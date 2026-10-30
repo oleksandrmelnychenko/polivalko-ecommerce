@@ -22,8 +22,8 @@ export function discountPercent(price: Money, oldPrice?: Money | null): number |
 /**
  * Сірий товарний блок 3:4 (розділ 3 ТЗ) як у референсі: фото, діагональні стрічки на кутах (ліворуч —
  * знижка або «немає», праворуч — «акція»). Звичайна плитка — як у магазині теми Sofani: ціна ліворуч, бренд
- * праворуч, назва Ubuntu під ними; при наведенні картка піднімається з тінню, по центру фото — жовтий «+»,
- * знизу виїжджає біла смуга дій («Переглянути», «У кошик»), назва жовтіє. `look` — плитка лукбук-секцій
+ * праворуч, назва під ними; при наведенні картка піднімається з тінню, по центру фото — зелений «+»,
+ * знизу виїжджає біла смуга дій («Переглянути», «У кошик»), назва зеленіє. `look` — плитка лукбук-секцій
  * головної, як «product-style_3»: фото темнішає й збільшується, ціна виїжджає зверху ліворуч, назва — знизу,
  * по центру круглі кнопки. На сенсорних екранах смуга дій стоїть під фото.
  */
@@ -41,7 +41,7 @@ export function ProductTile({ product, priority, look }: { product: ProductListI
           <span className="tile__photo-empty">Фото додасть магазин</span>
         )}
         <span className="tile__flashes">
-          {!product.inStock ? <span className="flash">Немає</span> : discount && <span className="flash">−{discount}%</span>}
+          {!product.inStock ? <span className="flash flash--out">Немає</span> : discount && <span className="flash">−{discount}%</span>}
           {discount && (
             <span className="flash flash--right flash--sale" aria-hidden="true">
               Акція

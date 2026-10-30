@@ -58,6 +58,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:PoliValko", _postgres.GetConnectionString());
         builder.UseSetting("RateLimiting:Forms:PermitLimit", "1000");
+        builder.UseSetting("RateLimiting:Orders:PermitLimit", "1000");
         builder.UseSetting("RateLimiting:Login:PermitLimit", "1000");
         builder.UseSetting("Payments:Provider", "Sandbox");
         builder.UseSetting("Payments:Sandbox:Secret", SandboxSecret);

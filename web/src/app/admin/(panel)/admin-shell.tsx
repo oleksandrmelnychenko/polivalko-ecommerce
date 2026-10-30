@@ -60,7 +60,7 @@ const isCurrent = (href: string, pathname: string) => (href === "/admin" ? pathn
 const SummaryContext = createContext<{ summary?: Summary; reload: () => void }>({ reload: () => {} });
 export const useSummary = () => useContext(SummaryContext);
 
-/** Каркас адмінки в стилі вітрини (тема Sofani): графітова бічна панель зі знаком у рамці, біла верхня смуга, сірий фон. */
+/** Каркас адмінки: графітова бічна панель зі знаком у рамці, біла верхня смуга, сірий фон. */
 export function AdminShell({ children }: { children: ReactNode }) {
   return (
     <StaffGate fallback={<div className="admin-loading" aria-busy="true">Перевіряємо вхід…</div>}>

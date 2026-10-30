@@ -85,6 +85,9 @@ export function CartDrawer() {
             <Link href="/checkout" className="btn btn--wide" onClick={close}>
               Оформити замовлення
             </Link>
+            <Link href="/cart" className="btn btn--quiet btn--wide" onClick={close}>
+              Перейти в кошик
+            </Link>
           </div>
         )}
       </div>

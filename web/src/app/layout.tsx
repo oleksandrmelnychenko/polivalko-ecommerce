@@ -1,23 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
-import { Montserrat, Roboto, Ubuntu } from "next/font/google";
+import { Onest } from "next/font/google";
 import { GoogleAnalytics } from "@/lib/analytics";
 import "./globals.css";
 
-// Шрифти референсу (тема Sofani): Ubuntu — заголовки, Lato — текст. Lato з Google Fonts не має кирилиці,
-// тому текст — власна підмножина Lato 2.015 з кирилицею, перейменована за OFL на «PoliValko Text» (fonts/OFL.txt).
-const ubuntu = Ubuntu({ variable: "--font-ubuntu", subsets: ["latin", "cyrillic"], weight: ["400", "500"], display: "swap" });
-// Як у референсі: Montserrat — заголовки колонок мегаменю, Roboto — кнопка першого екрана.
-const montserrat = Montserrat({ variable: "--font-montserrat", subsets: ["latin", "cyrillic"], weight: ["700"], display: "swap" });
-const roboto = Roboto({ variable: "--font-roboto", subsets: ["latin", "cyrillic"], weight: ["500"], display: "swap" });
-const text = localFont({
-  variable: "--font-text",
-  display: "swap",
-  src: [
-    { path: "./fonts/poli-text-400.woff2", weight: "400", style: "normal" },
-    { path: "./fonts/poli-text-700.woff2", weight: "700", style: "normal" },
-  ],
-});
+// Основний шрифт за ТЗ (розділ 3) — Onest, змінна вага, з кирилицею.
+const onest = Onest({ variable: "--font-onest", subsets: ["latin", "cyrillic"], display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL ?? "http://localhost:3000"),
@@ -34,7 +21,7 @@ export const viewport: Viewport = { themeColor: "#ffffff" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="uk" className={`${ubuntu.variable} ${text.variable} ${montserrat.variable} ${roboto.variable}`}>
+    <html lang="uk" className={onest.variable}>
       <head>
         {/* Тимчасові фото йдуть з Unsplash: з'єднання відкриваємо заздалегідь. */}
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="" />

@@ -42,7 +42,7 @@ export function StateBox({
   );
 }
 
-/** Заголовок сторінки: назва з жовтою рискою, підпис і дії праворуч. */
+/** Заголовок сторінки: назва із зеленою рискою, підпис і дії праворуч. */
 export function PageHead({ title, sub, children }: { title: ReactNode; sub?: ReactNode; children?: ReactNode }) {
   return (
     <div className="admin-head">
@@ -85,7 +85,7 @@ export function Modal({ open, title, onClose, children }: { open: boolean; title
   );
 }
 
-/** Колір статусу як стрічки вітрини: жовтий — потребує дії, блакитний — чекає, зелений — гроші й видача, рожевий — скасування. */
+/** Колір статусу: жовтий — потребує дії, блакитний — чекає, зелений — гроші й видача, рожевий — скасування. */
 export const statusTone: Record<OrderRow["status"], string> = {
   new: "yellow",
   awaitingConfirmation: "yellow",

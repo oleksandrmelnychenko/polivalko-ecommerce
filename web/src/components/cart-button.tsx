@@ -3,7 +3,7 @@
 import { useCart } from "@/lib/cart";
 import { BagIcon } from "./icons";
 
-/** Кошик у шапці, як у референсі: сумка з жовтим лічильником. */
+/** Кошик у шапці, як у референсі: сумка із зеленим лічильником. */
 export function CartButton() {
   const { count, open } = useCart();
   return (

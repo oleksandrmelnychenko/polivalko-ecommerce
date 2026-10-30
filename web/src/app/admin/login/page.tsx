@@ -6,7 +6,7 @@ import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Вхід" };
 
-/** Вхід для працівників у стилі вітрини: фото першого екрана, біла картка з жовтою смугою зверху. */
+/** Вхід для працівників у стилі вітрини: фото першого екрана, біла картка із зеленою смугою зверху. */
 export default function LoginPage() {
   return (
     <main id="main" className="admin-login">

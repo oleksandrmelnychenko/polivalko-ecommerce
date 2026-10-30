@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using PoliValko.Delivery;
 using PoliValko.Ordering.Api;
@@ -153,11 +154,29 @@ public sealed class CheckoutApiTests(ApiFactory api)
             .ShouldHaveSingleItem().Name.ShouldBe("Магазин Poli Valko у Бучі");
     }
 
-    internal Task<HttpResponseMessage> PostOrderAsync(CreateOrderRequest body, string key)
+    [Fact]
+    public async Task Too_many_orders_from_one_address_are_rejected_with_retry_after()
+    {
+        await using var limited = api.WithWebHostBuilder(builder => builder.UseSetting("RateLimiting:Orders:PermitLimit", "2"));
+        var client = limited.CreateClient();
+        var product = await api.AddProductAsync("hospodarchi-tovary", "Товар для ліміту замовлень", 50m);
+        // Невалідне замовлення теж рахується в ліміт, а в БД нічого не створює.
+        var body = Order(product.Id, 1, "50.00", UniquePhone()) with { AcceptOffer = false };
+
+        (await PostOrderAsync(body, Guid.NewGuid().ToString(), client)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await PostOrderAsync(body, Guid.NewGuid().ToString(), client)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var rejected = await PostOrderAsync(body, Guid.NewGuid().ToString(), client);
+
+        rejected.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+        rejected.Headers.RetryAfter!.Delta!.Value.ShouldBeGreaterThan(TimeSpan.Zero);
+        (await rejected.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Code.ShouldBe("http.too_many_requests");
+    }
+
+    internal Task<HttpResponseMessage> PostOrderAsync(CreateOrderRequest body, string key, HttpClient? client = null)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/orders") { Content = JsonContent.Create(body, options: TestJson.Options) };
         request.Headers.Add("Idempotency-Key", key);
-        return _client.SendAsync(request, Ct);
+        return (client ?? _client).SendAsync(request, Ct);
     }
 
     internal static CreateOrderRequest Order(Guid productId, int quantity, string expectedTotal, string phone) => new(

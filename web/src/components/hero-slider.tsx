@@ -7,7 +7,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "./icons";
 
 export type HeroSlide = {
   image: Sized & { alt: string };
-  /** «band» — заголовок на жовтій смузі по центру; «panel» — біла панель праворуч. */
+  /** «band» — заголовок на зеленій смузі по центру; «panel» — біла панель праворуч. */
   kind: "band" | "panel";
   kicker: string;
   title: string;

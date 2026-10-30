@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { QuantityStepper } from "@/components/quantity-stepper";
-import { browserApi, newIdempotencyKey, type Problem, type Quote, type Settlement, type Warehouse } from "@/lib/api/browser";
+import { browserApi, newIdempotencyKey, type Problem, type Settlement, type Warehouse } from "@/lib/api/browser";
 import { track } from "@/lib/analytics";
 import { useCart } from "@/lib/cart";
 import { formatMoney } from "@/lib/format";
 import { thumb } from "@/lib/images";
+import { useCartQuote } from "@/lib/quote";
 import { SettlementPicker } from "./settlement-picker";
 
 type Errors = Record<string, string | undefined>;
@@ -27,8 +28,7 @@ const deliveryHint: Record<string, string> = {
 export function CheckoutForm() {
   const router = useRouter();
   const { lines, setQuantity, remove, clear } = useCart();
-  const [quote, setQuote] = useState<Quote | null>(null);
-  const [quoteError, setQuoteError] = useState(false);
+  const { items, quote, failed: quoteError, refresh: refreshQuote } = useCartQuote();
   const [delivery, setDelivery] = useState("nova_poshta");
   const [payment, setPayment] = useState("");
   const [settlement, setSettlement] = useState<Settlement | null>(null);
@@ -48,24 +48,6 @@ export function CheckoutForm() {
     focusInvalid.current = false;
     formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
   }, [errors]);
-
-  const items = useMemo(() => lines.map((l) => ({ productId: l.productId, quantity: l.quantity })), [lines]);
-
-  const refreshQuote = useCallback(async () => {
-    if (items.length === 0) {
-      setQuote(null);
-      return null;
-    }
-    const { data } = await browserApi.POST("/api/v1/checkout/quote", { body: { items } });
-    setQuoteError(!data);
-    setQuote(data ?? null);
-    return data ?? null;
-  }, [items]);
-
-  useEffect(() => {
-    const t = setTimeout(() => void refreshQuote(), 200);
-    return () => clearTimeout(t);
-  }, [refreshQuote]);
 
   // Подія «початок оформлення» один раз за відкриття сторінки, без персональних даних.
   const checkoutTracked = useRef(false);
@@ -156,6 +138,8 @@ export function CheckoutForm() {
       } else if (problem.code === "checkout.insufficient_stock") {
         await refreshQuote();
         setNotice({ kind: "error", title: "Частини товарів не вистачає", text: "Змініть кількість або приберіть позиції, позначені нижче." });
+      } else if (response.status === 429) {
+        setNotice({ kind: "error", title: "Забагато замовлень за короткий час", text: "Спробуйте за кілька хвилин або зателефонуйте нам." });
       } else if (problem.code === "idempotency.key_mismatch") {
         idempotencyKey.current = null;
         setNotice({ kind: "error", title: "Спробуйте ще раз", text: "Дані змінилися з моменту попередньої спроби." });

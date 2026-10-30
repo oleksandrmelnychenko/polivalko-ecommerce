@@ -1,4 +1,5 @@
-/* Магазин за референсом (тема Sofani, «Home Lookbook V2»): головна, каталог, товар, кошик, оформлення, замовлення. */
+/* Магазин: головна, каталог, товар, кошик, оформлення, замовлення. Кольори й шрифт — за ТЗ (tokens.css), розміщення
+   блоків — за референсом-лукбуком (тема Sofani, «Home Lookbook V2»). */
 
 /* Ціни й наявність. */
 .price-old { color: var(--color-muted); text-decoration: line-through; font-variant-numeric: tabular-nums; }
@@ -8,11 +9,14 @@
 .stock--in { color: var(--color-success); }
 .stock--out { color: var(--color-muted); }
 
-/* Діагональні стрічки на кутах фото, як у референсі: ліворуч блакитна (знижка, «немає»), праворуч рожева («акція»). */
+/* Діагональні стрічки на кутах фото, як у референсі: ліворуч зелена (знижка) або сіра («немає»), праворуч червона («акція»).
+   Смуга однієї довжини, її центр — на бісектрисі кута, тож напис завжди посередині трикутника, хоч «−5%», хоч «Немає».
+   Зовнішній край заходить за кут, щоб у кутику не просвічувало фото. Розміри в em: менший шрифт — менша стрічка. */
 .tile__flashes { position: absolute; inset: 0; z-index: var(--z-base); overflow: hidden; pointer-events: none; }
-.flash { position: absolute; top: -10px; left: -40px; padding: 18px 40px 4px; transform: rotate(-45deg); background: var(--color-ribbon); color: #fff; font: 400 var(--text-sm)/25.2px var(--font-body); text-transform: uppercase; }
-.flash--right { left: auto; right: -45px; padding: 17px 45px 4px; transform: rotate(45deg); }
+.flash { position: absolute; top: 1.16em; left: 1.16em; display: flex; align-items: flex-end; justify-content: center; width: 8.6em; height: 3.86em; padding-bottom: 0.29em; translate: -50% -50%; rotate: -45deg; background: var(--color-ribbon); color: #fff; font: 400 var(--text-sm)/1.43 var(--font-body); text-transform: uppercase; white-space: nowrap; }
+.flash--right { left: auto; right: 1.16em; translate: 50% -50%; rotate: 45deg; }
 .flash--sale { background: var(--color-sale); }
+.flash--out { background: #8a8a8a; } /* «немає» сіре: зелене читалося б як «є» */
 
 /* Перший екран — слайдер як у референсі: висота 768 px, два слайди зі згасанням 0,6 с, круглі стрілки по краях. */
 .hero { position: relative; height: 768px; overflow: hidden; background: #5a5f55; color: #fff; }
@@ -25,10 +29,10 @@
 .hero__arc text { fill: currentColor; font: 500 19px var(--font-display); letter-spacing: 0.18em; text-transform: uppercase; }
 .hero__arc-stars { transform-box: fill-box; transform-origin: center; }
 .hero__title { position: relative; display: inline-block; margin: 0; padding: 18px 44px; color: #fff; font: 400 1.875rem/1.2 var(--font-display); text-transform: uppercase; isolation: isolate; }
-.hero__title::before { content: ""; position: absolute; inset: 0; z-index: -1; background: rgb(255 220 115 / 0.8); }
+.hero__title::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--color-hero-veil); }
 .hero__title span { display: inline-block; }
 .hero__sub { max-width: 60ch; color: #fff; font: 400 1.125rem/1.5 "Times New Roman", Times, serif; }
-.hero__btn { display: inline-flex; align-items: center; height: 41px; padding-inline: 35px; background: #fff; color: #0a0a0a; font: 500 1.0625rem/1 var(--font-button); text-transform: uppercase; text-decoration: none; transition: background-color 0.3s, color 0.3s; }
+.hero__btn { display: inline-flex; align-items: center; height: 41px; padding-inline: 35px; background: #fff; color: #0a0a0a; font: 600 1.0625rem/1 var(--font-button); text-decoration: none; transition: background-color 0.3s, color 0.3s; }
 .hero__btn:hover { background: var(--color-brand); color: #fff; }
 .hero__arrow { position: absolute; top: 50%; z-index: 2; display: grid; place-items: center; width: 70px; height: 70px; translate: 0 -50%; border: 0; border-radius: 50%; background: rgb(0 0 0 / 0.1); color: #fff; cursor: pointer; transition: background-color 0.3s; }
 .hero__arrow:hover { background: rgb(0 0 0 / 0.35); }
@@ -119,12 +123,12 @@
 .tile__cart { position: absolute; left: 0; right: 0; bottom: 0; z-index: var(--z-raised); display: flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: 44px; border: 0; background: var(--color-ink); color: #fff; font: 700 var(--text-sm)/1 var(--font-body); letter-spacing: var(--tracking-caps); text-transform: uppercase; cursor: pointer; translate: 0 100%; transition: translate var(--dur-short) var(--ease-out), background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
 .tile__cart svg { width: 18px; height: 18px; }
 .tile:hover .tile__cart, .tile__cart:focus-visible { translate: 0 0; }
-.tile__cart:hover { background: var(--color-brand); color: var(--color-ink); }
+.tile__cart:hover { background: var(--color-brand); color: #fff; }
 .tile__cart:focus-visible { outline-offset: -4px; outline-color: #fff; }
 .tile__cart--compact { position: static; display: inline-flex; min-height: 34px; margin-top: 6px; padding-inline: var(--space-md); translate: none; font-size: var(--text-xs); }
 .tile__body { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
 .tile__name { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; color: var(--color-ink); font: 700 var(--text-sm)/1.5 var(--font-body); }
-.tile__name--caps { font-weight: 400; font-size: var(--text-md); text-transform: uppercase; letter-spacing: var(--tracking-caps); }
+.tile__name--caps { font-weight: 400; font-size: var(--text-md); }
 .tile__name a { text-decoration: none; }
 .tile__name a::after { content: ""; position: absolute; inset: 0; z-index: var(--z-base); }
 .tile__name a:focus-visible { outline: none; }
@@ -167,9 +171,9 @@
   .tile--look .round-btn { width: 40px; height: 40px; background: var(--color-ink); }
 }
 
-/* Плитка магазину як «product-item» теми Sofani: ціна й бренд в один рядок, назва Ubuntu під ними. При наведенні
-   картка підіймається тінню, фото ледь темнішає, по центру жовтий «+» (дві лінії 40 px, вертикальна доповертається
-   на 90°), знизу виїжджає біла смуга з сірими іконками дій, назва жовтіє. */
+/* Плитка магазину як «product-item» теми Sofani: ціна й бренд в один рядок, назва під ними. При наведенні
+   картка підіймається тінню, фото ледь темнішає, по центру зелений «+» (дві лінії 40 px, вертикальна доповертається
+   на 90°), знизу виїжджає біла смуга з сірими іконками дій, назва зеленіє. */
 .tile--shop { gap: 0; background: #fff; transition: box-shadow 0.35s ease-in-out; }
 .tile--shop .tile__photo::after { content: ""; position: absolute; inset: 0; z-index: 1; background: rgb(0 0 0 / 0.04); opacity: 0; transition: opacity 0.25s ease-in-out; pointer-events: none; }
 .tile__sign { position: absolute; left: 50%; top: 50%; z-index: 2; width: 40px; height: 40px; margin: -20px 0 0 -20px; opacity: 0; transform: translateY(-25px); transition: opacity 0.35s, transform 0.35s; pointer-events: none; }
@@ -213,7 +217,7 @@
 .perks__list h3 { font: 400 var(--text-lg)/1.3 var(--font-display); color: var(--color-ink); text-transform: uppercase; }
 .perks__list p { max-width: 30ch; font-size: var(--text-sm); color: var(--color-muted); line-height: 1.6; }
 
-/* Напрямки послуг: дві колонки, жовтий номер, назва Ubuntu й короткий опис. */
+/* Напрямки послуг: дві колонки, номер, назва й короткий опис. */
 .directions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--space-xl); margin: 0; padding: 0; list-style: none; counter-reset: dir; text-align: left; }
 .directions li { border-bottom: var(--rule-hair) solid var(--color-rule); counter-increment: dir; }
 .directions a { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 2px var(--space-sm); padding-block: var(--space-md); text-decoration: none; transition: padding var(--dur-short) var(--ease-out); }
@@ -376,19 +380,46 @@
 .totals { display: grid; grid-template-columns: minmax(0, 1fr) auto; row-gap: var(--space-xs); margin: 0; }
 .totals dt { color: var(--color-ink-2); }
 .totals dd { margin: 0; padding-left: var(--space-md); text-align: right; font-variant-numeric: tabular-nums; }
-.totals .grand { padding-top: var(--space-sm); border-top: var(--rule-hair) solid var(--color-rule); font: 600 var(--text-xl)/1.2 var(--font-body); color: var(--color-ink); text-transform: uppercase; letter-spacing: 0.02em; }
+.totals .grand { padding-top: var(--space-sm); border-top: var(--rule-hair) solid var(--color-rule); font: 600 var(--text-xl)/1.2 var(--font-body); color: var(--color-ink); }
 
 /* Оформлення: кроки на лініях ліворуч, склад і сума праворуч. */
 .checkout { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--space-2xl); align-items: start; padding-bottom: var(--space-2xl); }
 .checkout__form { display: flex; flex-direction: column; gap: var(--space-2xl); }
 .checkout__form > section { display: flex; flex-direction: column; gap: var(--space-lg); }
 .checkout__form h2 { display: flex; align-items: center; gap: var(--space-sm); padding-bottom: var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-rule); font-size: var(--text-xl); }
-.checkout__form h2 span { display: inline-grid; place-items: center; width: 32px; height: 32px; background: var(--color-brand); color: var(--color-ink); font: 600 var(--text-sm)/1 var(--font-body); font-variant-numeric: tabular-nums; }
+.checkout__form h2 span { display: inline-grid; place-items: center; width: 32px; height: 32px; background: var(--color-brand); color: #fff; font: 600 var(--text-sm)/1 var(--font-body); font-variant-numeric: tabular-nums; }
 .summary { position: sticky; top: calc(var(--bar-height) + var(--space-md)); display: flex; flex-direction: column; gap: var(--space-md); padding: var(--space-xl); background: var(--color-paper-2); }
 .summary h2 { font-size: var(--text-xl); }
 .summary .line { grid-template-columns: 60px minmax(0, 1fr) auto; padding-block: var(--space-sm); }
 .summary .line__photo { width: 60px; background: var(--color-paper); }
 .summary ul { margin: 0; padding: 0; list-style: none; }
+
+/* Кошик: таблиця позицій ліворуч, як у кошику теми Sofani; праворуч підсумок і умови отримання й оплати. */
+.cart { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: var(--space-2xl); align-items: start; padding-bottom: var(--space-2xl); }
+.cart__main { display: flex; flex-direction: column; gap: var(--space-md); min-width: 0; }
+.cart__head, .cart-line { display: grid; grid-template-columns: 96px minmax(0, 1fr) 110px 132px 110px 40px; grid-template-areas: "photo info price qty total remove"; column-gap: var(--space-md); align-items: center; }
+.cart__head { padding-bottom: var(--space-sm); border-bottom: 2px solid var(--color-ink); font: 600 var(--text-sm)/1.2 var(--font-body); letter-spacing: var(--tracking-caps); text-transform: uppercase; }
+.cart__head span:first-child { grid-column: 1 / 3; }
+.cart__head span:last-child { text-align: right; }
+.cart__lines { margin: 0; padding: 0; list-style: none; }
+.cart-line { padding-block: var(--space-md); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.cart-line__photo { grid-area: photo; position: relative; width: 96px; aspect-ratio: 1; background: var(--color-paper-2); overflow: hidden; }
+.cart-line__photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.cart-line__info { grid-area: info; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cart-line__price { grid-area: price; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cart-line__label { display: none; }
+.cart-line__qty { grid-area: qty; }
+.cart-line .line__total { grid-area: total; }
+.cart-line__remove { grid-area: remove; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; background: none; color: var(--color-muted); cursor: pointer; transition: color var(--dur-micro) var(--ease-out); }
+.cart-line__remove:hover { color: var(--color-error); }
+.cart-line__remove svg { width: 18px; height: 18px; }
+.cart__after { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-md); }
+.cart-ways { display: flex; flex-direction: column; gap: var(--space-xs); padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); }
+.cart-ways h3 { font-size: var(--text-lg); }
+.cart-ways li { display: flex; flex-direction: column; padding-block: var(--space-xs); line-height: 1.5; }
+.cart-ways b { color: var(--color-ink); }
+.cart-ways span { color: var(--color-ink-2); font-size: var(--text-sm); }
+.cart-ways small { color: var(--color-muted); font-size: var(--text-sm); }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: var(--text-sm); font-weight: 600; }
@@ -500,7 +531,7 @@
   .tiles--rail { grid-auto-columns: calc((100% - var(--gap-columns)) / 2); }
   .rail { padding-inline: 0; }
   .rail__arrow { display: none; }
-  .product, .description, .checkout, .order-head, .catalog { grid-template-columns: minmax(0, 1fr); }
+  .product, .description, .checkout, .cart, .order-head, .catalog { grid-template-columns: minmax(0, 1fr); }
   .tiles, .tiles--3, .tiles--4 { --cols: 2; }
   .buybox, .summary { position: static; }
   .filters-panel { padding: 0; border: 0; }
@@ -528,10 +559,16 @@
   .hero__btn { height: 44px; }
   .hero__sub { font-size: var(--text-md); }
   .tiles--rail { grid-auto-columns: 62%; }
-  .flash { top: 10px; left: -40px; font-size: var(--text-xs); line-height: 20px; }
-  .flash--right { left: auto; right: -40px; }
+  .flash { font-size: var(--text-xs); }
   .fields-2, .seg--cards, .service-list { grid-template-columns: minmax(0, 1fr); }
   .summary { padding: var(--space-lg) var(--space-md); }
+  .cart__head { display: none; }
+  .cart-line { grid-template-columns: 72px minmax(0, 1fr) auto; grid-template-areas: "photo info remove" "photo price price" "qty qty total"; row-gap: var(--space-sm); align-items: start; }
+  .cart-line__photo { width: 72px; }
+  .cart-line__price { color: var(--color-muted); font-size: var(--text-sm); }
+  .cart-line__label { display: inline; }
+  .cart-line .line__total { align-self: center; }
+  .cart-line__remove { justify-self: end; margin: -8px -8px 0 0; }
   .buybox__actions { flex-direction: column; }
   .buybox__actions .stepper { align-self: flex-start; }
 }

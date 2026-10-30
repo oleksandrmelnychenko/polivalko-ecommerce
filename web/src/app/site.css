@@ -1,4 +1,5 @@
-/* Хром сайту за референсом (тема Sofani): графітова шапка 130 px, кнопки, заголовки секцій, футер. */
+/* Хром сайту за ТЗ (розділ 3): біла шапка з тонким розділювачем, зелені кнопки, заголовки секцій, футер.
+   Розміщення блоків — за референсом-лукбуком, який обрав користувач. */
 
 body { min-height: 100dvh; display: flex; flex-direction: column; }
 main { flex: 1; }
@@ -8,16 +9,16 @@ main { flex: 1; }
 .code { font-family: var(--font-outlier); font-variant-numeric: tabular-nums; color: var(--color-muted); }
 .muted { color: var(--color-muted); }
 
-/* Графітова шапка як у референсі: не липне, висота 130 px, меню Lato 16 px великими літерами зі стрілками. */
-.site-header { position: relative; z-index: var(--z-sticky-nav); background: var(--color-chrome); color: #fff; }
+/* Біла шапка з тонким розділювачем: не липне, висота 96 px, меню 16 px зі стрілками. */
+.site-header { position: relative; z-index: var(--z-sticky-nav); border-bottom: var(--rule-hair) solid var(--color-rule); background: var(--color-paper); color: var(--color-ink); }
 .site-header__bar { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-xl); min-height: var(--bar-height); }
-.logo { justify-self: start; display: inline-flex; align-items: center; height: 50px; padding: 0 10px; border: 2px solid #fff; color: #fff; font: 700 1.875rem/1 var(--font-body); letter-spacing: 0.01em; text-transform: uppercase; text-decoration: none; white-space: nowrap; }
+.logo { justify-self: start; display: inline-flex; align-items: center; height: 50px; padding: 0 10px; border: 2px solid var(--color-ink); color: var(--color-ink); font: 700 1.875rem/1 var(--font-body); letter-spacing: 0.01em; text-transform: uppercase; text-decoration: none; white-space: nowrap; }
 .logo--footer { height: auto; padding: 6px 0; border-width: 2px 0; border-color: var(--color-ink); color: var(--color-ink); font-size: 2.125rem; font-weight: 400; font-family: var(--font-display); }
 .site-nav { display: flex; justify-content: center; align-self: stretch; }
 .site-nav__list { display: flex; margin: 0; padding: 0; list-style: none; }
 .nav-item { position: relative; display: flex; }
 .nav-item--mega { position: static; }
-.nav-link { display: inline-flex; align-items: center; gap: 8px; padding: 0 20px; color: #fff; font: 400 1rem/var(--bar-height) var(--font-body); text-transform: uppercase; text-decoration: none; white-space: nowrap; transition: color 0.3s; }
+.nav-link { display: inline-flex; align-items: center; gap: 8px; padding: 0 20px; color: var(--color-ink); font: 500 1rem/var(--bar-height) var(--font-body); text-decoration: none; white-space: nowrap; transition: color 0.3s; }
 .nav-link svg { width: 13px; height: 13px; stroke-width: 2.4; }
 .nav-item:hover > .nav-link, .nav-item:focus-within > .nav-link, .nav-link[aria-current="page"] { color: var(--color-brand); }
 
@@ -31,7 +32,7 @@ main { flex: 1; }
 .sub--mega { left: 0; right: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 40px 0; }
 .mega-col + .mega-col { border-left: 1px solid #eee; }
 .mega-col ul { margin: 0; padding: 0; list-style: none; }
-.mega-col__title { position: relative; margin: 0 20px 15px; padding-bottom: 15px; color: #333; font: 700 var(--text-sm)/1.8 var(--font-mega); text-transform: uppercase; }
+.mega-col__title { position: relative; margin: 0 20px 15px; padding-bottom: 15px; color: var(--color-ink); font: 700 var(--text-sm)/1.8 var(--font-mega); }
 .mega-col__title::after { content: ""; position: absolute; left: 0; bottom: 0; width: 30px; height: 2px; background: var(--color-brand); }
 .mega-col a.mega-product { display: grid; justify-items: start; gap: 6px; padding: 0 20px; white-space: normal; }
 .mega-col a.mega-product:hover { padding-left: 20px; }
@@ -45,7 +46,7 @@ main { flex: 1; }
 .icon-btn { position: relative; display: inline-grid; place-items: center; width: 44px; height: 44px; flex: none; border: 0; background: transparent; color: var(--color-ink); cursor: pointer; transition: color 0.3s, background-color 0.3s; }
 .icon-btn:hover { background: var(--color-paper-2); }
 .icon-btn svg { width: 22px; height: 22px; }
-.icon-btn--chrome { color: #fff; }
+.icon-btn--chrome { color: var(--color-ink); }
 .icon-btn--chrome:hover { background: transparent; color: var(--color-brand); }
 .icon-btn.site-header__menu { display: none; }
 .cart-button__count { position: absolute; top: 0; right: -2px; min-width: 20px; height: 20px; padding-inline: 5px; border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font: 400 12px/20px var(--font-body); font-variant-numeric: tabular-nums; text-align: center; }
@@ -82,20 +83,21 @@ main { flex: 1; }
 .back-to-top svg { width: 22px; height: 22px; }
 
 
-/* Кнопки: прямокутні, великими літерами. Основна — графітова, при наведенні жовта. */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: 44px; padding-inline: var(--space-xl); border: 2px solid var(--color-ink); border-radius: 0; background: var(--color-ink); color: #fff; font: 700 var(--text-md)/1 var(--font-body); letter-spacing: var(--tracking-caps); text-transform: uppercase; white-space: nowrap; text-decoration: none; cursor: pointer; transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out); }
-.btn:hover { background: var(--color-brand); border-color: var(--color-brand); color: var(--color-ink); }
+/* Кнопки: прямокутні. Основна — зелена, другорядні — з чорною рамкою, при наведенні зеленіють. */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: 44px; padding-inline: var(--space-xl); border: 2px solid var(--color-brand); border-radius: 0; background: var(--color-brand); color: #fff; font: 600 var(--text-md)/1 var(--font-body); white-space: nowrap; text-decoration: none; cursor: pointer; transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out); }
+.btn:hover { background: var(--color-brand-strong); border-color: var(--color-brand-strong); color: #fff; }
 .btn:disabled, .btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
-.btn:disabled:hover { background: var(--color-ink); border-color: var(--color-ink); color: #fff; }
+.btn:disabled:hover { background: var(--color-brand); border-color: var(--color-brand); color: #fff; }
 .btn[aria-busy="true"] { cursor: progress; }
 .btn svg { width: 18px; height: 18px; flex: none; }
-.btn--light { background: #fff; border-color: #fff; color: #0a0a0a; }
+.btn--light { background: #fff; border-color: #fff; color: var(--color-ink); }
+.btn--light:hover { background: var(--color-brand); border-color: var(--color-brand); color: #fff; }
 .btn--dark { background: var(--color-ink); border-color: var(--color-ink); color: #fff; }
 .btn--outline, .btn--quiet { background: transparent; border-color: var(--color-ink); color: var(--color-ink); }
-.btn--outline:hover, .btn--quiet:hover { background: var(--color-ink); border-color: var(--color-ink); color: #fff; }
-.btn--quiet:disabled:hover { background: transparent; color: var(--color-ink); }
+.btn--outline:hover, .btn--quiet:hover { background: transparent; border-color: var(--color-brand); color: var(--color-brand-strong); }
+.btn--quiet:disabled:hover { background: transparent; border-color: var(--color-ink); color: var(--color-ink); }
 .btn--soft { background: var(--color-accent-soft); border-color: var(--color-accent-soft); color: var(--color-ink); }
-.btn--soft:hover { background: var(--color-brand); border-color: var(--color-brand); }
+.btn--soft:hover { background: var(--color-brand); border-color: var(--color-brand); color: #fff; }
 .btn--wide { width: 100%; }
 .btn--small { min-height: 38px; padding-inline: var(--space-md); font-size: var(--text-sm); }
 .btn--lg { min-height: 52px; }
@@ -119,7 +121,7 @@ main { flex: 1; }
 .section__head .lead { flex-basis: 100%; }
 .band--grey { background: var(--color-paper-2); }
 
-/* Заголовок секції: Ubuntu 36 px великими літерами, підпис і розділювач із блакитним кружечком. */
+/* Заголовок секції: 36 px, підпис і розділювач із зеленим кружечком. */
 .heading { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: var(--space-2xl); text-align: center; }
 .heading h2 { font-size: var(--text-section); }
 .heading p { color: var(--color-ink-2); }
@@ -138,7 +140,7 @@ main:has(> .strip:last-child) + .footer::before { display: none; }
 .footer__grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-xl); padding-block: var(--space-3xl) var(--space-2xl); }
 .footer__about p { margin-top: var(--space-lg); }
 .footer__about p + p { margin-top: var(--space-md); font-size: var(--text-sm); color: var(--color-muted); }
-.footer h2 { position: relative; margin-bottom: var(--space-xl); padding-bottom: var(--space-sm); font-size: var(--text-xl); color: #3f3f3f; }
+.footer h2 { position: relative; margin-bottom: var(--space-xl); padding-bottom: var(--space-sm); font-size: var(--text-xl); color: var(--color-ink); }
 .footer h2::after { content: ""; position: absolute; left: 0; bottom: 0; width: 75px; height: 2px; background: var(--color-brand); }
 .footer__links { margin: 0; padding: 0; list-style: none; }
 .footer__links li { border-bottom: var(--rule-hair) solid var(--color-rule); }

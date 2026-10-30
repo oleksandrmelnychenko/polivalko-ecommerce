@@ -1,4 +1,4 @@
-/* Адмінка в стилі вітрини (тема Sofani): графітова бічна панель, біла верхня смуга, світло-сірий фон, білі картки.
+/* Адмінка в стилі вітрини: графітова бічна панель, біла верхня смуга, світло-сірий фон, білі картки.
    Одна система контролів: поле, список і кнопка мають ту саму висоту (--a-ctl), підписи — один рядок однакової
    висоти, тож у рядку фільтрів усе стоїть на одній лінії. Екрани (огляд, замовлення, палітра пошуку) — admin-extra.css. */
 
@@ -28,7 +28,7 @@
 .admin-app { display: grid; grid-template-columns: var(--a-side) minmax(0, 1fr); min-height: 100dvh; background: linear-gradient(to right, var(--color-chrome) var(--a-side), transparent var(--a-side)); }
 .admin-side { position: sticky; top: 0; display: flex; flex-direction: column; height: 100dvh; overflow-y: auto; background: var(--color-chrome); color: #fff; scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / 0.15) transparent; }
 .admin-side__brand { display: flex; align-items: center; gap: var(--space-sm); height: var(--a-top); padding: 0 20px; border-bottom: 1px solid rgb(255 255 255 / 0.08); }
-.admin-side__brand .logo { height: 36px; padding: 0 8px; font-size: 1.125rem; }
+.admin-side__brand .logo { height: 36px; padding: 0 8px; border-color: #fff; color: #fff; font-size: 1.125rem; }
 .admin-side__tag { color: rgb(255 255 255 / 0.45); font: 700 10px/1 var(--font-mega); letter-spacing: 0.18em; text-transform: uppercase; }
 .admin-side__nav { flex: 1; padding: 20px 0; }
 .admin-side__group + .admin-side__group { margin-top: 20px; }
@@ -89,7 +89,7 @@
 }
 .admin :is(.field textarea, textarea.input) { width: 100%; min-height: 88px; padding: 10px 12px; border: 1px solid var(--color-field); border-radius: 0; background: #fff; color: var(--color-ink); font: 400 14px/1.5 var(--font-body); outline: 0; resize: vertical; transition: border-color 0.2s, box-shadow 0.2s; }
 .admin :is(.field input, .field select, .field textarea, .input, .select):hover { border-color: var(--color-ink-2); }
-.admin :is(.field input, .field select, .field textarea, .input, .select):focus-visible { border-color: var(--color-ink); box-shadow: 0 0 0 3px rgb(255 191 0 / 0.4); outline: 0; }
+.admin :is(.field input, .field select, .field textarea, .input, .select):focus-visible { border-color: var(--color-ink); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 40%, transparent); outline: 0; }
 .admin :is(.field input, .field select, .field textarea)[aria-invalid="true"] { border-color: var(--color-error); background-color: #fff8f7; }
 .admin :is(.field input, .field select, .field textarea, .input, .select):disabled { background-color: var(--a-bg); color: var(--color-muted); cursor: not-allowed; }
 .admin :is(.field input, .input)::placeholder { color: #9a9a9a; opacity: 1; }
@@ -116,17 +116,17 @@
 .admin input[type="checkbox"]:checked, .admin input[type="checkbox"]:indeterminate { border-color: var(--color-ink); background: var(--color-ink); }
 .admin input[type="checkbox"]:checked::before { transform: scale(1); }
 .admin input[type="checkbox"]:indeterminate::before { height: 2px; clip-path: none; transform: scale(1); }
-.admin input[type="checkbox"]:focus-visible { outline: 0; box-shadow: 0 0 0 3px rgb(255 191 0 / 0.5); }
+.admin input[type="checkbox"]:focus-visible { outline: 0; box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 50%, transparent); }
 .admin input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
 .admin :is(.consent, .check) { display: inline-flex; align-items: center; gap: 10px; min-height: var(--a-ctl); color: var(--color-ink); font-size: var(--text-sm); font-weight: 400; cursor: pointer; }
 .admin :is(.consent, .check) input { width: 18px; height: 18px; margin: 0; }
 
-/* Кнопки: 40 px, мала — 32 px. Основна графітова, акцентна жовта, тиха — біла з рамкою. */
+/* Кнопки: 40 px, мала — 32 px. Основна й акцентна — зелені, тиха — біла з рамкою. */
 .admin .btn { height: var(--a-ctl); min-height: var(--a-ctl); padding: 0 20px; gap: 8px; border-width: 1px; font: 700 12px/1 var(--font-body); letter-spacing: 0.08em; transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s; }
 .admin .btn svg { width: 16px; height: 16px; }
 .admin .btn--small { height: var(--a-ctl-sm); min-height: var(--a-ctl-sm); padding: 0 14px; font-size: 11px; }
 .admin .btn--small svg { width: 14px; height: 14px; }
-.admin .btn:focus-visible { outline: 0; box-shadow: 0 0 0 3px rgb(255 191 0 / 0.5); }
+.admin .btn:focus-visible { outline: 0; box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 50%, transparent); }
 .admin :is(.btn--quiet, .btn--outline) { background: #fff; border-color: #cfcfcf; color: var(--color-ink); }
 .admin :is(.btn--quiet, .btn--outline):hover { background: var(--color-ink); border-color: var(--color-ink); color: #fff; }
 .admin :is(.btn--quiet, .btn--outline):disabled:hover { background: #fff; border-color: #cfcfcf; color: var(--color-ink); }

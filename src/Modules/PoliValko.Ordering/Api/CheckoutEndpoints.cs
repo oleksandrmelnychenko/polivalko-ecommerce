@@ -19,6 +19,7 @@ public static class CheckoutEndpoints
 {
     public const string CustomerActor = "Покупець";
     public const string PaymentActor = "Платіжна система";
+    public const string OrdersRateLimitPolicy = "orders";
 
     public static IEndpointRouteBuilder MapOrderingEndpoints(this IEndpointRouteBuilder api)
     {
@@ -30,10 +31,12 @@ public static class CheckoutEndpoints
 
         group.MapPost("/orders", CreateOrderAsync)
             .RequireIdempotency<CreateOrderRequest>()
+            .RequireRateLimiting(OrdersRateLimitPolicy)
             .WithName("CreateOrder")
             .WithSummary("Гостьове замовлення. Сервер повторно перевіряє ціни й наявність.")
             .ProducesProblem(StatusCodes.Status409Conflict)
-            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
         group.MapGet("/orders/{number}", GetOrderAsync)
             .WithName("GetOrder")
