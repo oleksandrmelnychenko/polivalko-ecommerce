@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <!-- Опис OpenAPI генерується під час збірки в openapi/ і зберігається в репозиторії як контракт. -->
+    <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/../../openapi</OpenApiDocumentsDirectory>
+    <OpenApiGenerateDocumentsOptions>--file-name polivalko-api</OpenApiGenerateDocumentsOptions>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+    <PackageReference Include="Scalar.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PoliValko.Infrastructure\PoliValko.Infrastructure.csproj" />
+    <ProjectReference Include="..\Modules\PoliValko.Catalog\PoliValko.Catalog.csproj" />
+    <ProjectReference Include="..\Modules\PoliValko.Content\PoliValko.Content.csproj" />
+    <ProjectReference Include="..\Modules\PoliValko.Delivery\PoliValko.Delivery.csproj" />
+    <ProjectReference Include="..\Modules\PoliValko.Identity\PoliValko.Identity.csproj" />
+    <ProjectReference Include="..\Modules\PoliValko.Notifications\PoliValko.Notifications.csproj" />
+    <ProjectReference Include="..\Modules\PoliValko.Ordering\PoliValko.Ordering.csproj" />
+    <ProjectReference Include="..\Modules\PoliValko.Payments\PoliValko.Payments.csproj" />
+    <ProjectReference Include="..\Modules\PoliValko.Fiscal\PoliValko.Fiscal.csproj" />
+    <ProjectReference Include="..\Modules\PoliValko.Navkolo\PoliValko.Navkolo.csproj" />
+  </ItemGroup>
+
+</Project>

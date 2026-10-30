@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "copywriting": {
+      "source": "aiskillstore/marketplace",
+      "sourceType": "github",
+      "skillPath": "skills/coreyhaines31/copywriting/SKILL.md",
+      "computedHash": "1804b6127636cea9a16f058606144f979dca270ba01c6577017173636f56c5e2"
+    },
+    "hallmark": {
+      "source": "nutlope/hallmark",
+      "sourceType": "github",
+      "skillPath": "skills/hallmark/SKILL.md",
+      "computedHash": "a7e0f104af7f03882ac018f89f49185ed772742772f2cc96bb0e7e0dac0dd6a0"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
+    }
+  }
+}

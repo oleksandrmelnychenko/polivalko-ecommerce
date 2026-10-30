@@ -1,0 +1,45 @@
+# Один origin для браузера (розділ 3.2 пропозиції):
+#   /api/*      → ASP.NET Core API (той самий шлях для майбутніх мобільних застосунків)
+#   /health/*   → перевірки стану API для зовнішнього моніторингу: /health/live, /health/ready
+#   /internal/* → закрито ззовні (ревалідація кешу викликається лише внутрішньою мережею)
+#   решта       → Next.js
+# Для production задайте SITE_ADDRESS=example.ua — Caddy сам отримає сертифікат HTTPS
+# (порти 80 і 443 публікує deploy/compose.production.yaml).
+# SEARCH_INDEXING=noindex (staging) додає X-Robots-Tag, щоб пошукові системи не індексували копію сайту.
+
+(indexing-index) {
+}
+
+(indexing-noindex) {
+	header X-Robots-Tag "noindex, nofollow"
+}
+
+{$SITE_ADDRESS::8080} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	import indexing-{$SEARCH_INDEXING:index}
+
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+
+	handle /health/* {
+		header Cache-Control "no-store"
+		reverse_proxy api:8080
+	}
+
+	handle /internal/* {
+		respond 404
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}

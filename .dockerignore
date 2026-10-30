@@ -1,0 +1,14 @@
+**/bin
+**/obj
+**/node_modules
+**/.next
+web/
+tests/
+docs/
+openapi/
+.git
+.vs
+.vscode
+.idea
+**/*.user
+.env*

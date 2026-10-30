@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\PoliValko.Infrastructure\PoliValko.Infrastructure.csproj" />
+    <ProjectReference Include="..\PoliValko.Ordering\PoliValko.Ordering.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PoliValko.IntegrationTests" />
+    <InternalsVisibleTo Include="PoliValko.UnitTests" />
+  </ItemGroup>
+
+</Project>

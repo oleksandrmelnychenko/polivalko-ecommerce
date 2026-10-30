@@ -1,0 +1,396 @@
+{
+  "schema_version": "2.0",
+  "meta": {
+    "generated_at": "2026-07-13T18:06:05.287Z",
+    "slug": "coreyhaines31-copywriting",
+    "source_url": "https://github.com/coreyhaines31/marketingskills/tree/main/skills/copywriting",
+    "source_ref": "main",
+    "model": "codex",
+    "analysis_version": "3.0.0",
+    "source_type": "community",
+    "content_hash": "ecdaabca28863d1472f79ba637842fdf4ac2fd9acc92b215ab7f152e757b2a33",
+    "tree_hash": "2ed5949696a72c2e0549230d0dc7da5ed8a769d664c578d5820db6c42250a0f7",
+    "provenance": {
+      "model_effective": "codex",
+      "fallback_chain": [
+        {
+          "agent": "codex",
+          "outcome": "success"
+        }
+      ],
+      "analysis_version": "3.0.0"
+    }
+  },
+  "skill": {
+    "name": "copywriting",
+    "description": "Writes and improves conversion-focused website copy for homepages, landing pages, pricing pages, feature pages, product pages, and about pages.",
+    "summary": "Create clear, structured website copy with persuasive headlines, benefits, calls to action, and supporting sections.",
+    "icon": "📦",
+    "version": "1.0.2",
+    "author": "coreyhaines31",
+    "license": "MIT",
+    "category": "writing",
+    "tags": [
+      "copywriting",
+      "marketing",
+      "landing-pages",
+      "conversion",
+      "website-content"
+    ],
+    "supported_tools": [
+      "claude",
+      "codex",
+      "claude-code"
+    ],
+    "risk_factors": [
+      "external_commands"
+    ]
+  },
+  "security_audit": {
+    "risk_level": "safe",
+    "is_blocked": false,
+    "safe_to_publish": true,
+    "analysis_status": "ok",
+    "summary": "All nine static findings are false positives caused by ordinary copywriting prose and Markdown code formatting. No executable commands, reconnaissance behavior, malicious intent, or prompt injection were found.",
+    "remediation": [],
+    "risk_factor_evidence": [
+      {
+        "factor": "external_commands",
+        "evidence": [
+          {
+            "file": "SKILL.md",
+            "line_start": 15,
+            "line_end": 15
+          }
+        ]
+      }
+    ],
+    "static_findings": [
+      {
+        "id": "blocker:references/copy-frameworks.md:38:system-reconnaissance",
+        "category": "blocker",
+        "severity": "low",
+        "pattern": "System reconnaissance",
+        "file": "references/copy-frameworks.md",
+        "line_start": 38,
+        "line_end": 38,
+        "snippet": "> Stop chasing invoices. Start getting paid on time."
+      },
+      {
+        "id": "blocker:references/copy-frameworks.md:341:system-reconnaissance",
+        "category": "blocker",
+        "severity": "low",
+        "pattern": "System reconnaissance",
+        "file": "references/copy-frameworks.md",
+        "line_start": 341,
+        "line_end": 341,
+        "snippet": "Avoid testimonials that just say:"
+      },
+      {
+        "id": "blocker:references/copy-frameworks.md:324:network-reconnaissance",
+        "category": "blocker",
+        "severity": "low",
+        "pattern": "Network reconnaissance",
+        "file": "references/copy-frameworks.md",
+        "line_start": 324,
+        "line_end": 325,
+        "snippet": "- **Numbered**: Creates sense of progress"
+      },
+      {
+        "id": "blocker:references/natural-transitions.md:27:system-reconnaissance",
+        "category": "blocker",
+        "severity": "low",
+        "pattern": "System reconnaissance",
+        "file": "references/natural-transitions.md",
+        "line_start": 27,
+        "line_end": 27,
+        "snippet": "- Transitions to Avoid (AI Tells)"
+      },
+      {
+        "id": "blocker:references/natural-transitions.md:203:system-reconnaissance",
+        "category": "blocker",
+        "severity": "low",
+        "pattern": "System reconnaissance",
+        "file": "references/natural-transitions.md",
+        "line_start": 203,
+        "line_end": 203,
+        "snippet": "**Note:** Avoid \"In conclusion\" at the start of a paragraph. It's overused and signals AI writing."
+      },
+      {
+        "id": "blocker:references/natural-transitions.md:260:system-reconnaissance",
+        "category": "blocker",
+        "severity": "low",
+        "pattern": "System reconnaissance",
+        "file": "references/natural-transitions.md",
+        "line_start": 260,
+        "line_end": 260,
+        "snippet": "## Transitions to Avoid (AI Tells)"
+      },
+      {
+        "id": "external_commands:SKILL.md:15:ruby-shell-backtick-execution",
+        "category": "external_commands",
+        "severity": "medium",
+        "pattern": "Ruby/shell backtick execution",
+        "file": "SKILL.md",
+        "line_start": 15,
+        "line_end": 15,
+        "snippet": "If `.agents/product-marketing.md` exists (or `.claude/product-marketing.md`, or the legacy `product-"
+      },
+      {
+        "id": "blocker:SKILL.md:66:system-reconnaissance",
+        "category": "blocker",
+        "severity": "low",
+        "pattern": "System reconnaissance",
+        "file": "SKILL.md",
+        "line_start": 66,
+        "line_end": 66,
+        "snippet": "2. **Specific over vague** — Avoid \"streamline,\" \"optimize,\" \"innovative\""
+      },
+      {
+        "id": "blocker:SKILL.md:49:network-reconnaissance",
+        "category": "blocker",
+        "severity": "low",
+        "pattern": "Network reconnaissance",
+        "file": "SKILL.md",
+        "line_start": 49,
+        "line_end": 50,
+        "snippet": "### Specificity Over Vagueness"
+      }
+    ],
+    "finding_verdicts": [
+      {
+        "id": "blocker:references/copy-frameworks.md:38:system-reconnaissance",
+        "verdict": "false_positive",
+        "confidence": 0.99,
+        "reason": "The line is a sample headline about chasing invoices and getting paid. It contains no system discovery instruction or executable behavior."
+      },
+      {
+        "id": "blocker:references/copy-frameworks.md:341:system-reconnaissance",
+        "verdict": "false_positive",
+        "confidence": 0.99,
+        "reason": "The line introduces examples of weak testimonials in a copywriting reference. It does not request system information or perform reconnaissance."
+      },
+      {
+        "id": "blocker:references/copy-frameworks.md:324:network-reconnaissance",
+        "verdict": "false_positive",
+        "confidence": 0.99,
+        "reason": "The line recommends numbered steps for readable marketing copy. There is no network access, host discovery, or network reconnaissance."
+      },
+      {
+        "id": "blocker:references/natural-transitions.md:27:system-reconnaissance",
+        "verdict": "false_positive",
+        "confidence": 0.99,
+        "reason": "The line is a table-of-contents entry about avoiding overused AI writing phrases. It contains no system reconnaissance instruction."
+      },
+      {
+        "id": "blocker:references/natural-transitions.md:203:system-reconnaissance",
+        "verdict": "false_positive",
+        "confidence": 0.99,
+        "reason": "The note advises writers to avoid an overused conclusion phrase. It neither inspects a system nor requests sensitive information."
+      },
+      {
+        "id": "blocker:references/natural-transitions.md:260:system-reconnaissance",
+        "verdict": "false_positive",
+        "confidence": 0.99,
+        "reason": "The line is a section heading for stylistic phrases to avoid. It has no system access or discovery semantics."
+      },
+      {
+        "id": "external_commands:SKILL.md:15:ruby-shell-backtick-execution",
+        "verdict": "false_positive",
+        "confidence": 0.99,
+        "reason": "Backticks only format project-local filenames as Markdown code spans. The line contains no Ruby expression, shell command, or command execution syntax."
+      },
+      {
+        "id": "blocker:SKILL.md:66:system-reconnaissance",
+        "verdict": "false_positive",
+        "confidence": 0.99,
+        "reason": "The line advises using specific marketing language instead of vague terms. It does not inspect or enumerate system resources."
+      },
+      {
+        "id": "blocker:SKILL.md:49:network-reconnaissance",
+        "verdict": "false_positive",
+        "confidence": 0.99,
+        "reason": "The heading and examples compare vague and specific copy. They contain no network targets, requests, scans, or discovery instructions."
+      }
+    ],
+    "semantic_findings": [],
+    "critical_findings": [],
+    "high_findings": [],
+    "medium_findings": [],
+    "low_findings": [],
+    "dangerous_patterns": [],
+    "files_scanned": 4,
+    "total_lines": 983,
+    "audit_model": "codex",
+    "audited_at": "2026-07-13T18:06:05.287Z",
+    "agent_auto_install_policy": "allowed",
+    "manual_install_policy": "allowed"
+  },
+  "content": {
+    "user_title": "Write Clear, Conversion-Focused Website Copy",
+    "value_statement": "Website copy often hides the product value or gives visitors no clear next step. This skill creates structured, audience-focused copy that supports action.",
+    "seo_keywords": [
+      "Claude",
+      "Codex",
+      "Claude Code",
+      "AI copywriting",
+      "website copywriting",
+      "landing page copy",
+      "conversion copywriting",
+      "CTA writing",
+      "marketing copy"
+    ],
+    "actual_capabilities": [
+      "Writes complete page copy organized by headline, subheadline, calls to action, and supporting sections.",
+      "Rewrites existing website copy for clarity, specificity, active voice, and stronger customer benefits.",
+      "Creates two or three headline and call-to-action alternatives with concise rationale.",
+      "Adapts copy for homepages, landing pages, pricing pages, feature pages, product pages, and about pages.",
+      "Produces optional page titles and meta descriptions when search content is relevant."
+    ],
+    "limitations": [
+      "Requires product, audience, offer, proof, and page-goal context for tailored copy.",
+      "Does not verify claims, statistics, testimonials, customer research, or legal compliance.",
+      "Focuses on website pages, not email campaigns, popups, offer design, or detailed copy editing.",
+      "Provides copy options but does not measure conversion impact without external testing."
+    ],
+    "use_cases": [
+      {
+        "title": "Launch a SaaS landing page",
+        "description": "Create a focused page with a value proposition, benefit sections, objection handling, and one primary call to action.",
+        "target_user": "SaaS founder"
+      },
+      {
+        "title": "Rewrite a pricing page",
+        "description": "Clarify plan differences, recommendation cues, common objections, and calls to action for easier purchase decisions.",
+        "target_user": "Product marketer"
+      },
+      {
+        "title": "Explain a product feature",
+        "description": "Turn technical details into customer benefits, practical use cases, and clear paths to try the feature.",
+        "target_user": "Marketing writer"
+      }
+    ],
+    "prompt_templates": [
+      {
+        "title": "Draft a homepage hero",
+        "prompt": "Write homepage hero copy for [product] serving [audience]. Provide one headline, one subheadline, and three specific call-to-action options.",
+        "scenario": "Create a first homepage hero."
+      },
+      {
+        "title": "Improve existing copy",
+        "prompt": "Rewrite [current copy] for [audience]. Preserve verified claims, replace vague language, emphasize benefits, and explain the main changes.",
+        "scenario": "Strengthen an existing website section."
+      },
+      {
+        "title": "Create a landing page",
+        "prompt": "Write a landing page for [offer] from [traffic source]. Address [objections], use [proof], and focus every section on [primary action].",
+        "scenario": "Build a focused campaign page."
+      },
+      {
+        "title": "Develop an evidence-based page",
+        "prompt": "Build a complete [page type] for [product], using [research]. Address [objections], cite only supplied proof, annotate key choices, and provide alternatives.",
+        "scenario": "Create advanced copy from customer research."
+      }
+    ],
+    "output_examples": [
+      {
+        "input": "Write hero copy for LedgerLane, an expense platform for finance teams that spend hours chasing receipts.",
+        "output": [
+          "Headline: Close the month without chasing receipts",
+          "Subheadline: LedgerLane collects expense documents, flags missing details, and keeps every approval visible.",
+          "CTA: See LedgerLane in action"
+        ]
+      },
+      {
+        "input": "Rewrite this pricing CTA for a project tool with a 14-day trial: Sign up now.",
+        "output": [
+          "Primary CTA: Start your 14-day trial",
+          "Supporting text: Explore every feature before choosing a plan. No payment details required."
+        ]
+      },
+      {
+        "input": "Turn this feature into customer-focused copy: Automated reports arrive every Monday.",
+        "output": [
+          "Section heading: Start Monday with the numbers ready",
+          "Body: Receive a current report before your first meeting, so you can review results instead of preparing spreadsheets."
+        ]
+      }
+    ],
+    "best_practices": [
+      "Provide the primary audience, page goal, offer details, objections, and verified proof before requesting a draft.",
+      "Use customer language from interviews, reviews, and support conversations when you have permission to share it.",
+      "Test headline and call-to-action alternatives with real visitors before choosing final copy."
+    ],
+    "anti_patterns": [
+      "Do not invent testimonials, statistics, customer quotes, guarantees, or product capabilities.",
+      "Do not request persuasive copy without identifying one primary audience and one primary action.",
+      "Do not treat generated copy as validated conversion performance or legal approval."
+    ],
+    "faq": [
+      {
+        "question": "Which pages can this skill write?",
+        "answer": "It supports homepages, landing pages, pricing pages, feature pages, product pages, and about pages."
+      },
+      {
+        "question": "Can it improve copy I already have?",
+        "answer": "Yes. It can rewrite supplied copy for clarity, specificity, active voice, stronger benefits, and clearer calls to action."
+      },
+      {
+        "question": "What information should I provide?",
+        "answer": "Provide the audience, page type, primary action, offer, differentiators, objections, traffic source, brand voice, and verified proof."
+      },
+      {
+        "question": "Does it create SEO content?",
+        "answer": "It can provide a page title and meta description when relevant. It does not perform keyword research or technical SEO audits."
+      },
+      {
+        "question": "Will it create statistics or testimonials?",
+        "answer": "No. Supply verified evidence and approved customer quotes. The skill advises against fabricated claims because they damage trust and create legal risk."
+      },
+      {
+        "question": "Does generated copy guarantee more conversions?",
+        "answer": "No. The skill applies copywriting principles, but conversion impact requires testing with real visitors and reliable measurement."
+      }
+    ]
+  },
+  "file_structure": [
+    {
+      "name": "evals",
+      "type": "dir",
+      "path": "evals",
+      "children": [
+        {
+          "name": "evals.json",
+          "type": "file",
+          "path": "evals/evals.json",
+          "lines": 112
+        }
+      ]
+    },
+    {
+      "name": "references",
+      "type": "dir",
+      "path": "references",
+      "children": [
+        {
+          "name": "copy-frameworks.md",
+          "type": "file",
+          "path": "references/copy-frameworks.md",
+          "lines": 345
+        },
+        {
+          "name": "natural-transitions.md",
+          "type": "file",
+          "path": "references/natural-transitions.md",
+          "lines": 273
+        }
+      ]
+    },
+    {
+      "name": "SKILL.md",
+      "type": "file",
+      "path": "SKILL.md",
+      "lines": 253
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+/* Дизайн за референсом ТЗ (розділ 3): білий фон, нейтрально-сірі товарні блоки, тонкі розділювачі,
+ * чорний текст, зелений акцент #00A046, шрифт Onest. Токени — tokens.css; хром — site.css; магазин — shop.css. */
+@import url("./tokens.css");
+@import url("./base.css");
+@import url("./site.css");
+@import url("./shop.css");
+@import url("./admin.css");
+@import url("./admin-extra.css");

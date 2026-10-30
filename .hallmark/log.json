@@ -1,0 +1,36 @@
+[
+ {
+  "shape": "catalogue",
+  "theme": "terrazzo",
+  "axes": "light/grotesk-sans/chromatic-green",
+  "hero": "Counter",
+  "nav": "banner over a retracting bar",
+  "footer": "colophon block",
+  "imagery": "photographs (Wikimedia Commons stand-ins)",
+  "photos": [
+   "Viking lawn mower.jpg",
+   "Garden hose.jpg",
+   "Garden hose nozzle.jpg"
+  ],
+  "entry": "live offer buy box",
+  "fingerprint": "counter/rail/spec-table/pinned-steps/ink-grid/facts",
+  "sections": [
+   "hero: live offer",
+   "rail: catalogue sections",
+   "spec table: offers",
+   "pinned steps: how ordering works",
+   "ink band: services grid",
+   "facts: delivery and payment"
+  ],
+  "signature": "the live offer buy box in the hero, priced by the API",
+  "waived": [
+   "49b"
+  ],
+  "prompt": "Poli Valko online store prototype: home, garden and vegetable-garden goods, Bucha pickup, Nova Poshta delivery",
+  "scope": "page",
+  "job": "buy",
+  "draw": "deb2a7",
+  "date": "2026-10-28",
+  "mode": "build"
+ }
+]

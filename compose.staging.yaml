@@ -1,0 +1,58 @@
+# Staging — тестове середовище поруч із production на тому самому сервері.
+# Власна назва проєкту (контейнери й томи polivalko-staging_*), власні порти й образи,
+# без демо-товарів, тестова оплата й фіскалізація-заглушка, сайт закрито від індексації.
+#
+#   docker compose -f compose.yaml -f compose.staging.yaml --profile app up -d --build
+# або в .env окремого каталогу staging:
+#   COMPOSE_FILE=compose.yaml:compose.staging.yaml
+#   COMPOSE_PROFILES=app
+#
+# Вітрина: http://127.0.0.1:8081 (HTTP_BIND/HTTP_PORT). Доступ ззовні — SSH-тунелем
+# або свідомо відкритим портом за файрволом; докладно — docs/operations.md, «Staging».
+name: polivalko-staging
+
+x-staging-env: &staging-env
+  Site__PublicUrl: ${SITE_URL:-http://localhost:8081}
+  # Справжні платежі й фіскальні чеки на staging вмикаються лише окремими змінними STAGING_*,
+  # тож скопійований з production .env не проведе реальну оплату й не видасть реальний чек.
+  Payments__Provider: ${STAGING_PAYMENTS_PROVIDER:-Sandbox}
+  Fiscal__Provider: ${STAGING_FISCAL_PROVIDER:-Stub}
+
+services:
+  postgres:
+    ports: !override
+      - "${POSTGRES_BIND:-127.0.0.1}:${POSTGRES_PORT:-5433}:5432"
+
+  migrate:
+    image: polivalko-staging-migrate:${APP_VERSION:-latest}
+
+  api:
+    image: polivalko-staging-api:${APP_VERSION:-latest}
+    environment:
+      <<: *staging-env
+      ASPNETCORE_ENVIRONMENT: Staging
+      Database__SeedDemoData: ${SEED_DEMO_DATA:-false}
+
+  worker:
+    image: polivalko-staging-worker:${APP_VERSION:-latest}
+    environment:
+      <<: *staging-env
+      DOTNET_ENVIRONMENT: Staging
+
+  web:
+    image: polivalko-staging-web:${APP_VERSION:-latest}
+    build:
+      # Аналітика й верифікація Search Console — лише на production.
+      args:
+        SITE_URL: ${SITE_URL:-http://localhost:8081}
+        NEXT_PUBLIC_GA_MEASUREMENT_ID: ""
+        NEXT_PUBLIC_GSC_VERIFICATION: ""
+    environment:
+      SITE_URL: ${SITE_URL:-http://localhost:8081}
+
+  caddy:
+    environment:
+      SITE_ADDRESS: ":8080"
+      SEARCH_INDEXING: noindex
+    ports: !override
+      - "${HTTP_BIND:-127.0.0.1}:${HTTP_PORT:-8081}:8080"

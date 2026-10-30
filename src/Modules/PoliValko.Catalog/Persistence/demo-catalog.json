@@ -1,0 +1,660 @@
+[
+  {
+    "category": "vse-dlia-polyvu",
+    "name": "Шланг поливальний 1/2\", 20 м",
+    "brand": null,
+    "price": 899,
+    "oldPrice": 1049,
+    "stock": 14,
+    "description": "Гнучкий армований шланг для щоденного поливу городу й газону.\n\nНе перекручується на холоді, підходить до стандартних конекторів 1/2\".",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1715407157720-aff745f27568?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Зелений садовий шланг, згорнутий кільцями",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Діаметр",
+        "value": "1/2\""
+      },
+      {
+        "name": "Довжина",
+        "value": "20 м"
+      },
+      {
+        "name": "Матеріал",
+        "value": "ПВХ"
+      }
+    ],
+    "variantGroup": "hose-1-2",
+    "variantLabel": "20 м"
+  },
+  {
+    "category": "vse-dlia-polyvu",
+    "name": "Котушка для шланга з насадкою",
+    "brand": null,
+    "price": 1890,
+    "oldPrice": null,
+    "stock": 6,
+    "description": "Котушка тримає до 30 м шланга й кріпиться до стіни біля крана.\n\nНасадка висить поруч, тож поливати можна одразу.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1774647001091-50d355f802b4?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Шланг на настінній котушці біля крана",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Матеріал",
+        "value": "Пластик"
+      }
+    ]
+  },
+  {
+    "category": "vse-dlia-polyvu",
+    "name": "Пістолет-розпилювач для шланга",
+    "brand": null,
+    "price": 289,
+    "oldPrice": null,
+    "stock": 30,
+    "description": "Пістолет із регулюванням струменя: від м'якого дощу до сильного потоку.\n\nКурок фіксується, тому рука не втомлюється під час довгого поливу.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1697293585549-6eb147d2a8f4?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Пістолет-розпилювач розбризкує воду",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Матеріал",
+        "value": "Пластик"
+      }
+    ]
+  },
+  {
+    "category": "vse-dlia-polyvu",
+    "name": "Насадка-розпилювач Melnor, 5 режимів",
+    "brand": "Melnor",
+    "price": 459,
+    "oldPrice": 520,
+    "stock": 12,
+    "description": "П'ять режимів поливу перемикаються поворотом головки.\n\nКорпус із ґумовим покриттям не ковзає в мокрій руці.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1781594307634-7eda264650e4?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Насадка на шлангу розпилює воду на сонці",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Матеріал",
+        "value": "Пластик"
+      },
+      {
+        "name": "Режимів поливу",
+        "value": "5"
+      }
+    ]
+  },
+  {
+    "category": "vse-dlia-polyvu",
+    "name": "Зрошувач імпульсний металевий",
+    "brand": null,
+    "price": 649,
+    "oldPrice": null,
+    "stock": 8,
+    "description": "Імпульсний зрошувач поливає коло або сектор радіусом до 12 м.\n\nМеталевий механізм розрахований на постійний тиск із водогону.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1630862338638-6cf93f610dd8?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Зрошувач поливає газон",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Матеріал",
+        "value": "Метал"
+      }
+    ]
+  },
+  {
+    "category": "vse-dlia-polyvu",
+    "name": "Дощувач для автополиву",
+    "brand": null,
+    "price": 215,
+    "oldPrice": null,
+    "stock": 40,
+    "description": "Висувний дощувач для стаціонарної системи автополиву газону.\n\nПідходить для монтажу в ґрунт на рівні трави.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1718565524318-b58b8b86b813?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Дощувач поливає рослини на грядці",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Матеріал",
+        "value": "Пластик"
+      }
+    ]
+  },
+  {
+    "category": "vse-dlia-polyvu",
+    "name": "Крапельниці кнопкові, 10 шт",
+    "brand": null,
+    "price": 189,
+    "oldPrice": null,
+    "stock": 0,
+    "description": "Кнопкові крапельниці для точкового поливу грядок і теплиць.\n\nВставляються в магістральну трубку без інструмента.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1748432171507-c1d62fe2e859?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Крапельний полив на грядці з розсадою",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Матеріал",
+        "value": "Пластик"
+      },
+      {
+        "name": "Кількість",
+        "value": "10 шт"
+      }
+    ]
+  },
+  {
+    "category": "vse-dlia-polyvu",
+    "name": "Лійка садова металева, 10 л",
+    "brand": null,
+    "price": 749,
+    "oldPrice": null,
+    "stock": 5,
+    "description": "Оцинкована лійка з довгим носиком і знімною насадкою-дощем.\n\nВитримує сонце й мороз, не тріскається з роками.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1786461157611-b04e0ca44f48?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Оцинкована лійка на грядці",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Матеріал",
+        "value": "Метал"
+      },
+      {
+        "name": "Об'єм",
+        "value": "10 л"
+      }
+    ]
+  },
+  {
+    "category": "vse-dlia-polyvu",
+    "name": "Лійка мідна для бонсаю, 1 л",
+    "brand": null,
+    "price": 1290,
+    "oldPrice": 1450,
+    "stock": 2,
+    "description": "Невелика мідна лійка з тонким носиком для кімнатних рослин і бонсаю.\n\nДрібна насадка не розмиває ґрунт у горщику.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1599685087648-eb14f1be03f8?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Металева лійка на траві",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Матеріал",
+        "value": "Мідь"
+      },
+      {
+        "name": "Об'єм",
+        "value": "1 л"
+      }
+    ]
+  },
+  {
+    "category": "vse-dlia-roslyn",
+    "name": "Ґрунт універсальний для розсади, 50 л",
+    "brand": null,
+    "price": 189,
+    "oldPrice": null,
+    "stock": 40,
+    "description": "Легкий торф'яний субстрат для розсади, вазонів і пересадки.\n\nМістить стартове живлення на перші тижні росту.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1597868165956-03a6827955b1?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Руки в ґрунті висаджують розсаду",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ]
+  },
+  {
+    "category": "vse-dlia-roslyn",
+    "name": "Касети для розсади, 10 шт",
+    "brand": null,
+    "price": 145,
+    "oldPrice": null,
+    "stock": 25,
+    "description": "Пластикові касети на 54 комірки для огірків, томатів і квітів.\n\nДренажні отвори в кожній комірці, придатні для повторного використання.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1647550232391-f758832be5c2?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Касети з паростками розсади",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ]
+  },
+  {
+    "category": "vse-dlia-roslyn",
+    "name": "Добриво комплексне гранульоване, 2 кг",
+    "brand": null,
+    "price": 245,
+    "oldPrice": 279,
+    "stock": 18,
+    "description": "Гранульоване добриво для городу, ягідників і квітників.\n\nВносять навесні під перекопування або під час поливу.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1710666184386-9f42d0227237?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Руки в рукавицях підживлюють квіти",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ]
+  },
+  {
+    "category": "vse-dlia-roslyn",
+    "name": "Кашпо підвісне керамічне",
+    "brand": null,
+    "price": 329,
+    "oldPrice": null,
+    "stock": 9,
+    "description": "Теракотове кашпо для сукулентів і ампельних рослин.\n\nКомплектується шнуром для підвішування.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1680882123487-0ca066a3a03e?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Підвісне кашпо з рослиною",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ]
+  },
+  {
+    "category": "hospodarchi-tovary",
+    "name": "Відро оцинковане, 12 л",
+    "brand": null,
+    "price": 315,
+    "oldPrice": null,
+    "stock": 9,
+    "description": "Міцне оцинковане відро для води, золи й будівельних сумішей.\n\nМеталева дужка з дерев'яною ручкою.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1589630388147-68b3a2172e0c?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Оцинковане відро на дерев'яному столі",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ]
+  },
+  {
+    "category": "hospodarchi-tovary",
+    "name": "Тачка садова одноколісна, 85 л",
+    "brand": null,
+    "price": 2490,
+    "oldPrice": 2790,
+    "stock": 4,
+    "description": "Сталевий кузов на 85 л і пневматичне колесо для городу та будівництва.\n\nРучки з ґумовими накладками.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1715274036728-4385d95a5e9f?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Зелена садова тачка на газоні",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ]
+  },
+  {
+    "category": "ruchnyi-instrument",
+    "name": "Секатор площинний",
+    "brand": null,
+    "price": 489,
+    "oldPrice": null,
+    "stock": 15,
+    "description": "Секатор для живих гілок до 20 мм: чистий зріз без розчавлювання.\n\nФіксатор тримає лез закритими під час зберігання.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1523301551780-cd17359a95d0?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Секатор і садові рукавиці",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Тип",
+        "value": "Площинний"
+      },
+      {
+        "name": "Матеріал",
+        "value": "Сталь"
+      }
+    ]
+  },
+  {
+    "category": "ruchnyi-instrument",
+    "name": "Набір секаторів і садових ножиць",
+    "brand": null,
+    "price": 1590,
+    "oldPrice": null,
+    "stock": 3,
+    "description": "Набір для обрізки саду: секатори різних типів і ножиці для живоплоту.\n\nЗручно тримати разом у майстерні.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1526381805515-3fec2d69e7cc?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Садові інструменти на стіні",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ]
+  },
+  {
+    "category": "ruchnyi-instrument",
+    "name": "Лопата штикова з держаком",
+    "brand": null,
+    "price": 649,
+    "oldPrice": null,
+    "stock": 7,
+    "description": "Загострена штикова лопата для перекопування та посадки.\n\nДерев'яний держак 120 см.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1647978403048-2e5099133ea3?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Штикова лопата в землі",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Матеріал",
+        "value": "Сталь"
+      }
+    ]
+  },
+  {
+    "category": "ruchnyi-instrument",
+    "name": "Вила садові чотиризубі",
+    "brand": null,
+    "price": 579,
+    "oldPrice": null,
+    "stock": 6,
+    "description": "Вила для розпушування ґрунту, компосту й викопування коренеплодів.\n\nЗагартовані зубці не гнуться в важкому ґрунті.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1765810245181-97764b5500e4?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Садові вила біля стіни",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Матеріал",
+        "value": "Сталь"
+      }
+    ]
+  },
+  {
+    "category": "ruchnyi-instrument",
+    "name": "Совок садовий",
+    "brand": null,
+    "price": 129,
+    "oldPrice": null,
+    "stock": 50,
+    "description": "Вузький совок для пересадки розсади й роботи в клумбі.\n\nЯскрава ручка помітна в траві.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1712912828055-3d01804a1c73?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Садовий совок із землею",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Матеріал",
+        "value": "Сталь"
+      }
+    ]
+  },
+  {
+    "category": "tekhnika-dlia-sadu-ta-horodu",
+    "name": "Газонокосарка бензинова Viking",
+    "brand": "Viking",
+    "price": 18900,
+    "oldPrice": 20500,
+    "stock": 2,
+    "description": "Бензинова газонокосарка з травозбірником для ділянок до 1000 м².\n\nРегулювання висоти скошування в кілька положень.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1590820292118-e256c3ac2676?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Бензинова газонокосарка на газоні",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Тип двигуна",
+        "value": "Бензиновий"
+      }
+    ]
+  },
+  {
+    "category": "tekhnika-dlia-sadu-ta-horodu",
+    "name": "Газонокосарка Toro Recycler, 56 см",
+    "brand": "Toro",
+    "price": 21500,
+    "oldPrice": null,
+    "stock": 1,
+    "description": "Самохідна газонокосарка з мульчуванням: скошена трава повертається на газон як добриво.\n\nШирина скошування 56 см.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1458245201577-fc8a130b8829?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Газонокосарка на скошеній траві",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Тип двигуна",
+        "value": "Бензиновий"
+      },
+      {
+        "name": "Ширина скошування",
+        "value": "56 см"
+      }
+    ]
+  },
+  {
+    "category": "tekhnika-dlia-sadu-ta-horodu",
+    "name": "Тример бензиновий",
+    "brand": null,
+    "price": 6890,
+    "oldPrice": 7490,
+    "stock": 3,
+    "description": "Бензиновий тример для високої трави, узбіч і місць біля паркану.\n\nПлечовий ремінь розподіляє вагу.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1779636489744-76eb81c44925?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Тример підрізає траву біля дерева",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Тип двигуна",
+        "value": "Бензиновий"
+      }
+    ]
+  },
+  {
+    "category": "tekhnika-dlia-sadu-ta-horodu",
+    "name": "Котушка для тримера з волосінню",
+    "brand": null,
+    "price": 349,
+    "oldPrice": null,
+    "stock": 20,
+    "description": "Змінна котушка з волосінню 2,4 мм для більшості побутових тримерів.\n\nВолосінь подається автоматично.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1768268004427-6fb88cbd1605?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Покіс трави тримером",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ]
+  },
+  {
+    "category": "vse-dlia-vidpochynku",
+    "name": "Гриль газовий на візку",
+    "brand": null,
+    "price": 8990,
+    "oldPrice": null,
+    "stock": 2,
+    "description": "Газовий гриль із двома пальниками, кришкою й бічними полицями.\n\nВізок на колесах легко перекотити на терасу.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1534797258760-1bd2cc95a5bd?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Гриль із шашликами й овочами",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ]
+  },
+  {
+    "category": "vse-dlia-vidpochynku",
+    "name": "Гамак тканинний",
+    "brand": null,
+    "price": 899,
+    "oldPrice": null,
+    "stock": 11,
+    "description": "Бавовняний гамак до 120 кг із мотузками для кріплення до дерев.\n\nСкладається в компактний чохол.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1781384428934-0fadcc1ef691?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Гамак у саду",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ]
+  },
+  {
+    "category": "vse-dlia-vidpochynku",
+    "name": "Комплект садових меблів: стіл і 4 стільці",
+    "brand": null,
+    "price": 7490,
+    "oldPrice": 8290,
+    "stock": 1,
+    "description": "Металевий стіл і чотири стільці для тераси чи газону.\n\nПорошкове фарбування не боїться дощу.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1597088136953-db42ae225804?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Садовий стіл і стільці на терасі",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ]
+  },
+  {
+    "category": "vse-dlia-vidpochynku",
+    "name": "Лавка садова дерев'яна",
+    "brand": null,
+    "price": 5290,
+    "oldPrice": null,
+    "stock": 0,
+    "description": "Класична лавка зі спинкою з масиву дерева на троє.\n\nПросочення захищає від вологи.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1759864979918-63acc266c4e0?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Дерев'яна лавка в зеленому саду",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ]
+  },
+  {
+    "category": "landshaftnyi-dyzain",
+    "name": "Світильник садовий на сонячній батареї",
+    "brand": null,
+    "price": 239,
+    "oldPrice": 289,
+    "stock": 35,
+    "description": "Світильник заряджається вдень і вмикається в сутінках.\n\nВстромляється в ґрунт уздовж доріжки, без проводів.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1774202471418-bb7961856823?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Садовий світильник серед рослин",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ]
+  },
+  {
+    "category": "novyi-rik",
+    "name": "Ялинкова куля золота",
+    "brand": null,
+    "price": 89,
+    "oldPrice": null,
+    "stock": 120,
+    "description": "Скляна куля з дзеркальним покриттям для ялинки.\n\nДіаметр 8 см, з петелькою для підвішування.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1765967874600-8ba2c8f0a293?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Золота ялинкова куля на гілці",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ]
+  },
+  {
+    "category": "novyi-rik",
+    "name": "Мішура новорічна, 2 м",
+    "brand": null,
+    "price": 59,
+    "oldPrice": null,
+    "stock": 80,
+    "description": "Пухнаста мішура для ялинки, вікон і дверей.\n\nДовжина 2 м.",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1576028216904-06358eb3f7a0?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Срібна й червона мішура",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ]
+  },
+  {
+    "category": "vse-dlia-polyvu",
+    "name": "Шланг поливальний 1/2\", 30 м",
+    "brand": null,
+    "price": 1290,
+    "oldPrice": null,
+    "stock": 8,
+    "description": "Той самий армований шланг, що й 20-метровий, для більших ділянок.\n\nНе перекручується на холоді, підходить до стандартних конекторів 1/2\".",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1588501985911-6932ea666801?auto=format&fit=crop&q=80&w=1200",
+        "alt": "Зелений садовий шланг на гачку",
+        "credit": "Фото: Unsplash, ліцензія Unsplash"
+      }
+    ],
+    "attributes": [
+      {
+        "name": "Діаметр",
+        "value": "1/2\""
+      },
+      {
+        "name": "Довжина",
+        "value": "30 м"
+      },
+      {
+        "name": "Матеріал",
+        "value": "ПВХ"
+      }
+    ],
+    "variantGroup": "hose-1-2",
+    "variantLabel": "30 м"
+  }
+]
