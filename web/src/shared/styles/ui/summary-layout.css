@@ -1,0 +1,10 @@
+.checkout { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--space-2xl); align-items: start; padding-bottom: var(--space-2xl); }
+.checkout__form { display: flex; flex-direction: column; gap: var(--space-2xl); }
+.checkout__form > section { display: flex; flex-direction: column; gap: var(--space-lg); }
+.checkout__form h2 { display: flex; align-items: center; gap: var(--space-sm); padding-bottom: var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-rule); font-size: var(--text-xl); }
+.checkout__form h2 span { display: inline-grid; place-items: center; width: 32px; height: 32px; background: var(--color-brand); color: #fff; font: 600 var(--text-sm)/1 var(--font-body); font-variant-numeric: tabular-nums; }
+.summary { position: sticky; top: calc(var(--bar-height) + var(--space-md)); display: flex; flex-direction: column; gap: var(--space-md); padding: var(--space-xl); background: var(--color-paper-2); }
+.summary h2 { font-size: var(--text-xl); }
+.summary .line { grid-template-columns: 60px minmax(0, 1fr) auto; padding-block: var(--space-sm); }
+.summary .line__photo { width: 60px; background: var(--color-paper); }
+.summary ul { margin: 0; padding: 0; list-style: none; }

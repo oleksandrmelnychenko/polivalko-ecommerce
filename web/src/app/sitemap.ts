@@ -1,13 +1,9 @@
 import type { MetadataRoute } from "next";
 import { connection } from "next/server";
-import { getSitemap } from "@/lib/catalog";
+import { getSitemap } from "@/features/shop/catalog/server";
 
 const STATIC_PAGES = ["", "/catalog", "/services", "/contacts", "/payment-delivery", "/returns", "/offer", "/privacy"];
 
-/**
- * sitemap.xml (розділ 10 ТЗ): видимі розділи й товари з API плюс постійні сторінки.
- * Збирається під час запиту (дані кешуються в getSitemap), тож збірка образу не залежить від API.
- */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   await connection();
   const site = process.env.SITE_URL ?? "http://localhost:3000";

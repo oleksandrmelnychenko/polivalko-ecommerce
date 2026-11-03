@@ -1,0 +1,19 @@
+.chart { position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart__grid line { stroke: #ececec; stroke-width: 1; shape-rendering: crispEdges; }
+.chart__axis text { fill: var(--color-muted); font: 400 11px var(--font-body); font-variant-numeric: tabular-nums; }
+.chart__bar { fill: var(--color-brand); transition: fill 0.15s; }
+.chart__hit { fill: transparent; cursor: default; outline: 0; }
+.chart__col:hover .chart__bar, .chart__col:focus-within .chart__bar, .chart__col.is-active .chart__bar { fill: var(--color-ink); }
+.chart__col:focus-visible .chart__hit, .chart__hit:focus-visible { fill: color-mix(in srgb, var(--color-brand) 12%, transparent); }
+.chart__label { fill: var(--color-ink); font: 700 11px var(--font-body); font-variant-numeric: tabular-nums; }
+.chart__base { stroke: #cfcfcf; stroke-width: 1; shape-rendering: crispEdges; }
+.chart__tip { position: absolute; z-index: 2; min-width: 150px; padding: 10px 12px; background: var(--color-ink); color: #fff; box-shadow: 0 10px 24px -10px rgb(0 0 0 / 0.5); font-size: 12px; line-height: 1.4; pointer-events: none; transform: translate(-50%, calc(-100% - 10px)); white-space: nowrap; }
+.chart__tip b { display: block; font: 500 16px/1.2 var(--font-display); }
+.chart__tip span { color: rgb(255 255 255 / 0.7); }
+.chart__empty { position: absolute; inset: 0 0 auto 56px; display: grid; place-items: center; height: 230px; margin: 0; color: var(--color-muted); }
+.chart-table { margin-top: 12px; }
+.chart-table summary { color: var(--color-ink-2); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; }
+.chart-table .admin-table { margin-top: 8px; box-shadow: none; }
+.chart-table .admin-table td, .chart-table .admin-table th { padding-block: 6px; height: auto; }
+.chart-table__scroll { max-height: 240px; overflow: auto; }

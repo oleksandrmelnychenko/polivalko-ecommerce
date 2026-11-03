@@ -1,0 +1,21 @@
+.admin {
+  --a-bg: #f4f4f4;
+  --a-card: #fff;
+  --a-line: #e6e6e6;
+  --a-line-soft: #f0f0f0;
+  --a-hover: #fbfaf5;
+  --a-selected: #fff6d9;
+  --a-ctl: 40px;
+  --a-ctl-sm: 32px;
+  --a-pad: 24px;
+  --a-gap: 24px;
+  --a-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -16px rgb(0 0 0 / 0.18);
+  --a-shadow-up: 0 2px 4px rgb(0 0 0 / 0.05), 0 18px 36px -18px rgb(0 0 0 / 0.3);
+  --a-side: 240px;
+  --a-top: 64px;
+  min-height: 100dvh;
+  background: var(--a-bg);
+  color: var(--color-ink-2);
+  font-size: var(--text-sm);
+}
+.admin-loading { padding: var(--space-2xl); color: var(--color-muted); }

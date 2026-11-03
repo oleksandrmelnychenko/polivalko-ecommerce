@@ -1,0 +1,3 @@
+.pay { display: grid; gap: var(--space-md); padding: var(--space-lg); border: 2px solid var(--color-brand); }
+.pay h2 { font-size: var(--text-xl); }
+.pay__actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }

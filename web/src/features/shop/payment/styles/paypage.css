@@ -1,0 +1,7 @@
+.paypage { display: grid; place-items: center; min-height: 100dvh; padding: var(--space-lg); background: var(--color-paper-2); }
+.paypage__card { display: grid; gap: var(--space-md); width: min(480px, 100%); padding: var(--space-xl); background: var(--color-paper); box-shadow: var(--shadow-pop); border-top: 3px solid var(--color-brand); }
+.paypage__card h1 { font-size: var(--text-title); }
+.paypage__amount { font: 600 var(--text-display-s)/1 var(--font-body); color: var(--color-ink); font-variant-numeric: tabular-nums; }
+.paypage__actions { display: grid; gap: var(--space-sm); }
+.paypage__more summary { cursor: pointer; color: var(--color-ink-2); font-size: var(--text-sm); }
+.paypage__more .btn { margin-top: var(--space-xs); }

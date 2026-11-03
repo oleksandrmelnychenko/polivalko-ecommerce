@@ -1,0 +1,14 @@
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: var(--text-sm); font-weight: 600; }
+.field input, .field select, .field textarea { width: 100%; min-height: 48px; padding: var(--space-sm) var(--space-md); border: var(--rule-hair) solid var(--color-field); border-radius: 0; background: var(--color-paper); color: var(--color-ink); outline: 2px solid transparent; outline-offset: -2px; transition: border-color var(--dur-micro) var(--ease-out); }
+.field input:hover, .field select:hover, .field textarea:hover { border-color: var(--color-ink-2); }
+.field textarea { min-height: 112px; resize: vertical; }
+.field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible { outline-color: var(--color-focus); }
+.field input[aria-invalid="true"], .field select[aria-invalid="true"], .field textarea[aria-invalid="true"] { border-color: var(--color-error); background: color-mix(in oklab, var(--color-error) 4%, var(--color-paper)); }
+.field input:disabled, .field select:disabled { opacity: 0.6; cursor: not-allowed; background: var(--color-paper-2); }
+.field__help { font-size: var(--text-sm); color: var(--color-muted); }
+.field__error { font-size: var(--text-sm); color: var(--color-error); }
+.fields-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-md); }
+.consent { display: flex; gap: var(--space-sm); align-items: flex-start; cursor: pointer; }
+.consent input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--color-accent); flex: none; cursor: pointer; }
+.consent input[aria-invalid="true"] { outline: 2px solid var(--color-error); outline-offset: 2px; }

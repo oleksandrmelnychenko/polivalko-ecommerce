@@ -1,0 +1,5 @@
+.tile__flashes { position: absolute; inset: 0; z-index: var(--z-base); overflow: hidden; pointer-events: none; }
+.flash { position: absolute; top: 1.16em; left: 1.16em; display: flex; align-items: flex-end; justify-content: center; width: 8.6em; height: 3.86em; padding-bottom: 0.29em; translate: -50% -50%; rotate: -45deg; background: var(--color-ribbon); color: #fff; font: 400 var(--text-sm)/1.43 var(--font-body); text-transform: uppercase; white-space: nowrap; }
+.flash--right { left: auto; right: 1.16em; translate: 50% -50%; rotate: 45deg; }
+.flash--sale { background: var(--color-sale); }
+.flash--out { background: #8a8a8a; }

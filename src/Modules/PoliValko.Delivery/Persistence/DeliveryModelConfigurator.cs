@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PoliValko.Delivery.Domain;
 using PoliValko.Infrastructure.Persistence;
 
 namespace PoliValko.Delivery.Persistence;
@@ -9,7 +10,6 @@ internal sealed class DeliveryModelConfigurator : IModelConfigurator
     public const string WarehousesTable = "np_warehouses";
     public const string PickupPointsTable = "pickup_points";
 
-    /// <summary>Точка самовивозу, з якою стартує магазин; далі її редагує адміністратор.</summary>
     public const string BuchaStoreCode = "bucha-store";
 
     public void Configure(ModelBuilder modelBuilder)
@@ -23,7 +23,6 @@ internal sealed class DeliveryModelConfigurator : IModelConfigurator
             builder.Property(s => s.Area).HasMaxLength(DeliveryLimits.AreaLength);
             builder.Property(s => s.SearchName).HasMaxLength(DeliveryLimits.SettlementNameLength);
 
-            // text_pattern_ops: індекс працює для LIKE 'початок%' незалежно від collation бази.
             builder.HasIndex(s => s.SearchName).HasOperators("text_pattern_ops");
         });
 

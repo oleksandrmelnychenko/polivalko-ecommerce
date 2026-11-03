@@ -1,0 +1,9 @@
+.stepper { display: inline-grid; grid-template-columns: 40px 46px 40px; border: var(--rule-hair) solid var(--color-rule); }
+.stepper button { min-height: 44px; border: 0; background: var(--color-paper); color: var(--color-ink); cursor: pointer; font-size: var(--text-lg); transition: background-color var(--dur-micro) var(--ease-out); }
+.stepper button:hover { background: var(--color-paper-2); }
+.stepper button:disabled { color: var(--color-field); cursor: not-allowed; background: var(--color-paper); }
+.stepper input { width: 100%; min-height: 44px; border: 0; border-inline: var(--rule-hair) solid var(--color-rule); text-align: center; font-variant-numeric: tabular-nums; background: var(--color-paper); color: var(--color-ink); outline: 2px solid transparent; outline-offset: -2px; -moz-appearance: textfield; }
+.stepper input:focus-visible { outline-color: var(--color-focus); }
+.stepper input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.stepper--small { grid-template-columns: 32px 38px 32px; }
+.stepper--small button, .stepper--small input { min-height: 34px; font-size: var(--text-md); }

@@ -1,12 +1,5 @@
-# Локальне середовище й основа для staging і production.
-#   Лише БД:            docker compose up -d postgres
-#   Увесь застосунок:   docker compose --profile app up -d --build   → http://localhost:8080
-#   Staging:            + compose.staging.yaml (поруч із production на тому самому сервері)
-#   Production:         + deploy/compose.production.yaml (HTTPS на 80/443, обов'язкові секрети)
-# Змінні середовища, розгортання, бекапи, моніторинг і відкат — docs/operations.md.
 name: polivalko
 
-# Ротація журналів контейнерів, щоб логи не заповнили диск сервера.
 x-logging: &logging
   driver: json-file
   options:
@@ -15,27 +8,21 @@ x-logging: &logging
 
 x-db-connection: &db Host=postgres;Port=5432;Database=polivalko;Username=polivalko;Password=${POSTGRES_PASSWORD:-polivalko_dev};GSS Encryption Mode=Disable
 
-# Спільна конфігурація API і Worker. Секрети задаються лише в .env (docs/operations.md, «Секрети»).
 x-app-env: &app-env
   ConnectionStrings__PoliValko: *db
   Site__PublicUrl: ${SITE_URL:-http://localhost:8080}
-  # Скидання кешу вітрини після змін каталогу (API) та імпорту з Navkolo (Worker).
   Web__RevalidateUrl: http://web:3000/internal/revalidate
   Web__RevalidateSecret: ${REVALIDATE_SECRET:-local-revalidate-secret}
-  # Navkolo: Disabled | Stub (до отримання доступу до API).
   Navkolo__Mode: ${NAVKOLO_MODE:-Stub}
   Navkolo__SyncInterval: ${NAVKOLO_SYNC_INTERVAL:-00:05:00}
-  # Оплата: Sandbox (тестова) | Mono (Plata by mono).
   Payments__Provider: ${PAYMENTS_PROVIDER:-Sandbox}
   Payments__Sandbox__Secret: ${PAYMENTS_SANDBOX_SECRET:-local-sandbox-secret}
   Payments__Mono__Token: ${MONO_TOKEN:-}
-  # Фіскалізація: Disabled | Stub | Checkbox.
   Fiscal__Provider: ${FISCAL_PROVIDER:-Stub}
   Fiscal__Checkbox__LicenseKey: ${CHECKBOX_LICENSE_KEY:-}
   Fiscal__Checkbox__CashierLogin: ${CHECKBOX_CASHIER_LOGIN:-}
   Fiscal__Checkbox__CashierPassword: ${CHECKBOX_CASHIER_PASSWORD:-}
   Delivery__NovaPoshta__ApiKey: ${NOVAPOSHTA_API_KEY:-}
-  # Реквізити продавця для оферти, чеків і листів.
   Seller__Name: ${SELLER_NAME:-Продавець уточнюється}
   Seller__TaxId: ${SELLER_TAX_ID:-}
   Seller__Address: ${SELLER_ADDRESS:-}
@@ -50,7 +37,6 @@ services:
       POSTGRES_DB: polivalko
       POSTGRES_USER: polivalko
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-polivalko_dev}
-    # Лише для локальної розробки й лише з цього комп'ютера. На production порт не публікується.
     ports:
       - "${POSTGRES_BIND:-127.0.0.1}:${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -62,8 +48,6 @@ services:
       retries: 20
     logging: *logging
 
-  # Міграції застосовуються окремим кроком (EF migrations bundle), а не під час старту API.
-  # Образи мають тег APP_VERSION: попередню версію можна повернути без перезбірки (відкат).
   migrate:
     profiles: [app]
     image: polivalko-migrate:${APP_VERSION:-latest}
@@ -78,8 +62,6 @@ services:
         condition: service_healthy
     logging: *logging
 
-  # Перевірки стану: /health/live і /health/ready доступні ззовні через Caddy
-  # (в образі aspnet немає curl/wget для healthcheck усередині контейнера).
   api:
     profiles: [app]
     image: polivalko-api:${APP_VERSION:-latest}
@@ -95,8 +77,6 @@ services:
       Database__SeedDemoData: ${SEED_DEMO_DATA:-true}
       Api__ExposeDocs: ${EXPOSE_API_DOCS:-true}
       Media__Root: /data/media
-      # Перший адміністратор: створюється під час старту API, якщо задано email і пароль,
-      # а такого працівника ще немає. Наявних користувачів API не змінює.
       Seed__Users__0__Email: ${ADMIN_EMAIL:-}
       Seed__Users__0__Password: ${ADMIN_PASSWORD:-}
       Seed__Users__0__DisplayName: Адміністратор
@@ -129,7 +109,6 @@ services:
     image: polivalko-web:${APP_VERSION:-latest}
     build:
       context: web
-      # Вбудовуються під час збірки (canonical статичних сторінок, клієнтський код): після зміни потрібна перезбірка образу.
       args:
         SITE_URL: ${SITE_URL:-http://localhost:8080}
         NEXT_PUBLIC_GA_MEASUREMENT_ID: ${GA_MEASUREMENT_ID:-}
@@ -140,7 +119,6 @@ services:
       SITE_URL: ${SITE_URL:-http://localhost:8080}
       REVALIDATE_SECRET: ${REVALIDATE_SECRET:-local-revalidate-secret}
     healthcheck:
-      # robots.txt не звертається до API: перевіряється саме процес Next.js.
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/robots.txt"]
       interval: 30s
       timeout: 5s
@@ -151,16 +129,13 @@ services:
       - api
     logging: *logging
 
-  # Один origin: "/" → Next.js, "/api/*" і "/health/*" → ASP.NET Core (розділ 3.2 пропозиції).
   caddy:
     profiles: [app]
     image: caddy:2
     restart: unless-stopped
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:-:8080}
-      # index | noindex (заголовок X-Robots-Tag для staging).
       SEARCH_INDEXING: ${SEARCH_INDEXING:-index}
-    # Production з доменом: deploy/compose.production.yaml публікує 80 і 443 замість цього порту.
     ports:
       - "${HTTP_PORT:-8080}:8080"
     volumes:
@@ -177,8 +152,6 @@ services:
       - api
     logging: *logging
 
-  # Щоденний дамп БД о BACKUP_TIME (Europe/Kyiv) з ротацією BACKUP_RETENTION_DAYS днів.
-  # Скрипти: deploy/backup/ (backup.sh, restore.sh, restore-test.sh).
   backup:
     profiles: [app]
     image: postgres:18
@@ -198,9 +171,7 @@ services:
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
     volumes:
       - ./deploy/backup:/opt/backup:ro
-      # Іменований том або шлях на хості (окремий диск чи мережеве сховище), напр. /srv/polivalko-backups.
       - ${BACKUP_PATH:-backups}:/backups
-    # Образ postgres оголошує VOLUME для даних; tmpfs не дає створювати зайвий анонімний том.
     tmpfs:
       - /var/lib/postgresql
     healthcheck:
@@ -215,8 +186,6 @@ services:
         condition: service_healthy
     logging: *logging
 
-  # Копія дампів і фото (том media) поза сервер: S3-сумісне сховище, rclone.
-  # Вмикається профілем «offsite»: COMPOSE_PROFILES=app,offsite і OFFSITE_TARGET + OFFSITE_S3_* у .env.
   backup-offsite:
     profiles: [offsite]
     image: rclone/rclone:1.71
@@ -229,7 +198,6 @@ services:
       OFFSITE_TARGET: ${OFFSITE_TARGET:-}
       OFFSITE_INTERVAL: ${OFFSITE_INTERVAL:-3600}
       OFFSITE_RETENTION_DAYS: ${OFFSITE_RETENTION_DAYS:-}
-      # Конфігурація rclone — лише зі змінних середовища, без файлу.
       RCLONE_CONFIG: /dev/null
       RCLONE_CONFIG_OFFSITE_TYPE: s3
       RCLONE_CONFIG_OFFSITE_PROVIDER: ${OFFSITE_S3_PROVIDER:-Other}
@@ -237,7 +205,6 @@ services:
       RCLONE_CONFIG_OFFSITE_REGION: ${OFFSITE_S3_REGION:-}
       RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID: ${OFFSITE_S3_ACCESS_KEY_ID:-}
       RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY: ${OFFSITE_S3_SECRET_ACCESS_KEY:-}
-      # Ключу достатньо права на запис: rclone не перевіряє й не створює бакет.
       RCLONE_CONFIG_OFFSITE_NO_CHECK_BUCKET: "true"
     volumes:
       - ./deploy/backup:/opt/backup:ro

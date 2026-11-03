@@ -5,16 +5,21 @@
 відповідність кожної вимоги ТЗ — у [docs/tz-status.md](docs/tz-status.md).
 Розгортання, бекапи й моніторинг — [docs/operations.md](docs/operations.md); інтеграції — [docs/integrations.md](docs/integrations.md);
 інструкція для працівників — [docs/admin-guide.md](docs/admin-guide.md).
+Будова коду й правила меж між модулями — [docs/architecture-backend.md](docs/architecture-backend.md) (сервер)
+і [docs/architecture-web.md](docs/architecture-web.md) (вітрина й адмінка).
 
 ## Склад
 
 ```
 src/
-  PoliValko.Api/            ASP.NET Core 10: /api/v1, OpenAPI, Problem Details, rate limiting, health checks
-  PoliValko.Worker/         фонові процеси: outbox, синхронізації за розкладом, звірка оплат
-  PoliValko.Infrastructure/ EF Core + PostgreSQL, міграції, outbox, Idempotency-Key, журнал змін, журнал синхронізацій, фото, очищення HTML
+  PoliValko.Api/            ASP.NET Core 10, лише збирання модулів: Program.cs + Composition/ (/api/v1, OpenAPI, Problem Details, health checks)
+  PoliValko.Worker/         фонові процеси: outbox, синхронізації за розкладом, звірка оплат (Program.cs + Composition/)
+  PoliValko.Infrastructure/ EF Core + PostgreSQL, міграції, outbox, Idempotency-Key, журнал змін, журнал синхронізацій, фото,
+                            очищення HTML, rate limiting і CORS; точка входу — PlatformModule
   PoliValko.SharedKernel/   гроші, пагінація, телефон, транслітерація (КМУ № 55)
-  Modules/
+  Modules/                  кожен модуль: <Назва>Module.cs + Contracts/ Configuration/ Domain/ Persistence/ Features/ Integrations/ Jobs/;
+                            інші модулі бачать лише Contracts/, межі перевіряють архітектурні тести
+    PoliValko.Admin/         огляд, пошук Ctrl+K, лічильники меню, інтеграції й журнал змін для адмінки
     PoliValko.Catalog/       розділи (групи Navkolo + підрозділи), товари, характеристики, варіанти, фото, SEO,
                              пошук і фільтри, добірки головної, перенаправлення, імпорт каталогу
     PoliValko.Content/       послуги й заявки, текстові сторінки, контакти
@@ -25,7 +30,8 @@ src/
     PoliValko.Navkolo/       заглушка клієнта Navkolo, синхронізація цін і залишків, передача замовлень, свіжість даних
     PoliValko.Identity/      працівники (ASP.NET Core Identity): вхід, ролі Admin/Manager, CSRF, керування доступами
     PoliValko.Notifications/ повідомлення менеджеру й алерти збоїв (Telegram або лог)
-web/                        Next.js 16: вітрина (дизайн за скілом Hallmark) і адмінка
+web/                        Next.js 16: вітрина (дизайн за скілом Hallmark) і адмінка; src/app — тонкі маршрути,
+                            src/features — фічі вітрини й адмінки, src/shared — API-клієнт, UI, стилі
 .claude/skills/hallmark/    скіл Hallmark для Claude Code, встановлений локально для проєкту
 tests/                      юніт- і інтеграційні тести (HTTP + PostgreSQL у Testcontainers)
 openapi/                    контракт API, генерується під час збірки й комітиться

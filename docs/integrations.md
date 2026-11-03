@@ -41,8 +41,9 @@
 Щоб підключити справжній API:
 
 1. Отримати доступи й документацію; провести технічну перевірку (ліміти, інкрементальні зміни, передача замовлень).
-2. Написати клас `HttpNavkoloClient : INavkoloClient` (три методи), зареєструвати його замість `StubNavkoloClient`
-   у `NavkoloModule` для нового значення `Navkolo:Mode`.
+2. Написати клас `HttpNavkoloClient : INavkoloClient` (три методи) поруч зі `StubNavkoloClient`
+   у `src/Modules/PoliValko.Navkolo/Integrations/NavkoloApi/` і зареєструвати його в `NavkoloModule.AddNavkoloModule`
+   для нового значення `Navkolo:Mode`.
 3. В адмінці «Каталог → Розділи» замінити «Групу Navkolo» верхніх розділів (зараз — назви) на ідентифікатори груп.
 4. Погодити режим оновлення, якщо API не дозволяє 5 хвилин; змінити `Navkolo:SyncInterval` і поріг свіжості.
 

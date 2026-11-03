@@ -1,0 +1,5 @@
+.facts { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 9fr); margin: 0; border-top: var(--rule-hair) solid var(--color-rule); }
+.facts dt, .facts dd { margin: 0; padding-block: var(--space-md); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.facts dt { font-weight: 600; }
+.facts dd { color: var(--color-ink-2); }
+.facts dd p + p { margin-top: var(--space-xs); }

@@ -1,50 +1,11 @@
+using PoliValko.Ordering.Contracts;
+
 namespace PoliValko.Ordering.Domain;
-
-public enum OrderStatus
-{
-    New,
-
-    /// <summary>Ціна чи наявність потребують підтвердження менеджера (дані ERP застарілі).</summary>
-    AwaitingConfirmation,
-    Confirmed,
-    AwaitingPayment,
-    Paid,
-    Shipped,
-    ReadyForPickup,
-    Completed,
-    Cancelled,
-}
-
-public enum PaymentMethod
-{
-    Card,
-    CashOnDelivery,
-    PayOnPickup,
-}
-
-/// <summary>Авторитетний статус платежу зберігає бекенд; менеджер його не змінює (розділ 9 ТЗ).</summary>
-public enum PaymentStatus
-{
-    NotRequired,
-    Pending,
-    Succeeded,
-    Failed,
-    PartiallyRefunded,
-    Refunded,
-}
-
-public enum DeliveryMethod
-{
-    NovaPoshta,
-    Pickup,
-    NovaPoshtaCourier,
-}
 
 public sealed class Order
 {
     public Guid Id { get; init; }
 
-    /// <summary>Людиночитний номер, напр. PV-100001.</summary>
     public required string Number { get; init; }
 
     public required string AccessTokenHash { get; init; }
@@ -61,7 +22,6 @@ public sealed class Order
 
     public required string CustomerName { get; init; }
 
-    /// <summary>E.164 (+380XXXXXXXXX).</summary>
     public required string CustomerPhone { get; init; }
 
     public string? CustomerEmail { get; init; }
@@ -74,15 +34,12 @@ public sealed class Order
 
     public string? WarehouseName { get; init; }
 
-    /// <summary>Адреса кур'єрської доставки: вулиця, будинок, квартира.</summary>
     public string? DeliveryAddress { get; init; }
 
-    /// <summary>Знімок адреси самовивозу на момент замовлення.</summary>
     public string? PickupAddress { get; init; }
 
     public string? Comment { get; init; }
 
-    /// <summary>Продавець замовлення (розділ 5 ТЗ): платіж, чек і повернення відповідають йому.</summary>
     public required string SellerName { get; init; }
 
     public string? SellerTaxId { get; init; }
@@ -91,17 +48,14 @@ public sealed class Order
 
     public decimal Total { get; init; }
 
-    /// <summary>Сума успішних повернень коштів.</summary>
     public decimal RefundedAmount { get; private set; }
 
-    /// <summary>Номер замовлення в Navkolo після передачі через чергу.</summary>
     public string? NavkoloOrderRef { get; private set; }
 
     public DateTimeOffset? NavkoloExportedAt { get; private set; }
 
     public DateTimeOffset CreatedAt { get; init; }
 
-    /// <summary>xmin PostgreSQL для оптимістичної конкуренції.</summary>
     public uint Version { get; private set; }
 
     public List<OrderItem> Items { get; init; } = [];
@@ -128,7 +82,6 @@ public sealed class Order
         Status = to;
     }
 
-    /// <summary>Перевірене повідомлення провайдера про успішну оплату. Повторне нічого не змінює.</summary>
     public bool MarkPaid(DateTimeOffset at, string by)
     {
         if (PaymentStatus is PaymentStatus.Succeeded or PaymentStatus.PartiallyRefunded or PaymentStatus.Refunded)
@@ -145,7 +98,6 @@ public sealed class Order
         return true;
     }
 
-    /// <summary>Відмова, переривання або прострочення спроби оплати. Успішну оплату не скасовує.</summary>
     public void MarkPaymentFailed()
     {
         if (PaymentStatus == PaymentStatus.Pending)
@@ -154,7 +106,6 @@ public sealed class Order
         }
     }
 
-    /// <summary>Нова спроба після невдалої (повторне відкриття оплати).</summary>
     public void MarkPaymentRetry()
     {
         if (PaymentStatus == PaymentStatus.Failed)
@@ -185,105 +136,4 @@ public sealed class Order
         NavkoloOrderRef ??= reference;
         NavkoloExportedAt ??= at;
     }
-}
-
-/// <summary>Позиція зберігає знімок товару й ціни на момент покупки.</summary>
-public sealed class OrderItem
-{
-    public Guid Id { get; init; }
-
-    public Guid OrderId { get; init; }
-
-    public Guid ProductId { get; init; }
-
-    public required string Sku { get; init; }
-
-    public required string Name { get; init; }
-
-    public required string Slug { get; init; }
-
-    public string? ImageUrl { get; init; }
-
-    public decimal UnitPrice { get; init; }
-
-    public int Quantity { get; init; }
-
-    public decimal LineTotal { get; init; }
-}
-
-public sealed class OrderStatusChange
-{
-    public Guid Id { get; init; }
-
-    public Guid OrderId { get; init; }
-
-    /// <summary>null — замовлення щойно створене.</summary>
-    public OrderStatus? From { get; init; }
-
-    public OrderStatus To { get; init; }
-
-    public DateTimeOffset At { get; init; }
-
-    /// <summary>"Покупець", "Платіжна система" або ім'я працівника.</summary>
-    public required string By { get; init; }
-
-    public string? Reason { get; init; }
-}
-
-public enum RefundMethod
-{
-    /// <summary>Повернення на картку через платіжного провайдера.</summary>
-    Provider,
-
-    /// <summary>Готівкою чи переказом поза сайтом (післяплата, оплата в магазині); сайт фіксує факт і чек.</summary>
-    Manual,
-}
-
-public enum RefundStatus
-{
-    Pending,
-    Succeeded,
-    Failed,
-}
-
-/// <summary>Повне або часткове повернення за позиціями (розділ 6 ТЗ). Сума рахується з цін у замовленні.</summary>
-public sealed class OrderRefund
-{
-    public Guid Id { get; init; }
-
-    public Guid OrderId { get; init; }
-
-    public RefundMethod Method { get; init; }
-
-    public RefundStatus Status { get; set; }
-
-    public decimal Amount { get; init; }
-
-    public required string Reason { get; init; }
-
-    public required string RequestedBy { get; init; }
-
-    public DateTimeOffset CreatedAt { get; init; }
-
-    public DateTimeOffset? CompletedAt { get; set; }
-
-    /// <summary>Ідентифікатор операції повернення в платіжного провайдера.</summary>
-    public string? ProviderRef { get; set; }
-
-    public string? Error { get; set; }
-
-    public List<OrderRefundLine> Lines { get; init; } = [];
-}
-
-public sealed class OrderRefundLine
-{
-    public Guid Id { get; init; }
-
-    public Guid RefundId { get; init; }
-
-    public Guid OrderItemId { get; init; }
-
-    public int Quantity { get; init; }
-
-    public decimal Amount { get; init; }
 }

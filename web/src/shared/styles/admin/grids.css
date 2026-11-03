@@ -1,0 +1,7 @@
+.admin-columns { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: var(--a-gap); align-items: start; margin-top: var(--a-gap); }
+.admin-columns > .readonly, .admin-columns > aside { align-self: start; }
+.admin-stack { display: flex; flex-direction: column; gap: var(--a-gap); min-width: 0; }
+.admin-stack > * { width: 100%; max-width: none; }
+.admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
+.admin-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: var(--space-md); }
+.admin-actions--row { margin-top: 0; }

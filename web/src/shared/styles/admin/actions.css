@@ -1,0 +1,2 @@
+.admin-filters .btn--small, .admin-form > .admin-actions .btn--small, .admin-form > .btn--small, .admin-item__row > .btn--small, .attr-row > .btn--small { height: var(--a-ctl); min-height: var(--a-ctl); padding: 0 20px; font-size: 12px; }
+.admin-icon-xs { width: 13px; height: 13px; flex: none; }

@@ -4,7 +4,6 @@ using PoliValko.Infrastructure.Web;
 
 namespace PoliValko.Infrastructure.Security;
 
-/// <summary>API відповідає на відсутність входу чи прав у форматі Problem Details, а не редиректом.</summary>
 public static class AuthProblems
 {
     public static Task WriteUnauthorizedAsync(HttpContext http) =>

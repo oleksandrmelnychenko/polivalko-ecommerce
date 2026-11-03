@@ -1,4 +1,3 @@
-# Вітрина й адмінка (Next.js, output: standalone). Контекст збірки — папка web/.
 FROM node:24-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -9,15 +8,12 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# Публічна адреса (canonical статичних частин сторінок) та ідентифікатори GA4 і Search Console
-# вбудовуються під час збірки (розділ 10 ТЗ).
 ARG SITE_URL="http://localhost:8080"
 ARG NEXT_PUBLIC_GA_MEASUREMENT_ID=""
 ARG NEXT_PUBLIC_GSC_VERIFICATION=""
 ENV SITE_URL=$SITE_URL \
     NEXT_PUBLIC_GA_MEASUREMENT_ID=$NEXT_PUBLIC_GA_MEASUREMENT_ID \
     NEXT_PUBLIC_GSC_VERIFICATION=$NEXT_PUBLIC_GSC_VERIFICATION
-# Збірка не звертається до API: дані каталогу завантажуються під час запиту.
 RUN npm run build
 
 FROM node:24-alpine AS runtime

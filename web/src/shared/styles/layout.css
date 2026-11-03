@@ -1,0 +1,7 @@
+body { min-height: 100dvh; display: flex; flex-direction: column; }
+main { flex: 1; }
+.skip-link { position: absolute; left: var(--space-md); top: -100px; z-index: var(--z-toast); padding: var(--space-xs) var(--space-md); background: var(--color-ink); color: var(--color-paper); }
+.skip-link:focus-visible { top: var(--space-md); }
+
+.code { font-family: var(--font-outlier); font-variant-numeric: tabular-nums; color: var(--color-muted); }
+.muted { color: var(--color-muted); }

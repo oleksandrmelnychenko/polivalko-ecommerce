@@ -1,0 +1,11 @@
+.admin-main .notice { border-left-width: 3px; background: #fff; box-shadow: var(--a-shadow); }
+.admin-main .notice--error { background: #fff8f7; }
+.admin-main .notice--ok { background: #f3fbf6; border-left-color: var(--color-success); }
+.admin-main .empty { padding: 48px var(--a-pad); background: #fff; border: 1px solid var(--a-line); color: var(--color-muted); }
+.admin-main .skeleton { background: linear-gradient(100deg, #fff 40%, #f1f1f1 50%, #fff 60%) 0 0 / 300% 100%; border: 1px solid var(--a-line); }
+.admin-main .crumbs { margin-bottom: 12px; }
+.admin-notice { margin-bottom: var(--space-md); }
+.admin-bad { color: var(--color-error); font-weight: 700; }
+.admin-small { font-size: 12px; }
+.admin-nowrap { white-space: nowrap; }
+.is-stale { opacity: 0.55; transition: opacity 0.2s; pointer-events: none; }

@@ -1,7 +1,6 @@
 import { Suspense } from "react";
-import { AdminShell } from "./admin-shell";
+import { AdminShell } from "@/features/admin/shell";
 
-// Сторінки панелі клієнтські й залежать від входу працівника: валідацію миттєвої навігації вимикаємо.
 export const instant = false;
 
 export default function PanelLayout({ children }: LayoutProps<"/admin">) {

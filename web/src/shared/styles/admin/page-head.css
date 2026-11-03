@@ -1,0 +1,14 @@
+.admin-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-md) var(--space-lg); margin-bottom: var(--a-gap); }
+.admin-head .admin-title { margin: 0; }
+.admin-head__text { display: grid; gap: 10px; min-width: 0; }
+.admin-head__sub { color: var(--color-muted); font-size: var(--text-sm); }
+.admin-head__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); }
+.admin-title { position: relative; margin-bottom: var(--a-gap); padding-bottom: 12px; color: var(--color-ink); font: 400 1.75rem/1.15 var(--font-display); letter-spacing: 0.01em; text-transform: uppercase; max-width: none; }
+.admin-title::after { content: ""; position: absolute; left: 0; bottom: 0; width: 48px; height: 2px; background: var(--color-brand); }
+.admin-title .code { color: inherit; font: inherit; }
+.admin-section { margin-top: 40px; }
+.admin-section__head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md); }
+.admin-section h2, .admin-columns h2, .admin-panel h2, .admin-subsection h2, .admin-card__head h2 { margin-bottom: var(--space-md); color: var(--color-ink); font: 400 15px/1.3 var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; }
+.admin-section__head h2 { margin-bottom: 0; }
+.admin-lead { max-width: 72ch; margin-bottom: var(--space-lg); }
+.admin-title + .admin-lead { margin-top: -8px; }

@@ -8041,7 +8041,8 @@
           "pageSize",
           "totalItems",
           "totalPages",
-          "facets"
+          "facets",
+          "approximate"
         ],
         "type": "object",
         "properties": {
@@ -8069,6 +8070,9 @@
           },
           "facets": {
             "$ref": "#/components/schemas/ProductFacets"
+          },
+          "approximate": {
+            "type": "boolean"
           }
         }
       },

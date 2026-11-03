@@ -1,0 +1,29 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+export function PaymentPending() {
+  const router = useRouter();
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    if (attempt >= 10) return;
+    const timer = setTimeout(() => {
+      router.refresh();
+      setAttempt((n) => n + 1);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [attempt, router]);
+
+  return (
+    <section className="pay" aria-live="polite">
+      <h2>Перевіряємо оплату</h2>
+      <p>
+        {attempt < 10
+          ? "Чекаємо підтвердження від платіжної системи. Це займає кілька секунд."
+          : "Підтвердження ще не надійшло. Оновіть сторінку трохи пізніше: якщо гроші списано, статус зміниться автоматично."}
+      </p>
+    </section>
+  );
+}

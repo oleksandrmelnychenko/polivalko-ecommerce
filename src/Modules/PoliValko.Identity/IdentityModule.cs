@@ -1,9 +1,12 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+using PoliValko.Identity.Features.Auth;
+using PoliValko.Identity.Features.Staff;
+using PoliValko.Identity.Persistence;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Security;
 
@@ -12,13 +15,8 @@ namespace PoliValko.Identity;
 public static class IdentityModule
 {
     public const string CookieName = "pv_admin";
-    public const string LoginRateLimitPolicy = "login";
 
-    /// <summary>
-    /// Облікові записи працівників на ASP.NET Core Identity: cookie HttpOnly + SameSite=Strict,
-    /// antiforgery-заголовок для змінних запитів, блокування після 5 невдалих спроб (розділи 2, 9, 10 ТЗ).
-    /// </summary>
-    public static IServiceCollection AddIdentityModule(this IServiceCollection services)
+    public static IServiceCollection AddIdentityModule(this IServiceCollection services, IConfiguration configuration)
     {
         services
             .AddIdentityCore<StaffUser>(options =>
@@ -43,7 +41,6 @@ public static class IdentityModule
             options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
             options.ExpireTimeSpan = TimeSpan.FromHours(8);
             options.SlidingExpiration = true;
-            // Лише заміна редиректів: перевірку security stamp з подій Identity залишаємо.
             options.Events.OnRedirectToLogin = context => AuthProblems.WriteUnauthorizedAsync(context.HttpContext);
             options.Events.OnRedirectToAccessDenied = context => AuthProblems.WriteForbiddenAsync(context.HttpContext);
         });
@@ -60,26 +57,18 @@ public static class IdentityModule
             options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         });
 
-        // Блокування, зміна ролі й скидання пароля діють на відкриті сесії протягом хвилини.
         services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.FromMinutes(1));
 
-        // Ключі в БД: cookie входу переживають перезапуски й працюють на кількох екземплярах API.
         services.AddDataProtection().SetApplicationName("PoliValko").PersistKeysToDbContext<PoliValkoDbContext>();
         return services;
     }
-}
 
-/// <summary>Додає ім'я працівника в cookie, щоб журнал змін не ходив щоразу в БД.</summary>
-internal sealed class StaffClaimsFactory(
-    UserManager<StaffUser> userManager,
-    RoleManager<IdentityRole> roleManager,
-    IOptions<IdentityOptions> options)
-    : UserClaimsPrincipalFactory<StaffUser, IdentityRole>(userManager, roleManager, options)
-{
-    protected override async Task<ClaimsIdentity> GenerateClaimsAsync(StaffUser user)
-    {
-        var identity = await base.GenerateClaimsAsync(user);
-        identity.AddClaim(new Claim(StaffClaims.DisplayName, user.DisplayName));
-        return identity;
-    }
+    public static RouteGroupBuilder MapAdminAuthEndpoints(this RouteGroupBuilder admin) =>
+        AuthEndpoints.Map(admin);
+
+    public static RouteGroupBuilder MapAdminStaffEndpoints(this RouteGroupBuilder admin) =>
+        StaffEndpoints.Map(admin);
+
+    public static Task SeedUsersAsync(IServiceProvider services, CancellationToken ct = default) =>
+        IdentitySeeder.SeedAsync(services, ct);
 }

@@ -99,7 +99,6 @@ internal sealed class CatalogModelConfigurator : IModelConfigurator
         builder.HasIndex(p => p.Sku);
         builder.HasIndex(p => p.CategoryId);
 
-        // Пошук за частиною назви (ILIKE '%…%') з індексом pg_trgm.
         builder.HasIndex(p => p.Name).HasMethod("gin").HasOperators("gin_trgm_ops");
 
         builder.HasOne<Category>().WithMany().HasForeignKey(p => p.CategoryId).OnDelete(DeleteBehavior.Restrict);

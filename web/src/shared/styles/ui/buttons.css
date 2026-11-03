@@ -1,0 +1,19 @@
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: 44px; padding-inline: var(--space-xl); border: 2px solid var(--color-brand); border-radius: 0; background: var(--color-brand); color: #fff; font: 600 var(--text-md)/1 var(--font-body); white-space: nowrap; text-decoration: none; cursor: pointer; transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out); }
+.btn:hover { background: var(--color-brand-strong); border-color: var(--color-brand-strong); color: #fff; }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+.btn:disabled:hover { background: var(--color-brand); border-color: var(--color-brand); color: #fff; }
+.btn[aria-busy="true"] { cursor: progress; }
+.btn svg { width: 18px; height: 18px; flex: none; }
+.btn--light { background: #fff; border-color: #fff; color: var(--color-ink); }
+.btn--light:hover { background: var(--color-brand); border-color: var(--color-brand); color: #fff; }
+.btn--dark { background: var(--color-ink); border-color: var(--color-ink); color: #fff; }
+.btn--outline, .btn--quiet { background: transparent; border-color: var(--color-ink); color: var(--color-ink); }
+.btn--outline:hover, .btn--quiet:hover { background: transparent; border-color: var(--color-brand); color: var(--color-brand-strong); }
+.btn--quiet:disabled:hover { background: transparent; border-color: var(--color-ink); color: var(--color-ink); }
+.btn--soft { background: var(--color-accent-soft); border-color: var(--color-accent-soft); color: var(--color-ink); }
+.btn--soft:hover { background: var(--color-brand); border-color: var(--color-brand); color: #fff; }
+.btn--wide { width: 100%; }
+.btn--small { min-height: 38px; padding-inline: var(--space-md); font-size: var(--text-sm); }
+.btn--lg { min-height: 52px; }
+.link { color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-brand); text-underline-offset: 0.2em; }
+.link:hover { color: var(--color-ink); text-decoration-thickness: 2px; }

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "api:types": "openapi-typescript ../openapi/polivalko-api.json -o src/lib/api/schema.d.ts"
+    "api:types": "openapi-typescript ../openapi/polivalko-api.json -o src/shared/api/schema.d.ts"
   },
   "dependencies": {
     "next": "16.4.3",

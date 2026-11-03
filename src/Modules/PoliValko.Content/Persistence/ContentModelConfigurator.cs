@@ -74,7 +74,6 @@ internal sealed class ContentModelConfigurator : IModelConfigurator
         });
     }
 
-    // Чернетки, щоб сторінка не була порожньою. Остаточні описи надає замовник (розділ 8 ТЗ).
     private static readonly Dictionary<string, string> DraftDescriptions = new()
     {
         ["landscape-design"] = "Проєкт ділянки: зонування, доріжки, рослини й освітлення з урахуванням ґрунту та сонця.",

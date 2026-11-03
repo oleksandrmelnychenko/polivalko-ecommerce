@@ -18,11 +18,9 @@ jobs:
       - run: dotnet restore PoliValko.slnx
       - run: dotnet build PoliValko.slnx --no-restore -c Release
 
-      # Опис OpenAPI генерується під час збірки. Розбіжність означає, що контракт змінили без коміту.
       - name: Контракт OpenAPI закомічено
         run: git diff --exit-code -- openapi/
 
-      # Інтеграційні тести піднімають PostgreSQL 18 через Testcontainers.
       - run: dotnet test --solution PoliValko.slnx --no-build -c Release
 
   web:
@@ -41,7 +39,7 @@ jobs:
 
       - run: npm ci
       - name: TS-типи відповідають контракту OpenAPI
-        run: npm run api:types && git diff --exit-code -- src/lib/api/schema.d.ts
+        run: npm run api:types && git diff --exit-code -- src/shared/api/schema.d.ts
       - run: npm run lint
       - run: npm run build
 
@@ -72,7 +70,6 @@ jobs:
 
       - name: Конфігурація compose (production)
         env:
-          # Фіктивні значення лише для перевірки: production вимагає їх явно.
           POSTGRES_PASSWORD: ci-only
           SITE_ADDRESS: shop.example.ua
           SITE_URL: https://shop.example.ua
@@ -92,6 +89,5 @@ jobs:
       - name: Сценарій навантажувального тесту (k6 inspect)
         run: docker run --rm -v "$PWD/tests/load:/scripts:ro" grafana/k6:1.3.0 inspect /scripts/storefront.js > /dev/null
 
-      # Збірка всіх образів застосунку без публікації: Dockerfile і контекст збірки справні.
       - name: Збірка образів
         run: docker compose --profile app build

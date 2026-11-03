@@ -1,0 +1,5 @@
+.range { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-xs); }
+.range input { width: 100%; min-width: 0; min-height: 44px; padding-inline: var(--space-sm); border: var(--rule-hair) solid var(--color-field); background: var(--color-paper); color: var(--color-ink); outline: 2px solid transparent; outline-offset: -2px; }
+.range input:focus-visible { outline-color: var(--color-focus); }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-xl); padding-bottom: var(--space-md); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.toolbar p { color: var(--color-muted); }

@@ -10,10 +10,10 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="PoliValko.IntegrationTests" />
+    <InternalsVisibleTo Include="PoliValko.UnitTests" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Демо-каталог для локальної розробки; якщо файла немає, сідер нічого не робить. -->
     <EmbeddedResource Include="Persistence\demo-catalog.json" Condition="Exists('Persistence\demo-catalog.json')" />
   </ItemGroup>
 

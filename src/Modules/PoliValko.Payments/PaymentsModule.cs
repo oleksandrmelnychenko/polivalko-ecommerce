@@ -1,18 +1,23 @@
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Infrastructure;
-using PoliValko.Ordering;
-using PoliValko.Payments.Domain;
-using PoliValko.Payments.Providers;
+using PoliValko.Ordering.Contracts;
+using PoliValko.Payments.Configuration;
+using PoliValko.Payments.Features.Admin;
+using PoliValko.Payments.Features.Checkout;
+using PoliValko.Payments.Features.Processing;
+using PoliValko.Payments.Features.Refunds;
+using PoliValko.Payments.Integrations.Mono;
+using PoliValko.Payments.Integrations.Providers;
+using PoliValko.Payments.Integrations.Sandbox;
+using PoliValko.Payments.Jobs;
+using PoliValko.Payments.Persistence;
 
 namespace PoliValko.Payments;
 
 public static class PaymentsModule
 {
-    /// <summary>
-    /// Платежі: спроби оплати, вебхуки, повернення. Провайдер обирається <c>Payments:Provider</c>;
-    /// тестовий провайдер реєструється лише тоді, коли його обрано, тож на production його маршрути недоступні.
-    /// </summary>
     public static IServiceCollection AddPaymentsModule(this IServiceCollection services, IConfiguration configuration)
     {
         var section = configuration.GetSection("Payments");
@@ -36,7 +41,12 @@ public static class PaymentsModule
             .AddOutboxHandler<RefundRequested, ProcessRefundRequested>();
     }
 
-    /// <summary>Фонова звірка оплат. Лише в хості Worker.</summary>
     public static IServiceCollection AddPaymentsJobs(this IServiceCollection services) =>
         services.AddHostedService<PaymentReconciliationJob>();
+
+    public static IEndpointRouteBuilder MapPaymentEndpoints(this IEndpointRouteBuilder api) =>
+        PaymentEndpoints.Map(api);
+
+    public static RouteGroupBuilder MapAdminPaymentEndpoints(this RouteGroupBuilder admin) =>
+        AdminPaymentEndpoints.Map(admin);
 }

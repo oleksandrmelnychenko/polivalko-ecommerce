@@ -1,12 +1,3 @@
-# Один origin для браузера (розділ 3.2 пропозиції):
-#   /api/*      → ASP.NET Core API (той самий шлях для майбутніх мобільних застосунків)
-#   /health/*   → перевірки стану API для зовнішнього моніторингу: /health/live, /health/ready
-#   /internal/* → закрито ззовні (ревалідація кешу викликається лише внутрішньою мережею)
-#   решта       → Next.js
-# Для production задайте SITE_ADDRESS=example.ua — Caddy сам отримає сертифікат HTTPS
-# (порти 80 і 443 публікує deploy/compose.production.yaml).
-# SEARCH_INDEXING=noindex (staging) додає X-Robots-Tag, щоб пошукові системи не індексували копію сайту.
-
 (indexing-index) {
 }
 

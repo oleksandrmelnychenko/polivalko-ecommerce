@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { InfoPage } from "@/components/info-page";
+import { InfoPage } from "@/features/shop/content/server";
 
 export const metadata: Metadata = { title: "Повернення й обмін", alternates: { canonical: "/returns" } };
 

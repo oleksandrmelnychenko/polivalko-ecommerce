@@ -2,7 +2,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
@@ -13,17 +12,6 @@ using PoliValko.Infrastructure.Web;
 
 namespace PoliValko.Infrastructure.Idempotency;
 
-/// <summary>
-/// Захист від повторного виконання POST за заголовком <c>Idempotency-Key</c>.
-/// <list type="bullet">
-/// <item>Той самий ключ і те саме тіло — повертається збережена відповідь (заголовок <c>Idempotent-Replayed</c>).</item>
-/// <item>Той самий ключ з іншим тілом — 422 <c>idempotency.key_mismatch</c>.</item>
-/// <item>Запит із цим ключем ще виконується — 409 <c>idempotency.in_progress</c>.</item>
-/// </list>
-/// Зберігаються лише успішні (2xx) відповіді. Після помилки ключ звільняється, і клієнт може
-/// повторити запит. Для замовлень ключ додатково зберігається в самому замовленні з унікальним
-/// індексом, щоб захист не залежав від одного механізму.
-/// </summary>
 internal sealed class IdempotencyFilter<TRequest> : IEndpointFilter
     where TRequest : class
 {
@@ -150,10 +138,4 @@ internal sealed class IdempotencyFilter<TRequest> : IEndpointFilter
         };
         return Convert.ToHexStringLower(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(payload, json)));
     }
-}
-
-public static class IdempotencyHeaders
-{
-    public const string Key = "Idempotency-Key";
-    public const string Replayed = "Idempotent-Replayed";
 }

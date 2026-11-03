@@ -1,23 +1,29 @@
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using PoliValko.Catalog;
+using PoliValko.Catalog.Contracts;
 using PoliValko.Infrastructure;
-using PoliValko.Ordering;
+using PoliValko.Navkolo.Configuration;
+using PoliValko.Navkolo.Contracts;
+using PoliValko.Navkolo.Features.CatalogImport;
+using PoliValko.Navkolo.Features.Freshness;
+using PoliValko.Navkolo.Features.OrderExport;
+using PoliValko.Navkolo.Features.Settings;
+using PoliValko.Navkolo.Integrations.NavkoloApi;
+using PoliValko.Navkolo.Jobs;
+using PoliValko.Ordering.Contracts;
 
 namespace PoliValko.Navkolo;
 
 public static class NavkoloModule
 {
-    /// <summary>
-    /// Інтеграція з Navkolo (розділ 7 ТЗ). Доки немає документації API, працює заглушка клієнта;
-    /// у режимі <c>Disabled</c> синхронізації немає, а дані каталогу вважаються підтвердженими.
-    /// </summary>
     public static IServiceCollection AddNavkoloModule(this IServiceCollection services, IConfiguration configuration)
     {
         var section = configuration.GetSection("Navkolo");
         services.Configure<NavkoloOptions>(section);
         services.AddSingleton<INavkoloClient, StubNavkoloClient>();
+        services.AddSingleton<INavkoloSettings, NavkoloSettings>();
         services.AddOutboxHandler<OrderExportRequested, ExportOrderToNavkolo>();
 
         if (section.Get<NavkoloOptions>()?.IsEnabled == true)
@@ -28,9 +34,11 @@ public static class NavkoloModule
         return services;
     }
 
-    /// <summary>Синхронізація цін, залишків і каталогу. Лише в хості Worker.</summary>
     public static IServiceCollection AddNavkoloJobs(this IServiceCollection services) =>
         services
             .AddHostedService<NavkoloPriceStockJob>()
             .AddHostedService<NavkoloCatalogJob>();
+
+    public static RouteGroupBuilder MapAdminCatalogImportEndpoints(this RouteGroupBuilder admin) =>
+        CatalogImportEndpoints.Map(admin);
 }

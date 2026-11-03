@@ -6,11 +6,6 @@ using PoliValko.Infrastructure.Persistence;
 
 namespace PoliValko.Infrastructure.Sync;
 
-/// <summary>
-/// Основа періодичного завдання Worker. Запуск «забирається» атомарним UPDATE стану, тому
-/// кілька екземплярів Worker не виконують одне завдання одночасно. Завдання запускається
-/// за розкладом, повторюється після збою через <see cref="RetryInterval"/> і на запит з адмінки.
-/// </summary>
 public abstract class ScheduledJobService(IServiceScopeFactory scopes, TimeProvider time, ILogger logger) : BackgroundService
 {
     public const string ScheduleActor = "Розклад";
@@ -18,10 +13,8 @@ public abstract class ScheduledJobService(IServiceScopeFactory scopes, TimeProvi
 
     protected abstract string Job { get; }
 
-    /// <summary>Звичайний інтервал між запусками.</summary>
     protected abstract TimeSpan Interval(IServiceProvider services);
 
-    /// <summary>Вимкнене завдання не запускається (напр., немає ключа API).</summary>
     protected abstract bool IsEnabled(IServiceProvider services);
 
     protected abstract Task<SyncResult> RunOnceAsync(IServiceProvider services, CancellationToken ct);

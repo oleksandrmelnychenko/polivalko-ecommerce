@@ -1,12 +1,4 @@
 #!/usr/bin/env bash
-# Тестове відновлення: дамп → тимчасова база на тому самому сервері PostgreSQL → перевірочні
-# запити → видалення тимчасової бази. Робочу базу не змінює. Обов'язкове перед запуском
-# і після змін у бекапах; результат дописується в ${BACKUP_DIR}/restore-tests.log.
-#
-#   docker compose exec backup bash /opt/backup/restore-test.sh            # найновіший дамп
-#   docker compose exec backup bash /opt/backup/restore-test.sh <дамп>     # конкретний файл
-#
-# Потрібне вільне місце на диску PostgreSQL приблизно як розмір робочої бази.
 set -euo pipefail
 
 export TZ="${TZ:-Europe/Kyiv}"
@@ -52,7 +44,6 @@ pg_restore --dbname="$scratch" --no-owner --no-privileges --exit-on-error --jobs
   || fail "pg_restore завершився з помилкою"
 restore_seconds=$((SECONDS - started))
 
-# Перевірочні запити: ключові таблиці читаються, історія міграцій EF не порожня.
 counts_sql="SELECT
   (SELECT count(*) FROM catalog.products) AS products,
   (SELECT count(*) FROM ordering.orders) AS orders,
@@ -63,7 +54,6 @@ restored=$(psql -X -At -F ' ' -v ON_ERROR_STOP=1 -d "$scratch" -c "$counts_sql")
 read -r products orders migrations <<<"$restored"
 last_migration=$(psql -X -At -v ON_ERROR_STOP=1 -d "$scratch" \
   -c 'SELECT * FROM integration.__ef_migrations_history ORDER BY 1 DESC LIMIT 1' | cut -d'|' -f1)
-# Для порівняння — поточні значення робочої бази (лише читання; дані могли змінитися після дампу).
 live=$(psql -X -At -F ' ' -d "$DB" -c "$counts_sql" 2>/dev/null) || live="? ? ?"
 read -r live_products live_orders live_migrations <<<"$live"
 

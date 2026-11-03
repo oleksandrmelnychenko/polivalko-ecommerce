@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace PoliValko.Infrastructure.Outbox;
 
-/// <summary>Зіставляє назву типу повідомлення з обробником. Наповнюється через <c>AddOutboxHandler</c>.</summary>
 public sealed class OutboxHandlerRegistry
 {
     private readonly Dictionary<string, Func<IServiceProvider, string, CancellationToken, Task>> _handlers =

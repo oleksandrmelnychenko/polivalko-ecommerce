@@ -1,0 +1,6 @@
+.price-old { color: var(--color-muted); text-decoration: line-through; font-variant-numeric: tabular-nums; }
+.price-sale { color: var(--color-price-sale); }
+.stock { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); }
+.stock::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+.stock--in { color: var(--color-success); }
+.stock--out { color: var(--color-muted); }

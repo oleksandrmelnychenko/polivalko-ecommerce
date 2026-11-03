@@ -1,0 +1,22 @@
+import type { components } from "./schema";
+
+type S = components["schemas"];
+export type CreateServiceRequest = S["CreateServiceRequest"];
+export type Quote = S["QuoteDto"];
+export type CreateOrderRequest = S["CreateOrderRequest"];
+export type Settlement = S["SettlementDto"];
+export type Warehouse = S["WarehouseDto"];
+export type CategoryNode = S["CategoryNodeDto"];
+export type Category = S["CategoryDto"];
+export type ProductListItem = S["ProductListItemDto"];
+export type ProductDetails = S["ProductDetailsDto"];
+export type ProductSearch = S["ProductSearchResponse"];
+export type Money = S["MoneyDto"];
+export type ServiceDirection = S["ServiceDirectionDto"];
+export type PickupPoint = S["PickupPointDto"];
+export type Order = S["OrderDto"];
+export type OrderStatus = S["OrderStatus"];
+export type PaymentStatus = S["PaymentStatus"];
+export type Collection = S["CollectionDto"];
+export type Contacts = S["ContactsDto"];
+export type Receipt = S["ReceiptDto"];

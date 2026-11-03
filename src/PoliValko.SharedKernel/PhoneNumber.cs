@@ -2,10 +2,6 @@ namespace PoliValko.SharedKernel;
 
 public static class PhoneNumber
 {
-    /// <summary>
-    /// Приводить український мобільний або міський номер до формату E.164 (+380XXXXXXXXX).
-    /// Приймає "+380 67 123 45 67", "067-123-45-67", "380671234567", "(067) 123 45 67".
-    /// </summary>
     public static bool TryNormalizeUa(string? input, out string normalized)
     {
         normalized = string.Empty;

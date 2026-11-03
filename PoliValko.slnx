@@ -6,6 +6,7 @@
     <Project Path="src/PoliValko.Worker/PoliValko.Worker.csproj" />
   </Folder>
   <Folder Name="/src/Modules/">
+    <Project Path="src/Modules/PoliValko.Admin/PoliValko.Admin.csproj" />
     <Project Path="src/Modules/PoliValko.Catalog/PoliValko.Catalog.csproj" />
     <Project Path="src/Modules/PoliValko.Content/PoliValko.Content.csproj" />
     <Project Path="src/Modules/PoliValko.Delivery/PoliValko.Delivery.csproj" />

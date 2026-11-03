@@ -1,9 +1,5 @@
 import { revalidateTag } from "next/cache";
 
-/**
- * Скидання кешу каталогу за тегами. Викликає Worker внутрішньою мережею після синхронізації
- * з Navkolo або змін в адмінці. Ззовні шлях /internal/* закритий у Caddy.
- */
 export async function POST(request: Request) {
   const secret = process.env.REVALIDATE_SECRET;
   if (!secret || request.headers.get("x-revalidate-secret") !== secret) {

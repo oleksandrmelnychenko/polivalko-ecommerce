@@ -1,19 +1,14 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using PoliValko.Catalog.Api;
+using PoliValko.Catalog.Contracts;
 using PoliValko.Catalog.Domain;
+using PoliValko.Catalog.Features.Import;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.SharedKernel;
 
 namespace PoliValko.Catalog.Persistence;
 
-/// <summary>
-/// Демонстраційні товари для локальної розробки вітрини з вбудованого ресурсу
-/// <c>Persistence/demo-catalog.json</c>. Вмикається лише прапорцем <c>Database:SeedDemoData</c>.
-/// Повторний запуск поводиться як імпорт із Navkolo: оновлює лише поля Navkolo (артикул, назва,
-/// ціна, залишок), а описи, фото й видимість, змінені в адмінці, не чіпає.
-/// </summary>
-public static class CatalogDemoData
+internal static class CatalogDemoData
 {
     private sealed record DemoImage(string Url, string Alt, string? Credit);
 
@@ -30,7 +25,6 @@ public static class CatalogDemoData
         string? VariantGroup,
         string? VariantLabel);
 
-    /// <summary>Погоджені характеристики для фільтрів демо-розділів (лише якщо в адмінці ще не задано).</summary>
     private static readonly Dictionary<string, string[]> DemoFilters = new(StringComparer.Ordinal)
     {
         ["vse-dlia-polyvu"] = ["Матеріал", "Довжина", "Об'єм"],
@@ -87,7 +81,7 @@ public static class CatalogDemoData
                     Slug = $"{Transliteration.ToSlug(item.Name)}-{sku.ToLowerInvariant()}",
                     CategoryId = category.Id,
                     Brand = item.Brand,
-                    DescriptionHtml = CatalogImporter.TextToHtml(item.Description),
+                    DescriptionHtml = ImportText.TextToHtml(item.Description),
                     IsVisible = true,
                     CreatedAt = now,
                     UpdatedAt = now,
@@ -97,7 +91,6 @@ public static class CatalogDemoData
                 db.Add(product);
             }
 
-            // Поля Navkolo.
             product.Sku = sku;
             product.Name = item.Name;
             product.NavkoloGroupRef = category.NavkoloRef;
@@ -121,7 +114,6 @@ public static class CatalogDemoData
                 product.UpdatedAt = now;
             }
 
-            // Дані сайту — лише якщо їх ще немає.
             if (product.Images.Count == 0)
             {
                 var sort = 0;
@@ -160,7 +152,6 @@ public static class CatalogDemoData
         await SeedCollectionAsync(db, ct);
     }
 
-    /// <summary>Добірка «Рекомендовані» з кількох демо-товарів, щоб головна не була порожньою. Наявну не змінює.</summary>
     private static async Task SeedCollectionAsync(PoliValkoDbContext db, CancellationToken ct)
     {
         if (await db.Set<HomeCollection>().AnyAsync(c => c.Code == "recommended", ct))
@@ -181,7 +172,6 @@ public static class CatalogDemoData
         await db.SaveChangesAsync(ct);
     }
 
-    /// <summary>Ті самі демо-товари у форматі обміну з Navkolo — для заглушки клієнта Navkolo.</summary>
     public static async Task<IReadOnlyList<NavkoloProductRecord>> LoadNavkoloRecordsAsync(CancellationToken ct)
     {
         var groups = TopLevelCategories.All.ToDictionary(c => c.Slug, c => c.NavkoloRef);

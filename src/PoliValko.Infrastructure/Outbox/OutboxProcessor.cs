@@ -7,38 +7,6 @@ using PoliValko.Infrastructure.Sync;
 
 namespace PoliValko.Infrastructure.Outbox;
 
-public sealed class OutboxOptions
-{
-    public int BatchSize { get; set; } = 20;
-
-    public int MaxAttempts { get; set; } = 10;
-
-    public TimeSpan LockDuration { get; set; } = TimeSpan.FromMinutes(5);
-
-    public TimeSpan PollInterval { get; set; } = TimeSpan.FromSeconds(2);
-}
-
-public static class OutboxRetryPolicy
-{
-    private static readonly TimeSpan[] Delays =
-    [
-        TimeSpan.FromMinutes(1),
-        TimeSpan.FromMinutes(5),
-        TimeSpan.FromMinutes(15),
-        TimeSpan.FromHours(1),
-        TimeSpan.FromHours(3),
-        TimeSpan.FromHours(6),
-    ];
-
-    /// <summary>Затримка перед наступною спробою після <paramref name="attempts"/> невдалих.</summary>
-    public static TimeSpan NextDelay(int attempts) => Delays[Math.Clamp(attempts, 1, Delays.Length) - 1];
-}
-
-/// <summary>
-/// Забирає пачку повідомлень з орендою (<c>FOR UPDATE SKIP LOCKED</c>), тому кілька екземплярів
-/// Worker не обробляють одне повідомлення одночасно. Обробники мають бути ідемпотентними:
-/// доставка гарантується «щонайменше один раз».
-/// </summary>
 public sealed class OutboxProcessor(
     PoliValkoDbContext db,
     IOutbox outbox,
@@ -111,8 +79,6 @@ public sealed class OutboxProcessor(
                     message.Attempts,
                     exhausted);
 
-                // Вичерпані спроби — критичний збій: відповідальний отримує повідомлення,
-                // а операцію можна повторити вручну в адмінці (розділ 7 ТЗ).
                 if (exhausted && message.Type != IntegrationAlert.Type)
                 {
                     outbox.Enqueue(new IntegrationAlert(

@@ -1,0 +1,10 @@
+.prose { max-width: 72ch; padding-bottom: var(--space-2xl); line-height: 1.7; }
+.prose > * + * { margin-top: var(--space-sm); }
+.prose h2 { margin-top: var(--space-xl); font-size: var(--text-xl); }
+.prose h3 { margin-top: var(--space-lg); font-size: var(--text-lg); }
+.prose ul, .prose ol { padding-left: 1.25em; }
+.prose li + li { margin-top: var(--space-2xs); }
+.prose table, .spec { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.prose th, .prose td, .spec th, .spec td { padding: var(--space-xs) var(--space-sm) var(--space-xs) 0; border-bottom: var(--rule-hair) solid var(--color-rule); text-align: left; vertical-align: top; }
+.spec th { font-weight: 600; font-size: var(--text-sm); color: var(--color-muted); }
+.prose a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 0.15em; }

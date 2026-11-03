@@ -1,0 +1,6 @@
+.catalog { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 9fr); gap: var(--space-xl); align-items: start; }
+.filters-panel__toggle { display: none; }
+.filters-panel { padding: var(--space-lg); border: var(--rule-hair) solid var(--color-rule); }
+.filters { display: flex; flex-direction: column; gap: var(--space-lg); }
+.filters fieldset { margin: 0; padding: 0 0 var(--space-lg); border: 0; border-bottom: var(--rule-hair) solid var(--color-rule); }
+.filters legend { position: relative; margin-bottom: var(--space-sm); padding: 0 0 var(--space-xs); font-size: var(--text-sm); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }

@@ -2,9 +2,6 @@ using System.Text;
 
 namespace PoliValko.SharedKernel;
 
-/// <summary>
-/// Транслітерація української за постановою КМУ № 55 від 27.01.2010 для URL (slug).
-/// </summary>
 public static class Transliteration
 {
     private static readonly Dictionary<char, string> Map = new()
@@ -16,7 +13,6 @@ public static class Transliteration
         ['ш'] = "sh", ['щ'] = "shch", ['ю'] = "iu", ['я'] = "ia", ['ь'] = "", ['\''] = "", ['’'] = "", ['ʼ'] = "",
     };
 
-    // На початку слова: є → ye, ї → yi, й → y, ю → yu, я → ya.
     private static readonly Dictionary<char, string> WordStart = new()
     {
         ['є'] = "ye", ['ї'] = "yi", ['й'] = "y", ['ю'] = "yu", ['я'] = "ya",
@@ -32,7 +28,6 @@ public static class Transliteration
         {
             var c = lower[i];
 
-            // «зг» передається як «zgh», щоб не плутати з «ж» (zh).
             if (c == 'г' && i > 0 && lower[i - 1] == 'з')
             {
                 sb.Append("gh");

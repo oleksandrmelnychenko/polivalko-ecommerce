@@ -1,9 +1,5 @@
 namespace PoliValko.Catalog.Domain;
 
-/// <summary>
-/// Верхній рівень каталогу відповідає назвам груп у Navkolo (розділ 4 ТЗ). Поки немає доступу до API,
-/// зв'язок із групою — її назва; після перевірки API адміністратор замінить його на ідентифікатор групи.
-/// </summary>
 public static class TopLevelCategories
 {
     public static readonly Category[] All =

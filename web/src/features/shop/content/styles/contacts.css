@@ -1,0 +1,3 @@
+.contacts { padding-bottom: var(--space-2xl); }
+.contacts .facts dd p + p { margin-top: var(--space-xs); }
+.contacts__socials { display: flex; flex-wrap: wrap; gap: var(--space-md); margin: 0; padding: 0; list-style: none; }

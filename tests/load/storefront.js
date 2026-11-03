@@ -1,13 +1,3 @@
-// Навантажувальний тест вітрини (k6, розділ 11 ТЗ): відвідувачі переглядають сайт —
-// головна → категорія → пошук → товар → перерахунок кошика (POST /api/v1/checkout/quote).
-// Замовлень тест НЕ створює: виконуються лише GET-запити сторінок і перерахунок кошика.
-//
-//   docker run --rm -i -v "$PWD/tests/load:/scripts:ro" -e BASE_URL=https://staging.example.ua \
-//     -e VUS=100 -e DURATION=10m grafana/k6:1.3.0 run /scripts/storefront.js
-//
-// Змінні: BASE_URL (http://localhost:8080), VUS — одночасні відвідувачі (50), DURATION — утримання
-// навантаження (5m), RAMP_UP — вихід на VUS (1m), THINK_MIN/THINK_MAX — пауза між кроками, с (1/4).
-// Пороги: p95 сторінок < 1,5 с, p95 API < 500 мс, помилок < 1 %. Порушення → ненульовий код виходу.
 import http from "k6/http";
 import { check, fail, group, sleep } from "k6";
 
@@ -58,7 +48,6 @@ function flatten(nodes, out = []) {
   return out;
 }
 
-// Один раз перед тестом: реальні категорії, товари й пошукові слова з каталогу.
 export function setup() {
   const categories = http.get(`${BASE_URL}/api/v1/categories`, { tags: { kind: "setup" } });
   if (categories.status !== 200) {
@@ -116,7 +105,6 @@ export default function (data) {
   });
   think();
 
-  // Кошик: 1–3 товари. Лише перерахунок цін і наявності — без POST /api/v1/orders.
   group("Перерахунок кошика", () => {
     const lines = [{ productId: product.id, quantity: 1 }];
     const extra = Math.floor(Math.random() * 3);

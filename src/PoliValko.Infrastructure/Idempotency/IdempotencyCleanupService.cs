@@ -6,7 +6,6 @@ using PoliValko.Infrastructure.Persistence;
 
 namespace PoliValko.Infrastructure.Idempotency;
 
-/// <summary>Щогодини видаляє ключі ідемпотентності, старші за 72 години.</summary>
 internal sealed class IdempotencyCleanupService(
     IServiceScopeFactory scopes,
     TimeProvider time,

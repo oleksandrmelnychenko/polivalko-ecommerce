@@ -1,13 +1,4 @@
 #!/usr/bin/env bash
-# Резервні копії PostgreSQL (pg_dump -Fc) для сервісу backup у compose.yaml.
-#
-#   backup.sh [now] [мітка]  — дамп зараз (напр., «pre-deploy» перед оновленням) і ротація
-#   backup.sh schedule       — щоденний цикл о BACKUP_TIME за часовим поясом TZ (Europe/Kyiv)
-#   backup.sh check          — перевірка для healthcheck: є дамп, не старший за BACKUP_MAX_AGE_HOURS
-#
-# Підключення — стандартні змінні libpq: PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD.
-# Дамп спершу пишеться в прихований *.partial і перевіряється pg_restore --list; лише потім
-# отримує остаточну назву, тож копіювання поза сервер (offsite.sh) не бачить незавершених файлів.
 set -euo pipefail
 
 export TZ="${TZ:-Europe/Kyiv}"
@@ -31,7 +22,6 @@ validate() {
   [[ "$BACKUP_RETRY_MINUTES" =~ ^[1-9][0-9]*$ ]] || fail "BACKUP_RETRY_MINUTES має бути цілим числом"
 }
 
-# Чи є дамп, новіший за вказану кількість годин.
 has_dump_newer_than() {
   local hours=$1
   [[ -d "$BACKUP_DIR" ]] || return 1
@@ -55,7 +45,6 @@ run_backup() {
     rm -f "$tmp"
     fail "pg_dump завершився з помилкою"
   fi
-  # Архів має читатися: pg_restore перевіряє зміст (TOC) без підключення до бази.
   if ! pg_restore --list "$tmp" >/dev/null; then
     rm -f "$tmp"
     fail "дамп не читається pg_restore, файл видалено"
@@ -67,19 +56,15 @@ run_backup() {
   apply_retention
 }
 
-# Ротація виконується лише після успішного дампу: збій ніколи не видаляє старі копії.
 apply_retention() {
   local minutes=$((BACKUP_RETENTION_DAYS * 24 * 60)) file
   while IFS= read -r file; do
     rm -f -- "$file"
     log "Видалено за ротацією (старше ${BACKUP_RETENTION_DAYS} дн.): $(basename "$file")"
   done < <(find "$BACKUP_DIR" -maxdepth 1 -type f -name "${DB}_*.dump" -mmin "+${minutes}")
-  # Залишки перерваних дампів.
   find "$BACKUP_DIR" -maxdepth 1 -type f -name ".*.partial" -mmin +720 -delete
 }
 
-# Epoch наступного запуску о BACKUP_TIME. Якщо час випадає на перехід на літній час
-# (у Києві 03:00–03:59 останньої неділі березня), запуск зсувається на добу вперед від «зараз».
 next_run() {
   local now today tomorrow
   now=$(date +%s)
@@ -92,7 +77,6 @@ next_run() {
   echo "$tomorrow"
 }
 
-# Сон короткими відрізками: розклад не «з'їжджає» після зміни годинника чи призупинення хоста.
 wait_until() {
   local target=$1 now left
   while now=$(date +%s) && ((now < target)); do
@@ -102,7 +86,6 @@ wait_until() {
   done
 }
 
-# Дамп в окремому процесі (set -e діє повністю) з повторами після збою.
 attempt_backup() {
   local i
   for i in 1 2 3; do
@@ -122,7 +105,6 @@ attempt_backup() {
 schedule() {
   trap 'log "Зупинка"; exit 0' TERM INT
   log "Розклад: щодня о ${BACKUP_TIME} (${TZ}), зберігати ${BACKUP_RETENTION_DAYS} дн., каталог ${BACKUP_DIR}"
-  # Після простою (сервер був вимкнений о BACKUP_TIME) — наздогнати пропущений дамп.
   if ! has_dump_newer_than 24; then
     log "Дампу за останні 24 год немає — створюю зараз"
     attempt_backup || true
@@ -150,9 +132,20 @@ case "${1:-now}" in
   now) run_backup "${2:-}" ;;
   schedule) schedule ;;
   check) check ;;
-  -h | --help) sed -n '2,10p' "$SELF" | sed 's/^# \{0,1\}//' ;;
+  -h | --help)
+    cat <<'USAGE'
+Резервні копії PostgreSQL (pg_dump -Fc) для сервісу backup у compose.yaml.
+
+  backup.sh [now] [мітка]  — дамп зараз (напр., «pre-deploy» перед оновленням) і ротація
+  backup.sh schedule       — щоденний цикл о BACKUP_TIME за часовим поясом TZ (Europe/Kyiv)
+  backup.sh check          — перевірка для healthcheck: є дамп, не старший за BACKUP_MAX_AGE_HOURS
+
+Підключення — стандартні змінні libpq: PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD.
+Дамп спершу пишеться в прихований *.partial і перевіряється pg_restore --list; лише потім
+отримує остаточну назву, тож копіювання поза сервер (offsite.sh) не бачить незавершених файлів.
+USAGE
+    ;;
   *)
-    # Скорочення: «backup.sh pre-deploy» = «backup.sh now pre-deploy».
     run_backup "$1"
     ;;
 esac

@@ -1,0 +1,8 @@
+.directions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--space-xl); margin: 0; padding: 0; list-style: none; counter-reset: dir; text-align: left; }
+.directions li { border-bottom: var(--rule-hair) solid var(--color-rule); counter-increment: dir; }
+.directions a { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 2px var(--space-sm); padding-block: var(--space-md); text-decoration: none; transition: padding var(--dur-short) var(--ease-out); }
+.directions a::before { content: counter(dir, decimal-leading-zero); grid-row: span 2; color: var(--color-brand); font: 500 var(--text-lg)/1.4 var(--font-display); }
+.directions a:hover { padding-left: 6px; }
+.directions__name { color: var(--color-ink); font: 400 var(--text-lg)/1.4 var(--font-display); }
+.directions a:hover .directions__name { text-decoration: underline; text-decoration-color: var(--color-brand); text-decoration-thickness: 2px; }
+.directions__text { font-size: var(--text-sm); color: var(--color-muted); line-height: 1.6; }

@@ -1,17 +1,4 @@
 #!/usr/bin/env bash
-# Відновлення робочої бази з дампу pg_dump -Fc. Запускається в контейнері сервісу backup:
-#
-#   docker compose stop api worker
-#   docker compose run --rm backup bash /opt/backup/restore.sh <дамп | latest>
-#   docker compose up -d
-#
-# Порядок: дамп відновлюється в нову базу <db>_restore_<час>, перевіряється, потім бази
-# міняються місцями перейменуванням. Поточна база НЕ видаляється: вона лишається як
-# <db>_before_restore_<час> (з вимкненими підключеннями), доки її не видалять вручну.
-#
-# Параметри:
-#   <дамп>     шлях до файлу, назва файлу в BACKUP_DIR або «latest» (найновіший дамп)
-#   --yes      без інтерактивного підтвердження (для сценаріїв; використовуйте обережно)
 set -euo pipefail
 
 export TZ="${TZ:-Europe/Kyiv}"
@@ -21,7 +8,23 @@ DB="${PGDATABASE:?Не задано PGDATABASE}"
 
 log() { printf '%s [restore] %s\n' "$(date '+%F %T %Z')" "$*"; }
 fail() { log "ПОМИЛКА: $*" >&2; exit 1; }
-usage() { sed -n '2,15p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+usage() {
+  cat <<'USAGE'
+Відновлення робочої бази з дампу pg_dump -Fc. Запускається в контейнері сервісу backup:
+
+  docker compose stop api worker
+  docker compose run --rm backup bash /opt/backup/restore.sh <дамп | latest>
+  docker compose up -d
+
+Порядок: дамп відновлюється в нову базу <db>_restore_<час>, перевіряється, потім бази
+міняються місцями перейменуванням. Поточна база НЕ видаляється: вона лишається як
+<db>_before_restore_<час> (з вимкненими підключеннями), доки її не видалять вручну.
+
+Параметри:
+  <дамп>     шлях до файлу, назва файлу в BACKUP_DIR або «latest» (найновіший дамп)
+  --yes      без інтерактивного підтвердження (для сценаріїв; використовуйте обережно)
+USAGE
+}
 
 assume_yes=false
 dump_arg=""
@@ -114,7 +117,6 @@ SELECT count(*) FROM pg_database WHERE datname = :'db';
 SQL
 )
 if [[ "$db_exists" == "0" ]]; then
-  # Новий сервер без бази: достатньо дати відновленій копії робочу назву.
   psql_admin -v db="$DB" -v new="$new_db" <<'SQL'
 ALTER DATABASE :"new" RENAME TO :"db";
 SQL

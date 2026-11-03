@@ -1,9 +1,5 @@
-# Образи API, Worker і міграцій з одного рішення. Контекст збірки — корінь репозиторію.
-#   docker build -f deploy/dotnet.Dockerfile --target api .
-
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-# Опис OpenAPI генерується в CI та локально; в образі він не потрібен.
 ENV OpenApiGenerateDocuments=false \
     DOTNET_CLI_TELEMETRY_OPTOUT=1
 
@@ -21,6 +17,7 @@ COPY src/Modules/PoliValko.Ordering/PoliValko.Ordering.csproj src/Modules/PoliVa
 COPY src/Modules/PoliValko.Payments/PoliValko.Payments.csproj src/Modules/PoliValko.Payments/
 COPY src/Modules/PoliValko.Fiscal/PoliValko.Fiscal.csproj src/Modules/PoliValko.Fiscal/
 COPY src/Modules/PoliValko.Navkolo/PoliValko.Navkolo.csproj src/Modules/PoliValko.Navkolo/
+COPY src/Modules/PoliValko.Admin/PoliValko.Admin.csproj src/Modules/PoliValko.Admin/
 RUN dotnet restore src/PoliValko.Api/PoliValko.Api.csproj \
  && dotnet restore src/PoliValko.Worker/PoliValko.Worker.csproj \
  && dotnet tool restore
@@ -32,7 +29,6 @@ RUN dotnet publish src/PoliValko.Api -c Release --no-restore -o /out/api \
       --project src/PoliValko.Infrastructure --startup-project src/PoliValko.Api \
       --configuration Release --self-contained -r linux-x64 -o /out/migrate/efbundle
 
-# Міграції — окремий крок розгортання до перемикання версій.
 FROM mcr.microsoft.com/dotnet/runtime-deps:10.0 AS migrate
 WORKDIR /app
 COPY --from=build /out/migrate/efbundle .
@@ -43,8 +39,6 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS api
 WORKDIR /app
 COPY --from=build /out/api .
 ENV ASPNETCORE_HTTP_PORTS=8080
-# Каталог фото (Media:Root, том media у compose.yaml). Створюється від root і належить
-# користувачу застосунку: новий іменований том успадковує власника й доступний на запис.
 RUN mkdir -p /data/media && chown "$APP_UID" /data/media
 EXPOSE 8080
 USER $APP_UID

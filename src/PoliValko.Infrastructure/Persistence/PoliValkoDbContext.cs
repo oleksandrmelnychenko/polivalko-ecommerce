@@ -8,13 +8,6 @@ using PoliValko.Infrastructure.Security;
 
 namespace PoliValko.Infrastructure.Persistence;
 
-/// <summary>
-/// Єдиний контекст модульного моноліту. Кожен модуль додає свої сутності через
-/// <see cref="IModelConfigurator"/> і працює зі своєю схемою PostgreSQL. Один контекст
-/// дає змогу зберегти бізнес-зміни й повідомлення outbox в одній транзакції.
-/// Облікові записи працівників (ASP.NET Core Identity) і ключі Data Protection живуть
-/// у схемі <c>identity</c> цього ж контексту, тому базовий клас — <see cref="IdentityDbContext{TUser,TRole,TKey}"/>.
-/// </summary>
 public sealed class PoliValkoDbContext(
     DbContextOptions<PoliValkoDbContext> options,
     IEnumerable<IModelConfigurator> configurators)

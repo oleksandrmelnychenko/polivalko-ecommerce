@@ -20,8 +20,29 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\PoliValko.SharedKernel\PoliValko.SharedKernel.csproj" />
     <ProjectReference Include="..\..\src\PoliValko.Infrastructure\PoliValko.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\PoliValko.Admin\PoliValko.Admin.csproj" />
+    <ProjectReference Include="..\..\src\Modules\PoliValko.Catalog\PoliValko.Catalog.csproj" />
     <ProjectReference Include="..\..\src\Modules\PoliValko.Content\PoliValko.Content.csproj" />
     <ProjectReference Include="..\..\src\Modules\PoliValko.Delivery\PoliValko.Delivery.csproj" />
+    <ProjectReference Include="..\..\src\Modules\PoliValko.Fiscal\PoliValko.Fiscal.csproj" />
+    <ProjectReference Include="..\..\src\Modules\PoliValko.Identity\PoliValko.Identity.csproj" />
+    <ProjectReference Include="..\..\src\Modules\PoliValko.Navkolo\PoliValko.Navkolo.csproj" />
+    <ProjectReference Include="..\..\src\Modules\PoliValko.Notifications\PoliValko.Notifications.csproj" />
+    <ProjectReference Include="..\..\src\Modules\PoliValko.Ordering\PoliValko.Ordering.csproj" />
+    <ProjectReference Include="..\..\src\Modules\PoliValko.Payments\PoliValko.Payments.csproj" />
+    <ProjectReference Include="..\..\src\PoliValko.Api\PoliValko.Api.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\..\src\PoliValko.Worker\PoliValko.Worker.csproj" ReferenceOutputAssembly="false" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>PoliValko.Api.Path</_Parameter1>
+      <_Parameter2>$(MSBuildThisFileDirectory)../../src/PoliValko.Api/bin/$(Configuration)/$(TargetFramework)/PoliValko.Api.dll</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>PoliValko.Worker.Path</_Parameter1>
+      <_Parameter2>$(MSBuildThisFileDirectory)../../src/PoliValko.Worker/bin/$(Configuration)/$(TargetFramework)/PoliValko.Worker.dll</_Parameter2>
+    </AssemblyAttribute>
   </ItemGroup>
 
 </Project>

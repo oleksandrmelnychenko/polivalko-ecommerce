@@ -7,31 +7,6 @@ using PoliValko.Infrastructure.Persistence;
 
 namespace PoliValko.Infrastructure.Sync;
 
-public sealed class SyncOptions
-{
-    /// <summary>Після скількох невдалих запусків поспіль повідомляти відповідального.</summary>
-    public int AlertAfterFailures { get; set; } = 3;
-}
-
-/// <summary>Критичний збій інтеграції для відповідального (розділ 7 ТЗ). Обробник — у модулі повідомлень.</summary>
-public sealed record IntegrationAlert(string Title, string Body) : IOutboxMessage
-{
-    public static string Type => "integration.alert";
-}
-
-/// <summary>Журнал запусків фонових завдань: стан, підсумок, звіт помилок, повідомлення про тривалий збій.</summary>
-public interface ISyncJournal
-{
-    /// <summary>
-    /// Виконує <paramref name="body"/> і записує запуск. Тіло зберігає свої зміни саме; виняток
-    /// у тілі позначає запуск невдалим і не пробрасується далі.
-    /// </summary>
-    Task<SyncRun> RunAsync(string job, string startedBy, Func<CancellationToken, Task<SyncResult>> body, CancellationToken ct);
-
-    /// <summary>Просить Worker запустити завдання поза розкладом (кнопка в адмінці).</summary>
-    Task RequestRunAsync(string job, CancellationToken ct);
-}
-
 internal sealed class SyncJournal(
     PoliValkoDbContext db,
     IOutbox outbox,
@@ -65,7 +40,6 @@ internal sealed class SyncJournal(
         {
             var result = await body(ct);
 
-            // Тіло могло залишити в контексті зайві сутності; запуск і стан оновлюємо окремо.
             db.ChangeTracker.Clear();
             state = await LoadStateAsync(job, ct);
             run = await db.Set<SyncRun>().SingleAsync(r => r.Id == run.Id, ct);

@@ -5,7 +5,6 @@ using Microsoft.Extensions.Options;
 
 namespace PoliValko.Infrastructure.Outbox;
 
-/// <summary>Фоновий цикл Worker: обробляє outbox, доки є повідомлення, інакше чекає.</summary>
 internal sealed class OutboxDispatcherService(
     IServiceScopeFactory scopes,
     IOptions<OutboxOptions> options,

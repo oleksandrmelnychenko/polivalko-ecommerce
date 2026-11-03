@@ -1,10 +1,3 @@
-# Production: HTTPS на 80/443, PostgreSQL не публікується, обов'язкові секрети
-# й безпечні значення за замовчуванням (без демо-товарів і без опису API).
-# Підключення — у .env на сервері (тоді достатньо «docker compose ...» без -f і --profile):
-#   COMPOSE_FILE=compose.yaml:deploy/compose.production.yaml
-#   COMPOSE_PROFILES=app,offsite
-# Відносні шляхи рахуються від каталогу compose.yaml. Докладно — docs/operations.md.
-
 x-required-env: &required-env
   Site__PublicUrl: ${SITE_URL:?Задайте SITE_URL — публічна адреса з https://}
   Web__RevalidateSecret: ${REVALIDATE_SECRET:?Задайте REVALIDATE_SECRET — випадковий рядок}
@@ -36,7 +29,6 @@ services:
   caddy:
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:?Задайте SITE_ADDRESS — домен магазину, напр. example.ua}
-    # 80 — перенаправлення на HTTPS і перевірка ACME, 443/udp — HTTP/3.
     ports: !override
       - "80:80"
       - "443:443"
