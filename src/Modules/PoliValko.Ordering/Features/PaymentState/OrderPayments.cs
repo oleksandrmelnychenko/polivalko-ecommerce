@@ -16,14 +16,22 @@ internal sealed class OrderPayments(PoliValkoDbContext db) : IOrderPayments
             return null;
         }
 
-        return new PayableOrder(
-            order.Id,
-            order.Number,
-            order.Total,
-            order.PaymentMethod,
-            OrderMapping.CanPay(order),
-            order.Items.Select(i => new PayableOrderLine(i.Name, i.Sku, i.Quantity, i.UnitPrice)).ToList());
+        return ToPayable(order);
     }
+
+    public async Task<PayableOrder?> FindPayableForCustomerAsync(string number, Guid customerId, CancellationToken ct)
+    {
+        var order = await db.Set<Order>().Include(o => o.Items).FirstOrDefaultAsync(o => o.Number == number, ct);
+        return order is null || order.CustomerId != customerId ? null : ToPayable(order);
+    }
+
+    private static PayableOrder ToPayable(Order order) => new(
+        order.Id,
+        order.Number,
+        order.Total,
+        order.PaymentMethod,
+        OrderMapping.CanPay(order),
+        order.Items.Select(i => new PayableOrderLine(i.Name, i.Sku, i.Quantity, i.UnitPrice)).ToList());
 
     public async Task MarkPaymentRetryAsync(Guid orderId, CancellationToken ct) =>
         (await TrackedAsync(orderId, ct)).MarkPaymentRetry();

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using PoliValko.Identity.Features.Auth;
+using PoliValko.Infrastructure.Security;
 
 namespace PoliValko.IntegrationTests;
 

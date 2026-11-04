@@ -4,6 +4,8 @@ public interface IOrderPayments
 {
     Task<PayableOrder?> FindPayableAsync(string number, string? token, CancellationToken ct);
 
+    Task<PayableOrder?> FindPayableForCustomerAsync(string number, Guid customerId, CancellationToken ct);
+
     Task MarkPaymentRetryAsync(Guid orderId, CancellationToken ct);
 
     Task<OrderPaymentTarget> LoadForPaymentUpdateAsync(Guid orderId, CancellationToken ct);

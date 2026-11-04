@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using PoliValko.Infrastructure.Security;
 
 namespace PoliValko.Identity.Features.Auth;
 

@@ -34,6 +34,22 @@ internal static class StartPayment
             return OrderProblems.NotFound();
         }
 
+        var returnUrl = site.Value.Url($"/order/{order.Number}?token={Uri.EscapeDataString(request.Token!)}&payment=return");
+        return await StartAsync(order, returnUrl, db, orders, providers, options, site, time, loggers, ct);
+    }
+
+    public static async Task<Results<Ok<StartPaymentDto>, ProblemHttpResult>> StartAsync(
+        PayableOrder order,
+        string returnUrl,
+        PoliValkoDbContext db,
+        IOrderPayments orders,
+        IPaymentProviders providers,
+        IOptions<PaymentsOptions> options,
+        IOptions<SiteOptions> site,
+        TimeProvider time,
+        ILoggerFactory loggers,
+        CancellationToken ct)
+    {
         if (!order.CanPay)
         {
             return Problems.Create(
@@ -87,7 +103,7 @@ internal static class StartPayment
                     order.Number,
                     payment.Amount,
                     order.Items.Select(i => new PaymentBasketItem(i.Name, i.Sku, i.Quantity, i.UnitPrice)).ToList(),
-                    site.Value.Url($"/order/{order.Number}?token={Uri.EscapeDataString(request.Token!)}&payment=return"),
+                    returnUrl,
                     site.Value.Url($"/api/v1/payments/webhooks/{provider.Name}"),
                     payment.ExpiresAt),
                 ct);

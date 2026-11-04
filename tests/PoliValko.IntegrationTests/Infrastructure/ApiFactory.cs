@@ -33,6 +33,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public RecordingNotifier Notifier { get; } = new();
 
+    public RecordingMailer Mailer { get; } = new();
+
     public async ValueTask InitializeAsync()
     {
         await _postgres.StartAsync();
@@ -58,12 +60,15 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Payments:Sandbox:Secret", SandboxSecret);
         builder.UseSetting("Fiscal:Provider", "Stub");
         builder.UseSetting("Media:Root", Path.Combine(Path.GetTempPath(), "polivalko-tests-media"));
+        builder.UseSetting("Customers:SessionCheckInterval", "00:00:00");
         SeedUser(builder, 0, AdminEmail, StaffRoles.Admin);
         SeedUser(builder, 1, ManagerEmail, StaffRoles.Manager);
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<IManagerNotifier>();
             services.AddSingleton<IManagerNotifier>(Notifier);
+            services.RemoveAll<ICustomerMailer>();
+            services.AddSingleton<ICustomerMailer>(Mailer);
             services.AddOutboxHandler<AlwaysFailingMessage, AlwaysFailingHandler>();
         });
     }

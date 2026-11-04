@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using PoliValko.Catalog.Contracts;
+using PoliValko.Customers.Contracts;
 using PoliValko.Delivery.Contracts;
 using PoliValko.Infrastructure.Idempotency;
 using PoliValko.Infrastructure.Outbox;
@@ -27,6 +29,7 @@ internal static class CreateOrder
         IOptions<SellerOptions> seller,
         IOutbox outbox,
         TimeProvider time,
+        [FromServices] ICustomerDirectory customers,
         CancellationToken ct)
     {
         var (errors, valid) = await OrderValidator.ValidateAsync(request, directory, ct);
@@ -107,6 +110,13 @@ internal static class CreateOrder
             }).ToList(),
         };
         order.InitPaymentStatus();
+        var customerId = http.HttpContext.User.CustomerId()
+            ?? (valid.Email is null ? null : await customers.FindConfirmedIdByEmailAsync(valid.Email, ct));
+        if (customerId is { } owner)
+        {
+            order.LinkCustomer(owner);
+        }
+
         order.History.Add(new OrderStatusChange
         {
             Id = Guid.CreateVersion7(now),

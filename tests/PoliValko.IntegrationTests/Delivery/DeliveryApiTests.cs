@@ -16,6 +16,7 @@ using PoliValko.Delivery.Jobs;
 using PoliValko.Identity.Features.Auth;
 using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Persistence;
+using PoliValko.Infrastructure.Security;
 using PoliValko.Infrastructure.Sync;
 
 namespace PoliValko.IntegrationTests;

@@ -2,6 +2,7 @@ using System.Reflection;
 using PoliValko.Console;
 using PoliValko.Catalog;
 using PoliValko.Content;
+using PoliValko.Customers;
 using PoliValko.Delivery;
 using PoliValko.Fiscal;
 using PoliValko.Identity;
@@ -23,6 +24,7 @@ internal static class SolutionAssemblies
         typeof(ConsoleModule).Assembly,
         typeof(CatalogModule).Assembly,
         typeof(ContentModule).Assembly,
+        typeof(CustomersModule).Assembly,
         typeof(DeliveryModule).Assembly,
         typeof(FiscalModule).Assembly,
         typeof(IdentityModule).Assembly,

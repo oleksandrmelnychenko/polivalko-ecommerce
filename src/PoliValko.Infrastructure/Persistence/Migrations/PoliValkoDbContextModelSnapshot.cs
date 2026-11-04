@@ -353,6 +353,29 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("PoliValko.Catalog.Domain.Favorite", b =>
+                {
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<DateTimeOffset>("AddedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("added_at");
+
+                    b.HasKey("CustomerId", "ProductId")
+                        .HasName("pk_favorites");
+
+                    b.HasIndex("ProductId")
+                        .HasDatabaseName("ix_favorites_product_id");
+
+                    b.ToTable("favorites", "catalog");
+                });
+
             modelBuilder.Entity("PoliValko.Catalog.Domain.HomeCollection", b =>
                 {
                     b.Property<Guid>("Id")
@@ -943,7 +966,196 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("PoliValko.Delivery.Persistence.NpSettlement", b =>
+            modelBuilder.Entity("PoliValko.Customers.Domain.Customer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("email");
+
+                    b.Property<DateTimeOffset?>("EmailConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("email_confirmed_at");
+
+                    b.Property<int>("FailedLoginCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("failed_login_count");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("lockout_end");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NormalizedEmail")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("normalized_email");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("password_hash");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("phone");
+
+                    b.Property<string>("SecurityStamp")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("security_stamp");
+
+                    b.HasKey("Id")
+                        .HasName("pk_customers");
+
+                    b.HasIndex("NormalizedEmail")
+                        .IsUnique()
+                        .HasDatabaseName("ix_customers_normalized_email");
+
+                    b.ToTable("customers", "customers");
+                });
+
+            modelBuilder.Entity("PoliValko.Customers.Domain.CustomerAddress", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Apartment")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("apartment");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<string>("DeliveryMethod")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("delivery_method");
+
+                    b.Property<string>("House")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("house");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_default");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("label");
+
+                    b.Property<string>("SettlementName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("settlement_name");
+
+                    b.Property<string>("SettlementRef")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("settlement_ref");
+
+                    b.Property<string>("Street")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("street");
+
+                    b.Property<string>("WarehouseName")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("warehouse_name");
+
+                    b.Property<string>("WarehouseRef")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("warehouse_ref");
+
+                    b.HasKey("Id")
+                        .HasName("pk_customer_addresses");
+
+                    b.HasIndex("CustomerId")
+                        .HasDatabaseName("ix_customer_addresses_customer_id");
+
+                    b.ToTable("customer_addresses", "customers");
+                });
+
+            modelBuilder.Entity("PoliValko.Customers.Domain.CustomerToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("purpose");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("token_hash");
+
+                    b.Property<DateTimeOffset?>("UsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("used_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_customer_tokens");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_customer_tokens_token_hash");
+
+                    b.HasIndex("CustomerId", "Purpose")
+                        .HasDatabaseName("ix_customer_tokens_customer_id_purpose");
+
+                    b.ToTable("customer_tokens", "customers");
+                });
+
+            modelBuilder.Entity("PoliValko.Delivery.Domain.NpSettlement", b =>
                 {
                     b.Property<string>("Ref")
                         .HasMaxLength(50)
@@ -991,7 +1203,7 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     b.ToTable("np_settlements", "delivery");
                 });
 
-            modelBuilder.Entity("PoliValko.Delivery.Persistence.NpWarehouse", b =>
+            modelBuilder.Entity("PoliValko.Delivery.Domain.NpWarehouse", b =>
                 {
                     b.Property<string>("Ref")
                         .HasMaxLength(50)
@@ -1049,7 +1261,7 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     b.ToTable("np_warehouses", "delivery");
                 });
 
-            modelBuilder.Entity("PoliValko.Delivery.Persistence.PickupLocation", b =>
+            modelBuilder.Entity("PoliValko.Delivery.Domain.PickupLocation", b =>
                 {
                     b.Property<string>("Code")
                         .HasMaxLength(50)
@@ -1106,7 +1318,7 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("PoliValko.Fiscal.Receipt", b =>
+            modelBuilder.Entity("PoliValko.Fiscal.Domain.Receipt", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -1553,6 +1765,10 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("customer_email");
 
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
                     b.Property<string>("CustomerName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -1688,6 +1904,9 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     b.HasIndex("Number")
                         .IsUnique()
                         .HasDatabaseName("ix_orders_number");
+
+                    b.HasIndex("CustomerId", "CreatedAt")
+                        .HasDatabaseName("ix_orders_customer_id_created_at");
 
                     b.HasIndex("Status", "CreatedAt")
                         .HasDatabaseName("ix_orders_status_created_at");
@@ -2155,6 +2374,16 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_categories_categories_parent_id");
                 });
 
+            modelBuilder.Entity("PoliValko.Catalog.Domain.Favorite", b =>
+                {
+                    b.HasOne("PoliValko.Catalog.Domain.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_favorites_products_product_id");
+                });
+
             modelBuilder.Entity("PoliValko.Catalog.Domain.Product", b =>
                 {
                     b.HasOne("PoliValko.Catalog.Domain.Category", null)
@@ -2203,6 +2432,26 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_product_stock_product_product_id");
+                });
+
+            modelBuilder.Entity("PoliValko.Customers.Domain.CustomerAddress", b =>
+                {
+                    b.HasOne("PoliValko.Customers.Domain.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_customer_addresses_customers_customer_id");
+                });
+
+            modelBuilder.Entity("PoliValko.Customers.Domain.CustomerToken", b =>
+                {
+                    b.HasOne("PoliValko.Customers.Domain.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_customer_tokens_customers_customer_id");
                 });
 
             modelBuilder.Entity("PoliValko.Ordering.Domain.OrderItem", b =>

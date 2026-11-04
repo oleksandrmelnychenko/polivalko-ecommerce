@@ -12,7 +12,7 @@ public static class AuthProblems
     public static Task WriteForbiddenAsync(HttpContext http) =>
         WriteAsync(http, StatusCodes.Status403Forbidden, "auth.forbidden", "Недостатньо прав", "Ця дія доступна лише адміністратору.");
 
-    private static async Task WriteAsync(HttpContext http, int status, string code, string title, string detail)
+    public static async Task WriteAsync(HttpContext http, int status, string code, string title, string detail)
     {
         http.Response.StatusCode = status;
         await http.RequestServices.GetRequiredService<IProblemDetailsService>().WriteAsync(new ProblemDetailsContext

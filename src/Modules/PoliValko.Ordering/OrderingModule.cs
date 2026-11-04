@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PoliValko.Customers.Contracts;
 using PoliValko.Infrastructure;
 using PoliValko.Ordering.Configuration;
 using PoliValko.Ordering.Contracts;
+using PoliValko.Ordering.Features.Account;
 using PoliValko.Ordering.Features.Console.Customers;
 using PoliValko.Ordering.Features.Console.Orders;
 using PoliValko.Ordering.Features.Checkout;
@@ -28,6 +30,7 @@ public static class OrderingModule
             .AddScoped<IOrderReceiptSource, OrderReceiptSource>()
             .AddScoped<IOrderExportSource, OrderExportSource>()
             .AddScoped<IOrderReporting, OrderReporting>()
+            .AddScoped<ICustomerEmailConfirmedHandler, LinkGuestOrders>()
             .AddOutboxHandler<OrderPlaced, NotifyManagerOnOrderPlaced>()
             .AddOutboxHandler<PaymentSucceeded, NotifyManagerOnPaymentSucceeded>();
     }
@@ -40,4 +43,7 @@ public static class OrderingModule
 
     public static RouteGroupBuilder MapConsoleCustomerEndpoints(this RouteGroupBuilder console) =>
         ConsoleCustomerEndpoints.Map(console);
+
+    public static IEndpointRouteBuilder MapAccountOrderEndpoints(this IEndpointRouteBuilder api) =>
+        AccountOrderEndpoints.Map(api);
 }

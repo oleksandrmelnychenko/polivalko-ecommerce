@@ -9,6 +9,7 @@
     <Project Path="src/Modules/PoliValko.Console/PoliValko.Console.csproj" />
     <Project Path="src/Modules/PoliValko.Catalog/PoliValko.Catalog.csproj" />
     <Project Path="src/Modules/PoliValko.Content/PoliValko.Content.csproj" />
+    <Project Path="src/Modules/PoliValko.Customers/PoliValko.Customers.csproj" />
     <Project Path="src/Modules/PoliValko.Delivery/PoliValko.Delivery.csproj" />
     <Project Path="src/Modules/PoliValko.Fiscal/PoliValko.Fiscal.csproj" />
     <Project Path="src/Modules/PoliValko.Identity/PoliValko.Identity.csproj" />

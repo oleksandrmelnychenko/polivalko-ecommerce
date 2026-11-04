@@ -26,6 +26,18 @@ public static class NotificationsModule
             services.AddSingleton<IManagerNotifier, LogManagerNotifier>();
         }
 
+        var email = configuration.GetSection("Email");
+        services.Configure<EmailOptions>(email);
+        var mode = email.Get<EmailOptions>()?.Mode;
+        if (string.IsNullOrWhiteSpace(mode) || string.Equals(mode, EmailModes.Log, StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddSingleton<ICustomerMailer, LogCustomerMailer>();
+        }
+        else
+        {
+            throw new InvalidOperationException($"Email:Mode '{mode}' не підтримується. Доступно: {EmailModes.Log}.");
+        }
+
         services.AddOutboxHandler<IntegrationAlert, NotifyResponsibleOnIntegrationAlert>();
         return services;
     }

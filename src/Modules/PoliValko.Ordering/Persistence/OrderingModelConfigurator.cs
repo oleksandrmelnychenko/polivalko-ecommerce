@@ -45,6 +45,7 @@ internal sealed class OrderingModelConfigurator : IModelConfigurator
             builder.HasIndex(o => o.IdempotencyKey).IsUnique();
             builder.HasIndex(o => new { o.Status, o.CreatedAt });
             builder.HasIndex(o => o.CustomerPhone);
+            builder.HasIndex(o => new { o.CustomerId, o.CreatedAt });
             builder.HasMany(o => o.Items).WithOne().HasForeignKey(i => i.OrderId).OnDelete(DeleteBehavior.Cascade);
             builder.HasMany(o => o.History).WithOne().HasForeignKey(h => h.OrderId).OnDelete(DeleteBehavior.Cascade);
             builder.HasMany(o => o.Refunds).WithOne().HasForeignKey(r => r.OrderId).OnDelete(DeleteBehavior.Cascade);

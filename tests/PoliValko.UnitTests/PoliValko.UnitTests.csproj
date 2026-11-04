@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\src\Modules\PoliValko.Console\PoliValko.Console.csproj" />
     <ProjectReference Include="..\..\src\Modules\PoliValko.Catalog\PoliValko.Catalog.csproj" />
     <ProjectReference Include="..\..\src\Modules\PoliValko.Content\PoliValko.Content.csproj" />
+    <ProjectReference Include="..\..\src\Modules\PoliValko.Customers\PoliValko.Customers.csproj" />
     <ProjectReference Include="..\..\src\Modules\PoliValko.Delivery\PoliValko.Delivery.csproj" />
     <ProjectReference Include="..\..\src\Modules\PoliValko.Fiscal\PoliValko.Fiscal.csproj" />
     <ProjectReference Include="..\..\src\Modules\PoliValko.Identity\PoliValko.Identity.csproj" />

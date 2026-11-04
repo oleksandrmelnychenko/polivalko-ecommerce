@@ -5,6 +5,7 @@ using System.Text;
 using PoliValko.Console.Features.Summary;
 using PoliValko.Identity.Features.Auth;
 using PoliValko.Identity.Features.Staff;
+using PoliValko.Infrastructure.Security;
 using PoliValko.Ordering.Contracts;
 using PoliValko.Ordering.Features.Console.Orders;
 using PoliValko.Ordering.Features.Checkout;

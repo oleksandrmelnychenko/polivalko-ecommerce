@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using PoliValko.Customers.Contracts;
 using PoliValko.Infrastructure.Security;
 
 namespace PoliValko.Fiscal.Features.Receipts;
@@ -24,5 +25,15 @@ internal static class ReceiptEndpoints
             .WithName("ConsoleListOrderReceipts")
             .WithSummary("Фіскальні чеки продажу й повернення за замовленням");
         return console;
+    }
+
+    public static IEndpointRouteBuilder MapAccount(IEndpointRouteBuilder api)
+    {
+        api.MapGroup("/account/orders").WithTags("Account").RequireCustomer()
+            .MapGet("/{number}/receipts", GetAccountOrderReceipts.HandleAsync)
+            .WithName("AccountGetOrderReceipts")
+            .WithSummary("Фіскальні чеки замовлення покупця. Чужі замовлення — 404")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+        return api;
     }
 }

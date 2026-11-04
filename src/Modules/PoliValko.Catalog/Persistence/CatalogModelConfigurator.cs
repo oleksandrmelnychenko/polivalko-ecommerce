@@ -17,6 +17,14 @@ internal sealed class CatalogModelConfigurator : IModelConfigurator
         modelBuilder.Entity<ProductAttribute>(ConfigureAttribute);
         modelBuilder.Entity<HomeCollection>(ConfigureCollection);
         modelBuilder.Entity<UrlRedirect>(ConfigureRedirect);
+        modelBuilder.Entity<Favorite>(ConfigureFavorite);
+    }
+
+    private static void ConfigureFavorite(EntityTypeBuilder<Favorite> builder)
+    {
+        builder.ToTable("favorites", Schemas.Catalog);
+        builder.HasKey(f => new { f.CustomerId, f.ProductId });
+        builder.HasOne<Product>().WithMany().HasForeignKey(f => f.ProductId).OnDelete(DeleteBehavior.Cascade);
     }
 
     private static void ConfigureAttribute(EntityTypeBuilder<ProductAttribute> builder)

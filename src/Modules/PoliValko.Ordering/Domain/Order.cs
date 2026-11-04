@@ -26,6 +26,8 @@ public sealed class Order
 
     public string? CustomerEmail { get; init; }
 
+    public Guid? CustomerId { get; private set; }
+
     public string? SettlementRef { get; init; }
 
     public string? SettlementName { get; init; }
@@ -63,6 +65,8 @@ public sealed class Order
     public List<OrderStatusChange> History { get; init; } = [];
 
     public List<OrderRefund> Refunds { get; init; } = [];
+
+    public void LinkCustomer(Guid customerId) => CustomerId ??= customerId;
 
     public void InitPaymentStatus() =>
         PaymentStatus = PaymentMethod == PaymentMethod.Card ? PaymentStatus.Pending : PaymentStatus.NotRequired;

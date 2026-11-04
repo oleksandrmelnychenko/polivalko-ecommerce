@@ -6,10 +6,12 @@ namespace PoliValko.Ordering.Features.Checkout;
 
 internal static class OrderMapping
 {
-    public static bool CanPay(Order order) =>
-        order.PaymentMethod == PaymentMethod.Card
-        && order.Status == OrderStatus.AwaitingPayment
-        && order.PaymentStatus is PaymentStatus.Pending or PaymentStatus.Failed;
+    public static bool CanPay(Order order) => CanPay(order.PaymentMethod, order.Status, order.PaymentStatus);
+
+    public static bool CanPay(PaymentMethod method, OrderStatus status, PaymentStatus paymentStatus) =>
+        method == PaymentMethod.Card
+        && status == OrderStatus.AwaitingPayment
+        && paymentStatus is PaymentStatus.Pending or PaymentStatus.Failed;
 
     public static OrderItemDto ToDto(OrderItem i) => new(
         i.ProductId,

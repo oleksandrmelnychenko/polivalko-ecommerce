@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using PoliValko.Customers.Contracts;
 using PoliValko.Infrastructure.Idempotency;
 
 namespace PoliValko.Payments.Features.Checkout;
@@ -36,6 +37,18 @@ internal static class PaymentEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
+        return api;
+    }
+
+    public static IEndpointRouteBuilder MapAccount(IEndpointRouteBuilder api)
+    {
+        api.MapGroup("/account/orders").WithTags("Account").RequireCustomer()
+            .MapPost("/{number}/payments", StartAccountPayment.HandleAsync)
+            .WithName("AccountStartPayment")
+            .WithSummary("Оплата карткою замовлення покупця: посилання на сторінку провайдера, повернення на /account/orders/{number}")
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
         return api;
     }
 }

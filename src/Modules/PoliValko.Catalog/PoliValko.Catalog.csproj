@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\PoliValko.Infrastructure\PoliValko.Infrastructure.csproj" />
+    <ProjectReference Include="..\PoliValko.Customers\PoliValko.Customers.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -13,6 +13,9 @@ internal sealed class OrderReceiptSource(PoliValkoDbContext db) : IOrderReceiptS
         return order is not null && OrderTokens.Matches(token, order.AccessTokenHash);
     }
 
+    public Task<bool> BelongsToCustomerAsync(string number, Guid customerId, CancellationToken ct) =>
+        db.Set<Order>().AsNoTracking().AnyAsync(o => o.Number == number && o.CustomerId == customerId, ct);
+
     public async Task<OrderForReceipt> GetAsync(Guid orderId, CancellationToken ct)
     {
         var order = await db.Set<Order>()

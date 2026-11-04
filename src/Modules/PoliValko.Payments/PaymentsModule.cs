@@ -49,4 +49,7 @@ public static class PaymentsModule
 
     public static RouteGroupBuilder MapConsolePaymentEndpoints(this RouteGroupBuilder console) =>
         ConsolePaymentEndpoints.Map(console);
+
+    public static IEndpointRouteBuilder MapAccountPaymentEndpoints(this IEndpointRouteBuilder api) =>
+        PaymentEndpoints.MapAccount(api);
 }

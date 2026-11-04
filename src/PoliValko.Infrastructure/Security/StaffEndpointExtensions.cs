@@ -17,4 +17,10 @@ public static class StaffEndpointExtensions
 
     public static RouteHandlerBuilder RequireCsrf(this RouteHandlerBuilder builder) =>
         builder.AddEndpointFilter<CsrfFilter>();
+
+    public static RouteGroupBuilder RequireCsrf(this RouteGroupBuilder group)
+    {
+        group.AddEndpointFilter<CsrfFilter>();
+        return group;
+    }
 }

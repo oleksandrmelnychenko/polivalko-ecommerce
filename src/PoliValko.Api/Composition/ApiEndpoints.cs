@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using PoliValko.Console;
 using PoliValko.Catalog;
 using PoliValko.Content;
+using PoliValko.Customers;
 using PoliValko.Delivery;
 using PoliValko.Fiscal;
 using PoliValko.Identity;
@@ -47,6 +48,12 @@ public static class ApiEndpoints
         console.MapConsoleIntegrationEndpoints();
         console.MapConsoleServiceRequestEndpoints();
         console.MapConsoleDeliveryEndpoints();
+
+        api.MapAccountEndpoints();
+        api.MapAccountOrderEndpoints();
+        api.MapAccountReceiptEndpoints();
+        api.MapAccountPaymentEndpoints();
+        api.MapAccountFavoriteEndpoints();
 
         app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
         app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
