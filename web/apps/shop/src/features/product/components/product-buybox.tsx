@@ -1,5 +1,6 @@
 import { BuyForm } from "@/features/cart";
 import { discountPercent } from "@/features/catalog";
+import { FavoriteButton } from "@/features/favorites";
 import type { ProductDetails } from "@polivalko/shared/api/types";
 import { formatMoney } from "@polivalko/shared/lib/format";
 import { ProductDeliveryFacts } from "./product-delivery-facts";
@@ -49,7 +50,7 @@ export function ProductBuybox({ product }: { product: ProductDetails }) {
           <p className={product.inStock ? "stock stock--in" : "stock stock--out"}>{product.inStock ? "В наявності" : "Немає в наявності"}</p>
         </div>
         {product.variants.length > 1 && <ProductVariants variants={product.variants} />}
-        <BuyForm product={cartProduct} inStock={product.inStock} actionsClassName="buybox__actions" />
+        <BuyForm product={cartProduct} inStock={product.inStock} actionsClassName="buybox__actions" aside={<FavoriteButton productId={product.id} variant="box" />} />
       </div>
       <ProductDeliveryFacts />
     </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { CartButton } from "@/features/cart";
+import { AccountButton } from "@/features/customer";
 import { SearchButton } from "@/features/search";
 import { MenuIcon } from "@polivalko/shared/ui/icons";
 import { HeaderMobileMenu } from "./header-mobile-menu";
@@ -20,6 +21,7 @@ export function SiteHeader() {
           </Suspense>
           <div className="site-header__actions">
             <SearchButton />
+            <AccountButton />
             <CartButton />
             <button type="button" className="icon-btn icon-btn--chrome site-header__menu" popoverTarget="mobile-menu" aria-label="Меню й каталог">
               <MenuIcon />

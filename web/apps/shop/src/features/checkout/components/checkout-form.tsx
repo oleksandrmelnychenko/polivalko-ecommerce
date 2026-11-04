@@ -9,6 +9,7 @@ import { CheckoutDelivery } from "./checkout-delivery";
 import { CheckoutEmpty } from "./checkout-empty";
 import { CheckoutNotice } from "./checkout-notice";
 import { CheckoutPayment } from "./checkout-payment";
+import { CheckoutSavedAddresses } from "./checkout-saved-addresses";
 import { CheckoutSummary } from "./checkout-summary";
 
 export function CheckoutForm() {
@@ -18,6 +19,7 @@ export function CheckoutForm() {
   if (checkout.lines.length === 0) return <CheckoutEmpty />;
 
   const { field, fieldError } = fieldProps(checkout.errors);
+  const { account } = checkout;
 
   return (
     <form ref={formRef} className="checkout" onSubmit={checkout.onSubmit} noValidate>
@@ -36,6 +38,17 @@ export function CheckoutForm() {
           errors={checkout.errors}
           field={field}
           fieldError={fieldError}
+          courier={checkout.courier}
+          saved={account.addresses.length > 0 && <CheckoutSavedAddresses addresses={account.addresses} chosen={account.chosen} choose={account.choose} />}
+          save={
+            account.canSave &&
+            checkout.delivery !== "pickup" && (
+              <label className="consent">
+                <input type="checkbox" name="saveAddress" />
+                <span>Зберегти адресу в кабінеті</span>
+              </label>
+            )
+          }
         />
         <CheckoutPayment
           paymentOptions={checkout.paymentOptions}

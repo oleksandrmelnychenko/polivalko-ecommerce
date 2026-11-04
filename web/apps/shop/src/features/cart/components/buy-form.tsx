@@ -12,12 +12,14 @@ export function BuyForm({
   className,
   actionsClassName,
   children,
+  aside,
 }: {
   product: CartProduct;
   inStock: boolean;
   className?: string;
   actionsClassName?: string;
   children?: ReactNode;
+  aside?: ReactNode;
 }) {
   const { add } = useCart();
   const [quantity, setQuantity] = useState(1);
@@ -44,6 +46,7 @@ export function BuyForm({
             Немає в наявності
           </button>
         )}
+        {aside}
       </div>
     </form>
   );

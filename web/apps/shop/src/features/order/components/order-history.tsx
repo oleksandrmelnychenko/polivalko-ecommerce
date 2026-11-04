@@ -3,7 +3,7 @@ import type { Order } from "@polivalko/shared/api/types";
 import { formatDateTime } from "@polivalko/shared/lib/format";
 import { orderStatusLabel } from "@polivalko/shared/lib/labels";
 
-export function OrderHistory({ order }: { order: Order }) {
+export function OrderHistory({ order, back = { href: "/catalog", label: "Повернутися до каталогу" } }: { order: Order; back?: { href: string; label: string } }) {
   return (
     <aside className="summary" aria-labelledby="history-title">
       <h2 id="history-title">Історія</h2>
@@ -18,8 +18,8 @@ export function OrderHistory({ order }: { order: Order }) {
       <p className="field__help">
         Створено {formatDateTime(order.createdAt)}. Продавець: {order.sellerName}.
       </p>
-      <Link href="/catalog" className="btn btn--quiet">
-        Повернутися до каталогу
+      <Link href={back.href} className="btn btn--quiet">
+        {back.label}
       </Link>
     </aside>
   );

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AddToCart } from "@/features/cart";
+import { FavoriteButton } from "@/features/favorites";
 import type { ProductListItem } from "@polivalko/shared/api/types";
 import { formatMoney } from "@polivalko/shared/lib/format";
 import { sized } from "@polivalko/shared/lib/images";
@@ -35,6 +36,7 @@ export function ProductTile({ product, priority, look }: { product: ProductListI
               <Link href={href} className="round-btn" aria-label={`Переглянути: ${product.name}`} title="Переглянути">
                 <EyeIcon />
               </Link>
+              <FavoriteButton productId={product.id} name={product.name} />
               <AddToCart product={toCartProduct(product)} inStock={product.inStock} round />
             </span>
           </>
@@ -63,6 +65,7 @@ export function ProductTile({ product, priority, look }: { product: ProductListI
             <Link href={href} className="round-btn" aria-label={`Переглянути: ${product.name}`}>
               <EyeIcon />
             </Link>
+            <FavoriteButton productId={product.id} name={product.name} />
             <AddToCart product={toCartProduct(product)} inStock={product.inStock} round />
           </div>
         ) : (

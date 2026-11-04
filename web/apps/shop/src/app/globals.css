@@ -55,6 +55,14 @@
 @import url("../features/payment/styles/paypage.css");
 @import url("../shared/styles/responsive/shop.css");
 @import url("../features/content/styles/credits.css");
+@import url("../features/customer/styles/account-button.css");
+@import url("../features/favorites/styles/favorites.css");
+@import url("../features/checkout/styles/saved-addresses.css");
+@import url("../features/account/styles/auth.css");
+@import url("../features/account/styles/cabinet.css");
+@import url("../features/account/styles/orders.css");
+@import url("../features/account/styles/addresses.css");
+@import url("../features/account/styles/profile.css");
 @import url("../../../../packages/shared/styles/ui/seg-compact.css");
 @import url("../../../../packages/shared/styles/ui/meta-list.css");
 @import url("../shared/styles/print.css");

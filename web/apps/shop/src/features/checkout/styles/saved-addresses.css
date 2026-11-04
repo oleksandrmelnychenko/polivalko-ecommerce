@@ -1,0 +1,5 @@
+.address-choice { margin: 0; padding: 0; border: 0; }
+.address-choice legend { margin-bottom: var(--space-sm); padding: 0; font-size: var(--text-sm); font-weight: 600; }
+.address-choice input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.address-choice input:focus-visible + label { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.address-choice small { overflow-wrap: anywhere; }

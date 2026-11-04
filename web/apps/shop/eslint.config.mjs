@@ -5,17 +5,20 @@ import { featureBoundaries } from "../../eslint.boundaries.mjs";
 
 const edges = {
   analytics: [],
+  customer: [],
+  favorites: ["customer"],
   cart: ["analytics"],
-  catalog: ["cart"],
-  product: ["catalog", "cart", "analytics"],
+  catalog: ["cart", "favorites"],
+  product: ["catalog", "cart", "analytics", "favorites"],
   home: ["catalog", "services", "content"],
-  layout: ["cart", "catalog", "services", "content", "search"],
+  layout: ["cart", "catalog", "services", "content", "search", "customer"],
   search: ["catalog"],
-  checkout: ["cart", "analytics"],
+  checkout: ["cart", "analytics", "customer"],
   order: ["payment", "analytics"],
   payment: [],
   services: [],
   content: [],
+  account: ["customer", "favorites", "catalog", "cart", "checkout", "order", "payment"],
 };
 
 export default defineConfig([

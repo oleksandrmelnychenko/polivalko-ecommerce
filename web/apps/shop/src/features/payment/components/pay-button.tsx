@@ -5,7 +5,21 @@ import { newIdempotencyKey } from "@polivalko/shared/api/browser";
 import type { Problem } from "@polivalko/shared/api/problem";
 import { startPayment } from "../api/client";
 
-export function PayButton({ number, token, failed, amount }: { number: string; token: string; failed: boolean; amount: string }) {
+type StartResult = { data?: { pageUrl: string }; error?: unknown };
+
+export function PayButton({
+  number,
+  token = "",
+  failed,
+  amount,
+  start,
+}: {
+  number: string;
+  token?: string;
+  failed: boolean;
+  amount: string;
+  start?: (idempotencyKey: string) => Promise<StartResult>;
+}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const key = useRef<string | null>(null);
@@ -14,7 +28,7 @@ export function PayButton({ number, token, failed, amount }: { number: string; t
     setBusy(true);
     setError(null);
     key.current ??= newIdempotencyKey();
-    const { data, error: problem } = await startPayment(number, token, key.current);
+    const { data, error: problem } = await (start ? start(key.current) : startPayment(number, token, key.current));
     if (data) {
       window.location.assign(data.pageUrl);
       return;

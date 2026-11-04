@@ -18,6 +18,12 @@ export function SettlementPicker({
   const [options, setOptions] = useState<Settlement[]>([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+  const [shown, setShown] = useState(value);
+
+  if (value !== shown) {
+    setShown(value);
+    if (value) setText(value.name);
+  }
 
   useEffect(() => {
     if (!open) return;

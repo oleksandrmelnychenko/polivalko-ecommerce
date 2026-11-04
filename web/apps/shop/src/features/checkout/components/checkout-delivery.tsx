@@ -1,7 +1,8 @@
+import type { ReactNode } from "react";
 import type { Quote, Settlement, Warehouse } from "@polivalko/shared/api/types";
 import { deliveryHint } from "../lib/delivery";
 import type { FieldProps } from "../lib/field-props";
-import type { Errors } from "../lib/types";
+import type { CourierPrefill, Errors } from "../lib/types";
 import { CheckoutCourierFields } from "./checkout-courier-fields";
 import { CheckoutWarehouseSelect } from "./checkout-warehouse-select";
 import { SettlementPicker } from "./settlement-picker";
@@ -18,6 +19,9 @@ export function CheckoutDelivery({
   errors,
   field,
   fieldError,
+  courier,
+  saved,
+  save,
 }: FieldProps & {
   quote: Quote | null;
   delivery: string;
@@ -28,12 +32,16 @@ export function CheckoutDelivery({
   warehouseRef: string;
   setWarehouseRef: (ref: string) => void;
   errors: Errors;
+  courier?: CourierPrefill;
+  saved?: ReactNode;
+  save?: ReactNode;
 }) {
   return (
     <section aria-labelledby="delivery-title">
       <h2 id="delivery-title">
         <span>2</span> Отримання
       </h2>
+      {saved}
       <fieldset className="seg seg--cards">
         <legend className="visually-hidden">Спосіб отримання</legend>
         {(quote?.deliveryMethods ?? []).map((d) => (
@@ -49,6 +57,8 @@ export function CheckoutDelivery({
 
       {delivery === "nova_poshta_courier" ? (
         <CheckoutCourierFields
+          key={courier?.key}
+          defaults={courier?.values ?? undefined}
           settlement={settlement}
           chooseSettlement={chooseSettlement}
           settlementError={errors["delivery.settlementRef"]}
@@ -73,6 +83,7 @@ export function CheckoutDelivery({
           Адресу й графік менеджер підтвердить, коли замовлення буде готове.
         </p>
       )}
+      {save}
       {quote && <p className="field__help">{quote.deliveryNote}</p>}
     </section>
   );

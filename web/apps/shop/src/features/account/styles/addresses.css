@@ -1,0 +1,12 @@
+.address-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); margin: 0; padding: 0; list-style: none; }
+.address-card { display: flex; flex-direction: column; gap: 2px; padding: var(--space-lg); border: var(--rule-hair) solid var(--color-rule); overflow-wrap: anywhere; }
+.address-card--default { border-color: var(--color-brand); }
+.address-card__title { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs) var(--space-sm); margin-bottom: var(--space-2xs); color: var(--color-ink); }
+.address-card__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-md); margin-top: auto; padding-top: var(--space-sm); font-size: var(--text-sm); }
+.address-form { display: flex; flex-direction: column; gap: var(--space-lg); padding: var(--space-xl); background: var(--color-paper-2); }
+.address-form h3 { font-size: var(--text-lg); }
+.address-form__actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+@media (max-width: 40rem) {
+  .address-cards { grid-template-columns: minmax(0, 1fr); }
+  .address-form { padding: var(--space-lg) var(--space-md); }
+}

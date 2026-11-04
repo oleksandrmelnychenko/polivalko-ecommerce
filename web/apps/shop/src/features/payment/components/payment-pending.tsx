@@ -3,18 +3,19 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export function PaymentPending() {
+export function PaymentPending({ onRefresh }: { onRefresh?: () => void }) {
   const router = useRouter();
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (attempt >= 10) return;
     const timer = setTimeout(() => {
-      router.refresh();
+      if (onRefresh) onRefresh();
+      else router.refresh();
       setAttempt((n) => n + 1);
     }, 2000);
     return () => clearTimeout(timer);
-  }, [attempt, router]);
+  }, [attempt, router, onRefresh]);
 
   return (
     <section className="pay" aria-live="polite">

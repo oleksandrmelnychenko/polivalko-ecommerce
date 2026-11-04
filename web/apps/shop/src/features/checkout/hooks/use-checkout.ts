@@ -4,12 +4,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
 import { track } from "@/features/analytics";
 import { useCart, useCartQuote } from "@/features/cart";
+import type { CustomerAddress } from "@/features/customer";
 import { newIdempotencyKey } from "@polivalko/shared/api/browser";
 import type { Problem } from "@polivalko/shared/api/problem";
-import type { Settlement, Warehouse } from "@polivalko/shared/api/types";
-import { createOrder, getWarehouses } from "../api/client";
+import { createOrder } from "../api/client";
 import { orderRequest } from "../lib/order-request";
-import type { Errors, Notice } from "../lib/types";
+import type { CourierPrefill, Errors, Notice } from "../lib/types";
+import { useCheckoutAccount } from "./use-checkout-account";
+import { useDeliveryPoint } from "./use-delivery-point";
 
 export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
   const router = useRouter();
@@ -17,14 +19,21 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
   const { items, quote, failed: quoteError, refresh: refreshQuote } = useCartQuote();
   const [delivery, setDelivery] = useState("nova_poshta");
   const [payment, setPayment] = useState("");
-  const [settlement, setSettlement] = useState<Settlement | null>(null);
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [warehouseRef, setWarehouseRef] = useState("");
+  const point = useDeliveryPoint();
+  const [courier, setCourier] = useState<CourierPrefill>({ key: 0, values: null });
   const [errors, setErrors] = useState<Errors>({});
   const [notice, setNotice] = useState<Notice | null>(null);
   const [sending, setSending] = useState(false);
   const idempotencyKey = useRef<string | null>(null);
   const focusInvalid = useRef(false);
+
+  function applyAddress(address: CustomerAddress) {
+    setDelivery(address.method);
+    setCourier((c) => ({ key: c.key + 1, values: address.address }));
+    void point.applyPoint(address);
+  }
+
+  const account = useCheckoutAccount(formRef, lines.length > 0, applyAddress);
 
   useEffect(() => {
     if (!focusInvalid.current) return;
@@ -47,15 +56,6 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
   const paymentOptions = deliveryOption?.paymentMethods ?? [];
   const effectivePayment = paymentOptions.some((p) => p.code === payment) ? payment : (paymentOptions[0]?.code ?? "");
 
-  async function chooseSettlement(next: Settlement | null) {
-    setSettlement(next);
-    setWarehouseRef("");
-    setWarehouses([]);
-    if (!next) return;
-    const { data } = await getWarehouses(next.ref);
-    setWarehouses(data ?? []);
-  }
-
   const blocking = quote?.items.some((i) => i.issue) ?? false;
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -71,12 +71,18 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
     idempotencyKey.current ??= newIdempotencyKey();
 
     try {
-      const { data, error, response } = await createOrder(
-        idempotencyKey.current,
-        orderRequest(form, { items, quote, delivery, settlement, warehouseRef, payment: effectivePayment }),
-      );
+      const request = orderRequest(form, {
+        items,
+        quote,
+        delivery,
+        settlement: point.settlement,
+        warehouseRef: point.warehouseRef,
+        payment: effectivePayment,
+      });
+      const { data, error, response } = await createOrder(idempotencyKey.current, request);
 
       if (data) {
+        await account.saveAfterOrder(form, request.delivery);
         clear();
         router.push(`/order/${data.number}?token=${encodeURIComponent(data.accessToken)}`);
         return;
@@ -116,15 +122,26 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
     quote,
     quoteError,
     delivery,
-    setDelivery,
+    setDelivery: (code: string) => {
+      setDelivery(code);
+      account.release();
+    },
     paymentOptions,
     effectivePayment,
     setPayment,
-    settlement,
-    chooseSettlement,
-    warehouses,
-    warehouseRef,
-    setWarehouseRef,
+    settlement: point.settlement,
+    chooseSettlement: (next: Parameters<typeof point.chooseSettlement>[0]) => {
+      account.release();
+      return point.chooseSettlement(next);
+    },
+    warehouses: point.warehouses,
+    warehouseRef: point.warehouseRef,
+    setWarehouseRef: (ref: string) => {
+      point.setWarehouseRef(ref);
+      account.release();
+    },
+    courier,
+    account,
     errors,
     notice,
     sending,

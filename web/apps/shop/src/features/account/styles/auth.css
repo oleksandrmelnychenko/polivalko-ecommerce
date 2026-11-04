@@ -1,0 +1,18 @@
+.auth { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--space-2xl); align-items: start; padding-bottom: var(--space-3xl); }
+.auth--single { grid-template-columns: minmax(0, 1fr); }
+.auth__main { width: 100%; max-width: 520px; }
+.auth__form, .auth__done { display: flex; flex-direction: column; gap: var(--space-lg); }
+.auth__done { align-items: flex-start; }
+.auth__done .notice { align-self: stretch; }
+.auth__switch { padding-top: var(--space-lg); border-top: var(--rule-hair) solid var(--color-rule); color: var(--color-ink-2); }
+.auth__list { display: grid; gap: var(--space-sm); margin: 0; padding: 0; list-style: none; }
+.auth__list li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: var(--space-sm); align-items: start; color: var(--color-ink); line-height: 1.5; }
+.auth__list svg { width: 22px; height: 22px; color: var(--color-brand); }
+.field__row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2xs) var(--space-sm); }
+.field__row .link { font-size: var(--text-sm); }
+.form-status:empty { position: absolute; }
+.auth__done .notice b, .cabinet-banner b { color: var(--color-ink); overflow-wrap: anywhere; }
+@media (max-width: 60rem) {
+  .auth { grid-template-columns: minmax(0, 1fr); gap: var(--space-xl); }
+  .auth__main { max-width: none; }
+}
