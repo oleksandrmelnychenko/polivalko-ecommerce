@@ -20,7 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\PoliValko.SharedKernel\PoliValko.SharedKernel.csproj" />
     <ProjectReference Include="..\..\src\PoliValko.Infrastructure\PoliValko.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\src\Modules\PoliValko.Admin\PoliValko.Admin.csproj" />
+    <ProjectReference Include="..\..\src\Modules\PoliValko.Console\PoliValko.Console.csproj" />
     <ProjectReference Include="..\..\src\Modules\PoliValko.Catalog\PoliValko.Catalog.csproj" />
     <ProjectReference Include="..\..\src\Modules\PoliValko.Content\PoliValko.Content.csproj" />
     <ProjectReference Include="..\..\src\Modules\PoliValko.Delivery\PoliValko.Delivery.csproj" />

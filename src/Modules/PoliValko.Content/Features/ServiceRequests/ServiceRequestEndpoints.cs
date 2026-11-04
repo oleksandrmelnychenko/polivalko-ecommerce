@@ -20,7 +20,7 @@ internal static class ServiceRequestEndpoints
             .RequireIdempotency<CreateServiceRequest>()
             .RequireRateLimiting(RateLimitPolicies.Forms)
             .WithName("CreateServiceRequest")
-            .WithSummary("Заявка на послугу. Зберігається в адмінці, відповідальний отримує повідомлення.")
+            .WithSummary("Заявка на послугу. Зберігається в консолі, відповідальний отримує повідомлення.")
             .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status429TooManyRequests);

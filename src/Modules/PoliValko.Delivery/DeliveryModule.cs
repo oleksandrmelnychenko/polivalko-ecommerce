@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using PoliValko.Delivery.Configuration;
 using PoliValko.Delivery.Contracts;
-using PoliValko.Delivery.Features.Admin;
+using PoliValko.Delivery.Features.Console;
 using PoliValko.Delivery.Features.Directory;
 using PoliValko.Delivery.Features.DirectorySync;
 using PoliValko.Delivery.Features.Storefront;
@@ -51,9 +51,9 @@ public static class DeliveryModule
     public static IEndpointRouteBuilder MapDeliveryEndpoints(this IEndpointRouteBuilder api) =>
         DeliveryEndpoints.Map(api);
 
-    public static RouteGroupBuilder MapAdminDeliveryEndpoints(this RouteGroupBuilder admin)
+    public static RouteGroupBuilder MapConsoleDeliveryEndpoints(this RouteGroupBuilder console)
     {
-        AdminDeliveryEndpoints.Map(admin);
-        return admin;
+        ConsoleDeliveryEndpoints.Map(console);
+        return console;
     }
 }

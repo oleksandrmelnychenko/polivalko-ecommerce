@@ -1,6 +1,6 @@
 import type { components } from "@/shared/api/schema";
 
-export type AdminCategory = components["schemas"]["AdminCategoryDto"];
+export type AdminCategory = components["schemas"]["ConsoleCategoryDto"];
 
 export function descendants(all: AdminCategory[], parentId: string, depth: number): AdminCategory[] {
   return all.filter((c) => c.parentId === parentId).flatMap((c) => [c, ...descendants(all, c.id, depth + 1)]);

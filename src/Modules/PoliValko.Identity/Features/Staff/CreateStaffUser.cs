@@ -49,6 +49,6 @@ internal static class CreateStaffUser
         await userManager.AddToRoleAsync(user, role!);
         audit.Record("user.created", "StaffUser", email, new { name, role });
         await db.SaveChangesAsync();
-        return TypedResults.Created($"/api/v1/admin/users/{user.Id}", await StaffMapping.ToDtoAsync(userManager, user, time));
+        return TypedResults.Created($"/api/v1/console/users/{user.Id}", await StaffMapping.ToDtoAsync(userManager, user, time));
     }
 }

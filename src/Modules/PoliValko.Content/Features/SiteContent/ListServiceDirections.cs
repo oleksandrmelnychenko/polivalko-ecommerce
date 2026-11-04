@@ -8,13 +8,13 @@ namespace PoliValko.Content.Features.SiteContent;
 
 internal static class ListServiceDirections
 {
-    public static async Task<Ok<List<AdminServiceDirectionDto>>> HandleAsync(PoliValkoDbContext db, CancellationToken ct)
+    public static async Task<Ok<List<ConsoleServiceDirectionDto>>> HandleAsync(PoliValkoDbContext db, CancellationToken ct)
     {
         var content = await db.Set<ServiceDirectionContent>().AsNoTracking().ToDictionaryAsync(d => d.Code, ct);
         return TypedResults.Ok(ServiceDirections.All
             .Select((d, i) => content.TryGetValue(d.Code, out var c)
-                ? new AdminServiceDirectionDto(d.Code, d.Name, c.Description, c.SortOrder, c.IsVisible)
-                : new AdminServiceDirectionDto(d.Code, d.Name, null, i + 1, true))
+                ? new ConsoleServiceDirectionDto(d.Code, d.Name, c.Description, c.SortOrder, c.IsVisible)
+                : new ConsoleServiceDirectionDto(d.Code, d.Name, null, i + 1, true))
             .OrderBy(d => d.SortOrder)
             .ToList());
     }

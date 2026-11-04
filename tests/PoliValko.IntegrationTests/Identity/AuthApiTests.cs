@@ -9,9 +9,9 @@ public sealed class AuthApiTests(ApiFactory api)
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task Admin_endpoints_require_login()
+    public async Task Console_endpoints_require_login()
     {
-        var response = await api.CreateClient().GetAsync("/api/v1/admin/orders", Ct);
+        var response = await api.CreateClient().GetAsync("/api/v1/console/orders", Ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         response.Content.Headers.ContentType!.MediaType.ShouldBe("application/problem+json");
@@ -22,7 +22,7 @@ public sealed class AuthApiTests(ApiFactory api)
     public async Task Wrong_password_is_rejected()
     {
         var response = await api.CreateClient().PostAsJsonAsync(
-            "/api/v1/admin/auth/login",
+            "/api/v1/console/auth/login",
             new LoginRequest(ApiFactory.ManagerEmail, "not-the-password"),
             Ct);
 
@@ -35,10 +35,10 @@ public sealed class AuthApiTests(ApiFactory api)
     {
         var manager = await Staff.SignInAsync(api, ApiFactory.ManagerEmail);
 
-        var me = await manager.GetFromJsonAsync<StaffMeDto>("/api/v1/admin/auth/me", Ct);
+        var me = await manager.GetFromJsonAsync<StaffMeDto>("/api/v1/console/auth/me", Ct);
         me!.Roles.ShouldBe(["Manager"]);
 
-        var response = await manager.GetAsync("/api/v1/admin/users", Ct);
+        var response = await manager.GetAsync("/api/v1/console/users", Ct);
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await response.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Code.ShouldBe("auth.forbidden");
     }

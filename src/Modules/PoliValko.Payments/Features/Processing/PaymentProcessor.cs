@@ -67,7 +67,7 @@ internal sealed class PaymentProcessor(PoliValkoDbContext db, IOrderPayments ord
                     {
                         outbox.Enqueue(new IntegrationAlert(
                             $"Оплачено скасоване замовлення {order.Number}",
-                            "Покупець оплатив замовлення після скасування. Оформіть повернення коштів в адмінці."));
+                            "Покупець оплатив замовлення після скасування. Оформіть повернення коштів у консолі."));
                     }
                 }
 

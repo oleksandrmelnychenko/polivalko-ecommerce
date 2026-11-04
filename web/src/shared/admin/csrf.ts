@@ -5,7 +5,7 @@ let csrfToken: string | null = null;
 
 export async function csrfHeader(): Promise<{ "X-CSRF-TOKEN": string }> {
   if (!csrfToken) {
-    const { data } = await browserApi.GET("/api/v1/admin/auth/csrf");
+    const { data } = await browserApi.GET("/api/v1/console/auth/csrf");
     csrfToken = data?.token ?? "";
   }
   return { "X-CSRF-TOKEN": csrfToken };

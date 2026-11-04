@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PoliValko.Catalog.Contracts;
 using PoliValko.Catalog.Domain;
-using PoliValko.Catalog.Features.Admin.Products;
+using PoliValko.Catalog.Features.Console.Products;
 using PoliValko.Infrastructure.Persistence;
 
 namespace PoliValko.Catalog.Features.Reporting;

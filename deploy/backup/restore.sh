@@ -56,13 +56,13 @@ dump=$(resolve_dump "$dump_arg")
 [[ -n "$dump" ]] || fail "дамп «${dump_arg}» не знайдено (каталог ${BACKUP_DIR})"
 pg_restore --list "$dump" >/dev/null || fail "файл ${dump} не є читабельним дампом pg_dump -Fc"
 
-psql_admin() { psql -X -q -v ON_ERROR_STOP=1 -d postgres "$@"; }
+psql_cluster() { psql -X -q -v ON_ERROR_STOP=1 -d postgres "$@"; }
 
 stamp=$(date +%Y%m%d_%H%M%S)
 new_db="${DB}_restore_${stamp}"
 old_db="${DB}_before_restore_${stamp}"
 
-connections=$(psql_admin -At -v db="$DB" <<'SQL'
+connections=$(psql_cluster -At -v db="$DB" <<'SQL'
 SELECT count(*) FROM pg_stat_activity WHERE datname = :'db' AND pid <> pg_backend_pid();
 SQL
 )
@@ -90,14 +90,14 @@ fi
 started=$SECONDS
 cleanup_new_db() {
   log "Видаляю незавершену базу ${new_db}"
-  psql_admin -v db="$new_db" <<'SQL' || true
+  psql_cluster -v db="$new_db" <<'SQL' || true
 SET client_min_messages TO warning;
 DROP DATABASE IF EXISTS :"db" WITH (FORCE);
 SQL
 }
 
 log "Створюю базу ${new_db} і відновлюю дамп (паралельно: ${RESTORE_JOBS})"
-psql_admin -v db="$new_db" <<'SQL'
+psql_cluster -v db="$new_db" <<'SQL'
 CREATE DATABASE :"db" TEMPLATE template0;
 SQL
 if ! pg_restore --dbname="$new_db" --no-owner --no-privileges --exit-on-error --jobs="$RESTORE_JOBS" "$dump"; then
@@ -112,12 +112,12 @@ if [[ -z "$migrations" || "$migrations" == "0" ]]; then
 fi
 log "Дамп відновлено за $((SECONDS - started)) с, міграцій в історії: ${migrations}"
 
-db_exists=$(psql_admin -At -v db="$DB" <<'SQL'
+db_exists=$(psql_cluster -At -v db="$DB" <<'SQL'
 SELECT count(*) FROM pg_database WHERE datname = :'db';
 SQL
 )
 if [[ "$db_exists" == "0" ]]; then
-  psql_admin -v db="$DB" -v new="$new_db" <<'SQL'
+  psql_cluster -v db="$DB" -v new="$new_db" <<'SQL'
 ALTER DATABASE :"new" RENAME TO :"db";
 SQL
   log "Готово. Базу ${DB} створено з $(basename "$dump"). Далі: docker compose up -d"
@@ -125,7 +125,7 @@ SQL
 fi
 
 log "Замінюю ${DB} на відновлену копію"
-if ! psql_admin -v db="$DB" -v old="$old_db" -v new="$new_db" <<'SQL'; then
+if ! psql_cluster -v db="$DB" -v old="$old_db" -v new="$new_db" <<'SQL'; then
 ALTER DATABASE :"db" WITH ALLOW_CONNECTIONS false;
 SELECT count(pg_terminate_backend(pid, 5000)) AS "розірвано підключень"
   FROM pg_stat_activity WHERE datname = :'db' AND pid <> pg_backend_pid();
@@ -133,12 +133,12 @@ ALTER DATABASE :"db" RENAME TO :"old";
 ALTER DATABASE :"new" RENAME TO :"db";
 SQL
   log "Заміна не вдалася. Повертаю підключення до ${DB}; відновлена копія лишилась як ${new_db}."
-  psql_admin -v db="$DB" <<'SQL' || true
+  psql_cluster -v db="$DB" <<'SQL' || true
 ALTER DATABASE :"db" WITH ALLOW_CONNECTIONS true;
 SQL
   fail "перевірте стан: SELECT datname, datallowconn FROM pg_database;"
 fi
 
 log "Готово. ${DB} відновлено з $(basename "$dump"); попередня база — ${old_db}."
-log "Далі: docker compose up -d, перевірка сайту й адмінки. Коли все гаразд, видаліть стару базу:"
+log "Далі: docker compose up -d, перевірка сайту й консолі. Коли все гаразд, видаліть стару базу:"
 log "  docker compose exec postgres psql -U ${PGUSER:-polivalko} -d postgres -c 'DROP DATABASE \"${old_db}\"'"

@@ -1,5 +1,5 @@
 using System.Reflection;
-using PoliValko.Admin;
+using PoliValko.Console;
 using PoliValko.Catalog;
 using PoliValko.Content;
 using PoliValko.Delivery;
@@ -20,7 +20,7 @@ internal static class SolutionAssemblies
 
     public static readonly IReadOnlyList<Assembly> Modules =
     [
-        typeof(AdminModule).Assembly,
+        typeof(ConsoleModule).Assembly,
         typeof(CatalogModule).Assembly,
         typeof(ContentModule).Assembly,
         typeof(DeliveryModule).Assembly,

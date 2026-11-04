@@ -24,7 +24,7 @@
     <ProjectReference Include="..\Modules\PoliValko.Payments\PoliValko.Payments.csproj" />
     <ProjectReference Include="..\Modules\PoliValko.Fiscal\PoliValko.Fiscal.csproj" />
     <ProjectReference Include="..\Modules\PoliValko.Navkolo\PoliValko.Navkolo.csproj" />
-    <ProjectReference Include="..\Modules\PoliValko.Admin\PoliValko.Admin.csproj" />
+    <ProjectReference Include="..\Modules\PoliValko.Console\PoliValko.Console.csproj" />
   </ItemGroup>
 
 </Project>

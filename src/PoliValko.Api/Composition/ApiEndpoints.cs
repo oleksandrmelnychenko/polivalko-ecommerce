@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using PoliValko.Admin;
+using PoliValko.Console;
 using PoliValko.Catalog;
 using PoliValko.Content;
 using PoliValko.Delivery;
@@ -31,22 +31,22 @@ public static class ApiEndpoints
         api.MapPaymentEndpoints();
         api.MapReceiptEndpoints();
 
-        var admin = api.MapGroup("/admin");
-        admin.MapAdminAuthEndpoints();
-        admin.MapAdminStaffEndpoints();
-        admin.MapAdminSummaryEndpoints();
-        admin.MapAdminDashboardEndpoints();
-        admin.MapAdminSearchEndpoints();
-        admin.MapAdminOrderEndpoints();
-        admin.MapAdminCustomerEndpoints();
-        admin.MapAdminPaymentEndpoints();
-        admin.MapAdminReceiptEndpoints();
-        admin.MapAdminCatalogEndpoints();
-        admin.MapAdminSiteContentEndpoints();
-        admin.MapAdminCatalogImportEndpoints();
-        admin.MapAdminIntegrationEndpoints();
-        admin.MapAdminServiceRequestEndpoints();
-        admin.MapAdminDeliveryEndpoints();
+        var console = api.MapGroup("/console");
+        console.MapConsoleAuthEndpoints();
+        console.MapConsoleStaffEndpoints();
+        console.MapConsoleSummaryEndpoints();
+        console.MapConsoleDashboardEndpoints();
+        console.MapConsoleSearchEndpoints();
+        console.MapConsoleOrderEndpoints();
+        console.MapConsoleCustomerEndpoints();
+        console.MapConsolePaymentEndpoints();
+        console.MapConsoleReceiptEndpoints();
+        console.MapConsoleCatalogEndpoints();
+        console.MapConsoleSiteContentEndpoints();
+        console.MapConsoleCatalogImportEndpoints();
+        console.MapConsoleIntegrationEndpoints();
+        console.MapConsoleServiceRequestEndpoints();
+        console.MapConsoleDeliveryEndpoints();
 
         app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
         app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });

@@ -4,7 +4,7 @@ import { serviceRequestStatusLabel } from "@/shared/lib/labels";
 import { PhoneIcon } from "@/shared/ui/icons";
 import type { RequestStatus } from "../lib/types";
 
-type ServiceRequest = components["schemas"]["AdminServiceRequestDto"];
+type ServiceRequest = components["schemas"]["ConsoleServiceRequestDto"];
 
 export function RequestsTable({ requests, onStatus }: { requests: ServiceRequest[]; onStatus: (id: string, status: RequestStatus) => void }) {
   return (

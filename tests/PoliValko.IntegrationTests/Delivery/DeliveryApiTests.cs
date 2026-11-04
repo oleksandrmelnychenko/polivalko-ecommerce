@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Delivery.Contracts;
 using PoliValko.Delivery.Domain;
-using PoliValko.Delivery.Features.Admin;
+using PoliValko.Delivery.Features.Console;
 using PoliValko.Delivery.Features.DirectorySync;
 using PoliValko.Delivery.Features.Storefront;
 using PoliValko.Delivery.Integrations.NovaPoshta;
@@ -23,7 +23,7 @@ namespace PoliValko.IntegrationTests;
 public sealed class DeliveryApiTests(ApiFactory api)
 {
     private const string StoreCode = "bucha-store";
-    private const string StoreUrl = $"/api/v1/admin/delivery/pickup-points/{StoreCode}";
+    private const string StoreUrl = $"/api/v1/console/delivery/pickup-points/{StoreCode}";
     private const string StoreName = "Магазин Poli Valko у Бучі";
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
@@ -45,7 +45,7 @@ public sealed class DeliveryApiTests(ApiFactory api)
     public async Task Admin_updates_pickup_point_with_csrf_and_change_is_audited()
     {
         var admin = await LoginAsync(api, ApiFactory.AdminEmail);
-        var original = (await admin.GetFromJsonAsync<List<AdminPickupPointDto>>("/api/v1/admin/delivery/pickup-points", TestJson.Options, Ct))!
+        var original = (await admin.GetFromJsonAsync<List<ConsolePickupPointDto>>("/api/v1/console/delivery/pickup-points", TestJson.Options, Ct))!
             .Single(p => p.Code == StoreCode);
         var update = new UpdatePickupPointRequest(
             original.Name,
@@ -64,7 +64,7 @@ public sealed class DeliveryApiTests(ApiFactory api)
         {
             var response = await admin.PutAsJsonAsync(StoreUrl, update, Ct);
             response.StatusCode.ShouldBe(HttpStatusCode.OK);
-            var updated = (await response.Content.ReadFromJsonAsync<AdminPickupPointDto>(TestJson.Options, Ct))!;
+            var updated = (await response.Content.ReadFromJsonAsync<ConsolePickupPointDto>(TestJson.Options, Ct))!;
             updated.Schedule.ShouldBe("Пн–Сб, 8:00–20:00");
             updated.MapUrl.ShouldBe("https://maps.example.com/bucha-store");
 
@@ -106,8 +106,8 @@ public sealed class DeliveryApiTests(ApiFactory api)
         update.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
         (await update.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Code.ShouldBe("auth.forbidden");
 
-        (await manager.GetAsync("/api/v1/admin/delivery/pickup-points", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await manager.GetAsync("/api/v1/admin/delivery/novaposhta", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await manager.GetAsync("/api/v1/console/delivery/pickup-points", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await manager.GetAsync("/api/v1/console/delivery/novaposhta", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]
@@ -127,7 +127,7 @@ public sealed class DeliveryApiTests(ApiFactory api)
         deactivate.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await deactivate.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Errors!.Keys.ShouldBe(["isActive"]);
 
-        var missing = await admin.PutAsJsonAsync("/api/v1/admin/delivery/pickup-points/no-such-point", current, Ct);
+        var missing = await admin.PutAsJsonAsync("/api/v1/console/delivery/pickup-points/no-such-point", current, Ct);
         missing.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         (await missing.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Code.ShouldBe("delivery.pickup_point_not_found");
     }
@@ -137,7 +137,7 @@ public sealed class DeliveryApiTests(ApiFactory api)
     {
         var admin = await LoginAsync(api, ApiFactory.AdminEmail);
 
-        var status = await admin.GetFromJsonAsync<NovaPoshtaStatusDto>("/api/v1/admin/delivery/novaposhta", TestJson.Options, Ct);
+        var status = await admin.GetFromJsonAsync<NovaPoshtaStatusDto>("/api/v1/console/delivery/novaposhta", TestJson.Options, Ct);
 
         status!.Mode.ShouldBe("demo");
         status.Sync.ShouldNotBeNull();
@@ -199,7 +199,7 @@ public sealed class DeliveryApiTests(ApiFactory api)
         }
 
         var admin = await LoginAsync(factory, ApiFactory.AdminEmail);
-        var status = await admin.GetFromJsonAsync<NovaPoshtaStatusDto>("/api/v1/admin/delivery/novaposhta", TestJson.Options, Ct);
+        var status = await admin.GetFromJsonAsync<NovaPoshtaStatusDto>("/api/v1/console/delivery/novaposhta", TestJson.Options, Ct);
         status!.Mode.ShouldBe("api");
         status.Settlements.ShouldBeGreaterThanOrEqualTo(1);
         status.Postomats.ShouldBeGreaterThanOrEqualTo(1);
@@ -227,14 +227,14 @@ public sealed class DeliveryApiTests(ApiFactory api)
     private static async Task<HttpClient> LoginAsync(WebApplicationFactory<Program> factory, string email)
     {
         var client = factory.CreateClient();
-        var response = await client.PostAsJsonAsync("/api/v1/admin/auth/login", new LoginRequest(email, ApiFactory.TestPassword), Ct);
+        var response = await client.PostAsJsonAsync("/api/v1/console/auth/login", new LoginRequest(email, ApiFactory.TestPassword), Ct);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         return client;
     }
 
     private static async Task AddCsrfAsync(HttpClient client)
     {
-        var csrf = await client.GetFromJsonAsync<CsrfTokenDto>("/api/v1/admin/auth/csrf", Ct);
+        var csrf = await client.GetFromJsonAsync<CsrfTokenDto>("/api/v1/console/auth/csrf", Ct);
         client.DefaultRequestHeaders.Add("X-CSRF-TOKEN", csrf!.Token);
     }
 }

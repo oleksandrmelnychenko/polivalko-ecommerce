@@ -17,7 +17,7 @@ COPY src/Modules/PoliValko.Ordering/PoliValko.Ordering.csproj src/Modules/PoliVa
 COPY src/Modules/PoliValko.Payments/PoliValko.Payments.csproj src/Modules/PoliValko.Payments/
 COPY src/Modules/PoliValko.Fiscal/PoliValko.Fiscal.csproj src/Modules/PoliValko.Fiscal/
 COPY src/Modules/PoliValko.Navkolo/PoliValko.Navkolo.csproj src/Modules/PoliValko.Navkolo/
-COPY src/Modules/PoliValko.Admin/PoliValko.Admin.csproj src/Modules/PoliValko.Admin/
+COPY src/Modules/PoliValko.Console/PoliValko.Console.csproj src/Modules/PoliValko.Console/
 RUN dotnet restore src/PoliValko.Api/PoliValko.Api.csproj \
  && dotnet restore src/PoliValko.Worker/PoliValko.Worker.csproj \
  && dotnet tool restore

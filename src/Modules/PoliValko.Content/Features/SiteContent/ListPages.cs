@@ -8,10 +8,10 @@ namespace PoliValko.Content.Features.SiteContent;
 
 internal static class ListPages
 {
-    public static async Task<Ok<List<AdminPageListItemDto>>> HandleAsync(PoliValkoDbContext db, CancellationToken ct) =>
+    public static async Task<Ok<List<ConsolePageListItemDto>>> HandleAsync(PoliValkoDbContext db, CancellationToken ct) =>
         TypedResults.Ok(await db.Set<ContentPage>()
             .AsNoTracking()
             .OrderBy(p => p.Title)
-            .Select(p => new AdminPageListItemDto(p.Slug, p.Title, p.UpdatedAt, p.UpdatedBy))
+            .Select(p => new ConsolePageListItemDto(p.Slug, p.Title, p.UpdatedAt, p.UpdatedBy))
             .ToListAsync(ct));
 }

@@ -14,7 +14,7 @@ namespace PoliValko.Identity;
 
 public static class IdentityModule
 {
-    public const string CookieName = "pv_admin";
+    public const string CookieName = "pv_console";
 
     public static IServiceCollection AddIdentityModule(this IServiceCollection services, IConfiguration configuration)
     {
@@ -63,11 +63,11 @@ public static class IdentityModule
         return services;
     }
 
-    public static RouteGroupBuilder MapAdminAuthEndpoints(this RouteGroupBuilder admin) =>
-        AuthEndpoints.Map(admin);
+    public static RouteGroupBuilder MapConsoleAuthEndpoints(this RouteGroupBuilder console) =>
+        AuthEndpoints.Map(console);
 
-    public static RouteGroupBuilder MapAdminStaffEndpoints(this RouteGroupBuilder admin) =>
-        StaffEndpoints.Map(admin);
+    public static RouteGroupBuilder MapConsoleStaffEndpoints(this RouteGroupBuilder console) =>
+        StaffEndpoints.Map(console);
 
     public static Task SeedUsersAsync(IServiceProvider services, CancellationToken ct = default) =>
         IdentitySeeder.SeedAsync(services, ct);

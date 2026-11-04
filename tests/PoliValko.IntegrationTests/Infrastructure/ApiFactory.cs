@@ -85,9 +85,23 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     public Task<T> WithDbAsync<T>(Func<PoliValkoDbContext, Task<T>> action) =>
         WithScopeAsync(services => action(services.GetRequiredService<PoliValkoDbContext>()));
 
-    public Task<int> ProcessOutboxAsync() =>
-        WithScopeAsync(services => services.GetRequiredService<OutboxProcessor>()
-            .ProcessBatchAsync(TestContext.Current.CancellationToken));
+    public async Task<int> ProcessOutboxAsync()
+    {
+        var total = 0;
+        for (var round = 0; round < 50; round++)
+        {
+            var processed = await WithScopeAsync(services => services.GetRequiredService<OutboxProcessor>()
+                .ProcessBatchAsync(TestContext.Current.CancellationToken));
+            if (processed == 0)
+            {
+                break;
+            }
+
+            total += processed;
+        }
+
+        return total;
+    }
 
     public Task<Product> AddProductAsync(
         string categorySlug,

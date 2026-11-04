@@ -4,7 +4,7 @@ import type { components } from "@/shared/api/schema";
 import { formatDateTime, formatMoney } from "@/shared/lib/format";
 import { orderStatusLabel } from "@/shared/lib/labels";
 
-export type SearchResult = components["schemas"]["AdminSearchDto"];
+export type SearchResult = components["schemas"]["ConsoleSearchDto"];
 export type PaletteSection = { href: string; label: string; icon: ReactNode };
 export type PaletteItem = { key: string; href: string; icon: ReactNode; image?: string | null; title: string; sub: string; side?: string };
 export type PaletteGroup = { title: string; items: PaletteItem[] };

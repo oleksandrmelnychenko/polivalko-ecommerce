@@ -2,7 +2,7 @@ import type { components } from "@/shared/api/schema";
 import type { OrderStatus } from "@/shared/api/types";
 import { orderStatusLabel } from "@/shared/lib/labels";
 
-type Counts = components["schemas"]["AdminOrderCountsDto"];
+type Counts = components["schemas"]["ConsoleOrderCountsDto"];
 
 export function OrdersStatusTabs({ status, counts, onStatus }: { status: string; counts?: Counts; onStatus: (status: string) => void }) {
   const countOf = (s: OrderStatus) => counts?.byStatus.find((x) => x.status === s)?.count ?? 0;

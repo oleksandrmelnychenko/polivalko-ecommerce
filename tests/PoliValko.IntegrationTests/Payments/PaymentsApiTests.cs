@@ -6,7 +6,7 @@ using System.Text.Json;
 using PoliValko.Fiscal.Domain;
 using PoliValko.Fiscal.Features.Receipts;
 using PoliValko.Ordering.Contracts;
-using PoliValko.Ordering.Features.Admin.Orders;
+using PoliValko.Ordering.Features.Console.Orders;
 using PoliValko.Ordering.Features.Checkout;
 using PoliValko.Payments.Features.Checkout;
 
@@ -102,44 +102,44 @@ public sealed class PaymentsApiTests(ApiFactory api)
         await api.ProcessOutboxAsync();
 
         var admin = await Staff.AdminAsync(api);
-        var cancelPaid = await admin.PostAsJsonAsync($"/api/v1/admin/orders/{created.Number}/status", new { status = "cancelled" }, Ct);
+        var cancelPaid = await admin.PostAsJsonAsync($"/api/v1/console/orders/{created.Number}/status", new { status = "cancelled" }, Ct);
         cancelPaid.StatusCode.ShouldBe(HttpStatusCode.Conflict);
 
-        var tooMany = await admin.PostWithKeyAsync($"/api/v1/admin/orders/{created.Number}/refunds", new CreateRefundRequest([new RefundLineRequest(first.Id, 3)], "Забагато"));
+        var tooMany = await admin.PostWithKeyAsync($"/api/v1/console/orders/{created.Number}/refunds", new CreateRefundRequest([new RefundLineRequest(first.Id, 3)], "Забагато"));
         tooMany.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
         var partial = await (await admin.PostWithKeyAsync(
-                $"/api/v1/admin/orders/{created.Number}/refunds",
+                $"/api/v1/console/orders/{created.Number}/refunds",
                 new CreateRefundRequest([new RefundLineRequest(first.Id, 1)], "Покупець повернув один секатор")))
-            .ReadAsync<AdminOrderDto>();
+            .ReadAsync<ConsoleOrderDto>();
         partial.RefundMethod.ShouldBe(RefundMethod.Provider);
         partial.Refunds.ShouldHaveSingleItem().Status.ShouldBe(RefundStatus.Pending);
 
         await api.ProcessOutboxAsync();
         await api.ProcessOutboxAsync();
-        var afterPartial = await admin.GetFromJsonAsync<AdminOrderDto>($"/api/v1/admin/orders/{created.Number}", TestJson.Options, Ct);
+        var afterPartial = await admin.GetFromJsonAsync<ConsoleOrderDto>($"/api/v1/console/orders/{created.Number}", TestJson.Options, Ct);
         afterPartial!.PaymentStatus.ShouldBe(PaymentStatus.PartiallyRefunded);
         afterPartial.RefundedAmount.Value.ShouldBe("500.00");
         afterPartial.Refundable.ShouldBe([new RefundableItemDto(first.Id, 1), new RefundableItemDto(second.Id, 1)], ignoreOrder: true);
 
         await (await admin.PostWithKeyAsync(
-                $"/api/v1/admin/orders/{created.Number}/refunds",
+                $"/api/v1/console/orders/{created.Number}/refunds",
                 new CreateRefundRequest([new RefundLineRequest(first.Id, 1), new RefundLineRequest(second.Id, 1)], "Скасування")))
-            .ReadAsync<AdminOrderDto>();
+            .ReadAsync<ConsoleOrderDto>();
         await api.ProcessOutboxAsync();
         await api.ProcessOutboxAsync();
 
-        var refunded = await admin.GetFromJsonAsync<AdminOrderDto>($"/api/v1/admin/orders/{created.Number}", TestJson.Options, Ct);
+        var refunded = await admin.GetFromJsonAsync<ConsoleOrderDto>($"/api/v1/console/orders/{created.Number}", TestJson.Options, Ct);
         refunded!.PaymentStatus.ShouldBe(PaymentStatus.Refunded);
         refunded.RefundedAmount.Value.ShouldBe("1150.00");
         refunded.AllowedTransitions.ShouldContain(OrderStatus.Cancelled);
 
-        var receipts = await admin.GetFromJsonAsync<List<ReceiptDto>>($"/api/v1/admin/orders/{created.Number}/receipts", TestJson.Options, Ct);
+        var receipts = await admin.GetFromJsonAsync<List<ReceiptDto>>($"/api/v1/console/orders/{created.Number}/receipts", TestJson.Options, Ct);
         receipts!.Select(r => (r.Kind, r.Amount.Value)).ShouldBe(
             [(ReceiptKind.Sell, "1150.00"), (ReceiptKind.Return, "500.00"), (ReceiptKind.Return, "650.00")]);
         receipts!.ShouldAllBe(r => r.Status == ReceiptStatus.Issued);
 
-        (await admin.PostAsJsonAsync($"/api/v1/admin/orders/{created.Number}/status", new { status = "cancelled", reason = "Кошти повернуто" }, Ct))
+        (await admin.PostAsJsonAsync($"/api/v1/console/orders/{created.Number}/status", new { status = "cancelled", reason = "Кошти повернуто" }, Ct))
             .StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -151,24 +151,24 @@ public sealed class PaymentsApiTests(ApiFactory api)
             .ReadAsync<OrderCreatedDto>(HttpStatusCode.Created);
         var admin = await Staff.AdminAsync(api);
 
-        var notYet = await admin.PostWithKeyAsync($"/api/v1/admin/orders/{created.Number}/refunds", new CreateRefundRequest([new RefundLineRequest(product.Id, 1)], "Рано"));
+        var notYet = await admin.PostWithKeyAsync($"/api/v1/console/orders/{created.Number}/refunds", new CreateRefundRequest([new RefundLineRequest(product.Id, 1)], "Рано"));
         notYet.StatusCode.ShouldBe(HttpStatusCode.Conflict);
 
         foreach (var status in new[] { "confirmed", "shipped", "completed" })
         {
-            (await admin.PostAsJsonAsync($"/api/v1/admin/orders/{created.Number}/status", new { status }, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+            (await admin.PostAsJsonAsync($"/api/v1/console/orders/{created.Number}/status", new { status }, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
         }
 
         var refund = await (await admin.PostWithKeyAsync(
-                $"/api/v1/admin/orders/{created.Number}/refunds",
+                $"/api/v1/console/orders/{created.Number}/refunds",
                 new CreateRefundRequest([new RefundLineRequest(product.Id, 1)], "Повернення в магазині")))
-            .ReadAsync<AdminOrderDto>();
+            .ReadAsync<ConsoleOrderDto>();
         refund.Refunds.ShouldHaveSingleItem().Method.ShouldBe(RefundMethod.Manual);
         refund.Refunds[0].Status.ShouldBe(RefundStatus.Succeeded);
         refund.PaymentStatus.ShouldBe(PaymentStatus.NotRequired);
 
         await api.ProcessOutboxAsync();
-        var receipts = await admin.GetFromJsonAsync<List<ReceiptDto>>($"/api/v1/admin/orders/{created.Number}/receipts", TestJson.Options, Ct);
+        var receipts = await admin.GetFromJsonAsync<List<ReceiptDto>>($"/api/v1/console/orders/{created.Number}/receipts", TestJson.Options, Ct);
         receipts!.Select(r => r.Kind).ShouldBe([ReceiptKind.Sell, ReceiptKind.Return]);
     }
 

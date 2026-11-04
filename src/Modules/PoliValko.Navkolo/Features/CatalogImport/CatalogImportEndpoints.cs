@@ -7,14 +7,14 @@ namespace PoliValko.Navkolo.Features.CatalogImport;
 
 internal static class CatalogImportEndpoints
 {
-    public static RouteGroupBuilder Map(RouteGroupBuilder admin)
+    public static RouteGroupBuilder Map(RouteGroupBuilder console)
     {
-        admin.MapGroup("/integration/navkolo").WithTags("Admin").RequireStaff(StaffPolicies.Admin)
+        console.MapGroup("/integration/navkolo").WithTags("Console").RequireStaff(StaffPolicies.Admin)
             .MapPost("/import", ImportCatalogFile.HandleAsync)
             .DisableAntiforgery()
-            .WithName("AdminImportCatalog")
+            .WithName("ConsoleImportCatalog")
             .WithSummary("Імпорт каталогу з файлу JSON або CSV зі звітом помилок")
             .ProducesProblem(StatusCodes.Status400BadRequest);
-        return admin;
+        return console;
     }
 }

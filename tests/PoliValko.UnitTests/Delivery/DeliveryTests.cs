@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using PoliValko.Delivery.Domain;
-using PoliValko.Delivery.Features.Admin;
+using PoliValko.Delivery.Features.Console;
 using PoliValko.Delivery.Features.Directory;
 using PoliValko.Delivery.Features.DirectorySync;
 using PoliValko.Delivery.Integrations.NovaPoshta;

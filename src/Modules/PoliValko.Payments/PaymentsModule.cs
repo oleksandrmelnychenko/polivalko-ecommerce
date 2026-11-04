@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Infrastructure;
 using PoliValko.Ordering.Contracts;
 using PoliValko.Payments.Configuration;
-using PoliValko.Payments.Features.Admin;
+using PoliValko.Payments.Features.Console;
 using PoliValko.Payments.Features.Checkout;
 using PoliValko.Payments.Features.Processing;
 using PoliValko.Payments.Features.Refunds;
@@ -47,6 +47,6 @@ public static class PaymentsModule
     public static IEndpointRouteBuilder MapPaymentEndpoints(this IEndpointRouteBuilder api) =>
         PaymentEndpoints.Map(api);
 
-    public static RouteGroupBuilder MapAdminPaymentEndpoints(this RouteGroupBuilder admin) =>
-        AdminPaymentEndpoints.Map(admin);
+    public static RouteGroupBuilder MapConsolePaymentEndpoints(this RouteGroupBuilder console) =>
+        ConsolePaymentEndpoints.Map(console);
 }

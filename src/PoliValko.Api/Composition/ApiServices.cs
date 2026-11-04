@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using PoliValko.Admin;
+using PoliValko.Console;
 using PoliValko.Catalog;
 using PoliValko.Content;
 using PoliValko.Delivery;
@@ -31,7 +31,7 @@ public static class ApiServices
             .AddNavkoloModule(configuration)
             .AddIdentityModule(configuration)
             .AddNotificationsModule(configuration)
-            .AddAdminModule(configuration);
+            .AddConsoleModule(configuration);
 
         services.AddApiProblemDetails();
         services.AddApiRateLimiting();

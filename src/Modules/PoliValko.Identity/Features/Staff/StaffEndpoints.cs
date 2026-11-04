@@ -7,35 +7,35 @@ namespace PoliValko.Identity.Features.Staff;
 
 internal static class StaffEndpoints
 {
-    public static RouteGroupBuilder Map(RouteGroupBuilder admin)
+    public static RouteGroupBuilder Map(RouteGroupBuilder console)
     {
-        var users = admin.MapGroup("/users").WithTags("Admin").RequireStaff(StaffPolicies.Admin);
+        var users = console.MapGroup("/users").WithTags("Console").RequireStaff(StaffPolicies.Admin);
         users.MapGet(string.Empty, ListStaffUsers.HandleAsync)
-            .WithName("AdminListUsers")
+            .WithName("ConsoleListUsers")
             .WithSummary("Працівники та їхні ролі (лише адміністратор)");
         users.MapPost(string.Empty, CreateStaffUser.HandleAsync)
-            .WithName("AdminCreateUser")
+            .WithName("ConsoleCreateUser")
             .WithSummary("Новий працівник з роллю адміністратора або менеджера");
         users.MapPut("/{id}", UpdateStaffUser.HandleAsync)
-            .WithName("AdminUpdateUser")
+            .WithName("ConsoleUpdateUser")
             .WithSummary("Ім'я та роль працівника")
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
         users.MapPost("/{id}/lock", LockStaffUser.HandleAsync)
-            .WithName("AdminLockUser")
+            .WithName("ConsoleLockUser")
             .WithSummary("Заблокувати або розблокувати доступ")
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
         users.MapPost("/{id}/password", ResetStaffPassword.HandleAsync)
-            .WithName("AdminResetUserPassword")
+            .WithName("ConsoleResetUserPassword")
             .WithSummary("Новий пароль працівнику; активні сесії завершуються")
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        admin.MapGroup("/auth").WithTags("Admin").RequireStaff()
+        console.MapGroup("/auth").WithTags("Console").RequireStaff()
             .MapPost("/password", ChangeOwnPassword.HandleAsync)
-            .WithName("AdminChangeOwnPassword")
+            .WithName("ConsoleChangeOwnPassword")
             .WithSummary("Зміна власного пароля");
 
-        return admin;
+        return console;
     }
 }

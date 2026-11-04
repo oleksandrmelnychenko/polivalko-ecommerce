@@ -63,7 +63,7 @@ internal sealed class CatalogImporter(
             {
                 if (!byGroup.TryGetValue(record.GroupRef!, out var category))
                 {
-                    errors.Add(new SyncError(label, $"Невідома група Navkolo «{record.GroupRef}». Зв'яжіть її з розділом сайту в адмінці."));
+                    errors.Add(new SyncError(label, $"Невідома група Navkolo «{record.GroupRef}». Зв'яжіть її з розділом сайту в консолі."));
                     continue;
                 }
 

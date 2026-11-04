@@ -7,7 +7,7 @@ namespace PoliValko.Infrastructure.Security;
 public static class AuthProblems
 {
     public static Task WriteUnauthorizedAsync(HttpContext http) =>
-        WriteAsync(http, StatusCodes.Status401Unauthorized, "auth.unauthorized", "Потрібен вхід", "Увійдіть до адмінки.");
+        WriteAsync(http, StatusCodes.Status401Unauthorized, "auth.unauthorized", "Потрібен вхід", "Увійдіть до консолі.");
 
     public static Task WriteForbiddenAsync(HttpContext http) =>
         WriteAsync(http, StatusCodes.Status403Forbidden, "auth.forbidden", "Недостатньо прав", "Ця дія доступна лише адміністратору.");

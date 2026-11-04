@@ -3,7 +3,7 @@ import type { components } from "@/shared/api/schema";
 import { formatDateTime, formatMoney, plural } from "@/shared/lib/format";
 import { initials } from "../lib/initials";
 
-type Customer = components["schemas"]["AdminCustomerDto"];
+type Customer = components["schemas"]["ConsoleCustomerDto"];
 
 export function CustomersTable({ customers }: { customers: Customer[] }) {
   return (

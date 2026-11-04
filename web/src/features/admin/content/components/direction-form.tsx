@@ -9,7 +9,7 @@ import { useAdminForm } from "@/shared/admin/form/use-admin-form";
 import type { components } from "@/shared/api/schema";
 import { saveService } from "../api/client";
 
-type Direction = components["schemas"]["AdminServiceDirectionDto"];
+type Direction = components["schemas"]["ConsoleServiceDirectionDto"];
 
 export function DirectionForm({ initial }: { initial: Direction }) {
   const form = useAdminForm();

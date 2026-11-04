@@ -11,7 +11,7 @@ namespace PoliValko.Content.Features.SiteContent;
 
 internal static class SaveServiceDirection
 {
-    public static async Task<Results<Ok<AdminServiceDirectionDto>, ValidationProblem, ProblemHttpResult>> HandleAsync(
+    public static async Task<Results<Ok<ConsoleServiceDirectionDto>, ValidationProblem, ProblemHttpResult>> HandleAsync(
         string code,
         SaveServiceDirectionRequest request,
         PoliValkoDbContext db,
@@ -42,6 +42,6 @@ internal static class SaveServiceDirection
         audit.Record("content.service_direction_updated", "ServiceDirection", code, new { content.IsVisible, content.SortOrder });
         await db.SaveChangesAsync(ct);
         await storefront.InvalidateAsync(["services"], ct);
-        return TypedResults.Ok(new AdminServiceDirectionDto(code, direction.Name, content.Description, content.SortOrder, content.IsVisible));
+        return TypedResults.Ok(new ConsoleServiceDirectionDto(code, direction.Name, content.Description, content.SortOrder, content.IsVisible));
     }
 }

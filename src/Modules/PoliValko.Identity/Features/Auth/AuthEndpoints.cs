@@ -8,14 +8,14 @@ namespace PoliValko.Identity.Features.Auth;
 
 internal static class AuthEndpoints
 {
-    public static RouteGroupBuilder Map(RouteGroupBuilder admin)
+    public static RouteGroupBuilder Map(RouteGroupBuilder console)
     {
-        var auth = admin.MapGroup("/auth").WithTags("Admin");
+        var auth = console.MapGroup("/auth").WithTags("Console");
 
         auth.MapPost("/login", Login.HandleAsync)
             .RequireRateLimiting(RateLimitPolicies.Login)
-            .WithName("AdminLogin")
-            .WithSummary("Вхід працівника; встановлює cookie pv_admin")
+            .WithName("ConsoleLogin")
+            .WithSummary("Вхід працівника; встановлює cookie pv_console")
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status429TooManyRequests);
@@ -23,19 +23,19 @@ internal static class AuthEndpoints
         auth.MapPost("/logout", Logout.HandleAsync)
             .RequireAuthorization(StaffPolicies.Staff)
             .RequireCsrf()
-            .WithName("AdminLogout")
+            .WithName("ConsoleLogout")
             .WithSummary("Вихід");
 
         auth.MapGet("/me", Me.Handle)
             .RequireAuthorization(StaffPolicies.Staff)
-            .WithName("AdminMe")
+            .WithName("ConsoleMe")
             .WithSummary("Поточний працівник і його ролі")
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         auth.MapGet("/csrf", GetCsrfToken.Handle)
-            .WithName("AdminCsrf")
+            .WithName("ConsoleCsrf")
             .WithSummary("Токен для заголовка X-CSRF-TOKEN; отримуйте після входу");
 
-        return admin;
+        return console;
     }
 }

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { BagIcon, ClipboardIcon, FileTextIcon, GridIcon, ListIcon, PlugIcon, TagIcon, UserIcon, UsersIcon } from "@/shared/ui/icons";
 import type { components } from "@/shared/api/schema";
 
-export type Summary = components["schemas"]["AdminSummaryDto"];
+export type Summary = components["schemas"]["ConsoleSummaryDto"];
 export type NavLink = { href: string; label: string; icon: ReactNode; adminOnly: boolean; badge?: (s: Summary) => number };
 
 export const groups: { title: string; links: NavLink[] }[] = [

@@ -83,7 +83,7 @@ public sealed class OutboxProcessor(
                 {
                     outbox.Enqueue(new IntegrationAlert(
                         "Операцію не виконано",
-                        $"{message.Type}: {message.Attempts} невдалих спроб. Повторіть її в адмінці, розділ «Синхронізація». Помилка: {ex.Message}"));
+                        $"{message.Type}: {message.Attempts} невдалих спроб. Повторіть її в консолі, розділ «Синхронізація». Помилка: {ex.Message}"));
                     await db.SaveChangesAsync(CancellationToken.None);
                 }
             }

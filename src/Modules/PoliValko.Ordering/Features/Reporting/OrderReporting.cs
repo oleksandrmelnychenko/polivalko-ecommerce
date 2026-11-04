@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Ordering.Contracts;
 using PoliValko.Ordering.Domain;
-using PoliValko.Ordering.Features.Admin.Customers;
-using PoliValko.Ordering.Features.Admin.Orders;
+using PoliValko.Ordering.Features.Console.Customers;
+using PoliValko.Ordering.Features.Console.Orders;
 
 namespace PoliValko.Ordering.Features.Reporting;
 

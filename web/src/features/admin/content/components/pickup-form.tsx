@@ -9,7 +9,7 @@ import { useAdminForm } from "@/shared/admin/form/use-admin-form";
 import type { components } from "@/shared/api/schema";
 import { savePickupPoint } from "../api/client";
 
-type PickupPoint = components["schemas"]["AdminPickupPointDto"];
+type PickupPoint = components["schemas"]["ConsolePickupPointDto"];
 type TextField = Exclude<keyof ReturnType<typeof toValues>, "isActive">;
 
 export function PickupForm({ initial }: { initial: PickupPoint }) {

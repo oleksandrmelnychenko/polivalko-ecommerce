@@ -166,7 +166,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Заявка на послугу. Зберігається в адмінці, відповідальний отримує повідомлення. */
+        /** Заявка на послугу. Зберігається в консолі, відповідальний отримує повідомлення. */
         post: operations["CreateServiceRequest"];
         delete?: never;
         options?: never;
@@ -412,7 +412,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/auth/login": {
+    "/api/v1/console/auth/login": {
         parameters: {
             query?: never;
             header?: never;
@@ -421,15 +421,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Вхід працівника; встановлює cookie pv_admin */
-        post: operations["AdminLogin"];
+        /** Вхід працівника; встановлює cookie pv_console */
+        post: operations["ConsoleLogin"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/auth/logout": {
+    "/api/v1/console/auth/logout": {
         parameters: {
             query?: never;
             header?: never;
@@ -439,14 +439,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Вихід */
-        post: operations["AdminLogout"];
+        post: operations["ConsoleLogout"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/auth/me": {
+    "/api/v1/console/auth/me": {
         parameters: {
             query?: never;
             header?: never;
@@ -454,7 +454,7 @@ export interface paths {
             cookie?: never;
         };
         /** Поточний працівник і його ролі */
-        get: operations["AdminMe"];
+        get: operations["ConsoleMe"];
         put?: never;
         post?: never;
         delete?: never;
@@ -463,7 +463,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/auth/csrf": {
+    "/api/v1/console/auth/csrf": {
         parameters: {
             query?: never;
             header?: never;
@@ -471,7 +471,7 @@ export interface paths {
             cookie?: never;
         };
         /** Токен для заголовка X-CSRF-TOKEN; отримуйте після входу */
-        get: operations["AdminCsrf"];
+        get: operations["ConsoleCsrf"];
         put?: never;
         post?: never;
         delete?: never;
@@ -480,7 +480,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/users": {
+    "/api/v1/console/users": {
         parameters: {
             query?: never;
             header?: never;
@@ -488,17 +488,17 @@ export interface paths {
             cookie?: never;
         };
         /** Працівники та їхні ролі (лише адміністратор) */
-        get: operations["AdminListUsers"];
+        get: operations["ConsoleListUsers"];
         put?: never;
         /** Новий працівник з роллю адміністратора або менеджера */
-        post: operations["AdminCreateUser"];
+        post: operations["ConsoleCreateUser"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/users/{id}": {
+    "/api/v1/console/users/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -507,7 +507,7 @@ export interface paths {
         };
         get?: never;
         /** Ім'я та роль працівника */
-        put: operations["AdminUpdateUser"];
+        put: operations["ConsoleUpdateUser"];
         post?: never;
         delete?: never;
         options?: never;
@@ -515,7 +515,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/users/{id}/lock": {
+    "/api/v1/console/users/{id}/lock": {
         parameters: {
             query?: never;
             header?: never;
@@ -525,14 +525,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Заблокувати або розблокувати доступ */
-        post: operations["AdminLockUser"];
+        post: operations["ConsoleLockUser"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/users/{id}/password": {
+    "/api/v1/console/users/{id}/password": {
         parameters: {
             query?: never;
             header?: never;
@@ -542,14 +542,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Новий пароль працівнику; активні сесії завершуються */
-        post: operations["AdminResetUserPassword"];
+        post: operations["ConsoleResetUserPassword"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/auth/password": {
+    "/api/v1/console/auth/password": {
         parameters: {
             query?: never;
             header?: never;
@@ -559,14 +559,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Зміна власного пароля */
-        post: operations["AdminChangeOwnPassword"];
+        post: operations["ConsoleChangeOwnPassword"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/summary": {
+    "/api/v1/console/summary": {
         parameters: {
             query?: never;
             header?: never;
@@ -574,7 +574,7 @@ export interface paths {
             cookie?: never;
         };
         /** Нові замовлення, очікують оплати чи підтвердження, заявки, повернення, збої інтеграцій */
-        get: operations["AdminSummary"];
+        get: operations["ConsoleSummary"];
         put?: never;
         post?: never;
         delete?: never;
@@ -583,7 +583,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/dashboard": {
+    "/api/v1/console/dashboard": {
         parameters: {
             query?: never;
             header?: never;
@@ -591,7 +591,7 @@ export interface paths {
             cookie?: never;
         };
         /** Виручка, замовлення, середній чек і покупці за 7, 30 чи 90 днів із порівнянням, динаміка по днях, топ товарів, залишки */
-        get: operations["AdminDashboard"];
+        get: operations["ConsoleDashboard"];
         put?: never;
         post?: never;
         delete?: never;
@@ -600,7 +600,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/search": {
+    "/api/v1/console/search": {
         parameters: {
             query?: never;
             header?: never;
@@ -608,7 +608,7 @@ export interface paths {
             cookie?: never;
         };
         /** Пошук по замовленнях (номер, телефон), товарах (назва, артикул) і покупцях (ім'я, телефон); від 2 символів */
-        get: operations["AdminSearch"];
+        get: operations["ConsoleSearch"];
         put?: never;
         post?: never;
         delete?: never;
@@ -617,7 +617,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/orders": {
+    "/api/v1/console/orders": {
         parameters: {
             query?: never;
             header?: never;
@@ -625,7 +625,7 @@ export interface paths {
             cookie?: never;
         };
         /** Замовлення: пошук за номером або телефоном, фільтри за статусом, оплатою, способом отримання й датами */
-        get: operations["AdminListOrders"];
+        get: operations["ConsoleListOrders"];
         put?: never;
         post?: never;
         delete?: never;
@@ -634,7 +634,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/orders/counts": {
+    "/api/v1/console/orders/counts": {
         parameters: {
             query?: never;
             header?: never;
@@ -642,7 +642,7 @@ export interface paths {
             cookie?: never;
         };
         /** Кількість замовлень за статусами з тими самими фільтрами, що й у списку */
-        get: operations["AdminOrderCounts"];
+        get: operations["ConsoleOrderCounts"];
         put?: never;
         post?: never;
         delete?: never;
@@ -651,7 +651,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/orders/export": {
+    "/api/v1/console/orders/export": {
         parameters: {
             query?: never;
             header?: never;
@@ -659,7 +659,7 @@ export interface paths {
             cookie?: never;
         };
         /** Вивантаження замовлень у CSV для Excel (UTF-8 з BOM, роздільник «;», до 5000 рядків) */
-        get: operations["AdminExportOrders"];
+        get: operations["ConsoleExportOrders"];
         put?: never;
         post?: never;
         delete?: never;
@@ -668,7 +668,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/orders/{number}": {
+    "/api/v1/console/orders/{number}": {
         parameters: {
             query?: never;
             header?: never;
@@ -676,7 +676,7 @@ export interface paths {
             cookie?: never;
         };
         /** Картка замовлення з історією обробки, поверненнями й передачею в Navkolo */
-        get: operations["AdminGetOrder"];
+        get: operations["ConsoleGetOrder"];
         put?: never;
         post?: never;
         delete?: never;
@@ -685,7 +685,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/orders/{number}/status": {
+    "/api/v1/console/orders/{number}/status": {
         parameters: {
             query?: never;
             header?: never;
@@ -695,14 +695,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Зміна статусу за таблицею переходів. Статус оплати тут не змінюється. */
-        post: operations["AdminChangeOrderStatus"];
+        post: operations["ConsoleChangeOrderStatus"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/orders/{number}/refunds": {
+    "/api/v1/console/orders/{number}/refunds": {
         parameters: {
             query?: never;
             header?: never;
@@ -712,14 +712,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Повне або часткове повернення за позиціями: на картку через провайдера або фіксація готівкового повернення */
-        post: operations["AdminCreateRefund"];
+        post: operations["ConsoleCreateRefund"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/customers": {
+    "/api/v1/console/customers": {
         parameters: {
             query?: never;
             header?: never;
@@ -727,7 +727,7 @@ export interface paths {
             cookie?: never;
         };
         /** Покупці, зібрані із замовлень за телефоном: кількість замовлень, сума покупок, перше й останнє */
-        get: operations["AdminListCustomers"];
+        get: operations["ConsoleListCustomers"];
         put?: never;
         post?: never;
         delete?: never;
@@ -736,7 +736,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/orders/{number}/payments": {
+    "/api/v1/console/orders/{number}/payments": {
         parameters: {
             query?: never;
             header?: never;
@@ -744,7 +744,7 @@ export interface paths {
             cookie?: never;
         };
         /** Спроби онлайн-оплати замовлення та отримані повідомлення провайдера */
-        get: operations["AdminListOrderPayments"];
+        get: operations["ConsoleListOrderPayments"];
         put?: never;
         post?: never;
         delete?: never;
@@ -753,7 +753,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/orders/{number}/receipts": {
+    "/api/v1/console/orders/{number}/receipts": {
         parameters: {
             query?: never;
             header?: never;
@@ -761,7 +761,7 @@ export interface paths {
             cookie?: never;
         };
         /** Фіскальні чеки продажу й повернення за замовленням */
-        get: operations["AdminListOrderReceipts"];
+        get: operations["ConsoleListOrderReceipts"];
         put?: never;
         post?: never;
         delete?: never;
@@ -770,7 +770,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/catalog/products": {
+    "/api/v1/console/catalog/products": {
         parameters: {
             query?: never;
             header?: never;
@@ -778,7 +778,7 @@ export interface paths {
             cookie?: never;
         };
         /** Товари: пошук за назвою чи артикулом, фільтр за розділом, видимістю й залишком */
-        get: operations["AdminListProducts"];
+        get: operations["ConsoleListProducts"];
         put?: never;
         post?: never;
         delete?: never;
@@ -787,7 +787,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/catalog/products/visibility": {
+    "/api/v1/console/catalog/products/visibility": {
         parameters: {
             query?: never;
             header?: never;
@@ -797,14 +797,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Показати або приховати кілька товарів одним запитом (до 200) */
-        post: operations["AdminSetProductsVisibility"];
+        post: operations["ConsoleSetProductsVisibility"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/catalog/products/{id}": {
+    "/api/v1/console/catalog/products/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -812,9 +812,9 @@ export interface paths {
             cookie?: never;
         };
         /** Товар: поля Navkolo (лише читання) і поля сайту */
-        get: operations["AdminGetProduct"];
+        get: operations["ConsoleGetProduct"];
         /** Поля сайту: назва для вітрини, адреса, розділ, опис, характеристики, SEO, видимість */
-        put: operations["AdminUpdateProduct"];
+        put: operations["ConsoleUpdateProduct"];
         post?: never;
         delete?: never;
         options?: never;
@@ -822,7 +822,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/catalog/products/{id}/images": {
+    "/api/v1/console/catalog/products/{id}/images": {
         parameters: {
             query?: never;
             header?: never;
@@ -831,16 +831,16 @@ export interface paths {
         };
         get?: never;
         /** Порядок фото та підписи alt */
-        put: operations["AdminUpdateProductImages"];
+        put: operations["ConsoleUpdateProductImages"];
         /** Завантаження фото (JPEG, PNG або WebP, до 10 МБ) */
-        post: operations["AdminUploadProductImage"];
+        post: operations["ConsoleUploadProductImage"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/catalog/products/{id}/images/{imageId}": {
+    "/api/v1/console/catalog/products/{id}/images/{imageId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -851,13 +851,13 @@ export interface paths {
         put?: never;
         post?: never;
         /** Видалення фото */
-        delete: operations["AdminDeleteProductImage"];
+        delete: operations["ConsoleDeleteProductImage"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/catalog/attribute-names": {
+    "/api/v1/console/catalog/attribute-names": {
         parameters: {
             query?: never;
             header?: never;
@@ -865,7 +865,7 @@ export interface paths {
             cookie?: never;
         };
         /** Назви характеристик товарів розділу (для налаштування фільтрів) */
-        get: operations["AdminListAttributeNames"];
+        get: operations["ConsoleListAttributeNames"];
         put?: never;
         post?: never;
         delete?: never;
@@ -874,7 +874,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/catalog/categories": {
+    "/api/v1/console/catalog/categories": {
         parameters: {
             query?: never;
             header?: never;
@@ -882,17 +882,17 @@ export interface paths {
             cookie?: never;
         };
         /** Розділи й підрозділи з порядком, видимістю, зв'язком із Navkolo і фільтрами */
-        get: operations["AdminListCategories"];
+        get: operations["ConsoleListCategories"];
         put?: never;
         /** Новий підрозділ. Верхній рівень відповідає групам Navkolo й не створюється вручну. */
-        post: operations["AdminCreateCategory"];
+        post: operations["ConsoleCreateCategory"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/catalog/categories/{id}": {
+    "/api/v1/console/catalog/categories/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -901,16 +901,16 @@ export interface paths {
         };
         get?: never;
         /** Зміна розділу; зміна адреси створює перенаправлення */
-        put: operations["AdminUpdateCategory"];
+        put: operations["ConsoleUpdateCategory"];
         post?: never;
         /** Видалення порожнього підрозділу */
-        delete: operations["AdminDeleteCategory"];
+        delete: operations["ConsoleDeleteCategory"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/catalog/collections": {
+    "/api/v1/console/catalog/collections": {
         parameters: {
             query?: never;
             header?: never;
@@ -918,17 +918,17 @@ export interface paths {
             cookie?: never;
         };
         /** Добірки головної */
-        get: operations["AdminListCollections"];
+        get: operations["ConsoleListCollections"];
         put?: never;
         /** Нова добірка */
-        post: operations["AdminCreateCollection"];
+        post: operations["ConsoleCreateCollection"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/catalog/collections/{id}": {
+    "/api/v1/console/catalog/collections/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -937,16 +937,16 @@ export interface paths {
         };
         get?: never;
         /** Назва, порядок, видимість і товари добірки */
-        put: operations["AdminUpdateCollection"];
+        put: operations["ConsoleUpdateCollection"];
         post?: never;
         /** Видалення добірки */
-        delete: operations["AdminDeleteCollection"];
+        delete: operations["ConsoleDeleteCollection"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/catalog/redirects": {
+    "/api/v1/console/catalog/redirects": {
         parameters: {
             query?: never;
             header?: never;
@@ -954,17 +954,17 @@ export interface paths {
             cookie?: never;
         };
         /** Постійні перенаправлення зі старих адрес */
-        get: operations["AdminListRedirects"];
+        get: operations["ConsoleListRedirects"];
         put?: never;
         /** Ручне перенаправлення */
-        post: operations["AdminCreateRedirect"];
+        post: operations["ConsoleCreateRedirect"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/catalog/redirects/{id}": {
+    "/api/v1/console/catalog/redirects/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -975,13 +975,13 @@ export interface paths {
         put?: never;
         post?: never;
         /** Видалення перенаправлення */
-        delete: operations["AdminDeleteRedirect"];
+        delete: operations["ConsoleDeleteRedirect"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/content/pages": {
+    "/api/v1/console/content/pages": {
         parameters: {
             query?: never;
             header?: never;
@@ -989,7 +989,7 @@ export interface paths {
             cookie?: never;
         };
         /** Текстові сторінки */
-        get: operations["AdminListPages"];
+        get: operations["ConsoleListPages"];
         put?: never;
         post?: never;
         delete?: never;
@@ -998,7 +998,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/content/pages/{slug}": {
+    "/api/v1/console/content/pages/{slug}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1006,9 +1006,9 @@ export interface paths {
             cookie?: never;
         };
         /** Текстова сторінка для редагування */
-        get: operations["AdminGetPage"];
+        get: operations["ConsoleGetPage"];
         /** Зміна тексту сторінки; HTML очищається від небезпечної розмітки */
-        put: operations["AdminSavePage"];
+        put: operations["ConsoleSavePage"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1016,7 +1016,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/content/contacts": {
+    "/api/v1/console/content/contacts": {
         parameters: {
             query?: never;
             header?: never;
@@ -1024,9 +1024,9 @@ export interface paths {
             cookie?: never;
         };
         /** Контакти магазину */
-        get: operations["AdminGetContacts"];
+        get: operations["ConsoleGetContacts"];
         /** Зміна контактів магазину */
-        put: operations["AdminSaveContacts"];
+        put: operations["ConsoleSaveContacts"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1034,7 +1034,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/content/services": {
+    "/api/v1/console/content/services": {
         parameters: {
             query?: never;
             header?: never;
@@ -1042,7 +1042,7 @@ export interface paths {
             cookie?: never;
         };
         /** Напрямки послуг з описами */
-        get: operations["AdminListServiceDirections"];
+        get: operations["ConsoleListServiceDirections"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1051,7 +1051,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/content/services/{code}": {
+    "/api/v1/console/content/services/{code}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1060,7 +1060,7 @@ export interface paths {
         };
         get?: never;
         /** Опис, порядок і видимість напрямку послуг */
-        put: operations["AdminSaveServiceDirection"];
+        put: operations["ConsoleSaveServiceDirection"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1068,7 +1068,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/integration/navkolo/import": {
+    "/api/v1/console/integration/navkolo/import": {
         parameters: {
             query?: never;
             header?: never;
@@ -1078,14 +1078,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Імпорт каталогу з файлу JSON або CSV зі звітом помилок */
-        post: operations["AdminImportCatalog"];
+        post: operations["ConsoleImportCatalog"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/integration/status": {
+    "/api/v1/console/integration/status": {
         parameters: {
             query?: never;
             header?: never;
@@ -1093,7 +1093,7 @@ export interface paths {
             cookie?: never;
         };
         /** Фонові завдання, свіжість даних каталогу й черга операцій */
-        get: operations["AdminIntegrationStatus"];
+        get: operations["ConsoleIntegrationStatus"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1102,7 +1102,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/integration/runs": {
+    "/api/v1/console/integration/runs": {
         parameters: {
             query?: never;
             header?: never;
@@ -1110,7 +1110,7 @@ export interface paths {
             cookie?: never;
         };
         /** Останні запуски завдань зі звітом помилок */
-        get: operations["AdminListSyncRuns"];
+        get: operations["ConsoleListSyncRuns"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1119,7 +1119,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/integration/jobs/{job}/run": {
+    "/api/v1/console/integration/jobs/{job}/run": {
         parameters: {
             query?: never;
             header?: never;
@@ -1129,14 +1129,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Запустити завдання поза розкладом (виконає Worker протягом хвилини) */
-        post: operations["AdminRunSyncJob"];
+        post: operations["ConsoleRunSyncJob"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/integration/outbox": {
+    "/api/v1/console/integration/outbox": {
         parameters: {
             query?: never;
             header?: never;
@@ -1144,7 +1144,7 @@ export interface paths {
             cookie?: never;
         };
         /** Невдалі й відкладені операції черги */
-        get: operations["AdminListOutbox"];
+        get: operations["ConsoleListOutbox"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1153,7 +1153,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/integration/outbox/{id}/retry": {
+    "/api/v1/console/integration/outbox/{id}/retry": {
         parameters: {
             query?: never;
             header?: never;
@@ -1163,14 +1163,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Ручний повтор невдалої операції */
-        post: operations["AdminRetryOutboxMessage"];
+        post: operations["ConsoleRetryOutboxMessage"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/audit": {
+    "/api/v1/console/audit": {
         parameters: {
             query?: never;
             header?: never;
@@ -1178,7 +1178,7 @@ export interface paths {
             cookie?: never;
         };
         /** Журнал змін: доступи, статуси замовлень, повернення, каталог і налаштування */
-        get: operations["AdminListAudit"];
+        get: operations["ConsoleListAudit"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1187,7 +1187,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/service-requests": {
+    "/api/v1/console/service-requests": {
         parameters: {
             query?: never;
             header?: never;
@@ -1195,7 +1195,7 @@ export interface paths {
             cookie?: never;
         };
         /** Заявки на послуги */
-        get: operations["AdminListServiceRequests"];
+        get: operations["ConsoleListServiceRequests"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1204,7 +1204,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/service-requests/{id}/status": {
+    "/api/v1/console/service-requests/{id}/status": {
         parameters: {
             query?: never;
             header?: never;
@@ -1214,14 +1214,14 @@ export interface paths {
         get?: never;
         put?: never;
         /** Статус заявки: нова, в роботі, виконана */
-        post: operations["AdminChangeServiceRequestStatus"];
+        post: operations["ConsoleChangeServiceRequestStatus"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/delivery/pickup-points": {
+    "/api/v1/console/delivery/pickup-points": {
         parameters: {
             query?: never;
             header?: never;
@@ -1229,7 +1229,7 @@ export interface paths {
             cookie?: never;
         };
         /** Точки самовивозу, разом із вимкненими */
-        get: operations["AdminListPickupPoints"];
+        get: operations["ConsoleListPickupPoints"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1238,7 +1238,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/delivery/pickup-points/{code}": {
+    "/api/v1/console/delivery/pickup-points/{code}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1247,7 +1247,7 @@ export interface paths {
         };
         get?: never;
         /** Змінити точку самовивозу: адреса, графік роботи, інструкція покупцю */
-        put: operations["AdminUpdatePickupPoint"];
+        put: operations["ConsoleUpdatePickupPoint"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1255,7 +1255,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/delivery/novaposhta": {
+    "/api/v1/console/delivery/novaposhta": {
         parameters: {
             query?: never;
             header?: never;
@@ -1263,7 +1263,7 @@ export interface paths {
             cookie?: never;
         };
         /** Довідник Нової пошти: режим, кількість записів і стан синхронізації */
-        get: operations["AdminGetNovaPoshtaStatus"];
+        get: operations["ConsoleGetNovaPoshtaStatus"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1276,264 +1276,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        AdminCategoryDto: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            parentId: null | string;
-            slug: string;
-            name: string;
-            /** Format: int32 */
-            sortOrder: number;
-            isVisible: boolean;
-            navkoloRef: null | string;
-            filterAttributes: string[];
-            seoTitle: null | string;
-            seoDescription: null | string;
-            /** Format: int32 */
-            productCount: number;
-        };
-        AdminCollectionDto: {
-            /** Format: uuid */
-            id: string;
-            code: string;
-            title: string;
-            /** Format: int32 */
-            sortOrder: number;
-            isVisible: boolean;
-            products: components["schemas"]["AdminProductListItemDto"][];
-        };
-        AdminCustomerDto: {
-            phone: string;
-            name: string;
-            email: null | string;
-            /** Format: int32 */
-            orders: number;
-            totalSpent: components["schemas"]["MoneyDto"];
-            /** Format: date-time */
-            firstOrderAt: string;
-            /** Format: date-time */
-            lastOrderAt: string;
-            lastOrderNumber: string;
-        };
-        AdminDashboardDto: {
-            /** Format: int32 */
-            days: number;
-            current: components["schemas"]["DashboardTotalsDto"];
-            previous: components["schemas"]["DashboardTotalsDto"];
-            byDay: components["schemas"]["DashboardDayDto"][];
-            byStatus: components["schemas"]["OrderStatusCountDto"][];
-            topProducts: components["schemas"]["DashboardTopProductDto"][];
-            lowStock: components["schemas"]["DashboardLowStockDto"][];
-            byDelivery: components["schemas"]["DashboardDeliveryDto"][];
-        };
-        AdminOrderCountsDto: {
-            /** Format: int32 */
-            all: number;
-            byStatus: components["schemas"]["OrderStatusCountDto"][];
-        };
-        AdminOrderDto: {
-            number: string;
-            /** Format: date-time */
-            createdAt: string;
-            status: components["schemas"]["OrderStatus"];
-            paymentMethod: string;
-            paymentStatus: components["schemas"]["PaymentStatus"];
-            deliveryMethod: string;
-            settlementName: null | string;
-            warehouseName: null | string;
-            pickupAddress: null | string;
-            customerName: string;
-            phone: string;
-            email: null | string;
-            comment: null | string;
-            items: components["schemas"]["OrderItemDto"][];
-            subtotal: components["schemas"]["MoneyDto"];
-            total: components["schemas"]["MoneyDto"];
-            history: components["schemas"]["AdminOrderHistoryDto"][];
-            allowedTransitions: components["schemas"]["OrderStatus"][];
-            deliveryAddress: null | string;
-            sellerName: string;
-            sellerTaxId: null | string;
-            navkoloOrderRef: null | string;
-            /** Format: date-time */
-            navkoloExportedAt: null | string;
-            refundedAmount: components["schemas"]["MoneyDto"];
-            refunds: components["schemas"]["AdminRefundDto"][];
-            refundMethod: null | components["schemas"]["RefundMethod"];
-            refundable: components["schemas"]["RefundableItemDto"][];
-        };
-        AdminOrderHistoryDto: {
-            from: null | components["schemas"]["OrderStatus"];
-            to: components["schemas"]["OrderStatus"];
-            /** Format: date-time */
-            at: string;
-            by: string;
-            reason: null | string;
-        };
-        AdminOrderListItemDto: {
-            number: string;
-            /** Format: date-time */
-            createdAt: string;
-            customerName: string;
-            phone: string;
-            total: components["schemas"]["MoneyDto"];
-            status: components["schemas"]["OrderStatus"];
-            paymentStatus: components["schemas"]["PaymentStatus"];
-            deliveryMethod: string;
-            /** Format: int32 */
-            itemsCount: number;
-        };
-        AdminPageListItemDto: {
-            slug: string;
-            title: string;
-            /** Format: date-time */
-            updatedAt: string;
-            updatedBy: null | string;
-        };
-        AdminPaymentDto: {
-            /** Format: uuid */
-            id: string;
-            provider: string;
-            providerPaymentId: null | string;
-            amount: components["schemas"]["MoneyDto"];
-            status: components["schemas"]["PaymentAttemptStatus"];
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-            failureReason: null | string;
-            /** Format: int32 */
-            eventsCount: number;
-        };
-        AdminPickupPointDto: {
-            code: string;
-            name: string;
-            address: string;
-            schedule: string;
-            instructions: string;
-            mapUrl: null | string;
-            isActive: boolean;
-        };
-        AdminProductDto: {
-            /** Format: uuid */
-            id: string;
-            navkolo: components["schemas"]["NavkoloProductFieldsDto"];
-            displayName: null | string;
-            slug: string;
-            /** Format: uuid */
-            categoryId: string;
-            brand: null | string;
-            descriptionHtml: null | string;
-            isVisible: boolean;
-            seoTitle: null | string;
-            seoDescription: null | string;
-            attributes: components["schemas"]["ProductAttributeDto"][];
-            images: components["schemas"]["AdminProductImageDto"][];
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        AdminProductImageDto: {
-            /** Format: uuid */
-            id: string;
-            url: string;
-            alt: string;
-            /** Format: int32 */
-            sortOrder: number;
-            credit: null | string;
-        };
-        AdminProductListItemDto: {
-            /** Format: uuid */
-            id: string;
-            sku: string;
-            name: string;
-            displayName: null | string;
-            slug: string;
-            categoryName: string;
-            price: components["schemas"]["MoneyDto"];
-            /** Format: double */
-            stock: number;
-            isVisible: boolean;
-            imageUrl: null | string;
-            hasDescription: boolean;
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        AdminRedirectDto: {
-            /** Format: uuid */
-            id: string;
-            fromPath: string;
-            toPath: string;
-            isAutomatic: boolean;
-            /** Format: date-time */
-            createdAt: string;
-        };
-        AdminRefundDto: {
-            /** Format: uuid */
-            id: string;
-            /** Format: date-time */
-            createdAt: string;
-            method: components["schemas"]["RefundMethod"];
-            status: components["schemas"]["RefundStatus"];
-            amount: components["schemas"]["MoneyDto"];
-            reason: string;
-            requestedBy: string;
-            /** Format: date-time */
-            completedAt: null | string;
-            error: null | string;
-            lines: components["schemas"]["AdminRefundLineDto"][];
-        };
-        AdminRefundLineDto: {
-            /** Format: uuid */
-            productId: string;
-            sku: string;
-            name: string;
-            /** Format: int32 */
-            quantity: number;
-            amount: components["schemas"]["MoneyDto"];
-        };
-        AdminSearchDto: {
-            orders: components["schemas"]["SearchOrderHitDto"][];
-            products: components["schemas"]["SearchProductHitDto"][];
-            customers: components["schemas"]["SearchCustomerHitDto"][];
-        };
-        AdminServiceDirectionDto: {
-            code: string;
-            name: string;
-            description: null | string;
-            /** Format: int32 */
-            sortOrder: number;
-            isVisible: boolean;
-        };
-        AdminServiceRequestDto: {
-            /** Format: uuid */
-            id: string;
-            /** Format: date-time */
-            createdAt: string;
-            name: string;
-            phone: string;
-            directionCode: string;
-            directionName: string;
-            comment: null | string;
-            status: components["schemas"]["ServiceRequestStatus"];
-        };
-        AdminSummaryDto: {
-            /** Format: int32 */
-            newOrders: number;
-            /** Format: int32 */
-            awaitingPayment: number;
-            /** Format: int32 */
-            awaitingConfirmation: number;
-            /** Format: int32 */
-            newServiceRequests: number;
-            /** Format: int32 */
-            pendingRefunds: number;
-            /** Format: int32 */
-            failedOperations: number;
-            catalogDataFresh: boolean;
-            /** Format: date-time */
-            lastPriceSync: null | string;
-        };
         AttributeFacet: {
             name: string;
             values: components["schemas"]["AttributeValueFacet"][];
@@ -1612,6 +1354,264 @@ export interface components {
         CompleteSandboxPaymentRequest: {
             outcome: null | string;
             notify: null | boolean;
+        };
+        ConsoleCategoryDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            parentId: null | string;
+            slug: string;
+            name: string;
+            /** Format: int32 */
+            sortOrder: number;
+            isVisible: boolean;
+            navkoloRef: null | string;
+            filterAttributes: string[];
+            seoTitle: null | string;
+            seoDescription: null | string;
+            /** Format: int32 */
+            productCount: number;
+        };
+        ConsoleCollectionDto: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            title: string;
+            /** Format: int32 */
+            sortOrder: number;
+            isVisible: boolean;
+            products: components["schemas"]["ConsoleProductListItemDto"][];
+        };
+        ConsoleCustomerDto: {
+            phone: string;
+            name: string;
+            email: null | string;
+            /** Format: int32 */
+            orders: number;
+            totalSpent: components["schemas"]["MoneyDto"];
+            /** Format: date-time */
+            firstOrderAt: string;
+            /** Format: date-time */
+            lastOrderAt: string;
+            lastOrderNumber: string;
+        };
+        ConsoleDashboardDto: {
+            /** Format: int32 */
+            days: number;
+            current: components["schemas"]["DashboardTotalsDto"];
+            previous: components["schemas"]["DashboardTotalsDto"];
+            byDay: components["schemas"]["DashboardDayDto"][];
+            byStatus: components["schemas"]["OrderStatusCountDto"][];
+            topProducts: components["schemas"]["DashboardTopProductDto"][];
+            lowStock: components["schemas"]["DashboardLowStockDto"][];
+            byDelivery: components["schemas"]["DashboardDeliveryDto"][];
+        };
+        ConsoleOrderCountsDto: {
+            /** Format: int32 */
+            all: number;
+            byStatus: components["schemas"]["OrderStatusCountDto"][];
+        };
+        ConsoleOrderDto: {
+            number: string;
+            /** Format: date-time */
+            createdAt: string;
+            status: components["schemas"]["OrderStatus"];
+            paymentMethod: string;
+            paymentStatus: components["schemas"]["PaymentStatus"];
+            deliveryMethod: string;
+            settlementName: null | string;
+            warehouseName: null | string;
+            pickupAddress: null | string;
+            customerName: string;
+            phone: string;
+            email: null | string;
+            comment: null | string;
+            items: components["schemas"]["OrderItemDto"][];
+            subtotal: components["schemas"]["MoneyDto"];
+            total: components["schemas"]["MoneyDto"];
+            history: components["schemas"]["ConsoleOrderHistoryDto"][];
+            allowedTransitions: components["schemas"]["OrderStatus"][];
+            deliveryAddress: null | string;
+            sellerName: string;
+            sellerTaxId: null | string;
+            navkoloOrderRef: null | string;
+            /** Format: date-time */
+            navkoloExportedAt: null | string;
+            refundedAmount: components["schemas"]["MoneyDto"];
+            refunds: components["schemas"]["ConsoleRefundDto"][];
+            refundMethod: null | components["schemas"]["RefundMethod"];
+            refundable: components["schemas"]["RefundableItemDto"][];
+        };
+        ConsoleOrderHistoryDto: {
+            from: null | components["schemas"]["OrderStatus"];
+            to: components["schemas"]["OrderStatus"];
+            /** Format: date-time */
+            at: string;
+            by: string;
+            reason: null | string;
+        };
+        ConsoleOrderListItemDto: {
+            number: string;
+            /** Format: date-time */
+            createdAt: string;
+            customerName: string;
+            phone: string;
+            total: components["schemas"]["MoneyDto"];
+            status: components["schemas"]["OrderStatus"];
+            paymentStatus: components["schemas"]["PaymentStatus"];
+            deliveryMethod: string;
+            /** Format: int32 */
+            itemsCount: number;
+        };
+        ConsolePageListItemDto: {
+            slug: string;
+            title: string;
+            /** Format: date-time */
+            updatedAt: string;
+            updatedBy: null | string;
+        };
+        ConsolePaymentDto: {
+            /** Format: uuid */
+            id: string;
+            provider: string;
+            providerPaymentId: null | string;
+            amount: components["schemas"]["MoneyDto"];
+            status: components["schemas"]["PaymentAttemptStatus"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            failureReason: null | string;
+            /** Format: int32 */
+            eventsCount: number;
+        };
+        ConsolePickupPointDto: {
+            code: string;
+            name: string;
+            address: string;
+            schedule: string;
+            instructions: string;
+            mapUrl: null | string;
+            isActive: boolean;
+        };
+        ConsoleProductDto: {
+            /** Format: uuid */
+            id: string;
+            navkolo: components["schemas"]["NavkoloProductFieldsDto"];
+            displayName: null | string;
+            slug: string;
+            /** Format: uuid */
+            categoryId: string;
+            brand: null | string;
+            descriptionHtml: null | string;
+            isVisible: boolean;
+            seoTitle: null | string;
+            seoDescription: null | string;
+            attributes: components["schemas"]["ProductAttributeDto"][];
+            images: components["schemas"]["ConsoleProductImageDto"][];
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ConsoleProductImageDto: {
+            /** Format: uuid */
+            id: string;
+            url: string;
+            alt: string;
+            /** Format: int32 */
+            sortOrder: number;
+            credit: null | string;
+        };
+        ConsoleProductListItemDto: {
+            /** Format: uuid */
+            id: string;
+            sku: string;
+            name: string;
+            displayName: null | string;
+            slug: string;
+            categoryName: string;
+            price: components["schemas"]["MoneyDto"];
+            /** Format: double */
+            stock: number;
+            isVisible: boolean;
+            imageUrl: null | string;
+            hasDescription: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ConsoleRedirectDto: {
+            /** Format: uuid */
+            id: string;
+            fromPath: string;
+            toPath: string;
+            isAutomatic: boolean;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        ConsoleRefundDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            createdAt: string;
+            method: components["schemas"]["RefundMethod"];
+            status: components["schemas"]["RefundStatus"];
+            amount: components["schemas"]["MoneyDto"];
+            reason: string;
+            requestedBy: string;
+            /** Format: date-time */
+            completedAt: null | string;
+            error: null | string;
+            lines: components["schemas"]["ConsoleRefundLineDto"][];
+        };
+        ConsoleRefundLineDto: {
+            /** Format: uuid */
+            productId: string;
+            sku: string;
+            name: string;
+            /** Format: int32 */
+            quantity: number;
+            amount: components["schemas"]["MoneyDto"];
+        };
+        ConsoleSearchDto: {
+            orders: components["schemas"]["SearchOrderHitDto"][];
+            products: components["schemas"]["SearchProductHitDto"][];
+            customers: components["schemas"]["SearchCustomerHitDto"][];
+        };
+        ConsoleServiceDirectionDto: {
+            code: string;
+            name: string;
+            description: null | string;
+            /** Format: int32 */
+            sortOrder: number;
+            isVisible: boolean;
+        };
+        ConsoleServiceRequestDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            createdAt: string;
+            name: string;
+            phone: string;
+            directionCode: string;
+            directionName: string;
+            comment: null | string;
+            status: components["schemas"]["ServiceRequestStatus"];
+        };
+        ConsoleSummaryDto: {
+            /** Format: int32 */
+            newOrders: number;
+            /** Format: int32 */
+            awaitingPayment: number;
+            /** Format: int32 */
+            awaitingConfirmation: number;
+            /** Format: int32 */
+            newServiceRequests: number;
+            /** Format: int32 */
+            pendingRefunds: number;
+            /** Format: int32 */
+            failedOperations: number;
+            catalogDataFresh: boolean;
+            /** Format: date-time */
+            lastPriceSync: null | string;
         };
         ContactsDto: {
             storePhone: null | string;
@@ -1877,52 +1877,52 @@ export interface components {
         };
         /** @enum {unknown} */
         OutboxStatus: "pending" | "processed" | "failed";
-        PagedResponseOfAdminCustomerDto: {
-            items: components["schemas"]["AdminCustomerDto"][];
-            /** Format: int32 */
-            page: number;
-            /** Format: int32 */
-            pageSize: number;
-            /** Format: int32 */
-            totalItems: number;
-            /** Format: int32 */
-            totalPages: number;
-        };
-        PagedResponseOfAdminOrderListItemDto: {
-            items: components["schemas"]["AdminOrderListItemDto"][];
-            /** Format: int32 */
-            page: number;
-            /** Format: int32 */
-            pageSize: number;
-            /** Format: int32 */
-            totalItems: number;
-            /** Format: int32 */
-            totalPages: number;
-        };
-        PagedResponseOfAdminProductListItemDto: {
-            items: components["schemas"]["AdminProductListItemDto"][];
-            /** Format: int32 */
-            page: number;
-            /** Format: int32 */
-            pageSize: number;
-            /** Format: int32 */
-            totalItems: number;
-            /** Format: int32 */
-            totalPages: number;
-        };
-        PagedResponseOfAdminServiceRequestDto: {
-            items: components["schemas"]["AdminServiceRequestDto"][];
-            /** Format: int32 */
-            page: number;
-            /** Format: int32 */
-            pageSize: number;
-            /** Format: int32 */
-            totalItems: number;
-            /** Format: int32 */
-            totalPages: number;
-        };
         PagedResponseOfAuditEntryDto: {
             items: components["schemas"]["AuditEntryDto"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            totalItems: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
+        PagedResponseOfConsoleCustomerDto: {
+            items: components["schemas"]["ConsoleCustomerDto"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            totalItems: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
+        PagedResponseOfConsoleOrderListItemDto: {
+            items: components["schemas"]["ConsoleOrderListItemDto"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            totalItems: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
+        PagedResponseOfConsoleProductListItemDto: {
+            items: components["schemas"]["ConsoleProductListItemDto"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            totalItems: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
+        PagedResponseOfConsoleServiceRequestDto: {
+            items: components["schemas"]["ConsoleServiceRequestDto"][];
             /** Format: int32 */
             page: number;
             /** Format: int32 */
@@ -3110,7 +3110,7 @@ export interface operations {
             };
         };
     };
-    AdminLogin: {
+    ConsoleLogin: {
         parameters: {
             query?: never;
             header?: never;
@@ -3161,7 +3161,7 @@ export interface operations {
             };
         };
     };
-    AdminLogout: {
+    ConsoleLogout: {
         parameters: {
             query?: never;
             header?: never;
@@ -3179,7 +3179,7 @@ export interface operations {
             };
         };
     };
-    AdminMe: {
+    ConsoleMe: {
         parameters: {
             query?: never;
             header?: never;
@@ -3208,7 +3208,7 @@ export interface operations {
             };
         };
     };
-    AdminCsrf: {
+    ConsoleCsrf: {
         parameters: {
             query?: never;
             header?: never;
@@ -3228,7 +3228,7 @@ export interface operations {
             };
         };
     };
-    AdminListUsers: {
+    ConsoleListUsers: {
         parameters: {
             query?: never;
             header?: never;
@@ -3266,7 +3266,7 @@ export interface operations {
             };
         };
     };
-    AdminCreateUser: {
+    ConsoleCreateUser: {
         parameters: {
             query?: never;
             header?: never;
@@ -3317,7 +3317,7 @@ export interface operations {
             };
         };
     };
-    AdminUpdateUser: {
+    ConsoleUpdateUser: {
         parameters: {
             query?: never;
             header?: never;
@@ -3388,7 +3388,7 @@ export interface operations {
             };
         };
     };
-    AdminLockUser: {
+    ConsoleLockUser: {
         parameters: {
             query?: never;
             header?: never;
@@ -3450,7 +3450,7 @@ export interface operations {
             };
         };
     };
-    AdminResetUserPassword: {
+    ConsoleResetUserPassword: {
         parameters: {
             query?: never;
             header?: never;
@@ -3510,7 +3510,7 @@ export interface operations {
             };
         };
     };
-    AdminChangeOwnPassword: {
+    ConsoleChangeOwnPassword: {
         parameters: {
             query?: never;
             header?: never;
@@ -3559,7 +3559,7 @@ export interface operations {
             };
         };
     };
-    AdminSummary: {
+    ConsoleSummary: {
         parameters: {
             query?: never;
             header?: never;
@@ -3574,7 +3574,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminSummaryDto"];
+                    "application/json": components["schemas"]["ConsoleSummaryDto"];
                 };
             };
             /** @description Unauthorized */
@@ -3597,7 +3597,7 @@ export interface operations {
             };
         };
     };
-    AdminDashboard: {
+    ConsoleDashboard: {
         parameters: {
             query?: {
                 days?: number;
@@ -3614,7 +3614,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminDashboardDto"];
+                    "application/json": components["schemas"]["ConsoleDashboardDto"];
                 };
             };
             /** @description Bad Request */
@@ -3646,7 +3646,7 @@ export interface operations {
             };
         };
     };
-    AdminSearch: {
+    ConsoleSearch: {
         parameters: {
             query?: {
                 q?: string;
@@ -3663,7 +3663,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminSearchDto"];
+                    "application/json": components["schemas"]["ConsoleSearchDto"];
                 };
             };
             /** @description Unauthorized */
@@ -3686,7 +3686,7 @@ export interface operations {
             };
         };
     };
-    AdminListOrders: {
+    ConsoleListOrders: {
         parameters: {
             query?: {
                 q?: string;
@@ -3711,7 +3711,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PagedResponseOfAdminOrderListItemDto"];
+                    "application/json": components["schemas"]["PagedResponseOfConsoleOrderListItemDto"];
                 };
             };
             /** @description Bad Request */
@@ -3743,7 +3743,7 @@ export interface operations {
             };
         };
     };
-    AdminOrderCounts: {
+    ConsoleOrderCounts: {
         parameters: {
             query?: {
                 q?: string;
@@ -3764,7 +3764,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminOrderCountsDto"];
+                    "application/json": components["schemas"]["ConsoleOrderCountsDto"];
                 };
             };
             /** @description Bad Request */
@@ -3796,7 +3796,7 @@ export interface operations {
             };
         };
     };
-    AdminExportOrders: {
+    ConsoleExportOrders: {
         parameters: {
             query?: {
                 q?: string;
@@ -3851,7 +3851,7 @@ export interface operations {
             };
         };
     };
-    AdminGetOrder: {
+    ConsoleGetOrder: {
         parameters: {
             query?: never;
             header?: never;
@@ -3868,7 +3868,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminOrderDto"];
+                    "application/json": components["schemas"]["ConsoleOrderDto"];
                 };
             };
             /** @description Unauthorized */
@@ -3900,7 +3900,7 @@ export interface operations {
             };
         };
     };
-    AdminChangeOrderStatus: {
+    ConsoleChangeOrderStatus: {
         parameters: {
             query?: never;
             header?: never;
@@ -3921,7 +3921,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminOrderDto"];
+                    "application/json": components["schemas"]["ConsoleOrderDto"];
                 };
             };
             /** @description Bad Request */
@@ -3971,7 +3971,7 @@ export interface operations {
             };
         };
     };
-    AdminCreateRefund: {
+    ConsoleCreateRefund: {
         parameters: {
             query?: never;
             header: {
@@ -3995,7 +3995,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminOrderDto"];
+                    "application/json": components["schemas"]["ConsoleOrderDto"];
                 };
             };
             /** @description Bad Request */
@@ -4045,7 +4045,7 @@ export interface operations {
             };
         };
     };
-    AdminListCustomers: {
+    ConsoleListCustomers: {
         parameters: {
             query?: {
                 q?: string;
@@ -4065,7 +4065,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PagedResponseOfAdminCustomerDto"];
+                    "application/json": components["schemas"]["PagedResponseOfConsoleCustomerDto"];
                 };
             };
             /** @description Bad Request */
@@ -4097,7 +4097,7 @@ export interface operations {
             };
         };
     };
-    AdminListOrderPayments: {
+    ConsoleListOrderPayments: {
         parameters: {
             query?: never;
             header?: never;
@@ -4114,7 +4114,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminPaymentDto"][];
+                    "application/json": components["schemas"]["ConsolePaymentDto"][];
                 };
             };
             /** @description Unauthorized */
@@ -4137,7 +4137,7 @@ export interface operations {
             };
         };
     };
-    AdminListOrderReceipts: {
+    ConsoleListOrderReceipts: {
         parameters: {
             query?: never;
             header?: never;
@@ -4177,7 +4177,7 @@ export interface operations {
             };
         };
     };
-    AdminListProducts: {
+    ConsoleListProducts: {
         parameters: {
             query?: {
                 q?: string;
@@ -4199,7 +4199,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PagedResponseOfAdminProductListItemDto"];
+                    "application/json": components["schemas"]["PagedResponseOfConsoleProductListItemDto"];
                 };
             };
             /** @description Bad Request */
@@ -4231,7 +4231,7 @@ export interface operations {
             };
         };
     };
-    AdminSetProductsVisibility: {
+    ConsoleSetProductsVisibility: {
         parameters: {
             query?: never;
             header?: never;
@@ -4282,7 +4282,7 @@ export interface operations {
             };
         };
     };
-    AdminGetProduct: {
+    ConsoleGetProduct: {
         parameters: {
             query?: never;
             header?: never;
@@ -4299,7 +4299,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminProductDto"];
+                    "application/json": components["schemas"]["ConsoleProductDto"];
                 };
             };
             /** @description Unauthorized */
@@ -4331,7 +4331,7 @@ export interface operations {
             };
         };
     };
-    AdminUpdateProduct: {
+    ConsoleUpdateProduct: {
         parameters: {
             query?: never;
             header?: never;
@@ -4352,7 +4352,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminProductDto"];
+                    "application/json": components["schemas"]["ConsoleProductDto"];
                 };
             };
             /** @description Bad Request */
@@ -4393,7 +4393,7 @@ export interface operations {
             };
         };
     };
-    AdminUpdateProductImages: {
+    ConsoleUpdateProductImages: {
         parameters: {
             query?: never;
             header?: never;
@@ -4414,7 +4414,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminProductDto"];
+                    "application/json": components["schemas"]["ConsoleProductDto"];
                 };
             };
             /** @description Bad Request */
@@ -4455,7 +4455,7 @@ export interface operations {
             };
         };
     };
-    AdminUploadProductImage: {
+    ConsoleUploadProductImage: {
         parameters: {
             query?: never;
             header?: never;
@@ -4480,7 +4480,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminProductDto"];
+                    "application/json": components["schemas"]["ConsoleProductDto"];
                 };
             };
             /** @description Bad Request */
@@ -4521,7 +4521,7 @@ export interface operations {
             };
         };
     };
-    AdminDeleteProductImage: {
+    ConsoleDeleteProductImage: {
         parameters: {
             query?: never;
             header?: never;
@@ -4539,7 +4539,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminProductDto"];
+                    "application/json": components["schemas"]["ConsoleProductDto"];
                 };
             };
             /** @description Unauthorized */
@@ -4571,7 +4571,7 @@ export interface operations {
             };
         };
     };
-    AdminListAttributeNames: {
+    ConsoleListAttributeNames: {
         parameters: {
             query?: {
                 categoryId?: string;
@@ -4611,7 +4611,7 @@ export interface operations {
             };
         };
     };
-    AdminListCategories: {
+    ConsoleListCategories: {
         parameters: {
             query?: never;
             header?: never;
@@ -4626,7 +4626,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminCategoryDto"][];
+                    "application/json": components["schemas"]["ConsoleCategoryDto"][];
                 };
             };
             /** @description Unauthorized */
@@ -4649,7 +4649,7 @@ export interface operations {
             };
         };
     };
-    AdminCreateCategory: {
+    ConsoleCreateCategory: {
         parameters: {
             query?: never;
             header?: never;
@@ -4668,7 +4668,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminCategoryDto"];
+                    "application/json": components["schemas"]["ConsoleCategoryDto"];
                 };
             };
             /** @description Bad Request */
@@ -4700,7 +4700,7 @@ export interface operations {
             };
         };
     };
-    AdminUpdateCategory: {
+    ConsoleUpdateCategory: {
         parameters: {
             query?: never;
             header?: never;
@@ -4721,7 +4721,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminCategoryDto"];
+                    "application/json": components["schemas"]["ConsoleCategoryDto"];
                 };
             };
             /** @description Bad Request */
@@ -4762,7 +4762,7 @@ export interface operations {
             };
         };
     };
-    AdminDeleteCategory: {
+    ConsoleDeleteCategory: {
         parameters: {
             query?: never;
             header?: never;
@@ -4818,7 +4818,7 @@ export interface operations {
             };
         };
     };
-    AdminListCollections: {
+    ConsoleListCollections: {
         parameters: {
             query?: never;
             header?: never;
@@ -4833,7 +4833,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminCollectionDto"][];
+                    "application/json": components["schemas"]["ConsoleCollectionDto"][];
                 };
             };
             /** @description Unauthorized */
@@ -4856,7 +4856,7 @@ export interface operations {
             };
         };
     };
-    AdminCreateCollection: {
+    ConsoleCreateCollection: {
         parameters: {
             query?: never;
             header?: never;
@@ -4875,7 +4875,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminCollectionDto"];
+                    "application/json": components["schemas"]["ConsoleCollectionDto"];
                 };
             };
             /** @description Bad Request */
@@ -4907,7 +4907,7 @@ export interface operations {
             };
         };
     };
-    AdminUpdateCollection: {
+    ConsoleUpdateCollection: {
         parameters: {
             query?: never;
             header?: never;
@@ -4928,7 +4928,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminCollectionDto"];
+                    "application/json": components["schemas"]["ConsoleCollectionDto"];
                 };
             };
             /** @description Bad Request */
@@ -4969,7 +4969,7 @@ export interface operations {
             };
         };
     };
-    AdminDeleteCollection: {
+    ConsoleDeleteCollection: {
         parameters: {
             query?: never;
             header?: never;
@@ -5016,7 +5016,7 @@ export interface operations {
             };
         };
     };
-    AdminListRedirects: {
+    ConsoleListRedirects: {
         parameters: {
             query?: never;
             header?: never;
@@ -5031,7 +5031,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminRedirectDto"][];
+                    "application/json": components["schemas"]["ConsoleRedirectDto"][];
                 };
             };
             /** @description Unauthorized */
@@ -5054,7 +5054,7 @@ export interface operations {
             };
         };
     };
-    AdminCreateRedirect: {
+    ConsoleCreateRedirect: {
         parameters: {
             query?: never;
             header?: never;
@@ -5073,7 +5073,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminRedirectDto"];
+                    "application/json": components["schemas"]["ConsoleRedirectDto"];
                 };
             };
             /** @description Bad Request */
@@ -5105,7 +5105,7 @@ export interface operations {
             };
         };
     };
-    AdminDeleteRedirect: {
+    ConsoleDeleteRedirect: {
         parameters: {
             query?: never;
             header?: never;
@@ -5152,7 +5152,7 @@ export interface operations {
             };
         };
     };
-    AdminListPages: {
+    ConsoleListPages: {
         parameters: {
             query?: never;
             header?: never;
@@ -5167,7 +5167,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminPageListItemDto"][];
+                    "application/json": components["schemas"]["ConsolePageListItemDto"][];
                 };
             };
             /** @description Unauthorized */
@@ -5190,7 +5190,7 @@ export interface operations {
             };
         };
     };
-    AdminGetPage: {
+    ConsoleGetPage: {
         parameters: {
             query?: never;
             header?: never;
@@ -5239,7 +5239,7 @@ export interface operations {
             };
         };
     };
-    AdminSavePage: {
+    ConsoleSavePage: {
         parameters: {
             query?: never;
             header?: never;
@@ -5301,7 +5301,7 @@ export interface operations {
             };
         };
     };
-    AdminGetContacts: {
+    ConsoleGetContacts: {
         parameters: {
             query?: never;
             header?: never;
@@ -5339,7 +5339,7 @@ export interface operations {
             };
         };
     };
-    AdminSaveContacts: {
+    ConsoleSaveContacts: {
         parameters: {
             query?: never;
             header?: never;
@@ -5390,7 +5390,7 @@ export interface operations {
             };
         };
     };
-    AdminListServiceDirections: {
+    ConsoleListServiceDirections: {
         parameters: {
             query?: never;
             header?: never;
@@ -5405,7 +5405,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminServiceDirectionDto"][];
+                    "application/json": components["schemas"]["ConsoleServiceDirectionDto"][];
                 };
             };
             /** @description Unauthorized */
@@ -5428,7 +5428,7 @@ export interface operations {
             };
         };
     };
-    AdminSaveServiceDirection: {
+    ConsoleSaveServiceDirection: {
         parameters: {
             query?: never;
             header?: never;
@@ -5449,7 +5449,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminServiceDirectionDto"];
+                    "application/json": components["schemas"]["ConsoleServiceDirectionDto"];
                 };
             };
             /** @description Bad Request */
@@ -5490,7 +5490,7 @@ export interface operations {
             };
         };
     };
-    AdminImportCatalog: {
+    ConsoleImportCatalog: {
         parameters: {
             query?: never;
             header?: never;
@@ -5543,7 +5543,7 @@ export interface operations {
             };
         };
     };
-    AdminIntegrationStatus: {
+    ConsoleIntegrationStatus: {
         parameters: {
             query?: never;
             header?: never;
@@ -5581,7 +5581,7 @@ export interface operations {
             };
         };
     };
-    AdminListSyncRuns: {
+    ConsoleListSyncRuns: {
         parameters: {
             query?: {
                 job?: string;
@@ -5621,7 +5621,7 @@ export interface operations {
             };
         };
     };
-    AdminRunSyncJob: {
+    ConsoleRunSyncJob: {
         parameters: {
             query?: never;
             header?: never;
@@ -5668,7 +5668,7 @@ export interface operations {
             };
         };
     };
-    AdminListOutbox: {
+    ConsoleListOutbox: {
         parameters: {
             query?: never;
             header?: never;
@@ -5706,7 +5706,7 @@ export interface operations {
             };
         };
     };
-    AdminRetryOutboxMessage: {
+    ConsoleRetryOutboxMessage: {
         parameters: {
             query?: never;
             header?: never;
@@ -5753,7 +5753,7 @@ export interface operations {
             };
         };
     };
-    AdminListAudit: {
+    ConsoleListAudit: {
         parameters: {
             query?: {
                 entityType?: string;
@@ -5796,7 +5796,7 @@ export interface operations {
             };
         };
     };
-    AdminListServiceRequests: {
+    ConsoleListServiceRequests: {
         parameters: {
             query?: {
                 status?: components["schemas"]["ServiceRequestStatus"];
@@ -5815,7 +5815,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PagedResponseOfAdminServiceRequestDto"];
+                    "application/json": components["schemas"]["PagedResponseOfConsoleServiceRequestDto"];
                 };
             };
             /** @description Bad Request */
@@ -5847,7 +5847,7 @@ export interface operations {
             };
         };
     };
-    AdminChangeServiceRequestStatus: {
+    ConsoleChangeServiceRequestStatus: {
         parameters: {
             query?: never;
             header?: never;
@@ -5868,7 +5868,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminServiceRequestDto"];
+                    "application/json": components["schemas"]["ConsoleServiceRequestDto"];
                 };
             };
             /** @description Bad Request */
@@ -5909,7 +5909,7 @@ export interface operations {
             };
         };
     };
-    AdminListPickupPoints: {
+    ConsoleListPickupPoints: {
         parameters: {
             query?: never;
             header?: never;
@@ -5924,7 +5924,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminPickupPointDto"][];
+                    "application/json": components["schemas"]["ConsolePickupPointDto"][];
                 };
             };
             /** @description Unauthorized */
@@ -5947,7 +5947,7 @@ export interface operations {
             };
         };
     };
-    AdminUpdatePickupPoint: {
+    ConsoleUpdatePickupPoint: {
         parameters: {
             query?: never;
             header?: never;
@@ -5968,7 +5968,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AdminPickupPointDto"];
+                    "application/json": components["schemas"]["ConsolePickupPointDto"];
                 };
             };
             /** @description Bad Request */
@@ -6009,7 +6009,7 @@ export interface operations {
             };
         };
     };
-    AdminGetNovaPoshtaStatus: {
+    ConsoleGetNovaPoshtaStatus: {
         parameters: {
             query?: never;
             header?: never;

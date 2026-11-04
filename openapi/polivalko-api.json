@@ -383,7 +383,7 @@
         "tags": [
           "Services"
         ],
-        "summary": "Заявка на послугу. Зберігається в адмінці, відповідальний отримує повідомлення.",
+        "summary": "Заявка на послугу. Зберігається в консолі, відповідальний отримує повідомлення.",
         "operationId": "CreateServiceRequest",
         "parameters": [
           {
@@ -1121,13 +1121,13 @@
         }
       }
     },
-    "/api/v1/admin/auth/login": {
+    "/api/v1/console/auth/login": {
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
-        "summary": "Вхід працівника; встановлює cookie pv_admin",
-        "operationId": "AdminLogin",
+        "summary": "Вхід працівника; встановлює cookie pv_console",
+        "operationId": "ConsoleLogin",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1182,13 +1182,13 @@
         }
       }
     },
-    "/api/v1/admin/auth/logout": {
+    "/api/v1/console/auth/logout": {
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Вихід",
-        "operationId": "AdminLogout",
+        "operationId": "ConsoleLogout",
         "responses": {
           "204": {
             "description": "No Content"
@@ -1196,13 +1196,13 @@
         }
       }
     },
-    "/api/v1/admin/auth/me": {
+    "/api/v1/console/auth/me": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Поточний працівник і його ролі",
-        "operationId": "AdminMe",
+        "operationId": "ConsoleMe",
         "responses": {
           "200": {
             "description": "OK",
@@ -1227,13 +1227,13 @@
         }
       }
     },
-    "/api/v1/admin/auth/csrf": {
+    "/api/v1/console/auth/csrf": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Токен для заголовка X-CSRF-TOKEN; отримуйте після входу",
-        "operationId": "AdminCsrf",
+        "operationId": "ConsoleCsrf",
         "responses": {
           "200": {
             "description": "OK",
@@ -1248,13 +1248,13 @@
         }
       }
     },
-    "/api/v1/admin/users": {
+    "/api/v1/console/users": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Працівники та їхні ролі (лише адміністратор)",
-        "operationId": "AdminListUsers",
+        "operationId": "ConsoleListUsers",
         "responses": {
           "401": {
             "description": "Unauthorized",
@@ -1293,10 +1293,10 @@
       },
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Новий працівник з роллю адміністратора або менеджера",
-        "operationId": "AdminCreateUser",
+        "operationId": "ConsoleCreateUser",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1351,13 +1351,13 @@
         }
       }
     },
-    "/api/v1/admin/users/{id}": {
+    "/api/v1/console/users/{id}": {
       "put": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Ім'я та роль працівника",
-        "operationId": "AdminUpdateUser",
+        "operationId": "ConsoleUpdateUser",
         "parameters": [
           {
             "name": "id",
@@ -1442,13 +1442,13 @@
         }
       }
     },
-    "/api/v1/admin/users/{id}/lock": {
+    "/api/v1/console/users/{id}/lock": {
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Заблокувати або розблокувати доступ",
-        "operationId": "AdminLockUser",
+        "operationId": "ConsoleLockUser",
         "parameters": [
           {
             "name": "id",
@@ -1523,13 +1523,13 @@
         }
       }
     },
-    "/api/v1/admin/users/{id}/password": {
+    "/api/v1/console/users/{id}/password": {
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Новий пароль працівнику; активні сесії завершуються",
-        "operationId": "AdminResetUserPassword",
+        "operationId": "ConsoleResetUserPassword",
         "parameters": [
           {
             "name": "id",
@@ -1597,13 +1597,13 @@
         }
       }
     },
-    "/api/v1/admin/auth/password": {
+    "/api/v1/console/auth/password": {
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Зміна власного пароля",
-        "operationId": "AdminChangeOwnPassword",
+        "operationId": "ConsoleChangeOwnPassword",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1651,13 +1651,13 @@
         }
       }
     },
-    "/api/v1/admin/summary": {
+    "/api/v1/console/summary": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Нові замовлення, очікують оплати чи підтвердження, заявки, повернення, збої інтеграцій",
-        "operationId": "AdminSummary",
+        "operationId": "ConsoleSummary",
         "responses": {
           "401": {
             "description": "Unauthorized",
@@ -1684,7 +1684,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminSummaryDto"
+                  "$ref": "#/components/schemas/ConsoleSummaryDto"
                 }
               }
             }
@@ -1692,13 +1692,13 @@
         }
       }
     },
-    "/api/v1/admin/dashboard": {
+    "/api/v1/console/dashboard": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Виручка, замовлення, середній чек і покупці за 7, 30 чи 90 днів із порівнянням, динаміка по днях, топ товарів, залишки",
-        "operationId": "AdminDashboard",
+        "operationId": "ConsoleDashboard",
         "parameters": [
           {
             "name": "days",
@@ -1735,7 +1735,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminDashboardDto"
+                  "$ref": "#/components/schemas/ConsoleDashboardDto"
                 }
               }
             }
@@ -1753,13 +1753,13 @@
         }
       }
     },
-    "/api/v1/admin/search": {
+    "/api/v1/console/search": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Пошук по замовленнях (номер, телефон), товарах (назва, артикул) і покупцях (ім'я, телефон); від 2 символів",
-        "operationId": "AdminSearch",
+        "operationId": "ConsoleSearch",
         "parameters": [
           {
             "name": "q",
@@ -1795,7 +1795,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminSearchDto"
+                  "$ref": "#/components/schemas/ConsoleSearchDto"
                 }
               }
             }
@@ -1803,13 +1803,13 @@
         }
       }
     },
-    "/api/v1/admin/orders": {
+    "/api/v1/console/orders": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Замовлення: пошук за номером або телефоном, фільтри за статусом, оплатою, способом отримання й датами",
-        "operationId": "AdminListOrders",
+        "operationId": "ConsoleListOrders",
         "parameters": [
           {
             "name": "q",
@@ -1905,7 +1905,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagedResponseOfAdminOrderListItemDto"
+                  "$ref": "#/components/schemas/PagedResponseOfConsoleOrderListItemDto"
                 }
               }
             }
@@ -1923,13 +1923,13 @@
         }
       }
     },
-    "/api/v1/admin/orders/counts": {
+    "/api/v1/console/orders/counts": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Кількість замовлень за статусами з тими самими фільтрами, що й у списку",
-        "operationId": "AdminOrderCounts",
+        "operationId": "ConsoleOrderCounts",
         "parameters": [
           {
             "name": "q",
@@ -1995,7 +1995,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminOrderCountsDto"
+                  "$ref": "#/components/schemas/ConsoleOrderCountsDto"
                 }
               }
             }
@@ -2013,13 +2013,13 @@
         }
       }
     },
-    "/api/v1/admin/orders/export": {
+    "/api/v1/console/orders/export": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Вивантаження замовлень у CSV для Excel (UTF-8 з BOM, роздільник «;», до 5000 рядків)",
-        "operationId": "AdminExportOrders",
+        "operationId": "ConsoleExportOrders",
         "parameters": [
           {
             "name": "q",
@@ -2117,13 +2117,13 @@
         }
       }
     },
-    "/api/v1/admin/orders/{number}": {
+    "/api/v1/console/orders/{number}": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Картка замовлення з історією обробки, поверненнями й передачею в Navkolo",
-        "operationId": "AdminGetOrder",
+        "operationId": "ConsoleGetOrder",
         "parameters": [
           {
             "name": "number",
@@ -2160,7 +2160,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminOrderDto"
+                  "$ref": "#/components/schemas/ConsoleOrderDto"
                 }
               }
             }
@@ -2178,13 +2178,13 @@
         }
       }
     },
-    "/api/v1/admin/orders/{number}/status": {
+    "/api/v1/console/orders/{number}/status": {
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Зміна статусу за таблицею переходів. Статус оплати тут не змінюється.",
-        "operationId": "AdminChangeOrderStatus",
+        "operationId": "ConsoleChangeOrderStatus",
         "parameters": [
           {
             "name": "number",
@@ -2231,7 +2231,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminOrderDto"
+                  "$ref": "#/components/schemas/ConsoleOrderDto"
                 }
               }
             }
@@ -2269,13 +2269,13 @@
         }
       }
     },
-    "/api/v1/admin/orders/{number}/refunds": {
+    "/api/v1/console/orders/{number}/refunds": {
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Повне або часткове повернення за позиціями: на картку через провайдера або фіксація готівкового повернення",
-        "operationId": "AdminCreateRefund",
+        "operationId": "ConsoleCreateRefund",
         "parameters": [
           {
             "name": "number",
@@ -2332,7 +2332,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminOrderDto"
+                  "$ref": "#/components/schemas/ConsoleOrderDto"
                 }
               }
             }
@@ -2370,13 +2370,13 @@
         }
       }
     },
-    "/api/v1/admin/customers": {
+    "/api/v1/console/customers": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Покупці, зібрані із замовлень за телефоном: кількість замовлень, сума покупок, перше й останнє",
-        "operationId": "AdminListCustomers",
+        "operationId": "ConsoleListCustomers",
         "parameters": [
           {
             "name": "q",
@@ -2435,7 +2435,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagedResponseOfAdminCustomerDto"
+                  "$ref": "#/components/schemas/PagedResponseOfConsoleCustomerDto"
                 }
               }
             }
@@ -2453,13 +2453,13 @@
         }
       }
     },
-    "/api/v1/admin/orders/{number}/payments": {
+    "/api/v1/console/orders/{number}/payments": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Спроби онлайн-оплати замовлення та отримані повідомлення провайдера",
-        "operationId": "AdminListOrderPayments",
+        "operationId": "ConsoleListOrderPayments",
         "parameters": [
           {
             "name": "number",
@@ -2498,7 +2498,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AdminPaymentDto"
+                    "$ref": "#/components/schemas/ConsolePaymentDto"
                   }
                 }
               }
@@ -2507,13 +2507,13 @@
         }
       }
     },
-    "/api/v1/admin/orders/{number}/receipts": {
+    "/api/v1/console/orders/{number}/receipts": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Фіскальні чеки продажу й повернення за замовленням",
-        "operationId": "AdminListOrderReceipts",
+        "operationId": "ConsoleListOrderReceipts",
         "parameters": [
           {
             "name": "number",
@@ -2561,13 +2561,13 @@
         }
       }
     },
-    "/api/v1/admin/catalog/products": {
+    "/api/v1/console/catalog/products": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Товари: пошук за назвою чи артикулом, фільтр за розділом, видимістю й залишком",
-        "operationId": "AdminListProducts",
+        "operationId": "ConsoleListProducts",
         "parameters": [
           {
             "name": "q",
@@ -2641,7 +2641,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagedResponseOfAdminProductListItemDto"
+                  "$ref": "#/components/schemas/PagedResponseOfConsoleProductListItemDto"
                 }
               }
             }
@@ -2659,13 +2659,13 @@
         }
       }
     },
-    "/api/v1/admin/catalog/products/visibility": {
+    "/api/v1/console/catalog/products/visibility": {
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Показати або приховати кілька товарів одним запитом (до 200)",
-        "operationId": "AdminSetProductsVisibility",
+        "operationId": "ConsoleSetProductsVisibility",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2720,13 +2720,13 @@
         }
       }
     },
-    "/api/v1/admin/catalog/products/{id}": {
+    "/api/v1/console/catalog/products/{id}": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Товар: поля Navkolo (лише читання) і поля сайту",
-        "operationId": "AdminGetProduct",
+        "operationId": "ConsoleGetProduct",
         "parameters": [
           {
             "name": "id",
@@ -2764,7 +2764,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminProductDto"
+                  "$ref": "#/components/schemas/ConsoleProductDto"
                 }
               }
             }
@@ -2783,10 +2783,10 @@
       },
       "put": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Поля сайту: назва для вітрини, адреса, розділ, опис, характеристики, SEO, видимість",
-        "operationId": "AdminUpdateProduct",
+        "operationId": "ConsoleUpdateProduct",
         "parameters": [
           {
             "name": "id",
@@ -2834,7 +2834,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminProductDto"
+                  "$ref": "#/components/schemas/ConsoleProductDto"
                 }
               }
             }
@@ -2862,13 +2862,13 @@
         }
       }
     },
-    "/api/v1/admin/catalog/products/{id}/images": {
+    "/api/v1/console/catalog/products/{id}/images": {
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Завантаження фото (JPEG, PNG або WebP, до 10 МБ)",
-        "operationId": "AdminUploadProductImage",
+        "operationId": "ConsoleUploadProductImage",
         "parameters": [
           {
             "name": "id",
@@ -2937,7 +2937,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminProductDto"
+                  "$ref": "#/components/schemas/ConsoleProductDto"
                 }
               }
             }
@@ -2966,10 +2966,10 @@
       },
       "put": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Порядок фото та підписи alt",
-        "operationId": "AdminUpdateProductImages",
+        "operationId": "ConsoleUpdateProductImages",
         "parameters": [
           {
             "name": "id",
@@ -3017,7 +3017,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminProductDto"
+                  "$ref": "#/components/schemas/ConsoleProductDto"
                 }
               }
             }
@@ -3045,13 +3045,13 @@
         }
       }
     },
-    "/api/v1/admin/catalog/products/{id}/images/{imageId}": {
+    "/api/v1/console/catalog/products/{id}/images/{imageId}": {
       "delete": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Видалення фото",
-        "operationId": "AdminDeleteProductImage",
+        "operationId": "ConsoleDeleteProductImage",
         "parameters": [
           {
             "name": "id",
@@ -3098,7 +3098,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminProductDto"
+                  "$ref": "#/components/schemas/ConsoleProductDto"
                 }
               }
             }
@@ -3116,13 +3116,13 @@
         }
       }
     },
-    "/api/v1/admin/catalog/attribute-names": {
+    "/api/v1/console/catalog/attribute-names": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Назви характеристик товарів розділу (для налаштування фільтрів)",
-        "operationId": "AdminListAttributeNames",
+        "operationId": "ConsoleListAttributeNames",
         "parameters": [
           {
             "name": "categoryId",
@@ -3170,13 +3170,13 @@
         }
       }
     },
-    "/api/v1/admin/catalog/categories": {
+    "/api/v1/console/catalog/categories": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Розділи й підрозділи з порядком, видимістю, зв'язком із Navkolo і фільтрами",
-        "operationId": "AdminListCategories",
+        "operationId": "ConsoleListCategories",
         "responses": {
           "401": {
             "description": "Unauthorized",
@@ -3205,7 +3205,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AdminCategoryDto"
+                    "$ref": "#/components/schemas/ConsoleCategoryDto"
                   }
                 }
               }
@@ -3215,10 +3215,10 @@
       },
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Новий підрозділ. Верхній рівень відповідає групам Navkolo й не створюється вручну.",
-        "operationId": "AdminCreateCategory",
+        "operationId": "ConsoleCreateCategory",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3255,7 +3255,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminCategoryDto"
+                  "$ref": "#/components/schemas/ConsoleCategoryDto"
                 }
               }
             }
@@ -3273,13 +3273,13 @@
         }
       }
     },
-    "/api/v1/admin/catalog/categories/{id}": {
+    "/api/v1/console/catalog/categories/{id}": {
       "put": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Зміна розділу; зміна адреси створює перенаправлення",
-        "operationId": "AdminUpdateCategory",
+        "operationId": "ConsoleUpdateCategory",
         "parameters": [
           {
             "name": "id",
@@ -3327,7 +3327,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminCategoryDto"
+                  "$ref": "#/components/schemas/ConsoleCategoryDto"
                 }
               }
             }
@@ -3356,10 +3356,10 @@
       },
       "delete": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Видалення порожнього підрозділу",
-        "operationId": "AdminDeleteCategory",
+        "operationId": "ConsoleDeleteCategory",
         "parameters": [
           {
             "name": "id",
@@ -3418,13 +3418,13 @@
         }
       }
     },
-    "/api/v1/admin/catalog/collections": {
+    "/api/v1/console/catalog/collections": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Добірки головної",
-        "operationId": "AdminListCollections",
+        "operationId": "ConsoleListCollections",
         "responses": {
           "401": {
             "description": "Unauthorized",
@@ -3453,7 +3453,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AdminCollectionDto"
+                    "$ref": "#/components/schemas/ConsoleCollectionDto"
                   }
                 }
               }
@@ -3463,10 +3463,10 @@
       },
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Нова добірка",
-        "operationId": "AdminCreateCollection",
+        "operationId": "ConsoleCreateCollection",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3503,7 +3503,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminCollectionDto"
+                  "$ref": "#/components/schemas/ConsoleCollectionDto"
                 }
               }
             }
@@ -3521,13 +3521,13 @@
         }
       }
     },
-    "/api/v1/admin/catalog/collections/{id}": {
+    "/api/v1/console/catalog/collections/{id}": {
       "put": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Назва, порядок, видимість і товари добірки",
-        "operationId": "AdminUpdateCollection",
+        "operationId": "ConsoleUpdateCollection",
         "parameters": [
           {
             "name": "id",
@@ -3575,7 +3575,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminCollectionDto"
+                  "$ref": "#/components/schemas/ConsoleCollectionDto"
                 }
               }
             }
@@ -3604,10 +3604,10 @@
       },
       "delete": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Видалення добірки",
-        "operationId": "AdminDeleteCollection",
+        "operationId": "ConsoleDeleteCollection",
         "parameters": [
           {
             "name": "id",
@@ -3656,13 +3656,13 @@
         }
       }
     },
-    "/api/v1/admin/catalog/redirects": {
+    "/api/v1/console/catalog/redirects": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Постійні перенаправлення зі старих адрес",
-        "operationId": "AdminListRedirects",
+        "operationId": "ConsoleListRedirects",
         "responses": {
           "401": {
             "description": "Unauthorized",
@@ -3691,7 +3691,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AdminRedirectDto"
+                    "$ref": "#/components/schemas/ConsoleRedirectDto"
                   }
                 }
               }
@@ -3701,10 +3701,10 @@
       },
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Ручне перенаправлення",
-        "operationId": "AdminCreateRedirect",
+        "operationId": "ConsoleCreateRedirect",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3741,7 +3741,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminRedirectDto"
+                  "$ref": "#/components/schemas/ConsoleRedirectDto"
                 }
               }
             }
@@ -3759,13 +3759,13 @@
         }
       }
     },
-    "/api/v1/admin/catalog/redirects/{id}": {
+    "/api/v1/console/catalog/redirects/{id}": {
       "delete": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Видалення перенаправлення",
-        "operationId": "AdminDeleteRedirect",
+        "operationId": "ConsoleDeleteRedirect",
         "parameters": [
           {
             "name": "id",
@@ -3814,13 +3814,13 @@
         }
       }
     },
-    "/api/v1/admin/content/pages": {
+    "/api/v1/console/content/pages": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Текстові сторінки",
-        "operationId": "AdminListPages",
+        "operationId": "ConsoleListPages",
         "responses": {
           "401": {
             "description": "Unauthorized",
@@ -3849,7 +3849,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AdminPageListItemDto"
+                    "$ref": "#/components/schemas/ConsolePageListItemDto"
                   }
                 }
               }
@@ -3858,13 +3858,13 @@
         }
       }
     },
-    "/api/v1/admin/content/pages/{slug}": {
+    "/api/v1/console/content/pages/{slug}": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Текстова сторінка для редагування",
-        "operationId": "AdminGetPage",
+        "operationId": "ConsoleGetPage",
         "parameters": [
           {
             "name": "slug",
@@ -3920,10 +3920,10 @@
       },
       "put": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Зміна тексту сторінки; HTML очищається від небезпечної розмітки",
-        "operationId": "AdminSavePage",
+        "operationId": "ConsoleSavePage",
         "parameters": [
           {
             "name": "slug",
@@ -3998,13 +3998,13 @@
         }
       }
     },
-    "/api/v1/admin/content/contacts": {
+    "/api/v1/console/content/contacts": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Контакти магазину",
-        "operationId": "AdminGetContacts",
+        "operationId": "ConsoleGetContacts",
         "responses": {
           "401": {
             "description": "Unauthorized",
@@ -4040,10 +4040,10 @@
       },
       "put": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Зміна контактів магазину",
-        "operationId": "AdminSaveContacts",
+        "operationId": "ConsoleSaveContacts",
         "requestBody": {
           "content": {
             "application/json": {
@@ -4098,13 +4098,13 @@
         }
       }
     },
-    "/api/v1/admin/content/services": {
+    "/api/v1/console/content/services": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Напрямки послуг з описами",
-        "operationId": "AdminListServiceDirections",
+        "operationId": "ConsoleListServiceDirections",
         "responses": {
           "401": {
             "description": "Unauthorized",
@@ -4133,7 +4133,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AdminServiceDirectionDto"
+                    "$ref": "#/components/schemas/ConsoleServiceDirectionDto"
                   }
                 }
               }
@@ -4142,13 +4142,13 @@
         }
       }
     },
-    "/api/v1/admin/content/services/{code}": {
+    "/api/v1/console/content/services/{code}": {
       "put": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Опис, порядок і видимість напрямку послуг",
-        "operationId": "AdminSaveServiceDirection",
+        "operationId": "ConsoleSaveServiceDirection",
         "parameters": [
           {
             "name": "code",
@@ -4195,7 +4195,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminServiceDirectionDto"
+                  "$ref": "#/components/schemas/ConsoleServiceDirectionDto"
                 }
               }
             }
@@ -4223,13 +4223,13 @@
         }
       }
     },
-    "/api/v1/admin/integration/navkolo/import": {
+    "/api/v1/console/integration/navkolo/import": {
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Імпорт каталогу з файлу JSON або CSV зі звітом помилок",
-        "operationId": "AdminImportCatalog",
+        "operationId": "ConsoleImportCatalog",
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -4292,13 +4292,13 @@
         }
       }
     },
-    "/api/v1/admin/integration/status": {
+    "/api/v1/console/integration/status": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Фонові завдання, свіжість даних каталогу й черга операцій",
-        "operationId": "AdminIntegrationStatus",
+        "operationId": "ConsoleIntegrationStatus",
         "responses": {
           "401": {
             "description": "Unauthorized",
@@ -4333,13 +4333,13 @@
         }
       }
     },
-    "/api/v1/admin/integration/runs": {
+    "/api/v1/console/integration/runs": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Останні запуски завдань зі звітом помилок",
-        "operationId": "AdminListSyncRuns",
+        "operationId": "ConsoleListSyncRuns",
         "parameters": [
           {
             "name": "job",
@@ -4386,13 +4386,13 @@
         }
       }
     },
-    "/api/v1/admin/integration/jobs/{job}/run": {
+    "/api/v1/console/integration/jobs/{job}/run": {
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Запустити завдання поза розкладом (виконає Worker протягом хвилини)",
-        "operationId": "AdminRunSyncJob",
+        "operationId": "ConsoleRunSyncJob",
         "parameters": [
           {
             "name": "job",
@@ -4440,13 +4440,13 @@
         }
       }
     },
-    "/api/v1/admin/integration/outbox": {
+    "/api/v1/console/integration/outbox": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Невдалі й відкладені операції черги",
-        "operationId": "AdminListOutbox",
+        "operationId": "ConsoleListOutbox",
         "responses": {
           "401": {
             "description": "Unauthorized",
@@ -4484,13 +4484,13 @@
         }
       }
     },
-    "/api/v1/admin/integration/outbox/{id}/retry": {
+    "/api/v1/console/integration/outbox/{id}/retry": {
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Ручний повтор невдалої операції",
-        "operationId": "AdminRetryOutboxMessage",
+        "operationId": "ConsoleRetryOutboxMessage",
         "parameters": [
           {
             "name": "id",
@@ -4539,13 +4539,13 @@
         }
       }
     },
-    "/api/v1/admin/audit": {
+    "/api/v1/console/audit": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Журнал змін: доступи, статуси замовлень, повернення, каталог і налаштування",
-        "operationId": "AdminListAudit",
+        "operationId": "ConsoleListAudit",
         "parameters": [
           {
             "name": "entityType",
@@ -4612,13 +4612,13 @@
         }
       }
     },
-    "/api/v1/admin/service-requests": {
+    "/api/v1/console/service-requests": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Заявки на послуги",
-        "operationId": "AdminListServiceRequests",
+        "operationId": "ConsoleListServiceRequests",
         "parameters": [
           {
             "name": "status",
@@ -4670,7 +4670,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagedResponseOfAdminServiceRequestDto"
+                  "$ref": "#/components/schemas/PagedResponseOfConsoleServiceRequestDto"
                 }
               }
             }
@@ -4688,13 +4688,13 @@
         }
       }
     },
-    "/api/v1/admin/service-requests/{id}/status": {
+    "/api/v1/console/service-requests/{id}/status": {
       "post": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Статус заявки: нова, в роботі, виконана",
-        "operationId": "AdminChangeServiceRequestStatus",
+        "operationId": "ConsoleChangeServiceRequestStatus",
         "parameters": [
           {
             "name": "id",
@@ -4742,7 +4742,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminServiceRequestDto"
+                  "$ref": "#/components/schemas/ConsoleServiceRequestDto"
                 }
               }
             }
@@ -4770,13 +4770,13 @@
         }
       }
     },
-    "/api/v1/admin/delivery/pickup-points": {
+    "/api/v1/console/delivery/pickup-points": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Точки самовивозу, разом із вимкненими",
-        "operationId": "AdminListPickupPoints",
+        "operationId": "ConsoleListPickupPoints",
         "responses": {
           "401": {
             "description": "Unauthorized",
@@ -4805,7 +4805,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AdminPickupPointDto"
+                    "$ref": "#/components/schemas/ConsolePickupPointDto"
                   }
                 }
               }
@@ -4814,13 +4814,13 @@
         }
       }
     },
-    "/api/v1/admin/delivery/pickup-points/{code}": {
+    "/api/v1/console/delivery/pickup-points/{code}": {
       "put": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Змінити точку самовивозу: адреса, графік роботи, інструкція покупцю",
-        "operationId": "AdminUpdatePickupPoint",
+        "operationId": "ConsoleUpdatePickupPoint",
         "parameters": [
           {
             "name": "code",
@@ -4867,7 +4867,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AdminPickupPointDto"
+                  "$ref": "#/components/schemas/ConsolePickupPointDto"
                 }
               }
             }
@@ -4895,13 +4895,13 @@
         }
       }
     },
-    "/api/v1/admin/delivery/novaposhta": {
+    "/api/v1/console/delivery/novaposhta": {
       "get": {
         "tags": [
-          "Admin"
+          "Console"
         ],
         "summary": "Довідник Нової пошти: режим, кількість записів і стан синхронізації",
-        "operationId": "AdminGetNovaPoshtaStatus",
+        "operationId": "ConsoleGetNovaPoshtaStatus",
         "responses": {
           "401": {
             "description": "Unauthorized",
@@ -4939,1046 +4939,6 @@
   },
   "components": {
     "schemas": {
-      "AdminCategoryDto": {
-        "required": [
-          "id",
-          "parentId",
-          "slug",
-          "name",
-          "sortOrder",
-          "isVisible",
-          "navkoloRef",
-          "filterAttributes",
-          "seoTitle",
-          "seoDescription",
-          "productCount"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "parentId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
-          "slug": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "sortOrder": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "isVisible": {
-            "type": "boolean"
-          },
-          "navkoloRef": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "filterAttributes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "seoTitle": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "seoDescription": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "productCount": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "AdminCollectionDto": {
-        "required": [
-          "id",
-          "code",
-          "title",
-          "sortOrder",
-          "isVisible",
-          "products"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "code": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "sortOrder": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "isVisible": {
-            "type": "boolean"
-          },
-          "products": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AdminProductListItemDto"
-            }
-          }
-        }
-      },
-      "AdminCustomerDto": {
-        "required": [
-          "phone",
-          "name",
-          "email",
-          "orders",
-          "totalSpent",
-          "firstOrderAt",
-          "lastOrderAt",
-          "lastOrderNumber"
-        ],
-        "type": "object",
-        "properties": {
-          "phone": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "email": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "orders": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalSpent": {
-            "$ref": "#/components/schemas/MoneyDto"
-          },
-          "firstOrderAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lastOrderAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lastOrderNumber": {
-            "type": "string"
-          }
-        }
-      },
-      "AdminDashboardDto": {
-        "required": [
-          "days",
-          "current",
-          "previous",
-          "byDay",
-          "byStatus",
-          "topProducts",
-          "lowStock",
-          "byDelivery"
-        ],
-        "type": "object",
-        "properties": {
-          "days": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "current": {
-            "$ref": "#/components/schemas/DashboardTotalsDto"
-          },
-          "previous": {
-            "$ref": "#/components/schemas/DashboardTotalsDto"
-          },
-          "byDay": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DashboardDayDto"
-            }
-          },
-          "byStatus": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/OrderStatusCountDto"
-            }
-          },
-          "topProducts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DashboardTopProductDto"
-            }
-          },
-          "lowStock": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DashboardLowStockDto"
-            }
-          },
-          "byDelivery": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DashboardDeliveryDto"
-            }
-          }
-        }
-      },
-      "AdminOrderCountsDto": {
-        "required": [
-          "all",
-          "byStatus"
-        ],
-        "type": "object",
-        "properties": {
-          "all": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "byStatus": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/OrderStatusCountDto"
-            }
-          }
-        }
-      },
-      "AdminOrderDto": {
-        "required": [
-          "number",
-          "createdAt",
-          "status",
-          "paymentMethod",
-          "paymentStatus",
-          "deliveryMethod",
-          "settlementName",
-          "warehouseName",
-          "pickupAddress",
-          "customerName",
-          "phone",
-          "email",
-          "comment",
-          "items",
-          "subtotal",
-          "total",
-          "history",
-          "allowedTransitions",
-          "deliveryAddress",
-          "sellerName",
-          "sellerTaxId",
-          "navkoloOrderRef",
-          "navkoloExportedAt",
-          "refundedAmount",
-          "refunds",
-          "refundMethod",
-          "refundable"
-        ],
-        "type": "object",
-        "properties": {
-          "number": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "status": {
-            "$ref": "#/components/schemas/OrderStatus"
-          },
-          "paymentMethod": {
-            "type": "string"
-          },
-          "paymentStatus": {
-            "$ref": "#/components/schemas/PaymentStatus"
-          },
-          "deliveryMethod": {
-            "type": "string"
-          },
-          "settlementName": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "warehouseName": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "pickupAddress": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "customerName": {
-            "type": "string"
-          },
-          "phone": {
-            "type": "string"
-          },
-          "email": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "comment": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/OrderItemDto"
-            }
-          },
-          "subtotal": {
-            "$ref": "#/components/schemas/MoneyDto"
-          },
-          "total": {
-            "$ref": "#/components/schemas/MoneyDto"
-          },
-          "history": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AdminOrderHistoryDto"
-            }
-          },
-          "allowedTransitions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/OrderStatus"
-            }
-          },
-          "deliveryAddress": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "sellerName": {
-            "type": "string"
-          },
-          "sellerTaxId": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "navkoloOrderRef": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "navkoloExportedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date-time"
-          },
-          "refundedAmount": {
-            "$ref": "#/components/schemas/MoneyDto"
-          },
-          "refunds": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AdminRefundDto"
-            }
-          },
-          "refundMethod": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/RefundMethod"
-              }
-            ]
-          },
-          "refundable": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RefundableItemDto"
-            }
-          }
-        }
-      },
-      "AdminOrderHistoryDto": {
-        "required": [
-          "from",
-          "to",
-          "at",
-          "by",
-          "reason"
-        ],
-        "type": "object",
-        "properties": {
-          "from": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/OrderStatus"
-              }
-            ]
-          },
-          "to": {
-            "$ref": "#/components/schemas/OrderStatus"
-          },
-          "at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "by": {
-            "type": "string"
-          },
-          "reason": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      },
-      "AdminOrderListItemDto": {
-        "required": [
-          "number",
-          "createdAt",
-          "customerName",
-          "phone",
-          "total",
-          "status",
-          "paymentStatus",
-          "deliveryMethod",
-          "itemsCount"
-        ],
-        "type": "object",
-        "properties": {
-          "number": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "customerName": {
-            "type": "string"
-          },
-          "phone": {
-            "type": "string"
-          },
-          "total": {
-            "$ref": "#/components/schemas/MoneyDto"
-          },
-          "status": {
-            "$ref": "#/components/schemas/OrderStatus"
-          },
-          "paymentStatus": {
-            "$ref": "#/components/schemas/PaymentStatus"
-          },
-          "deliveryMethod": {
-            "type": "string"
-          },
-          "itemsCount": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "AdminPageListItemDto": {
-        "required": [
-          "slug",
-          "title",
-          "updatedAt",
-          "updatedBy"
-        ],
-        "type": "object",
-        "properties": {
-          "slug": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedBy": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      },
-      "AdminPaymentDto": {
-        "required": [
-          "id",
-          "provider",
-          "providerPaymentId",
-          "amount",
-          "status",
-          "createdAt",
-          "updatedAt",
-          "failureReason",
-          "eventsCount"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "provider": {
-            "type": "string"
-          },
-          "providerPaymentId": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "amount": {
-            "$ref": "#/components/schemas/MoneyDto"
-          },
-          "status": {
-            "$ref": "#/components/schemas/PaymentAttemptStatus"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "failureReason": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "eventsCount": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "AdminPickupPointDto": {
-        "required": [
-          "code",
-          "name",
-          "address",
-          "schedule",
-          "instructions",
-          "mapUrl",
-          "isActive"
-        ],
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "address": {
-            "type": "string"
-          },
-          "schedule": {
-            "type": "string"
-          },
-          "instructions": {
-            "type": "string"
-          },
-          "mapUrl": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "isActive": {
-            "type": "boolean"
-          }
-        }
-      },
-      "AdminProductDto": {
-        "required": [
-          "id",
-          "navkolo",
-          "displayName",
-          "slug",
-          "categoryId",
-          "brand",
-          "descriptionHtml",
-          "isVisible",
-          "seoTitle",
-          "seoDescription",
-          "attributes",
-          "images",
-          "updatedAt"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "navkolo": {
-            "$ref": "#/components/schemas/NavkoloProductFieldsDto"
-          },
-          "displayName": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "slug": {
-            "type": "string"
-          },
-          "categoryId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "brand": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "descriptionHtml": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "isVisible": {
-            "type": "boolean"
-          },
-          "seoTitle": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "seoDescription": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "attributes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProductAttributeDto"
-            }
-          },
-          "images": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AdminProductImageDto"
-            }
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "AdminProductImageDto": {
-        "required": [
-          "id",
-          "url",
-          "alt",
-          "sortOrder",
-          "credit"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "url": {
-            "type": "string"
-          },
-          "alt": {
-            "type": "string"
-          },
-          "sortOrder": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "credit": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      },
-      "AdminProductListItemDto": {
-        "required": [
-          "id",
-          "sku",
-          "name",
-          "displayName",
-          "slug",
-          "categoryName",
-          "price",
-          "stock",
-          "isVisible",
-          "imageUrl",
-          "hasDescription",
-          "updatedAt"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sku": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "slug": {
-            "type": "string"
-          },
-          "categoryName": {
-            "type": "string"
-          },
-          "price": {
-            "$ref": "#/components/schemas/MoneyDto"
-          },
-          "stock": {
-            "type": "number",
-            "format": "double"
-          },
-          "isVisible": {
-            "type": "boolean"
-          },
-          "imageUrl": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "hasDescription": {
-            "type": "boolean"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "AdminRedirectDto": {
-        "required": [
-          "id",
-          "fromPath",
-          "toPath",
-          "isAutomatic",
-          "createdAt"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fromPath": {
-            "type": "string"
-          },
-          "toPath": {
-            "type": "string"
-          },
-          "isAutomatic": {
-            "type": "boolean"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "AdminRefundDto": {
-        "required": [
-          "id",
-          "createdAt",
-          "method",
-          "status",
-          "amount",
-          "reason",
-          "requestedBy",
-          "completedAt",
-          "error",
-          "lines"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "method": {
-            "$ref": "#/components/schemas/RefundMethod"
-          },
-          "status": {
-            "$ref": "#/components/schemas/RefundStatus"
-          },
-          "amount": {
-            "$ref": "#/components/schemas/MoneyDto"
-          },
-          "reason": {
-            "type": "string"
-          },
-          "requestedBy": {
-            "type": "string"
-          },
-          "completedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date-time"
-          },
-          "error": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "lines": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AdminRefundLineDto"
-            }
-          }
-        }
-      },
-      "AdminRefundLineDto": {
-        "required": [
-          "productId",
-          "sku",
-          "name",
-          "quantity",
-          "amount"
-        ],
-        "type": "object",
-        "properties": {
-          "productId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sku": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "quantity": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "amount": {
-            "$ref": "#/components/schemas/MoneyDto"
-          }
-        }
-      },
-      "AdminSearchDto": {
-        "required": [
-          "orders",
-          "products",
-          "customers"
-        ],
-        "type": "object",
-        "properties": {
-          "orders": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SearchOrderHitDto"
-            }
-          },
-          "products": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SearchProductHitDto"
-            }
-          },
-          "customers": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SearchCustomerHitDto"
-            }
-          }
-        }
-      },
-      "AdminServiceDirectionDto": {
-        "required": [
-          "code",
-          "name",
-          "description",
-          "sortOrder",
-          "isVisible"
-        ],
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "description": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "sortOrder": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "isVisible": {
-            "type": "boolean"
-          }
-        }
-      },
-      "AdminServiceRequestDto": {
-        "required": [
-          "id",
-          "createdAt",
-          "name",
-          "phone",
-          "directionCode",
-          "directionName",
-          "comment",
-          "status"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "name": {
-            "type": "string"
-          },
-          "phone": {
-            "type": "string"
-          },
-          "directionCode": {
-            "type": "string"
-          },
-          "directionName": {
-            "type": "string"
-          },
-          "comment": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "status": {
-            "$ref": "#/components/schemas/ServiceRequestStatus"
-          }
-        }
-      },
-      "AdminSummaryDto": {
-        "required": [
-          "newOrders",
-          "awaitingPayment",
-          "awaitingConfirmation",
-          "newServiceRequests",
-          "pendingRefunds",
-          "failedOperations",
-          "catalogDataFresh",
-          "lastPriceSync"
-        ],
-        "type": "object",
-        "properties": {
-          "newOrders": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "awaitingPayment": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "awaitingConfirmation": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "newServiceRequests": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pendingRefunds": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "failedOperations": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "catalogDataFresh": {
-            "type": "boolean"
-          },
-          "lastPriceSync": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date-time"
-          }
-        }
-      },
       "AttributeFacet": {
         "required": [
           "name",
@@ -6308,6 +5268,1046 @@
               "null",
               "boolean"
             ]
+          }
+        }
+      },
+      "ConsoleCategoryDto": {
+        "required": [
+          "id",
+          "parentId",
+          "slug",
+          "name",
+          "sortOrder",
+          "isVisible",
+          "navkoloRef",
+          "filterAttributes",
+          "seoTitle",
+          "seoDescription",
+          "productCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isVisible": {
+            "type": "boolean"
+          },
+          "navkoloRef": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "filterAttributes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "seoTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "seoDescription": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "productCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ConsoleCollectionDto": {
+        "required": [
+          "id",
+          "code",
+          "title",
+          "sortOrder",
+          "isVisible",
+          "products"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isVisible": {
+            "type": "boolean"
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleProductListItemDto"
+            }
+          }
+        }
+      },
+      "ConsoleCustomerDto": {
+        "required": [
+          "phone",
+          "name",
+          "email",
+          "orders",
+          "totalSpent",
+          "firstOrderAt",
+          "lastOrderAt",
+          "lastOrderNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "orders": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalSpent": {
+            "$ref": "#/components/schemas/MoneyDto"
+          },
+          "firstOrderAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastOrderAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastOrderNumber": {
+            "type": "string"
+          }
+        }
+      },
+      "ConsoleDashboardDto": {
+        "required": [
+          "days",
+          "current",
+          "previous",
+          "byDay",
+          "byStatus",
+          "topProducts",
+          "lowStock",
+          "byDelivery"
+        ],
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "current": {
+            "$ref": "#/components/schemas/DashboardTotalsDto"
+          },
+          "previous": {
+            "$ref": "#/components/schemas/DashboardTotalsDto"
+          },
+          "byDay": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardDayDto"
+            }
+          },
+          "byStatus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderStatusCountDto"
+            }
+          },
+          "topProducts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardTopProductDto"
+            }
+          },
+          "lowStock": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardLowStockDto"
+            }
+          },
+          "byDelivery": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardDeliveryDto"
+            }
+          }
+        }
+      },
+      "ConsoleOrderCountsDto": {
+        "required": [
+          "all",
+          "byStatus"
+        ],
+        "type": "object",
+        "properties": {
+          "all": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "byStatus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderStatusCountDto"
+            }
+          }
+        }
+      },
+      "ConsoleOrderDto": {
+        "required": [
+          "number",
+          "createdAt",
+          "status",
+          "paymentMethod",
+          "paymentStatus",
+          "deliveryMethod",
+          "settlementName",
+          "warehouseName",
+          "pickupAddress",
+          "customerName",
+          "phone",
+          "email",
+          "comment",
+          "items",
+          "subtotal",
+          "total",
+          "history",
+          "allowedTransitions",
+          "deliveryAddress",
+          "sellerName",
+          "sellerTaxId",
+          "navkoloOrderRef",
+          "navkoloExportedAt",
+          "refundedAmount",
+          "refunds",
+          "refundMethod",
+          "refundable"
+        ],
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "paymentMethod": {
+            "type": "string"
+          },
+          "paymentStatus": {
+            "$ref": "#/components/schemas/PaymentStatus"
+          },
+          "deliveryMethod": {
+            "type": "string"
+          },
+          "settlementName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "warehouseName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pickupAddress": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "comment": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemDto"
+            }
+          },
+          "subtotal": {
+            "$ref": "#/components/schemas/MoneyDto"
+          },
+          "total": {
+            "$ref": "#/components/schemas/MoneyDto"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleOrderHistoryDto"
+            }
+          },
+          "allowedTransitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderStatus"
+            }
+          },
+          "deliveryAddress": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sellerName": {
+            "type": "string"
+          },
+          "sellerTaxId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "navkoloOrderRef": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "navkoloExportedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "refundedAmount": {
+            "$ref": "#/components/schemas/MoneyDto"
+          },
+          "refunds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleRefundDto"
+            }
+          },
+          "refundMethod": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RefundMethod"
+              }
+            ]
+          },
+          "refundable": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RefundableItemDto"
+            }
+          }
+        }
+      },
+      "ConsoleOrderHistoryDto": {
+        "required": [
+          "from",
+          "to",
+          "at",
+          "by",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "from": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OrderStatus"
+              }
+            ]
+          },
+          "to": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "by": {
+            "type": "string"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ConsoleOrderListItemDto": {
+        "required": [
+          "number",
+          "createdAt",
+          "customerName",
+          "phone",
+          "total",
+          "status",
+          "paymentStatus",
+          "deliveryMethod",
+          "itemsCount"
+        ],
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "total": {
+            "$ref": "#/components/schemas/MoneyDto"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "paymentStatus": {
+            "$ref": "#/components/schemas/PaymentStatus"
+          },
+          "deliveryMethod": {
+            "type": "string"
+          },
+          "itemsCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ConsolePageListItemDto": {
+        "required": [
+          "slug",
+          "title",
+          "updatedAt",
+          "updatedBy"
+        ],
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedBy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ConsolePaymentDto": {
+        "required": [
+          "id",
+          "provider",
+          "providerPaymentId",
+          "amount",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "failureReason",
+          "eventsCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "providerPaymentId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "amount": {
+            "$ref": "#/components/schemas/MoneyDto"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PaymentAttemptStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "failureReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "eventsCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ConsolePickupPointDto": {
+        "required": [
+          "code",
+          "name",
+          "address",
+          "schedule",
+          "instructions",
+          "mapUrl",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "schedule": {
+            "type": "string"
+          },
+          "instructions": {
+            "type": "string"
+          },
+          "mapUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ConsoleProductDto": {
+        "required": [
+          "id",
+          "navkolo",
+          "displayName",
+          "slug",
+          "categoryId",
+          "brand",
+          "descriptionHtml",
+          "isVisible",
+          "seoTitle",
+          "seoDescription",
+          "attributes",
+          "images",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "navkolo": {
+            "$ref": "#/components/schemas/NavkoloProductFieldsDto"
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "slug": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "brand": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "descriptionHtml": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isVisible": {
+            "type": "boolean"
+          },
+          "seoTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "seoDescription": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductAttributeDto"
+            }
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleProductImageDto"
+            }
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ConsoleProductImageDto": {
+        "required": [
+          "id",
+          "url",
+          "alt",
+          "sortOrder",
+          "credit"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string"
+          },
+          "alt": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "credit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ConsoleProductListItemDto": {
+        "required": [
+          "id",
+          "sku",
+          "name",
+          "displayName",
+          "slug",
+          "categoryName",
+          "price",
+          "stock",
+          "isVisible",
+          "imageUrl",
+          "hasDescription",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "slug": {
+            "type": "string"
+          },
+          "categoryName": {
+            "type": "string"
+          },
+          "price": {
+            "$ref": "#/components/schemas/MoneyDto"
+          },
+          "stock": {
+            "type": "number",
+            "format": "double"
+          },
+          "isVisible": {
+            "type": "boolean"
+          },
+          "imageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "hasDescription": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ConsoleRedirectDto": {
+        "required": [
+          "id",
+          "fromPath",
+          "toPath",
+          "isAutomatic",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fromPath": {
+            "type": "string"
+          },
+          "toPath": {
+            "type": "string"
+          },
+          "isAutomatic": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ConsoleRefundDto": {
+        "required": [
+          "id",
+          "createdAt",
+          "method",
+          "status",
+          "amount",
+          "reason",
+          "requestedBy",
+          "completedAt",
+          "error",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "method": {
+            "$ref": "#/components/schemas/RefundMethod"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RefundStatus"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/MoneyDto"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "requestedBy": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleRefundLineDto"
+            }
+          }
+        }
+      },
+      "ConsoleRefundLineDto": {
+        "required": [
+          "productId",
+          "sku",
+          "name",
+          "quantity",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/MoneyDto"
+          }
+        }
+      },
+      "ConsoleSearchDto": {
+        "required": [
+          "orders",
+          "products",
+          "customers"
+        ],
+        "type": "object",
+        "properties": {
+          "orders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchOrderHitDto"
+            }
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchProductHitDto"
+            }
+          },
+          "customers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchCustomerHitDto"
+            }
+          }
+        }
+      },
+      "ConsoleServiceDirectionDto": {
+        "required": [
+          "code",
+          "name",
+          "description",
+          "sortOrder",
+          "isVisible"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isVisible": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ConsoleServiceRequestDto": {
+        "required": [
+          "id",
+          "createdAt",
+          "name",
+          "phone",
+          "directionCode",
+          "directionName",
+          "comment",
+          "status"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "directionCode": {
+            "type": "string"
+          },
+          "directionName": {
+            "type": "string"
+          },
+          "comment": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ServiceRequestStatus"
+          }
+        }
+      },
+      "ConsoleSummaryDto": {
+        "required": [
+          "newOrders",
+          "awaitingPayment",
+          "awaitingConfirmation",
+          "newServiceRequests",
+          "pendingRefunds",
+          "failedOperations",
+          "catalogDataFresh",
+          "lastPriceSync"
+        ],
+        "type": "object",
+        "properties": {
+          "newOrders": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "awaitingPayment": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "awaitingConfirmation": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "newServiceRequests": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendingRefunds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failedOperations": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "catalogDataFresh": {
+            "type": "boolean"
+          },
+          "lastPriceSync": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -7439,142 +7439,6 @@
           "failed"
         ]
       },
-      "PagedResponseOfAdminCustomerDto": {
-        "required": [
-          "items",
-          "page",
-          "pageSize",
-          "totalItems",
-          "totalPages"
-        ],
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AdminCustomerDto"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalItems": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "PagedResponseOfAdminOrderListItemDto": {
-        "required": [
-          "items",
-          "page",
-          "pageSize",
-          "totalItems",
-          "totalPages"
-        ],
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AdminOrderListItemDto"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalItems": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "PagedResponseOfAdminProductListItemDto": {
-        "required": [
-          "items",
-          "page",
-          "pageSize",
-          "totalItems",
-          "totalPages"
-        ],
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AdminProductListItemDto"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalItems": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "PagedResponseOfAdminServiceRequestDto": {
-        "required": [
-          "items",
-          "page",
-          "pageSize",
-          "totalItems",
-          "totalPages"
-        ],
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AdminServiceRequestDto"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalItems": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
       "PagedResponseOfAuditEntryDto": {
         "required": [
           "items",
@@ -7589,6 +7453,142 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AuditEntryDto"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PagedResponseOfConsoleCustomerDto": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalItems",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleCustomerDto"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PagedResponseOfConsoleOrderListItemDto": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalItems",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleOrderListItemDto"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PagedResponseOfConsoleProductListItemDto": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalItems",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleProductListItemDto"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PagedResponseOfConsoleServiceRequestDto": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalItems",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleServiceRequestDto"
             }
           },
           "page": {
@@ -9192,7 +9192,7 @@
       "name": "Payments"
     },
     {
-      "name": "Admin"
+      "name": "Console"
     }
   ]
 }

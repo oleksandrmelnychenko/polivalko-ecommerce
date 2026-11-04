@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Catalog.Configuration;
 using PoliValko.Catalog.Contracts;
-using PoliValko.Catalog.Features.Admin;
+using PoliValko.Catalog.Features.Console;
 using PoliValko.Catalog.Features.Import;
 using PoliValko.Catalog.Features.Pricing;
 using PoliValko.Catalog.Features.Reporting;
@@ -31,8 +31,8 @@ public static class CatalogModule
     public static IEndpointRouteBuilder MapCatalogEndpoints(this IEndpointRouteBuilder api) =>
         CatalogEndpoints.Map(api);
 
-    public static RouteGroupBuilder MapAdminCatalogEndpoints(this RouteGroupBuilder admin) =>
-        AdminCatalogEndpoints.Map(admin);
+    public static RouteGroupBuilder MapConsoleCatalogEndpoints(this RouteGroupBuilder console) =>
+        ConsoleCatalogEndpoints.Map(console);
 
     public static Task SeedDemoDataAsync(IServiceProvider services, CancellationToken ct = default) =>
         CatalogDemoData.SeedAsync(services.GetRequiredService<PoliValkoDbContext>(), services.GetRequiredService<TimeProvider>(), ct);

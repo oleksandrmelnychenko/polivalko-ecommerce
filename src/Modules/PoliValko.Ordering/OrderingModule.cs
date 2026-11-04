@@ -4,8 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Infrastructure;
 using PoliValko.Ordering.Configuration;
 using PoliValko.Ordering.Contracts;
-using PoliValko.Ordering.Features.Admin.Customers;
-using PoliValko.Ordering.Features.Admin.Orders;
+using PoliValko.Ordering.Features.Console.Customers;
+using PoliValko.Ordering.Features.Console.Orders;
 using PoliValko.Ordering.Features.Checkout;
 using PoliValko.Ordering.Features.Export;
 using PoliValko.Ordering.Features.Notifications;
@@ -35,9 +35,9 @@ public static class OrderingModule
     public static IEndpointRouteBuilder MapCheckoutEndpoints(this IEndpointRouteBuilder api) =>
         CheckoutEndpoints.Map(api);
 
-    public static RouteGroupBuilder MapAdminOrderEndpoints(this RouteGroupBuilder admin) =>
-        AdminOrderEndpoints.Map(admin);
+    public static RouteGroupBuilder MapConsoleOrderEndpoints(this RouteGroupBuilder console) =>
+        ConsoleOrderEndpoints.Map(console);
 
-    public static RouteGroupBuilder MapAdminCustomerEndpoints(this RouteGroupBuilder admin) =>
-        AdminCustomerEndpoints.Map(admin);
+    public static RouteGroupBuilder MapConsoleCustomerEndpoints(this RouteGroupBuilder console) =>
+        ConsoleCustomerEndpoints.Map(console);
 }

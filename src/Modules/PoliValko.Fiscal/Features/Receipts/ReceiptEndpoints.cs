@@ -17,12 +17,12 @@ internal static class ReceiptEndpoints
         return api;
     }
 
-    public static RouteGroupBuilder MapAdmin(RouteGroupBuilder admin)
+    public static RouteGroupBuilder MapConsole(RouteGroupBuilder console)
     {
-        admin.MapGroup("/orders").WithTags("Admin").RequireStaff()
+        console.MapGroup("/orders").WithTags("Console").RequireStaff()
             .MapGet("/{number}/receipts", ListOrderReceipts.HandleAsync)
-            .WithName("AdminListOrderReceipts")
+            .WithName("ConsoleListOrderReceipts")
             .WithSummary("Фіскальні чеки продажу й повернення за замовленням");
-        return admin;
+        return console;
     }
 }

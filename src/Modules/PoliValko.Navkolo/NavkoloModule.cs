@@ -39,6 +39,6 @@ public static class NavkoloModule
             .AddHostedService<NavkoloPriceStockJob>()
             .AddHostedService<NavkoloCatalogJob>();
 
-    public static RouteGroupBuilder MapAdminCatalogImportEndpoints(this RouteGroupBuilder admin) =>
-        CatalogImportEndpoints.Map(admin);
+    public static RouteGroupBuilder MapConsoleCatalogImportEndpoints(this RouteGroupBuilder console) =>
+        CatalogImportEndpoints.Map(console);
 }

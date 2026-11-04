@@ -39,6 +39,6 @@ public static class FiscalModule
     public static IEndpointRouteBuilder MapReceiptEndpoints(this IEndpointRouteBuilder api) =>
         ReceiptEndpoints.Map(api);
 
-    public static RouteGroupBuilder MapAdminReceiptEndpoints(this RouteGroupBuilder admin) =>
-        ReceiptEndpoints.MapAdmin(admin);
+    public static RouteGroupBuilder MapConsoleReceiptEndpoints(this RouteGroupBuilder console) =>
+        ReceiptEndpoints.MapConsole(console);
 }

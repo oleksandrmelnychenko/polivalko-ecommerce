@@ -11,7 +11,7 @@ internal static class Staff
     public static async Task<HttpClient> LoginAsync(ApiFactory api, string email, string? password = null)
     {
         var client = await SignInAsync(api, email, password);
-        var csrf = await client.GetFromJsonAsync<CsrfTokenDto>("/api/v1/admin/auth/csrf", Ct);
+        var csrf = await client.GetFromJsonAsync<CsrfTokenDto>("/api/v1/console/auth/csrf", Ct);
         client.DefaultRequestHeaders.Add("X-CSRF-TOKEN", csrf!.Token);
         return client;
     }
@@ -19,7 +19,7 @@ internal static class Staff
     public static async Task<HttpClient> SignInAsync(ApiFactory api, string email, string? password = null)
     {
         var client = api.CreateClient();
-        var response = await client.PostAsJsonAsync("/api/v1/admin/auth/login", new LoginRequest(email, password ?? ApiFactory.TestPassword), Ct);
+        var response = await client.PostAsJsonAsync("/api/v1/console/auth/login", new LoginRequest(email, password ?? ApiFactory.TestPassword), Ct);
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         return client;
     }
