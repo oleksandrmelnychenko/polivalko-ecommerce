@@ -5,18 +5,16 @@
 	header X-Robots-Tag "noindex, nofollow"
 }
 
-{$SITE_ADDRESS::8080} {
-	encode zstd gzip
-
+(security) {
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		-Server
 	}
+}
 
-	import indexing-{$SEARCH_INDEXING:index}
-
+(api) {
 	handle /api/* {
 		reverse_proxy api:8080
 	}
@@ -29,8 +27,41 @@
 	handle /internal/* {
 		respond 404
 	}
+}
 
-	handle {
-		reverse_proxy web:3000
+{$SITE_ADDRESS::8080} {
+	encode zstd gzip
+
+	import security
+
+	import indexing-{$SEARCH_INDEXING:index}
+
+	route {
+		respond /api/v1/console/* 404
+
+		import api
+
+		handle {
+			reverse_proxy web:3000
+		}
+	}
+}
+
+{$CONSOLE_ADDRESS:http://console.localhost:8080} {
+	encode zstd gzip
+
+	import security
+
+	import indexing-noindex
+
+	route {
+		@outside not remote_ip {$CONSOLE_ALLOWED_IPS:0.0.0.0/0 ::/0}
+		respond @outside 404
+
+		import api
+
+		handle {
+			reverse_proxy console:3000
+		}
 	}
 }

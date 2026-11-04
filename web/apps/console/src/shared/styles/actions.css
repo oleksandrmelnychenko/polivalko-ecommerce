@@ -1,0 +1,2 @@
+.console-filters .btn--small, .console-form > .console-actions .btn--small, .console-form > .btn--small, .console-item__row > .btn--small, .attr-row > .btn--small { height: var(--a-ctl); min-height: var(--a-ctl); padding: 0 20px; font-size: 12px; }
+.console-icon-xs { width: 13px; height: 13px; flex: none; }

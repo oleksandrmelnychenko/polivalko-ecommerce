@@ -24,7 +24,7 @@ jobs:
       - run: dotnet test --solution PoliValko.slnx --no-build -c Release
 
   web:
-    name: Вітрина (Next.js)
+    name: Вітрина й консоль (Next.js)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -39,8 +39,9 @@ jobs:
 
       - run: npm ci
       - name: TS-типи відповідають контракту OpenAPI
-        run: npm run api:types && git diff --exit-code -- src/shared/api/schema.d.ts
+        run: npm run api:types && git diff --exit-code -- packages/shared/api/schema.d.ts
       - run: npm run lint
+      - run: npm run typecheck
       - run: npm run build
 
   deploy:
@@ -73,6 +74,7 @@ jobs:
           POSTGRES_PASSWORD: ci-only
           SITE_ADDRESS: shop.example.ua
           SITE_URL: https://shop.example.ua
+          CONSOLE_ADDRESS: console.shop.example.ua
           REVALIDATE_SECRET: ci-only
           PAYMENTS_PROVIDER: Sandbox
           PAYMENTS_SANDBOX_SECRET: ci-only
@@ -85,6 +87,8 @@ jobs:
             docker run --rm -e SEARCH_INDEXING=$indexing -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
               caddy:2 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
           done
+          docker run --rm -e SITE_ADDRESS=shop.example.ua -e CONSOLE_ADDRESS=console.shop.example.ua -e CONSOLE_ALLOWED_IPS=203.0.113.0/24 \
+            -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 
       - name: Сценарій навантажувального тесту (k6 inspect)
         run: docker run --rm -v "$PWD/tests/load:/scripts:ro" grafana/k6:1.3.0 inspect /scripts/storefront.js > /dev/null

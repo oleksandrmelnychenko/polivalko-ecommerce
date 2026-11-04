@@ -1,9 +1,0 @@
-.admin-tabs, .admin-subnav { display: flex; margin-bottom: var(--a-gap); overflow-x: auto; background: var(--a-card); border: 1px solid var(--a-line); box-shadow: var(--a-shadow); scrollbar-width: none; }
-.admin-tabs { flex-wrap: wrap; overflow: visible; }
-.admin-tabs :is(a, button), .admin-subnav a { display: inline-flex; flex: none; align-items: center; gap: 8px; height: 48px; padding: 0 16px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--color-ink-2); font: 400 12.5px/1 var(--font-body); letter-spacing: 0.07em; text-decoration: none; text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: color 0.2s, border-color 0.2s, background-color 0.2s; }
-.admin-tabs :is(a, button):hover, .admin-subnav a:hover { color: var(--color-ink); background: var(--a-hover); }
-.admin-tabs :is(a, button):focus-visible, .admin-subnav a:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
-.admin-tabs [aria-current="page"], .admin-tabs [aria-pressed="true"], .admin-subnav a[aria-current="page"] { border-bottom-color: var(--color-brand); color: var(--color-ink); font-weight: 700; }
-.tab-count { display: inline-grid; place-items: center; min-width: 22px; height: 20px; padding: 0 6px; background: #efefef; color: var(--color-ink-2); font: 700 11px/1 var(--font-body); letter-spacing: 0; }
-[aria-current="page"] > .tab-count, [aria-pressed="true"] > .tab-count { background: var(--color-ink); color: #fff; }
-.tab-count--hot { background: var(--color-brand); color: var(--color-ink); }

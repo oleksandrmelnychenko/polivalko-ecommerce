@@ -2,26 +2,14 @@
   "name": "web",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "api:types": "openapi-typescript ../openapi/polivalko-api.json -o src/shared/api/schema.d.ts"
-  },
-  "dependencies": {
-    "next": "16.4.3",
-    "openapi-fetch": "^0.17.0",
-    "react": "19.3.0",
-    "react-dom": "19.3.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.4.3",
-    "openapi-typescript": "^7.13.0",
-    "typescript": "^5"
+    "lint": "npm run lint --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "build": "npm run build --workspaces --if-present",
+    "api:types": "npm run api:types -w @polivalko/shared"
   }
 }

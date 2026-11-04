@@ -1,0 +1,4 @@
+@media print {
+  .crumbs { display: none !important; }
+  a { color: #000 !important; text-decoration: none !important; }
+}

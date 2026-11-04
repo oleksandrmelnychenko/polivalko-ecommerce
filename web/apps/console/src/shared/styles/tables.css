@@ -1,0 +1,37 @@
+.console-table-wrap { position: relative; overflow-x: auto; min-width: 0; }
+.console-table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--a-card); border: 1px solid var(--a-line); box-shadow: var(--a-shadow); color: var(--color-ink); font-size: var(--text-sm); }
+.console-table th { height: 44px; padding: 0 16px; background: #fafafa; border-bottom: 1px solid var(--a-line); color: var(--color-muted); font: 700 11px/1.2 var(--font-body); letter-spacing: 0.08em; text-align: left; text-transform: uppercase; white-space: nowrap; vertical-align: middle; }
+.console-table td { padding: 12px 16px; border-bottom: 1px solid var(--a-line-soft); vertical-align: middle; }
+.console-table tbody tr:last-child > td { border-bottom: 0; }
+.console-table tbody tr { transition: background-color 0.15s; }
+.console-table tbody tr:hover { background: var(--a-hover); }
+.console-table tbody tr[data-selected="true"] { background: var(--a-selected); }
+.console-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.console-table .col-check { width: 48px; padding-right: 0; }
+.console-table .col-check input { display: grid; }
+.console-table .col-thumb { width: 64px; padding-right: 0; }
+.console-table .col-actions { width: 1%; text-align: right; white-space: nowrap; }
+.console-table tfoot th, .console-table tfoot td { height: auto; padding: 14px 16px; background: #fff; border-top: 1px solid var(--a-line); border-bottom: 0; color: var(--color-ink); font-size: var(--text-sm); letter-spacing: 0; text-transform: none; }
+.console-table tfoot th { text-align: right; }
+.console-table td > a:not(.btn, .chip), .console-table a.code { color: var(--color-ink); font-weight: 700; text-decoration: none; transition: color 0.2s; }
+.console-table td > a:not(.btn, .chip):hover, .console-table a.code:hover { color: #b07400; text-decoration: underline; text-decoration-color: var(--color-brand); text-underline-offset: 3px; }
+.console-table .code { font-size: 13px; }
+.console-table .btn { height: var(--a-ctl-sm); min-height: var(--a-ctl-sm); padding: 0 12px; font-size: 11px; }
+.console-table input:not([type="checkbox"]), .console-table select { height: var(--a-ctl-sm); }
+.console-select { height: var(--a-ctl-sm); padding: 0 32px 0 10px; border: 1px solid var(--color-field); background-color: #fff; color: var(--color-ink); }
+.cell-main { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.cell-sub { display: block; margin-top: 3px; color: var(--color-muted); font-size: 12px; font-weight: 400; }
+.cell-strong { color: var(--color-ink); font-weight: 700; }
+.console-thumb { display: block; width: 44px; height: 44px; flex: none; object-fit: cover; background: var(--a-bg); }
+.console-thumb--lg { width: 56px; height: 56px; }
+
+.chip, .status--attention, .badge { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; color: var(--color-ink); font: 700 10.5px/1 var(--font-body); letter-spacing: 0.07em; text-transform: uppercase; white-space: nowrap; }
+.chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.55; }
+.chip--yellow, .status--attention { background: #ffe9a6; color: #5c4300; }
+.chip--cyan { background: #d2f3f9; color: #0b4a55; }
+.chip--green, .badge--ok { background: #dcf3e4; color: #1d6b3f; }
+.chip--pink, .badge--bad { background: #ffe0e0; color: #8a1f1f; }
+.chip--dark { background: #333; color: #fff; }
+.chip--grey, .badge:not(.badge--ok, .badge--bad) { background: #ececec; color: #555; }
+.chip--outline { background: transparent; box-shadow: inset 0 0 0 1px #cfcfcf; color: var(--color-ink-2); }
+.status { font-weight: 700; }

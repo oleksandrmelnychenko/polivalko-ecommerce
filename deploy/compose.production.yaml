@@ -26,9 +26,14 @@ services:
       SITE_URL: ${SITE_URL:?Задайте SITE_URL — публічна адреса з https://}
       REVALIDATE_SECRET: ${REVALIDATE_SECRET:?Задайте REVALIDATE_SECRET — випадковий рядок}
 
+  console:
+    environment:
+      SITE_URL: ${SITE_URL:?Задайте SITE_URL — публічна адреса з https://}
+
   caddy:
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:?Задайте SITE_ADDRESS — домен магазину, напр. example.ua}
+      CONSOLE_ADDRESS: ${CONSOLE_ADDRESS:?Задайте CONSOLE_ADDRESS — домен консолі, напр. console.example.ua}
     ports: !override
       - "80:80"
       - "443:443"

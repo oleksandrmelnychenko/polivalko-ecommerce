@@ -1,0 +1,7 @@
+.console-columns { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: var(--a-gap); align-items: start; margin-top: var(--a-gap); }
+.console-columns > .readonly, .console-columns > aside { align-self: start; }
+.console-stack { display: flex; flex-direction: column; gap: var(--a-gap); min-width: 0; }
+.console-stack > * { width: 100%; max-width: none; }
+.console-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
+.console-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: var(--space-md); }
+.console-actions--row { margin-top: 0; }

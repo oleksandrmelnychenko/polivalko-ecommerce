@@ -1,0 +1,12 @@
+.console-pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-sm); margin-top: var(--space-md); }
+.console-pager__pages { display: flex; gap: 4px; }
+.console-pager__pages > * { display: inline-grid; place-items: center; min-width: var(--a-ctl-sm); height: var(--a-ctl-sm); padding: 0 8px; border: 1px solid var(--a-line); background: #fff; color: var(--color-ink); font: 700 12px/1 var(--font-body); font-variant-numeric: tabular-nums; }
+.console-pager__pages button { cursor: pointer; transition: border-color 0.2s, background-color 0.2s, color 0.2s; }
+.console-pager__pages button:hover:not(:disabled) { border-color: var(--color-ink); }
+.console-pager__pages button:disabled { opacity: 0.4; cursor: not-allowed; }
+.console-pager__pages [aria-current="page"] { background: var(--color-ink); border-color: var(--color-ink); color: #fff; }
+.console-pager__pages .gap { border-color: transparent; background: transparent; color: var(--color-muted); }
+.console-pager__pages svg { width: 14px; height: 14px; }
+.pager__btn { min-width: var(--a-ctl-sm); min-height: var(--a-ctl-sm); border: 1px solid var(--a-line); background: #fff; color: var(--color-ink); cursor: pointer; }
+.pager__btn:hover { border-color: var(--color-ink); }
+.pager__btn:disabled { opacity: 0.45; cursor: not-allowed; }

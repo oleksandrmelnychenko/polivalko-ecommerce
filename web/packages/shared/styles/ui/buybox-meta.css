@@ -1,0 +1,2 @@
+.buybox__meta { display: flex; flex-wrap: wrap; gap: var(--space-2xs) var(--space-lg); font-size: var(--text-sm); color: var(--color-muted); }
+.buybox__meta span span { color: var(--color-ink-2); }

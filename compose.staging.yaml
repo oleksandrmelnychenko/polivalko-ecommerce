@@ -36,9 +36,18 @@ services:
     environment:
       SITE_URL: ${SITE_URL:-http://localhost:8081}
 
+  console:
+    image: polivalko-staging-console:${APP_VERSION:-latest}
+    build:
+      args:
+        SITE_URL: ${SITE_URL:-http://localhost:8081}
+    environment:
+      SITE_URL: ${SITE_URL:-http://localhost:8081}
+
   caddy:
     environment:
       SITE_ADDRESS: ":8080"
+      CONSOLE_ADDRESS: "http://console.localhost:8080"
       SEARCH_INDEXING: noindex
     ports: !override
       - "${HTTP_BIND:-127.0.0.1}:${HTTP_PORT:-8081}:8080"

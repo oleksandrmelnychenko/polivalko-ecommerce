@@ -1,0 +1,57 @@
+.console .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.console .field > label, .console .label { display: block; overflow: hidden; color: var(--color-ink); font: 700 11px/16px var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; text-overflow: ellipsis; }
+.console :is(.field input:not([type="checkbox"], [type="radio"], [type="file"]), .field select, .input, .select) {
+  width: 100%; height: var(--a-ctl); min-height: 0; padding: 0 12px; border: 1px solid var(--color-field); border-radius: 0; background-color: #fff; color: var(--color-ink);
+  font: 400 14px/1.2 var(--font-body); outline: 0; transition: border-color 0.2s, box-shadow 0.2s;
+}
+.console :is(.field textarea, textarea.input) { width: 100%; min-height: 88px; padding: 10px 12px; border: 1px solid var(--color-field); border-radius: 0; background: #fff; color: var(--color-ink); font: 400 14px/1.5 var(--font-body); outline: 0; resize: vertical; transition: border-color 0.2s, box-shadow 0.2s; }
+.console :is(.field input, .field select, .field textarea, .input, .select):hover { border-color: var(--color-ink-2); }
+.console :is(.field input, .field select, .field textarea, .input, .select):focus-visible { border-color: var(--color-ink); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 40%, transparent); outline: 0; }
+.console :is(.field input, .field select, .field textarea)[aria-invalid="true"] { border-color: var(--color-error); background-color: #fff8f7; }
+.console :is(.field input, .field select, .field textarea, .input, .select):disabled { background-color: var(--a-bg); color: var(--color-muted); cursor: not-allowed; }
+.console :is(.field input, .input)::placeholder { color: #9a9a9a; opacity: 1; }
+.console :is(.field select, .select) {
+  appearance: none; padding-right: 36px; cursor: pointer; text-overflow: ellipsis;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%23333' stroke-width='1.6'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 13px center; background-size: 11px 8px;
+}
+.console .field input[type="file"] { width: 100%; padding: 8px; border: 1px dashed var(--color-field); background: #fff; font-size: 13px; cursor: pointer; }
+.console .field input[type="file"]::file-selector-button { height: 30px; margin-right: 12px; padding: 0 14px; border: 1px solid var(--color-ink); background: var(--color-ink); color: #fff; font: 700 11px/1 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
+.console .field input[type="number"] { font-variant-numeric: tabular-nums; }
+.console .field__help { color: var(--color-muted); font-size: 12px; line-height: 1.45; }
+.console .field__error { color: var(--color-error); font-size: 12px; font-weight: 700; }
+.console .input-icon { position: relative; display: block; }
+.console .input-icon > svg { position: absolute; left: 12px; top: 50%; width: 16px; height: 16px; color: var(--color-muted); transform: translateY(-50%); pointer-events: none; }
+.console .field .input-icon > input, .console .input-icon > .input { padding-left: 38px; }
+
+.console input[type="checkbox"] {
+  appearance: none; display: inline-grid; place-content: center; width: 18px; height: 18px; margin: 0; flex: none; border: 1.5px solid var(--color-field); border-radius: 0; background: #fff; cursor: pointer; vertical-align: middle; transition: background-color 0.15s, border-color 0.15s;
+}
+.console input[type="checkbox"]::before { content: ""; width: 10px; height: 10px; background: #fff; clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%); transform: scale(0); transition: transform 0.12s; }
+.console input[type="checkbox"]:hover { border-color: var(--color-ink); }
+.console input[type="checkbox"]:checked, .console input[type="checkbox"]:indeterminate { border-color: var(--color-ink); background: var(--color-ink); }
+.console input[type="checkbox"]:checked::before { transform: scale(1); }
+.console input[type="checkbox"]:indeterminate::before { height: 2px; clip-path: none; transform: scale(1); }
+.console input[type="checkbox"]:focus-visible { outline: 0; box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 50%, transparent); }
+.console input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
+.console :is(.consent, .check) { display: inline-flex; align-items: center; gap: 10px; min-height: var(--a-ctl); color: var(--color-ink); font-size: var(--text-sm); font-weight: 400; cursor: pointer; }
+.console :is(.consent, .check) input { width: 18px; height: 18px; margin: 0; }
+
+.console .btn { height: var(--a-ctl); min-height: var(--a-ctl); padding: 0 20px; gap: 8px; border-width: 1px; font: 700 12px/1 var(--font-body); letter-spacing: 0.08em; transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s; }
+.console .btn svg { width: 16px; height: 16px; }
+.console .btn--small { height: var(--a-ctl-sm); min-height: var(--a-ctl-sm); padding: 0 14px; font-size: 11px; }
+.console .btn--small svg { width: 14px; height: 14px; }
+.console .btn:focus-visible { outline: 0; box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 50%, transparent); }
+.console :is(.btn--quiet, .btn--outline) { background: #fff; border-color: #cfcfcf; color: var(--color-ink); }
+.console :is(.btn--quiet, .btn--outline):hover { background: var(--color-ink); border-color: var(--color-ink); color: #fff; }
+.console :is(.btn--quiet, .btn--outline):disabled:hover { background: #fff; border-color: #cfcfcf; color: var(--color-ink); }
+.console .btn--accent { background: var(--color-brand); border-color: var(--color-brand); color: var(--color-ink); }
+.console .btn--accent:hover { background: var(--color-ink); border-color: var(--color-ink); color: #fff; }
+.console .btn--danger { background: #fff; border-color: #e8b7b3; color: var(--color-error); }
+.console .btn--danger:hover { background: var(--color-error); border-color: var(--color-error); color: #fff; }
+.console .btn--ghost { background: transparent; border-color: transparent; color: var(--color-ink); }
+.console .btn--ghost:hover { background: rgb(0 0 0 / 0.05); border-color: transparent; color: var(--color-ink); }
+.console .btn--icon { width: var(--a-ctl); padding: 0; }
+.console .btn--small.btn--icon { width: var(--a-ctl-sm); }
+.console .btn--wide { width: 100%; }
+.console .remove { min-height: 0; padding: 0; color: inherit; font-weight: 700; }
