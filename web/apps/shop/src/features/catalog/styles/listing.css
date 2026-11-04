@@ -1,6 +1,7 @@
 .catalog { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 9fr); gap: var(--space-xl); align-items: start; }
 .filters-panel__toggle { display: none; }
-.filters-panel { padding: var(--space-lg); border: var(--rule-hair) solid var(--color-rule); }
+.filters-panel { position: sticky; top: var(--space-lg); max-height: calc(100dvh - 2 * var(--space-lg)); overflow-y: auto; padding: var(--space-lg); border: var(--rule-hair) solid var(--color-rule); background: var(--color-paper); scrollbar-width: thin; scrollbar-color: var(--color-rule) transparent; }
 .filters { display: flex; flex-direction: column; gap: var(--space-lg); }
 .filters fieldset { margin: 0; padding: 0 0 var(--space-lg); border: 0; border-bottom: var(--rule-hair) solid var(--color-rule); }
 .filters legend { position: relative; margin-bottom: var(--space-sm); padding: 0 0 var(--space-xs); font-size: var(--text-sm); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.filters__submit { position: sticky; bottom: 0; z-index: var(--z-base); box-shadow: 0 0 0 var(--space-sm) var(--color-paper), 0 var(--space-sm) 0 var(--space-sm) var(--color-paper); }

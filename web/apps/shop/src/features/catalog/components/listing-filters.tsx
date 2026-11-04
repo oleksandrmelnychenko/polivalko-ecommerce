@@ -104,7 +104,7 @@ export function ListingFilters({
         )}
       </fieldset>
 
-      <button type="submit" className="btn btn--dark btn--small">
+      <button type="submit" className="btn btn--dark btn--small filters__submit">
         Показати товари
       </button>
       {filtered && (
