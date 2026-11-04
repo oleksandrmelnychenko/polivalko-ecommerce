@@ -31,8 +31,9 @@ Staging і production можуть працювати на одному серв
 | `migrate` | EF migrations bundle: застосовує міграції й завершується | код виходу 0 |
 | `api` | ASP.NET Core API, фото в томі `media` | `/health/live`, `/health/ready` через Caddy (зовнішній монітор) |
 | `worker` | фонові процеси: outbox, синхронізації, чеки, повідомлення | журнали й тривоги в Telegram |
-| `web` | Next.js (вітрина й адмінка) | healthcheck `GET /robots.txt` |
-| `caddy` | єдиний вхід: HTTPS, `/api/*` і `/health/*` → API, решта → Next.js | healthcheck адмін-API Caddy |
+| `web` | Next.js: вітрина й особистий кабінет покупця | healthcheck `GET /robots.txt` |
+| `console` | Next.js: консоль для працівників, окремий застосунок на піддомені з `CONSOLE_ADDRESS` | healthcheck `GET /login` |
+| `caddy` | єдиний вхід для двох адрес: HTTPS, `/api/*` і `/health/*` → API, решта → вітрина або консоль; на домені магазину API консолі закритий (404), а вітрина ніде не згадує адресу консолі | healthcheck `GET :2019/config/` (вбудований API керування Caddy) |
 | `backup` | щоденний `pg_dump`, ротація, тест відновлення | healthcheck: є дамп не старший за 26 год |
 | `backup-offsite` | копія дампів і фото в S3-сумісне сховище (профіль `offsite`) | healthcheck: успішне копіювання за останні ~2 год |
 
@@ -40,7 +41,7 @@ Staging і production можуть працювати на одному серв
 
 - Linux x86_64 (migrations bundle збирається під `linux-x64`), Docker Engine 25+ з Compose 2.24+.
 - Орієнтовно від 2 vCPU, 4 ГБ RAM і 40 ГБ SSD; точний розмір підтверджує навантажувальний тест (розділ 12).
-- DNS-запис домену на IP сервера, відкриті вхідні порти 22, 80, 443 (UDP 443 — для HTTP/3).
+- DNS-записи домену й піддомену консолі (`CONSOLE_ADDRESS`) на IP сервера, відкриті вхідні порти 22, 80, 443 (UDP 443 — для HTTP/3).
 - Синхронізація часу (NTP): від неї залежать розклад бекапів і TLS.
 
 ## 2. Змінні середовища
@@ -71,7 +72,9 @@ Staging і production можуть працювати на одному серв
 | Змінна | Сервіси | За замовчуванням | Призначення | Секрет |
 |---|---|---|---|---|
 | `SITE_ADDRESS` | caddy | `:8080` | Домен для Caddy (`example.ua`) — сертифікат HTTPS отримується автоматично. Production: обов'язкова | ні |
-| `SITE_URL` | api, worker, web | `http://localhost:8080` (staging `:8081`) | Публічна адреса: повернення з оплати, вебхуки, sitemap, canonical. Production: обов'язкова, з `https://` | ні |
+| `SITE_URL` | api, worker, web, console (збірка) | `http://localhost:8080` (staging `:8081`) | Публічна адреса: повернення з оплати, вебхуки, sitemap, canonical, посилання в листах покупцям і з консолі на вітрину. Production: обов'язкова, з `https://` | ні |
+| `CONSOLE_ADDRESS` | caddy | `http://console.localhost:8080` | Адреса консолі для Caddy (`console.example.ua`); сама назва піддомену не захищає (розділ 7). Сертифікат отримується автоматично, консоль завжди з `X-Robots-Tag: noindex, nofollow`. Production: обов'язкова | ні |
+| `CONSOLE_ALLOWED_IPS` | caddy | усі | Необов'язково: IP або мережі (CIDR, через пробіл), з яких пускати в консоль; решта отримує 404. Рекомендовано для production (офіс, VPN) | ні |
 | `HTTP_PORT` | caddy | `8080` (staging `8081`) | Порт HTTP локально й на staging | ні |
 | `HTTP_BIND` | caddy (staging) | `127.0.0.1` | Адреса, на якій staging приймає з'єднання | ні |
 | `SEARCH_INDEXING` | caddy | `index` | `noindex` додає `X-Robots-Tag: noindex, nofollow`; на staging примусово | ні |
@@ -113,6 +116,9 @@ Staging і production можуть працювати на одному серв
 | `TELEGRAM_BOT_TOKEN` | порожньо | Бот для повідомлень менеджеру й тривог; порожньо — лише лог | так |
 | `TELEGRAM_CHAT_ID` | порожньо | Чат або група, куди пише бот | ні |
 
+Листи покупцям (підтвердження пошти, скидання пароля) поки йдуть через заглушку `Email:Mode=Log`: посилання пишуться в журнал API.
+До запуску кабінету для покупців потрібен поштовий провайдер — див. [integrations.md](integrations.md).
+
 ### Бекапи
 
 | Змінна | За замовчуванням | Призначення | Секрет |
@@ -132,7 +138,7 @@ Staging і production можуть працювати на одному серв
 ## 3. Перше розгортання (production)
 
 1. **Сервер.** Встановіть Docker Engine з плагіном Compose, налаштуйте вхід лише за SSH-ключами, відкрийте
-   порти 22, 80, 443 (TCP) і 443 (UDP). Створіть DNS-запис A (і AAAA, якщо є IPv6) домену на IP сервера.
+   порти 22, 80, 443 (TCP) і 443 (UDP). Створіть DNS-записи A (і AAAA, якщо є IPv6) домену й піддомену консолі (`CONSOLE_ADDRESS`) на IP сервера.
 2. **Код.** Розгорніть потрібний реліз (тег) у каталог, напр. `/srv/polivalko`. Скрипти з `deploy/backup/`
    мають бути з LF-закінченнями рядків — беріть код на Linux, а не копіюйте з Windows-checkout.
 3. **Налаштування.**
@@ -144,7 +150,7 @@ Staging і production можуть працювати на одному серв
    ```
 
    У `.env` обов'язково: `COMPOSE_FILE=compose.yaml:deploy/compose.production.yaml`, `COMPOSE_PROFILES=app,offsite`,
-   `APP_VERSION` (напр. `2026.11.0`), `SITE_ADDRESS`, `SITE_URL`, `POSTGRES_PASSWORD`, `REVALIDATE_SECRET`,
+   `APP_VERSION` (напр. `2026.11.0`), `SITE_ADDRESS`, `SITE_URL`, `CONSOLE_ADDRESS`, `POSTGRES_PASSWORD`, `REVALIDATE_SECRET`,
    `PAYMENTS_PROVIDER`, `PAYMENTS_SANDBOX_SECRET`, `FISCAL_PROVIDER`, `SEED_DEMO_DATA=false`, `EXPOSE_API_DOCS=false`,
    `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `TELEGRAM_*`, `SELLER_*`, `OFFSITE_*`. Без обов'язкових змінних compose
    зупиниться з повідомленням, якої саме бракує. Пароль БД записується під час першого старту `postgres`
@@ -156,11 +162,12 @@ Staging і production можуть працювати на одному серв
    docker compose build                # образи polivalko-*:APP_VERSION
    docker compose run --rm migrate     # міграції БД окремим кроком; має завершитися кодом 0
    docker compose up -d
-   docker compose ps                   # postgres, web, caddy, backup — healthy; api, worker — running
+   docker compose ps                   # postgres, web, console, caddy, backup — healthy; api, worker — running
    ```
 
 5. **Перевірка.** `curl -fsS https://example.ua/health/ready` повертає `Healthy`; відкрийте вітрину,
-   увійдіть в адмінку `https://example.ua/admin/login`, оформіть тестове замовлення (у режимі Sandbox).
+   увійдіть у консоль `https://console.example.ua/login` (адреса з `CONSOLE_ADDRESS`), оформіть тестове замовлення (у режимі Sandbox), зареєструйтеся
+   в кабінеті покупця й перевірте, що замовлення з'явилося в «Моїх замовленнях».
 6. **Адміністратор.** Після першого входу приберіть `ADMIN_PASSWORD` з `.env` і виконайте `docker compose up -d api`.
 7. **Бекапи.** Переконайтеся, що з'явився перший дамп і копія поза сервер, і проведіть тест відновлення (розділ 8.5).
 8. **Моніторинг.** Підключіть зовнішній монітор і перевірте тривоги Telegram (розділ 9).
@@ -187,7 +194,8 @@ docker compose logs --since 10m api worker | grep -iE "fail|error|exception" || 
 
 Міграції мають бути зворотно сумісними з попередньою версією коду (спершу додати, потім прибрати в наступному
 релізі): тоді відкат коду не вимагає відновлення бази. Змінні `GA_MEASUREMENT_ID` і `GSC_VERIFICATION`
-вбудовуються під час збірки — після їх зміни потрібен `docker compose build web`.
+вбудовуються під час збірки — після їх зміни потрібен `docker compose build web`. `SITE_URL` вбудовується й у консоль:
+після його зміни — `docker compose build web console`.
 
 ## 5. Відкат
 
@@ -223,7 +231,7 @@ docker compose up -d
 літери, цифра й спецсимвол — інакше API не стартує й пише причину в лог.
 
 Після першого входу приберіть пароль з `.env` і перестворіть API (`docker compose up -d api`), щоб він не лишався
-в змінних контейнера. Інших працівників додає адміністратор в адмінці. Локально для тестів можна задати
+в змінних контейнера. Інших працівників додає адміністратор у консолі. Локально для тестів можна задати
 `ADMIN_EMAIL=admin@polivalko.local` і будь-який пароль, що відповідає вимогам.
 
 ## 7. HTTPS і домен
@@ -232,10 +240,18 @@ docker compose up -d
   HTTP на HTTPS і вмикає HTTP/3. Кілька імен — через кому: `SITE_ADDRESS=example.ua, www.example.ua`
   (canonical на сторінках веде на `SITE_URL`).
 - `SITE_URL=https://example.ua` — та сама адреса, яку бачать покупці; її використовують посилання оплати й sitemap.
+- `CONSOLE_ADDRESS=console.example.ua` — окремий сайт консолі з власним сертифікатом на піддомені. Вітрина його не згадує:
+  на домені магазину немає ні посилань, ні переадресації на консоль, а API консолі (`/api/v1/console/*`) відповідає 404.
+  Консоль має інше походження, ніж вітрина: її cookie `pv_console` недоступна сторінкам магазину.
+- Назва піддомену — не захист: публічні сертифікати потрапляють у журнали Certificate Transparency (crt.sh), тож
+  адресу можна знайти. Справжній захист — паролі й блокування спроб входу, а для production ще й `CONSOLE_ALLOWED_IPS`
+  (лише IP офісу чи VPN; решта бачить 404). Якщо сервер за Cloudflare чи іншим проксі, Caddy бачить IP проксі —
+  тоді обмеження треба налаштовувати з `trusted_proxies`.
 - Сертифікати зберігаються в томі `caddy_data`. Не видаляйте його: часті повторні випуски впираються в ліміти CA.
 - Заголовки безпеки (HSTS, `nosniff`, `Referrer-Policy`) задає `deploy/Caddyfile`. Шлях `/internal/*` закритий ззовні.
 - Перевірка: `curl -I https://example.ua` (статус 200, заголовок `strict-transport-security`),
-  `curl -I http://example.ua` (перенаправлення 308 на HTTPS).
+  `curl -I http://example.ua` (перенаправлення 308 на HTTPS), `curl -I https://console.example.ua/login`
+  (200 і `x-robots-tag: noindex, nofollow`).
 
 ## 8. Резервні копії
 
@@ -251,7 +267,7 @@ docker compose up -d
 - Де лежать: том `polivalko_backups` (`docker compose exec backup ls -lh /backups`) або каталог `BACKUP_PATH`.
   Забрати файл на свій комп'ютер: `docker compose cp backup:/backups/<файл> .`
 
-У дамп БД не входять: фото з адмінки (том `media`) — їх копіює `backup-offsite`; сертифікати (`caddy_data`) —
+У дамп БД не входять: фото з консолі (том `media`) — їх копіює `backup-offsite`; сертифікати (`caddy_data`) —
 випускаються заново; файл `.env` — зберігайте його копію в менеджері паролів власника.
 
 ### 8.2. Копія поза сервер (обов'язково для production)
@@ -315,8 +331,8 @@ docker compose exec backup bash /opt/backup/restore-test.sh <файл>      # к
   `GET /health/ready` — API бачить базу: `200 Healthy` або `503 Unhealthy`.
 - **Зовнішній монітор доступності** (UptimeRobot, Better Stack, Uptime Kuma на іншому сервері тощо) — ззовні,
   не з того самого сервера: `https://example.ua/health/ready` кожні 1–5 хв (очікувати `Healthy`), головна сторінка `/`
-  (перевіряє Next.js разом з API), строк дії сертифіката. Сповіщення — відповідальному за email і Telegram.
-- **Стан контейнерів:** `docker compose ps`. Healthcheck є в `postgres`, `web`, `caddy`, `backup`, `backup-offsite`;
+  (перевіряє Next.js разом з API), `https://console.example.ua/login` (консоль), строк дії обох сертифікатів. Сповіщення — відповідальному за email і Telegram.
+- **Стан контейнерів:** `docker compose ps`. Healthcheck є в `postgres`, `web`, `console`, `caddy`, `backup`, `backup-offsite`;
   образи .NET не містять curl/wget, тож `api` перевіряє зовнішній монітор, а `worker` — журнали й тривоги.
   Довгоживучі сервіси мають `restart: unless-stopped` і піднімаються після перезавантаження сервера.
 - **Журнали:** `docker compose logs -f --since 1h api worker`, пошук помилок:
@@ -360,7 +376,7 @@ Staging — копія production для перевірки релізів пе�
   провайдер вмикається лише окремо: `STAGING_PAYMENTS_PROVIDER=Mono` з тестовим токеном,
   `STAGING_FISCAL_PROVIDER=Checkbox` з тестовою касою.
 - Доступ: staging слухає `127.0.0.1:8081` на сервері. Тестувальники відкривають його через SSH-тунель
-  `ssh -L 8081:127.0.0.1:8081 user@server` → http://localhost:8081. Відкрити порт для всіх — `HTTP_BIND=0.0.0.0`
+  `ssh -L 8081:127.0.0.1:8081 user@server` → вітрина http://localhost:8081, консоль http://console.localhost:8081. Відкрити порт для всіх — `HTTP_BIND=0.0.0.0`
   лише разом з обмеженням за IP у файрволі провайдера (опубліковані Docker порти обходять ufw).
 - Публічний staging з HTTPS на власному домені — на окремому невеликому сервері: там використовуйте
   production-конфігурацію (`compose.yaml:deploy/compose.production.yaml`) зі значеннями staging у `.env`:
@@ -398,14 +414,14 @@ docker run --rm -i -v "$PWD/tests/load:/scripts:ro" \
 - Запускайте з іншої машини, не з самого сервера. На спільному з production сервері тест staging навантажує й
   production — проводьте його до запуску або в години найменшого трафіку; під час тесту стежте за `docker stats`.
 - Статичні файли (`/_next/static`, фото) тест не завантажує: їх кешують браузер і CDN. Обмеження частоти діють
-  лише на форми й вхід в адмінку, тож на перегляд і перерахунок кошика не впливають.
+  лише на форми й вхід у консоль, тож на перегляд і перерахунок кошика не впливають.
 
 ## 13. CI
 
 `.github/workflows/ci.yml` на кожен push у `main` і pull request:
 
 - `backend` — збірка .NET, перевірка закоміченого контракту OpenAPI, юніт- та інтеграційні тести (PostgreSQL у Testcontainers);
-- `web` — відповідність TS-типів контракту, lint і збірка Next.js;
+- `web` — відповідність TS-типів контракту, перевірка типів, lint і збірка обох застосунків Next.js (вітрина й консоль);
 - `deploy` — `bash -n`/`sh -n`, shellcheck і LF-закінчення скриптів `deploy/backup/`, `docker compose config` для
   локальної, staging- і production-конфігурацій, `caddy validate` для `deploy/Caddyfile`, `k6 inspect` для сценарію
   навантаження й збірка всіх образів (`docker compose --profile app build`) без публікації.
@@ -414,7 +430,8 @@ docker run --rm -i -v "$PWD/tests/load:/scripts:ro" \
 
 ## 14. Чек-лист перед запуском
 
-- [ ] Домен і HTTPS: `curl -I https://…` — 200 і HSTS; HTTP перенаправляє на HTTPS.
+- [ ] Домен і HTTPS: `curl -I https://…` — 200 і HSTS; HTTP перенаправляє на HTTPS; консоль на окремому піддомені з noindex, `CONSOLE_ALLOWED_IPS` задано; `https://<домен>/api/v1/console/auth/me` — 404.
+- [ ] Поштовий провайдер для листів покупцям підключено (`Email:Mode` не `Log`), лист підтвердження й скидання пароля доходять.
 - [ ] `.env`: усі секрети згенеровані, `chmod 600`, копія в менеджері паролів; `ADMIN_PASSWORD` прибрано.
 - [ ] `SEED_DEMO_DATA=false`, `EXPOSE_API_DOCS=false`, обрано `PAYMENTS_PROVIDER` і `FISCAL_PROVIDER`, заповнено `SELLER_*`.
 - [ ] Бекапи: є щоденний дамп, копія поза сервер (дампи й `media/`), тест відновлення пройдено й записано.
