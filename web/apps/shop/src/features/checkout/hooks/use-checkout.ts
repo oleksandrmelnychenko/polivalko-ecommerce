@@ -17,7 +17,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
   const router = useRouter();
   const { lines, setQuantity, remove, clear } = useCart();
   const { items, quote, failed: quoteError, refresh: refreshQuote } = useCartQuote();
-  const [delivery, setDelivery] = useState("nova_poshta");
+  const [chosenDelivery, setDelivery] = useState("nova_poshta");
   const [payment, setPayment] = useState("");
   const point = useDeliveryPoint();
   const [courier, setCourier] = useState<CourierPrefill>({ key: 0, values: null });
@@ -52,7 +52,9 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
     });
   }, [quote]);
 
-  const deliveryOption = quote?.deliveryMethods.find((d) => d.code === delivery);
+  const deliveryMethods = quote?.deliveryMethods ?? [];
+  const deliveryOption = deliveryMethods.find((d) => d.code === chosenDelivery) ?? deliveryMethods[0];
+  const delivery = deliveryOption?.code ?? chosenDelivery;
   const paymentOptions = deliveryOption?.paymentMethods ?? [];
   const effectivePayment = paymentOptions.some((p) => p.code === payment) ? payment : (paymentOptions[0]?.code ?? "");
 
@@ -94,6 +96,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
         focusInvalid.current = true;
         setErrors(fieldErrors);
         setNotice({ kind: "error", title: "Замовлення не оформлено. Виправте поля:", items: [...new Set(Object.values(fieldErrors))] });
+        if (fieldErrors["delivery.method"] || fieldErrors["payment.method"]) await refreshQuote();
       } else if (problem.code === "checkout.price_changed") {
         await refreshQuote();
         setNotice({ kind: "info", title: "Ціни змінилися", text: "Ми оновили суму. Перевірте її й підтвердіть замовлення ще раз." });
@@ -122,6 +125,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
     quote,
     quoteError,
     delivery,
+    deliveryOption,
     setDelivery: (code: string) => {
       setDelivery(code);
       account.release();

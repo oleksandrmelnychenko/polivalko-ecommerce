@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageTitle } from "@/features/catalog";
 import { descriptionText } from "@/features/product";
 import { getProduct, ProductScreen } from "@/features/product/server";
 
@@ -7,7 +8,7 @@ export async function generateMetadata({ params }: PageProps<"/product/[slug]">)
   const product = await getProduct(slug);
   if (!product) return { title: "Товар не знайдено" };
   return {
-    title: product.seoTitle ?? product.name,
+    title: pageTitle(product.seoTitle || product.name),
     description: product.seoDescription ?? (descriptionText(product.descriptionHtml) || undefined),
     alternates: { canonical: `/product/${product.slug}` },
   };

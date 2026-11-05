@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { ProductTiles } from "@/features/catalog";
+import { discountPercent, ProductTiles } from "@/features/catalog";
 import { searchProducts } from "@/features/catalog/server";
 import { pagePhotos } from "@polivalko/shared/lib/stand-in-photos";
 import { Look } from "./look";
@@ -9,7 +9,8 @@ import { Strip } from "./strip";
 export async function OffersPair() {
   await connection();
   const sale = await searchProducts({ onSale: true, inStock: true, sort: "price_asc", pageSize: 12 });
-  const items = sale?.items.length ? sale.items : ((await searchProducts({ inStock: true, pageSize: 12 }))?.items ?? []);
+  const items = (sale?.items ?? []).filter((p) => discountPercent(p.price, p.oldPrice) !== null);
+  if (items.length === 0) return null;
   const photo = pagePhotos.offers;
   return (
     <>

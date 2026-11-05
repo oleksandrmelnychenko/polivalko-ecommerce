@@ -8,6 +8,7 @@ export function CheckoutSummary({
   quote,
   quoteError,
   delivery,
+  priceNote,
   sending,
   setQuantity,
   remove,
@@ -15,6 +16,7 @@ export function CheckoutSummary({
   quote: Quote | null;
   quoteError: boolean;
   delivery: string;
+  priceNote?: string | null;
   sending: boolean;
   setQuantity: (productId: string, quantity: number) => void;
   remove: (productId: string) => void;
@@ -62,7 +64,7 @@ export function CheckoutSummary({
           <dt>Товари</dt>
           <dd>{formatMoney(quote.subtotal)}</dd>
           <dt>Доставка</dt>
-          <dd>{delivery === "pickup" ? "Безкоштовно" : "За тарифами перевізника"}</dd>
+          <dd>{delivery === "pickup" ? "Безкоштовно" : priceNote || "За тарифами перевізника"}</dd>
           <dt className="grand">До сплати</dt>
           <dd className="grand">{formatMoney(quote.total)}</dd>
         </dl>

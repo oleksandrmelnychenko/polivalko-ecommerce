@@ -1,6 +1,7 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { api } from "@polivalko/shared/api/server";
+import type { Announcement, SiteHome } from "../lib/site-types";
 
 export async function getPhotoCredits() {
   "use cache";
@@ -40,4 +41,24 @@ export async function getSeller() {
   cacheTag("content");
   const { data } = await api.GET("/api/v1/seller");
   return data ?? null;
+}
+
+export async function getSiteHome(): Promise<SiteHome | null> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("content", "site", "home");
+  try {
+    const { data } = await api.GET("/api/v1/site/home");
+    return data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getAnnouncement(): Promise<Announcement | null> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("content", "site", "home");
+  const announcement = (await getSiteHome())?.announcement;
+  return announcement?.text.trim() ? announcement : null;
 }

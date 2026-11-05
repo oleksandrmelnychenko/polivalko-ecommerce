@@ -1,19 +1,19 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { getContacts } from "@/features/content/server";
+import { getContacts, type TextItem } from "@/features/content/server";
 import { sized } from "@polivalko/shared/lib/images";
 import { pagePhotos } from "@polivalko/shared/lib/stand-in-photos";
 import { ArrowRightIcon, ClockIcon, PhoneIcon, PinIcon } from "@polivalko/shared/ui/icons";
 import { Heading } from "./heading";
 
-export async function StoreVisit() {
+export async function StoreVisit({ visit }: { visit?: TextItem | null }) {
   await connection();
   const contacts = await getContacts();
   return (
     <section className="visit" aria-labelledby="visit-title">
       <div className="container visit__inner">
         <div className="visit__copy">
-          <Heading id="visit-title" title="Магазин у Бучі" sub="Подивіться товар наживо й заберіть замовлення" />
+          <Heading id="visit-title" title={visit?.title?.trim() || "Магазин у Бучі"} sub={visit?.title?.trim() ? (visit.text ?? "") : "Подивіться товар наживо й заберіть замовлення"} />
           <ul className="visit__facts">
             <li>
               <PinIcon />

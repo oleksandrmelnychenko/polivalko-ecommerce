@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { FooterColumn } from "./footer-column";
 import { FooterContacts } from "./footer-contacts";
 import { FooterLinks } from "./footer-links";
+import { FooterSeller } from "./footer-seller";
 import { FooterServices } from "./footer-services";
 
 const information = [
@@ -28,7 +29,9 @@ export function SiteFooter() {
             PoliValko
           </Link>
           <p>Товари для дому, саду та городу з магазину в Бучі. Відправляємо Новою поштою по всій Україні або чекаємо на самовивіз.</p>
-          <p>Прототип магазину: товари й ціни демонстраційні, фото тимчасові, з Unsplash.</p>
+          <Suspense fallback={null}>
+            <FooterSeller />
+          </Suspense>
         </div>
         <FooterColumn id="footer-info" title="Інформація">
           <FooterLinks links={information} />

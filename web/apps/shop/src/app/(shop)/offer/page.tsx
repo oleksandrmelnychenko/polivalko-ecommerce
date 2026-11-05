@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { OfferScreen } from "@/features/content/server";
+import { OfferScreen, pageMetadata } from "@/features/content/server";
 
-export const metadata: Metadata = { title: "Публічна оферта", alternates: { canonical: "/offer" } };
+export function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("offer", "Публічна оферта");
+}
 
 export default function OfferPage() {
   return <OfferScreen />;

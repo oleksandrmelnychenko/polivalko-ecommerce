@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { sized } from "@polivalko/shared/lib/images";
+import { sized, thumb } from "@polivalko/shared/lib/images";
 import { pagePhotos } from "@polivalko/shared/lib/stand-in-photos";
 import { getServiceDirections } from "../api/server";
 import { ServiceRequestForm } from "./service-request-form";
@@ -40,7 +40,8 @@ async function ServicesContent() {
         </figure>
         <ul className="service-list">
           {directions.map((d) => (
-            <li key={d.code}>
+            <li key={d.code} className={d.imageUrl ? "service-list__item--photo" : undefined}>
+              {d.imageUrl && <img src={thumb(d.imageUrl, 120)} alt="" width={72} height={72} loading="lazy" decoding="async" className="service-list__photo" />}
               <h2>{d.name}</h2>
               {d.description && <p>{d.description}</p>}
             </li>

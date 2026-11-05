@@ -1,0 +1,4 @@
+.announce { background: var(--color-accent-soft); color: var(--color-ink); font-size: var(--text-sm); }
+.announce__inner { display: flex; align-items: center; justify-content: center; min-height: 40px; padding-block: 6px; line-height: 1.5; text-align: center; }
+a.announce__text { color: var(--color-ink); font-weight: 600; text-decoration-color: var(--color-brand); text-underline-offset: 0.25em; }
+a.announce__text:hover { color: var(--color-brand-strong); }

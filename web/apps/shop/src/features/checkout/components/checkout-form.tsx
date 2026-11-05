@@ -63,6 +63,7 @@ export function CheckoutForm() {
         quote={checkout.quote}
         quoteError={checkout.quoteError}
         delivery={checkout.delivery}
+        priceNote={checkout.deliveryOption?.priceNote}
         sending={checkout.sending}
         setQuantity={checkout.setQuantity}
         remove={checkout.remove}

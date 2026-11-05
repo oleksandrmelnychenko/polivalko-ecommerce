@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { sized } from "@polivalko/shared/lib/images";
-import { categoryPhotos } from "@polivalko/shared/lib/stand-in-photos";
 import { ArrowRightIcon } from "@polivalko/shared/ui/icons";
+import { categoryPhotoUrl } from "../lib/category-photo";
 
-export type CategoryItem = { id: string; slug: string; name: string };
+export type CategoryItem = { id: string; slug: string; name: string; imageUrl?: string | null };
 
 export function CategoryTile({ category, look }: { category: CategoryItem; look?: boolean }) {
-  const photo = categoryPhotos[category.slug];
-  const image = photo ? sized(photo.url, "(max-width: 40rem) 46vw, (max-width: 75rem) 30vw, 380px", 330) : null;
+  const photo = categoryPhotoUrl(category);
+  const image = photo ? sized(photo, "(max-width: 40rem) 46vw, (max-width: 75rem) 30vw, 380px", 330) : null;
   const href = `/catalog/${category.slug}`;
   return (
     <li className={look ? "tile tile--look" : "tile"}>

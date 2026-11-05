@@ -4,3 +4,5 @@
 .service-list li { padding-block: var(--space-md); border-bottom: var(--rule-hair) solid var(--color-rule); }
 .service-list h2 { font-size: var(--text-md); letter-spacing: 0.06em; }
 .service-list p { margin-top: var(--space-2xs); font-size: var(--text-sm); color: var(--color-ink-2); }
+.service-list__item--photo { display: grid; grid-template-columns: 72px minmax(0, 1fr); column-gap: var(--space-md); align-content: start; }
+.service-list__photo { grid-row: span 2; width: 72px; height: 72px; object-fit: cover; background: var(--color-paper-2); }

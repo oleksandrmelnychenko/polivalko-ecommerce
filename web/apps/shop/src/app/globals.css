@@ -1,6 +1,7 @@
 @import url("../../../../packages/shared/styles/tokens.css");
 @import url("../../../../packages/shared/styles/base.css");
 @import url("../../../../packages/shared/styles/layout.css");
+@import url("../features/layout/styles/announce.css");
 @import url("../features/layout/styles/header.css");
 @import url("../../../../packages/shared/styles/ui/logo.css");
 @import url("../features/layout/styles/header-menu.css");
@@ -18,6 +19,7 @@
 @import url("../shared/styles/responsive/site.css");
 @import url("../features/catalog/styles/price.css");
 @import url("../features/catalog/styles/flashes.css");
+@import url("../features/catalog/styles/labels.css");
 @import url("../features/home/styles/hero.css");
 @import url("../features/home/styles/look.css");
 @import url("../features/home/styles/strip.css");
@@ -30,6 +32,7 @@
 @import url("../features/content/styles/facts.css");
 @import url("../../../../packages/shared/styles/ui/page-head.css");
 @import url("../features/catalog/styles/listing.css");
+@import url("../features/catalog/styles/category-intro.css");
 @import url("../../../../packages/shared/styles/ui/check.css");
 @import url("../features/catalog/styles/listing-toolbar.css");
 @import url("../../../../packages/shared/styles/ui/seg.css");

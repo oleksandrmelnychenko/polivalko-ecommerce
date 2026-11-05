@@ -36,6 +36,7 @@ export function CheckoutDelivery({
   saved?: ReactNode;
   save?: ReactNode;
 }) {
+  const methods = quote?.deliveryMethods ?? [];
   return (
     <section aria-labelledby="delivery-title">
       <h2 id="delivery-title">
@@ -44,18 +45,26 @@ export function CheckoutDelivery({
       {saved}
       <fieldset className="seg seg--cards">
         <legend className="visually-hidden">Спосіб отримання</legend>
-        {(quote?.deliveryMethods ?? []).map((d) => (
+        {methods.map((d) => (
           <span key={d.code}>
             <input type="radio" id={`delivery-${d.code}`} name="delivery" value={d.code} checked={delivery === d.code} onChange={() => setDelivery(d.code)} />
             <label htmlFor={`delivery-${d.code}`}>
               <b>{d.name}</b>
               <small>{deliveryHint[d.code] ?? ""}</small>
+              {d.description && <small>{d.description}</small>}
+              {d.priceNote && <small>{d.priceNote}</small>}
             </label>
           </span>
         ))}
       </fieldset>
+      {fieldError("delivery.method")}
 
-      {delivery === "nova_poshta_courier" ? (
+      {quote && methods.length === 0 ? (
+        <p className="notice">
+          <strong>Зараз немає доступних способів отримання</strong>
+          Зателефонуйте нам, і менеджер допоможе оформити замовлення.
+        </p>
+      ) : delivery === "nova_poshta_courier" ? (
         <CheckoutCourierFields
           key={courier?.key}
           defaults={courier?.values ?? undefined}
@@ -65,7 +74,7 @@ export function CheckoutDelivery({
           field={field}
           fieldError={fieldError}
         />
-      ) : delivery === "nova_poshta" ? (
+      ) : delivery !== "pickup" ? (
         <div className="fields-2">
           <SettlementPicker value={settlement} onChange={chooseSettlement} error={errors["delivery.settlementRef"]} />
           <CheckoutWarehouseSelect

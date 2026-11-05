@@ -4,6 +4,7 @@ import { CartButton } from "@/features/cart";
 import { AccountButton } from "@/features/customer";
 import { SearchButton } from "@/features/search";
 import { MenuIcon } from "@polivalko/shared/ui/icons";
+import { AnnouncementBar } from "./announcement-bar";
 import { HeaderMobileMenu } from "./header-mobile-menu";
 import { HeaderNav } from "./header-nav";
 import { NavFallback } from "./nav-fallback";
@@ -11,6 +12,9 @@ import { NavFallback } from "./nav-fallback";
 export function SiteHeader() {
   return (
     <>
+      <Suspense fallback={null}>
+        <AnnouncementBar />
+      </Suspense>
       <header className="site-header">
         <div className="container site-header__bar">
           <Link href="/" className="logo" translate="no">

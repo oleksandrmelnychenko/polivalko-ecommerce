@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { InfoPage } from "@/features/content/server";
+import { InfoPage, pageMetadata } from "@/features/content/server";
 
-export const metadata: Metadata = { title: "Політика приватності", alternates: { canonical: "/privacy" } };
+export function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("privacy", "Політика приватності");
+}
 
 export default function PrivacyPage() {
   return <InfoPage slug="privacy" />;

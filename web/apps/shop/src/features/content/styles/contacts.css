@@ -1,3 +1,5 @@
 .contacts { padding-bottom: var(--space-2xl); }
 .contacts .facts dd p + p { margin-top: var(--space-xs); }
 .contacts__socials { display: flex; flex-wrap: wrap; gap: var(--space-md); margin: 0; padding: 0; list-style: none; }
+.special-days { display: grid; gap: var(--space-2xs); margin: var(--space-sm) 0 0; padding: 0; list-style: none; }
+.special-days__date { font-weight: 600; color: var(--color-ink); }

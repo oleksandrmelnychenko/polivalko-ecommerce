@@ -1,5 +1,5 @@
 import { BuyForm } from "@/features/cart";
-import { discountPercent } from "@/features/catalog";
+import { discountPercent, ProductLabels } from "@/features/catalog";
 import { FavoriteButton } from "@/features/favorites";
 import type { ProductDetails } from "@polivalko/shared/api/types";
 import { formatMoney } from "@polivalko/shared/lib/format";
@@ -19,6 +19,7 @@ export function ProductBuybox({ product }: { product: ProductDetails }) {
 
   return (
     <div className="buybox">
+      <ProductLabels labels={product.labels} className="buybox__labels" />
       <h1>{product.name}</h1>
       <p className="buybox__meta">
         <span>

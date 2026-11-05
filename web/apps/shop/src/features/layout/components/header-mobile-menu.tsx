@@ -1,6 +1,6 @@
 import { connection } from "next/server";
+import { categoryPhotoUrl } from "@/features/catalog";
 import { getCategoryTree } from "@/features/catalog/server";
-import { categoryPhotos } from "@polivalko/shared/lib/stand-in-photos";
 import { buyerLinks } from "../lib/nav-links";
 import { MobileMenu } from "./mobile-menu";
 
@@ -9,7 +9,7 @@ export async function HeaderMobileMenu() {
   const categories = await getCategoryTree();
   return (
     <MobileMenu
-      categories={categories.map((c) => ({ id: c.id, slug: c.slug, name: c.name, photo: categoryPhotos[c.slug]?.url ?? null }))}
+      categories={categories.map((c) => ({ id: c.id, slug: c.slug, name: c.name, photo: categoryPhotoUrl(c) }))}
       pages={[...buyerLinks, { href: "/services", label: "Послуги для саду" }, { href: "/contacts", label: "Контакти" }]}
     />
   );

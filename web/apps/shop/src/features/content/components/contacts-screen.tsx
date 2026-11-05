@@ -2,8 +2,10 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { getContacts, getPickupPoints } from "../api/server";
+import { socialLinks } from "../lib/social-links";
 import { ContactsPhone } from "./contacts-phone";
 import { PageHead } from "./page-head";
+import { SpecialDays } from "./special-days";
 
 export function ContactsScreen() {
   return (
@@ -19,12 +21,7 @@ export function ContactsScreen() {
 async function ContactsContent() {
   await connection();
   const [contacts, pickupPoints] = await Promise.all([getContacts(), getPickupPoints()]);
-  const socials = [
-    ["Instagram", contacts?.instagram],
-    ["Facebook", contacts?.facebook],
-    ["Telegram", contacts?.telegram],
-    ["YouTube", contacts?.youTube],
-  ].filter((s): s is [string, string] => Boolean(s[1]));
+  const socials = socialLinks(contacts);
 
   return (
     <div className="contacts">
@@ -41,7 +38,10 @@ async function ContactsContent() {
           )}
         </dd>
         <dt>Графік</dt>
-        <dd>{contacts?.schedule ?? <span className="fill">графік уточнюється</span>}</dd>
+        <dd>
+          <p>{contacts?.schedule ?? <span className="fill">графік уточнюється</span>}</p>
+          <SpecialDays days={contacts?.specialDays} />
+        </dd>
         <dt>Магазин</dt>
         <dd>
           {contacts?.storePhone ? <ContactsPhone value={contacts.storePhone} /> : <span className="fill">телефон уточнюється</span>}
@@ -79,10 +79,10 @@ async function ContactsContent() {
             <dt>Соцмережі</dt>
             <dd>
               <ul className="contacts__socials">
-                {socials.map(([name, url]) => (
-                  <li key={name}>
-                    <a className="link" href={url} target="_blank" rel="noopener">
-                      {name}
+                {socials.map((s) => (
+                  <li key={s.name}>
+                    <a className="link" href={s.url} target="_blank" rel="noopener">
+                      {s.name}
                     </a>
                   </li>
                 ))}

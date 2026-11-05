@@ -7,6 +7,7 @@ import { sized } from "@polivalko/shared/lib/images";
 import { EyeIcon } from "@polivalko/shared/ui/icons";
 import { toCartProduct } from "../lib/cart-product";
 import { discountPercent } from "../lib/discount";
+import { TileFlashes } from "./tile-flashes";
 
 export function ProductTile({ product, priority, look }: { product: ProductListItem; priority?: boolean; look?: boolean }) {
   const discount = discountPercent(product.price, product.oldPrice);
@@ -21,14 +22,7 @@ export function ProductTile({ product, priority, look }: { product: ProductListI
         ) : (
           <span className="tile__photo-empty">Фото додасть магазин</span>
         )}
-        <span className="tile__flashes">
-          {!product.inStock ? <span className="flash flash--out">Немає</span> : discount && <span className="flash">−{discount}%</span>}
-          {discount && (
-            <span className="flash flash--right flash--sale" aria-hidden="true">
-              Акція
-            </span>
-          )}
-        </span>
+        <TileFlashes product={product} discount={discount} />
         {!look && (
           <>
             <span className="tile__sign" aria-hidden="true" />

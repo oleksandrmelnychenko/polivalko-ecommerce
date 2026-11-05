@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Category } from "@polivalko/shared/api/types";
+import { CategoryIntro } from "./category-intro";
 
 export function CategoryHead({ category }: { category: Category }) {
   return (
@@ -18,6 +19,7 @@ export function CategoryHead({ category }: { category: Category }) {
         </ol>
       </nav>
       <h1>{category.name}</h1>
+      <CategoryIntro description={category.description} />
       {category.children.length > 0 && (
         <nav aria-label="Підрозділи">
           <ul className="chips chips--grey">

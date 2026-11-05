@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { categoryPhotoUrl, pageTitle } from "@/features/catalog";
 import { CategoryScreen, getCategory } from "@/features/catalog/server";
 
 export async function generateMetadata({ params, searchParams }: PageProps<"/catalog/[slug]">): Promise<Metadata> {
@@ -6,10 +7,12 @@ export async function generateMetadata({ params, searchParams }: PageProps<"/cat
   const category = await getCategory(slug);
   if (!category) return { title: "Розділ не знайдено" };
   const filtered = Object.keys(sp).length > 0;
+  const image = categoryPhotoUrl(category);
   return {
-    title: category.seoTitle ?? category.name,
+    title: pageTitle(category.seoTitle || category.name),
     description: category.seoDescription ?? undefined,
     alternates: { canonical: `/catalog/${slug}` },
+    openGraph: image ? { images: [image] } : undefined,
     robots: filtered ? { index: false, follow: true } : undefined,
   };
 }
