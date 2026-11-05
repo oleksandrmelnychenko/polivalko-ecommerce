@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using PoliValko.Infrastructure.Persistence;
+using PoliValko.Infrastructure.Settings;
 
 namespace PoliValko.Catalog.Features.Storefront;
 
@@ -9,6 +10,7 @@ internal static class GetCategory
     public static async Task<Results<Ok<CategoryDto>, ProblemHttpResult>> HandleAsync(
         string slug,
         PoliValkoDbContext db,
+        ISettingsStore settings,
         CancellationToken ct)
     {
         var categories = await CategoryQueries.LoadVisibleCategoriesAsync(db, ct);
@@ -26,6 +28,21 @@ internal static class GetCategory
         }
 
         var children = categories.Where(c => c.ParentId == category.Id).Select(CategoryQueries.ToRef).ToList();
-        return TypedResults.Ok(new CategoryDto(category.Id, category.Slug, category.Name, breadcrumbs, children, category.SeoTitle, category.SeoDescription));
+        var templates = await SeoTemplates.LoadAsync(settings, ct);
+        var (seoTitle, seoDescription) = SeoTemplates.Fill(
+            templates.Category,
+            category.SeoTitle,
+            category.SeoDescription,
+            new SeoTemplates.Values(category.Name, null, breadcrumbs.LastOrDefault()?.Name ?? category.Name, null));
+        return TypedResults.Ok(new CategoryDto(
+            category.Id,
+            category.Slug,
+            category.Name,
+            breadcrumbs,
+            children,
+            seoTitle,
+            seoDescription,
+            category.ImageUrl,
+            category.Description));
     }
 }

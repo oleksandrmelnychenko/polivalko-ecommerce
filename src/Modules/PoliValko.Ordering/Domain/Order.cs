@@ -42,6 +42,8 @@ public sealed class Order
 
     public string? Comment { get; init; }
 
+    public string? InternalNote { get; private set; }
+
     public required string SellerName { get; init; }
 
     public string? SellerTaxId { get; init; }
@@ -67,6 +69,27 @@ public sealed class Order
     public List<OrderRefund> Refunds { get; init; } = [];
 
     public void LinkCustomer(Guid customerId) => CustomerId ??= customerId;
+
+    public bool ChangeInternalNote(string? note, DateTimeOffset at, string by)
+    {
+        if (string.Equals(InternalNote, note, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        InternalNote = note;
+        History.Add(new OrderStatusChange
+        {
+            Id = Guid.CreateVersion7(at),
+            OrderId = Id,
+            From = Status,
+            To = Status,
+            At = at,
+            By = by,
+            Reason = OrderStatusChange.NoteChanged,
+        });
+        return true;
+    }
 
     public void InitPaymentStatus() =>
         PaymentStatus = PaymentMethod == PaymentMethod.Card ? PaymentStatus.Pending : PaymentStatus.NotRequired;

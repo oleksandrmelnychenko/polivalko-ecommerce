@@ -10,5 +10,6 @@ public static class Schemas
     public const string Integration = "integration";
     public const string Ordering = "ordering";
     public const string Payments = "payments";
+    public const string Platform = "platform";
     public const string Identity = "identity";
 }

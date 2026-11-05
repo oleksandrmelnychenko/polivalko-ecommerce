@@ -23,6 +23,6 @@ internal sealed class NotifyManagerOnServiceRequest(PoliValkoDbContext db, IMana
             body += $"\n\n{request.Comment}";
         }
 
-        await notifier.NotifyAsync(new ManagerNotification("Нова заявка на послугу", body), cancellationToken);
+        await notifier.NotifyAsync(new ManagerNotification("Нова заявка на послугу", body, ManagerEvent.NewServiceRequest), cancellationToken);
     }
 }

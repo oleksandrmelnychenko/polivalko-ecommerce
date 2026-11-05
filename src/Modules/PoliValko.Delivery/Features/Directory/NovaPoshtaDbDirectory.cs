@@ -6,7 +6,7 @@ using PoliValko.Infrastructure.Persistence;
 
 namespace PoliValko.Delivery.Features.Directory;
 
-internal sealed class NovaPoshtaDbDirectory(PoliValkoDbContext db, PickupPointStore pickup) : IDeliveryDirectory
+internal sealed class NovaPoshtaDbDirectory(PoliValkoDbContext db) : IDeliveryDirectory
 {
     public const int PopularLimit = 8;
 
@@ -38,8 +38,6 @@ internal sealed class NovaPoshtaDbDirectory(PoliValkoDbContext db, PickupPointSt
             .Where(w => w.Ref == reference && w.IsActive)
             .Select(w => new Warehouse(w.Ref, w.SettlementRef, w.Number, w.Name, w.Address, w.Type))
             .FirstOrDefaultAsync(ct);
-
-    public ValueTask<PickupPoint> GetPickupAsync(CancellationToken ct) => pickup.GetDefaultAsync(ct);
 
     internal static IQueryable<Settlement> SearchSettlements(IQueryable<NpSettlement> source, string? query, int limit)
     {

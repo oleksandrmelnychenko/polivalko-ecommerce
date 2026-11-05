@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using PoliValko.Infrastructure.Idempotency;
 using PoliValko.Infrastructure.Security;
+using PoliValko.Infrastructure.Security.Permissions;
 using PoliValko.Infrastructure.Web;
 using PoliValko.Ordering.Contracts;
 
@@ -12,7 +13,7 @@ internal static class ConsoleOrderEndpoints
 {
     public static RouteGroupBuilder Map(RouteGroupBuilder console)
     {
-        var group = console.MapGroup("/orders").WithTags("Console").RequireStaff();
+        var group = console.MapGroup("/orders").WithTags("Console").RequireStaff(PermissionKeys.OrdersView);
 
         group.MapGet(string.Empty, ListOrders.HandleAsync)
             .WithName("ConsoleListOrders")
@@ -26,6 +27,7 @@ internal static class ConsoleOrderEndpoints
             .WithSummary("Кількість замовлень за статусами з тими самими фільтрами, що й у списку");
 
         group.MapGet("/export", ExportOrders.HandleAsync)
+            .RequirePermission(PermissionKeys.OrdersExport)
             .WithName("ConsoleExportOrders")
             .WithEnumQuery<OrderStatus>("status")
             .WithEnumQuery<PaymentStatus>("paymentStatus")
@@ -38,15 +40,24 @@ internal static class ConsoleOrderEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapPost("/{number}/status", ChangeOrderStatus.HandleAsync)
+            .RequirePermission(PermissionKeys.OrdersStatusChange)
             .WithName("ConsoleChangeOrderStatus")
             .WithSummary("Зміна статусу за таблицею переходів. Статус оплати тут не змінюється.")
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
         group.MapPost("/{number}/refunds", CreateRefund.HandleAsync)
+            .RequirePermission(PermissionKeys.OrdersRefundCreate)
             .RequireIdempotency<CreateRefundRequest>()
             .WithName("ConsoleCreateRefund")
             .WithSummary("Повне або часткове повернення за позиціями: на картку через провайдера або фіксація готівкового повернення")
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        group.MapPut("/{number}/note", UpdateOrderNote.HandleAsync)
+            .RequirePermission(PermissionKeys.OrdersStatusChange)
+            .WithName("ConsoleUpdateOrderNote")
+            .WithSummary("Службова нотатка до замовлення (бачать лише працівники); зміна пишеться в історію")
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 

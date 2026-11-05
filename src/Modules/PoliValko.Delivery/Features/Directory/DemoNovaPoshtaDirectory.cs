@@ -2,7 +2,7 @@ using PoliValko.Delivery.Contracts;
 
 namespace PoliValko.Delivery.Features.Directory;
 
-internal sealed class DemoNovaPoshtaDirectory(PickupPointStore pickup) : IDeliveryDirectory
+internal sealed class DemoNovaPoshtaDirectory : IDeliveryDirectory
 {
     private static readonly Settlement[] Settlements =
     [
@@ -55,8 +55,6 @@ internal sealed class DemoNovaPoshtaDirectory(PickupPointStore pickup) : IDelive
         Branch("demo-kharkiv", 22, "просп. Науки, 44"),
         Postomat("demo-kharkiv", 35071, "вул. Сумська, 2"),
     ];
-
-    public ValueTask<PickupPoint> GetPickupAsync(CancellationToken ct) => pickup.GetDefaultAsync(ct);
 
     public ValueTask<IReadOnlyList<Settlement>> SearchSettlementsAsync(string? query, int limit, CancellationToken ct)
     {

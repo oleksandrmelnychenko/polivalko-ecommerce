@@ -19,7 +19,7 @@ public sealed class CatalogFacetsTests(ApiFactory api)
         await api.AddProductAsync("vse-dlia-roslyn", $"Добриво {token} друге", 200m, brand: "Florovit");
         await api.AddProductAsync("vse-dlia-roslyn", $"Добриво {token} третє", 300m, stock: 0, brand: "Agrecol");
 
-        var filtered = await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={token}&brand=Florovit", Ct);
+        var filtered = await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={token}&brand=Florovit", TestJson.Options, Ct);
 
         filtered!.TotalItems.ShouldBe(2);
         filtered.Facets.Brands.ShouldBe([new BrandFacet("Florovit", 2), new BrandFacet("Agrecol", 1)]);
@@ -27,7 +27,7 @@ public sealed class CatalogFacetsTests(ApiFactory api)
         filtered.Facets.PriceMax.ShouldBe(new MoneyDto("300.00", "UAH"));
         filtered.Facets.InStockCount.ShouldBe(2);
 
-        var onSale = await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={token}&onSale=true", Ct);
+        var onSale = await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={token}&onSale=true", TestJson.Options, Ct);
         onSale!.Items.ShouldHaveSingleItem().OldPrice.ShouldBe(new MoneyDto("150.00", "UAH"));
     }
 
@@ -43,10 +43,10 @@ public sealed class CatalogFacetsTests(ApiFactory api)
             return await db.SaveChangesAsync(Ct);
         });
 
-        var details = await _client.GetFromJsonAsync<ProductDetailsDto>($"/api/v1/products/{product.Slug}", Ct);
+        var details = await _client.GetFromJsonAsync<ProductDetailsDto>($"/api/v1/products/{product.Slug}", TestJson.Options, Ct);
         details!.Images.Select(i => i.Url).ShouldBe(["https://example.test/first.jpg", "https://example.test/second.jpg"]);
 
-        var list = await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={product.Sku}", Ct);
+        var list = await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={product.Sku}", TestJson.Options, Ct);
         list!.Items.ShouldHaveSingleItem().ImageUrl.ShouldBe("https://example.test/first.jpg");
 
         var credits = await _client.GetFromJsonAsync<List<PhotoCreditDto>>("/api/v1/catalog/photo-credits", Ct);

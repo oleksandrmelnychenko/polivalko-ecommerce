@@ -65,9 +65,7 @@ internal sealed class PaymentProcessor(PoliValkoDbContext db, IOrderPayments ord
                     outbox.Enqueue(new FiscalReceiptRequested(order.Id, FiscalTrigger.Payment));
                     if (paid.IsCancelled)
                     {
-                        outbox.Enqueue(new IntegrationAlert(
-                            $"Оплачено скасоване замовлення {order.Number}",
-                            "Покупець оплатив замовлення після скасування. Оформіть повернення коштів у консолі."));
+                        outbox.Enqueue(new OrderPaidAfterCancel(order.Id));
                     }
                 }
 

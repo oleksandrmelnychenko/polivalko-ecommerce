@@ -7,5 +7,5 @@ namespace PoliValko.Notifications.Features.IntegrationAlerts;
 internal sealed class NotifyResponsibleOnIntegrationAlert(IManagerNotifier notifier) : IOutboxHandler<IntegrationAlert>
 {
     public Task HandleAsync(IntegrationAlert message, CancellationToken cancellationToken) =>
-        notifier.NotifyAsync(new ManagerNotification($"⚠ {message.Title}", message.Body), cancellationToken);
+        notifier.NotifyAsync(new ManagerNotification($"⚠ {message.Title}", message.Body, ManagerEvent.IntegrationAlert), cancellationToken);
 }

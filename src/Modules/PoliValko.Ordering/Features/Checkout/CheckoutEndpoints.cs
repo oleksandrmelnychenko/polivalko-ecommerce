@@ -30,7 +30,7 @@ internal static class CheckoutEndpoints
             .WithSummary("Статус замовлення для покупця (за токеном зі сторінки результату)")
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        group.MapGet("/seller", GetSeller.Handle)
+        group.MapGet("/seller", GetSeller.HandleAsync)
             .WithName("GetSeller")
             .WithSummary("Продавець, з яким покупець укладає договір (для оферти й сторінки замовлення)");
 

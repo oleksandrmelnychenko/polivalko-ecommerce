@@ -14,13 +14,14 @@ public sealed class StaffApiTests(ApiFactory api)
     {
         var admin = await Staff.AdminAsync(api);
         var email = $"new-{Guid.NewGuid():N}@tests.polivalko.local";
+        var managerRole = await Staff.RoleIdAsync(admin, "Менеджер");
 
-        var weak = await admin.PostAsJsonAsync("/api/v1/console/users", new CreateStaffUserRequest(email, "Новий Менеджер", "Manager", "short"), Ct);
+        var weak = await admin.PostAsJsonAsync("/api/v1/console/users", new CreateStaffUserRequest(email, "Новий Менеджер", managerRole, "short"), Ct);
         weak.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
-        var user = await (await admin.PostAsJsonAsync("/api/v1/console/users", new CreateStaffUserRequest(email, "Новий Менеджер", "Manager", ApiFactory.TestPassword), Ct))
+        var user = await (await admin.PostAsJsonAsync("/api/v1/console/users", new CreateStaffUserRequest(email, "Новий Менеджер", managerRole, ApiFactory.TestPassword), Ct))
             .ReadAsync<StaffUserDto>(HttpStatusCode.Created);
-        user.Roles.ShouldBe(["Manager"]);
+        user.RoleName.ShouldBe("Менеджер");
 
         var newcomer = await Staff.LoginAsync(api, email);
         (await newcomer.GetAsync("/api/v1/console/users", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
@@ -33,6 +34,6 @@ public sealed class StaffApiTests(ApiFactory api)
         var me = await admin.GetFromJsonAsync<List<StaffUserDto>>("/api/v1/console/users", TestJson.Options, Ct);
         var self = me!.Single(u => u.Email == ApiFactory.AdminEmail);
         (await admin.PostAsJsonAsync($"/api/v1/console/users/{self.Id}/lock", new LockStaffUserRequest(true), Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
-        (await admin.PutAsJsonAsync($"/api/v1/console/users/{self.Id}", new UpdateStaffUserRequest("Адмін Тестовий", "Manager"), Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await admin.PutAsJsonAsync($"/api/v1/console/users/{self.Id}", new UpdateStaffUserRequest("Адмін Тестовий", managerRole), Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 }

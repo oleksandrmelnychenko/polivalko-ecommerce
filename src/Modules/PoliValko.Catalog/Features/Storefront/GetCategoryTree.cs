@@ -12,7 +12,7 @@ internal static class GetCategoryTree
         var byParent = categories.ToLookup(c => c.ParentId);
 
         IReadOnlyList<CategoryNodeDto> Build(Guid? parentId) =>
-            byParent[parentId].Select(c => new CategoryNodeDto(c.Id, c.Slug, c.Name, Build(c.Id))).ToList();
+            byParent[parentId].Select(c => new CategoryNodeDto(c.Id, c.Slug, c.Name, Build(c.Id), c.ImageUrl, c.Description)).ToList();
 
         return TypedResults.Ok(Build(null));
     }

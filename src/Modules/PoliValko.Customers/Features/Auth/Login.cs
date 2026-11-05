@@ -38,6 +38,15 @@ internal static class Login
             return InvalidCredentials();
         }
 
+        if (customer.BlockedAt is not null)
+        {
+            return Problems.Create(
+                StatusCodes.Status403Forbidden,
+                "account.blocked",
+                "Обліковий запис заблоковано",
+                "Зверніться до магазину, щоб розблокувати кабінет.");
+        }
+
         if (result == PasswordVerificationResult.SuccessRehashNeeded)
         {
             customer.RehashPassword(passwords.Hash(customer, request.Password));

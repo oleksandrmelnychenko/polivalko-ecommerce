@@ -13,8 +13,8 @@ internal static class ListServiceDirections
         var content = await db.Set<ServiceDirectionContent>().AsNoTracking().ToDictionaryAsync(d => d.Code, ct);
         return TypedResults.Ok(ServiceDirections.All
             .Select((d, i) => content.TryGetValue(d.Code, out var c)
-                ? new ConsoleServiceDirectionDto(d.Code, d.Name, c.Description, c.SortOrder, c.IsVisible)
-                : new ConsoleServiceDirectionDto(d.Code, d.Name, null, i + 1, true))
+                ? new ConsoleServiceDirectionDto(d.Code, d.Name, c.Description, c.SortOrder, c.IsVisible, c.ImageUrl)
+                : new ConsoleServiceDirectionDto(d.Code, d.Name, null, i + 1, true, null))
             .OrderBy(d => d.SortOrder)
             .ToList());
     }

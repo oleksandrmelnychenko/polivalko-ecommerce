@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PoliValko.Catalog;
+using PoliValko.Content;
 using PoliValko.Identity;
 using PoliValko.Infrastructure.Persistence;
 
@@ -34,6 +35,10 @@ public static class ApiDatabase
         {
             await CatalogModule.SeedDemoDataAsync(scope.ServiceProvider);
         }
+
+        await CatalogModule.SyncDictionariesAsync(scope.ServiceProvider);
+
+        await ContentModule.SeedSiteAsync(scope.ServiceProvider);
 
         await IdentityModule.SeedUsersAsync(app.Services);
     }

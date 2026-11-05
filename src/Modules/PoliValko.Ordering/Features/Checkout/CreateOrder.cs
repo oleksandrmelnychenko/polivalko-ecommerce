@@ -9,10 +9,12 @@ using PoliValko.Delivery.Contracts;
 using PoliValko.Infrastructure.Idempotency;
 using PoliValko.Infrastructure.Outbox;
 using PoliValko.Infrastructure.Persistence;
+using PoliValko.Infrastructure.Settings;
 using PoliValko.Infrastructure.Web;
 using PoliValko.Ordering.Configuration;
 using PoliValko.Ordering.Contracts;
 using PoliValko.Ordering.Domain;
+using PoliValko.Ordering.Features.Shop;
 using PoliValko.SharedKernel;
 
 namespace PoliValko.Ordering.Features.Checkout;
@@ -25,14 +27,17 @@ internal static class CreateOrder
         PoliValkoDbContext db,
         CheckoutCalculator calculator,
         IDeliveryDirectory directory,
+        IDeliveryAvailability delivery,
         ICatalogFreshness freshness,
-        IOptions<SellerOptions> seller,
+        IOptions<SellerOptions> sellerOptions,
+        ISettingsStore settings,
         IOutbox outbox,
         TimeProvider time,
         [FromServices] ICustomerDirectory customers,
         CancellationToken ct)
     {
-        var (errors, valid) = await OrderValidator.ValidateAsync(request, directory, ct);
+        var availability = await delivery.GetAsync(ct);
+        var (errors, valid) = await OrderValidator.ValidateAsync(request, directory, availability, ct);
         if (valid is null)
         {
             return TypedResults.ValidationProblem(errors);
@@ -69,7 +74,8 @@ internal static class CreateOrder
             .SingleAsync(ct);
         var (token, tokenHash) = OrderTokens.Create();
         var orderId = Guid.CreateVersion7(now);
-        var pickup = valid.Delivery == DeliveryMethod.Pickup ? await directory.GetPickupAsync(ct) : null;
+        var pickup = valid.Delivery == DeliveryMethod.Pickup ? availability.Pickup : null;
+        var seller = await ShopSettingsStore.LoadSellerAsync(settings, sellerOptions.Value, ct);
 
         var order = new Order
         {
@@ -90,8 +96,8 @@ internal static class CreateOrder
             DeliveryAddress = valid.Address,
             PickupAddress = pickup is null ? null : $"{pickup.Name}, {pickup.Address}",
             Comment = valid.Comment,
-            SellerName = seller.Value.Name,
-            SellerTaxId = seller.Value.TaxId,
+            SellerName = seller.Name,
+            SellerTaxId = seller.TaxId,
             Subtotal = subtotal,
             Total = subtotal,
             CreatedAt = now,

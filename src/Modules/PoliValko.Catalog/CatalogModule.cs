@@ -10,6 +10,7 @@ using PoliValko.Catalog.Features.Pricing;
 using PoliValko.Catalog.Features.Reporting;
 using PoliValko.Catalog.Features.Storefront;
 using PoliValko.Catalog.Persistence;
+using PoliValko.Customers.Contracts;
 using PoliValko.Infrastructure;
 using PoliValko.Infrastructure.Persistence;
 
@@ -26,7 +27,8 @@ public static class CatalogModule
             .AddScoped<ICatalogImporter, CatalogImporter>()
             .AddScoped<ICatalogReporting, CatalogReporting>()
             .AddSingleton<ICatalogDemoFeed, CatalogDemoFeed>()
-            .AddScoped<ICatalogFreshness, AlwaysFreshCatalog>();
+            .AddScoped<ICatalogFreshness, AlwaysFreshCatalog>()
+            .AddScoped<ICustomerFavoritesCounter, CustomerFavoritesCounter>();
     }
 
     public static IEndpointRouteBuilder MapCatalogEndpoints(this IEndpointRouteBuilder api) =>
@@ -40,4 +42,7 @@ public static class CatalogModule
 
     public static Task SeedDemoDataAsync(IServiceProvider services, CancellationToken ct = default) =>
         CatalogDemoData.SeedAsync(services.GetRequiredService<PoliValkoDbContext>(), services.GetRequiredService<TimeProvider>(), ct);
+
+    public static Task SyncDictionariesAsync(IServiceProvider services, CancellationToken ct = default) =>
+        CatalogDictionarySync.SyncAsync(services.GetRequiredService<PoliValkoDbContext>(), ct);
 }

@@ -9,6 +9,4 @@ public interface IDeliveryDirectory
     ValueTask<IReadOnlyList<Warehouse>?> GetWarehousesAsync(string settlementRef, string? query, CancellationToken ct);
 
     ValueTask<Warehouse?> FindWarehouseAsync(string reference, CancellationToken ct);
-
-    ValueTask<PickupPoint> GetPickupAsync(CancellationToken ct);
 }

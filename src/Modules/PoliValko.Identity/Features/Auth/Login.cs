@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using PoliValko.Infrastructure.Security;
+using PoliValko.Infrastructure.Security.Permissions;
 using PoliValko.Infrastructure.Web;
 
 namespace PoliValko.Identity.Features.Auth;
@@ -11,7 +12,9 @@ internal static class Login
     public static async Task<Results<Ok<StaffMeDto>, ProblemHttpResult>> HandleAsync(
         LoginRequest request,
         UserManager<StaffUser> userManager,
-        SignInManager<StaffUser> signInManager)
+        SignInManager<StaffUser> signInManager,
+        IStaffAccessResolver access,
+        CancellationToken ct)
     {
         var user = string.IsNullOrWhiteSpace(request.Email) ? null : await userManager.FindByEmailAsync(request.Email.Trim());
         if (user is null || string.IsNullOrEmpty(request.Password))
@@ -34,7 +37,8 @@ internal static class Login
             return InvalidCredentials();
         }
 
-        return TypedResults.Ok(new StaffMeDto(user.Email!, user.DisplayName, (await userManager.GetRolesAsync(user)).ToList()));
+        var mine = await access.GetAsync(user.Id, ct);
+        return TypedResults.Ok(new StaffMeDto(user.Email!, user.DisplayName, mine?.RoleId ?? string.Empty, mine?.RoleName ?? string.Empty));
     }
 
     private static ProblemHttpResult InvalidCredentials() =>

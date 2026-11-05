@@ -88,5 +88,5 @@ public sealed class ProductSearchApiTests(ApiFactory api)
     private static string Token() => Guid.NewGuid().ToString("N")[..8];
 
     private async Task<ProductSearchResponse> SearchAsync(string q) =>
-        (await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={Uri.EscapeDataString(q)}", Ct))!;
+        (await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={Uri.EscapeDataString(q)}", TestJson.Options, Ct))!;
 }

@@ -54,12 +54,15 @@ internal static class UploadProductImage
             SortOrder = product.Images.Count == 0 ? 0 : product.Images.Max(i => i.SortOrder) + 1,
         };
         db.Add(image);
-        product.Images.Add(image);
+        if (!product.Images.Contains(image))
+        {
+            product.Images.Add(image);
+        }
         product.UpdatedAt = now;
         audit.Record("catalog.product_image_added", "Product", product.Sku, new { image.Url });
         await db.SaveChangesAsync(ct);
         await storefront.InvalidateAsync(ConsoleProductQueries.ProductTags(product.Slug), ct);
 
-        return TypedResults.Ok(ConsoleProductQueries.ToDto(product));
+        return TypedResults.Ok(await ConsoleProductQueries.ToDtoAsync(db, product, time.GetUtcNow(), ct));
     }
 }

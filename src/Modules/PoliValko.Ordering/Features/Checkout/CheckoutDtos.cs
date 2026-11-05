@@ -27,7 +27,12 @@ public sealed record QuoteLineDto(
 
 public sealed record PaymentMethodOptionDto(string Code, string Name);
 
-public sealed record DeliveryMethodOptionDto(string Code, string Name, IReadOnlyList<PaymentMethodOptionDto> PaymentMethods);
+public sealed record DeliveryMethodOptionDto(
+    string Code,
+    string Name,
+    IReadOnlyList<PaymentMethodOptionDto> PaymentMethods,
+    string? Description = null,
+    string? PriceNote = null);
 
 public sealed record QuoteDto(
     IReadOnlyList<QuoteLineDto> Items,
@@ -95,6 +100,6 @@ public sealed record OrderDto(
     MoneyDto RefundedAmount,
     string SellerName);
 
-public sealed record SellerDto(string Name, string? TaxId, string? Address);
+public sealed record SellerDto(string Name, string? TaxId, string? Address, string? Iban = null, string? Email = null, string? Phone = null);
 
 public sealed record StockIssueDto(Guid ProductId, int RequestedQuantity, int AvailableQuantity, string Issue);

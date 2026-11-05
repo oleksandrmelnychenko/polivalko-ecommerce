@@ -21,4 +21,8 @@ public sealed class Category
     public string? SeoTitle { get; set; }
 
     public string? SeoDescription { get; set; }
+
+    public string? ImageUrl { get; set; }
+
+    public string? Description { get; set; }
 }

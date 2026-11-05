@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PoliValko.Content.Domain;
 using PoliValko.Infrastructure.Audit;
+using PoliValko.Infrastructure.Media;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Storefront;
 using PoliValko.Infrastructure.Web;
@@ -24,9 +25,21 @@ internal static class SaveServiceDirection
             return Problems.NotFound("content.direction_not_found", "Напрямок не знайдено");
         }
 
+        var errors = new Dictionary<string, string[]>();
         if (request.Description is { Length: > 1000 })
         {
-            return TypedResults.ValidationProblem(new Dictionary<string, string[]> { ["description"] = ["Опис — до 1000 символів."] });
+            errors["description"] = ["Опис — до 1000 символів."];
+        }
+
+        var imageUrl = SiteContentMapping.Clean(request.ImageUrl);
+        if (imageUrl is not null && !ImageUrls.IsValid(imageUrl))
+        {
+            errors["imageUrl"] = [ImageUrls.InvalidMessage];
+        }
+
+        if (errors.Count > 0)
+        {
+            return TypedResults.ValidationProblem(errors);
         }
 
         var content = await db.Set<ServiceDirectionContent>().FirstOrDefaultAsync(d => d.Code == code, ct);
@@ -39,9 +52,10 @@ internal static class SaveServiceDirection
         content.Description = SiteContentMapping.Clean(request.Description);
         content.SortOrder = request.SortOrder;
         content.IsVisible = request.IsVisible;
-        audit.Record("content.service_direction_updated", "ServiceDirection", code, new { content.IsVisible, content.SortOrder });
+        content.ImageUrl = imageUrl;
+        audit.Record("content.service_direction_updated", "ServiceDirection", code, new { content.IsVisible, content.SortOrder, content.ImageUrl });
         await db.SaveChangesAsync(ct);
         await storefront.InvalidateAsync(["services"], ct);
-        return TypedResults.Ok(new ConsoleServiceDirectionDto(code, direction.Name, content.Description, content.SortOrder, content.IsVisible));
+        return TypedResults.Ok(new ConsoleServiceDirectionDto(code, direction.Name, content.Description, content.SortOrder, content.IsVisible, content.ImageUrl));
     }
 }

@@ -26,10 +26,10 @@ internal static class AuthEndpoints
             .WithName("ConsoleLogout")
             .WithSummary("Вихід");
 
-        auth.MapGet("/me", Me.Handle)
+        auth.MapGet("/me", Me.HandleAsync)
             .RequireAuthorization(StaffPolicies.Staff)
             .WithName("ConsoleMe")
-            .WithSummary("Поточний працівник і його ролі")
+            .WithSummary("Поточний працівник і його роль")
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         auth.MapGet("/csrf", GetCsrfToken.Handle)

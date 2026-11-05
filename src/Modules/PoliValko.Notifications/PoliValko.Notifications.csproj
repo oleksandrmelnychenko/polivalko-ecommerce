@@ -8,4 +8,9 @@
     <ProjectReference Include="..\..\PoliValko.Infrastructure\PoliValko.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="PoliValko.IntegrationTests" />
+    <InternalsVisibleTo Include="PoliValko.UnitTests" />
+  </ItemGroup>
+
 </Project>

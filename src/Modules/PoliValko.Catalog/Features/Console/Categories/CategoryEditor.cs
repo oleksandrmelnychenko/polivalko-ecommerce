@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PoliValko.Catalog.Domain;
+using PoliValko.Infrastructure.Media;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Web;
 using PoliValko.SharedKernel;
@@ -53,12 +54,36 @@ internal static class CategoryEditor
         var filters = (request.FilterAttributes ?? [])
             .Where(f => !string.IsNullOrWhiteSpace(f))
             .Select(f => f.Trim())
-            .Distinct(StringComparer.Ordinal)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
         if (filters.Count > 10 || filters.Any(f => f.Length > 100))
         {
             errors["filterAttributes"] = ["До 10 характеристик, кожна до 100 символів."];
         }
+        else if (filters.Count > 0)
+        {
+            var normalized = filters.Select(AttributeDefinition.Normalize).ToList();
+            var known = await db.Set<AttributeDefinition>().AsNoTracking()
+                .Where(d => normalized.Contains(d.NormalizedName))
+                .ToDictionaryAsync(d => d.NormalizedName, d => d.Name, ct);
+            var missing = filters.Where(f => !known.ContainsKey(AttributeDefinition.Normalize(f))).ToList();
+            if (missing.Count > 0)
+            {
+                errors["filterAttributes"] = [$"Немає в довіднику характеристик: {string.Join(", ", missing)}. Спершу додайте їх у розділі «Характеристики»."];
+            }
+            else
+            {
+                filters = normalized.Select(n => known[n]).ToList();
+            }
+        }
+
+        var imageUrl = CatalogConsoleValidation.NullIfEmpty(request.ImageUrl);
+        if (imageUrl is not null && !ImageUrls.IsValid(imageUrl))
+        {
+            errors["imageUrl"] = [ImageUrls.InvalidMessage];
+        }
+
+        CatalogConsoleValidation.CheckLength(errors, "description", request.Description, 2000);
 
         if (errors.Count > 0)
         {
@@ -78,10 +103,12 @@ internal static class CategoryEditor
         category.FilterAttributes = filters;
         category.SeoTitle = CatalogConsoleValidation.NullIfEmpty(request.SeoTitle);
         category.SeoDescription = CatalogConsoleValidation.NullIfEmpty(request.SeoDescription);
+        category.ImageUrl = imageUrl;
+        category.Description = CatalogConsoleValidation.NullIfEmpty(request.Description);
     }
 
     public static ConsoleCategoryDto ToDto(Category c, int productCount) => new(
-        c.Id, c.ParentId, c.Slug, c.Name, c.SortOrder, c.IsVisible, c.NavkoloRef, c.FilterAttributes ?? [], c.SeoTitle, c.SeoDescription, productCount);
+        c.Id, c.ParentId, c.Slug, c.Name, c.SortOrder, c.IsVisible, c.NavkoloRef, c.FilterAttributes ?? [], c.SeoTitle, c.SeoDescription, productCount, c.ImageUrl, c.Description);
 
     public static ProblemHttpResult CategoryNotFound() => Problems.NotFound("catalog.category_not_found", "Розділ не знайдено");
 

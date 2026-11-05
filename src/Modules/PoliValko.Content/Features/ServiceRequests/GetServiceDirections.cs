@@ -14,7 +14,7 @@ internal static class GetServiceDirections
         return TypedResults.Ok(ServiceDirections.All
             .Where(d => content.GetValueOrDefault(d.Code)?.IsVisible != false)
             .OrderBy(d => content.GetValueOrDefault(d.Code)?.SortOrder ?? int.MaxValue)
-            .Select(d => new ServiceDirectionDto(d.Code, d.Name, content.GetValueOrDefault(d.Code)?.Description))
+            .Select(d => new ServiceDirectionDto(d.Code, d.Name, content.GetValueOrDefault(d.Code)?.Description, content.GetValueOrDefault(d.Code)?.ImageUrl))
             .ToList());
     }
 }

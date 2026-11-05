@@ -26,5 +26,7 @@ public sealed class SiteContacts
 
     public string? YouTube { get; set; }
 
+    public string? Viber { get; set; }
+
     public DateTimeOffset UpdatedAt { get; set; }
 }

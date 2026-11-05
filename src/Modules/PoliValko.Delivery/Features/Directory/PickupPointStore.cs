@@ -30,9 +30,5 @@ internal sealed class PickupPointStore(PoliValkoDbContext db, IMemoryCache cache
         return result;
     }
 
-    public async ValueTask<PickupPoint> GetDefaultAsync(CancellationToken ct) =>
-        (await GetActiveAsync(ct)).FirstOrDefault()
-        ?? throw new InvalidOperationException("Немає жодної активної точки самовивозу: увімкніть її в консолі.");
-
     public void Invalidate() => cache.Remove(CacheKey);
 }

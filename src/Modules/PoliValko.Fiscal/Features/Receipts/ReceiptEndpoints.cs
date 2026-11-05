@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using PoliValko.Customers.Contracts;
 using PoliValko.Infrastructure.Security;
+using PoliValko.Infrastructure.Security.Permissions;
 
 namespace PoliValko.Fiscal.Features.Receipts;
 
@@ -20,7 +21,7 @@ internal static class ReceiptEndpoints
 
     public static RouteGroupBuilder MapConsole(RouteGroupBuilder console)
     {
-        console.MapGroup("/orders").WithTags("Console").RequireStaff()
+        console.MapGroup("/orders").WithTags("Console").RequireStaff(PermissionKeys.OrdersView)
             .MapGet("/{number}/receipts", ListOrderReceipts.HandleAsync)
             .WithName("ConsoleListOrderReceipts")
             .WithSummary("Фіскальні чеки продажу й повернення за замовленням");

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -5,10 +6,13 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Identity.Features.Auth;
+using PoliValko.Identity.Features.Permissions;
+using PoliValko.Identity.Features.Roles;
 using PoliValko.Identity.Features.Staff;
 using PoliValko.Identity.Persistence;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Security;
+using PoliValko.Infrastructure.Security.Permissions;
 
 namespace PoliValko.Identity;
 
@@ -27,7 +31,7 @@ public static class IdentityModule
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
                 options.Lockout.AllowedForNewUsers = true;
             })
-            .AddRoles<IdentityRole>()
+            .AddRoles<StaffRole>()
             .AddEntityFrameworkStores<PoliValkoDbContext>()
             .AddSignInManager()
             .AddClaimsPrincipalFactory<StaffClaimsFactory>();
@@ -46,8 +50,13 @@ public static class IdentityModule
         });
 
         services.AddAuthorizationBuilder()
-            .AddPolicy(StaffPolicies.Staff, policy => policy.RequireRole(StaffRoles.All))
-            .AddPolicy(StaffPolicies.Admin, policy => policy.RequireRole(StaffRoles.Admin));
+            .AddPolicy(StaffPolicies.Staff, policy => policy.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme).RequireAuthenticatedUser());
+        services.AddHttpContextAccessor();
+        services.AddMemoryCache();
+        services.AddSingleton<StaffAccessEpoch>();
+        services.AddScoped<IStaffAccessResolver, StaffAccessResolver>();
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
         services.AddAntiforgery(options =>
         {
@@ -66,8 +75,13 @@ public static class IdentityModule
     public static RouteGroupBuilder MapConsoleAuthEndpoints(this RouteGroupBuilder console) =>
         AuthEndpoints.Map(console);
 
-    public static RouteGroupBuilder MapConsoleStaffEndpoints(this RouteGroupBuilder console) =>
+    public static RouteGroupBuilder MapConsoleStaffEndpoints(this RouteGroupBuilder console)
+    {
         StaffEndpoints.Map(console);
+        RoleEndpoints.Map(console);
+        PermissionEndpoints.Map(console);
+        return console;
+    }
 
     public static Task SeedUsersAsync(IServiceProvider services, CancellationToken ct = default) =>
         IdentitySeeder.SeedAsync(services, ct);

@@ -18,6 +18,7 @@ internal static class UpdateCollection
         PoliValkoDbContext db,
         IAuditLog audit,
         IStorefrontCache storefront,
+        TimeProvider time,
         CancellationToken ct)
     {
         var collection = await db.Set<HomeCollection>().FirstOrDefaultAsync(c => c.Id == id, ct);
@@ -35,7 +36,7 @@ internal static class UpdateCollection
         audit.Record("catalog.collection_updated", "Collection", collection.Code, new { collection.Title, collection.IsVisible, products = collection.ProductIds.Count });
         await db.SaveChangesAsync(ct);
         await storefront.InvalidateAsync([StorefrontTags.Collections], ct);
-        var products = await ConsoleProductQueries.LoadListItemsAsync(db, collection.ProductIds, ct);
+        var products = await ConsoleProductQueries.LoadListItemsAsync(db, collection.ProductIds, time.GetUtcNow(), ct);
         return TypedResults.Ok(CollectionEditor.ToDto(collection, products));
     }
 }

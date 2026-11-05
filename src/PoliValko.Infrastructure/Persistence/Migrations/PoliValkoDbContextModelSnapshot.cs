@@ -50,37 +50,6 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     b.ToTable("data_protection_keys", "identity");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("text")
-                        .HasColumnName("concurrency_stamp");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("name");
-
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("normalized_name");
-
-                    b.HasKey("Id")
-                        .HasName("pk_roles");
-
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex");
-
-                    b.ToTable("roles", "identity");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.Property<int>("Id")
@@ -214,15 +183,127 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     b.ToTable("user_tokens", "identity");
                 });
 
+            modelBuilder.Entity("PoliValko.Catalog.Domain.AttributeDefinition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.PrimitiveCollection<List<string>>("Aliases")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("aliases");
+
+                    b.Property<string>("FilterView")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("filter_view");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("normalized_name");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("unit");
+
+                    b.HasKey("Id")
+                        .HasName("pk_attribute_definitions");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("ix_attribute_definitions_normalized_name");
+
+                    b.ToTable("attribute_definitions", "catalog");
+                });
+
+            modelBuilder.Entity("PoliValko.Catalog.Domain.Brand", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("LogoUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("logo_url");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("normalized_name");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("slug");
+
+                    b.HasKey("Id")
+                        .HasName("pk_brands");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("ix_brands_normalized_name");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("ix_brands_slug");
+
+                    b.ToTable("brands", "catalog");
+                });
+
             modelBuilder.Entity("PoliValko.Catalog.Domain.Category", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("description");
+
                     b.PrimitiveCollection<List<string>>("FilterAttributes")
                         .HasColumnType("text[]")
                         .HasColumnName("filter_attributes");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("image_url");
 
                     b.Property<bool>("IsVisible")
                         .HasColumnType("boolean")
@@ -505,6 +586,9 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_products");
 
+                    b.HasIndex("Brand")
+                        .HasDatabaseName("ix_products_brand");
+
                     b.HasIndex("CategoryId")
                         .HasDatabaseName("ix_products_category_id");
 
@@ -609,6 +693,67 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     b.ToTable("product_images", "catalog");
                 });
 
+            modelBuilder.Entity("PoliValko.Catalog.Domain.ProductLabel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("name");
+
+                    b.Property<int?>("NewDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("new_days");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.Property<string>("Tone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("tone");
+
+                    b.HasKey("Id")
+                        .HasName("pk_product_labels");
+
+                    b.ToTable("product_labels", "catalog");
+                });
+
+            modelBuilder.Entity("PoliValko.Catalog.Domain.ProductLabelLink", b =>
+                {
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<Guid>("LabelId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("label_id");
+
+                    b.HasKey("ProductId", "LabelId")
+                        .HasName("pk_product_label_links");
+
+                    b.HasIndex("LabelId")
+                        .HasDatabaseName("ix_product_label_links_label_id");
+
+                    b.ToTable("product_label_links", "catalog");
+                });
+
             modelBuilder.Entity("PoliValko.Catalog.Domain.ProductPrice", b =>
                 {
                     b.Property<Guid>("ProductId")
@@ -695,6 +840,78 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     b.ToTable("redirects", "catalog");
                 });
 
+            modelBuilder.Entity("PoliValko.Content.Domain.Banner", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ButtonLabel")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("button_label");
+
+                    b.Property<DateTimeOffset?>("EndsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ends_at");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("image_url");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Kicker")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("kicker");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("link");
+
+                    b.Property<string>("MobileImageUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("mobile_image_url");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.Property<DateTimeOffset?>("StartsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("starts_at");
+
+                    b.Property<string>("Text")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_banners");
+
+                    b.HasIndex("SortOrder")
+                        .HasDatabaseName("ix_banners_sort_order");
+
+                    b.ToTable("banners", "content");
+                });
+
             modelBuilder.Entity("PoliValko.Content.Domain.ContentPage", b =>
                 {
                     b.Property<string>("Slug")
@@ -710,6 +927,16 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("lead");
+
+                    b.Property<string>("SeoDescription")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("seo_description");
+
+                    b.Property<string>("SeoTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("seo_title");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -777,6 +1004,11 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("description");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("image_url");
 
                     b.Property<bool>("IsVisible")
                         .HasColumnType("boolean")
@@ -946,6 +1178,11 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
+                    b.Property<string>("Viber")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("viber");
+
                     b.Property<string>("YouTube")
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)")
@@ -971,6 +1208,10 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("BlockedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("blocked_at");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1561,6 +1802,91 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     b.ToTable("outbox_messages", "integration");
                 });
 
+            modelBuilder.Entity("PoliValko.Infrastructure.Security.StaffRole", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text")
+                        .HasColumnName("concurrency_stamp");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("display_name");
+
+                    b.Property<bool>("IsSuperuser")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_superuser");
+
+                    b.Property<bool>("IsSystem")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_system");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("normalized_name");
+
+                    b.Property<long>("PermissionsVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("permissions_version");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_roles");
+
+                    b.HasIndex("DisplayName")
+                        .IsUnique()
+                        .HasDatabaseName("ix_roles_display_name");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex");
+
+                    b.ToTable("roles", "identity");
+                });
+
+            modelBuilder.Entity("PoliValko.Infrastructure.Security.StaffRolePermission", b =>
+                {
+                    b.Property<string>("RoleId")
+                        .HasColumnType("text")
+                        .HasColumnName("role_id");
+
+                    b.Property<string>("Key")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("key");
+
+                    b.HasKey("RoleId", "Key")
+                        .HasName("pk_role_permissions");
+
+                    b.ToTable("role_permissions", "identity");
+                });
+
             modelBuilder.Entity("PoliValko.Infrastructure.Security.StaffUser", b =>
                 {
                     b.Property<string>("Id")
@@ -1645,6 +1971,34 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("users", "identity");
+                });
+
+            modelBuilder.Entity("PoliValko.Infrastructure.Settings.PlatformSetting", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("key");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("updated_by");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("value");
+
+                    b.HasKey("Key")
+                        .HasName("pk_settings");
+
+                    b.ToTable("settings", "platform");
                 });
 
             modelBuilder.Entity("PoliValko.Infrastructure.Sync.SyncRun", b =>
@@ -1797,6 +2151,11 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("idempotency_key");
+
+                    b.Property<string>("InternalNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("internal_note");
 
                     b.Property<DateTimeOffset?>("NavkoloExportedAt")
                         .HasColumnType("timestamp with time zone")
@@ -2310,7 +2669,7 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                    b.HasOne("PoliValko.Infrastructure.Security.StaffRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2340,7 +2699,7 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                    b.HasOne("PoliValko.Infrastructure.Security.StaffRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2414,6 +2773,23 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_product_images_products_product_id");
                 });
 
+            modelBuilder.Entity("PoliValko.Catalog.Domain.ProductLabelLink", b =>
+                {
+                    b.HasOne("PoliValko.Catalog.Domain.ProductLabel", null)
+                        .WithMany()
+                        .HasForeignKey("LabelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_product_label_links_product_labels_label_id");
+
+                    b.HasOne("PoliValko.Catalog.Domain.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_product_label_links_products_product_id");
+                });
+
             modelBuilder.Entity("PoliValko.Catalog.Domain.ProductPrice", b =>
                 {
                     b.HasOne("PoliValko.Catalog.Domain.Product", null)
@@ -2452,6 +2828,16 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_customer_tokens_customers_customer_id");
+                });
+
+            modelBuilder.Entity("PoliValko.Infrastructure.Security.StaffRolePermission", b =>
+                {
+                    b.HasOne("PoliValko.Infrastructure.Security.StaffRole", null)
+                        .WithMany("Permissions")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_role_permissions_roles_role_id");
                 });
 
             modelBuilder.Entity("PoliValko.Ordering.Domain.OrderItem", b =>
@@ -2512,6 +2898,11 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
 
                     b.Navigation("Stock")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("PoliValko.Infrastructure.Security.StaffRole", b =>
+                {
+                    b.Navigation("Permissions");
                 });
 
             modelBuilder.Entity("PoliValko.Ordering.Domain.Order", b =>

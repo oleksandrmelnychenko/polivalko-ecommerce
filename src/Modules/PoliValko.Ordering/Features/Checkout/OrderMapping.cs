@@ -35,7 +35,7 @@ internal static class OrderMapping
         order.Items.Select(ToDto).ToList(),
         MoneyDto.Hryvnia(order.Subtotal),
         MoneyDto.Hryvnia(order.Total),
-        order.History.OrderBy(h => h.At).Select(h => new OrderHistoryEntryDto(h.To, h.At)).ToList(),
+        order.History.Where(h => h.IsStatusChange).OrderBy(h => h.At).Select(h => new OrderHistoryEntryDto(h.To, h.At)).ToList(),
         CanPay(order),
         MoneyDto.Hryvnia(order.RefundedAmount),
         order.SellerName);

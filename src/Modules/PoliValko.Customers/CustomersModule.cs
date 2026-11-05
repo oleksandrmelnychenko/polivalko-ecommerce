@@ -7,6 +7,7 @@ using PoliValko.Customers.Contracts;
 using PoliValko.Customers.Domain;
 using PoliValko.Customers.Features;
 using PoliValko.Customers.Features.Auth;
+using PoliValko.Customers.Features.Console;
 using PoliValko.Customers.Features.Directory;
 using PoliValko.Customers.Features.Mail;
 using PoliValko.Customers.Persistence;
@@ -30,4 +31,7 @@ public static class CustomersModule
 
     public static IEndpointRouteBuilder MapAccountEndpoints(this IEndpointRouteBuilder api) =>
         AccountEndpoints.Map(api);
+
+    public static RouteGroupBuilder MapConsoleAccountEndpoints(this RouteGroupBuilder console) =>
+        ConsoleAccountEndpoints.Map(console);
 }

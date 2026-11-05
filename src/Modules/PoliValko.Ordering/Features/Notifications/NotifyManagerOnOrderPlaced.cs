@@ -29,6 +29,6 @@ internal sealed class NotifyManagerOnOrderPlaced(PoliValkoDbContext db, IManager
         var attention = order.Status == OrderStatus.AwaitingConfirmation ? "\nПотрібне підтвердження ціни й наявності." : string.Empty;
         var body = $"{order.Items.Count} поз. на {OrderMoney.Money(order.Total)}\n{delivery}\nОплата: {payment}\n{order.CustomerName}, {order.CustomerPhone}{attention}";
 
-        await notifier.NotifyAsync(new ManagerNotification($"Нове замовлення {order.Number}", body), cancellationToken);
+        await notifier.NotifyAsync(new ManagerNotification($"Нове замовлення {order.Number}", body, ManagerEvent.NewOrder), cancellationToken);
     }
 }

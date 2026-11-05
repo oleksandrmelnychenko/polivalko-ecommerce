@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PoliValko.Content.Domain;
+using PoliValko.Infrastructure.Media;
 using PoliValko.Infrastructure.Persistence;
 
 namespace PoliValko.Content.Persistence;
@@ -31,6 +32,8 @@ internal sealed class ContentModelConfigurator : IModelConfigurator
             builder.Property(p => p.Title).HasMaxLength(200);
             builder.Property(p => p.Lead).HasMaxLength(500);
             builder.Property(p => p.UpdatedBy).HasMaxLength(200);
+            builder.Property(p => p.SeoTitle).HasMaxLength(200);
+            builder.Property(p => p.SeoDescription).HasMaxLength(500);
             builder.HasData(DraftPages());
         });
 
@@ -49,6 +52,7 @@ internal sealed class ContentModelConfigurator : IModelConfigurator
             builder.Property(c => c.Facebook).HasMaxLength(300);
             builder.Property(c => c.Telegram).HasMaxLength(300);
             builder.Property(c => c.YouTube).HasMaxLength(300);
+            builder.Property(c => c.Viber).HasMaxLength(300);
             builder.HasData(new SiteContacts
             {
                 Id = SiteContacts.SingletonId,
@@ -64,6 +68,7 @@ internal sealed class ContentModelConfigurator : IModelConfigurator
             builder.HasKey(d => d.Code);
             builder.Property(d => d.Code).HasMaxLength(50);
             builder.Property(d => d.Description).HasMaxLength(1000);
+            builder.Property(d => d.ImageUrl).HasMaxLength(ImageUrls.MaxLength);
             builder.HasData(ServiceDirections.All.Select((d, i) => new ServiceDirectionContent
             {
                 Code = d.Code,
@@ -71,6 +76,21 @@ internal sealed class ContentModelConfigurator : IModelConfigurator
                 IsVisible = true,
                 Description = DraftDescriptions.GetValueOrDefault(d.Code),
             }));
+        });
+
+        modelBuilder.Entity<Banner>(builder =>
+        {
+            builder.ToTable("banners", Schemas.Content);
+            builder.HasKey(b => b.Id);
+            builder.Property(b => b.Id).ValueGeneratedNever();
+            builder.Property(b => b.Title).HasMaxLength(Banner.TitleLength);
+            builder.Property(b => b.Text).HasMaxLength(Banner.TextLength);
+            builder.Property(b => b.Kicker).HasMaxLength(Banner.KickerLength);
+            builder.Property(b => b.ButtonLabel).HasMaxLength(Banner.ButtonLabelLength);
+            builder.Property(b => b.Link).HasMaxLength(Banner.LinkLength);
+            builder.Property(b => b.ImageUrl).HasMaxLength(ImageUrls.MaxLength);
+            builder.Property(b => b.MobileImageUrl).HasMaxLength(ImageUrls.MaxLength);
+            builder.HasIndex(b => b.SortOrder);
         });
     }
 

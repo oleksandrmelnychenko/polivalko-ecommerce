@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using PoliValko.Catalog.Configuration;
 using PoliValko.Catalog.Contracts;
 using PoliValko.Catalog.Domain;
+using PoliValko.Catalog.Persistence;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Storefront;
 using PoliValko.Infrastructure.Sync;
@@ -91,6 +92,8 @@ internal sealed class CatalogImporter(
         await db.SaveChangesAsync(ct);
         if (created + updated > 0)
         {
+            await CatalogDictionarySync.SyncAttributesAsync(db, ct);
+            await CatalogDictionarySync.SyncBrandsAsync(db, ct);
             await storefront.InvalidateAsync([StorefrontTags.Catalog, StorefrontTags.Products, StorefrontTags.Collections], ct);
         }
 

@@ -12,6 +12,7 @@ internal static class SearchProducts
     public static async Task<Results<Ok<ProductSearchResponse>, ValidationProblem, ProblemHttpResult>> HandleAsync(
         [AsParameters] ProductSearchQuery query,
         PoliValkoDbContext db,
+        TimeProvider time,
         CancellationToken ct)
     {
         var sort = query.Sort ?? ProductSort.NameAsc;
@@ -108,7 +109,7 @@ internal static class SearchProducts
         };
 
         var rows = await ProductListing.ListItems(products.Skip(page.Skip).Take(page.PageSize)).ToListAsync(ct);
-        var items = rows.Select(ProductListing.ToListItem).ToList();
+        var items = await ProductListing.ToListItemsAsync(db, rows, time, ct);
 
         var totalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)page.PageSize);
         return TypedResults.Ok(new ProductSearchResponse(items, page.Page, page.PageSize, total, totalPages, facets, approximate && total > 0));

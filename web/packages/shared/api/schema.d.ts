@@ -412,6 +412,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/site/home": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Головна сторінка: оголошення (якщо діє зараз), порядок і видимість блоків, тексти переваг, кроків і блоку магазину, банери, що діють зараз */
+        get: operations["GetSiteHome"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/auth/login": {
         parameters: {
             query?: never;
@@ -453,7 +470,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Поточний працівник і його ролі */
+        /** Поточний працівник і його роль */
         get: operations["ConsoleMe"];
         put?: never;
         post?: never;
@@ -487,10 +504,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Працівники та їхні ролі (лише адміністратор) */
+        /** Працівники та їхні ролі */
         get: operations["ConsoleListUsers"];
         put?: never;
-        /** Новий працівник з роллю адміністратора або менеджера */
+        /** Новий працівник з однією з ролей */
         post: operations["ConsoleCreateUser"];
         delete?: never;
         options?: never;
@@ -560,6 +577,94 @@ export interface paths {
         put?: never;
         /** Зміна власного пароля */
         post: operations["ConsoleChangeOwnPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ролі працівників: кількість людей і прав, версія */
+        get: operations["ConsoleListRoles"];
+        put?: never;
+        /** Нова роль; права можна скопіювати з іншої ролі */
+        post: operations["ConsoleCreateRole"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/roles/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Назва й опис ролі */
+        put: operations["ConsoleUpdateRole"];
+        post?: never;
+        /** Видалення ролі без працівників */
+        delete: operations["ConsoleDeleteRole"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/roles/{id}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Права ролі та їхня версія */
+        get: operations["ConsoleGetRolePermissions"];
+        /** Повний набір прав ролі з перевіркою версії */
+        put: operations["ConsoleUpdateRolePermissions"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/permissions/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Каталог прав консолі: ключі, назви, розділи й ризик */
+        get: operations["ConsolePermissionCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/permissions/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Роль і права поточного працівника */
+        get: operations["ConsoleMyPermissions"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -719,6 +824,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/orders/{number}/note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Службова нотатка до замовлення (бачать лише працівники); зміна пишеться в історію */
+        put: operations["ConsoleUpdateOrderNote"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/customers": {
         parameters: {
             query?: never;
@@ -857,6 +979,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/catalog/products/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Кількість товарів для швидких вкладок: усі, потребують заповнення, нові за 30 днів, приховані з залишком, без залишку */
+        get: operations["ConsoleProductCounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/catalog/products/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Масова зміна до 200 товарів: розділ, бренд (порожній рядок прибирає бренд), мітки, видимість */
+        post: operations["ConsoleBulkUpdateProducts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/catalog/attribute-names": {
         parameters: {
             query?: never;
@@ -976,6 +1132,131 @@ export interface paths {
         post?: never;
         /** Видалення перенаправлення */
         delete: operations["ConsoleDeleteRedirect"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/catalog/attributes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Довідник характеристик: одиниця, тип, вигляд фільтра, синоніми, кількість товарів і категорій з фільтром */
+        get: operations["ConsoleListAttributeDefinitions"];
+        put?: never;
+        /** Нова характеристика в довіднику */
+        post: operations["ConsoleCreateAttributeDefinition"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/catalog/attributes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Зміна характеристики; нова назва переписується в усіх товарах і фільтрах категорій однією транзакцією */
+        put: operations["ConsoleUpdateAttributeDefinition"];
+        post?: never;
+        /** Видалення з довідника; значення в товарах лишаються. Не можна, поки характеристика є фільтром категорії. */
+        delete: operations["ConsoleDeleteAttributeDefinition"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/catalog/brands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Довідник брендів з кількістю товарів */
+        get: operations["ConsoleListBrands"];
+        put?: never;
+        /** Новий бренд */
+        post: operations["ConsoleCreateBrand"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/catalog/brands/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Зміна бренду; нова назва переписується в усіх його товарах */
+        put: operations["ConsoleUpdateBrand"];
+        post?: never;
+        /** Видалення бренду без товарів */
+        delete: operations["ConsoleDeleteBrand"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/catalog/brands/{id}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Об'єднання: товари бренду переходять до іншого бренду, цей бренд видаляється */
+        post: operations["ConsoleMergeBrand"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/catalog/labels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Мітки товарів у порядку показу: ручні та автоматичні (акція — стара ціна більша, новинка — створений за N днів) */
+        get: operations["ConsoleListLabels"];
+        put?: never;
+        /** Нова мітка */
+        post: operations["ConsoleCreateLabel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/catalog/labels/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Зміна мітки: назва, колір, порядок, увімкнення; тип не змінюється */
+        put: operations["ConsoleUpdateLabel"];
+        post?: never;
+        /** Видалення ручної мітки або вимкненої автоматичної */
+        delete: operations["ConsoleDeleteLabel"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1266,6 +1547,285 @@ export interface paths {
         get: operations["ConsoleGetNovaPoshtaStatus"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/refunds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Повернення коштів з усіх замовлень: пошук за номером чи телефоном, фільтр за статусом і датами, стан чека */
+        get: operations["ConsoleListRefunds"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Зареєстровані покупці (кабінети): пошук за email, ім'ям чи телефоном, фільтр за станом */
+        get: operations["ConsoleListAccounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Кабінет покупця: адреси, обране, останні замовлення */
+        get: operations["ConsoleGetAccount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounts/{id}/lock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Блокування кабінету (вхід заборонено, сесії завершуються) або розблокування */
+        post: operations["ConsoleSetAccountLock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounts/{id}/password-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Лист покупцю з посиланням для нового пароля (діє 1 годину) */
+        post: operations["ConsoleSendAccountPasswordReset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/media/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Завантаження фото для банерів, сторінок, категорій і брендів (JPEG, PNG або WebP, до 10 МБ); повертає адресу */
+        post: operations["ConsoleUploadContentImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/site/home": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Налаштування головної: блоки, оголошення, переваги, кроки, блок магазину */
+        get: operations["ConsoleGetHomeSettings"];
+        /** Зміна налаштувань головної */
+        put: operations["ConsoleSaveHomeSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/site/banners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Банери першого екрана в порядку показу, разом із вимкненими й завершеними */
+        get: operations["ConsoleListBanners"];
+        put?: never;
+        /** Новий банер (стає останнім) */
+        post: operations["ConsoleCreateBanner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/site/banners/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Новий порядок банерів: усі id по черзі; повертає список */
+        put: operations["ConsoleReorderBanners"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/site/banners/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Зміна банера: тексти, посилання, фото, період, увімкнення */
+        put: operations["ConsoleUpdateBanner"];
+        post?: never;
+        /** Видалення банера */
+        delete: operations["ConsoleDeleteBanner"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/site/seo-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Мета-шаблони товарів і категорій: {name}, {price}, {category}, {brand}, {shop} */
+        get: operations["ConsoleGetSeoTemplates"];
+        /** Зміна мета-шаблонів; діють для товарів і категорій без власних SEO-полів */
+        put: operations["ConsoleSaveSeoTemplates"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/settings/shop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Реквізити продавця й особливі дні графіка; поки реквізити не збережено — з конфігурації сервера */
+        get: operations["ConsoleGetShopSettings"];
+        /** Зміна реквізитів продавця (оферта, замовлення, підвал сайту) й особливих днів графіка */
+        put: operations["ConsoleSaveShopSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/settings/delivery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Способи доставки: Нова пошта (і післяплата), кур'єр, самовивіз */
+        get: operations["ConsoleGetDeliverySettings"];
+        /** Увімкнення способів доставки; самовивіз покупець бачить, лише коли є активна точка */
+        put: operations["ConsoleSaveDeliverySettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/settings/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Оплата й чеки лише для перегляду: платіжний провайдер і режим, остання звірка, ПРРО і коли видається чек */
+        get: operations["ConsoleGetPaymentSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/settings/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Кому й про що надсилати сповіщення: чати Telegram, e-mail, події; чи налаштований бот */
+        get: operations["ConsoleGetNotificationSettings"];
+        /** Зміна отримувачів і подій сповіщень */
+        put: operations["ConsoleSaveNotificationSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/settings/notifications/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Тестове повідомлення в усі збережені чати Telegram */
+        post: operations["ConsoleSendTestNotification"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1634,10 +2194,29 @@ export interface components {
             mainItemImageUrl: null | string;
             canPay: boolean;
         };
+        AttributeDefinitionDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            unit: null | string;
+            kind: components["schemas"]["AttributeKind"];
+            filterView: components["schemas"]["AttributeFilterView"];
+            /** Format: int32 */
+            sortOrder: number;
+            aliases: string[];
+            /** Format: int32 */
+            productCount: number;
+            /** Format: int32 */
+            categoryCount: number;
+        };
         AttributeFacet: {
             name: string;
             values: components["schemas"]["AttributeValueFacet"][];
         };
+        /** @enum {unknown} */
+        AttributeFilterView: "checkboxes" | "range";
+        /** @enum {unknown} */
+        AttributeKind: "list" | "number" | "boolean";
         AttributeNameDto: {
             name: string;
             /** Format: int32 */
@@ -1659,10 +2238,53 @@ export interface components {
             entityId: null | string;
             details: null | components["schemas"]["JsonElement"];
         };
+        BannerDto: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            text: null | string;
+            buttonLabel: null | string;
+            link: null | string;
+            imageUrl: string;
+            mobileImageUrl: null | string;
+            /** Format: date-time */
+            startsAt: null | string;
+            /** Format: date-time */
+            endsAt: null | string;
+            /** Format: int32 */
+            sortOrder: number;
+            isActive: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+            kicker: null | string;
+        };
+        BrandDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            slug: string;
+            description: null | string;
+            logoUrl: null | string;
+            /** Format: int32 */
+            productCount: number;
+        };
         BrandFacet: {
             name: string;
             /** Format: int32 */
             count: number;
+        };
+        BulkUpdateProductsRequest: {
+            productIds: null | string[];
+            /** Format: uuid */
+            categoryId: null | string;
+            brand: null | string;
+            addLabelIds: null | string[];
+            removeLabelIds: null | string[];
+            isVisible: null | boolean;
+        };
+        BulkUpdateProductsResult: {
+            /** Format: int32 */
+            updated: number;
         };
         CartLineRequest: {
             /** Format: uuid */
@@ -1679,6 +2301,8 @@ export interface components {
             children: components["schemas"]["CategoryRefDto"][];
             seoTitle: null | string;
             seoDescription: null | string;
+            imageUrl: null | string;
+            description: null | string;
         };
         CategoryNodeDto: {
             /** Format: uuid */
@@ -1686,6 +2310,8 @@ export interface components {
             slug: string;
             name: string;
             children: components["schemas"]["CategoryNodeDto"][];
+            imageUrl: null | string;
+            description: null | string;
         };
         CategoryRefDto: {
             /** Format: uuid */
@@ -1720,6 +2346,44 @@ export interface components {
         ConfirmEmailRequest: {
             token: null | string;
         };
+        ConsoleAccountDetailsDto: {
+            /** Format: uuid */
+            id: string;
+            email: string;
+            name: string;
+            phone: null | string;
+            emailConfirmed: boolean;
+            lockedOut: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: int32 */
+            ordersCount: number;
+            blocked: boolean;
+            addresses: components["schemas"]["CustomerAddressDto"][];
+            /** Format: int32 */
+            favoritesCount: number;
+            orders: components["schemas"]["ConsoleAccountOrderDto"][];
+        };
+        ConsoleAccountDto: {
+            /** Format: uuid */
+            id: string;
+            email: string;
+            name: string;
+            phone: null | string;
+            emailConfirmed: boolean;
+            lockedOut: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: int32 */
+            ordersCount: number;
+        };
+        ConsoleAccountOrderDto: {
+            number: string;
+            /** Format: date-time */
+            createdAt: string;
+            status: string;
+            total: components["schemas"]["MoneyDto"];
+        };
         ConsoleCategoryDto: {
             /** Format: uuid */
             id: string;
@@ -1736,6 +2400,8 @@ export interface components {
             seoDescription: null | string;
             /** Format: int32 */
             productCount: number;
+            imageUrl: null | string;
+            description: null | string;
         };
         ConsoleCollectionDto: {
             /** Format: uuid */
@@ -1806,6 +2472,9 @@ export interface components {
             refunds: components["schemas"]["ConsoleRefundDto"][];
             refundMethod: null | components["schemas"]["RefundMethod"];
             refundable: components["schemas"]["RefundableItemDto"][];
+            internalNote: null | string;
+            /** Format: uuid */
+            customerAccountId: null | string;
         };
         ConsoleOrderHistoryDto: {
             from: null | components["schemas"]["OrderStatus"];
@@ -1834,6 +2503,8 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             updatedBy: null | string;
+            seoTitle: null | string;
+            seoDescription: null | string;
         };
         ConsolePaymentDto: {
             /** Format: uuid */
@@ -1859,6 +2530,18 @@ export interface components {
             mapUrl: null | string;
             isActive: boolean;
         };
+        ConsoleProductCountsDto: {
+            /** Format: int32 */
+            all: number;
+            /** Format: int32 */
+            needsFilling: number;
+            /** Format: int32 */
+            recent30: number;
+            /** Format: int32 */
+            hiddenWithStock: number;
+            /** Format: int32 */
+            outOfStock: number;
+        };
         ConsoleProductDto: {
             /** Format: uuid */
             id: string;
@@ -1876,6 +2559,10 @@ export interface components {
             images: components["schemas"]["ConsoleProductImageDto"][];
             /** Format: date-time */
             updatedAt: string;
+            labelIds: string[];
+            labels: components["schemas"]["ConsoleProductLabelDto"][];
+            /** Format: date-time */
+            createdAt: string;
         };
         ConsoleProductImageDto: {
             /** Format: uuid */
@@ -1885,6 +2572,13 @@ export interface components {
             /** Format: int32 */
             sortOrder: number;
             credit: null | string;
+        };
+        ConsoleProductLabelDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            tone: components["schemas"]["LabelTone"];
+            kind: components["schemas"]["LabelKind"];
         };
         ConsoleProductListItemDto: {
             /** Format: uuid */
@@ -1902,6 +2596,7 @@ export interface components {
             hasDescription: boolean;
             /** Format: date-time */
             updatedAt: string;
+            labels: components["schemas"]["ConsoleProductLabelDto"][];
         };
         ConsoleRedirectDto: {
             /** Format: uuid */
@@ -1936,6 +2631,20 @@ export interface components {
             quantity: number;
             amount: components["schemas"]["MoneyDto"];
         };
+        ConsoleRefundRowDto: {
+            /** Format: uuid */
+            id: string;
+            orderNumber: string;
+            /** Format: date-time */
+            createdAt: string;
+            amount: components["schemas"]["MoneyDto"];
+            method: components["schemas"]["RefundChannel"];
+            status: components["schemas"]["RefundStatus"];
+            reason: string;
+            createdBy: string;
+            /** @description Стан чека повернення: pending | issued | failed; порожньо, якщо чека немає */
+            receiptStatus: null | string;
+        };
         ConsoleSearchDto: {
             orders: components["schemas"]["SearchOrderHitDto"][];
             products: components["schemas"]["SearchProductHitDto"][];
@@ -1948,6 +2657,7 @@ export interface components {
             /** Format: int32 */
             sortOrder: number;
             isVisible: boolean;
+            imageUrl: null | string;
         };
         ConsoleServiceRequestDto: {
             /** Format: uuid */
@@ -1989,6 +2699,13 @@ export interface components {
             facebook: null | string;
             telegram: null | string;
             youTube: null | string;
+            viber?: null | string;
+            specialDays?: null | components["schemas"]["SpecialDayDto"][];
+        };
+        CourierSettingsDto: {
+            enabled: boolean;
+            area: null | string;
+            priceNote: null | string;
         };
         CreateOrderRequest: {
             items: null | components["schemas"]["CartLineRequest"][];
@@ -2016,7 +2733,7 @@ export interface components {
         CreateStaffUserRequest: {
             email: null | string;
             displayName: null | string;
-            role: null | string;
+            roleId: null | string;
             password: null | string;
         };
         CsrfTokenDto: {
@@ -2100,6 +2817,8 @@ export interface components {
             code: string;
             name: string;
             paymentMethods: components["schemas"]["PaymentMethodOptionDto"][];
+            description?: null | string;
+            priceNote?: null | string;
         };
         DeliveryRequest: {
             method: null | string;
@@ -2107,8 +2826,52 @@ export interface components {
             warehouseRef: null | string;
             address?: null | components["schemas"]["DeliveryAddressRequest"];
         };
+        DeliverySettingsDto: {
+            novaPoshta: components["schemas"]["NovaPoshtaSettingsDto"];
+            courier: components["schemas"]["CourierSettingsDto"];
+            pickup: components["schemas"]["PickupSettingsDto"];
+        };
         ForgotPasswordRequest: {
             email: null | string;
+        };
+        HomeAnnouncementDto: {
+            text: string;
+            link: null | string;
+            isActive: boolean;
+            /** Format: date-time */
+            startsAt: null | string;
+            /** Format: date-time */
+            endsAt: null | string;
+        };
+        HomeBannerDto: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            text: null | string;
+            buttonLabel: null | string;
+            link: null | string;
+            imageUrl: string;
+            mobileImageUrl: null | string;
+            /** Format: date-time */
+            startsAt: null | string;
+            /** Format: date-time */
+            endsAt: null | string;
+            kicker: null | string;
+        };
+        HomeBlockDto: {
+            key: string;
+            visible: boolean;
+        };
+        HomeItemDto: {
+            title: string;
+            text: string;
+        };
+        HomeSettingsDto: {
+            blocks: components["schemas"]["HomeBlockDto"][];
+            announcement: components["schemas"]["HomeAnnouncementDto"];
+            perks: components["schemas"]["HomeItemDto"][];
+            steps: components["schemas"]["HomeItemDto"][];
+            visit: components["schemas"]["HomeItemDto"];
         };
         HttpValidationProblemDetails: {
             type?: null | string;
@@ -2148,6 +2911,24 @@ export interface components {
             outboxFailed: number;
         };
         JsonElement: unknown;
+        LabelDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            tone: components["schemas"]["LabelTone"];
+            kind: components["schemas"]["LabelKind"];
+            /** Format: int32 */
+            newDays: null | number;
+            /** Format: int32 */
+            sortOrder: number;
+            isActive: boolean;
+            /** Format: int32 */
+            productCount: number;
+        };
+        /** @enum {unknown} */
+        LabelKind: "manual" | "new" | "sale";
+        /** @enum {unknown} */
+        LabelTone: "green" | "red" | "orange" | "blue" | "gray" | "dark";
         LockStaffUserRequest: {
             locked: boolean;
         };
@@ -2155,9 +2936,20 @@ export interface components {
             email: null | string;
             password: null | string;
         };
+        MergeBrandRequest: {
+            /** Format: uuid */
+            intoId: null | string;
+        };
         MoneyDto: {
             value: string;
             currency: string;
+        };
+        MyPermissionsDto: {
+            roleId: string;
+            roleName: string;
+            isSuperuser: boolean;
+            permissionKeys: string[];
+            catalogVersion: string;
         };
         NavkoloProductFieldsDto: {
             navkoloId: string;
@@ -2174,6 +2966,28 @@ export interface components {
             stockUpdatedAt: string;
             variantGroup: null | string;
             variantLabel: null | string;
+        };
+        NotificationEventsDto: {
+            newOrder: boolean;
+            newServiceRequest: boolean;
+            integrationAlert: boolean;
+            paymentAfterCancel: boolean;
+        };
+        NotificationSettingsDto: {
+            telegramChatIds: string[];
+            emails: string[];
+            events: components["schemas"]["NotificationEventsDto"];
+            telegramConfigured: boolean;
+        };
+        NotificationTestResultDto: {
+            /** Format: int32 */
+            chats: number;
+            /** Format: int32 */
+            delivered: number;
+        };
+        NovaPoshtaSettingsDto: {
+            enabled: boolean;
+            cashOnDelivery: boolean;
         };
         NovaPoshtaStatusDto: {
             mode: string;
@@ -2291,6 +3105,17 @@ export interface components {
             /** Format: int32 */
             totalPages: number;
         };
+        PagedResponseOfConsoleAccountDto: {
+            items: components["schemas"]["ConsoleAccountDto"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            totalItems: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
         PagedResponseOfConsoleCustomerDto: {
             items: components["schemas"]["ConsoleCustomerDto"][];
             /** Format: int32 */
@@ -2324,6 +3149,17 @@ export interface components {
             /** Format: int32 */
             totalPages: number;
         };
+        PagedResponseOfConsoleRefundRowDto: {
+            items: components["schemas"]["ConsoleRefundRowDto"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            totalItems: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
         PagedResponseOfConsoleServiceRequestDto: {
             items: components["schemas"]["ConsoleServiceRequestDto"][];
             /** Format: int32 */
@@ -2343,6 +3179,8 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             updatedBy: null | string;
+            seoTitle: null | string;
+            seoDescription: null | string;
         };
         /** @enum {unknown} */
         PaymentAttemptStatus: "created" | "processing" | "succeeded" | "failed" | "expired" | "reversed";
@@ -2353,8 +3191,31 @@ export interface components {
         PaymentRequest: {
             method: null | string;
         };
+        PaymentSettingsDto: {
+            provider: string;
+            mode: string;
+            /** Format: date-time */
+            lastReconcileAt: null | string;
+            fiscalProvider: string;
+            fiscalMode: string;
+            issueOn: components["schemas"]["ReceiptIssueDto"];
+        };
         /** @enum {unknown} */
         PaymentStatus: "notRequired" | "pending" | "succeeded" | "failed" | "partiallyRefunded" | "refunded";
+        PermissionCatalogDto: {
+            version: string;
+            permissions: components["schemas"]["PermissionDefinitionDto"][];
+        };
+        PermissionDefinitionDto: {
+            key: string;
+            name: string;
+            description: null | string;
+            sectionId: string;
+            sectionLabel: string;
+            risk: components["schemas"]["PermissionRisk"];
+        };
+        /** @enum {unknown} */
+        PermissionRisk: "low" | "medium" | "high";
         PhotoCreditDto: {
             credit: string;
             url: string;
@@ -2366,6 +3227,9 @@ export interface components {
             schedule: string;
             instructions: string;
             mapUrl: null | string;
+        };
+        PickupSettingsDto: {
+            enabled: boolean;
         };
         ProblemDetails: {
             type?: null | string;
@@ -2396,6 +3260,7 @@ export interface components {
             variants: components["schemas"]["ProductVariantDto"][];
             seoTitle: null | string;
             seoDescription: null | string;
+            labels: components["schemas"]["ProductLabelBadgeDto"][];
         };
         ProductFacets: {
             brands: components["schemas"]["BrandFacet"][];
@@ -2414,6 +3279,10 @@ export interface components {
             id: string;
             alt: null | string;
         };
+        ProductLabelBadgeDto: {
+            name: string;
+            tone: components["schemas"]["LabelTone"];
+        };
         ProductListItemDto: {
             /** Format: uuid */
             id: string;
@@ -2425,6 +3294,7 @@ export interface components {
             oldPrice: null | components["schemas"]["MoneyDto"];
             inStock: boolean;
             imageUrl: null | string;
+            labels: components["schemas"]["ProductLabelBadgeDto"][];
         };
         ProductSearchResponse: {
             items: components["schemas"]["ProductListItemDto"][];
@@ -2487,6 +3357,11 @@ export interface components {
             issuedAt: null | string;
             error: null | string;
         };
+        ReceiptIssueDto: {
+            card: string;
+            cashOnDelivery: string;
+            pickup: string;
+        };
         /** @enum {unknown} */
         ReceiptKind: "sell" | "return";
         /** @enum {unknown} */
@@ -2501,6 +3376,8 @@ export interface components {
             /** Format: int32 */
             quantity: number;
         };
+        /** @enum {unknown} */
+        RefundChannel: "card" | "offline";
         RefundLineRequest: {
             /** Format: uuid */
             productId: string;
@@ -2517,12 +3394,26 @@ export interface components {
             name: null | string;
             phone: null | string;
         };
+        ReorderBannersRequest: {
+            ids: null | string[];
+        };
         ResetCustomerPasswordRequest: {
             token: null | string;
             newPassword: null | string;
         };
         ResetPasswordRequest: {
             password: null | string;
+        };
+        RolePermissionsDto: {
+            roleId: string;
+            /** Format: int64 */
+            version: number;
+            permissionKeys: string[];
+            isSuperuser: boolean;
+            /** Format: date-time */
+            updatedAt: null | string;
+            updatedBy: null | string;
+            catalogVersion: string;
         };
         SandboxCompletionDto: {
             status: string;
@@ -2536,6 +3427,35 @@ export interface components {
             /** Format: date-time */
             expiresAt: string;
         };
+        SaveAttributeDefinitionRequest: {
+            name: null | string;
+            unit: null | string;
+            kind: null | components["schemas"]["AttributeKind"];
+            filterView: null | components["schemas"]["AttributeFilterView"];
+            /** Format: int32 */
+            sortOrder: number;
+            aliases: null | string[];
+        };
+        SaveBannerRequest: {
+            title: null | string;
+            text: null | string;
+            buttonLabel: null | string;
+            link: null | string;
+            imageUrl: null | string;
+            mobileImageUrl: null | string;
+            /** Format: date-time */
+            startsAt: null | string;
+            /** Format: date-time */
+            endsAt: null | string;
+            isActive: boolean;
+            kicker?: null | string;
+        };
+        SaveBrandRequest: {
+            name: null | string;
+            slug: null | string;
+            description: null | string;
+            logoUrl: null | string;
+        };
         SaveCategoryRequest: {
             /** Format: uuid */
             parentId: null | string;
@@ -2548,6 +3468,8 @@ export interface components {
             filterAttributes: null | string[];
             seoTitle: null | string;
             seoDescription: null | string;
+            imageUrl?: null | string;
+            description?: null | string;
         };
         SaveCollectionRequest: {
             code: null | string;
@@ -2565,16 +3487,39 @@ export interface components {
             address: null | components["schemas"]["StreetAddressRequest"];
             isDefault: boolean;
         };
+        SaveLabelRequest: {
+            name: null | string;
+            tone: null | components["schemas"]["LabelTone"];
+            kind: null | components["schemas"]["LabelKind"];
+            /** Format: int32 */
+            newDays: null | number;
+            /** Format: int32 */
+            sortOrder: number;
+            isActive: boolean;
+        };
+        SaveNotificationSettingsRequest: {
+            telegramChatIds: null | string[];
+            emails: null | string[];
+            events: null | components["schemas"]["NotificationEventsDto"];
+        };
         SavePageRequest: {
             title: null | string;
             lead: null | string;
             bodyHtml: null | string;
+            seoTitle?: null | string;
+            seoDescription?: null | string;
         };
         SaveServiceDirectionRequest: {
             description: null | string;
             /** Format: int32 */
             sortOrder: number;
             isVisible: boolean;
+            imageUrl?: null | string;
+        };
+        SaveStaffRoleRequest: {
+            name: null | string;
+            description: null | string;
+            copyFromRoleId: null | string;
         };
         SearchCustomerHitDto: {
             phone: string;
@@ -2604,11 +3549,23 @@ export interface components {
             name: string;
             taxId: null | string;
             address: null | string;
+            iban?: null | string;
+            email?: null | string;
+            phone?: null | string;
+        };
+        SeoTemplateDto: {
+            title: string;
+            description: string;
+        };
+        SeoTemplatesDto: {
+            product: components["schemas"]["SeoTemplateDto"];
+            category: components["schemas"]["SeoTemplateDto"];
         };
         ServiceDirectionDto: {
             code: string;
             name: string;
             description: null | string;
+            imageUrl: null | string;
         };
         ServiceRequestCreated: {
             /** Format: uuid */
@@ -2616,6 +3573,9 @@ export interface components {
         };
         /** @enum {unknown} */
         ServiceRequestStatus: "new" | "inProgress" | "done";
+        SetAccountLockRequest: {
+            locked: null | boolean;
+        };
         SetProductsVisibilityRequest: {
             productIds: null | string[];
             visible: null | boolean;
@@ -2629,6 +3589,33 @@ export interface components {
             name: string;
             area: string;
         };
+        ShopSellerDto: {
+            name: string;
+            taxId: null | string;
+            address: null | string;
+            iban: null | string;
+            email: null | string;
+            phone: null | string;
+        };
+        ShopSettingsDto: {
+            seller: components["schemas"]["ShopSellerDto"];
+            specialDays: components["schemas"]["ShopSpecialDayDto"][];
+        };
+        ShopSpecialDayDto: {
+            /** Format: date */
+            date: string;
+            label: string;
+            closed: boolean;
+            hours: null | string;
+        };
+        SiteHomeDto: {
+            announcement: null | components["schemas"]["HomeAnnouncementDto"];
+            blocks: components["schemas"]["HomeBlockDto"][];
+            perks: components["schemas"]["HomeItemDto"][];
+            steps: components["schemas"]["HomeItemDto"][];
+            visit: components["schemas"]["HomeItemDto"];
+            banners: components["schemas"]["HomeBannerDto"][];
+        };
         SitemapDto: {
             categories: components["schemas"]["SitemapEntryDto"][];
             products: components["schemas"]["SitemapEntryDto"][];
@@ -2638,16 +3625,41 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        SpecialDayDto: {
+            /** Format: date */
+            date: string;
+            label: string;
+            closed: boolean;
+            hours: null | string;
+        };
         StaffMeDto: {
             email: string;
             displayName: string;
-            roles: string[];
+            roleId: string;
+            roleName: string;
+        };
+        StaffRoleDto: {
+            id: string;
+            name: string;
+            description: null | string;
+            isSystem: boolean;
+            isSuperuser: boolean;
+            /** Format: int32 */
+            userCount: number;
+            /** Format: int32 */
+            permissionCount: number;
+            /** Format: int64 */
+            version: number;
+            /** Format: date-time */
+            updatedAt: null | string;
+            updatedBy: null | string;
         };
         StaffUserDto: {
             id: string;
             email: string;
             displayName: string;
-            roles: string[];
+            roleId: string;
+            roleName: string;
             lockedOut: boolean;
         };
         StartPaymentDto: {
@@ -2689,6 +3701,9 @@ export interface components {
         };
         /** @enum {unknown} */
         SyncRunStatus: "running" | "succeeded" | "partiallySucceeded" | "failed";
+        UpdateOrderNoteRequest: {
+            note: null | string;
+        };
         UpdatePickupPointRequest: {
             name: null | string;
             address: null | string;
@@ -2711,14 +3726,23 @@ export interface components {
             seoTitle: null | string;
             seoDescription: null | string;
             attributes: null | components["schemas"]["ProductAttributeDto"][];
+            labelIds?: null | string[];
         };
         UpdateProfileRequest: {
             name: null | string;
             phone: null | string;
         };
+        UpdateRolePermissionsRequest: {
+            /** Format: int64 */
+            expectedVersion: number;
+            permissionKeys: null | string[];
+        };
         UpdateStaffUserRequest: {
             displayName: null | string;
-            role: null | string;
+            roleId: null | string;
+        };
+        UploadedImageDto: {
+            url: string;
         };
         WarehouseDto: {
             ref: string;
@@ -3545,6 +4569,26 @@ export interface operations {
             };
         };
     };
+    GetSiteHome: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteHomeDto"];
+                };
+            };
+        };
+    };
     ConsoleLogin: {
         parameters: {
             query?: never;
@@ -3972,6 +5016,418 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleListRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffRoleDto"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleCreateRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveStaffRoleRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffRoleDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleUpdateRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveStaffRoleRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffRoleDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleDeleteRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleGetRolePermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolePermissionsDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleUpdateRolePermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRolePermissionsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolePermissionsDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsolePermissionCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermissionCatalogDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleMyPermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyPermissionsDto"];
                 };
             };
             /** @description Unauthorized */
@@ -4480,6 +5936,77 @@ export interface operations {
             };
         };
     };
+    ConsoleUpdateOrderNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOrderNoteRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsoleOrderDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     ConsoleListCustomers: {
         parameters: {
             query?: {
@@ -4619,6 +6146,14 @@ export interface operations {
                 categoryId?: string;
                 visible?: boolean;
                 stock?: string;
+                brand?: string;
+                labelId?: string;
+                /** @description missing-photo | missing-description | missing-attributes | any-missing */
+                fill?: string;
+                /** @description Створені за останні N днів */
+                newDays?: number;
+                /** @description Приховані товари, що є в наявності */
+                hiddenWithStock?: boolean;
                 page?: number;
                 pageSize?: number;
             };
@@ -4997,6 +6532,95 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleProductCounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsoleProductCountsDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleBulkUpdateProducts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkUpdateProductsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkUpdateProductsResult"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -5578,6 +7202,689 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleListAttributeDefinitions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttributeDefinitionDto"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleCreateAttributeDefinition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAttributeDefinitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttributeDefinitionDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleUpdateAttributeDefinition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveAttributeDefinitionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttributeDefinitionDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleDeleteAttributeDefinition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleListBrands: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandDto"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleCreateBrand: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveBrandRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleUpdateBrand: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveBrandRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleDeleteBrand: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleMergeBrand: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeBrandRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleListLabels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabelDto"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleCreateLabel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveLabelRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabelDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleUpdateLabel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveLabelRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabelDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleDeleteLabel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6473,6 +8780,1123 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleListRefunds: {
+        parameters: {
+            query?: {
+                /** @description Номер замовлення або телефон покупця */
+                q?: string;
+                from?: string;
+                to?: string;
+                status?: components["schemas"]["RefundStatus"];
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagedResponseOfConsoleRefundRowDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleListAccounts: {
+        parameters: {
+            query?: {
+                /** @description Email, ім'я або телефон */
+                q?: string;
+                /** @description all | confirmed | unconfirmed | locked */
+                status?: string;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagedResponseOfConsoleAccountDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleGetAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsoleAccountDetailsDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleSetAccountLock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetAccountLockRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsoleAccountDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleSendAccountPasswordReset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleUploadContentImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    file: components["schemas"]["IFormFile"];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadedImageDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleGetHomeSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HomeSettingsDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleSaveHomeSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HomeSettingsDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HomeSettingsDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleListBanners: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BannerDto"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleCreateBanner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveBannerRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BannerDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleReorderBanners: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderBannersRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BannerDto"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleUpdateBanner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveBannerRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BannerDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleDeleteBanner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleGetSeoTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeoTemplatesDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleSaveSeoTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeoTemplatesDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SeoTemplatesDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleGetShopSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopSettingsDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleSaveShopSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShopSettingsDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShopSettingsDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleGetDeliverySettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliverySettingsDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleSaveDeliverySettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliverySettingsDto"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliverySettingsDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleGetPaymentSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentSettingsDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleGetNotificationSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationSettingsDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleSaveNotificationSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveNotificationSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationSettingsDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleSendTestNotification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationTestResultDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

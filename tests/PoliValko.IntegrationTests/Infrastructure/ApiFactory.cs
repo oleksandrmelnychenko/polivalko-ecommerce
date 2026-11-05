@@ -4,14 +4,18 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using PoliValko.Catalog;
 using PoliValko.Catalog.Domain;
+using PoliValko.Content;
 using PoliValko.Identity;
 using PoliValko.Infrastructure;
 using PoliValko.Infrastructure.Outbox;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Security;
+using PoliValko.Infrastructure.Storefront;
 using PoliValko.IntegrationTests;
 using PoliValko.Notifications.Contracts;
+using PoliValko.Notifications.Integrations.Channels;
 using Testcontainers.PostgreSql;
 
 [assembly: AssemblyFixture(typeof(ApiFactory))]
@@ -35,11 +39,15 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public RecordingMailer Mailer { get; } = new();
 
+    public RecordingStorefront Storefront { get; } = new();
+
     public async ValueTask InitializeAsync()
     {
         await _postgres.StartAsync();
         await using var scope = Services.CreateAsyncScope();
         await scope.ServiceProvider.GetRequiredService<PoliValkoDbContext>().Database.MigrateAsync();
+        await CatalogModule.SyncDictionariesAsync(scope.ServiceProvider);
+        await ContentModule.SeedSiteAsync(scope.ServiceProvider);
         await IdentityModule.SeedUsersAsync(Services);
     }
 
@@ -65,8 +73,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         SeedUser(builder, 1, ManagerEmail, StaffRoles.Manager);
         builder.ConfigureServices(services =>
         {
-            services.RemoveAll<IManagerNotifier>();
-            services.AddSingleton<IManagerNotifier>(Notifier);
+            services.RemoveAll<IManagerChannel>();
+            services.AddSingleton<IManagerChannel>(Notifier);
+            services.RemoveAll<IStorefrontCache>();
+            services.AddSingleton<IStorefrontCache>(Storefront);
             services.RemoveAll<ICustomerMailer>();
             services.AddSingleton<ICustomerMailer>(Mailer);
             services.AddOutboxHandler<AlwaysFailingMessage, AlwaysFailingHandler>();
@@ -116,7 +126,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         decimal? oldPrice = null,
         bool visible = true,
         string? brand = null,
-        string? slug = null) =>
+        string? slug = null,
+        DateTimeOffset? createdAt = null) =>
         WithDbAsync(async db =>
         {
             var ct = TestContext.Current.CancellationToken;
@@ -133,7 +144,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
                 CategoryId = categoryId,
                 Brand = brand,
                 IsVisible = visible,
-                CreatedAt = now,
+                CreatedAt = createdAt ?? now,
                 Price = new ProductPrice { ProductId = id, Amount = price, OldAmount = oldPrice, UpdatedAt = now },
                 Stock = new ProductStock { ProductId = id, Quantity = stock, UpdatedAt = now },
             };
@@ -143,13 +154,33 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         });
 }
 
-public sealed class RecordingNotifier : IManagerNotifier
+public sealed class RecordingNotifier : IManagerChannel
 {
     public ConcurrentQueue<ManagerNotification> Sent { get; } = new();
 
-    public Task NotifyAsync(ManagerNotification notification, CancellationToken cancellationToken)
+    public ConcurrentQueue<(ManagerNotification Notification, IReadOnlyList<string> ChatIds)> Deliveries { get; } = new();
+
+    public bool IsConfigured => true;
+
+    public Task<int> SendAsync(ManagerNotification notification, IReadOnlyList<string> chatIds, CancellationToken cancellationToken)
     {
         Sent.Enqueue(notification);
+        Deliveries.Enqueue((notification, chatIds));
+        return Task.FromResult(chatIds.Count);
+    }
+}
+
+public sealed class RecordingStorefront : IStorefrontCache
+{
+    public ConcurrentQueue<string> Tags { get; } = new();
+
+    public Task InvalidateAsync(IReadOnlyCollection<string> tags, CancellationToken ct)
+    {
+        foreach (var tag in tags)
+        {
+            Tags.Enqueue(tag);
+        }
+
         return Task.CompletedTask;
     }
 }

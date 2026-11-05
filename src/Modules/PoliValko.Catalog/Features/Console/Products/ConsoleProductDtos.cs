@@ -1,5 +1,7 @@
+using System.ComponentModel;
 using Microsoft.AspNetCore.Mvc;
 using PoliValko.Catalog.Contracts;
+using PoliValko.Catalog.Domain;
 using PoliValko.SharedKernel;
 
 namespace PoliValko.Catalog.Features.Console.Products;
@@ -16,19 +18,39 @@ public sealed record ConsoleProductListItemDto(
     bool IsVisible,
     string? ImageUrl,
     bool HasDescription,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    IReadOnlyList<ConsoleProductLabelDto> Labels);
+
+public sealed record ConsoleProductLabelDto(Guid Id, string Name, LabelTone Tone, LabelKind Kind);
 
 public sealed record ConsoleProductQuery(
     [FromQuery(Name = "q")] string? Q,
     [FromQuery(Name = "categoryId")] Guid? CategoryId,
     [FromQuery(Name = "visible")] bool? Visible,
     [FromQuery(Name = "stock")] string? Stock,
+    [FromQuery(Name = "brand")] string? Brand,
+    [FromQuery(Name = "labelId")] Guid? LabelId,
+    [property: Description("missing-photo | missing-description | missing-attributes | any-missing")] [FromQuery(Name = "fill")] string? Fill,
+    [property: Description("Створені за останні N днів")] [FromQuery(Name = "newDays")] int? NewDays,
+    [property: Description("Приховані товари, що є в наявності")] [FromQuery(Name = "hiddenWithStock")] bool? HiddenWithStock,
     [FromQuery(Name = "page")] int? Page,
     [FromQuery(Name = "pageSize")] int? PageSize);
 
 public sealed record SetProductsVisibilityRequest(IReadOnlyList<Guid>? ProductIds, bool? Visible);
 
 public sealed record SetProductsVisibilityResult(int Updated);
+
+public sealed record ConsoleProductCountsDto(int All, int NeedsFilling, int Recent30, int HiddenWithStock, int OutOfStock);
+
+public sealed record BulkUpdateProductsRequest(
+    IReadOnlyList<Guid>? ProductIds,
+    Guid? CategoryId,
+    string? Brand,
+    IReadOnlyList<Guid>? AddLabelIds,
+    IReadOnlyList<Guid>? RemoveLabelIds,
+    bool? IsVisible);
+
+public sealed record BulkUpdateProductsResult(int Updated);
 
 public sealed record NavkoloProductFieldsDto(
     string NavkoloId,
@@ -58,7 +80,10 @@ public sealed record ConsoleProductDto(
     string? SeoDescription,
     IReadOnlyList<ProductAttributeDto> Attributes,
     IReadOnlyList<ConsoleProductImageDto> Images,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    IReadOnlyList<Guid> LabelIds,
+    IReadOnlyList<ConsoleProductLabelDto> Labels,
+    DateTimeOffset CreatedAt);
 
 public sealed record UpdateProductRequest(
     string? DisplayName,
@@ -69,7 +94,8 @@ public sealed record UpdateProductRequest(
     bool IsVisible,
     string? SeoTitle,
     string? SeoDescription,
-    IReadOnlyList<ProductAttributeDto>? Attributes);
+    IReadOnlyList<ProductAttributeDto>? Attributes,
+    IReadOnlyList<Guid>? LabelIds = null);
 
 public sealed record ProductImageOrderItem(Guid Id, string? Alt);
 

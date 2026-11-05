@@ -27,13 +27,22 @@ internal static class ListAttributeNames
             attributes = attributes.Where(p => ids.Contains(p.CategoryId));
         }
 
-        var names = await attributes
+        var pairs = await attributes
             .SelectMany(p => p.Attributes)
-            .GroupBy(a => a.Name)
-            .Select(g => new AttributeNameDto(g.Key, g.Select(a => a.ProductId).Distinct().Count()))
-            .OrderByDescending(a => a.ProductCount)
-            .ThenBy(a => a.Name)
+            .Select(a => new { a.Name, a.ProductId })
+            .Distinct()
             .ToListAsync(ct);
+        var used = pairs
+            .GroupBy(a => a.Name)
+            .Select(g => new AttributeNameDto(g.Key, g.Count()))
+            .ToList();
+        var seen = used.Select(a => AttributeDefinition.Normalize(a.Name)).ToHashSet(StringComparer.Ordinal);
+        var dictionary = await db.Set<AttributeDefinition>().AsNoTracking().OrderBy(d => d.SortOrder).Select(d => new { d.Name, d.NormalizedName }).ToListAsync(ct);
+        var names = used
+            .Concat(dictionary.Where(d => seen.Add(d.NormalizedName)).Select(d => new AttributeNameDto(d.Name, 0)))
+            .OrderByDescending(a => a.ProductCount)
+            .ThenBy(a => a.Name, StringComparer.InvariantCulture)
+            .ToList();
         return TypedResults.Ok(names);
     }
 }

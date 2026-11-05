@@ -6,5 +6,5 @@ public sealed class TelegramOptions
 
     public string? ChatId { get; set; }
 
-    public bool IsConfigured => !string.IsNullOrWhiteSpace(BotToken) && !string.IsNullOrWhiteSpace(ChatId);
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(BotToken);
 }

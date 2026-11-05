@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using PoliValko.Identity.Features.Auth;
+using PoliValko.Identity.Features.Roles;
 using PoliValko.Infrastructure.Security;
 
 namespace PoliValko.IntegrationTests;
@@ -28,6 +29,9 @@ internal static class Staff
     public static Task<HttpClient> AdminAsync(ApiFactory api) => LoginAsync(api, ApiFactory.AdminEmail);
 
     public static Task<HttpClient> ManagerAsync(ApiFactory api) => LoginAsync(api, ApiFactory.ManagerEmail);
+
+    public static async Task<string> RoleIdAsync(HttpClient client, string name) =>
+        (await client.ReadAsync<List<StaffRoleDto>>("/api/v1/console/roles")).Single(r => r.Name == name).Id;
 
     public static async Task<T> ReadAsync<T>(this HttpResponseMessage response, HttpStatusCode expected = HttpStatusCode.OK)
     {

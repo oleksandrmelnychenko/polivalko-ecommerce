@@ -7,6 +7,7 @@ using PoliValko.Delivery;
 using PoliValko.Fiscal;
 using PoliValko.Identity;
 using PoliValko.Navkolo;
+using PoliValko.Notifications;
 using PoliValko.Ordering;
 using PoliValko.Payments;
 using Scalar.AspNetCore;
@@ -31,6 +32,7 @@ public static class ApiEndpoints
         api.MapCheckoutEndpoints();
         api.MapPaymentEndpoints();
         api.MapReceiptEndpoints();
+        api.MapSiteEndpoints();
 
         var console = api.MapGroup("/console");
         console.MapConsoleAuthEndpoints();
@@ -48,6 +50,14 @@ public static class ApiEndpoints
         console.MapConsoleIntegrationEndpoints();
         console.MapConsoleServiceRequestEndpoints();
         console.MapConsoleDeliveryEndpoints();
+        console.MapConsoleRefundEndpoints();
+        console.MapConsoleAccountEndpoints();
+        console.MapConsoleMediaEndpoints();
+        console.MapConsoleSiteEndpoints();
+        console.MapConsoleShopSettingsEndpoints();
+        console.MapConsoleDeliverySettingsEndpoints();
+        console.MapConsolePaymentSettingsEndpoints();
+        console.MapConsoleNotificationSettingsEndpoints();
 
         api.MapAccountEndpoints();
         api.MapAccountOrderEndpoints();

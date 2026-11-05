@@ -41,6 +41,18 @@ internal static class SavePage
             errors["lead"] = ["Підзаголовок — до 500 символів."];
         }
 
+        var seoTitle = SiteContentMapping.Clean(request.SeoTitle);
+        if (seoTitle is { Length: > 200 })
+        {
+            errors["seoTitle"] = ["SEO-заголовок — до 200 символів."];
+        }
+
+        var seoDescription = SiteContentMapping.Clean(request.SeoDescription);
+        if (seoDescription is { Length: > 500 })
+        {
+            errors["seoDescription"] = ["SEO-опис — до 500 символів."];
+        }
+
         var body = sanitizer.Sanitize(request.BodyHtml);
         if (body is { Length: > 100_000 })
         {
@@ -55,9 +67,11 @@ internal static class SavePage
         page.Title = title!;
         page.Lead = string.IsNullOrWhiteSpace(request.Lead) ? null : request.Lead.Trim();
         page.BodyHtml = body;
+        page.SeoTitle = seoTitle;
+        page.SeoDescription = seoDescription;
         page.UpdatedAt = time.GetUtcNow();
         page.UpdatedBy = http.User.StaffName();
-        audit.Record("content.page_updated", "Page", slug, new { page.Title, length = body?.Length ?? 0 });
+        audit.Record("content.page_updated", "Page", slug, new { page.Title, length = body?.Length ?? 0, page.SeoTitle, page.SeoDescription });
         await db.SaveChangesAsync(ct);
         await storefront.InvalidateAsync([StorefrontTags.Content, StorefrontTags.Page(slug)], ct);
         return TypedResults.Ok(SiteContentMapping.ToDto(page));

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using PoliValko.Infrastructure.Security;
+using PoliValko.Infrastructure.Security.Permissions;
 
 namespace PoliValko.Identity.Features.Staff;
 
@@ -9,13 +10,14 @@ internal static class StaffEndpoints
 {
     public static RouteGroupBuilder Map(RouteGroupBuilder console)
     {
-        var users = console.MapGroup("/users").WithTags("Console").RequireStaff(StaffPolicies.Admin);
+        var users = console.MapGroup("/users").WithTags("Console").RequireStaff(PermissionKeys.StaffUsersManage);
         users.MapGet(string.Empty, ListStaffUsers.HandleAsync)
             .WithName("ConsoleListUsers")
-            .WithSummary("Працівники та їхні ролі (лише адміністратор)");
+            .WithSummary("Працівники та їхні ролі");
         users.MapPost(string.Empty, CreateStaffUser.HandleAsync)
             .WithName("ConsoleCreateUser")
-            .WithSummary("Новий працівник з роллю адміністратора або менеджера");
+            .WithSummary("Новий працівник з однією з ролей")
+            .ProducesProblem(StatusCodes.Status403Forbidden);
         users.MapPut("/{id}", UpdateStaffUser.HandleAsync)
             .WithName("ConsoleUpdateUser")
             .WithSummary("Ім'я та роль працівника")

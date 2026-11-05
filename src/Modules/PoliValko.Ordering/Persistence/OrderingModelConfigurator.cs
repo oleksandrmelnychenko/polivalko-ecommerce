@@ -38,6 +38,7 @@ internal sealed class OrderingModelConfigurator : IModelConfigurator
             builder.Property(o => o.RefundedAmount).HasPrecision(12, 2);
             builder.Property(o => o.NavkoloOrderRef).HasMaxLength(100);
             builder.Property(o => o.Comment).HasMaxLength(1000);
+            builder.Property(o => o.InternalNote).HasMaxLength(1000);
             builder.Property(o => o.Subtotal).HasPrecision(12, 2);
             builder.Property(o => o.Total).HasPrecision(12, 2);
             builder.Property(o => o.Version).IsRowVersion();

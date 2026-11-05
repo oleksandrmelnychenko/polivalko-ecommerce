@@ -6,6 +6,7 @@ using PoliValko.Infrastructure.Idempotency;
 using PoliValko.Infrastructure.Media;
 using PoliValko.Infrastructure.Outbox;
 using PoliValko.Infrastructure.Persistence;
+using PoliValko.Infrastructure.Settings;
 using PoliValko.Infrastructure.Storefront;
 using PoliValko.Infrastructure.Sync;
 using PoliValko.Infrastructure.Text;
@@ -40,6 +41,8 @@ public static class PlatformModule
         services.AddScoped<IAuditLog, EfAuditLog>();
         services.AddSingleton<IMediaStorage, LocalMediaStorage>();
         services.AddSingleton<IRichTextSanitizer, RichTextSanitizer>();
+        services.AddSingleton<SettingsCache>();
+        services.AddScoped<ISettingsStore, SettingsStore>();
         services.AddOptions<StorefrontOptions>().BindConfiguration("Web");
         services.AddHttpClient<IStorefrontCache, StorefrontCache>(client => client.Timeout = TimeSpan.FromSeconds(5));
         return services;

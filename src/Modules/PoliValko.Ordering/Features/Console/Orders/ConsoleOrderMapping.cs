@@ -74,7 +74,9 @@ internal static class ConsoleOrderMapping
                     l.Quantity,
                     MoneyDto.Hryvnia(l.Amount))).ToList())).ToList(),
             method,
-            method is null ? [] : Refundable(order).ToList());
+            method is null ? [] : Refundable(order).ToList(),
+            order.InternalNote,
+            order.CustomerId);
     }
 
     public static ProblemHttpResult NotFound(string number) =>

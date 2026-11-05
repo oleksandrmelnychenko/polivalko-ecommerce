@@ -11,7 +11,9 @@ public sealed record ConsoleCategoryDto(
     IReadOnlyList<string> FilterAttributes,
     string? SeoTitle,
     string? SeoDescription,
-    int ProductCount);
+    int ProductCount,
+    string? ImageUrl,
+    string? Description);
 
 public sealed record SaveCategoryRequest(
     Guid? ParentId,
@@ -22,4 +24,6 @@ public sealed record SaveCategoryRequest(
     string? NavkoloRef,
     IReadOnlyList<string>? FilterAttributes,
     string? SeoTitle,
-    string? SeoDescription);
+    string? SeoDescription,
+    string? ImageUrl = null,
+    string? Description = null);

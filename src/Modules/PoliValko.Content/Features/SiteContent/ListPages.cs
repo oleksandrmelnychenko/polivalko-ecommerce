@@ -12,6 +12,6 @@ internal static class ListPages
         TypedResults.Ok(await db.Set<ContentPage>()
             .AsNoTracking()
             .OrderBy(p => p.Title)
-            .Select(p => new ConsolePageListItemDto(p.Slug, p.Title, p.UpdatedAt, p.UpdatedBy))
+            .Select(p => new ConsolePageListItemDto(p.Slug, p.Title, p.UpdatedAt, p.UpdatedBy, p.SeoTitle, p.SeoDescription))
             .ToListAsync(ct));
 }

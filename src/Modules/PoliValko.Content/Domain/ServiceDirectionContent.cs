@@ -9,4 +9,6 @@ public sealed class ServiceDirectionContent
     public int SortOrder { get; set; }
 
     public bool IsVisible { get; set; } = true;
+
+    public string? ImageUrl { get; set; }
 }

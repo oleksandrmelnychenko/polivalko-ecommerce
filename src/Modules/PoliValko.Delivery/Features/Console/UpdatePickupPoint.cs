@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PoliValko.Delivery.Domain;
 using PoliValko.Delivery.Features.Directory;
+using PoliValko.Delivery.Features.Settings;
 using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Persistence;
+using PoliValko.Infrastructure.Settings;
 using PoliValko.Infrastructure.Storefront;
 using PoliValko.Infrastructure.Web;
 
@@ -21,6 +23,7 @@ internal static class UpdatePickupPoint
         IAuditLog audit,
         PickupPointStore store,
         IStorefrontCache storefront,
+        ISettingsStore settings,
         CancellationToken ct)
     {
         var errors = Validate(request, out var values);
@@ -35,11 +38,14 @@ internal static class UpdatePickupPoint
             return Problems.NotFound("delivery.pickup_point_not_found", "Точку самовивозу не знайдено", $"Точки «{code}» не існує.");
         }
 
-        if (point.IsActive && !values.IsActive && !await db.Set<PickupLocation>().AnyAsync(p => p.IsActive && p.Code != code, ct))
+        if (point.IsActive
+            && !values.IsActive
+            && (await DeliverySettingsStore.LoadAsync(settings, ct)).Pickup.Enabled
+            && !await db.Set<PickupLocation>().AnyAsync(p => p.IsActive && p.Code != code, ct))
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
-                ["isActive"] = ["Має залишитися хоча б одна активна точка самовивозу."],
+                ["isActive"] = ["Має залишитися хоча б одна активна точка самовивозу. Щоб вимкнути всі точки, спершу вимкніть самовивіз у налаштуваннях доставки."],
             });
         }
 

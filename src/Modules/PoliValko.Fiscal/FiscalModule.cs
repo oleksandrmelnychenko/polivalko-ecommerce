@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Fiscal.Configuration;
+using PoliValko.Fiscal.Contracts;
 using PoliValko.Fiscal.Features.Issuing;
 using PoliValko.Fiscal.Features.Receipts;
+using PoliValko.Fiscal.Features.Settings;
 using PoliValko.Fiscal.Integrations.Checkbox;
 using PoliValko.Fiscal.Integrations.Providers;
 using PoliValko.Fiscal.Integrations.Stub;
@@ -33,6 +35,8 @@ public static class FiscalModule
 
         return services
             .AddModelConfigurator<FiscalModelConfigurator>()
+            .AddScoped<IRefundReceiptStatuses, RefundReceiptStatuses>()
+            .AddSingleton<IFiscalSettings, FiscalSettings>()
             .AddOutboxHandler<FiscalReceiptRequested, IssueReceiptOnRequest>();
     }
 

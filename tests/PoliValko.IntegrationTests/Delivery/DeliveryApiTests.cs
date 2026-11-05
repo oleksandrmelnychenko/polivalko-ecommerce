@@ -108,7 +108,7 @@ public sealed class DeliveryApiTests(ApiFactory api)
         (await update.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Code.ShouldBe("auth.forbidden");
 
         (await manager.GetAsync("/api/v1/console/delivery/pickup-points", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await manager.GetAsync("/api/v1/console/delivery/novaposhta", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await manager.GetAsync("/api/v1/console/delivery/novaposhta", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [Fact]

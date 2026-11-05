@@ -40,6 +40,7 @@ public sealed class CatalogApiTests(ApiFactory api)
 
         var page = await _client.GetFromJsonAsync<ProductSearchResponse>(
             $"/api/v1/products?q={token}&category=vse-dlia-polyvu&sort=price_desc&page=2&pageSize=2",
+            TestJson.Options,
             Ct);
 
         page!.TotalItems.ShouldBe(3);
@@ -48,6 +49,7 @@ public sealed class CatalogApiTests(ApiFactory api)
 
         var inStock = await _client.GetFromJsonAsync<ProductSearchResponse>(
             $"/api/v1/products?q={token}&category=vse-dlia-polyvu&inStock=true",
+            TestJson.Options,
             Ct);
         inStock!.Items.ShouldAllBe(p => p.InStock);
         inStock.TotalItems.ShouldBe(2);
@@ -58,7 +60,7 @@ public sealed class CatalogApiTests(ApiFactory api)
     {
         var product = await api.AddProductAsync("vse-dlia-roslyn", "Ґрунт для розсади", 120m);
 
-        var page = await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={product.Sku}", Ct);
+        var page = await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={product.Sku}", TestJson.Options, Ct);
 
         page!.Items.ShouldHaveSingleItem().Id.ShouldBe(product.Id);
     }
@@ -69,8 +71,8 @@ public sealed class CatalogApiTests(ApiFactory api)
         var promo = await api.AddProductAsync("novyi-rik", "Гірлянда акційна", 300m, oldPrice: 400m);
         var broken = await api.AddProductAsync("novyi-rik", "Гірлянда з некоректною старою ціною", 300m, oldPrice: 250m);
 
-        var promoDto = await _client.GetFromJsonAsync<ProductDetailsDto>($"/api/v1/products/{promo.Slug}", Ct);
-        var brokenDto = await _client.GetFromJsonAsync<ProductDetailsDto>($"/api/v1/products/{broken.Slug}", Ct);
+        var promoDto = await _client.GetFromJsonAsync<ProductDetailsDto>($"/api/v1/products/{promo.Slug}", TestJson.Options, Ct);
+        var brokenDto = await _client.GetFromJsonAsync<ProductDetailsDto>($"/api/v1/products/{broken.Slug}", TestJson.Options, Ct);
 
         promoDto!.OldPrice.ShouldBe(new MoneyDto("400.00", "UAH"));
         brokenDto!.OldPrice.ShouldBeNull();

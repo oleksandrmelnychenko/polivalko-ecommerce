@@ -10,7 +10,7 @@ namespace PoliValko.Catalog.Features.Favorites;
 
 internal static class ListFavorites
 {
-    public static async Task<Ok<List<ProductListItemDto>>> HandleAsync(HttpContext http, PoliValkoDbContext db, CancellationToken ct)
+    public static async Task<Ok<List<ProductListItemDto>>> HandleAsync(HttpContext http, PoliValkoDbContext db, TimeProvider time, CancellationToken ct)
     {
         var customerId = http.User.CustomerId();
         var ids = await db.Set<Favorite>()
@@ -19,8 +19,8 @@ internal static class ListFavorites
             .OrderByDescending(f => f.AddedAt)
             .Select(f => f.ProductId)
             .ToListAsync(ct);
-        var items = (await ProductListing.ListItems(db.Set<Product>().AsNoTracking().Where(p => p.IsVisible && ids.Contains(p.Id))).ToListAsync(ct))
-            .ToDictionary(r => r.Id, ProductListing.ToListItem);
+        var rows = await ProductListing.ListItems(db.Set<Product>().AsNoTracking().Where(p => p.IsVisible && ids.Contains(p.Id))).ToListAsync(ct);
+        var items = (await ProductListing.ToListItemsAsync(db, rows, time, ct)).ToDictionary(r => r.Id);
 
         return TypedResults.Ok(ids.Where(items.ContainsKey).Select(id => items[id]).ToList());
     }

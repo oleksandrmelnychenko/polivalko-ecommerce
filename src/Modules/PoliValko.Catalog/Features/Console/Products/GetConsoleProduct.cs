@@ -6,9 +6,11 @@ namespace PoliValko.Catalog.Features.Console.Products;
 
 internal static class GetConsoleProduct
 {
-    public static async Task<Results<Ok<ConsoleProductDto>, ProblemHttpResult>> HandleAsync(Guid id, PoliValkoDbContext db, CancellationToken ct)
+    public static async Task<Results<Ok<ConsoleProductDto>, ProblemHttpResult>> HandleAsync(Guid id, PoliValkoDbContext db, TimeProvider time, CancellationToken ct)
     {
         var product = await ConsoleProductQueries.LoadProductAsync(db, id, tracking: false, ct);
-        return product is null ? ConsoleProductQueries.ProductNotFound() : TypedResults.Ok(ConsoleProductQueries.ToDto(product));
+        return product is null
+            ? ConsoleProductQueries.ProductNotFound()
+            : TypedResults.Ok(await ConsoleProductQueries.ToDtoAsync(db, product, time.GetUtcNow(), ct));
     }
 }

@@ -10,6 +10,10 @@ public sealed class ContentPage
 
     public string? BodyHtml { get; set; }
 
+    public string? SeoTitle { get; set; }
+
+    public string? SeoDescription { get; set; }
+
     public DateTimeOffset UpdatedAt { get; set; }
 
     public string? UpdatedBy { get; set; }

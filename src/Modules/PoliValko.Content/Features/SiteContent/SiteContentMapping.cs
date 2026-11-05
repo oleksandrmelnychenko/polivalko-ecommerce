@@ -6,10 +6,12 @@ namespace PoliValko.Content.Features.SiteContent;
 
 internal static class SiteContentMapping
 {
-    public static PageDto ToDto(ContentPage p) => new(p.Slug, p.Title, p.Lead, p.BodyHtml, p.UpdatedAt, p.UpdatedBy);
+    public static PageDto ToDto(ContentPage p) => new(p.Slug, p.Title, p.Lead, p.BodyHtml, p.UpdatedAt, p.UpdatedBy, p.SeoTitle, p.SeoDescription);
 
     public static ContactsDto ToDto(SiteContacts c) =>
-        new(c.StorePhone, c.ServicesPhone, c.Email, c.Address, c.Schedule, c.MapUrl, c.Instagram, c.Facebook, c.Telegram, c.YouTube);
+        new(c.StorePhone, c.ServicesPhone, c.Email, c.Address, c.Schedule, c.MapUrl, c.Instagram, c.Facebook, c.Telegram, c.YouTube, c.Viber);
+
+    public static ContactsDto ToDto(SiteContacts c, IReadOnlyList<SpecialDayDto> specialDays) => ToDto(c) with { SpecialDays = specialDays };
 
     public static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 

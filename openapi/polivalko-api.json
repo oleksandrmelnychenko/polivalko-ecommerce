@@ -1121,6 +1121,27 @@
         }
       }
     },
+    "/api/v1/site/home": {
+      "get": {
+        "tags": [
+          "Content"
+        ],
+        "summary": "Головна сторінка: оголошення (якщо діє зараз), порядок і видимість блоків, тексти переваг, кроків і блоку магазину, банери, що діють зараз",
+        "operationId": "GetSiteHome",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteHomeDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/console/auth/login": {
       "post": {
         "tags": [
@@ -1201,7 +1222,7 @@
         "tags": [
           "Console"
         ],
-        "summary": "Поточний працівник і його ролі",
+        "summary": "Поточний працівник і його роль",
         "operationId": "ConsoleMe",
         "responses": {
           "200": {
@@ -1253,7 +1274,7 @@
         "tags": [
           "Console"
         ],
-        "summary": "Працівники та їхні ролі (лише адміністратор)",
+        "summary": "Працівники та їхні ролі",
         "operationId": "ConsoleListUsers",
         "responses": {
           "401": {
@@ -1295,7 +1316,7 @@
         "tags": [
           "Console"
         ],
-        "summary": "Новий працівник з роллю адміністратора або менеджера",
+        "summary": "Новий працівник з однією з ролей",
         "operationId": "ConsoleCreateUser",
         "requestBody": {
           "content": {
@@ -1644,6 +1665,494 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/roles": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Ролі працівників: кількість людей і прав, версія",
+        "operationId": "ConsoleListRoles",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StaffRoleDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Нова роль; права можна скопіювати з іншої ролі",
+        "operationId": "ConsoleCreateRole",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStaffRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffRoleDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/roles/{id}": {
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Назва й опис ролі",
+        "operationId": "ConsoleUpdateRole",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveStaffRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffRoleDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Видалення ролі без працівників",
+        "operationId": "ConsoleDeleteRole",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/roles/{id}/permissions": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Права ролі та їхня версія",
+        "operationId": "ConsoleGetRolePermissions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RolePermissionsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Повний набір прав ролі з перевіркою версії",
+        "operationId": "ConsoleUpdateRolePermissions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRolePermissionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RolePermissionsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/permissions/catalog": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Каталог прав консолі: ключі, назви, розділи й ризик",
+        "operationId": "ConsolePermissionCatalog",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionCatalogDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/permissions/me": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Роль і права поточного працівника",
+        "operationId": "ConsoleMyPermissions",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyPermissionsDto"
                 }
               }
             }
@@ -2370,6 +2879,97 @@
         }
       }
     },
+    "/api/v1/console/orders/{number}/note": {
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Службова нотатка до замовлення (бачать лише працівники); зміна пишеться в історію",
+        "operationId": "ConsoleUpdateOrderNote",
+        "parameters": [
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrderNoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsoleOrderDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/console/customers": {
       "get": {
         "tags": [
@@ -2596,6 +3196,46 @@
             "in": "query",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "brand",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "labelId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "fill",
+            "in": "query",
+            "description": "missing-photo | missing-description | missing-attributes | any-missing",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "newDays",
+            "in": "query",
+            "description": "Створені за останні N днів",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "hiddenWithStock",
+            "in": "query",
+            "description": "Приховані товари, що є в наявності",
+            "schema": {
+              "type": "boolean"
             }
           },
           {
@@ -3109,6 +3749,108 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/catalog/products/counts": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Кількість товарів для швидких вкладок: усі, потребують заповнення, нові за 30 днів, приховані з залишком, без залишку",
+        "operationId": "ConsoleProductCounts",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsoleProductCountsDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/catalog/products/bulk": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Масова зміна до 200 товарів: розділ, бренд (порожній рядок прибирає бренд), мітки, видимість",
+        "operationId": "ConsoleBulkUpdateProducts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkUpdateProductsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkUpdateProductsResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
                 }
               }
             }
@@ -3803,6 +4545,832 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/catalog/attributes": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Довідник характеристик: одиниця, тип, вигляд фільтра, синоніми, кількість товарів і категорій з фільтром",
+        "operationId": "ConsoleListAttributeDefinitions",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttributeDefinitionDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Нова характеристика в довіднику",
+        "operationId": "ConsoleCreateAttributeDefinition",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAttributeDefinitionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttributeDefinitionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/catalog/attributes/{id}": {
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Зміна характеристики; нова назва переписується в усіх товарах і фільтрах категорій однією транзакцією",
+        "operationId": "ConsoleUpdateAttributeDefinition",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAttributeDefinitionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttributeDefinitionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Видалення з довідника; значення в товарах лишаються. Не можна, поки характеристика є фільтром категорії.",
+        "operationId": "ConsoleDeleteAttributeDefinition",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/catalog/brands": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Довідник брендів з кількістю товарів",
+        "operationId": "ConsoleListBrands",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BrandDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Новий бренд",
+        "operationId": "ConsoleCreateBrand",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveBrandRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/catalog/brands/{id}": {
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Зміна бренду; нова назва переписується в усіх його товарах",
+        "operationId": "ConsoleUpdateBrand",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveBrandRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Видалення бренду без товарів",
+        "operationId": "ConsoleDeleteBrand",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/catalog/brands/{id}/merge": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Об'єднання: товари бренду переходять до іншого бренду, цей бренд видаляється",
+        "operationId": "ConsoleMergeBrand",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MergeBrandRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/catalog/labels": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Мітки товарів у порядку показу: ручні та автоматичні (акція — стара ціна більша, новинка — створений за N днів)",
+        "operationId": "ConsoleListLabels",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LabelDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Нова мітка",
+        "operationId": "ConsoleCreateLabel",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveLabelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabelDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/catalog/labels/{id}": {
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Зміна мітки: назва, колір, порядок, увімкнення; тип не змінюється",
+        "operationId": "ConsoleUpdateLabel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveLabelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabelDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Видалення ручної мітки або вимкненої автоматичної",
+        "operationId": "ConsoleDeleteLabel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4936,6 +6504,1373 @@
         }
       }
     },
+    "/api/v1/console/refunds": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Повернення коштів з усіх замовлень: пошук за номером чи телефоном, фільтр за статусом і датами, стан чека",
+        "operationId": "ConsoleListRefunds",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Номер замовлення або телефон покупця",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/RefundStatus"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfConsoleRefundRowDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/accounts": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Зареєстровані покупці (кабінети): пошук за email, ім'ям чи телефоном, фільтр за станом",
+        "operationId": "ConsoleListAccounts",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Email, ім'я або телефон",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "all | confirmed | unconfirmed | locked",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfConsoleAccountDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/accounts/{id}": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Кабінет покупця: адреси, обране, останні замовлення",
+        "operationId": "ConsoleGetAccount",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsoleAccountDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/accounts/{id}/lock": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Блокування кабінету (вхід заборонено, сесії завершуються) або розблокування",
+        "operationId": "ConsoleSetAccountLock",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetAccountLockRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsoleAccountDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/accounts/{id}/password-reset": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Лист покупцю з посиланням для нового пароля (діє 1 годину)",
+        "operationId": "ConsoleSendAccountPasswordReset",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/media/images": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Завантаження фото для банерів, сторінок, категорій і брендів (JPEG, PNG або WebP, до 10 МБ); повертає адресу",
+        "operationId": "ConsoleUploadContentImage",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadedImageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/site/home": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Налаштування головної: блоки, оголошення, переваги, кроки, блок магазину",
+        "operationId": "ConsoleGetHomeSettings",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeSettingsDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Зміна налаштувань головної",
+        "operationId": "ConsoleSaveHomeSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeSettingsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/site/banners": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Банери першого екрана в порядку показу, разом із вимкненими й завершеними",
+        "operationId": "ConsoleListBanners",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BannerDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Новий банер (стає останнім)",
+        "operationId": "ConsoleCreateBanner",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveBannerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BannerDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/site/banners/order": {
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Новий порядок банерів: усі id по черзі; повертає список",
+        "operationId": "ConsoleReorderBanners",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderBannersRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BannerDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/site/banners/{id}": {
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Зміна банера: тексти, посилання, фото, період, увімкнення",
+        "operationId": "ConsoleUpdateBanner",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveBannerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BannerDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Видалення банера",
+        "operationId": "ConsoleDeleteBanner",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/site/seo-templates": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Мета-шаблони товарів і категорій: {name}, {price}, {category}, {brand}, {shop}",
+        "operationId": "ConsoleGetSeoTemplates",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeoTemplatesDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Зміна мета-шаблонів; діють для товарів і категорій без власних SEO-полів",
+        "operationId": "ConsoleSaveSeoTemplates",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeoTemplatesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeoTemplatesDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/settings/shop": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Реквізити продавця й особливі дні графіка; поки реквізити не збережено — з конфігурації сервера",
+        "operationId": "ConsoleGetShopSettings",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopSettingsDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Зміна реквізитів продавця (оферта, замовлення, підвал сайту) й особливих днів графіка",
+        "operationId": "ConsoleSaveShopSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShopSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShopSettingsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/settings/delivery": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Способи доставки: Нова пошта (і післяплата), кур'єр, самовивіз",
+        "operationId": "ConsoleGetDeliverySettings",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliverySettingsDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Увімкнення способів доставки; самовивіз покупець бачить, лише коли є активна точка",
+        "operationId": "ConsoleSaveDeliverySettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliverySettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliverySettingsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/settings/payments": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Оплата й чеки лише для перегляду: платіжний провайдер і режим, остання звірка, ПРРО і коли видається чек",
+        "operationId": "ConsoleGetPaymentSettings",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentSettingsDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/settings/notifications": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Кому й про що надсилати сповіщення: чати Telegram, e-mail, події; чи налаштований бот",
+        "operationId": "ConsoleGetNotificationSettings",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Зміна отримувачів і подій сповіщень",
+        "operationId": "ConsoleSaveNotificationSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveNotificationSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/settings/notifications/test": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Тестове повідомлення в усі збережені чати Telegram",
+        "operationId": "ConsoleSendTestNotification",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationTestResultDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/account/csrf": {
       "get": {
         "tags": [
@@ -6034,6 +8969,59 @@
           }
         }
       },
+      "AttributeDefinitionDto": {
+        "required": [
+          "id",
+          "name",
+          "unit",
+          "kind",
+          "filterView",
+          "sortOrder",
+          "aliases",
+          "productCount",
+          "categoryCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "unit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AttributeKind"
+          },
+          "filterView": {
+            "$ref": "#/components/schemas/AttributeFilterView"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "productCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "categoryCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "AttributeFacet": {
         "required": [
           "name",
@@ -6051,6 +9039,19 @@
             }
           }
         }
+      },
+      "AttributeFilterView": {
+        "enum": [
+          "checkboxes",
+          "range"
+        ]
+      },
+      "AttributeKind": {
+        "enum": [
+          "list",
+          "number",
+          "boolean"
+        ]
       },
       "AttributeNameDto": {
         "required": [
@@ -6131,6 +9132,130 @@
           }
         }
       },
+      "BannerDto": {
+        "required": [
+          "id",
+          "title",
+          "text",
+          "buttonLabel",
+          "link",
+          "imageUrl",
+          "mobileImageUrl",
+          "startsAt",
+          "endsAt",
+          "sortOrder",
+          "isActive",
+          "updatedAt",
+          "kicker"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "text": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "buttonLabel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "link": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "mobileImageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "startsAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "kicker": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "BrandDto": {
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "description",
+          "logoUrl",
+          "productCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "logoUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "productCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "BrandFacet": {
         "required": [
           "name",
@@ -6142,6 +9267,80 @@
             "type": "string"
           },
           "count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "BulkUpdateProductsRequest": {
+        "required": [
+          "productIds",
+          "categoryId",
+          "brand",
+          "addLabelIds",
+          "removeLabelIds",
+          "isVisible"
+        ],
+        "type": "object",
+        "properties": {
+          "productIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "categoryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "brand": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "addLabelIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "removeLabelIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "isVisible": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        }
+      },
+      "BulkUpdateProductsResult": {
+        "required": [
+          "updated"
+        ],
+        "type": "object",
+        "properties": {
+          "updated": {
             "type": "integer",
             "format": "int32"
           }
@@ -6172,7 +9371,9 @@
           "breadcrumbs",
           "children",
           "seoTitle",
-          "seoDescription"
+          "seoDescription",
+          "imageUrl",
+          "description"
         ],
         "type": "object",
         "properties": {
@@ -6209,6 +9410,18 @@
               "null",
               "string"
             ]
+          },
+          "imageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -6217,7 +9430,9 @@
           "id",
           "slug",
           "name",
-          "children"
+          "children",
+          "imageUrl",
+          "description"
         ],
         "type": "object",
         "properties": {
@@ -6236,6 +9451,18 @@
             "items": {
               "$ref": "#/components/schemas/CategoryNodeDto"
             }
+          },
+          "imageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -6401,6 +9628,143 @@
           }
         }
       },
+      "ConsoleAccountDetailsDto": {
+        "required": [
+          "id",
+          "email",
+          "name",
+          "phone",
+          "emailConfirmed",
+          "lockedOut",
+          "createdAt",
+          "ordersCount",
+          "blocked",
+          "addresses",
+          "favoritesCount",
+          "orders"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "emailConfirmed": {
+            "type": "boolean"
+          },
+          "lockedOut": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ordersCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "blocked": {
+            "type": "boolean"
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerAddressDto"
+            }
+          },
+          "favoritesCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "orders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleAccountOrderDto"
+            }
+          }
+        }
+      },
+      "ConsoleAccountDto": {
+        "required": [
+          "id",
+          "email",
+          "name",
+          "phone",
+          "emailConfirmed",
+          "lockedOut",
+          "createdAt",
+          "ordersCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "emailConfirmed": {
+            "type": "boolean"
+          },
+          "lockedOut": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ordersCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ConsoleAccountOrderDto": {
+        "required": [
+          "number",
+          "createdAt",
+          "status",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "total": {
+            "$ref": "#/components/schemas/MoneyDto"
+          }
+        }
+      },
       "ConsoleCategoryDto": {
         "required": [
           "id",
@@ -6413,7 +9777,9 @@
           "filterAttributes",
           "seoTitle",
           "seoDescription",
-          "productCount"
+          "productCount",
+          "imageUrl",
+          "description"
         ],
         "type": "object",
         "properties": {
@@ -6468,6 +9834,18 @@
           "productCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "imageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -6654,7 +10032,9 @@
           "refundedAmount",
           "refunds",
           "refundMethod",
-          "refundable"
+          "refundable",
+          "internalNote",
+          "customerAccountId"
         ],
         "type": "object",
         "properties": {
@@ -6789,6 +10169,19 @@
             "items": {
               "$ref": "#/components/schemas/RefundableItemDto"
             }
+          },
+          "internalNote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customerAccountId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -6880,7 +10273,9 @@
           "slug",
           "title",
           "updatedAt",
-          "updatedBy"
+          "updatedBy",
+          "seoTitle",
+          "seoDescription"
         ],
         "type": "object",
         "properties": {
@@ -6895,6 +10290,18 @@
             "format": "date-time"
           },
           "updatedBy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "seoTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "seoDescription": {
             "type": [
               "null",
               "string"
@@ -6993,6 +10400,38 @@
           }
         }
       },
+      "ConsoleProductCountsDto": {
+        "required": [
+          "all",
+          "needsFilling",
+          "recent30",
+          "hiddenWithStock",
+          "outOfStock"
+        ],
+        "type": "object",
+        "properties": {
+          "all": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "needsFilling": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recent30": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hiddenWithStock": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "outOfStock": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "ConsoleProductDto": {
         "required": [
           "id",
@@ -7007,7 +10446,10 @@
           "seoDescription",
           "attributes",
           "images",
-          "updatedAt"
+          "updatedAt",
+          "labelIds",
+          "labels",
+          "createdAt"
         ],
         "type": "object",
         "properties": {
@@ -7073,6 +10515,23 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "labelIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleProductLabelDto"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -7108,6 +10567,30 @@
           }
         }
       },
+      "ConsoleProductLabelDto": {
+        "required": [
+          "id",
+          "name",
+          "tone",
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tone": {
+            "$ref": "#/components/schemas/LabelTone"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/LabelKind"
+          }
+        }
+      },
       "ConsoleProductListItemDto": {
         "required": [
           "id",
@@ -7121,7 +10604,8 @@
           "isVisible",
           "imageUrl",
           "hasDescription",
-          "updatedAt"
+          "updatedAt",
+          "labels"
         ],
         "type": "object",
         "properties": {
@@ -7169,6 +10653,12 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleProductLabelDto"
+            }
           }
         }
       },
@@ -7289,6 +10779,55 @@
           }
         }
       },
+      "ConsoleRefundRowDto": {
+        "required": [
+          "id",
+          "orderNumber",
+          "createdAt",
+          "amount",
+          "method",
+          "status",
+          "reason",
+          "createdBy",
+          "receiptStatus"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderNumber": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/MoneyDto"
+          },
+          "method": {
+            "$ref": "#/components/schemas/RefundChannel"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RefundStatus"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "receiptStatus": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Стан чека повернення: pending | issued | failed; порожньо, якщо чека немає"
+          }
+        }
+      },
       "ConsoleSearchDto": {
         "required": [
           "orders",
@@ -7323,7 +10862,8 @@
           "name",
           "description",
           "sortOrder",
-          "isVisible"
+          "isVisible",
+          "imageUrl"
         ],
         "type": "object",
         "properties": {
@@ -7345,6 +10885,12 @@
           },
           "isVisible": {
             "type": "boolean"
+          },
+          "imageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -7515,6 +11061,46 @@
               "null",
               "string"
             ]
+          },
+          "viber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "specialDays": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SpecialDayDto"
+            }
+          }
+        }
+      },
+      "CourierSettingsDto": {
+        "required": [
+          "enabled",
+          "area",
+          "priceNote"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "area": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "priceNote": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -7670,7 +11256,7 @@
         "required": [
           "email",
           "displayName",
-          "role",
+          "roleId",
           "password"
         ],
         "type": "object",
@@ -7687,7 +11273,7 @@
               "string"
             ]
           },
-          "role": {
+          "roleId": {
             "type": [
               "null",
               "string"
@@ -8027,6 +11613,18 @@
             "items": {
               "$ref": "#/components/schemas/PaymentMethodOptionDto"
             }
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "priceNote": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -8068,6 +11666,25 @@
           }
         }
       },
+      "DeliverySettingsDto": {
+        "required": [
+          "novaPoshta",
+          "courier",
+          "pickup"
+        ],
+        "type": "object",
+        "properties": {
+          "novaPoshta": {
+            "$ref": "#/components/schemas/NovaPoshtaSettingsDto"
+          },
+          "courier": {
+            "$ref": "#/components/schemas/CourierSettingsDto"
+          },
+          "pickup": {
+            "$ref": "#/components/schemas/PickupSettingsDto"
+          }
+        }
+      },
       "ForgotPasswordRequest": {
         "required": [
           "email"
@@ -8079,6 +11696,181 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "HomeAnnouncementDto": {
+        "required": [
+          "text",
+          "link",
+          "isActive",
+          "startsAt",
+          "endsAt"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "link": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "startsAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "HomeBannerDto": {
+        "required": [
+          "id",
+          "title",
+          "text",
+          "buttonLabel",
+          "link",
+          "imageUrl",
+          "mobileImageUrl",
+          "startsAt",
+          "endsAt",
+          "kicker"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "text": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "buttonLabel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "link": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "mobileImageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "startsAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "kicker": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "HomeBlockDto": {
+        "required": [
+          "key",
+          "visible"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "visible": {
+            "type": "boolean"
+          }
+        }
+      },
+      "HomeItemDto": {
+        "required": [
+          "title",
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "HomeSettingsDto": {
+        "required": [
+          "blocks",
+          "announcement",
+          "perks",
+          "steps",
+          "visit"
+        ],
+        "type": "object",
+        "properties": {
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeBlockDto"
+            }
+          },
+          "announcement": {
+            "$ref": "#/components/schemas/HomeAnnouncementDto"
+          },
+          "perks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeItemDto"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeItemDto"
+            }
+          },
+          "visit": {
+            "$ref": "#/components/schemas/HomeItemDto"
           }
         }
       },
@@ -8220,6 +12012,69 @@
         }
       },
       "JsonElement": { },
+      "LabelDto": {
+        "required": [
+          "id",
+          "name",
+          "tone",
+          "kind",
+          "newDays",
+          "sortOrder",
+          "isActive",
+          "productCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tone": {
+            "$ref": "#/components/schemas/LabelTone"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/LabelKind"
+          },
+          "newDays": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "productCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "LabelKind": {
+        "enum": [
+          "manual",
+          "new",
+          "sale"
+        ]
+      },
+      "LabelTone": {
+        "enum": [
+          "green",
+          "red",
+          "orange",
+          "blue",
+          "gray",
+          "dark"
+        ]
+      },
       "LockStaffUserRequest": {
         "required": [
           "locked"
@@ -8252,6 +12107,21 @@
           }
         }
       },
+      "MergeBrandRequest": {
+        "required": [
+          "intoId"
+        ],
+        "type": "object",
+        "properties": {
+          "intoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
       "MoneyDto": {
         "required": [
           "value",
@@ -8263,6 +12133,36 @@
             "type": "string"
           },
           "currency": {
+            "type": "string"
+          }
+        }
+      },
+      "MyPermissionsDto": {
+        "required": [
+          "roleId",
+          "roleName",
+          "isSuperuser",
+          "permissionKeys",
+          "catalogVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "roleId": {
+            "type": "string"
+          },
+          "roleName": {
+            "type": "string"
+          },
+          "isSuperuser": {
+            "type": "boolean"
+          },
+          "permissionKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "catalogVersion": {
             "type": "string"
           }
         }
@@ -8334,6 +12234,90 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "NotificationEventsDto": {
+        "required": [
+          "newOrder",
+          "newServiceRequest",
+          "integrationAlert",
+          "paymentAfterCancel"
+        ],
+        "type": "object",
+        "properties": {
+          "newOrder": {
+            "type": "boolean"
+          },
+          "newServiceRequest": {
+            "type": "boolean"
+          },
+          "integrationAlert": {
+            "type": "boolean"
+          },
+          "paymentAfterCancel": {
+            "type": "boolean"
+          }
+        }
+      },
+      "NotificationSettingsDto": {
+        "required": [
+          "telegramChatIds",
+          "emails",
+          "events",
+          "telegramConfigured"
+        ],
+        "type": "object",
+        "properties": {
+          "telegramChatIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "emails": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "events": {
+            "$ref": "#/components/schemas/NotificationEventsDto"
+          },
+          "telegramConfigured": {
+            "type": "boolean"
+          }
+        }
+      },
+      "NotificationTestResultDto": {
+        "required": [
+          "chats",
+          "delivered"
+        ],
+        "type": "object",
+        "properties": {
+          "chats": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "delivered": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "NovaPoshtaSettingsDto": {
+        "required": [
+          "enabled",
+          "cashOnDelivery"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "cashOnDelivery": {
+            "type": "boolean"
           }
         }
       },
@@ -8763,6 +12747,40 @@
           }
         }
       },
+      "PagedResponseOfConsoleAccountDto": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalItems",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleAccountDto"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PagedResponseOfConsoleCustomerDto": {
         "required": [
           "items",
@@ -8865,6 +12883,40 @@
           }
         }
       },
+      "PagedResponseOfConsoleRefundRowDto": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalItems",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleRefundRowDto"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PagedResponseOfConsoleServiceRequestDto": {
         "required": [
           "items",
@@ -8906,7 +12958,9 @@
           "lead",
           "bodyHtml",
           "updatedAt",
-          "updatedBy"
+          "updatedBy",
+          "seoTitle",
+          "seoDescription"
         ],
         "type": "object",
         "properties": {
@@ -8933,6 +12987,18 @@
             "format": "date-time"
           },
           "updatedBy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "seoTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "seoDescription": {
             "type": [
               "null",
               "string"
@@ -8979,6 +13045,41 @@
           }
         }
       },
+      "PaymentSettingsDto": {
+        "required": [
+          "provider",
+          "mode",
+          "lastReconcileAt",
+          "fiscalProvider",
+          "fiscalMode",
+          "issueOn"
+        ],
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "lastReconcileAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "fiscalProvider": {
+            "type": "string"
+          },
+          "fiscalMode": {
+            "type": "string"
+          },
+          "issueOn": {
+            "$ref": "#/components/schemas/ReceiptIssueDto"
+          }
+        }
+      },
       "PaymentStatus": {
         "enum": [
           "notRequired",
@@ -8987,6 +13088,65 @@
           "failed",
           "partiallyRefunded",
           "refunded"
+        ]
+      },
+      "PermissionCatalogDto": {
+        "required": [
+          "version",
+          "permissions"
+        ],
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PermissionDefinitionDto"
+            }
+          }
+        }
+      },
+      "PermissionDefinitionDto": {
+        "required": [
+          "key",
+          "name",
+          "description",
+          "sectionId",
+          "sectionLabel",
+          "risk"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sectionId": {
+            "type": "string"
+          },
+          "sectionLabel": {
+            "type": "string"
+          },
+          "risk": {
+            "$ref": "#/components/schemas/PermissionRisk"
+          }
+        }
+      },
+      "PermissionRisk": {
+        "enum": [
+          "low",
+          "medium",
+          "high"
         ]
       },
       "PhotoCreditDto": {
@@ -9035,6 +13195,17 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "PickupSettingsDto": {
+        "required": [
+          "enabled"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
           }
         }
       },
@@ -9105,7 +13276,8 @@
           "attributes",
           "variants",
           "seoTitle",
-          "seoDescription"
+          "seoDescription",
+          "labels"
         ],
         "type": "object",
         "properties": {
@@ -9182,6 +13354,12 @@
               "null",
               "string"
             ]
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductLabelBadgeDto"
+            }
           }
         }
       },
@@ -9267,6 +13445,21 @@
           }
         }
       },
+      "ProductLabelBadgeDto": {
+        "required": [
+          "name",
+          "tone"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "tone": {
+            "$ref": "#/components/schemas/LabelTone"
+          }
+        }
+      },
       "ProductListItemDto": {
         "required": [
           "id",
@@ -9277,7 +13470,8 @@
           "price",
           "oldPrice",
           "inStock",
-          "imageUrl"
+          "imageUrl",
+          "labels"
         ],
         "type": "object",
         "properties": {
@@ -9321,6 +13515,12 @@
               "null",
               "string"
             ]
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductLabelBadgeDto"
+            }
           }
         }
       },
@@ -9565,6 +13765,25 @@
           }
         }
       },
+      "ReceiptIssueDto": {
+        "required": [
+          "card",
+          "cashOnDelivery",
+          "pickup"
+        ],
+        "type": "object",
+        "properties": {
+          "card": {
+            "type": "string"
+          },
+          "cashOnDelivery": {
+            "type": "string"
+          },
+          "pickup": {
+            "type": "string"
+          }
+        }
+      },
       "ReceiptKind": {
         "enum": [
           "sell",
@@ -9609,6 +13828,12 @@
             "format": "int32"
           }
         }
+      },
+      "RefundChannel": {
+        "enum": [
+          "card",
+          "offline"
+        ]
       },
       "RefundLineRequest": {
         "required": [
@@ -9675,6 +13900,24 @@
           }
         }
       },
+      "ReorderBannersRequest": {
+        "required": [
+          "ids"
+        ],
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
       "ResetCustomerPasswordRequest": {
         "required": [
           "token",
@@ -9707,6 +13950,52 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "RolePermissionsDto": {
+        "required": [
+          "roleId",
+          "version",
+          "permissionKeys",
+          "isSuperuser",
+          "updatedAt",
+          "updatedBy",
+          "catalogVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "roleId": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "permissionKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isSuperuser": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "updatedBy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "catalogVersion": {
+            "type": "string"
           }
         }
       },
@@ -9750,6 +14039,174 @@
           "expiresAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "SaveAttributeDefinitionRequest": {
+        "required": [
+          "name",
+          "unit",
+          "kind",
+          "filterView",
+          "sortOrder",
+          "aliases"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "unit": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AttributeKind"
+              }
+            ]
+          },
+          "filterView": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AttributeFilterView"
+              }
+            ]
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aliases": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "SaveBannerRequest": {
+        "required": [
+          "title",
+          "text",
+          "buttonLabel",
+          "link",
+          "imageUrl",
+          "mobileImageUrl",
+          "startsAt",
+          "endsAt",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "text": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "buttonLabel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "link": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "imageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mobileImageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "startsAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "kicker": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SaveBrandRequest": {
+        "required": [
+          "name",
+          "slug",
+          "description",
+          "logoUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "slug": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "logoUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -9815,6 +14272,18 @@
             ]
           },
           "seoDescription": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "imageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
             "type": [
               "null",
               "string"
@@ -9913,6 +14382,97 @@
           }
         }
       },
+      "SaveLabelRequest": {
+        "required": [
+          "name",
+          "tone",
+          "kind",
+          "newDays",
+          "sortOrder",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tone": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/LabelTone"
+              }
+            ]
+          },
+          "kind": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/LabelKind"
+              }
+            ]
+          },
+          "newDays": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SaveNotificationSettingsRequest": {
+        "required": [
+          "telegramChatIds",
+          "emails",
+          "events"
+        ],
+        "type": "object",
+        "properties": {
+          "telegramChatIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "emails": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "events": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NotificationEventsDto"
+              }
+            ]
+          }
+        }
+      },
       "SavePageRequest": {
         "required": [
           "title",
@@ -9934,6 +14494,18 @@
             ]
           },
           "bodyHtml": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "seoTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "seoDescription": {
             "type": [
               "null",
               "string"
@@ -9961,6 +14533,40 @@
           },
           "isVisible": {
             "type": "boolean"
+          },
+          "imageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SaveStaffRoleRequest": {
+        "required": [
+          "name",
+          "description",
+          "copyFromRoleId"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "copyFromRoleId": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -10073,6 +14679,54 @@
               "null",
               "string"
             ]
+          },
+          "iban": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "phone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SeoTemplateDto": {
+        "required": [
+          "title",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "SeoTemplatesDto": {
+        "required": [
+          "product",
+          "category"
+        ],
+        "type": "object",
+        "properties": {
+          "product": {
+            "$ref": "#/components/schemas/SeoTemplateDto"
+          },
+          "category": {
+            "$ref": "#/components/schemas/SeoTemplateDto"
           }
         }
       },
@@ -10080,7 +14734,8 @@
         "required": [
           "code",
           "name",
-          "description"
+          "description",
+          "imageUrl"
         ],
         "type": "object",
         "properties": {
@@ -10091,6 +14746,12 @@
             "type": "string"
           },
           "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "imageUrl": {
             "type": [
               "null",
               "string"
@@ -10116,6 +14777,20 @@
           "inProgress",
           "done"
         ]
+      },
+      "SetAccountLockRequest": {
+        "required": [
+          "locked"
+        ],
+        "type": "object",
+        "properties": {
+          "locked": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        }
       },
       "SetProductsVisibilityRequest": {
         "required": [
@@ -10173,6 +14848,147 @@
           }
         }
       },
+      "ShopSellerDto": {
+        "required": [
+          "name",
+          "taxId",
+          "address",
+          "iban",
+          "email",
+          "phone"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "taxId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "address": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "iban": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "phone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ShopSettingsDto": {
+        "required": [
+          "seller",
+          "specialDays"
+        ],
+        "type": "object",
+        "properties": {
+          "seller": {
+            "$ref": "#/components/schemas/ShopSellerDto"
+          },
+          "specialDays": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShopSpecialDayDto"
+            }
+          }
+        }
+      },
+      "ShopSpecialDayDto": {
+        "required": [
+          "date",
+          "label",
+          "closed",
+          "hours"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "label": {
+            "type": "string"
+          },
+          "closed": {
+            "type": "boolean"
+          },
+          "hours": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SiteHomeDto": {
+        "required": [
+          "announcement",
+          "blocks",
+          "perks",
+          "steps",
+          "visit",
+          "banners"
+        ],
+        "type": "object",
+        "properties": {
+          "announcement": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/HomeAnnouncementDto"
+              }
+            ]
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeBlockDto"
+            }
+          },
+          "perks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeItemDto"
+            }
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeItemDto"
+            }
+          },
+          "visit": {
+            "$ref": "#/components/schemas/HomeItemDto"
+          },
+          "banners": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeBannerDto"
+            }
+          }
+        }
+      },
       "SitemapDto": {
         "required": [
           "categories",
@@ -10210,11 +15026,39 @@
           }
         }
       },
+      "SpecialDayDto": {
+        "required": [
+          "date",
+          "label",
+          "closed",
+          "hours"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "label": {
+            "type": "string"
+          },
+          "closed": {
+            "type": "boolean"
+          },
+          "hours": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "StaffMeDto": {
         "required": [
           "email",
           "displayName",
-          "roles"
+          "roleId",
+          "roleName"
         ],
         "type": "object",
         "properties": {
@@ -10224,11 +15068,71 @@
           "displayName": {
             "type": "string"
           },
-          "roles": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+          "roleId": {
+            "type": "string"
+          },
+          "roleName": {
+            "type": "string"
+          }
+        }
+      },
+      "StaffRoleDto": {
+        "required": [
+          "id",
+          "name",
+          "description",
+          "isSystem",
+          "isSuperuser",
+          "userCount",
+          "permissionCount",
+          "version",
+          "updatedAt",
+          "updatedBy"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isSystem": {
+            "type": "boolean"
+          },
+          "isSuperuser": {
+            "type": "boolean"
+          },
+          "userCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "permissionCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updatedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "updatedBy": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -10237,7 +15141,8 @@
           "id",
           "email",
           "displayName",
-          "roles",
+          "roleId",
+          "roleName",
           "lockedOut"
         ],
         "type": "object",
@@ -10251,11 +15156,11 @@
           "displayName": {
             "type": "string"
           },
-          "roles": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+          "roleId": {
+            "type": "string"
+          },
+          "roleName": {
+            "type": "string"
           },
           "lockedOut": {
             "type": "boolean"
@@ -10424,6 +15329,20 @@
           "failed"
         ]
       },
+      "UpdateOrderNoteRequest": {
+        "required": [
+          "note"
+        ],
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "UpdatePickupPointRequest": {
         "required": [
           "name",
@@ -10558,6 +15477,16 @@
             "items": {
               "$ref": "#/components/schemas/ProductAttributeDto"
             }
+          },
+          "labelIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         }
       },
@@ -10582,10 +15511,32 @@
           }
         }
       },
+      "UpdateRolePermissionsRequest": {
+        "required": [
+          "expectedVersion",
+          "permissionKeys"
+        ],
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "permissionKeys": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "UpdateStaffUserRequest": {
         "required": [
           "displayName",
-          "role"
+          "roleId"
         ],
         "type": "object",
         "properties": {
@@ -10595,11 +15546,22 @@
               "string"
             ]
           },
-          "role": {
+          "roleId": {
             "type": [
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "UploadedImageDto": {
+        "required": [
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
           }
         }
       },

@@ -42,6 +42,6 @@ internal static class UpdateProductImages
         product.UpdatedAt = time.GetUtcNow();
         await db.SaveChangesAsync(ct);
         await storefront.InvalidateAsync(ConsoleProductQueries.ProductTags(product.Slug), ct);
-        return TypedResults.Ok(ConsoleProductQueries.ToDto(product));
+        return TypedResults.Ok(await ConsoleProductQueries.ToDtoAsync(db, product, time.GetUtcNow(), ct));
     }
 }

@@ -29,10 +29,10 @@ internal static class CustomerSessionValidator
             : await services.GetRequiredService<PoliValkoDbContext>().Set<Customer>()
                 .AsNoTracking()
                 .Where(c => c.Id == id)
-                .Select(c => new { c.Id, c.Email, c.Name, c.SecurityStamp })
+                .Select(c => new { c.Id, c.Email, c.Name, c.SecurityStamp, c.BlockedAt })
                 .FirstOrDefaultAsync(context.HttpContext.RequestAborted);
 
-        if (customer is null || customer.SecurityStamp != stamp)
+        if (customer is null || customer.SecurityStamp != stamp || customer.BlockedAt is not null)
         {
             context.RejectPrincipal();
             await context.HttpContext.SignOutAsync(context.Scheme.Name);

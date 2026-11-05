@@ -1,10 +1,14 @@
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Infrastructure;
 using PoliValko.Infrastructure.Sync;
 using PoliValko.Notifications.Configuration;
 using PoliValko.Notifications.Contracts;
+using PoliValko.Notifications.Features.Dispatch;
 using PoliValko.Notifications.Features.IntegrationAlerts;
+using PoliValko.Notifications.Features.Settings;
+using PoliValko.Notifications.Integrations.Channels;
 using PoliValko.Notifications.Integrations.Log;
 using PoliValko.Notifications.Integrations.Telegram;
 
@@ -19,12 +23,14 @@ public static class NotificationsModule
 
         if (section.Get<TelegramOptions>()?.IsConfigured == true)
         {
-            services.AddHttpClient<IManagerNotifier, TelegramManagerNotifier>();
+            services.AddHttpClient<IManagerChannel, TelegramManagerNotifier>(nameof(IManagerNotifier));
         }
         else
         {
-            services.AddSingleton<IManagerNotifier, LogManagerNotifier>();
+            services.AddSingleton<IManagerChannel, LogManagerNotifier>();
         }
+
+        services.AddScoped<IManagerNotifier, ManagerNotifier>();
 
         var email = configuration.GetSection("Email");
         services.Configure<EmailOptions>(email);
@@ -41,4 +47,7 @@ public static class NotificationsModule
         services.AddOutboxHandler<IntegrationAlert, NotifyResponsibleOnIntegrationAlert>();
         return services;
     }
+
+    public static RouteGroupBuilder MapConsoleNotificationSettingsEndpoints(this RouteGroupBuilder console) =>
+        NotificationSettingsEndpoints.Map(console);
 }

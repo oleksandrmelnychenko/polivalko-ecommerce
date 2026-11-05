@@ -9,6 +9,7 @@
     <ProjectReference Include="..\PoliValko.Catalog\PoliValko.Catalog.csproj" />
     <ProjectReference Include="..\PoliValko.Content\PoliValko.Content.csproj" />
     <ProjectReference Include="..\PoliValko.Delivery\PoliValko.Delivery.csproj" />
+    <ProjectReference Include="..\PoliValko.Fiscal\PoliValko.Fiscal.csproj" />
     <ProjectReference Include="..\PoliValko.Navkolo\PoliValko.Navkolo.csproj" />
     <ProjectReference Include="..\PoliValko.Ordering\PoliValko.Ordering.csproj" />
     <ProjectReference Include="..\PoliValko.Payments\PoliValko.Payments.csproj" />

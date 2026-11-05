@@ -13,7 +13,7 @@ internal sealed class NotifyManagerOnPaymentSucceeded(PoliValkoDbContext db, IMa
     {
         var order = await db.Set<Order>().AsNoTracking().SingleAsync(o => o.Id == message.OrderId, cancellationToken);
         await notifier.NotifyAsync(
-            new ManagerNotification($"Оплачено замовлення {order.Number}", $"Сума: {OrderMoney.Money(order.Total)}"),
+            new ManagerNotification($"Оплачено замовлення {order.Number}", $"Сума: {OrderMoney.Money(order.Total)}", ManagerEvent.OrderPaid),
             cancellationToken);
     }
 }

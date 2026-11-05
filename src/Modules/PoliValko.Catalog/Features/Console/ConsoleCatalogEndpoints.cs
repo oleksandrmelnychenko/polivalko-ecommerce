@@ -2,8 +2,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using PoliValko.Catalog.Features.Console.AttributeNames;
+using PoliValko.Catalog.Features.Console.Attributes;
+using PoliValko.Catalog.Features.Console.Brands;
 using PoliValko.Catalog.Features.Console.Categories;
 using PoliValko.Catalog.Features.Console.Collections;
+using PoliValko.Catalog.Features.Console.Labels;
 using PoliValko.Catalog.Features.Console.Products;
 using PoliValko.Catalog.Features.Console.Redirects;
 
@@ -20,6 +23,9 @@ internal static class ConsoleCatalogEndpoints
         CategoryEndpoints.Map(catalog);
         CollectionEndpoints.Map(catalog);
         RedirectEndpoints.Map(catalog);
+        AttributeEndpoints.Map(catalog);
+        BrandEndpoints.Map(catalog);
+        LabelEndpoints.Map(catalog);
 
         return console;
     }

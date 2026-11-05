@@ -4,10 +4,12 @@ using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Infrastructure;
 using PoliValko.Ordering.Contracts;
 using PoliValko.Payments.Configuration;
+using PoliValko.Payments.Contracts;
 using PoliValko.Payments.Features.Console;
 using PoliValko.Payments.Features.Checkout;
 using PoliValko.Payments.Features.Processing;
 using PoliValko.Payments.Features.Refunds;
+using PoliValko.Payments.Features.Settings;
 using PoliValko.Payments.Integrations.Mono;
 using PoliValko.Payments.Integrations.Providers;
 using PoliValko.Payments.Integrations.Sandbox;
@@ -37,6 +39,7 @@ public static class PaymentsModule
         return services
             .AddModelConfigurator<PaymentsModelConfigurator>()
             .AddScoped<IPaymentProviders, PaymentProviders>()
+            .AddSingleton<IPaymentSettings, PaymentSettings>()
             .AddScoped<PaymentProcessor>()
             .AddOutboxHandler<RefundRequested, ProcessRefundRequested>();
     }

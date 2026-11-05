@@ -1,20 +1,49 @@
 using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PoliValko.Notifications.Configuration;
 using PoliValko.Notifications.Contracts;
+using PoliValko.Notifications.Integrations.Channels;
 
 namespace PoliValko.Notifications.Integrations.Telegram;
 
-internal sealed class TelegramManagerNotifier(HttpClient http, IOptions<TelegramOptions> options) : IManagerNotifier
+internal sealed class TelegramManagerNotifier(HttpClient http, IOptions<TelegramOptions> options, ILogger<TelegramManagerNotifier> logger)
+    : IManagerChannel
 {
-    public async Task NotifyAsync(ManagerNotification notification, CancellationToken cancellationToken)
-    {
-        var settings = options.Value;
-        using var response = await http.PostAsJsonAsync(
-            $"https://api.telegram.org/bot{settings.BotToken}/sendMessage",
-            new { chat_id = settings.ChatId, text = $"{notification.Title}\n\n{notification.Body}" },
-            cancellationToken);
+    public bool IsConfigured => options.Value.IsConfigured;
 
-        response.EnsureSuccessStatusCode();
+    public async Task<int> SendAsync(ManagerNotification notification, IReadOnlyList<string> chatIds, CancellationToken cancellationToken)
+    {
+        if (chatIds.Count == 0)
+        {
+            logger.LogWarning("Повідомлення менеджеру не надіслано: не вказано жодного чату Telegram ({Title})", notification.Title);
+            return 0;
+        }
+
+        var delivered = 0;
+        foreach (var chatId in chatIds)
+        {
+            try
+            {
+                using var response = await http.PostAsJsonAsync(
+                    $"https://api.telegram.org/bot{options.Value.BotToken}/sendMessage",
+                    new { chat_id = chatId, text = $"{notification.Title}\n\n{notification.Body}" },
+                    cancellationToken);
+                if (response.IsSuccessStatusCode)
+                {
+                    delivered++;
+                }
+                else
+                {
+                    logger.LogWarning("Telegram не прийняв повідомлення для чату {ChatId}: {Status}", chatId, (int)response.StatusCode);
+                }
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
+            {
+                logger.LogWarning(ex, "Telegram недоступний: повідомлення для чату {ChatId} не надіслано", chatId);
+            }
+        }
+
+        return delivered;
     }
 }

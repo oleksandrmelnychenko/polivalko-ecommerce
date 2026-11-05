@@ -36,7 +36,7 @@ public sealed class AuthApiTests(ApiFactory api)
         var manager = await Staff.SignInAsync(api, ApiFactory.ManagerEmail);
 
         var me = await manager.GetFromJsonAsync<StaffMeDto>("/api/v1/console/auth/me", Ct);
-        me!.Roles.ShouldBe(["Manager"]);
+        me!.RoleName.ShouldBe("Менеджер");
 
         var response = await manager.GetAsync("/api/v1/console/users", Ct);
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);

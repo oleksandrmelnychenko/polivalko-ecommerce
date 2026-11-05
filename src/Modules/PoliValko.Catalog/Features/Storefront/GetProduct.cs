@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PoliValko.Catalog.Contracts;
 using PoliValko.Catalog.Domain;
+using PoliValko.Catalog.Persistence;
 using PoliValko.Infrastructure.Persistence;
+using PoliValko.Infrastructure.Settings;
 using PoliValko.Infrastructure.Web;
 using PoliValko.SharedKernel;
 
@@ -14,6 +16,8 @@ internal static class GetProduct
     public static async Task<Results<Ok<ProductDetailsDto>, ProblemHttpResult>> HandleAsync(
         string slug,
         PoliValkoDbContext db,
+        ISettingsStore settings,
+        TimeProvider time,
         CancellationToken ct)
     {
         var row = await db.Set<Product>()
@@ -34,6 +38,7 @@ internal static class GetProduct
                 p.VariantGroup,
                 p.SeoTitle,
                 p.SeoDescription,
+                p.CreatedAt,
                 Category = new CategoryRefDto(c.Id, c.Slug, c.Name),
                 Images = p.Images.OrderBy(i => i.SortOrder).Select(i => new ProductImageDto(i.Url, i.Alt)).ToList(),
                 Attributes = p.Attributes.OrderBy(a => a.SortOrder).Select(a => new ProductAttributeDto(a.Name, a.Value)).ToList(),
@@ -56,6 +61,14 @@ internal static class GetProduct
                 .Select(v => new ProductVariantDto(v.Slug, v.Label, v.Quantity > 0, v.Id == row.Id))
                 .ToList();
 
+        var labels = await ProductLabelSet.LoadAsync(db, [row.Id], time.GetUtcNow(), ct);
+        var templates = await SeoTemplates.LoadAsync(settings, ct);
+        var (seoTitle, seoDescription) = SeoTemplates.Fill(
+            templates.Product,
+            row.SeoTitle,
+            row.SeoDescription,
+            new SeoTemplates.Values(row.Name, SeoTemplates.Price(row.Amount), row.Category.Name, row.Brand));
+
         return TypedResults.Ok(new ProductDetailsDto(
             row.Id,
             row.Slug,
@@ -70,7 +83,8 @@ internal static class GetProduct
             row.Images,
             row.Attributes,
             variants.Count > 1 ? variants : [],
-            row.SeoTitle,
-            row.SeoDescription));
+            seoTitle,
+            seoDescription,
+            ProductListing.Badges(labels.For(row.Id, row.Amount, row.OldAmount, row.CreatedAt))));
     }
 }

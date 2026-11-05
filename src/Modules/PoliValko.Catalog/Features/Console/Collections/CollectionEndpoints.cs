@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using PoliValko.Infrastructure.Security;
+using PoliValko.Infrastructure.Security.Permissions;
 
 namespace PoliValko.Catalog.Features.Console.Collections;
 
@@ -9,7 +10,7 @@ internal static class CollectionEndpoints
 {
     public static RouteGroupBuilder Map(RouteGroupBuilder catalog)
     {
-        var collections = catalog.MapGroup("/collections").RequireStaff();
+        var collections = catalog.MapGroup("/collections").RequireStaff(PermissionKeys.CollectionsManage);
         collections.MapGet(string.Empty, ListCollections.HandleAsync)
             .WithName("ConsoleListCollections")
             .WithSummary("Добірки головної");

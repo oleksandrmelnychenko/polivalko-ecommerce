@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using PoliValko.Content.Domain;
 using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Persistence;
+using PoliValko.Infrastructure.Settings;
 using PoliValko.Infrastructure.Storefront;
 
 namespace PoliValko.Content.Features.SiteContent;
@@ -16,6 +17,7 @@ internal static partial class SaveContacts
         PoliValkoDbContext db,
         IAuditLog audit,
         IStorefrontCache storefront,
+        ISettingsStore settings,
         TimeProvider time,
         CancellationToken ct)
     {
@@ -30,6 +32,7 @@ internal static partial class SaveContacts
         CheckUrl(errors, "facebook", request.Facebook);
         CheckUrl(errors, "telegram", request.Telegram);
         CheckUrl(errors, "youTube", request.YouTube);
+        CheckViber(errors, request.Viber);
         if (request.Email is { Length: > 0 } email && !EmailPattern().IsMatch(email.Trim()))
         {
             errors["email"] = ["Перевірте email."];
@@ -58,11 +61,12 @@ internal static partial class SaveContacts
         contacts.Facebook = SiteContentMapping.Clean(request.Facebook);
         contacts.Telegram = SiteContentMapping.Clean(request.Telegram);
         contacts.YouTube = SiteContentMapping.Clean(request.YouTube);
+        contacts.Viber = SiteContentMapping.Clean(request.Viber);
         contacts.UpdatedAt = time.GetUtcNow();
         audit.Record("content.contacts_updated", "Contacts", null, new { before, after = SiteContentMapping.ToDto(contacts) });
         await db.SaveChangesAsync(ct);
         await storefront.InvalidateAsync([StorefrontTags.Content], ct);
-        return TypedResults.Ok(SiteContentMapping.ToDto(contacts));
+        return TypedResults.Ok(SiteContentMapping.ToDto(contacts, await ShopSpecialDays.UpcomingAsync(settings, time, ct)));
     }
 
     private static void Check(Dictionary<string, string[]> errors, string field, string? value, int max)
@@ -79,6 +83,15 @@ internal static partial class SaveContacts
             && (value.Trim().Length > 500 || !Uri.TryCreate(value.Trim(), UriKind.Absolute, out var uri) || uri.Scheme is not ("https" or "http")))
         {
             errors[field] = ["Вкажіть повне посилання, що починається з https://."];
+        }
+    }
+
+    private static void CheckViber(Dictionary<string, string[]> errors, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value)
+            && (value.Trim().Length > 300 || !Uri.TryCreate(value.Trim(), UriKind.Absolute, out var uri) || uri.Scheme is not ("https" or "http" or "viber")))
+        {
+            errors["viber"] = ["Вкажіть посилання, що починається з viber:// або https://."];
         }
     }
 

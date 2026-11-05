@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PoliValko.Catalog.Domain;
 using PoliValko.Catalog.Features.Console.Redirects;
+using PoliValko.Catalog.Persistence;
 using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Storefront;
@@ -46,7 +47,8 @@ internal static class UpdateProduct
         }
 
         CatalogConsoleValidation.CheckLength(errors, "displayName", request.DisplayName, 500);
-        CatalogConsoleValidation.CheckLength(errors, "brand", request.Brand, 200);
+        var brand = await CatalogConsoleValidation.ResolveBrandAsync(db, request.Brand, product.Brand, errors, ct);
+        var labelIds = request.LabelIds is null ? null : await CatalogConsoleValidation.ResolveManualLabelsAsync(db, request.LabelIds, "labelIds", errors, ct);
         CatalogConsoleValidation.CheckLength(errors, "seoTitle", request.SeoTitle, 200);
         CatalogConsoleValidation.CheckLength(errors, "seoDescription", request.SeoDescription, 500);
         var description = sanitizer.Sanitize(request.DescriptionHtml);
@@ -65,7 +67,7 @@ internal static class UpdateProduct
         product.DisplayName = CatalogConsoleValidation.NullIfEmpty(request.DisplayName);
         product.Slug = slug;
         product.CategoryId = categoryId;
-        product.Brand = CatalogConsoleValidation.NullIfEmpty(request.Brand);
+        product.Brand = brand;
         product.DescriptionHtml = description;
         product.IsVisible = request.IsVisible;
         product.SeoTitle = CatalogConsoleValidation.NullIfEmpty(request.SeoTitle);
@@ -77,6 +79,12 @@ internal static class UpdateProduct
             .Select((a, i) => new ProductAttribute { Id = Guid.CreateVersion7(now), ProductId = product.Id, Name = a.Name, Value = a.Value, SortOrder = i })
             .ToList();
 
+        await CatalogDictionarySync.AddMissingAttributesAsync(db, attributes.Select(a => a.Name).ToList(), ct);
+        if (labelIds is not null)
+        {
+            await ProductLabelLinks.ReplaceAsync(db, product.Id, labelIds, ct);
+        }
+
         if (oldSlug != slug)
         {
             await RedirectWriter.AddRedirectAsync(db, $"/product/{oldSlug}", $"/product/{slug}", now, ct);
@@ -87,10 +95,11 @@ internal static class UpdateProduct
             before,
             after = new { product.DisplayName, product.Slug, product.CategoryId, product.Brand, product.IsVisible, product.SeoTitle, product.SeoDescription },
             attributes = attributes.Count,
+            labelIds,
         });
         await db.SaveChangesAsync(ct);
         await storefront.InvalidateAsync(ConsoleProductQueries.ProductTags(oldSlug, slug), ct);
 
-        return TypedResults.Ok(ConsoleProductQueries.ToDto(product));
+        return TypedResults.Ok(await ConsoleProductQueries.ToDtoAsync(db, product, time.GetUtcNow(), ct));
     }
 }

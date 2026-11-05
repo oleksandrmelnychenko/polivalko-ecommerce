@@ -7,6 +7,7 @@ using PoliValko.Delivery.Contracts;
 using PoliValko.Delivery.Features.Console;
 using PoliValko.Delivery.Features.Directory;
 using PoliValko.Delivery.Features.DirectorySync;
+using PoliValko.Delivery.Features.Settings;
 using PoliValko.Delivery.Features.Storefront;
 using PoliValko.Delivery.Integrations.NovaPoshta;
 using PoliValko.Delivery.Jobs;
@@ -24,6 +25,7 @@ public static class DeliveryModule
         services.AddModelConfigurator<DeliveryModelConfigurator>();
 
         services.AddScoped<PickupPointStore>();
+        services.AddScoped<IDeliveryAvailability, DeliveryAvailabilityReader>();
         services.AddScoped<DemoNovaPoshtaDirectory>();
         services.AddScoped<NovaPoshtaDbDirectory>();
 
@@ -56,4 +58,7 @@ public static class DeliveryModule
         ConsoleDeliveryEndpoints.Map(console);
         return console;
     }
+
+    public static RouteGroupBuilder MapConsoleDeliverySettingsEndpoints(this RouteGroupBuilder console) =>
+        DeliverySettingsEndpoints.Map(console);
 }

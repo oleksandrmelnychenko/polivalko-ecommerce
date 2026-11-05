@@ -8,12 +8,14 @@ using PoliValko.Ordering.Contracts;
 using PoliValko.Ordering.Features.Account;
 using PoliValko.Ordering.Features.Console.Customers;
 using PoliValko.Ordering.Features.Console.Orders;
+using PoliValko.Ordering.Features.Console.Refunds;
 using PoliValko.Ordering.Features.Checkout;
 using PoliValko.Ordering.Features.Export;
 using PoliValko.Ordering.Features.Notifications;
 using PoliValko.Ordering.Features.PaymentState;
 using PoliValko.Ordering.Features.Receipts;
 using PoliValko.Ordering.Features.Reporting;
+using PoliValko.Ordering.Features.Shop;
 using PoliValko.Ordering.Persistence;
 
 namespace PoliValko.Ordering;
@@ -31,8 +33,10 @@ public static class OrderingModule
             .AddScoped<IOrderExportSource, OrderExportSource>()
             .AddScoped<IOrderReporting, OrderReporting>()
             .AddScoped<ICustomerEmailConfirmedHandler, LinkGuestOrders>()
+            .AddScoped<ICustomerOrderHistory, CustomerOrderHistory>()
             .AddOutboxHandler<OrderPlaced, NotifyManagerOnOrderPlaced>()
-            .AddOutboxHandler<PaymentSucceeded, NotifyManagerOnPaymentSucceeded>();
+            .AddOutboxHandler<PaymentSucceeded, NotifyManagerOnPaymentSucceeded>()
+            .AddOutboxHandler<OrderPaidAfterCancel, NotifyManagerOnOrderPaidAfterCancel>();
     }
 
     public static IEndpointRouteBuilder MapCheckoutEndpoints(this IEndpointRouteBuilder api) =>
@@ -43,6 +47,12 @@ public static class OrderingModule
 
     public static RouteGroupBuilder MapConsoleCustomerEndpoints(this RouteGroupBuilder console) =>
         ConsoleCustomerEndpoints.Map(console);
+
+    public static RouteGroupBuilder MapConsoleRefundEndpoints(this RouteGroupBuilder console) =>
+        ConsoleRefundEndpoints.Map(console);
+
+    public static RouteGroupBuilder MapConsoleShopSettingsEndpoints(this RouteGroupBuilder console) =>
+        ShopSettingsEndpoints.Map(console);
 
     public static IEndpointRouteBuilder MapAccountOrderEndpoints(this IEndpointRouteBuilder api) =>
         AccountOrderEndpoints.Map(api);

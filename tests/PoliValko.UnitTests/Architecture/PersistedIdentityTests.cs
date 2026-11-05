@@ -13,6 +13,7 @@ public sealed class PersistedIdentityTests
     {
         ["OrderPlaced"] = "ordering.order-placed",
         ["PaymentSucceeded"] = "ordering.payment-succeeded",
+        ["OrderPaidAfterCancel"] = "ordering.paid-after-cancel",
         ["OrderExportRequested"] = "ordering.export-requested",
         ["FiscalReceiptRequested"] = "ordering.fiscal-receipt-requested",
         ["RefundRequested"] = "ordering.refund-requested",
@@ -24,6 +25,7 @@ public sealed class PersistedIdentityTests
     {
         ["OrderPlaced"] = ["OrderId"],
         ["PaymentSucceeded"] = ["OrderId"],
+        ["OrderPaidAfterCancel"] = ["OrderId"],
         ["OrderExportRequested"] = ["OrderId"],
         ["FiscalReceiptRequested"] = ["OrderId", "Trigger", "RefundId"],
         ["RefundRequested"] = ["OrderId", "RefundId"],

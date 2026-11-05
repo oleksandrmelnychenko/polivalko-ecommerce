@@ -25,7 +25,7 @@ public sealed class SiteContentApiTests(ApiFactory api)
         var contacts = new ContactsDto("+380 67 000 00 00", null, "shop@example.com", "м. Буча, вул. Тестова, 1", "Пн–Нд 9–19",
             "https://maps.example.com/bucha", null, null, null, null);
         (await admin.PutAsJsonAsync("/api/v1/console/content/contacts", contacts, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await api.CreateClient().GetFromJsonAsync<ContactsDto>("/api/v1/contacts", TestJson.Options, Ct)).ShouldBe(contacts);
+        ((await api.CreateClient().GetFromJsonAsync<ContactsDto>("/api/v1/contacts", TestJson.Options, Ct))! with { SpecialDays = null }).ShouldBe(contacts);
 
         var badUrl = await admin.PutAsJsonAsync("/api/v1/console/content/contacts", contacts with { MapUrl = "javascript:alert(1)" }, Ct);
         badUrl.StatusCode.ShouldBe(HttpStatusCode.BadRequest);

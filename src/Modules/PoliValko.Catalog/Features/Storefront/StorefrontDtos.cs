@@ -1,11 +1,12 @@
 using System.ComponentModel;
 using Microsoft.AspNetCore.Mvc;
 using PoliValko.Catalog.Contracts;
+using PoliValko.Catalog.Domain;
 using PoliValko.SharedKernel;
 
 namespace PoliValko.Catalog.Features.Storefront;
 
-public sealed record CategoryNodeDto(Guid Id, string Slug, string Name, IReadOnlyList<CategoryNodeDto> Children);
+public sealed record CategoryNodeDto(Guid Id, string Slug, string Name, IReadOnlyList<CategoryNodeDto> Children, string? ImageUrl, string? Description);
 
 public sealed record CategoryRefDto(Guid Id, string Slug, string Name);
 
@@ -16,7 +17,11 @@ public sealed record CategoryDto(
     IReadOnlyList<CategoryRefDto> Breadcrumbs,
     IReadOnlyList<CategoryRefDto> Children,
     string? SeoTitle,
-    string? SeoDescription);
+    string? SeoDescription,
+    string? ImageUrl,
+    string? Description);
+
+public sealed record ProductLabelBadgeDto(string Name, LabelTone Tone);
 
 public sealed record ProductListItemDto(
     Guid Id,
@@ -27,7 +32,8 @@ public sealed record ProductListItemDto(
     MoneyDto Price,
     MoneyDto? OldPrice,
     bool InStock,
-    string? ImageUrl);
+    string? ImageUrl,
+    IReadOnlyList<ProductLabelBadgeDto> Labels);
 
 public sealed record ProductImageDto(string Url, string Alt);
 
@@ -48,7 +54,8 @@ public sealed record ProductDetailsDto(
     IReadOnlyList<ProductAttributeDto> Attributes,
     IReadOnlyList<ProductVariantDto> Variants,
     string? SeoTitle,
-    string? SeoDescription);
+    string? SeoDescription,
+    IReadOnlyList<ProductLabelBadgeDto> Labels);
 
 public sealed record BrandFacet(string Name, int Count);
 

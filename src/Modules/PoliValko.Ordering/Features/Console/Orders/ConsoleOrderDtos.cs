@@ -61,9 +61,13 @@ public sealed record ConsoleOrderDto(
     MoneyDto RefundedAmount,
     IReadOnlyList<ConsoleRefundDto> Refunds,
     RefundMethod? RefundMethod,
-    IReadOnlyList<RefundableItemDto> Refundable);
+    IReadOnlyList<RefundableItemDto> Refundable,
+    string? InternalNote,
+    Guid? CustomerAccountId);
 
 public sealed record ChangeOrderStatusRequest(OrderStatus? Status, string? Reason);
+
+public sealed record UpdateOrderNoteRequest(string? Note);
 
 public sealed record RefundLineRequest(Guid ProductId, int Quantity);
 

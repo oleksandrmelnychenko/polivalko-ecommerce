@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Catalog.Contracts;
+using PoliValko.Catalog.Features.Console.AttributeNames;
 using PoliValko.Catalog.Features.Console.Categories;
 using PoliValko.Catalog.Features.Console.Collections;
 using PoliValko.Catalog.Features.Console.Products;
@@ -24,12 +25,13 @@ public sealed class ConsoleCatalogApiTests(ApiFactory api)
         var manager = await Staff.ManagerAsync(api);
         var oldSlug = product.Slug;
         var newSlug = $"rozpyliuvach-{product.Id.ToString("N")[..8]}";
+        var brand = await CatalogDictionaries.CreateBrandAsync(await Staff.AdminAsync(api), CatalogDictionaries.Unique("Gardena"));
 
         var updated = await (await manager.PutAsJsonAsync($"/api/v1/console/catalog/products/{product.Id}", new UpdateProductRequest(
                 "Розпилювач латунний",
                 newSlug,
                 null,
-                "Gardena",
+                brand.Name.ToUpperInvariant(),
                 "<p>Опис<script>alert(1)</script> з <a href=\"https://example.com\">посиланням</a></p>",
                 true,
                 "Розпилювач латунний — купити",
@@ -39,6 +41,7 @@ public sealed class ConsoleCatalogApiTests(ApiFactory api)
         updated.DescriptionHtml.ShouldNotBeNull().ShouldNotContain("script");
         updated.DescriptionHtml.ShouldContain("rel=\"nofollow noopener\"");
         updated.Navkolo.Name.ShouldBe("Розпилювач для консолі");
+        updated.Brand.ShouldBe(brand.Name);
 
         await api.WithScopeAsync(async services =>
         {
@@ -61,12 +64,34 @@ public sealed class ConsoleCatalogApiTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Attribute_names_and_image_upload_return_clean_lists()
+    {
+        var admin = await Staff.AdminAsync(api);
+        var names = await admin.ReadAsync<List<AttributeNameDto>>("/api/v1/console/catalog/attribute-names");
+        names.Select(n => n.Name).ShouldBeUnique();
+        var unused = await CatalogDictionaries.EnsureAttributeAsync(admin, CatalogDictionaries.Unique("Без товарів"));
+        names = await admin.ReadAsync<List<AttributeNameDto>>("/api/v1/console/catalog/attribute-names");
+        names.ShouldContain(new AttributeNameDto(unused.Name, 0));
+        names.Select(n => n.ProductCount).ShouldBeInOrder(SortDirection.Descending);
+
+        var product = await api.AddProductAsync("vse-dlia-polyvu", "Лійка для фото", 120m);
+        byte[] jpeg = [0xFF, 0xD8, 0xFF, 0xE0, .. new byte[64]];
+        using var form = new MultipartFormDataContent();
+        var file = new ByteArrayContent(jpeg);
+        file.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+        form.Add(file, "file", "photo.jpg");
+        var uploaded = await (await admin.PostAsync($"/api/v1/console/catalog/products/{product.Id}/images", form, Ct)).ReadAsync<ConsoleProductDto>();
+        uploaded.Images.Count.ShouldBe(1);
+    }
+
+    [Fact]
     public async Task Category_filters_produce_attribute_facets_and_filtering()
     {
         var admin = await Staff.AdminAsync(api);
         var categories = await admin.GetFromJsonAsync<List<ConsoleCategoryDto>>("/api/v1/console/catalog/categories", TestJson.Options, Ct);
         var parent = categories!.Single(c => c.Slug == "landshaftnyi-dyzain");
         var slug = $"svitylnyky-{Guid.NewGuid().ToString("N")[..6]}";
+        await CatalogDictionaries.EnsureAttributeAsync(admin, "Колір");
 
         var created = await (await admin.PostAsJsonAsync("/api/v1/console/catalog/categories", new SaveCategoryRequest(
                 parent.Id, "Світильники", slug, 1, true, null, ["Колір"], null, null), TestJson.Options, Ct))
@@ -97,7 +122,8 @@ public sealed class ConsoleCatalogApiTests(ApiFactory api)
         bad.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
         var manager = await Staff.ManagerAsync(api);
-        (await manager.GetAsync("/api/v1/console/catalog/categories", Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await manager.GetAsync("/api/v1/console/catalog/categories", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await manager.PostAsJsonAsync("/api/v1/console/catalog/categories", new { name = "Менеджерський розділ" }, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]

@@ -11,6 +11,7 @@ internal static class OrderValidator
     public static async Task<(Dictionary<string, string[]> Errors, ValidatedOrder? Order)> ValidateAsync(
         CreateOrderRequest request,
         IDeliveryDirectory directory,
+        DeliveryAvailability availability,
         CancellationToken ct)
     {
         var errors = new Dictionary<string, string[]>();
@@ -46,6 +47,10 @@ internal static class OrderValidator
         {
             errors["delivery.method"] = ["Оберіть спосіб отримання."];
         }
+        else if (!CheckoutCalculator.IsOffered(availability, delivery.Value))
+        {
+            errors["delivery.method"] = ["Цей спосіб отримання зараз недоступний. Оберіть інший."];
+        }
         else if (delivery is DeliveryMethod.NovaPoshta or DeliveryMethod.NovaPoshtaCourier)
         {
             settlement = string.IsNullOrWhiteSpace(request.Delivery!.SettlementRef)
@@ -76,7 +81,7 @@ internal static class OrderValidator
         {
             errors["payment.method"] = ["Оберіть спосіб оплати."];
         }
-        else if (delivery is { } d && !CheckoutCalculator.IsAllowed(d, payment.Value))
+        else if (delivery is { } d && CheckoutCalculator.IsOffered(availability, d) && !CheckoutCalculator.IsAllowed(availability, d, payment.Value))
         {
             errors["payment.method"] = ["Цей спосіб оплати недоступний для обраного способу отримання."];
         }

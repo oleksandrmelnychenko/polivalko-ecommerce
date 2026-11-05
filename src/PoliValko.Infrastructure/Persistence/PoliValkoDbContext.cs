@@ -11,13 +11,15 @@ namespace PoliValko.Infrastructure.Persistence;
 public sealed class PoliValkoDbContext(
     DbContextOptions<PoliValkoDbContext> options,
     IEnumerable<IModelConfigurator> configurators)
-    : IdentityDbContext<StaffUser, IdentityRole, string>(options), IDataProtectionKeyContext
+    : IdentityDbContext<StaffUser, StaffRole, string>(options), IDataProtectionKeyContext
 {
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
 
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+
+    public DbSet<StaffRolePermission> RolePermissions => Set<StaffRolePermission>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

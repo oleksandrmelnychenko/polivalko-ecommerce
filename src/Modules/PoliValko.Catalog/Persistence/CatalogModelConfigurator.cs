@@ -18,6 +18,56 @@ internal sealed class CatalogModelConfigurator : IModelConfigurator
         modelBuilder.Entity<HomeCollection>(ConfigureCollection);
         modelBuilder.Entity<UrlRedirect>(ConfigureRedirect);
         modelBuilder.Entity<Favorite>(ConfigureFavorite);
+        modelBuilder.Entity<AttributeDefinition>(ConfigureAttributeDefinition);
+        modelBuilder.Entity<Brand>(ConfigureBrand);
+        modelBuilder.Entity<ProductLabel>(ConfigureLabel);
+        modelBuilder.Entity<ProductLabelLink>(ConfigureLabelLink);
+    }
+
+    private static void ConfigureAttributeDefinition(EntityTypeBuilder<AttributeDefinition> builder)
+    {
+        builder.ToTable("attribute_definitions", Schemas.Catalog);
+        builder.HasKey(d => d.Id);
+        builder.Property(d => d.Id).ValueGeneratedNever();
+        builder.Property(d => d.Name).HasMaxLength(AttributeDefinition.MaxNameLength);
+        builder.Property(d => d.NormalizedName).HasMaxLength(AttributeDefinition.MaxNameLength);
+        builder.Property(d => d.Unit).HasMaxLength(20);
+        builder.Property(d => d.Kind).HasConversion<string>().HasMaxLength(20);
+        builder.Property(d => d.FilterView).HasConversion<string>().HasMaxLength(20);
+        builder.HasIndex(d => d.NormalizedName).IsUnique();
+    }
+
+    private static void ConfigureBrand(EntityTypeBuilder<Brand> builder)
+    {
+        builder.ToTable("brands", Schemas.Catalog);
+        builder.HasKey(b => b.Id);
+        builder.Property(b => b.Id).ValueGeneratedNever();
+        builder.Property(b => b.Name).HasMaxLength(Brand.MaxNameLength);
+        builder.Property(b => b.NormalizedName).HasMaxLength(Brand.MaxNameLength);
+        builder.Property(b => b.Slug).HasMaxLength(200);
+        builder.Property(b => b.Description).HasMaxLength(2000);
+        builder.Property(b => b.LogoUrl).HasMaxLength(1000);
+        builder.HasIndex(b => b.NormalizedName).IsUnique();
+        builder.HasIndex(b => b.Slug).IsUnique();
+    }
+
+    private static void ConfigureLabel(EntityTypeBuilder<ProductLabel> builder)
+    {
+        builder.ToTable("product_labels", Schemas.Catalog);
+        builder.HasKey(l => l.Id);
+        builder.Property(l => l.Id).ValueGeneratedNever();
+        builder.Property(l => l.Name).HasMaxLength(30);
+        builder.Property(l => l.Tone).HasConversion<string>().HasMaxLength(20);
+        builder.Property(l => l.Kind).HasConversion<string>().HasMaxLength(20);
+    }
+
+    private static void ConfigureLabelLink(EntityTypeBuilder<ProductLabelLink> builder)
+    {
+        builder.ToTable("product_label_links", Schemas.Catalog);
+        builder.HasKey(l => new { l.ProductId, l.LabelId });
+        builder.HasIndex(l => l.LabelId);
+        builder.HasOne<Product>().WithMany().HasForeignKey(l => l.ProductId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne<ProductLabel>().WithMany().HasForeignKey(l => l.LabelId).OnDelete(DeleteBehavior.Cascade);
     }
 
     private static void ConfigureFavorite(EntityTypeBuilder<Favorite> builder)
@@ -79,6 +129,8 @@ internal sealed class CatalogModelConfigurator : IModelConfigurator
         builder.Property(c => c.NavkoloRef).HasMaxLength(100);
         builder.Property(c => c.SeoTitle).HasMaxLength(200);
         builder.Property(c => c.SeoDescription).HasMaxLength(500);
+        builder.Property(c => c.ImageUrl).HasMaxLength(1000);
+        builder.Property(c => c.Description).HasMaxLength(2000);
         builder.HasIndex(c => c.NavkoloRef);
         builder.HasIndex(c => c.Slug).IsUnique();
         builder.HasOne<Category>().WithMany().HasForeignKey(c => c.ParentId).OnDelete(DeleteBehavior.Restrict);
@@ -106,6 +158,7 @@ internal sealed class CatalogModelConfigurator : IModelConfigurator
         builder.HasIndex(p => p.Slug).IsUnique();
         builder.HasIndex(p => p.Sku);
         builder.HasIndex(p => p.CategoryId);
+        builder.HasIndex(p => p.Brand);
 
         builder.HasIndex(p => p.Name).HasMethod("gin").HasOperators("gin_trgm_ops");
 

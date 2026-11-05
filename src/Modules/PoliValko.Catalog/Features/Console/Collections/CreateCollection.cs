@@ -15,6 +15,7 @@ internal static class CreateCollection
         PoliValkoDbContext db,
         IAuditLog audit,
         IStorefrontCache storefront,
+        TimeProvider time,
         CancellationToken ct)
     {
         var collection = new HomeCollection { Id = Guid.CreateVersion7(), Code = string.Empty, Title = string.Empty };
@@ -28,7 +29,7 @@ internal static class CreateCollection
         audit.Record("catalog.collection_created", "Collection", collection.Code, new { collection.Title, products = collection.ProductIds.Count });
         await db.SaveChangesAsync(ct);
         await storefront.InvalidateAsync([StorefrontTags.Collections], ct);
-        var products = await ConsoleProductQueries.LoadListItemsAsync(db, collection.ProductIds, ct);
+        var products = await ConsoleProductQueries.LoadListItemsAsync(db, collection.ProductIds, time.GetUtcNow(), ct);
         return TypedResults.Created($"/api/v1/console/catalog/collections/{collection.Id}", CollectionEditor.ToDto(collection, products));
     }
 }

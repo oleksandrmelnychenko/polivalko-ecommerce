@@ -10,7 +10,7 @@ public static class AuthProblems
         WriteAsync(http, StatusCodes.Status401Unauthorized, "auth.unauthorized", "Потрібен вхід", "Увійдіть до консолі.");
 
     public static Task WriteForbiddenAsync(HttpContext http) =>
-        WriteAsync(http, StatusCodes.Status403Forbidden, "auth.forbidden", "Недостатньо прав", "Ця дія доступна лише адміністратору.");
+        WriteAsync(http, StatusCodes.Status403Forbidden, "auth.forbidden", "Недостатньо прав", "Для цієї дії у вашої ролі немає права.");
 
     public static async Task WriteAsync(HttpContext http, int status, string code, string title, string detail)
     {

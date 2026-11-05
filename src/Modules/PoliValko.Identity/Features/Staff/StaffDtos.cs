@@ -1,10 +1,10 @@
 namespace PoliValko.Identity.Features.Staff;
 
-public sealed record StaffUserDto(string Id, string Email, string DisplayName, IReadOnlyList<string> Roles, bool LockedOut);
+public sealed record StaffUserDto(string Id, string Email, string DisplayName, string RoleId, string RoleName, bool LockedOut);
 
-public sealed record CreateStaffUserRequest(string? Email, string? DisplayName, string? Role, string? Password);
+public sealed record CreateStaffUserRequest(string? Email, string? DisplayName, string? RoleId, string? Password);
 
-public sealed record UpdateStaffUserRequest(string? DisplayName, string? Role);
+public sealed record UpdateStaffUserRequest(string? DisplayName, string? RoleId);
 
 public sealed record LockStaffUserRequest(bool Locked);
 

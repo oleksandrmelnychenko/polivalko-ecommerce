@@ -7,9 +7,9 @@ namespace PoliValko.Identity.Features.Auth;
 
 internal sealed class StaffClaimsFactory(
     UserManager<StaffUser> userManager,
-    RoleManager<IdentityRole> roleManager,
+    RoleManager<StaffRole> roleManager,
     IOptions<IdentityOptions> options)
-    : UserClaimsPrincipalFactory<StaffUser, IdentityRole>(userManager, roleManager, options)
+    : UserClaimsPrincipalFactory<StaffUser, StaffRole>(userManager, roleManager, options)
 {
     protected override async Task<ClaimsIdentity> GenerateClaimsAsync(StaffUser user)
     {

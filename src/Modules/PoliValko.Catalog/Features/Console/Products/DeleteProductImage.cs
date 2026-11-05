@@ -34,6 +34,6 @@ internal static class DeleteProductImage
         await db.SaveChangesAsync(ct);
         await media.DeleteAsync(image.Url, ct);
         await storefront.InvalidateAsync(ConsoleProductQueries.ProductTags(product.Slug), ct);
-        return TypedResults.Ok(ConsoleProductQueries.ToDto(product));
+        return TypedResults.Ok(await ConsoleProductQueries.ToDtoAsync(db, product, time.GetUtcNow(), ct));
     }
 }

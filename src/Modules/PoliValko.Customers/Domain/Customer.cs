@@ -28,7 +28,28 @@ public sealed class Customer
 
     public DateTimeOffset? LockoutEnd { get; private set; }
 
+    public DateTimeOffset? BlockedAt { get; private set; }
+
     public bool IsLockedOut(DateTimeOffset now) => LockoutEnd is { } end && end > now;
+
+    public bool IsBlockedOrLockedOut(DateTimeOffset now) => BlockedAt is not null || IsLockedOut(now);
+
+    public void Block(DateTimeOffset now)
+    {
+        if (BlockedAt is not null)
+        {
+            return;
+        }
+
+        BlockedAt = now;
+        SecurityStamp = NewStamp();
+    }
+
+    public void Unblock()
+    {
+        BlockedAt = null;
+        ClearLockout();
+    }
 
     public void ChangePassword(string passwordHash)
     {

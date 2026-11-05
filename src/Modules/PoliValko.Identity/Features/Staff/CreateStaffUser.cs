@@ -1,20 +1,26 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Security;
+using PoliValko.Infrastructure.Security.Permissions;
 
 namespace PoliValko.Identity.Features.Staff;
 
 internal static class CreateStaffUser
 {
-    public static async Task<Results<Created<StaffUserDto>, ValidationProblem>> HandleAsync(
+    public static async Task<Results<Created<StaffUserDto>, ValidationProblem, ProblemHttpResult>> HandleAsync(
         CreateStaffUserRequest request,
+        ClaimsPrincipal me,
+        HttpContext http,
         UserManager<StaffUser> userManager,
         PoliValkoDbContext db,
+        IStaffAccessResolver access,
         IAuditLog audit,
-        TimeProvider time)
+        TimeProvider time,
+        CancellationToken ct)
     {
         var errors = new Dictionary<string, string[]>();
         var email = request.Email?.Trim();
@@ -28,7 +34,7 @@ internal static class CreateStaffUser
         }
 
         var name = StaffValidation.ValidateName(request.DisplayName, errors);
-        var role = StaffValidation.ValidateRole(request.Role, errors);
+        var role = await StaffValidation.ValidateRoleAsync(request.RoleId, db, errors, ct);
         if (string.IsNullOrEmpty(request.Password))
         {
             errors["password"] = ["Вкажіть початковий пароль."];
@@ -39,6 +45,12 @@ internal static class CreateStaffUser
             return TypedResults.ValidationProblem(errors);
         }
 
+        var mine = await access.GetStaffAccessAsync(me, http.Items, ct);
+        if (await StaffValidation.CanGrantAsync(mine, role!, db, ct) is { } denied)
+        {
+            return denied;
+        }
+
         var user = new StaffUser { UserName = email, Email = email, EmailConfirmed = true, DisplayName = name! };
         var created = await userManager.CreateAsync(user, request.Password!);
         if (!created.Succeeded)
@@ -46,9 +58,10 @@ internal static class CreateStaffUser
             return TypedResults.ValidationProblem(StaffValidation.ToErrors(created));
         }
 
-        await userManager.AddToRoleAsync(user, role!);
-        audit.Record("user.created", "StaffUser", email, new { name, role });
-        await db.SaveChangesAsync();
-        return TypedResults.Created($"/api/v1/console/users/{user.Id}", await StaffMapping.ToDtoAsync(userManager, user, time));
+        await userManager.AddToRoleAsync(user, role!.Name!);
+        audit.Record("user.created", "StaffUser", email, new { name, role = role.DisplayName });
+        await db.SaveChangesAsync(ct);
+        access.Invalidate();
+        return TypedResults.Created($"/api/v1/console/users/{user.Id}", await StaffMapping.ToDtoAsync(db, user, time, ct));
     }
 }
