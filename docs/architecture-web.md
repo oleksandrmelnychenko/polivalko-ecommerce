@@ -1,23 +1,32 @@
 # Архітектура клієнта (web/)
 
-Документ описує будову Next.js-клієнта PoliValko. З 2026-11-04 це npm workspace із двох застосунків і спільного
-пакета:
+Документ описує будову веб-клієнта PoliValko. З 2026-11-04 це npm workspace із двох застосунків і спільного пакета:
 
-- **вітрина** `web/apps/shop` — сайт для покупців на `<домен>` (локально http://localhost:8080);
+- **вітрина** `web/apps/shop` — Next.js-сайт для покупців на `<домен>` (локально http://localhost:8080);
 - **консоль** `web/apps/console` — застосунок для працівників на власному піддомені (`CONSOLE_ADDRESS`, локально
-  http://console.localhost:8080), маршрути — від кореня хоста (`/`, `/login`, `/orders`, …);
-- **спільний пакет** `web/packages/shared` (`@polivalko/shared`) — клієнт і типи API, хелпери, іконки й базові стилі,
-  якими користуються обидва застосунки.
+  http://console.localhost:8080), маршрути — від кореня хоста за розділами меню (`/`, `/login`, `/sales/orders`,
+  `/catalog/products`, `/site/home`, `/settings/shop`, `/system/staff`, …). З 2026-11-05 це односторінковий
+  застосунок на Vite, зібраний на ядрі консолі GBA (`gba_console`), а не Next.js (розділ 15);
+- **спільний пакет** `web/packages/shared` (`@polivalko/shared`) — клієнт і типи API, хелпери форматування й підписів,
+  іконки й базові стилі. Клієнт, типи й хелпери беруть обидва застосунки, іконки й стилі — лише вітрина.
+
+Розділи 1–8 і 10 описують вітрину й спільний пакет; консоль має власні шари, межі й збірку — розділ 15. Розділи 9 і
+11–14 — історія перенесень: усе, що там сказано про консоль (Next.js, `globals.css`, `StaffGate`, `useConsoleData`,
+бічна панель, адреси на кшталт `/orders` чи `/content/pickup`), стосується її версії до 2026-11-05. Розділ 16 — дані
+вітрини, якими тепер керує консоль (банери, головна, реквізити, доставка, мітки, SEO), і їхній кеш.
 
 Мета обох рефакторингів (фічеве розбиття, потім розділення на два застосунки) — явні межі без зміни поведінки: той
 самий HTTP API, ті самі розмітка, класи, тексти, стилі, метадані й поведінка в браузері; змінилися лише адреси
-панелі працівників (маршрути від кореня власного хоста, розділ 12). Згодом панель перейменовано на «консоль» (розділ 14).
+панелі працівників (маршрути від кореня власного хоста, розділ 12). Згодом панель перейменовано на «консоль» (розділ 14),
+а потім перебудовано з нуля як окремий SPA з правами за ключами (розділ 15) — це вже зміна поведінки, а не рефакторинг.
 
-Версії: Next.js 16 (App Router, `cacheComponents`, `partialPrefetching`), React 19, TypeScript, ESLint 9 (flat config),
-npm workspaces (без turbo/pnpm/nx). Перед зміною коду читайте відповідні розділи `web/node_modules/next/dist/docs/`
-(див. `web/AGENTS.md`).
+Версії вітрини: Next.js 16 (App Router, `cacheComponents`, `partialPrefetching`), React 19, TypeScript, ESLint 9
+(flat config), npm workspaces (без turbo/pnpm/nx). Перед зміною коду вітрини читайте відповідні розділи
+`web/node_modules/next/dist/docs/` (див. `web/AGENTS.md`). Версії консолі — розділ 15.
 
 ## 1. Принципи
+
+Пункти 1–4, 6 і 7 — правила вітрини; пункт 5 стосується обох застосунків. Принципи консолі — розділ 15.1.
 
 1. **Маршрути тонкі.** Файли в `src/app` потрібні лише маршрутизатору: вони тримають `metadata` / `generateMetadata`,
    конфігурацію сегмента (`instant`, тощо), `Suspense`, якщо він є частиною маршруту, і складають екран із публічного
@@ -32,10 +41,12 @@ npm workspaces (без turbo/pnpm/nx). Перед зміною коду чита
 6. **Межа «клієнт/сервер» мінімальна.** `"use client"` стоїть лише на модулях, які використовують стан, ефекти,
    контекст, обробники подій або API браузера. Серверний код (внутрішня адреса API, `"use cache"`-функції) позначений
    `import "server-only"` і не може потрапити в клієнтський бандл.
-7. **Каскад CSS незмінний.** Кожен застосунок підключає лише потрібні йому сегменти, але порядок правил той самий, що
-   й у спільному CSS до розділення (розділ 6).
+7. **Каскад CSS незмінний.** Вітрина підключає лише потрібні їй сегменти, але порядок правил той самий, що й у
+   спільному CSS до розділення (розділ 6).
 
 ## 2. Шари й напрям залежностей
+
+Шари вітрини й пакета. Шари консолі (`app` → `features` → `shared`) і її ребра між фічами — розділ 15.2.
 
 ```
 src/app (маршрути)  ──►  src/features/<фіча> (index.ts | server.ts)  ──►  src/shared  ──►  @polivalko/shared
@@ -50,22 +61,19 @@ src/app (маршрути)  ──►  src/features/<фіча> (index.ts | serve
 | `src/shared/**` | `@/shared/**`, `@polivalko/shared/**`, сторонні пакети | `@/features/**`, `@/app/**` |
 | `packages/shared/**` | власні файли відносними шляхами, сторонні пакети | `@/…` (псевдоніми застосунків), `shop`, `console`, шляхи в `apps/` і за межі пакета |
 
-Для всіх файлів застосунків заборонені також старі шляхи `@/lib/**` і `@/components/**` та імпорт іншого застосунку
-(`shop/…`, `console/…` — npm workspaces створюють такі посилання в `node_modules`).
+Для всіх файлів вітрини заборонені також старі шляхи `@/lib/**` і `@/components/**` та імпорт іншого застосунку
+(`shop/…`, `console/…` — npm workspaces створюють такі посилання в `node_modules`). Консоль має таку саму заборону у
+власному `eslint.config.mjs`.
 
-Циклічних залежностей між фічами немає. Дозволені ребра (фіча → від чого залежить):
+Циклічних залежностей між фічами немає. Дозволені ребра вітрини (`apps/shop`, фіча → від чого залежить):
+`favorites → customer`; `cart → analytics`; `catalog → cart, favorites`;
+`product → catalog, cart, analytics, favorites`; `home → catalog, services, content`;
+`layout → cart, catalog, services, content, search, customer`; `search → catalog`; `checkout → cart, analytics, customer`;
+`order → payment, analytics`; `account → customer, favorites, catalog, cart, checkout, order, payment`; `customer`,
+`services`, `content`, `payment`, `analytics` — лише від `shared`.
 
-- Вітрина (`apps/shop`): `favorites → customer`; `cart → analytics`; `catalog → cart, favorites`;
-  `product → catalog, cart, analytics, favorites`; `home → catalog, services, content`;
-  `layout → cart, catalog, services, content, search, customer`; `search → catalog`; `checkout → cart, analytics, customer`;
-  `order → payment, analytics`; `account → customer, favorites, catalog, cart, checkout, order, payment`; `customer`,
-  `services`, `content`, `payment`, `analytics` — лише від `shared`.
-- Консоль (`apps/console`): `shell → auth`; `dashboard → shell, orders, catalog`; `orders → shell`; `catalog → auth`;
-  `content → auth`; `integration → auth`; `staff → auth`; `audit → auth`; `requests → shell`; `customers`, `auth` —
-  лише від `shared`.
-
-Цей список — мапа `edges` в `eslint.config.mjs` кожного застосунку: імпорт фічі, якої немає серед залежностей
-(зокрема власного публічного API зсередини фічі), — помилка `npm run lint` (розділ 7).
+Цей список — мапа `edges` в `apps/shop/eslint.config.mjs`: імпорт фічі, якої немає серед залежностей (зокрема
+власного публічного API зсередини фічі), — помилка `npm run lint` (розділ 7).
 
 ## 3. Дерево
 
@@ -73,9 +81,9 @@ src/app (маршрути)  ──►  src/features/<фіча> (index.ts | serve
 web/
 ├─ package.json            workspace-корінь: "workspaces": ["apps/*", "packages/*"], скрипти lint/typecheck/build/api:types
 ├─ package-lock.json       єдиний lock-файл
-├─ eslint.boundaries.mjs   спільні правила меж для eslint.config.mjs обох застосунків
-├─ AGENTS.md               правила Next.js для агентів (next dev пише таку саму копію в кожен застосунок)
-├─ Dockerfile              один образ на застосунок: build-arg APP=shop|console
+├─ eslint.boundaries.mjs   правила меж для eslint.config.mjs вітрини (консоль має власні, розділ 15.2)
+├─ AGENTS.md               правила Next.js для агентів (next dev пише таку саму копію у вітрину)
+├─ Dockerfile              спільні етапи deps і build, кінцеві цілі shop (Next standalone) і console (Caddy зі статикою)
 ├─ apps/
 │  ├─ shop/                вітрина (workspace "shop")
 │  │  ├─ package.json  next.config.ts  tsconfig.json  eslint.config.mjs  AGENTS.md
@@ -92,60 +100,38 @@ web/
 │  │     │  ├─ analytics/   GA4: track, TrackPurchase, TrackViewItem, GoogleAnalytics
 │  │     │  ├─ cart/        сховище кошика (localStorage), CartProvider/useCart, useCartQuote, CartButton, CartDrawer,
 │  │     │  │               CartScreen/CartView, BuyForm, AddToCart
-│  │     │  ├─ catalog/     дерево розділів, пошук товарів, плитки товарів і розділів, лістинг з фільтрами й
-│  │     │  │               пейджером, CatalogScreen, CategoryScreen, перенаправлення старих URL, sitemap-дані
+│  │     │  ├─ catalog/     дерево розділів, пошук товарів, плитки товарів і розділів (фото й опис категорії, мітки
+│  │     │  │               товарів), лістинг з фільтрами й пейджером, CatalogScreen, CategoryScreen, перенаправлення
+│  │     │  │               старих URL, sitemap-дані
 │  │     │  ├─ product/     ProductScreen: галерея, блок покупки, варіанти, опис і характеристики, схожі товари, JSON-LD
-│  │     │  ├─ home/        HomeScreen: слайдер, лукбук-секції, стрічки (Rail), переваги, кроки, магазин у Бучі
-│  │     │  ├─ layout/      хром вітрини: ShopShell, SiteHeader (меню, мегаменю, мобільне меню), SiteFooter, BackToTop
+│  │     │  ├─ home/        HomeScreen: блоки в порядку з консолі — слайдер із банерів, знижки, добірки, розділи,
+│  │     │  │               переваги, послуги, кроки, магазин у Бучі
+│  │     │  ├─ layout/      хром вітрини: ShopShell, SiteHeader (смуга оголошення, меню, мегаменю, мобільне меню),
+│  │     │  │               SiteFooter (контакти, соцмережі, особливі дні, реквізити продавця), BackToTop
 │  │     │  ├─ search/      SearchButton (панель пошуку в шапці), SearchScreen
 │  │     │  ├─ checkout/    CheckoutScreen: форма, вибір міста й відділення НП, підсумок, створення замовлення
 │  │     │  ├─ order/       OrderScreen: сторінка результату замовлення, чеки, історія
 │  │     │  ├─ payment/     PayButton, PaymentPending, SandboxPaymentScreen
 │  │     │  ├─ services/    ServicesScreen, ServiceRequestForm, напрямки послуг
-│  │     │  ├─ content/     InfoPage, PageHead, ContactsScreen, CreditsScreen, OfferScreen (реквізити продавця)
+│  │     │  ├─ content/     InfoPage, PageHead, ContactsScreen, CreditsScreen, OfferScreen (реквізити продавця),
+│  │     │  │               дані з консолі: головна й оголошення, реквізити, соцмережі, особливі дні, SEO сторінок
 │  │     │  ├─ customer/    сесія покупця (зовнішнє сховище + підказка в localStorage), CSRF кабінету, вхід/реєстрація/
 │  │     │  │               вихід, адреси для оформлення, AccountButton у шапці
 │  │     │  ├─ favorites/   сховище id обраного, FavoriteButton (сердечко), список обраних товарів
 │  │     │  └─ account/     сторінки кабінету: вхід, реєстрація, відновлення пароля, підтвердження email, AccountShell,
 │  │     │                  замовлення, деталі замовлення, обране, адреси, профіль
 │  │     └─ shared/
-│  │        ├─ lib/quantity.ts (MAX_QUANTITY)   ui/quantity-stepper.tsx   hooks/use-hydrated.ts
+│  │        ├─ lib/quantity.ts (MAX_QUANTITY), page-title.ts (pageTitle)   ui/quantity-stepper.tsx
+│  │        │  hooks/use-hydrated.ts
 │  │        └─ styles/   print.css
 │  │           ├─ ui/         stepper, fill, lines, totals, summary-layout (.css)
 │  │           └─ responsive/ site, shop (.css)
-│  └─ console/             консоль (workspace "console")
-│     ├─ package.json  next.config.ts  tsconfig.json  eslint.config.mjs  AGENTS.md
-│     └─ src/
-│        ├─ app/
-│        │  ├─ layout.tsx  globals.css  not-found.tsx  favicon.ico
-│        │  └─ (console)/layout.tsx  login/page.tsx
-│        │     └─ (panel)/layout.tsx  page.tsx  audit/ catalog/(categories|collections|import|redirects|products/[id])/
-│        │                 content/(layout.tsx|contacts|pages/[slug]|pickup|services)/ customers/ integration/
-│        │                 orders/ orders/[number]/ requests/ staff/
-│        ├─ features/
-│        │  ├─ auth/        StaffGate, useStaff, AdminOnly, LoginScreen, вихід
-│        │  ├─ shell/       ConsoleShell, useSummary, бічна панель, верхня смуга, сповіщення, палітра Ctrl+K
-│        │  ├─ dashboard/   OverviewScreen, графік виручки, KPI, черга, стан інтеграцій
-│        │  ├─ orders/      OrdersScreen, OrderDetailScreen, OrdersTable, StatusText, PaymentStatusText, повернення,
-│        │  │               оплати й чеки
-│        │  ├─ customers/   CustomersScreen
-│        │  ├─ requests/    RequestsScreen
-│        │  ├─ catalog/     ProductsScreen, ProductEditorScreen, CategoriesScreen, CollectionsScreen, RedirectsScreen,
-│        │  │               ImportScreen, CatalogTabs, StockText
-│        │  ├─ content/     ContentSectionLayout, ContentPagesScreen, PageEditorScreen, ContactsEditorScreen,
-│        │  │               PickupEditorScreen, ServicesEditorScreen
-│        │  ├─ integration/ IntegrationScreen (завдання, прогони, черга, Нова пошта)
-│        │  ├─ staff/       StaffScreen і форми працівників
-│        │  └─ audit/       AuditScreen
-│        └─ shared/
-│           ├─ csrf.ts (csrfHeader, forgetCsrf, withCsrf)  use-console-data.ts  format.ts (when)  download.ts
-│           ├─ site-url.ts (siteUrl — абсолютні посилання на вітрину)
-│           ├─ ui/    state-box.tsx, page-head.tsx, modal.tsx, pager.tsx, selection.tsx (useSelection, CheckAll)
-│           ├─ form/  field.tsx, check-field.tsx, field-error.tsx, form-status.tsx, save-button.tsx, use-console-form.ts
-│           └─ styles/ root, page-head, controls, filters, cards, console-meta, tables, pager, tabs, notices, grids,
-│                      actions, forms, modal (.css);  responsive/ console, console-screens (.css)
+│  └─ console/             консоль (workspace "console"), Vite SPA — будова в розділі 15.3
+│     ├─ package.json  index.html  vite.config.ts  tsconfig{,.app,.node}.json  eslint.config.mjs  serve.Caddyfile
+│     ├─ public/favicon.ico
+│     └─ src/  main.tsx  index.css  app/  features/  shared/
 └─ packages/
-   └─ shared/              "@polivalko/shared" — TypeScript-джерела, без збірки (transpilePackages)
+   └─ shared/              "@polivalko/shared" — TypeScript-джерела без власної збірки (їх компілюють Next.js і Vite)
       ├─ package.json  tsconfig.json  eslint.config.mjs
       ├─ api/     browser.ts (browserApi, newIdempotencyKey), server.ts (api, server-only), types.ts (псевдоніми DTO),
       │           problem.ts (Problem і хелпери Problem Details), schema.d.ts (ГЕНЕРУЄТЬСЯ, не редагувати)
@@ -156,15 +142,18 @@ web/
                   seg-compact, meta-list (.css)
 ```
 
-Власні `styles/` мають 18 фіч: вітрина — `layout`, `search`, `home`, `catalog`, `product`, `content`, `cart`, `order`,
-`checkout`, `services`, `payment`, `customer`, `favorites`, `account`; консоль — `shell`, `auth`, `dashboard`, `orders`. Перелік файлів — розділ 6.2.
+Власні `styles/` мають 14 фіч вітрини: `layout`, `search`, `home`, `catalog`, `product`, `content`, `cart`, `order`,
+`checkout`, `services`, `payment`, `customer`, `favorites`, `account`. Перелік файлів — розділ 6.2.
 
 Пакет `@polivalko/shared` не має поля `exports` і власної збірки: застосунки імпортують файли за шляхом
-(`@polivalko/shared/api/browser`, `@polivalko/shared/lib/format`, `@polivalko/shared/ui/icons`), а Next.js компілює
-їх як частину застосунку (`transpilePackages`). npm workspaces створюють посилання
-`node_modules/@polivalko/shared → packages/shared`.
+(`@polivalko/shared/api/browser`, `@polivalko/shared/lib/format`, `@polivalko/shared/ui/icons`), а збирач застосунку
+компілює їх як його частину (Next.js — через `transpilePackages`, Vite — напряму). npm workspaces створюють посилання
+`node_modules/@polivalko/shared → packages/shared`. Консоль бере з пакета лише `api/browser`, `api/schema`, `api/types`,
+`api/problem`, `lib/format`, `lib/labels` і `lib/images`; `api/server`, `ui/icons` і `styles/**` потрібні тільки вітрині.
 
 ### 3.1. Будова фічі
+
+Будова фічі вітрини (будова фічі консолі — розділ 15.3).
 
 ```
 src/features/<фіча>/
@@ -198,7 +187,7 @@ src/features/<фіча>/
 | --- | --- | --- |
 | `analytics` | `track`, `TrackPurchase`, `TrackViewItem`, `GoogleAnalytics` | — |
 | `cart` | `CartProvider`, `useCart`, `useCartQuote`, `CartButton`, `CartDrawer`, `CartScreen`, `BuyForm`, `AddToCart` | — |
-| `catalog` | `ProductTile`, `ProductTiles`, `ProductTilesSkeleton`, `CategoryTile`, `CategoryGrid`, `ListingSkeleton`, `discountPercent`, тип `SearchParams` | `getCategory`, `getCategoryTree`, `getCollections`, `getSitemap`, `resolveRedirect`, `searchProducts`, `CatalogListing`, `CatalogScreen`, `CategoryScreen` |
+| `catalog` | `ProductTile`, `ProductTiles`, `ProductTilesSkeleton`, `CategoryTile`, `CategoryGrid`, `ListingSkeleton`, `ProductLabels`, `discountPercent`, `categoryPhotoUrl`, `pageTitle`, тип `SearchParams` | `getCategory`, `getCategoryTree`, `getCollections`, `getSitemap`, `resolveRedirect`, `searchProducts`, `CatalogListing`, `CatalogScreen`, `CategoryScreen` |
 | `product` | `descriptionText` | `getProduct`, `ProductScreen` |
 | `home` | — | `HomeScreen` |
 | `layout` | — | `ShopShell` |
@@ -207,32 +196,37 @@ src/features/<фіча>/
 | `order` | `OrderFacts`, `OrderHistory`, `OrderItems`, `OrderReceipts`, `isOrderPaid`, `orderWhere` | `OrderScreen` |
 | `payment` | `PayButton`, `PaymentPending`, `SandboxPaymentScreen` | — |
 | `services` | — | `getServiceDirections`, `ServicesScreen` |
-| `content` | — | `getContacts`, `InfoPage`, `ContactsScreen`, `CreditsScreen`, `OfferScreen` |
+| `content` | — | `getAnnouncement`, `getContacts`, `getSeller`, `getSiteHome`, `pageMetadata`, `socialLinks`, типи `Banner`, `SiteHome`, `TextItem`, `InfoPage`, `ContactsScreen`, `CreditsScreen`, `OfferScreen`, `SpecialDays` |
 | `customer` | `AccountButton`, `useCustomer`, `getAddresses`, `postAddress`, `withCsrf`, тип `CsrfHeaders`, `expireOn401`, `loadSession`, `refreshSession`, `setSignedIn`, `sessionEnded`, `signIn`, `signOut`, `signUp`, `currentPath`, `loginHref`, `safeNext`, `addressPlace`, `addressTitle`, типи `CustomerAddress`, `CustomerMe`, `SaveAddressRequest` | — |
 | `favorites` | `FavoriteButton`, `useFavorites`, `getFavoriteProducts`, `HeartIcon` | — |
 | `account` | `LoginScreen`, `RegisterScreen`, `ForgotPasswordScreen`, `ResetPasswordScreen`, `ConfirmEmailScreen`, `AccountShell`, `OrdersScreen`, `OrderDetailScreen`, `FavoritesScreen`, `AddressesScreen`, `ProfileScreen` | — |
 
-Консоль (`apps/console/src/features`):
+Що додало розширення консолі 2026-11-05 (подробиці й кеш — розділ 16):
 
-| Фіча | `index.ts` | `server.ts` |
-| --- | --- | --- |
-| `auth` | `StaffGate`, `useStaff`, `AdminOnly`, `LoginScreen`, `logout` | — |
-| `shell` | `ConsoleShell`, `useSummary` | — |
-| `dashboard` | `OverviewScreen` | — |
-| `orders` | `OrdersScreen`, `OrderDetailScreen`, `OrdersTable`, `StatusText` | — |
-| `customers` | `CustomersScreen` | — |
-| `requests` | `RequestsScreen` | — |
-| `catalog` | `ProductsScreen`, `ProductEditorScreen`, `CategoriesScreen`, `CollectionsScreen`, `RedirectsScreen`, `ImportScreen`, `StockText` | — |
-| `content` | `ContentSectionLayout`, `ContentPagesScreen`, `PageEditorScreen`, `ContactsEditorScreen`, `PickupEditorScreen`, `ServicesEditorScreen` | — |
-| `integration` | `IntegrationScreen` | — |
-| `staff` | `StaffScreen` | — |
-| `audit` | `AuditScreen` | — |
+- `catalog/index.ts`: `ProductLabels` — мітки товару (`{ name, tone }[]`) чипами з `data-tone` (плитка й блок покупки
+  товару); `categoryPhotoUrl(category)` — фото категорії з консолі (`imageUrl`) або тимчасове фото за `slug`, інакше
+  `null` (плитка, мобільне меню, `openGraph` сторінки категорії); `pageTitle(title)` — `title` для `metadata`: якщо
+  текст уже закінчується на «Poli Valko», повертає `{ absolute }`, щоб шаблон `%s | Poli Valko` не додав назву вдруге.
+  `pageTitle` лежить у `src/shared/lib/page-title.ts`, а `catalog` лише реекспортує його: маршрути не можуть
+  імпортувати `@/shared` (розділ 2), а потрібен він сторінкам товару й категорії.
+- `content/server.ts`: `getSiteHome()` — `GET /api/v1/site/home` (блоки, банери, оголошення, переваги, кроки, блок
+  магазину; збій API → `null`, головна тоді показує типові блоки); `getAnnouncement()` — оголошення з тієї самої
+  відповіді, лише з непорожнім текстом; `getSeller()` — `GET /api/v1/seller` (футер, оферта); `pageMetadata(slug,
+  fallbackTitle)` — `metadata` текстової сторінки: `seoTitle` → заголовок → запасний, `seoDescription` → підзаголовок,
+  canonical `/<slug>` (`offer`, `privacy`, `returns`, `payment-delivery`); `socialLinks(contacts)` — заповнені посилання
+  Instagram, Facebook, Telegram, Viber, YouTube (контакти й футер); `SpecialDays` — сьогоднішні й майбутні особливі
+  дні за київським часом, `limit` для футера; типи `SiteHome`, `Banner`, `TextItem` (з `SiteHomeDto`, `HomeBannerDto`,
+  `HomeItemDto`).
+
+Публічний API фіч консолі — розділ 15.2.
 
 ## 4. Конвенції
 
+Конвенції вітрини й пакета. Консоль іменує файли інакше (PascalCase-компоненти, сторінки `*Page`) — розділ 15.
+
 - **Файли:** kebab-case (`checkout-form.tsx`, `use-cart-quote.ts`). Компоненти й типи — PascalCase, хуки — `useX`.
 - **Екрани:** тіло сторінки, яке маршрут рендерить цілком, має суфікс `Screen` (`OrderDetailScreen`, `HomeScreen`).
-  Екран вітрини з запитами — серверний (експорт із `server.ts`); екран консолі — клієнтський (експорт з `index.ts`).
+  Екран з запитами — серверний (експорт із `server.ts`), інтерактивний без серверних даних — з `index.ts`.
 - **Розмір:** компонентний файл — до ~150 рядків, жоден `.ts/.tsx` не довший за 200 рядків, крім
   `packages/shared/api/schema.d.ts` і `packages/shared/ui/icons.tsx`. Маршрутний файл — до 40 рядків
   (з `generateMetadata` — до 60).
@@ -243,14 +237,10 @@ src/features/<фіча>/
   і `cacheTag`: теги скидає `/internal/revalidate` вітрини.
 - **API:** браузерні запити — `browserApi` з `@polivalko/shared/api/browser` (відносні `/api/v1/...`, тобто той самий
   хост, через Caddy); серверні запити вітрини — `api` з `@polivalko/shared/api/server` (`API_INTERNAL_URL`). Типи —
-  `@polivalko/shared/api/schema` (`paths`, `components`) і псевдоніми в `@polivalko/shared/api/types`.
-- **Дані в консолі:** компонент викликає `useConsoleData(key, () => getOrder(number))` з `@/shared/use-console-data`;
-  самі запити живуть в `api/client.ts` фічі. Змінні запити — через `withCsrf` з `@/shared/csrf` консолі (один модуль —
-  один кешований токен).
-- **Посилання консолі на вітрину** (товар «на сайті», сторінка контенту, іконка «Вітрина») — абсолютні, через
-  `siteUrl(path)` з `@/shared/site-url` консолі. Внутрішні посилання консолі — від кореня її хоста (`/orders/…`).
-- **Контексти** (`CartContext`, `StaffContext`, `SummaryContext`) і модульний стан (кошик у `localStorage`,
-  CSRF-токени, сесія покупця, id обраного) створюються рівно в одному модулі.
+  `@polivalko/shared/api/schema` (`paths`, `components`) і псевдоніми в `@polivalko/shared/api/types`. Консоль
+  використовує той самий `browserApi` через власну обгортку (розділ 15.5).
+- **Контексти** (`CartContext`) і модульний стан (кошик у `localStorage`, CSRF-токен кабінету, сесія покупця, id
+  обраного) створюються рівно в одному модулі.
 - **Коментарі** в коді не пишемо.
 
 ## 5. Інваріанти рефакторингу
@@ -269,10 +259,13 @@ src/features/<фіча>/
 
 ## 6. CSS
 
+Розділ описує вітрину. Консоль з 2026-11-05 не має `globals.css` і сегментів: кожен компонент імпортує власний CSS,
+базу дає Mantine (розділ 15.7). Рядки таблиць нижче зі шляхами `console/…` — історія розрізання: ці файли видалено
+разом із Next.js-консоллю.
+
 ### 6.1. Як влаштовано
 
-Усі стилі глобальні й підключаються **одним** імпортом `import "./globals.css"` у `src/app/layout.tsx` кожного
-застосунку. Next.js не гарантує порядок CSS, імпортованого з різних компонентів, тож компоненти CSS не імпортують.
+Усі стилі вітрини глобальні й підключаються **одним** імпортом `import "./globals.css"` у `src/app/layout.tsx`. Next.js не гарантує порядок CSS, імпортованого з різних компонентів, тож компоненти CSS не імпортують.
 `src/app/globals.css` — маніфест: лише `@import url("…");` відносними шляхами до сегментів у `src/shared/styles/**`,
 `src/features/*/styles/**` цього застосунку і `packages/shared/styles/**` (шлях
 `../../../../packages/shared/styles/…`; Turbopack має корінь `web/`, тож ці файли в межах проєкту). Вкладених
@@ -282,20 +275,22 @@ src/features/<фіча>/
 
 - сегмент, яким користується одна фіча, лежить у цій фічі;
 - яким користуються кілька фіч одного застосунку — у `src/shared/styles` цього застосунку;
-- правило, яке може зачепити елементи **обох** застосунків, лежить у `packages/shared/styles` і підключене в обох
-  маніфестах на тому самому місці каскаду.
+- правило, яке до 2026-11-05 могло зачепити елементи **обох** застосунків, лежить у `packages/shared/styles`; тепер
+  ці файли підключає лише маніфест вітрини, на тому самому місці каскаду.
 
 Медіаблоки в кінці вихідних файлів змішують правила різних фіч, тож вони лишаються цілими в
 `src/shared/styles/responsive/*` свого застосунку: інакше змінився б відносний порядок правил.
 
-Порядок `@import` в обох маніфестах — це порядок спільного `globals.css` до розділення (75 сегментів), з якого
-викинуто сегменти, правила яких не можуть зачепити елементи застосунку. Вітрина: 60 рядків, консоль: 43. Початок
-`apps/shop/src/app/globals.css`:
+Порядок `@import` у маніфесті — це порядок спільного `globals.css` до розділення (75 сегментів), з якого викинуто
+сегменти, правила яких не можуть зачепити елементи вітрини. Після розділення маніфест вітрини мав 60 рядків, після
+кабінету покупця — 68 (розділ 13.4), після розширення консолі — 71 (розділ 16.3); маніфест колишньої Next.js-консолі
+мав 43. Початок `apps/shop/src/app/globals.css`:
 
 ```css
 @import url("../../../../packages/shared/styles/tokens.css");
 @import url("../../../../packages/shared/styles/base.css");
 @import url("../../../../packages/shared/styles/layout.css");
+@import url("../features/layout/styles/announce.css");
 @import url("../features/layout/styles/header.css");
 @import url("../../../../packages/shared/styles/ui/logo.css");
 @import url("../features/layout/styles/header-menu.css");
@@ -304,16 +299,16 @@ src/features/<фіча>/
 Кінець маніфесту вітрини — три сегменти з правилами, які до розділення вітрина отримувала з CSS консолі
 (розділ 12.4): `ui/seg-compact.css`, `ui/meta-list.css` (обидва з пакета) і `src/shared/styles/print.css`.
 
-Новий сегмент додається окремим файлом у `styles/` фічі (або в `src/shared/styles/**` застосунку, або в
-`packages/shared/styles/**`, якщо правила потрібні обом) і рядком `@import` у `globals.css` там, де його правила мають
-стояти в каскаді. Сегменти не містять `@import` і коментарів, `@media`/`@starting-style`-блоки не розрізаються,
+Новий сегмент додається окремим файлом у `styles/` фічі (або в `src/shared/styles/**` вітрини) і рядком `@import` у
+`globals.css` там, де його правила мають стояти в каскаді. Сегменти не містять `@import` і коментарів, `@media`/`@starting-style`-блоки не розрізаються,
 `@keyframes` лежать поруч зі своїм сегментом.
 
 ### 6.2. Карта сегментів
 
 Номери рядків — за `git show 583c573:web/src/app/<файл>` (межі припадають на порожні рядки або коментарі).
 Порядок у таблицях — порядок `@import` у маніфестах. Шляхи: `shop/…` = `web/apps/shop/src/…`,
-`console/…` = `web/apps/console/src/…`, `pkg/…` = `web/packages/shared/…` (підключено в обох застосунках).
+`console/…` = `web/apps/console/src/…` Next.js-консолі (видалено 2026-11-05), `pkg/…` = `web/packages/shared/…`
+(до 2026-11-05 підключено в обох застосунках, тепер лише у вітрині).
 
 `tokens.css` → `pkg/styles/tokens.css`, `base.css` → `pkg/styles/base.css`.
 
@@ -429,10 +424,12 @@ src/features/<фіча>/
 
 ## 7. Межі в ESLint
 
+Розділ описує вітрину й пакет; межі консолі — розділ 15.2.
+
 Лише вбудоване правило `no-restricted-imports` з `regex`. У flat config пізніший блок для тих самих файлів повністю
-замінює налаштування правила, тому кожен блок містить спільні заборони плюс свої. Блоки однакові для обох застосунків,
-тож їх будує функція `featureBoundaries(edges)` з `web/eslint.boundaries.mjs`; кожен застосунок передає свою мапу
-`edges` (розділ 2):
+замінює налаштування правила, тому кожен блок містить спільні заборони плюс свої. Блоки будує функція
+`featureBoundaries(edges)` з `web/eslint.boundaries.mjs` (до 2026-11-05 нею користувалися обидва застосунки, тепер —
+лише вітрина) за мапою `edges` з розділу 2:
 
 - усі файли `src/**`: лише публічний API фіч (`index.ts` або `/server`), жодних `@/lib`, `@/components`, `@/app`,
   жодного імпорту іншого застосунку (`shop/…`, `console/…`);
@@ -444,7 +441,7 @@ src/features/<фіча>/
 Пакет `packages/shared` має власний `eslint.config.mjs`: заборонені `@/…`, `shop`, `console`, сам
 `@polivalko/shared`, будь-який шлях з `apps/` і відносні шляхи за межі пакета (`../../` з файлів `api/`, `lib/`, `ui/`).
 
-Перевірено тимчасовими порушеннями (потім видаленими): маршрут з `@/shared/...` чи `@polivalko/shared/...`;
+Перевірено тимчасовими порушеннями (потім видаленими; згадки консолі — про її Next.js-версію): маршрут з `@/shared/...` чи `@polivalko/shared/...`;
 `catalog`, що імпортує `analytics`; `analytics` → `cart`; глибокий `@/features/cart/lib/...`; `../../cart/...` з
 фічі; нова фіча поза `edges`; `src/shared` → `@/features`; фіча вітрини → `console/src/...`; фіча консолі →
 `shop/src/...`; `auth` → `shell`; пакет → `@/shared/...`, `shop/...`, `../../../apps/...` — кожне дає помилку
@@ -504,7 +501,7 @@ export function featureBoundaries(edges) {
 }
 ```
 
-`web/apps/shop/eslint.config.mjs` (консоль — так само, зі своєю мапою `edges` з розділу 2):
+`web/apps/shop/eslint.config.mjs`:
 
 ```js
 import { defineConfig, globalIgnores } from "eslint/config";
@@ -544,8 +541,10 @@ export default defineConfig([
 
 ## 8. Як додати фічу
 
-1. Створіть `apps/<shop|console>/src/features/<назва>/` з `index.ts` та/або `server.ts` (серверні дані чи
-   async-екран) і додайте фічу з її залежностями в `edges` у `apps/<shop|console>/eslint.config.mjs` та в розділ 2.
+Для вітрини (сторінку чи фічу консолі — розділ 15.10):
+
+1. Створіть `apps/shop/src/features/<назва>/` з `index.ts` та/або `server.ts` (серверні дані чи async-екран) і додайте
+   фічу з її залежностями в `edges` у `apps/shop/eslint.config.mjs` та в розділ 2.
 2. Запити: браузерні — функції в `api/client.ts` поверх `browserApi` з `@polivalko/shared/api/browser`; серверні — у
    `api/server.ts` з `import "server-only"`, `api` з `@polivalko/shared/api/server`, `"use cache"`, `cacheLife` і
    `cacheTag` (тег має скидатися через `/internal/revalidate`). Типи — з `@polivalko/shared/api/schema` або
@@ -555,9 +554,10 @@ export default defineConfig([
 4. Експортуйте назовні тільки те, що потрібно маршрутам і іншим фічам. Серверні речі — лише з `server.ts`.
 5. Маршрут у `src/app/...` імпортує екран з `@/features/<назва>` (або `/server`), тримає `metadata`
    і конфігурацію сегмента.
-6. Стилі: новий сегмент `styles/<назва>.css` у фічі і рядок `@import` у `src/app/globals.css` застосунку на потрібному
-   місці каскаду. Правила, потрібні обом застосункам, — у `packages/shared/styles` і в обох маніфестах.
-7. Спільний з іншим застосунком код (не стилі) — лише в `packages/shared`, і лише якщо ним справді користуються обидва.
+6. Стилі: новий сегмент `styles/<назва>.css` у фічі і рядок `@import` у `src/app/globals.css` на потрібному місці
+   каскаду.
+7. Спільний з консоллю код (клієнт API, типи, форматування) — лише в `packages/shared`, і лише якщо ним справді
+   користуються обидва застосунки. Стилі консоль із пакета не бере.
 8. Перевірте з `web/`: `npm run typecheck`, `npm run lint`, `npm run build`.
 
 ## 9. Карта перенесення (з 583c573)
@@ -602,16 +602,16 @@ export default defineConfig([
 ```
 cd web
 npm ci
-npm run typecheck                   # next typegen + tsc --noEmit в обох застосунках, tsc --noEmit у пакеті
+npm run typecheck                   # вітрина: next typegen + tsc --noEmit; консоль: tsc -b; пакет: tsc --noEmit
 npm run lint                        # eslint у shop, console і packages/shared
-npm run build                       # next build обох застосунків; таблиці маршрутів — як у розділі 12.2
+npm run build                       # вітрина: next build; консоль: tsc -b && vite build → apps/console/dist
 npm run api:types && git diff --exit-code -- packages/shared/api/schema.d.ts
 ```
 
 Окремий застосунок: `npm run <скрипт> -w shop`, `-w console` або `-w @polivalko/shared`.
 
-Плюс знімки сторінок (DOM і пікселі, 1440 і 375 px) зібраних Docker-образів проти базових і перевірка каскаду CSS
-(розділ 6.3).
+Для вітрини плюс знімки сторінок (DOM і пікселі, 1440 і 375 px) зібраних Docker-образів проти базових і перевірка
+каскаду CSS (розділ 6.3).
 
 ## 11. Уточнення й відхилення, зроблені під час перенесення
 
@@ -736,6 +736,11 @@ npm run api:types && git diff --exit-code -- packages/shared/api/schema.d.ts
 лишилася без жодного її коду й готова до особистого кабінету покупця. Поведінка обох не змінилася, окрім адрес панелі
 (маршрути від кореня власного хоста).
 
+Чинними з цього розділу лишаються: окремий піддомен консолі, маршрути від кореня її хоста, `/api` через Caddy власного
+хоста, cookie на хості консолі, абсолютні посилання на вітрину, Caddyfile і змінні `CONSOLE_ADDRESS` /
+`CONSOLE_ALLOWED_IPS`. Код, збірка й образ Next.js-консолі замінені 2026-11-05 (розділ 15); де це важливо, нижче
+позначено поточний стан.
+
 ### 12.1. Карта перенесення
 
 | Було (`web/`) | Стало (`web/`) |
@@ -771,29 +776,29 @@ npm run api:types && git diff --exit-code -- packages/shared/api/schema.d.ts
   (`features/auth/lib/next-path.ts`).
 - Шляхи API консолі — `/api/v1/console/...` (розділ 14). Браузер консолі звертається до `/api` власного хоста; Caddy
   передає їх в API, тож cookie `pv_console` і `pv_csrf` (host-only, `SameSite=Strict`) ставляться на хост консолі.
-- Посилання консолі на вітрину абсолютні: `siteUrl(path)` з `apps/console/src/shared/site-url.ts` →
-  `${SITE_URL}${path}`. Це «На сайті» в таблиці товарів, посилання в блоці Navkolo редактора товару, у складі
-  замовлення, адреса сторінки в списку й редакторі контенту, іконка «Вітрина» у верхній смузі (тепер звичайний `<a>`
-  замість `Link`, розмітка та сама). `SITE_URL` вбудовується під час збірки через `env` у
-  `apps/console/next.config.ts` (за замовчуванням `http://localhost:8080`).
-- Сторінка 404 консолі має ту саму розмітку, що й 404 вітрини (посилання «Poli Valko» і «Перейти до каталогу» —
-  абсолютні, на вітрину).
+- Посилання консолі на вітрину абсолютні: `siteUrl(path)` → `${SITE_URL}${path}`. Тоді це був
+  `apps/console/src/shared/site-url.ts` з `SITE_URL`, вбудованим через `env` у `apps/console/next.config.ts`; зараз —
+  `@/shared/lib/siteUrl` з `import.meta.env.VITE_SITE_URL`, вбудованим Vite (розділ 15.9). За замовчуванням
+  `http://localhost:8080`.
+- Сторінка 404 Next.js-консолі мала ту саму розмітку, що й 404 вітрини. Зараз невідома адреса консолі показує
+  «Сторінку не знайдено» всередині каркаса консолі (розділ 15.4).
 - Вітрина консолі не знає: невідома адреса на домені магазину — звичайна сторінка 404 вітрини, а `/api/v1/console/*`
   там закриває Caddy (404). `robots.txt` вітрини консолі не згадує; `/account` у ньому — з розділу 13.
 
 ### 12.3. Збірка, Docker, Caddy, змінні
 
-- **Dockerfile** (`web/Dockerfile`, контекст `web/`) один для обох: `ARG APP=shop|console`. Етап `deps` ставить
-  workspace за `package-lock.json` і трьома `package.json`, `build` виконує `npm run build -w $APP`, `runtime`
-  копіює `apps/$APP/.next/standalone` (корінь трасування — `web/`, тож `server.js` лежить в `apps/$APP/`) і
-  `apps/$APP/.next/static`, робочий каталог — `/app/apps/$APP`. Копіювання порожнього `public/` прибрано: каталогу
-  немає в git.
-- **next.config.ts** обох застосунків: `output: "standalone"`, `outputFileTracingRoot` і `turbopack.root` = `web/`,
-  `transpilePackages: ["@polivalko/shared"]`, ті самі `cacheComponents`, `partialPrefetching`, `poweredByHeader` і
-  `rewrites` `/api/*` → `API_INTERNAL_URL` (для `next dev`).
-- **compose.yaml:** сервіс `web` (вітрина, `APP: shop`) як був; `console` (профіль `app`, образ
-  `polivalko-console`, `APP: console`, build-arg і змінна `SITE_URL`, `API_INTERNAL_URL`, healthcheck `GET /login`);
-  `caddy` залежить і від `console`. Staging — образ `polivalko-staging-console`, `SITE_URL` staging.
+- **Dockerfile** (`web/Dockerfile`, контекст `web/`) один для обох. Етап `deps` ставить workspace за
+  `package-lock.json` і трьома `package.json`, `build` виконує `npm run build -w $APP` (`ARG APP=shop|console`).
+  Тоді обидва образи збиралися одним етапом `runtime` з `.next/standalone`; з 2026-11-05 є дві кінцеві цілі:
+  `shop` копіює `apps/shop/.next/standalone` (корінь трасування — `web/`, тож `server.js` лежить в `apps/shop/`) і
+  `apps/shop/.next/static`, робочий каталог — `/app/apps/shop`; `console` — розділ 15.9. Копіювання порожнього
+  `public/` вітрини прибрано: каталогу немає в git.
+- **next.config.ts** вітрини (тоді — обох застосунків): `output: "standalone"`, `outputFileTracingRoot` і
+  `turbopack.root` = `web/`, `transpilePackages: ["@polivalko/shared"]`, `cacheComponents`, `partialPrefetching`,
+  `poweredByHeader` і `rewrites` `/api/*` → `API_INTERNAL_URL` (для `next dev`).
+- **compose.yaml:** сервіс `web` (вітрина, `target: shop`, `APP: shop`); `console` (профіль `app`, образ
+  `polivalko-console`, healthcheck `GET /login`); `caddy` залежить і від `console`. Staging — образ
+  `polivalko-staging-console`, `SITE_URL` staging. Поточні налаштування сервісу `console` — розділ 15.9.
 - **Caddyfile:** сайт вітрини `{$SITE_ADDRESS::8080}` (заголовки безпеки, `SEARCH_INDEXING`, `/api/v1/console/*` →
   404, `/api/*` і `/health/*` → API, `/internal/*` → 404, решта → `web:3000`). Сайт консолі
   `{$CONSOLE_ADDRESS:http://console.localhost:8080}`: ті самі заголовки безпеки, завжди `X-Robots-Tag: noindex, nofollow`,
@@ -806,12 +811,14 @@ npm run api:types && git diff --exit-code -- packages/shared/api/schema.d.ts
 | --- | --- | --- | --- |
 | `CONSOLE_ADDRESS` | caddy | `http://console.localhost:8080`; staging — завжди `http://console.localhost:8080`; production — обов'язкова | Адреса сайту консолі для Caddy (`console.example.ua` → HTTPS автоматично) |
 | `CONSOLE_ALLOWED_IPS` | caddy | усі (`0.0.0.0/0 ::/0`) | IP або мережі (CIDR, через пробіл), з яких відкривається консоль; решта отримує 404 |
-| `SITE_URL` | web, **console** (збірка й середовище) | як і раніше | У консолі — основа абсолютних посилань на вітрину |
-| `API_INTERNAL_URL` | web, console | `http://api:8080` у compose | Як і раніше; у консолі потрібна лише для `next dev` |
+| `SITE_URL` | web, **console** (у консолі — лише збірка) | як і раніше | У консолі — основа абсолютних посилань на вітрину |
+| `API_INTERNAL_URL` | web; console — лише `npm run dev` | `http://api:8080` у compose вітрини | У консолі — ціль проксі `/api` сервера розробки Vite (розділ 15.9) |
 
 На staging (доступ через SSH-тунель на `localhost:8081`) консоль відкривається як http://console.localhost:8081.
 
 ### 12.4. CSS після розділення
+
+Стан на момент розділення; з 2026-11-05 маніфест і сегменти лишилися тільки у вітрини (розділ 6).
 
 Кожен маніфест містить лише сегменти, правила яких можуть зачепити елементи цього застосунку, у старому порядку
 (розділ 6.1). Щоб жоден сегмент не змішував правила для різних застосунків, п'ять сегментів розрізано на суцільні
@@ -849,10 +856,10 @@ npm run api:types && git diff --exit-code -- packages/shared/api/schema.d.ts
 
 ### 12.5. Що ще змінилося
 
-- **`<head>` консолі.** Кореневий макет консолі не має GA4 (`GoogleAnalytics`), `google-site-verification` і опису
-  вітрини (`description`), які раніше успадковувалися від спільного кореневого макета; лишилися `title`
+- **`<head>` консолі.** Кореневий макет Next.js-консолі не мав GA4 (`GoogleAnalytics`), `google-site-verification` і
+  опису вітрини (`description`), які раніше успадковувалися від спільного кореневого макета; лишилися `title`
   (`%s | Консоль Poli Valko`), `robots: noindex, nofollow`, `themeColor`, шрифт і `preconnect` до Unsplash (фото на
-  сторінці входу). Тіло сторінок те саме (`skip-link`, `div.console`, …).
+  сторінці входу). Поточний `<head>` консолі — `apps/console/index.html` (розділ 15.4).
 - **Папки фіч без рівня області** (`features/<фіча>`, без проміжної теки застосунку), ключі `edges` — так само.
 - **`api:types`** належить пакету (`npm run api:types -w @polivalko/shared`, кореневий скрипт його викликає); схема
   перегенерована з поточного `openapi/polivalko-api.json` (додалися лише нові шляхи `/api/v1/account/...`).
@@ -986,7 +993,9 @@ API кабінету — `/api/v1/account/*` (опис — `docs/architecture-ba
 згадує. Лишилися назви, що походять від ролі «адміністратор» з ТЗ: роль `Admin`, політика `admin`, охоронці
 `AdminOnly` / `AdminOnlyNotice` і їхні повідомлення, `Seed:Users[].Role`, `ADMIN_EMAIL` / `ADMIN_PASSWORD` (перший
 адміністратор). Розмітка (крім імен класів і підписів із назвою панелі), каскад CSS, таблиці маршрутів `next build`,
-запити й поведінка не змінилися.
+запити й поведінка не змінилися. З 2026-11-05 політики `admin` і охоронців `AdminOnly` / `AdminOnlyNotice` немає:
+доступ перевіряють права за ключами (розділ 15.6); роль `Admin` («Адміністратор»), `Seed:Users[].Role` і
+`ADMIN_EMAIL` / `ADMIN_PASSWORD` лишилися.
 
 | Було | Стало |
 | --- | --- |
@@ -1025,3 +1034,517 @@ API кабінету — `/api/v1/account/*` (опис — `docs/architecture-ba
   (списки, KPI, графік, картка замовлення); жодного іншого рядка. Смоук-тест консолі (усі 20 маршрутів, палітра, дзвоник,
   масова й поштучна зміна статусу, CSV через `/api/v1/console/orders/export`) — без помилок; на 375 px жодна сторінка
   вітрини й консолі не ширша за екран.
+
+## 15. Консоль на ядрі gba_console (2026-11-05)
+
+Next.js-консоль замінено односторінковим застосунком (SPA) на Vite. Його ядро — каркас, таблиця, фільтри, пейджер,
+модальні вікна, шухляди й перевірка прав — перенесено з консолі GBA (`gba_console`), модель прав — з `gba-server`.
+Сервер для консолі той самий: `/api/v1/console/*`, cookie `pv_console`, CSRF; новими стали лише права за ключами й
+ролі з власним набором прав (`docs/architecture-backend.md`, розділ 5.2). Консоль працює тільки в браузері: серверний
+рендеринг, SEO й кеш Next.js їй не потрібні.
+
+Того ж дня консоль розширено (розділ 15.11): меню «Дашборд · Продажі · Каталог · Сайт · Налаштування · Система» з
+адресами за розділами й перенаправленнями зі старих, повернення, кабінети покупців, нотатка до замовлення, довідники
+каталогу (характеристики, бренди, мітки), вкладки наповнення й масові дії в товарах, сайт (головна, банери, SEO) і
+налаштування магазину (контакти й реквізити, доставка, оплата й чеки, сповіщення). Сервер цих екранів —
+`docs/architecture-backend.md`, розділи 5.2–5.4.
+
+Версії: React 19.3, React Router 7, Mantine 9 (`core`, `dates`, `hooks`, `notifications`), TanStack Table 8,
+`@tabler/icons-react`, `dayjs` (локаль `uk`), шрифт Onest з `@fontsource/onest` (локально, без CDN), Vite 8 з
+`@vitejs/plugin-react`, TypeScript 5, ESLint 9 з `typescript-eslint`, `eslint-plugin-react-hooks` 7 і
+`eslint-plugin-react-refresh`.
+
+### 15.1. Принципи
+
+1. **Один реєстр маршрутів.** Шлях, заголовок, ключ права й сторінка кожного маршруту, а також перенаправлення старих
+   адрес записані в `src/app/routes/consoleRoutes.ts`. Меню має власну модель з тими самими ключами, адреса сторінки
+   починається з префікса її розділу меню.
+2. **Кожен маршрут вимагає право.** Сторінка не повторює перевірку маршруту, а лише ховає чи вимикає дії, яким
+   потрібні інші ключі. Остаточно права перевіряє сервер; консоль тільки не показує недоступного.
+3. **Фіча володіє своїм:** запитами (`api/`), компонентами, станом і логікою (`lib/`), сторінками (`pages/`) і CSS поруч
+   із компонентом.
+4. **`shared` — нижній шар.** Він не знає ні фіч, ні `app`.
+5. **Сигнали між фічами — подіями.** Оновити лічильники меню, перечитати права чи відкрити пошук фіча просить через
+   `@/shared/lib/events`, а не імпортом іншої фічі.
+6. **Стан списку — в адресі.** Фільтри, сортування, сторінка й розмір сторінки живуть в URL, тож посиланням можна
+   поділитися, а «Назад» повертає попередню вибірку.
+7. **Без коментарів у коді** і без рядків `eslint-disable`: винятки з правил лише в `eslint.config.mjs`.
+
+### 15.2. Шари й межі
+
+```
+src/app (каркас, провайдери, реєстр маршрутів)
+   │  бере з фіч лише index.ts і pages/*
+   ▼
+src/features/<фіча>  ──►  index.ts інших фіч, лише за edges
+   │
+   ▼
+src/shared  ──►  @polivalko/shared (крім api/server)
+```
+
+| Шар | Може імпортувати | Не може імпортувати |
+| --- | --- | --- |
+| `src/app/**` | `@/features/<фіча>` (її `index.ts`), `@/features/<фіча>/pages/<Сторінка>`, `@/shared/**`, `@polivalko/shared/**` | інші внутрішні файли фіч |
+| `src/features/<фіча>/**` | власні файли відносними шляхами, `@/shared/**`, `@polivalko/shared/**`, `index.ts` фіч зі списку `edges` | `@/app/**`, відносні шляхи за межі фічі, глибокі шляхи інших фіч |
+| `src/shared/**` | `@/shared/**`, `@polivalko/shared/**`, сторонні пакети | `@/features/**`, `@/app/**` (ні псевдонімом, ні відносним шляхом) |
+
+Для всіх файлів заборонені також імпорт іншого застосунку (`shop/…`, `console/…`) і `@polivalko/shared/api/server`
+(серверний клієнт API вітрини). Псевдонім `@/` — це `src/`.
+
+Ребра між фічами (`edges` в `apps/console/eslint.config.mjs`, список `features` — 15 фіч): кожна фіча може брати
+`auth`; `navigation` — лише `auth`; `search` — ще й `navigation`; `site` — ще й `content` і `catalog`; `settings` — ще й
+`content` і `integration`; `auth` не залежить від жодної. Ребра `site` і `settings` до `content`, `catalog` та
+`integration` дозволені наперед і зараз не використовуються: ці три фічі не мають `index.ts`, а `site` і `settings`
+тримають власні дрібні копії (`FormAlert`, `ListError`, `SectionCard`, `lib/useSaveForm.ts`, у `site` — ще й
+`ImageField`). Фактично
+фічі імпортують лише `@/features/auth` і (з `search`) `@/features/navigation`. Публічний API (`index.ts`) мають
+три фічі:
+
+| Фіча | `index.ts` |
+| --- | --- |
+| `auth` | `AuthProvider`, `useAuth`, `usePermissions`, `Can`, `PermissionGate`, `AccessDenied`, `PagePermissionBoundary`, `ProtectedRoute`, `ChangePasswordModal`, `LoginPage`, типи `AuthContextValue`, `AuthStatus` |
+| `navigation` | `NavigationProvider`, `useNavigation`, `NAV_SECTIONS`, `findActive`, `isNavItemAllowed`, `matchesPath`, `sectionByPrefix`, типи `ConsoleSummary`, `NavBadgeTone`, `NavItem`, `NavSection` |
+| `search` | `SearchPalette`, `SearchButton` |
+
+Сторінки решти фіч бере лише реєстр маршрутів (`app/routes/lazyConsolePages.ts`, `React.lazy`), тож `index.ts` їм не
+потрібен. Нове ребро — запис у `edges` і експорт із `index.ts` фічі-залежності.
+
+`eslint.config.mjs` — flat config без спільного `web/eslint.boundaries.mjs`: `@eslint/js` і `typescript-eslint`
+(recommended), `react-hooks` 7 (правила React Compiler: без синхронного `setState` у тілі ефекту, без читання ref під
+час рендеру), `react-refresh` для Vite і правила `no-restricted-imports` з таблиці вище. Єдиний виняток —
+`react-hooks/incompatible-library` вимкнено для `src/shared/ui/data-table/DataTable.tsx` (TanStack Table).
+
+### 15.3. Дерево
+
+```
+web/apps/console/
+├─ index.html            lang="uk", translate="no", robots noindex, nofollow, theme-color, favicon, #root
+├─ vite.config.ts        псевдонім @ → src, порт 3001, проксі /api, VITE_SITE_URL, чанки вендорів
+├─ serve.Caddyfile       роздача dist/ у контейнері (розділ 15.9)
+├─ eslint.config.mjs     межі шарів і фіч (розділ 15.2)
+├─ tsconfig.json         посилання на tsconfig.app.json (src) і tsconfig.node.json (vite.config.ts)
+├─ public/favicon.ico
+└─ src/
+   ├─ main.tsx           index.css першим, installApiMiddleware(), перезавантаження після vite:preloadError, StrictMode
+   ├─ index.css          Onest (@fontsource), стилі Mantine, токени бренду
+   ├─ env.d.ts           тип import.meta.env.VITE_SITE_URL
+   ├─ app/               каркас
+   │  ├─ App.tsx         /login, захищений макет, маршрути з реєстру, 404
+   │  ├─ providers/      MantineProvider(theme) → DatesProvider(uk) → Notifications → BrowserRouter → AuthProvider
+   │  ├─ layout/         ConsoleLayout; components/: ConsoleHeader, ConsoleSectionNav, ConsoleSectionTabs,
+   │  │                  ConsoleMobileNav, ConsoleAccountMenu, ConsoleMain, NavBadge; layout.css
+   │  └─ routes/         consoleRoutes.ts (реєстр маршрутів і перенаправлень), lazyConsolePages.ts,
+   │                     ConsoleRouteElement.tsx, ConsoleRedirect.tsx (PathRedirect, SectionRedirect), lazyRoute.tsx
+   ├─ features/
+   │  ├─ auth/           сесія й права (AuthProvider, usePermissions), вхід, ProtectedRoute, Can, AccessDenied,
+   │  │                  PagePermissionBoundary, зміна власного пароля
+   │  ├─ navigation/     модель меню (розділи, пункти, ключі, бейджі), NavigationProvider, зведення /console/summary
+   │  ├─ search/         кнопка пошуку й палітра Ctrl+K
+   │  ├─ dashboard/      Дашборд: стан, черга, «Потребує уваги» (лічильники товарів), показники
+   │  ├─ orders/         список (еталон сторінки списку) і картка замовлення з друком і нотаткою для працівників
+   │  ├─ returns/        список повернень коштів (ReturnsPage)
+   │  ├─ customers/      покупці: вкладки «За замовленнями» й «Кабінети», картка кабінету (AccountPage)
+   │  ├─ requests/       заявки на послуги
+   │  ├─ catalog/        товари (вкладки наповнення, масові дії) і редактор товару, категорії, довідники
+   │  │                  характеристик, брендів і міток (AttributesPage, BrandsPage, LabelsPage), добірки, імпорт
+   │  ├─ content/        текстові сторінки й редактор (з SEO), напрямки послуг (з фото)
+   │  ├─ site/           головна (HomeSettingsPage), банери (BannersPage), SEO: перенаправлення й мета-шаблони (SeoPage)
+   │  ├─ settings/       магазин (контакти, особливі дні, реквізити), доставка й точки самовивозу, оплата й чеки,
+   │  │                  сповіщення (ShopSettingsPage, DeliverySettingsPage, PaymentSettingsPage, NotificationSettingsPage)
+   │  ├─ integration/    фонові завдання, запуски, черга операцій, Нова пошта
+   │  ├─ audit/          журнал змін
+   │  └─ staff/          працівники, ролі і права
+   └─ shared/
+      ├─ api/            client.ts (api, installApiMiddleware, apiFetch), csrf.ts, problem.ts, useApiQuery.ts, download.ts
+      ├─ auth/           permissionKeys.ts, permissions.ts, permissionsApi.ts
+      ├─ lib/            events.ts, siteUrl.ts, useDocumentTitle.ts
+      ├─ theme/          theme.ts; CSS чипів, алертів, полів вибору (Select), сегментованих перемикачів
+      └─ ui/             data-table/, paginator/, page-header-actions/, ListPage, FilterBar, ScreenTabs, PageHeader,
+                         PageState, PlaceholderPage, AppModal, AppDrawer, ConfirmDialog, AppDateInput, DateRangeFilter,
+                         AppErrorBoundary, StatusChip, TableChip, Money (Money, NumberValue, CellStack), notify
+```
+
+Будова фічі: `features/<фіча>/{api,components,lib,pages}`, `index.ts` — лише якщо фічу імпортують інші. Сторінка —
+`pages/<Назва>Page.tsx` з іменованим експортом (`export function AuditPage()`), поруч її CSS (`audit.css`). Файли
+компонентів — PascalCase (`OrdersFilters.tsx`), колонки таблиць — `<назва>Columns.tsx`, стан списку —
+`lib/use<Назва>State.ts`, запити — `api/<назва>Api.ts`. Класи мають префікс фічі (`orders-…`, `audit-…`).
+
+### 15.4. Маршрути й каркас
+
+Адреса повторює меню: `/sales/…`, `/catalog/…`, `/site/…`, `/settings/…`, `/system/…`.
+
+| Шлях | Заголовок | Сторінка (`features/…/pages`) | Право |
+| --- | --- | --- | --- |
+| `/` | Дашборд | `dashboard/DashboardPage` | `dashboard.page.view`; без нього `/` веде на перший доступний пункт меню (`redirectWhenDenied`) |
+| `/sales/orders`, `/sales/orders/:number` | Замовлення | `orders/OrdersPage`, `OrderPage` | `orders.page.view` |
+| `/sales/requests` | Заявки | `requests/RequestsPage` | `requests.page.view` |
+| `/sales/returns` | Повернення | `returns/ReturnsPage` | `orders.page.view` |
+| `/sales/customers` | Покупці | `customers/CustomersPage` (`?tab=accounts` — «Кабінети») | `customers.page.view` |
+| `/sales/customers/accounts/:id` | Кабінет покупця | `customers/AccountPage` | `customers.page.view` |
+| `/catalog/products`, `/catalog/products/:id` | Товари, Товар | `catalog/ProductsPage`, `ProductPage` | `catalog.products.view` |
+| `/catalog/categories` | Категорії | `catalog/CategoriesPage` | `catalog.categories.manage` |
+| `/catalog/attributes` | Характеристики | `catalog/AttributesPage` | `catalog.attributes.manage` |
+| `/catalog/brands` | Бренди | `catalog/BrandsPage` | `catalog.brands.manage` |
+| `/catalog/labels` | Мітки | `catalog/LabelsPage` | `catalog.labels.manage` |
+| `/catalog/collections` | Добірки | `catalog/CollectionsPage` | `catalog.collections.manage` |
+| `/catalog/import` | Імпорт (без пункту меню) | `catalog/ImportPage` | `catalog.import.run` |
+| `/site/home` | Головна | `site/HomeSettingsPage` | `site.home.manage` |
+| `/site/banners` | Банери | `site/BannersPage` | `site.home.manage` |
+| `/site/pages`, `/site/pages/:slug` | Сторінки, Сторінка | `content/ContentPagesPage`, `ContentPageEditorPage` | `content.site.manage` |
+| `/site/services` | Послуги | `content/ServicesPage` | `content.site.manage` |
+| `/site/seo` | SEO | `site/SeoPage` (`?tab=redirects` або `?tab=templates`) | `catalog.redirects.manage` або `site.seo.manage` (`alsoAllowedBy`); кожна вкладка — лише зі своїм ключем |
+| `/settings/shop` | Магазин | `settings/ShopSettingsPage` | `settings.shop.manage` |
+| `/settings/delivery` | Доставка | `settings/DeliverySettingsPage` | `delivery.pickup.manage` |
+| `/settings/payments` | Оплата й чеки | `settings/PaymentSettingsPage` | `integration.status.view` |
+| `/settings/notifications` | Сповіщення | `settings/NotificationSettingsPage` | `settings.notifications.manage` |
+| `/system/integrations` | Інтеграції | `integration/IntegrationPage` | `integration.status.view` |
+| `/system/staff` | Працівники | `staff/StaffPage` | `staff.users.manage` |
+| `/system/roles` | Ролі і права | `staff/RolesPage` | `staff.roles.manage` |
+| `/system/audit` | Журнал | `audit/AuditPage` | `audit.page.view` |
+
+`/login` — без права; будь-яка інша адреса — «Сторінку не знайдено» всередині каркаса.
+
+**Перенаправлення старих адрес** (`consoleRedirects` у `consoleRoutes.ts`, `PathRedirect` — `<Navigate replace>`;
+параметри шляху підставляються, query й hash зберігаються, а query з цілі, як-от `tab=redirects`, має пріоритет):
+
+| Було | Стало |
+| --- | --- |
+| `/orders`, `/orders/:number` | `/sales/orders`, `/sales/orders/:number` |
+| `/customers`, `/requests` | `/sales/customers`, `/sales/requests` |
+| `/catalog/redirects` | `/site/seo?tab=redirects` |
+| `/content`, `/content/pages`, `/content/pages/:slug` | `/site/pages`, `/site/pages/:slug` |
+| `/content/services` | `/site/services` |
+| `/content/contacts` | `/settings/shop` |
+| `/content/pickup` | `/settings/delivery` |
+| `/integration`, `/audit` | `/system/integrations`, `/system/audit` |
+| `/staff`, `/staff/roles` | `/system/staff`, `/system/roles` |
+
+Голі префікси `/sales`, `/catalog`, `/site`, `/settings`, `/system` (`sectionRedirects`, `SectionRedirect`) ведуть на
+перший пункт розділу, доступний працівнику, або показують «Сторінку не знайдено», якщо доступного немає; так колишня
+адреса списку товарів `/catalog` відкриває «Товари». Усі внутрішні посилання консолі (дашборд, журнал, пошук, картки)
+використовують нові адреси.
+
+`ConsoleRouteElement` для кожного маршруту з реєстру: чекає, доки завантажаться права; без права (і без жодного з
+`alsoAllowedBy`) показує `AccessDenied` («Недостатньо прав»: якій ролі не надано яке право, кнопка «На головну» на
+перший доступний пункт), а маршрут із `redirectWhenDenied` (лише `/`) замість цього веде на перший доступний пункт;
+ставить заголовок вкладки `<заголовок> · Консоль PoliValko`; загортає ліниву сторінку в `Suspense` і
+`AppErrorBoundary` («Щось пішло не так» замість білого екрана).
+
+**Вхід.** `ProtectedRoute` показує лоадер, поки сесія невідома, а гостя веде на `/login`, запам'ятавши адресу в
+`state.from`; після входу консоль повертає туди. Повертає лише на локальний шлях (не `//…`, не `/\…`, не `/login`).
+Якщо сесія закінчилася посеред роботи (401 на будь-якому запиті, крім входу й зміни пароля), адреса зберігається в
+`sessionStorage` (`pv-console:return-path`), CSRF-токен забувається, а після повторного входу консоль відкриває ту саму
+сторінку.
+
+**Каркас** (`ConsoleLayout` на Mantine `AppShell`, шапка 108 px у два ряди):
+
+- ряд 1: «PoliValko» з позначкою «консоль» (посилання на `/`); розділи Дашборд / Продажі / Каталог / Сайт /
+  Налаштування / Система (`ConsoleSectionNav`) — звичайні посилання з сумарним бейджем розділу: кожне веде на першу
+  сторінку розділу, доступну працівнику, активний розділ підсвічено; кнопка «Пошук» з підказкою Ctrl K; кнопка вітрини
+  (нова вкладка); меню облікового запису (ім'я, email, роль, «Змінити пароль», «Вийти»);
+- ряд 2 — заголовок сторінки: вкладки поточного розділу з бейджами (`ConsoleSectionTabs`) — єдине місце, де на широкому
+  екрані видно сторінки розділу. Вкладки малюються, лише коли працівнику доступні хоча б дві сторінки розділу (у
+  «Дашборда» їх немає). На сторінках деталей замість вкладок — заголовок сторінки, наприклад хлібні крихти замовлення,
+  кабінету покупця чи імпорту; праворуч дії сторінки, які сторінка передає через `PageHeader`;
+- на ширині до 64em (1024 px) меню розділів ховається, з'являється бургер з лівою шухлядою з усіма розділами,
+  пошук стає іконкою; до 36em кнопки дій з іконкою стискаються до іконки (підпис лишається для екранних читачів);
+- робоча рамка `.console-frame` під шапкою: сторінка списку займає її всю й сама не прокручується (прокручується
+  таблиця), форми й картки прокручують рамку.
+
+**Меню** (`features/navigation/lib/navigationModel.ts`):
+
+| Розділ (`prefix`) | Пункти | Бейдж |
+| --- | --- | --- |
+| Дашборд | Дашборд (`/`) | — |
+| Продажі (`/sales`) | Замовлення, Заявки, Повернення, Покупці | Замовлення — нові й ті, що чекають підтвердження; Заявки — нові |
+| Каталог (`/catalog`) | Товари, Категорії, Характеристики, Бренди, Мітки, Добірки | — |
+| Сайт (`/site`) | Головна, Банери, Сторінки, Послуги, SEO | — |
+| Налаштування (`/settings`) | Магазин, Доставка, Оплата й чеки, Сповіщення | — |
+| Система (`/system`) | Інтеграції, Працівники, Ролі і права, Журнал | Інтеграції — невиконані операції черги (червоний) |
+
+Пункт без права прихований (`isNavItemAllowed`: ключ пункту або будь-який з `alsoAllowedBy`, як у «SEO»), розділ без
+доступних пунктів зникає, а посилання розділу у верхньому ряду веде на перший доступний пункт (наприклад, без права на
+замовлення «Продажі» відкривають «Заявки»). Активний пункт — найдовший шлях, що збігається з адресою; сторінка без
+пункту меню (`/catalog/import`) підсвічує розділ за `prefix`. Бейджі беруться з `GET /api/v1/console/summary` (кожні
+60 с і після `notifySummaryStale()`); бейдж розділу — сума бейджів його пунктів, червоний, якщо серед них є червоний.
+
+**Пошук Ctrl+K** (`SearchPalette`): відкривається Ctrl/⌘+K, клавішею `/` поза полями вводу або кнопкою в шапці. До двох
+символів показує доступні пункти меню; з двох — `GET /api/v1/console/search?q=` (затримка 180 мс) з групами
+«Замовлення», «Товари», «Покупці». Групи, на які немає права, сервер не повертає. Стрілки вибирають, Enter відкриває.
+
+**`<head>`** задає `index.html`: `lang="uk"`, `translate="no"`, `robots: noindex, nofollow`, `theme-color`, favicon і
+базова назва «Консоль PoliValko». Заголовок вкладки ставлять `useDocumentTitle` / `useDefaultDocumentTitle`.
+
+### 15.5. API, CSRF і дані
+
+- **Клієнт.** `api` з `@/shared/api/client` — той самий openapi-fetch `browserApi` з пакета з middleware, яку
+  `main.tsx` ставить один раз (`installApiMiddleware`): відповідь 401 (крім `/auth/login` і `/auth/password`) — подія
+  `unauthorized`, вихід і повернення після входу. `apiFetch(url, init)` — те саме для звичайного `fetch` (CSV, файли).
+- **CSRF** (`@/shared/api/csrf`): токен з `GET /api/v1/console/auth/csrf` кешується промісом;
+  `withCsrf((headers) => api.POST(…, { headers, body }))` додає `X-CSRF-TOKEN` і один раз повторює запит після
+  `auth.csrf_invalid`; `forgetCsrf()` — після входу й виходу. Функції в `api/*Api.ts` фіч приймають заголовки першим
+  аргументом. Фото товару й файл імпорту йдуть через `apiFetch` з `FormData` і тим самим повтором.
+- **Читання.** `useApiQuery(key, loader, { enabled })` → `status` (`loading`, `ready`, `error`, `forbidden` для 403),
+  `data`, `problem`, `isLoading`, `isFetching`, `reload`, `setData`. Ключ — серіалізований запит
+  (`orders:${JSON.stringify(query)}`); поки вантажиться новий ключ, лишаються попередні дані, і таблиця лише тьмяніє.
+- **Помилки й повідомлення.** `problemMessage(error, fallback)` (окремо обробляє `auth.forbidden`), `fieldErrors(error)`
+  → `{ поле: текст }`, `problemCode`, `NETWORK_ERROR`. Сповіщення Mantine внизу праворуч: `notifySuccess`,
+  `notifyError`, `notifyInfo`, `notifyProblem`.
+- **Події** (`@/shared/lib/events`, `CustomEvent` `pv-console:*` на `window`): `unauthorized`;
+  `permissions-changed` — `notifyPermissionsChanged()` після збереження ролі чи працівника, щоб інтерфейс поточного
+  користувача перечитав права; `summary-stale` — `notifySummaryStale()` після дій, що змінюють лічильники меню;
+  `open-search`.
+- **Ідемпотентність.** Повернення коштів надсилає `Idempotency-Key` з `newIdempotencyKey()` пакета, один ключ на
+  спробу форми.
+- **Файли.** `downloadFile(url, fallbackName)` (CSV замовлень) бере ім'я файлу з `Content-Disposition`.
+
+### 15.6. Права в інтерфейсі
+
+- **Ключі** — `@/shared/auth/permissionKeys`: `PermissionKeys` (напр. `PermissionKeys.Catalog.EditProducts` =
+  `catalog.products.edit`), тип `PermissionKey`, `PERMISSION_LABELS` (назви, як у каталозі сервера), `PERMISSION_KEYS`,
+  `PERMISSION_CATALOG_VERSION` (`2026-11-06.1`, 30 ключів). Рядки ті самі, що в `PermissionKeys` бекенду
+  (`docs/architecture-backend.md`, розділ 5.2). Групи консолі: `Dashboard`, `Orders`, `Customers` (+ `ManageAccounts` =
+  `customers.accounts.manage`), `Requests`, `Catalog` (+ `ManageAttributes`, `ManageBrands`, `ManageLabels`),
+  `Content` (`ManageSite` = `content.site.manage`, `ManagePickup` = `delivery.pickup.manage` — ключі ті самі, хоча в
+  каталозі сервера вони тепер у розділах «Сайт» і «Налаштування»), `Site` (`ManageHome`, `ManageSeo`), `Settings`
+  (`ManageShop`, `ManageNotifications`), `Integration`, `Audit`, `Staff`.
+- **Сесія** (`AuthProvider`): `GET /auth/me`, потім `GET /permissions/me` (`roleId`, `roleName`, `isSuperuser`,
+  `permissionKeys`, `catalogVersion`). Права перечитуються, коли вікно отримує фокус (не частіше ніж раз на 30 с), і
+  після `notifyPermissionsChanged()`. Суперкористувач (роль «Адміністратор») проходить будь-яку перевірку.
+- **Хелпери** з `@/features/auth`:
+  - `usePermissions()` → `can(key)`, `cannot`, `canAny([...])`, `isSuperuser`, `roleName`, `permissionKeys`, `isLoading`;
+  - `<Can permission mode="hide|disable" fallback deniedReason>` — ховає дію або вимикає її з підказкою «Недостатньо
+    прав для цієї дії»; `<PermissionGate permissionKey>` — те саме для блоку;
+  - `<PagePermissionBoundary permissionKey homePath>` — для частини сторінки, якій потрібне власне право: лоадер, поки
+    права вантажаться, без права — `AccessDenied`;
+  - `<AccessDenied permissionKey homePath>` — екран «Недостатньо прав»;
+  - `useAuth()` → `me`, `permissions`, `hasPermission`, `login`, `logout`, `refresh`.
+- **Три рівні:** маршрут (реєстр), пункт меню (модель навігації), дія на сторінці (`can` / `<Can>`). Маршрут і пункт
+  меню можуть мати `alsoAllowedBy` — додаткові ключі, будь-якого з яких досить (зараз лише «SEO»). Дії під окремими
+  ключами: «Експорт CSV» — `orders.export`; вибір рядків, масова зміна статусу, панель «Змінити статус» і редагування
+  нотатки для працівників — `orders.status.change`; форма повернення — `orders.refund.create`; блокування кабінету й
+  лист для скидання пароля — `customers.accounts.manage`; зміна статусу заявки — `requests.status.change`; збереження
+  товару, вибір рядків і масові дії в товарах — `catalog.products.edit` (без нього редактор товару лише для перегляду);
+  вкладки «Перенаправлення» й «Мета-шаблони» на `/site/seo` — `catalog.redirects.manage` і `site.seo.manage`;
+  «Запустити зараз» — `integration.jobs.run`; вкладка «Черга операцій» — `integration.outbox.manage`; «Імпорт» на
+  товарах і «Імпорт каталогу з файлу» на інтеграціях — `catalog.import.run`; історія імпортів — `integration.status.view`.
+  Посилання на іншу сторінку (з дашборда, журналу, покупців, картки замовлення чи кабінету, на довідники брендів, міток
+  і характеристик з редакторів товару й категорії) показуються, лише якщо є право її відкрити.
+- **API ролей** (`@/shared/auth/permissionsApi`, типи зі згенерованої схеми): `getPermissionCatalog`,
+  `getMyPermissions`, `getRoles`, `createRole`, `updateRole`, `deleteRole`, `getRolePermissions`,
+  `updateRolePermissions(headers, id, { expectedVersion, permissionKeys })`.
+
+**Сторінка «Ролі і права»** (`features/staff/pages/RolesPage.tsx`, `/system/roles?role=<id>`):
+
+- ліворуч — список ролей (Адміністратор, далі системні, далі власні за абеткою) з кількістю працівників і прав та
+  позначками «Системна», «Повний доступ», «Ваша роль»; «Нова роль» — у шапці;
+- праворуч — підсумок ролі («Змінити», «Видалити»), рядок фільтрів (пошук за назвою, описом чи ключем; ризик; стан:
+  вибрані, не вибрані, змінені; «Вибрати все» / «Очистити» або «Вибрати показані» / «Зняти показані»), дерево прав за
+  розділами каталогу з лічильником `вибрано/усього`, позначками змін («додано», «знято») і ризику;
+- права, яких немає в ролі поточного працівника, позначено замком: увімкнути їх не можна, зняти — можна (так само
+  перевіряє сервер, `roles.escalation`); Адміністратор цих обмежень не має;
+- нижня панель: «Змін: n» (додано, знято), «Скасувати зміни», «Зберегти». Збереження надсилає повний набір ключів з
+  `expectedVersion`. 409 `roles.version_conflict` → «Права ролі вже змінив інший працівник» і кнопка «Завантажити
+  актуальні права»; якщо версія каталогу на сервері не збігається з версією в правах ролі, збереження заблоковано до
+  перезавантаження; зняття права «Ролі та права» з власної ролі попереджає, що сторінка стане недоступною;
+- незбережені зміни захищено: вибір іншої ролі, перехід за посиланням консолі чи «Оновити» питають «Відхилити зміни?»,
+  закриття вкладки — стандартне попередження браузера;
+- роль «Адміністратор» — лише перегляд; роль, призначену працівникам, не видалити (діалог пропонує «Відкрити
+  працівників» з фільтром за цією роллю).
+
+### 15.7. Списки, таблиці, форми, стилі
+
+Сторінка списку (еталон — `features/orders/**`):
+
+```tsx
+<ListPage>
+  <PageHeader title="Замовлення" actions={<Can permission={PermissionKeys.Orders.Export}>…</Can>} />
+  <OrdersStatusTabs … />
+  <OrdersFilters … actions={<Paginator … />} />
+  <ListPageBody>
+    <DataTable height="100%" manualSorting selection={…} … />
+  </ListPageBody>
+  {selected.size > 0 ? <OrdersBulkBar … /> : null}
+</ListPage>
+```
+
+- **`ListPage`** займає всю робочу рамку й не прокручується; **`ListPageBody`** віддає висоту таблиці;
+  **`ListPageFooter`** — смуга масових дій під таблицею.
+- **`PageHeader`** — заголовок вкладки (`title`), кнопки в другому ряду шапки (`actions`; кнопкам потрібна іконка
+  `leftSection`, бо на вузькому екрані лишається тільки вона), `heading` замість вкладок розділу (сторінки деталей).
+- **`FilterBar`** — один рядок: поле `search` видно завжди; інші фільтри на ширині до 48em ховаються за кнопкою
+  «Фільтри (n)»; `actions` праворуч — скидання фільтрів, «Знайдено: n», пейджер. Пошук спрацьовує через 350 мс, Enter —
+  одразу.
+- **`Paginator`** — розмір сторінки (20, 40, 60, 100), поле номера сторінки, попередня / наступна, «Оновити».
+- **`ScreenTabs`** — вкладки з лічильниками всередині сторінки (статуси замовлень і заявок, вибірки товарів, «За
+  замовленнями» / «Кабінети» в покупцях, «Перенаправлення» / «Мета-шаблони» в SEO, розділи інтеграцій); `hot`
+  підсвічує ненульовий лічильник. Обрана вкладка живе в адресі (`?tab=`, у товарах — набір фільтрів).
+- **`DateRangeFilter`** — пара дат «Від» / «До» для `FilterBar` (замовлення, повернення).
+- **`DataTable`** (TanStack Table 8): колонки `DataTableColumn` (`id`, `header`, `accessor`, `cell`, `width`,
+  `minWidth`, `maxWidth`, `align`, `numeric`, `fill`, `enableSorting`, `sortDescFirst`); липкий заголовок і прокрутка
+  всередині; колонка, що забирає вільну ширину; скелет при першому завантаженні (`isLoading`) і притемнення під час
+  нового запиту (`isFetching`); порожній стан (`emptyText`); горизонтальна прокрутка нижче `minWidth`; серверне
+  (`manualSorting`) або клієнтське сортування; `onRowClick` (клік по посиланню, кнопці чи полю в рядку рядок не
+  відкриває); вибір рядків (`selection`, прапорець «усі на сторінці»). З gba свідомо не перенесено перетягування й
+  закріплення колонок, зміну ширини, меню видимості, збережений макет, перемикач щільності й розгортання рядків.
+- **Стан в URL.** `features/orders/lib/useOrdersState.ts` і `orderFilters.ts` читають і пишуть `q`, `status`,
+  `paymentStatus`, `delivery`, `from`, `to`, `sort`, `page`, `pageSize` через `useSearchParams` (`replace`): типові
+  значення в адресу не пишуться, зміна фільтра скидає сторінку. Вибір рядків прив'язаний до адреси й скидається з
+  будь-якою зміною фільтра чи сторінки.
+- **Вікна.** `AppModal` + `AppModalFooter` — форми (працівник, роль, пароль); `ConfirmDialog` — видалення й масові
+  дії; `AppDrawer` — права шухляда (`compact`, `standard`, `wide`) з прокручуваним тілом і закріпленим футером для
+  редагування без втрати списку з очей (категорія, характеристика, бренд, мітка, добірка, банер, точка самовивозу,
+  напрямок послуг, запис журналу);
+  `AppDateInput` — дата `YYYY-MM-DD` з уводом `дд.мм.рррр`.
+- **Стани й комірки.** `PageState kind="loading|error|forbidden|empty"` з `onRetry`; `CellStack`, `Money`,
+  `NumberValue`, `OrderStatusChip`, `PaymentStatusChip`, `RequestStatusChip`, `TableChip` (тони `neutral`, `document`,
+  `product`, `source`, `storage`, `success`, `warning`, `danger`).
+
+Стилі: тема Mantine (`shared/theme/theme.ts`: шрифт Onest, `primaryColor: brand`, відтінок 6 = `#00A046`, наведення —
+`#008a3c`, текст `#1a1a1a`) і токени в `src/index.css` (`--brand-accent`, `--brand-accent-hover`,
+`--brand-accent-soft`, `--brand-ink`, `--app-ground`, `--app-hot`, `--app-focus-*`). `index.css` (разом зі стилями
+Mantine) імпортується першим у `main.tsx`, інакше Mantine перекриває власні правила. Кожен компонент імпортує свій CSS
+поруч; спільні класи — `.app-cell-*`, `.app-money`, `.app-number`, `.app-section-title`, `.app-filter-*`,
+`.app-screen-tab*`. Випадні списки Mantine рендеряться в портал, тож стилізуються через `classNames` / `comboboxProps`.
+Лінивий чанк сторінки несе власний CSS: на CSS іншої сторінки покладатися не можна.
+
+### 15.8. Що змінилося для працівників
+
+- Бічну панель замінила шапка у два ряди: розділи вгорі, вкладки розділу під ними.
+- Дзвоника зі сповіщеннями немає: нові замовлення, заявки й невиконані операції видно в бейджах меню і на «Огляді».
+- Форми розділів, добірок, точок самовивозу й напрямків послуг, а також запис журналу відкриваються в шухляді праворуч.
+- Свій пароль змінюють у меню облікового запису (або кнопкою «Змінити мій пароль» на сторінці «Працівники»).
+- Дві фіксовані ролі замінено ролями з правами за ключами; нова сторінка «Ролі і права» (`docs/console-guide.md`).
+- Після нового релізу вкладка, що просить уже видалений файл сторінки, один раз перезавантажується сама
+  (`vite:preloadError` у `main.tsx`, не частіше ніж раз на 30 с).
+- Після розширення (розділ 15.11): нове меню й адреси (старі закладки перенаправляються), «Огляд» став «Дашбордом»,
+  «Розділи» — «Категоріями», «Добірки головної» — «Добірками»; контакти переїхали в «Налаштування → Магазин»,
+  самовивіз — у «Налаштування → Доставка», перенаправлення — у «Сайт → SEO»; імпорт відкривається кнопкою з
+  «Товарів» чи «Інтеграцій».
+
+### 15.9. Збірка, Docker, розробка
+
+- **Розробка.** `npm run dev -w console` (з `web/`) — Vite на http://localhost:3001 (`strictPort`). `/api`
+  проксіюється на `API_INTERNAL_URL`, за замовчуванням `http://127.0.0.1:8080` (Caddy Docker-стека) із заголовком
+  `Host: console.localhost:8080`, тож запит проходить сайтом консолі в Caddy так само, як із браузера. Інший `Host` —
+  `API_HOST_HEADER`. Якщо `API_INTERNAL_URL` задано, а `API_HOST_HEADER` ні, `Host` стає адресою цілі: так консоль
+  працює з API з `dotnet run` (`API_INTERNAL_URL=http://localhost:5080`). `npm run preview -w console` — зібраний
+  `dist/` на тому самому порту й з тим самим проксі. Тестові облікові записи — `Seed:Users` в
+  `src/PoliValko.Api/appsettings.Development.json` (Admin — Адміністратор, Manager — Менеджер).
+- **Перевірки й збірка.** `npm run typecheck -w console` (`tsc -b`), `npm run lint -w console` (`eslint .`),
+  `npm run build -w console` (`tsc -b && vite build` → `apps/console/dist`). Вендори розкладено по чанках
+  `vendor-react`, `vendor-mantine`, `vendor-table`, `vendor-icons` і `vendor`; кожна сторінка — окремий лінивий чанк.
+- **`SITE_URL`** вбудовується під час збірки: `vite.config.ts` підставляє `import.meta.env.VITE_SITE_URL` =
+  `VITE_SITE_URL` ?? `SITE_URL` ?? `http://localhost:8080`. З нього `siteUrl(path)` (`@/shared/lib/siteUrl`) будує
+  посилання «На сайті», адреси текстових сторінок і кнопку вітрини в шапці. Після зміни `SITE_URL` образ консолі треба
+  перезібрати (`docs/operations.md`, розділ 4).
+- **Docker.** Ціль `console` у `web/Dockerfile`: образ `caddy:2-alpine`, у `/srv` — `apps/console/dist` з етапу
+  `build` (`npm run build -w console`, `SITE_URL` з build-arg), конфігурація — `apps/console/serve.Caddyfile`: порт 3000,
+  без HTTPS і API керування, стиснення `zstd`/`gzip`, `/assets/*` з `Cache-Control: public, max-age=31536000, immutable`,
+  решта з `no-cache`, будь-який шлях без файлу → `index.html` (адресу на кшталт `/orders/PV-…` можна відкрити напряму).
+- **compose.yaml.** Сервіс `console`: `target: console`, build-args `APP: console` і `SITE_URL`, healthcheck
+  `wget http://127.0.0.1:3000/login` (віддає `index.html`). Змінних середовища й залежності від `api` немає: дані браузер
+  бере через `/api` того самого піддомену, який основний Caddy (`deploy/Caddyfile`) веде в API, а решту — на
+  `console:3000`. Staging перевизначає образ (`polivalko-staging-console`) і `SITE_URL`, production — лише `SITE_URL`
+  (обов'язковий).
+
+### 15.10. Як додати сторінку чи право
+
+1. Сторінка — `src/features/<фіча>/pages/<Назва>Page.tsx` з іменованим експортом і лінивий імпорт у
+   `app/routes/lazyConsolePages.ts`.
+2. Маршрут — запис у `app/routes/consoleRoutes.ts`: `path` під префіксом свого розділу меню (`/sales`, `/catalog`,
+   `/site`, `/settings`, `/system`), `title`, `permissionKey`, за потреби `alsoAllowedBy`, `page`. Якщо сторінка
+   переїжджає, стара адреса — запис у `consoleRedirects`, а всі внутрішні посилання — на нову.
+3. Пункт меню — у `features/navigation/lib/navigationModel.ts` з тими самими ключами (і `badge`, якщо лічильник є в
+   `ConsoleSummaryDto`). Новий розділ — ще й `prefix` у моделі та в `sectionRedirects`.
+4. Сторінка списку — за зразком `orders`: `ListPage` / `FilterBar` / `DataTable`, стан в URL, дії під `can` / `<Can>`.
+5. Новий ключ права — спершу на сервері (`PermissionKeys`, `PermissionCatalog`, нова версія каталогу —
+   `docs/architecture-backend.md`, розділ 5.2), потім той самий рядок у `PermissionKeys`, `PERMISSION_LABELS` і
+   `PERMISSION_CATALOG_VERSION` консолі.
+6. Імпорт з іншої фічі — лише через її `index.ts`; нове ребро — в `edges` у `eslint.config.mjs` і в розділі 15.2.
+7. Перевірка з `web/`: `npm run typecheck -w console`, `npm run lint -w console`, `npm run build -w console`; після змін
+   API — `npm run api:types`.
+
+### 15.11. Розширення консолі (2026-11-05)
+
+Меню перебудовано за дослідженням структури бек-офісів (Shopify, Хорошоп, Prom, KeyCRM, OpenCart): верхній рівень —
+розділи за видом роботи, рідкісне — у «Налаштуваннях» і «Системі». Межі ТЗ збережено: власних знижок, промокодів і
+редагування цін немає (ціни й стара ціна лише з Navkolo, ТЗ §4.6), статус оплати вручну не змінюється, резервів і
+другого платіжного провайдера немає, кинутих кошиків немає (кошик живе в браузері).
+
+| Фіча | Що додано | API (`/api/v1/console/…`) |
+| --- | --- | --- |
+| `returns` (нова) | `ReturnsPage`: усі повернення коштів зі станом грошей і чека | `GET refunds` |
+| `customers` | `CustomersPage` з вкладками «За замовленнями» (колишній список) і «Кабінети», `AccountPage` з блокуванням і листом для скидання пароля | `GET customers`, `GET accounts`, `GET accounts/{id}`, `POST accounts/{id}/lock`, `POST accounts/{id}/password-reset` |
+| `orders` | `OrderNoteCard` («Нотатка для працівників»), рядок «Кабінет» у `OrderBuyerCard` (`customerAccountId`) | `PUT orders/{number}/note` |
+| `dashboard` | `CatalogAttention` («Потребує уваги»: наповнення, нові, приховані з залишком) | `GET catalog/products/counts` |
+| `catalog` | `ProductsTabs` (вибірки), фільтри «Бренд», «Мітка», «Наповнення», `ProductsBulkBar` + `ProductsBulkDialog` (категорія, бренд, ручні мітки), `ProductEditorLabels`, бренд у товарі зі списку; `CategoryForm` з фото, описом і фільтрами з довідника (`MultiSelect`, до 10); `AttributesPage`, `BrandsPage` (+ `BrandMergeDialog`), `LabelsPage`; «Добірки головної» → «Добірки» | `GET catalog/products` (+ `brand`, `labelId`, `fill`, `newDays`, `hiddenWithStock`), `GET catalog/products/counts`, `POST catalog/products/bulk`, `catalog/attributes`, `catalog/brands` (+ `{id}/merge`), `catalog/labels`, `POST media/images` |
+| `content` | `PageSeoFields` у редакторі сторінки, фото в `ServiceDirectionDrawer` | `content/pages`, `content/services`, `POST media/images` |
+| `site` (нова) | `HomeSettingsPage` (блоки, смуга оголошення, переваги, кроки, блок магазину), `BannersPage` + `BannerDrawer` (з `kicker` — «Надпис над заголовком»), `SeoPage` з `RedirectsPanel` (перенесено з `catalog`) і `SeoTemplatesPanel` | `site/home`, `site/banners` (+ `PUT site/banners/order`), `site/seo-templates`, `catalog/redirects`, `POST media/images` |
+| `settings` (нова) | `ShopSettingsPage` (форма контактів з колишньої `ContactsPage` + особливі дні, соцмережі з Viber, реквізити), `DeliverySettingsPage` (перемикачі способів + точки самовивозу з колишньої `PickupPage`), `PaymentSettingsPage` (лише читання), `NotificationSettingsPage` (з тестовим повідомленням) | `content/contacts`, `settings/shop`, `settings/delivery`, `delivery/pickup-points`, `settings/payments`, `settings/notifications` (+ `POST …/test`) |
+| `integration` | кнопка «Імпорт каталогу з файлу» й посилання з рядка імпорту ведуть на `/catalog/import` | — |
+
+Видалено сторінки `content/pages/ContactsPage`, `content/pages/PickupPage` і `catalog/pages/RedirectsPage`: їхні
+форми живуть у `settings` і `site`. Фото категорій, брендів, банерів і напрямків послуг вантажаться через
+`POST /api/v1/console/media/images` (`FormData`, той самий повтор CSRF), фото товарів — як і раніше, через
+`catalog/products/{id}/images`. Форми «Головна», «Магазин» і редактор сторінки зберігаються ще й Ctrl/⌘+S; форми
+«Головна», «Магазин», «Доставка», «Сповіщення» й редактор сторінки попереджають про незбережені зміни під час
+закриття вкладки (`beforeunload`).
+
+`features/audit/lib/auditLabels.ts` має назви всіх дій і типів об'єктів, які пише бекенд (зокрема `order.note_changed`,
+`catalog.attribute_*`, `catalog.brand_*`, `catalog.label_*`, `site.*`, `settings.*`, `customer.*`, `media.image_uploaded`);
+новий код дії бекенду треба додати туди, інакше журнал покаже його кодом.
+
+Перевірка 2026-11-05: `npm run typecheck -w console` і `npm run lint -w console` — без помилок.
+
+## 16. Вітрина: дані з консолі (2026-11-05)
+
+З розширенням консолі частина вітрини, що була зашита в коді, береться з API. Фічі, маршрути й `edges` вітрини не
+змінилися; нові публічні експорти — розділ 3.2, сервер — `docs/architecture-backend.md`, розділи 5.3–5.4.
+
+### 16.1. Звідки що береться
+
+| Що на вітрині | Звідки | Де в коді |
+| --- | --- | --- |
+| Слайдер першого екрана | `GET /api/v1/site/home` → `banners` (увімкнені й у межах дат, за порядком): фото для комп'ютера й телефона, надпис над заголовком (`kicker`), заголовок, текст, кнопка. Без банерів — тимчасові `heroSlides` | `home/lib/hero-slides.ts` (`bannerSlides`), `home/components/hero-slider.tsx` |
+| Склад і порядок головної | `site/home` → `blocks`: невідомі й повторені ключі відкидаються, вимкнені пропускаються; без даних — усі вісім у типовому порядку. Без слайдера на сторінці лишається прихований `h1` | `home/lib/home-blocks.ts`, `home/components/home-screen.tsx` |
+| Переваги, кроки, блок «Магазин у Бучі» | `site/home` → `perks`, `steps`, `visit`; порожньо — типові тексти з коду; адреса, графік і телефон блоку — з контактів | `perks.tsx`, `steps.tsx`, `store-visit.tsx` |
+| Смуга оголошення | `site/home` → `announcement` (сервер віддає лише увімкнене в межах дат), посилання — `next/link` | `layout/components/announcement-bar.tsx` у `SiteHeader` |
+| Добірки | усі видимі добірки з товарами за порядком: перша — лукбук-секція й стрічка, решта — стрічки (раніше лише перша) | `home/components/collection-pair.tsx` (`CollectionPairs`) |
+| Знижки | лише товари в наявності зі справжньою знижкою (`discountPercent` не `null`); якщо таких немає, блок не рендериться (раніше підставлялися будь-які товари в наявності) | `home/components/offers-pair.tsx` |
+| Мітки товарів | `labels` (`ProductLabelBadgeDto { name, tone }`) у плитці й на сторінці товару. На плитці перша мітка до 10 символів — стрічка в правому куті фото (`splitRibbon`), решта — чипи; у блоці покупки — чипи над назвою | `catalog/components/tile-flashes.tsx`, `product-labels.tsx`, `catalog/lib/labels.ts`, `product/components/product-buybox.tsx` |
+| Фото й опис категорії | `imageUrl` і `description` у `CategoryNodeDto` / `CategoryDto`: фото — плитка, мобільне меню, `openGraph`; опис — абзаци за рядками під заголовком | `categoryPhotoUrl`, `catalog/components/category-intro.tsx`, `category-head.tsx` |
+| Фото напрямків послуг | `imageUrl` у `ServiceDirectionDto` → мініатюра 72 px біля напрямку | `services/components/services-screen.tsx` |
+| SEO товарів і категорій | `seoTitle` / `seoDescription` з API (порожні сервер заповнює мета-шаблоном) через `pageTitle`; заголовок категорії тепер теж з `seoTitle` | маршрути `product/[slug]`, `catalog/[slug]` |
+| SEO текстових сторінок | `seoTitle` / `seoDescription` у `PageDto` → `pageMetadata` | маршрути `offer`, `privacy`, `returns`, `payment-delivery` |
+| Футер | реквізити продавця (`getSeller`: назва, код, адреса) замість рядка «Прототип магазину…»; соцмережі через `socialLinks` (з Viber); до трьох найближчих особливих днів | `layout/components/footer-seller.tsx`, `footer-contacts.tsx` |
+| Контакти | соцмережі з Viber, особливі дні під графіком | `content/components/contacts-screen.tsx` |
+| Оформлення | способи отримання з `POST /api/v1/checkout/quote` за налаштуваннями доставки: самовивіз лише коли він увімкнений і є активна точка (раніше вимкнення останньої точки давало 500 під час замовлення); `description` (зона кур'єра) і `priceNote` під назвою способу, `priceNote` — і в підсумку замість «За тарифами перевізника»; немає жодного способу — повідомлення «Зараз немає доступних способів отримання»; обраний спосіб, якого вже немає, замінюється першим доступним; помилки `delivery.method` / `payment.method` перечитують розрахунок | `checkout/hooks/use-checkout.ts`, `checkout/components/checkout-delivery.tsx`, `checkout-summary.tsx` |
+
+### 16.2. Кеш
+
+| Функція | `cacheLife` | `cacheTag` | Хто скидає |
+| --- | --- | --- | --- |
+| `getSiteHome`, `getAnnouncement` | `minutes` | `content`, `site`, `home` | збереження головної й банерів у консолі |
+| `getSeller`, `getContacts` | `hours` | `content` | збереження «Магазину» (реквізити, особливі дні) і контактів |
+| `getPage(slug)` | `hours` | `content`, `page:<slug>` | збереження сторінки |
+| `getPickupPoints` | `hours` | `delivery` | збереження налаштувань доставки й точок |
+
+- **Смуга оголошення — у кешованій статичній оболонці.** `AnnouncementBar` стоїть у `SiteHeader` у `Suspense` без
+  `connection()`, тож її HTML збирається разом зі статичною оболонкою кожної сторінки. Найкоротший `cacheLife` в
+  оболонці задає ревалідацію маршруту, тому всі попередньо зібрані сторінки (22 у `.next/prerender-manifest.json`)
+  тепер мають Revalidate 1m і Expire 1h (профіль `minutes`). Це очікувана зміна таблиці `next build` (інваріант 4
+  розділу 5 стосується лише позначок ○ / ◐ / ƒ).
+- Головна (`HomeContent`), футер (`FooterSeller`, `FooterContacts`), контакти й блок магазину викликають
+  `connection()`: вони рендеряться на кожен запит, але дані беруть із кешованих функцій вище.
+- Сервер скидає теги через `/internal/revalidate` (`revalidateTag(tag, "max")`): перший запит після скидання ще може
+  отримати попередній варіант, наступні — новий. Мета-шаблони, мітки, бренди й характеристики скидають `catalog`,
+  `products` і `categories` / `collections`. Окремо API тримає ввімкнені банери в пам'яті 1 хв, а налаштування — 30 с
+  (`ISettingsStore`), тож працівнику кажемо «протягом хвилини».
+
+### 16.3. CSS
+
+Три нові сегменти: `layout/styles/announce.css` (одразу після `layout.css` пакета, перед `header.css`),
+`catalog/styles/labels.css` (після `flashes.css`) і `catalog/styles/category-intro.css` (після `listing.css`); маніфест
+вітрини — 71 рядок. Тон мітки задає `data-tone` (`green`, `red`, `orange`, `blue`, `gray`, `dark`): зелений, червоний,
+сірий і темний — токени вітрини, помаранчевий і синій — власні значення сегмента.

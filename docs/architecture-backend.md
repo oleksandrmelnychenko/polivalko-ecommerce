@@ -17,14 +17,18 @@ src/
     Audit/         AuditEntry, IAuditLog, EfAuditLog, AuditEntryConfiguration
     Idempotency/   IdempotencyRecord(+Configuration), IdempotencyFilter, IdempotencyHeaders,
                    IdempotencyEndpointExtensions, IdempotencyCleanupService
-    Media/         MediaOptions, StoredMedia, MediaValidationException, IMediaStorage, LocalMediaStorage, MediaEndpointExtensions
+    Media/         MediaOptions, StoredMedia, MediaValidationException, IMediaStorage, LocalMediaStorage, MediaEndpointExtensions,
+                   ImageUrls (перевірка адреси фото: відносна /api/media/... або https://)
     Outbox/        IOutboxMessage, IOutboxHandler, IOutbox, EfOutbox, OutboxJson, OutboxMessage, OutboxStatus,
                    OutboxMessageConfiguration, OutboxOptions, OutboxRetryPolicy, OutboxProcessor,
                    OutboxHandlerRegistry, OutboxDispatcherService
     Persistence/   PoliValkoDbContext, IModelConfigurator, Schemas, SqlLike, Migrations/ (не змінюються)
-    Security/      StaffUser, StaffRoles, StaffClaims, StaffPolicies, IdentityModel, AuthProblems,
-                   CsrfFilter, CsrfHeaders, CsrfTokenDto, StaffEndpointExtensions (RequireStaff, RequireCsrf
-                   для маршруту й для групи)
+    Security/      StaffUser, StaffRole, StaffRolePermission, StaffRoles, StaffClaims, StaffPolicies,
+                   IdentityModel, AuthProblems, CsrfFilter, CsrfHeaders, CsrfTokenDto, StaffEndpointExtensions
+                   (RequireStaff, RequirePermission, RequireCsrf для маршруту й для групи)
+      Permissions/ PermissionKeys, PermissionCatalog, PermissionDefinition, PermissionRequirement,
+                   PermissionPolicyProvider, PermissionAuthorizationHandler, IStaffAccessResolver, StaffAccess
+    Settings/      PlatformSetting (+Configuration, таблиця platform.settings), ISettingsStore, SettingsStore, SettingsCache
     Storefront/    SiteOptions, StorefrontOptions, IStorefrontCache, StorefrontCache, StorefrontTags
     Sync/          ScheduledJobService, ISyncJournal, SyncJournal, SyncOptions, IntegrationAlert, SyncState,
                    SyncRun, SyncRunStatus, SyncError, SyncResult, SyncStateConfiguration, SyncRunConfiguration
@@ -60,16 +64,23 @@ tests/                               теки дзеркальні до моду
     Customers/      CustomerRulesTests (блокування, токени, правила пароля, коди адрес = коди checkout)
     Delivery/       DeliveryTests, NovaPoshtaClientTests
   PoliValko.IntegrationTests/
-    Infrastructure/ ApiFactory (+ [AssemblyFixture] і послідовне виконання), Staff, Accounts (покупці: CSRF,
+    Infrastructure/ ApiFactory (+ [AssemblyFixture] і послідовне виконання; після міграції — синхронізація довідників
+                    каталогу й початкові дані сайту; підмінює канал сповіщень менеджеру (RecordingNotifier) і кеш вітрини
+                    (RecordingStorefront — записує скинуті теги)), Staff, TestRoles (працівник з роллю з заданими правами), Accounts (покупці: CSRF,
                     реєстрація, вхід), RecordingMailer (перехоплює листи з токенами), TestJson, ProblemBody
-    Catalog/        CatalogApiTests, CatalogFacetsTests, ConsoleCatalogApiTests, ConsoleProductStockApiTests, FavoritesApiTests
-    Content/        ServiceRequestApiTests, SiteContentApiTests
-    Customers/      AccountApiTests, AccountAddressApiTests
-    Delivery/       DeliveryApiTests
-    Identity/       AuthApiTests, StaffApiTests
-    Ordering/       CheckoutApiTests, ConsoleOrderApiTests, ConsoleCustomerApiTests, AccountOrderApiTests, TestOrders
+    Catalog/        CatalogApiTests, CatalogFacetsTests, ConsoleCatalogApiTests, ConsoleProductStockApiTests, FavoritesApiTests,
+                    ConsoleAttributeApiTests, ConsoleBrandApiTests, ConsoleLabelApiTests, ConsoleProductFiltersApiTests,
+                    CategoryContentAndSeoApiTests, CatalogDictionaries (помічник)
+    Content/        ServiceRequestApiTests, SiteContentApiTests, SiteHomeApiTests, PageSeoAndServiceApiTests, SeoTemplatesApiTests
+    Customers/      AccountApiTests, AccountAddressApiTests, ConsoleAccountApiTests
+    Delivery/       DeliveryApiTests, DeliverySettingsApiTests
+    Identity/       AuthApiTests, StaffApiTests, RoleApiTests
+    Ordering/       CheckoutApiTests, ConsoleOrderApiTests, ConsoleCustomerApiTests, AccountOrderApiTests,
+                    ConsoleRefundAndNoteApiTests, ShopSettingsApiTests, TestOrders
     Payments/       PaymentsApiTests
-    Console/        ConsoleDashboardApiTests, ConsoleSearchApiTests, IntegrationApiTests
+    Console/        ConsoleDashboardApiTests, ConsoleSearchApiTests, IntegrationApiTests, ConsoleMediaAndPermissionApiTests,
+                    PaymentSettingsApiTests
+    Notifications/  NotificationSettingsApiTests
 ```
 
 ## 2. Правила залежностей
@@ -86,8 +97,8 @@ tests/                               теки дзеркальні до моду
 
 - Посилання між проєктами (`ProjectReference`): Content → Notifications; Customers → Delivery, Notifications;
   Catalog → Customers; Ordering → Catalog, Customers, Delivery, Notifications; Payments → Customers, Ordering;
-  Fiscal → Customers, Ordering; Navkolo → Catalog, Ordering; Console → Catalog, Content, Delivery, Navkolo, Ordering,
-  Payments. Межу задає не посилання на проєкт, а простір імен `Contracts`, і її перевіряє архітектурний тест.
+  Fiscal → Customers, Ordering; Navkolo → Catalog, Ordering; Console → Catalog, Content, Delivery, Fiscal, Navkolo,
+  Ordering, Payments. Межу задає не посилання на проєкт, а простір імен `Contracts`, і її перевіряє архітектурний тест.
 - Customers стоїть «вище» за Catalog, Ordering, Fiscal і Payments: їм потрібні з його `Contracts` ідентифікатор
   покупця з `ClaimsPrincipal`, політика й `RequireCustomer()`. Тому Customers не може посилатися на Catalog чи
   Ordering (цикл проєктів). Звідси два рішення: коди способів доставки збережених адрес Customers тримає у власному
@@ -123,13 +134,14 @@ tests/                               теки дзеркальні до моду
 | --- | --- |
 | Catalog | `ICatalogPricing` + `ProductPricing`; `ICatalogFreshness`; `ICatalogImporter` + `NavkoloProductRecord`, `PriceStockRecord`, `CatalogImportResult`; `ProductAttributeDto`; `ICatalogDemoFeed` (джерело демо-записів для заглушки Navkolo); `ICatalogReporting` (картки товарів, товари, що закінчуються, пошук товарів для консолі) |
 | Content | `ServiceRequestSubmitted`; `IServiceRequestStats` (кількість нових заявок) |
-| Delivery | `IDeliveryDirectory`, `Settlement`, `Warehouse`, `WarehouseType`, `PickupPoint`; `DeliveryJobs.NovaPoshtaDirectory` |
+| Delivery | `IDeliveryDirectory` (населені пункти й відділення), `Settlement`, `Warehouse`, `WarehouseType`, `PickupPoint`; `IDeliveryAvailability` + `DeliveryAvailability` (які способи доставки й чи є післяплата зараз увімкнені, точка самовивозу — лише коли самовивіз увімкнений і є активна точка); `DeliveryJobs.NovaPoshtaDirectory` |
 | Navkolo | `NavkoloJobs`; `ImportRunDto` (+ `ImportRunDto.From(SyncRun)`); `INavkoloSettings` (режим інтеграції) |
-| Customers | `CustomerClaims` (тип claim, `CustomerId(ClaimsPrincipal)` → `Guid?`), `CustomerPolicies.Customer`, `CustomerEndpointExtensions.RequireCustomer()` (політика + CSRF + 401 у документі); порт `ICustomerDirectory` (Ordering: id покупця з підтвердженим email); гачок `ICustomerEmailConfirmedHandler` (реалізує Ordering) |
-| Notifications | `IManagerNotifier`, `ManagerNotification`; `ICustomerMailer` (листи покупцю: підтвердження email, відновлення пароля) |
-| Ordering | повідомлення `OrderPlaced`, `PaymentSucceeded`, `OrderExportRequested`, `FiscalReceiptRequested` + `FiscalTrigger`, `RefundRequested`; перелічення `OrderStatus`, `PaymentStatus`, `PaymentMethod`, `DeliveryMethod`, `RefundMethod`, `RefundStatus`; `DeliveryCodes`, `PaymentCodes`, `OrderProblems`; `OrderStatusCountDto` + `OrderStatusCounts`; порти `IOrderPayments` (Payments; `FindPayableForCustomerAsync` — для оплати з кабінету), `IOrderReceiptSource` (Fiscal; `BelongsToCustomerAsync` — чеки в кабінеті), `IOrderExportSource` (Navkolo), `IOrderReporting` (Console) і їхні записи-знімки (`PayableOrder`, `OrderPaymentTarget`, `PaidOrderResult`, `RefundToProcess`, `OrderForReceipt`, `OrderForExport`, `OrderPeriodRow`, `ProductSalesRow`, `OrderedProductSnapshot`, `OrderSearchHit`, `CustomerSearchHit`); `SellerOptions` — у `Configuration` |
-| Payments | `PaymentJobs.Reconcile` |
-| Fiscal, Identity, Console | порожньо (нікому не потрібні) |
+| Customers | `CustomerClaims` (тип claim, `CustomerId(ClaimsPrincipal)` → `Guid?`), `CustomerPolicies.Customer`, `CustomerEndpointExtensions.RequireCustomer()` (політика + CSRF + 401 у документі); порт `ICustomerDirectory` (Ordering: id покупця з підтвердженим email); гачки `ICustomerEmailConfirmedHandler` (реалізує Ordering), `ICustomerOrderHistory` + `CustomerOrderRecord` (Ordering: кількість і останні замовлення покупця для консолі, статус — рядок у camelCase, як у JSON) і `ICustomerFavoritesCounter` (Catalog: кількість обраного) |
+| Notifications | `IManagerNotifier`, `ManagerNotification` (+ `ManagerEvent` — подія, за якою працює перемикач у налаштуваннях сповіщень); `ICustomerMailer` (листи покупцю: підтвердження email, відновлення пароля) |
+| Ordering | повідомлення `OrderPlaced`, `PaymentSucceeded`, `OrderPaidAfterCancel`, `OrderExportRequested`, `FiscalReceiptRequested` + `FiscalTrigger`, `RefundRequested`; перелічення `OrderStatus`, `PaymentStatus`, `PaymentMethod`, `DeliveryMethod`, `RefundMethod`, `RefundStatus`; `DeliveryCodes`, `PaymentCodes`, `OrderProblems`; `OrderStatusCountDto` + `OrderStatusCounts`; порти `IOrderPayments` (Payments; `FindPayableForCustomerAsync` — для оплати з кабінету), `IOrderReceiptSource` (Fiscal; `BelongsToCustomerAsync` — чеки в кабінеті), `IOrderExportSource` (Navkolo), `IOrderReporting` (Console), гачок `IRefundReceiptStatuses` (реалізує Fiscal: стан останнього чека повернення за id повернення) і їхні записи-знімки (`PayableOrder`, `OrderPaymentTarget`, `PaidOrderResult`, `RefundToProcess`, `OrderForReceipt`, `OrderForExport`, `OrderPeriodRow`, `ProductSalesRow`, `OrderedProductSnapshot`, `OrderSearchHit`, `CustomerSearchHit`); `SellerOptions` — у `Configuration` |
+| Payments | `PaymentJobs.Reconcile`; `IPaymentSettings` (провайдер і режим для консолі) |
+| Fiscal | `IFiscalSettings` (провайдер ПРРО, режим і коли видається чек для кожного способу оплати) |
+| Identity, Console | порожньо (нікому не потрібні) |
 
 Спільну для Identity й Customers схему OpenAPI `CsrfTokenDto` перенесено в `Infrastructure.Security`: обидва
 маршрути `.../csrf` повертають ту саму схему, ім'я й форма в документі не змінилися.
@@ -190,16 +202,24 @@ PoliValko.<M>/
 PoliValko.Catalog/
   CatalogModule.cs  Contracts/  Configuration/CatalogOptions
   Domain/                  Category, HomeCollection, UrlRedirect, Product, ProductPrice, ProductStock, ProductImage,
-                           ProductAttribute, TopLevelCategories
-  Persistence/             CatalogModelConfigurator, CatalogDemoData, demo-catalog.json
+                           ProductAttribute, TopLevelCategories, AttributeDefinition (+ AttributeKind, AttributeFilterView),
+                           Brand, ProductLabel (правило AppliesTo) + ProductLabelLink, LabelKind, LabelTone
+  Persistence/             CatalogModelConfigurator, CatalogDemoData, demo-catalog.json, CatalogDictionarySync (довідники
+                           характеристик і брендів з товарів, початкові мітки), ProductLabelSet (мітки для сторінки товарів)
   Features/Storefront/     CatalogEndpoints; GetCategoryTree, GetCategory, SearchProducts, GetProduct, GetPhotoCredits,
                            GetCollections, GetSitemap, ResolveRedirect; StorefrontDtos (+ ProductSearchQuery, ProductSort);
-                           ProductFacetBuilder, ProductListing, CategoryQueries
-  Features/Console/        ConsoleCatalogEndpoints (група /catalog), CatalogConsoleValidation
+                           ProductFacetBuilder, ProductListing, CategoryQueries, SeoTemplates (мета-шаблони з seo.templates)
+  Features/Console/        ConsoleCatalogEndpoints (група /catalog), CatalogConsoleValidation (+ бренд і ручні мітки)
     Products/              ProductEndpoints; ListProducts, SetProductsVisibility, GetConsoleProduct, UpdateProduct,
-                           UploadProductImage, UpdateProductImages, DeleteProductImage; ConsoleProductDtos,
-                           ConsoleProductQueries, ProductStockFilters
+                           UploadProductImage, UpdateProductImages, DeleteProductImage, CountProducts, BulkUpdateProducts;
+                           ConsoleProductDtos, ConsoleProductQueries, ConsoleProductFilter, ProductStockFilters,
+                           ProductFillFilters, ProductLabelLinks
     AttributeNames/        AttributeNameEndpoints, ListAttributeNames, AttributeNameDto
+    Attributes/            AttributeEndpoints; ListAttributeDefinitions, CreateAttributeDefinition, UpdateAttributeDefinition,
+                           DeleteAttributeDefinition; AttributeDefinitionEditor, AttributeUsage, ConsoleAttributeDtos
+    Brands/                BrandEndpoints; ListBrands, CreateBrand, UpdateBrand, DeleteBrand, MergeBrand; BrandEditor,
+                           ConsoleBrandDtos
+    Labels/                LabelEndpoints; ListLabels, CreateLabel, UpdateLabel, DeleteLabel; LabelEditor, ConsoleLabelDtos
     Categories/            CategoryEndpoints; ListCategories, CreateCategory, UpdateCategory, DeleteCategory;
                            CategoryEditor (зокрема ToDto), ConsoleCategoryDtos
     Collections/           CollectionEndpoints; ListCollections, CreateCollection, UpdateCollection, DeleteCollection;
@@ -209,7 +229,8 @@ PoliValko.Catalog/
   Features/Import/         CatalogImporter (ICatalogImporter), ImportValidation, ProductFieldWriter, ImportText,
                            CatalogDemoFeed (ICatalogDemoFeed: записи демо-каталогу у форматі Navkolo)
   Features/Favorites/      FavoriteEndpoints (група /account/favorites, RequireCustomer); ListFavorites, ListFavoriteIds,
-                           AddFavorite, RemoveFavorite (сутність Domain/Favorite, таблиця catalog.favorites)
+                           AddFavorite, RemoveFavorite (сутність Domain/Favorite, таблиця catalog.favorites);
+                           CustomerFavoritesCounter (ICustomerFavoritesCounter)
   Features/Pricing/        CatalogPricing (ICatalogPricing), AlwaysFreshCatalog (ICatalogFreshness)
   Features/Reporting/      CatalogReporting (ICatalogReporting)
 
@@ -218,15 +239,21 @@ PoliValko.Ordering/
   Domain/                  Order, OrderItem, OrderStatusChange, OrderRefund, OrderRefundLine, OrderTokens, OrderTransitions,
                            OrderActors (хто змінив статус: «Покупець», «Платіжна система»)
   Persistence/             OrderingModelConfigurator, OrderLoader (агрегат з позиціями, історією й поверненнями)
-  Features/Checkout/       CheckoutEndpoints; QuoteCheckout, CreateOrder, GetOrder, GetSeller; CheckoutCalculator,
-                           OrderValidator, OrderMapping (CanPay — і для IOrderPayments), CheckoutDtos (+ QuoteIssues)
+  Features/Checkout/       CheckoutEndpoints; QuoteCheckout, CreateOrder, GetOrder, GetSeller; CheckoutCalculator
+                           (способи доставки й оплати з IDeliveryAvailability), OrderValidator, OrderMapping (CanPay — і для
+                           IOrderPayments), CheckoutDtos (+ QuoteIssues)
+  Features/Shop/           ShopSettingsEndpoints (група /settings/shop); GetShopSettings, SaveShopSettings; ShopSettingsStore
+                           (ключ settings.shop, запасні реквізити з SellerOptions), ShopSettingsDtos
   Features/Console/Orders/ ConsoleOrderEndpoints; ListOrders, CountOrders, ExportOrders, GetConsoleOrder, ChangeOrderStatus,
-                           CreateRefund; ConsoleOrderDtos, ConsoleOrderMapping, ConsoleOrderFilter, ConsoleOrderSorts,
-                           OrderSearch, OrderCsv
+                           CreateRefund, UpdateOrderNote; ConsoleOrderDtos, ConsoleOrderMapping, ConsoleOrderFilter,
+                           ConsoleOrderSorts, OrderSearch, OrderCsv
   Features/Console/Customers/ ConsoleCustomerEndpoints; ListCustomers; CustomerContacts; ConsoleCustomerDtos
+  Features/Console/Refunds/ ConsoleRefundEndpoints (група /refunds); ListRefunds; ConsoleRefundDtos, RefundChannel
   Features/Account/        AccountOrderEndpoints (група /account/orders, RequireCustomer); ListAccountOrders,
-                           GetAccountOrder; AccountOrderDtos; LinkGuestOrders (ICustomerEmailConfirmedHandler)
-  Features/Notifications/  NotifyManagerOnOrderPlaced, NotifyManagerOnPaymentSucceeded, OrderMoney
+                           GetAccountOrder; AccountOrderDtos; LinkGuestOrders (ICustomerEmailConfirmedHandler);
+                           CustomerOrderHistory (ICustomerOrderHistory)
+  Features/Notifications/  NotifyManagerOnOrderPlaced, NotifyManagerOnPaymentSucceeded, NotifyManagerOnOrderPaidAfterCancel,
+                           OrderMoney
   Features/PaymentState/   OrderPayments          Features/Receipts/   OrderReceiptSource
   Features/Export/         OrderExportSource      Features/Reporting/  OrderReporting
 
@@ -245,6 +272,7 @@ PoliValko.Payments/
   Features/Console/        ConsolePaymentEndpoints, ListOrderPayments, ConsolePaymentDto
   Features/Processing/     PaymentProcessor, PaymentUpdateResult
   Features/Refunds/        ProcessRefundRequested
+  Features/Settings/       PaymentSettings (IPaymentSettings)
   Jobs/                    PaymentReconciliationJob
 ```
 
@@ -281,15 +309,20 @@ PoliValko.Payments/
 PoliValko.Content/
   ContentModule.cs  Contracts/ ServiceRequestSubmitted, IServiceRequestStats
   Domain/                  ServiceRequest, ServiceRequestStatus, ServiceDirection, ServiceDirections, ContentPage,
-                           SiteContacts, ServiceDirectionContent
-  Persistence/             ContentModelConfigurator
+                           SiteContacts, ServiceDirectionContent, Banner
+  Persistence/             ContentModelConfigurator, SiteSeeder (початкові банери, головна й мета-шаблони)
   Features/ServiceRequests/ ServiceRequestEndpoints; GetServiceDirections, SubmitServiceRequest (+ Validate);
                            ServiceRequestDtos; NotifyManagerOnServiceRequest; ServiceRequestStats (IServiceRequestStats)
     Console/               ConsoleServiceRequestEndpoints; ListServiceRequests, ChangeServiceRequestStatus;
                            ConsoleServiceRequestDtos, ConsoleServiceRequestMapping
   Features/SiteContent/    SiteContentEndpoints (pages, contacts), ConsoleSiteContentEndpoints (група /content);
                            GetPage, GetContacts, ListPages, SavePage, SaveContacts, ListServiceDirections,
-                           SaveServiceDirection; SiteContentDtos, SiteContentMapping
+                           SaveServiceDirection; SiteContentDtos, SiteContentMapping, ShopSpecialDays (особливі дні з
+                           settings.shop для контактів)
+  Features/Site/           SiteEndpoints (GET /site/home), ConsoleSiteEndpoints (група /site); GetSiteHome, GetHomeSettings,
+                           SaveHomeSettings, ListBanners, CreateBanner, UpdateBanner, DeleteBanner, ReorderBanners,
+                           GetSeoTemplates, SaveSeoTemplates; HomeSettingsStore (site.home), SeoTemplateSettings
+                           (seo.templates), BannerEditor, ActiveBanners (кеш діючих банерів), SiteLinks, SiteDtos
 
 PoliValko.Delivery/
   DeliveryModule.cs  Contracts/  Configuration/NovaPoshtaOptions
@@ -301,6 +334,9 @@ PoliValko.Delivery/
   Features/Storefront/     DeliveryEndpoints; SearchSettlements, GetWarehouses, GetPickupPoints; DeliveryDtos
   Features/Console/        ConsoleDeliveryEndpoints; ListPickupPoints, UpdatePickupPoint (+ Validate, PickupPointValues),
                            GetNovaPoshtaStatus; ConsoleDeliveryDtos, ConsolePickupPointMapping
+  Features/Settings/       DeliverySettingsEndpoints (група /settings/delivery); GetDeliverySettings, SaveDeliverySettings;
+                           DeliverySettingsStore (settings.delivery), DeliveryAvailabilityReader (IDeliveryAvailability),
+                           DeliverySettingsDtos
   Features/DirectorySync/  NovaPoshtaDirectorySync (+ RecountActiveWarehousesSql)
   Jobs/                    NovaPoshtaSyncJob
 
@@ -312,8 +348,9 @@ PoliValko.Fiscal/
   Integrations/Stub/       StubFiscalProvider
   Integrations/Checkbox/   CheckboxFiscalProvider (записи формату Checkbox вкладені)
   Features/Receipts/       ReceiptEndpoints (Map, MapConsole, MapAccount); GetOrderReceipts, ListOrderReceipts,
-                           GetAccountOrderReceipts; ReceiptQueries, ReceiptDto
+                           GetAccountOrderReceipts; ReceiptQueries, ReceiptDto; RefundReceiptStatuses (IRefundReceiptStatuses)
   Features/Issuing/        IssueReceiptOnRequest
+  Features/Settings/       FiscalSettings (IFiscalSettings)
 
 PoliValko.Identity/
   IdentityModule.cs
@@ -333,10 +370,14 @@ PoliValko.Navkolo/
   Jobs/                    NavkoloPriceStockJob, NavkoloCatalogJob
 
 PoliValko.Notifications/
-  NotificationsModule.cs  Contracts/ IManagerNotifier, ManagerNotification, ICustomerMailer
+  NotificationsModule.cs  Contracts/ IManagerNotifier, ManagerNotification, ManagerEvent, ICustomerMailer
   Configuration/           TelegramOptions, EmailOptions, EmailModes
-  Integrations/Telegram/   TelegramManagerNotifier
-  Integrations/Log/        LogManagerNotifier, LogCustomerMailer
+  Integrations/Channels/   IManagerChannel (канал доставки: Telegram або лог)
+  Integrations/Telegram/   TelegramManagerNotifier (IManagerChannel)
+  Integrations/Log/        LogManagerNotifier (IManagerChannel), LogCustomerMailer
+  Features/Dispatch/       ManagerNotifier (IManagerNotifier: перемикачі подій і чати з налаштувань, далі — канал)
+  Features/Settings/       NotificationSettingsEndpoints (група /settings/notifications); GetNotificationSettings,
+                           SaveNotificationSettings, SendTestNotification; NotificationSettingsStore, NotificationSettingsDtos
   Features/IntegrationAlerts/ NotifyResponsibleOnIntegrationAlert
 
 PoliValko.Customers/
@@ -358,6 +399,8 @@ PoliValko.Customers/
                            AddressValidation (через IDeliveryDirectory), AddressMapping, AddressDtos
   Features/Mail/           AccountMail (посилання {Site:PublicUrl}/account/... і відправлення через ICustomerMailer)
   Features/Directory/      CustomerDirectory (ICustomerDirectory)
+  Features/Console/        ConsoleAccountEndpoints (група /console/accounts); ListAccounts, GetAccount, SetAccountLock,
+                           SendAccountPasswordReset; ConsoleAccountDtos (+ ConsoleAccountStatuses), ConsoleAccountMapping
 ```
 
 ### Точка входу `<M>Module`
@@ -379,7 +422,8 @@ public static class CatalogModule
 - `Map<Область>Endpoints(this IEndpointRouteBuilder api)` — публічний API області;
   `MapConsole<Область>Endpoints(this RouteGroupBuilder console)` — консоль області. Одна функція на кожен блок, який
   у документі OpenAPI стоїть окремо (див. порядок у розділі 4), тож хост задає порядок, а модуль — вміст.
-- Сідери, які запускає хост: `CatalogModule.SeedDemoDataAsync`, `IdentityModule.SeedUsersAsync`.
+- Сідери, які запускає хост: `CatalogModule.SeedDemoDataAsync`, `CatalogModule.SyncDictionariesAsync`,
+  `ContentModule.SeedSiteAsync` (лише порожні дані сайту, розділ 5.4), `IdentityModule.SeedUsersAsync`.
 
 ## 4. Хости
 
@@ -417,6 +461,7 @@ public partial class Program;
            Ordering.MapCheckoutEndpoints             (checkout/quote, orders, orders/{number}, seller)
            Payments.MapPaymentEndpoints
            Fiscal.MapReceiptEndpoints                (orders/{number}/receipts)
+           Content.MapSiteEndpoints                  (site/home; власна група /site)
 /console:  Identity.MapConsoleAuthEndpoints
            Identity.MapConsoleStaffEndpoints         (users..., auth/password)
            Console.MapConsoleSummaryEndpoints
@@ -432,6 +477,14 @@ public partial class Program;
            Console.MapConsoleIntegrationEndpoints    (integration/status, runs, jobs, outbox, audit)
            Content.MapConsoleServiceRequestEndpoints
            Delivery.MapConsoleDeliveryEndpoints
+           Ordering.MapConsoleRefundEndpoints        (refunds)
+           Customers.MapConsoleAccountEndpoints      (accounts, accounts/{id}, lock, password-reset)
+           Console.MapConsoleMediaEndpoints          (media/images)
+           Content.MapConsoleSiteEndpoints           (site/home, site/banners, site/banners/order, site/seo-templates)
+           Ordering.MapConsoleShopSettingsEndpoints  (settings/shop)
+           Delivery.MapConsoleDeliverySettingsEndpoints (settings/delivery)
+           Console.MapConsolePaymentSettingsEndpoints (settings/payments)
+           Notifications.MapConsoleNotificationSettingsEndpoints (settings/notifications, settings/notifications/test)
 /api/v1:   Customers.MapAccountEndpoints             (account/csrf, register, login, logout, email/confirm,
            (після консолі)                            password/forgot, password/reset, me, profile, password,
                                                       email/resend, addresses, addresses/{id})
@@ -448,7 +501,8 @@ public partial class Program;
 
 - `ApiDatabase.PrepareDatabaseAsync` — та сама логіка `Database:ApplyMigrationsOnStartup`, `Database:SeedDemoData`,
   `Seed:Users`: міграція, перевірка незастосованих міграцій, `CatalogModule.SeedDemoDataAsync`,
-  `IdentityModule.SeedUsersAsync`.
+  `CatalogModule.SyncDictionariesAsync` (завжди, ідемпотентно: довідники характеристик і брендів, початкові мітки),
+  `ContentModule.SeedSiteAsync` (завжди, ідемпотентно: заповнює лише порожні дані сайту), `IdentityModule.SeedUsersAsync`.
 
 ### Worker (`src/PoliValko.Worker`)
 
@@ -472,7 +526,8 @@ Ordering, Catalog, Payments і Fiscal.
 ```
 PoliValko.Console/
   ConsoleModule.cs              AddConsoleModule, MapConsoleSummaryEndpoints, MapConsoleDashboardEndpoints,
-                                MapConsoleSearchEndpoints, MapConsoleIntegrationEndpoints
+                                MapConsoleSearchEndpoints, MapConsoleIntegrationEndpoints, MapConsoleMediaEndpoints,
+                                MapConsolePaymentSettingsEndpoints
   Features/Summary/             GetConsoleSummary, ConsoleSummaryDto
   Features/Dashboard/           GetConsoleDashboard, DashboardDtos (ConsoleDashboardDto, DashboardTotalsDto, ...)
   Features/Search/              SearchConsole, SearchDtos (ConsoleSearchDto, SearchOrderHitDto, ...)
@@ -480,6 +535,9 @@ PoliValko.Console/
                                 GetIntegrationStatus, ListSyncRuns, RequestJobRun, ListOutbox, RetryOutboxMessage,
                                 SyncJobTitles, IntegrationDtos
   Features/Audit/               ListAudit, AuditDtos (AuditEntryDto, AuditQuery)
+  Features/Media/               UploadContentImage (POST /console/media/images → { url }, тека content), UploadedImageDto
+  Features/Settings/            GetPaymentSettings (GET /console/settings/payments через IPaymentSettings, IFiscalSettings і
+                                стан завдання payments.reconcile), PaymentSettingsDtos
 ```
 
 Блоки `summary`, `dashboard` і `search` мають по одному маршруту, тож їхні ланцюжки мапінгу стоять просто в
@@ -558,6 +616,228 @@ SHA-256 (hex). Підтвердження email діє 3 доби, віднов�
 індекс `(customer_id, purpose)`), `catalog.favorites`, колонка й індекс у `ordering.orders`. Зовнішніх ключів між
 схемами різних модулів, як і раніше, немає (FK обраного на товар — усередині Catalog).
 
+## 5.2 Права працівників
+
+Модель узято з консолі GBA: каталог прав живе в коді, ролі зберігають набір ключів, кожен маршрут консолі вимагає
+конкретне право. Ролі й права обслуговує модуль Identity, ядро перевірки лежить в `Infrastructure/Security/Permissions`.
+
+- **Каталог** — `PermissionCatalog`: ключ `розділ.ресурс.дія`, назва й опис українською, розділ для дерева в консолі,
+  ризик (low, medium, high) і версія каталогу. Константи — `PermissionKeys`; ті самі рядки має консоль.
+- **Ролі** — `StaffRole` у `identity.roles`: назва для людей (унікальна), опис, ознаки системної ролі й
+  суперкористувача, версія прав (concurrency token), хто й коли змінив. Права ролі — `identity.role_permissions`
+  (роль, ключ), міграція `StaffRolePermissions`. У працівника одна роль.
+- **Системні ролі**: `Admin` «Адміністратор» — суперкористувач, завжди має всі ключі, не редагується й не видаляється;
+  `Manager` «Менеджер» — не видаляється. Поки права менеджера ніхто не змінював (версія 0), сідер під час старту API
+  вирівнює їх до `PermissionCatalog.ManagerDefaults`.
+- **Перевірка** — `RequireStaff(ключ, ...)` на групі або `RequirePermission(ключ, ...)` на маршруті; кілька ключів
+  означають «будь-який з». `PermissionPolicyProvider` будує політику `permission:<ключі>` з імені,
+  `PermissionAuthorizationHandler` бере права працівника через `IStaffAccessResolver`: роль і ключі з БД, кеш 30 с,
+  який скидається одразу після зміни ролі, прав, призначення чи блокування. Заблокований працівник прав не має.
+  Відмова пишеться в журнал (EventId 4601) і повертає 403 `auth.forbidden`.
+- **Ендпоінти**: `GET /console/permissions/catalog`, `GET /console/permissions/me`; ролі — `GET/POST /console/roles`,
+  `PUT/DELETE /console/roles/{id}`, `GET/PUT /console/roles/{id}/permissions` (повний набір ключів і
+  `expectedVersion`; інша версія — 409 `roles.version_conflict`, невідомий ключ — 400 `roles.unknown_permissions`).
+- **Захист від підвищення прав**: працівник без ролі адміністратора не може надати ролі право, якого не має сам
+  (403 `roles.escalation`), призначити роль із такими правами чи роль адміністратора, змінити, заблокувати або скинути
+  пароль працівнику із сильнішою роллю (403 `staff.escalation`). Власну роль змінити не можна (409 `auth.self_role`),
+  останнього активного адміністратора не можна зняти з ролі чи заблокувати (409 `staff.last_superuser`).
+- Будь-якому працівнику доступні `/console/auth/*`, `/console/summary`, `/console/search` (групи результатів
+  відсікаються за правами) і `/console/permissions/*`.
+
+Новий ключ: константа в `PermissionKeys`, визначення в `PermissionCatalog` (за потреби — у `ManagerDefaults`), нова
+`PermissionCatalog.Version`, той самий ключ у консолі. Невідомий ключ у `RequireStaff`/`RequirePermission` зупиняє
+запуск API.
+
+Версія каталогу `2026-11-06.1` (розширення консолі) додала ключі `catalog.attributes.manage`, `catalog.brands.manage`,
+`catalog.labels.manage` (розділ «Каталог»), `site.home.manage`, `site.seo.manage` (новий розділ «Сайт»),
+`settings.shop.manage`, `settings.notifications.manage` (новий розділ «Налаштування») і `customers.accounts.manage`.
+У розділ «Сайт» переїхали `content.site.manage` («Сторінки й послуги») і `catalog.redirects.manage` («Перенаправлення
+адрес (SEO)»), у «Налаштування» — `delivery.pickup.manage` («Доставка й самовивіз»). Контакти магазину
+(`/console/content/contacts`) тепер вимагають `settings.shop.manage` замість `content.site.manage`. Менеджер за
+замовчуванням отримав `catalog.labels.manage` (лише якщо його права ще не змінювали — див. сідер).
+
+## 5.3 Довідники каталогу, мітки, налаштування, кабінети покупців (міграція `ConsoleCatalogSales`)
+
+**Сховище налаштувань.** Таблиця `platform.settings` (`key` PK, `value` jsonb, `updated_at`, `updated_by`) і
+`ISettingsStore` в Infrastructure: `GetAsync<T>(key)` / `SaveAsync<T>(key, value, updatedBy)`. Значення — JSON
+(`JsonSerializerDefaults.Web`, перелічення рядками в camelCase). Кеш у пам'яті процесу на 30 с, скидається одразу після
+збереження в тому самому процесі (Worker бачить зміну щонайпізніше за 30 с). `SaveAsync` сам викликає
+`SaveChangesAsync`, тож запис аудиту робіть до нього — він збережеться разом. Ключі й записи належать модулям; той самий
+JSON може читати інший модуль власним записом тієї ж форми: Catalog читає `seo.templates`
+(`{ product: { title, description }, category: { title, description } }`, власник — Content) записом
+`SeoTemplates.Set`. Після збереження шаблонів власник має скинути теги вітрини `catalog`, `products`, `categories`.
+
+**Мета-шаблони.** Якщо в товару чи категорії порожні `SeoTitle`/`SeoDescription`, `GetProduct` і `GetCategory`
+підставляють шаблон: `{name}`, `{price}` («1 249,50 грн»), `{category}` (для товару — його категорія, для категорії —
+батьківська або вона сама), `{brand}`, `{shop}` = «Poli Valko»; зайві пробіли стискаються. Власні значення мають
+пріоритет; у консолі (`ConsoleProductDto`) лишаються тільки власні.
+
+**Характеристики** (`catalog.attribute_definitions`): назва (до 100 — як у `product_attributes.name`, щоб синхронізація
+не губила назв), унікальна без урахування регістру (`normalized_name` = `Trim().ToUpperInvariant()`), одиниця (20),
+`kind` `List|Number|Boolean`, `filter_view` `Checkboxes|Range` (діапазон — лише для `Number`), порядок, синоніми
+`text[]` (не збігаються з іншими назвами й синонімами). Синхронізація (`CatalogDictionarySync`) створює визначення для
+кожної назви з фільтрів категорій і характеристик товарів, якої немає серед назв і синонімів; запускається на старті
+API, після імпорту каталогу, а `UpdateProduct` додає визначення для нових назв однією транзакцією з товаром.
+Перейменування (`PUT /console/catalog/attributes/{id}`) в одній транзакції переписує `product_attributes.name`
+(`ExecuteUpdate`, без урахування регістру) і `categories.filter_attributes`. Видалення — 409 `attributes.in_filters`
+(розширення `categoryCount`), поки назва є фільтром категорії; значення в товарах лишаються (і наступна синхронізація
+поверне визначення, якщо назва ще є в товарах). Фільтри категорії приймають лише назви з довідника (інакше 400
+`filterAttributes`) і зберігаються в написанні довідника. `GET /catalog/attribute-names` додає назви з довідника з
+`productCount = 0`.
+
+**Бренди** (`catalog.brands`): назва (до 200, як `products.brand`), унікальна без урахування регістру, `slug`
+(унікальний, з назви), опис (2000), `logo_url`. Товар і далі зберігає `Brand` текстом (індекс `ix_products_brand`).
+Перейменування й об'єднання (`POST /brands/{id}/merge { intoId }`) переписують `products.brand` через `ExecuteUpdate`
+в одній транзакції; видалення — 409 `brands.in_use` (`productCount`). `UpdateProduct` і масова зміна приймають бренд
+лише з довідника (400 `brand`; записується написання довідника), порожній — прибирає бренд; у `UpdateProduct` також
+дозволено лишити поточний бренд товару, навіть якщо його ще немає в довіднику (до наступної синхронізації).
+
+**Мітки** (`catalog.product_labels` + `catalog.product_label_links` (product_id, label_id), FK з каскадом на обидві
+сторони): назва (30), `tone` `Green|Red|Orange|Blue|Gray|Dark`, `kind` `Manual|New|Sale`, `new_days` (для `New`,
+1–365), порядок, `is_active`. Правила (`ProductLabel.AppliesTo`): `Sale` — стара ціна більша за поточну, `New` —
+`CreatedAt` не старіший за `new_days`, `Manual` — є зв'язок. Показуються лише активні, за порядком. Синхронізація
+створює «Акція» (Sale, червона), «Новинка» (New, 30 днів, зелена), «Хіт» (Manual, помаранчева), якщо таблиця порожня.
+Тип мітки не змінюється (400 `kind`); видалити можна ручну або вимкнену автоматичну (інакше 409 `labels.auto_active`).
+Товарам призначаються лише ручні мітки (400 `labelIds`/`addLabelIds`). `productCount` рахується для всіх типів
+(для автоматичних — за правилом). Вітрина: `ProductListItemDto.labels` і `ProductDetailsDto.labels` (`{ name, tone }`);
+консоль: `ConsoleProductListItemDto.labels` і `ConsoleProductDto.labels` (`{ id, name, tone, kind }`, діючі мітки),
+`ConsoleProductDto.labelIds` (ручні, для редактора) і `createdAt`. Мітка «Новинка» у кеші вітрини оновлюється разом із
+тегами товарів, тож може протриматися довше за `new_days` до наступної ревалідації.
+
+**Категорії**: `image_url` (1000, відносна адреса медіа або https) і `description` (простий текст до 2000) — у
+`ConsoleCategoryDto`/`SaveCategoryRequest` (поля необов'язкові в запиті) і на вітрині в `CategoryNodeDto` та
+`CategoryDto`. Консольний список категорій повертає й приховані.
+
+**Товари в консолі**: `GET /console/catalog/products` має ще `brand`, `labelId` (діюча мітка за її правилом), `fill`
+(`missing-photo|missing-description|missing-attributes|any-missing`), `newDays`, `hiddenWithStock`;
+`GET /products/counts` → `{ all, needsFilling, recent30, hiddenWithStock, outOfStock }`; `POST /products/bulk`
+(до 200 товарів; `catalog.products.edit`; аудит `catalog.products_bulk_updated`) → `{ updated }` — кількість справді
+змінених.
+
+**Медіа консолі**: `POST /console/media/images` (multipart `file`) → `{ url }`, тека `content`, будь-яке з прав
+`site.home.manage`, `content.site.manage`, `catalog.categories.manage`, `catalog.brands.manage`; аудит
+`media.image_uploaded`. Перевірка адрес фото для збереження — `ImageUrls.IsValid`.
+
+**Повернення**: `GET /console/refunds?q&from&to&status&page&pageSize` (`orders.page.view`) у модулі Ordering →
+`PagedResponse<ConsoleRefundRowDto>` (`method` `card|offline` з `RefundMethod`, `receiptStatus` — стан останнього
+чека повернення через гачок `IRefundReceiptStatuses`, який реалізує Fiscal; `null`, поки чека немає).
+
+**Службова нотатка замовлення**: `orders.internal_note` (1000), `PUT /console/orders/{number}/note { note }`
+(`orders.status.change`, аудит `order.note_changed`). Зміна пише в історію запис із `From = To` = поточний статус і
+причиною «Нотатка змінена» (`OrderStatusChange.NoteChanged`); `OrderStatusChange.IsStatusChange` відсіює такі записи зі
+сторінки замовлення для покупця (`OrderMapping`). `ConsoleOrderDto` має `internalNote` і `customerAccountId`.
+
+**Кабінети покупців у консолі** (модуль Customers): `GET /console/accounts?q&status=all|confirmed|unconfirmed|locked`,
+`GET /console/accounts/{id}` (адреси, кількість обраного, до 50 останніх замовлень) — `customers.page.view`;
+`POST /{id}/lock { locked }` і `POST /{id}/password-reset` — `customers.accounts.manage`, аудит `customer.locked`,
+`customer.unlocked`, `customer.password_reset_sent`. Блокування працівником — окрема колонка
+`customers.blocked_at`: змінює security stamp (сесії завершуються), вхід із правильним паролем дає 403
+`account.blocked`; відновлення пароля його не знімає, розблокування знімає й тимчасове блокування після невдалих
+спроб. `lockedOut` = заблоковано працівником або діє тимчасове блокування; `blocked` у картці — лише працівником.
+Кількість замовлень і замовлення беруться через гачок `ICustomerOrderHistory` (Ordering), обране — через
+`ICustomerFavoritesCounter` (Catalog). Лист відновлення — той самий `AccountMail`, що й «забули пароль»; збій
+відправлення — 503 `account.mail_unavailable`.
+
+## 5.4 Сайт і налаштування магазину (міграція `ConsoleSiteSettings`)
+
+Міграція містить лише DDL: таблицю `content.banners` (індекс `sort_order`) і колонки `content.pages.seo_title` (200),
+`seo_description` (500), `content.service_directions.image_url` (1000), `content.contacts.viber` (300). Згенеровані EF
+`UpdateData` для рядків `HasData` (сторінки, контакти, напрямки) прибрано, як і в `ConsoleCatalogSales`. Решта
+налаштувань — JSON у `platform.settings` (розділ 5.3); кожен ключ має власника, інші модулі читають той самий JSON власним
+записом. Кожне збереження з консолі пише запис аудиту до `ISettingsStore.SaveAsync` (або до `SaveChangesAsync`), тож
+вони зберігаються однією транзакцією.
+
+| Ключ | Власник | Форма | Хто ще читає |
+| --- | --- | --- | --- |
+| `site.home` | Content | `{ blocks: { key, visible }[], announcement: { text, link?, isActive, startsAt?, endsAt? }, perks: { title, text }[], steps: { title, text }[], visit: { title, text } }` | — |
+| `seo.templates` | Content | `{ product: { title, description }, category: { title, description } }` | Catalog (`SeoTemplates`) |
+| `settings.shop` | Ordering | `{ seller: { name, taxId?, address?, iban?, email?, phone? }, specialDays: { date, label, closed, hours? }[] }` | Content (`ShopSpecialDays`) |
+| `settings.delivery` | Delivery | `{ novaPoshta: { enabled, cashOnDelivery }, courier: { enabled, area?, priceNote? }, pickup: { enabled } }` | — (Ordering — через `IDeliveryAvailability`) |
+| `settings.notifications` | Notifications | `{ telegramChatIds: string[], emails: string[], events: { newOrder, newServiceRequest, integrationAlert, paymentAfterCancel } }` | — |
+
+**Початкові дані.** `ContentModule.SeedSiteAsync` запускається на кожному старті API (і в `ApiFactory` тестів) та
+заповнює лише порожнє: якщо ключа `site.home` ще немає — зберігає тексти головної, які раніше були зашиті у вітрину
+(блоки в теперішньому порядку `hero, offers, collections, categories, perks, services, steps, visit`, переваги, кроки,
+блок магазину; оголошення порожнє й вимкнене), а якщо до того ж таблиця банерів порожня — два банери з колишніх слайдів
+вітрини (`hero-slides.ts`). Наявність `site.home` — ознака, що сід уже був: якщо працівник видалить усі банери, вони не
+повернуться. Якщо ключа `seo.templates` немає — зберігає типові шаблони без назви магазину (вітрина сама додає
+« | Poli Valko» до заголовка): товар — `{name} — купити в Бучі, ціна {price}` /
+`{name} у магазині Poli Valko: ціна {price}, доставка Новою поштою й самовивіз у Бучі.`, категорія —
+`{name} — купити в Бучі` / `{name}: ціни, наявність і доставка по Україні.` Збережене працівником не перезаписується.
+
+**Головна й банери** (Content, `site.home.manage`). `GET/PUT /console/site/home` — `HomeSettingsDto`: невідомий чи
+повторений блок — 400 `blocks`; блоки, яких немає в запиті, додаються в кінець видимими. Оголошення — до 160 символів,
+увімкнене потребує тексту, посилання — відносне `/…` (не `//`) або `http(s)://` до 300 символів, `endsAt` не раніше за
+`startsAt`; переваги й кроки — до 6, заголовок обов'язковий (до 80), текст до 300; блок магазину — заголовок до 80,
+текст до 200. Ключі помилок: `announcement.text`, `perks[0].title` тощо. Банери: `GET/POST /console/site/banners`
+(новий — останнім, 201), `PUT/DELETE /console/site/banners/{id}` (404 `content.banner_not_found`, видалення — 204),
+`PUT /console/site/banners/order { ids }` — усі id рівно один раз (інакше 400 `ids`), відповідь — список у новому порядку.
+Поля банера: надпис над заголовком `kicker` (40, необов'язковий; колонка `content.banners.kicker` з міграції
+`BannerKicker`, яка проставила надписи двом засіяним банерам за їхніми заголовками; є в консольному DTO, запиті й
+публічному `HomeBannerDto`), заголовок (80, обов'язковий), текст (200), напис на кнопці (30), посилання (300, як в оголошенні), фото
+(обов'язкове) і фото для телефона — `ImageUrls.IsValid`, `startsAt`/`endsAt` (`DateTimeOffset`, консоль надсилає
+початок і кінець дня за місцевим часом), `isActive`. Аудит `site.home_updated`, `site.banner_created|updated|deleted`,
+`site.banners_reordered`; після змін скидаються теги вітрини `content`, `site`, `home`.
+
+**Публічна головна.** `GET /api/v1/site/home` → `SiteHomeDto { announcement?, blocks, perks, steps, visit, banners }`:
+оголошення — лише коли увімкнене, має текст і зараз у межах періоду; банери — увімкнені, у яких зараз у межах періоду, за
+`sort_order`. Увімкнені банери кешуються в пам'яті процесу на 1 хв (ключ `content:banners:active`, скидається після
+зміни банерів), налаштування — кешем `ISettingsStore` (30 с); період перевіряється на кожен запит.
+
+**Сторінки й послуги** (`content.site.manage`). `PageDto`, `ConsolePageListItemDto` і `SavePageRequest` мають `seoTitle`
+(до 200) і `seoDescription` (до 500); на вітрині — у `GET /pages/{slug}`. Напрямки послуг мають `imageUrl`
+(`ImageUrls.IsValid`): у `ConsoleServiceDirectionDto`, `SaveServiceDirectionRequest` (необов'язкове поле) і в публічному
+`ServiceDirectionDto`.
+
+**Мета-шаблони** (`site.seo.manage`). `GET/PUT /console/site/seo-templates` — `SeoTemplatesDto`; заголовки обов'язкові,
+кожен шаблон до 300 символів; змінні товару — `{name}`, `{price}`, `{category}`, `{brand}`, `{shop}`, категорії — `{name}`,
+`{category}`, `{shop}` (інші — 400 «Невідомі змінні»). Аудит `site.seo_templates_updated`; скидаються теги `catalog`,
+`products`, `categories`. Застосовує шаблони Catalog (розділ 5.3).
+
+**Магазин** (Ordering, `settings.shop.manage`). `GET/PUT /console/settings/shop` — `ShopSettingsDto { seller,
+specialDays }`. Поки реквізити не збережено, `seller` береться з `SellerOptions` (`Seller:*`). Перевірки: назва
+обов'язкова (до 200), ЄДРПОУ/РНОКПП — 8 або 10 цифр (пробіли прибираються), IBAN — `UA` і 27 цифр (пробіли прибираються,
+великі літери), email, телефон до 30; особливі дні — до 100, дата (`yyyy-MM-dd`) не повторюється, назва до 60, години
+обов'язкові для робочого дня (до 60), для вихідного не зберігаються; список сортується за датою. Аудит
+`settings.shop_updated`, тег вітрини `content`. Збережені реквізити віддає `GET /api/v1/seller` (`SellerDto` + `iban`,
+`email`, `phone`) і записує в нові замовлення (`SellerName`, `SellerTaxId`). Соцмережі живуть лише в контактах
+(`/console/content/contacts`, той самий `settings.shop.manage`): `ContactsDto` має `viber` (`viber://` або `http(s)://`)
+і `specialDays` — у відповідях лише сьогоднішні й майбутні дні з `settings.shop` за київським часом, у запиті поле
+ігнорується.
+
+**Доставка** (Delivery, `delivery.pickup.manage`). `GET/PUT /console/settings/delivery` — `DeliverySettingsDto`; типово все
+увімкнено. Усі способи вимкнені — 400 `delivery.no_methods`; зона й примітка кур'єра — до 200 (`courier.area`,
+`courier.priceNote`). Аудит `delivery.settings_updated`, тег `delivery`. `IDeliveryAvailability` віддає checkout, що
+зараз дозволено: Нова пошта й кур'єр — за перемикачами, післяплата — для обох способів Нової пошти, самовивіз — лише
+коли він увімкнений **і** є активна точка (`PickupPointStore`). `QuoteCheckout` показує тільки ці способи
+(`DeliveryMethodOptionDto` має ще `description` — зона кур'єра — і `priceNote`), `CreateOrder` відхиляє інші
+(400 `delivery.method` / `payment.method`). Колишнє `IDeliveryDirectory.GetPickupAsync` кидало виняток, коли активних
+точок не було (500 під час замовлення із самовивозом), — його прибрано разом із `PickupPointStore.GetDefaultAsync`.
+Останню активну точку можна вимкнути лише тоді, коли самовивіз вимкнений у налаштуваннях.
+
+**Оплата й чеки** (модуль Console, `integration.status.view`, лише читання). `GET /console/settings/payments` →
+`PaymentSettingsDto`: `provider` `Sandbox|Mono|None` і `mode` `Test|Live|Disabled` (`IPaymentSettings` з
+`Payments:Provider`), `lastReconcileAt` — останній успіх завдання `payments.reconcile`, `fiscalProvider`
+`Checkbox|Stub|Disabled` і `fiscalMode` `Live|Stub|Disabled` (`IFiscalSettings` з `Fiscal:Provider`), `issueOn { card,
+cashOnDelivery, pickup }` — `payment|completion|none` з `Fiscal:IssueOn` (усі `none`, коли ПРРО вимкнено).
+
+**Сповіщення** (Notifications, `settings.notifications.manage`). `GET/PUT /console/settings/notifications` —
+`NotificationSettingsDto { telegramChatIds, emails, events, telegramConfigured }` (запит — `SaveNotificationSettingsRequest`
+без `telegramConfigured`). ID чату — число від 5 до 20 цифр (можна з мінусом) або `@назва`; до 10 чатів і 10 адрес,
+дублікати прибираються, адреси — малими літерами. `POST /console/settings/notifications/test` надсилає «Тестове
+повідомлення» в усі чати → `{ chats, delivered }`; без бота — 409 `notifications.telegram_not_configured`, без чатів — 409
+`notifications.no_recipients`, Telegram не прийняв жодного — 502 `notifications.send_failed`. Аудит
+`settings.notifications_updated`, `settings.notifications_test_sent`. Доставка: `IManagerNotifier` тепер реалізує
+`ManagerNotifier` — він перевіряє перемикач події (`ManagerEvent`: нове замовлення й оплата → `newOrder`, заявка →
+`newServiceRequest`, тривога інтеграції → `integrationAlert`, оплата скасованого замовлення → `paymentAfterCancel`,
+тест — завжди), бере чати з налаштувань (порожньо — `Notifications:Telegram:ChatId`) і передає повідомлення каналу
+`IManagerChannel`: `TelegramManagerNotifier`, коли задано `Notifications:Telegram:BotToken` (типізований HttpClient з
+колишнім ім'ям `IManagerNotifier`), інакше `LogManagerNotifier`. Telegram надсилає в кожен чат окремо; якщо не прийняв
+жоден, обробник outbox падає й повторюється. Адреси e-mail поки лише зберігаються: листи менеджерам з'являться разом із
+поштовим провайдером. Оплата скасованого замовлення тепер іде окремим повідомленням outbox `OrderPaidAfterCancel`
+(`ordering.paid-after-cancel`, обробник `NotifyManagerOnOrderPaidAfterCancel`) замість `IntegrationAlert`, щоб її
+можна було вимкнути окремо.
+
 ## 6. Інваріанти
 
 ### 6.1 OpenAPI — байт у байт
@@ -581,12 +861,15 @@ SHA-256 (hex). Підтвердження email діє 3 доби, віднов�
 ### 6.2 Модель EF Core — зміни лише новою міграцією
 
 - Один `PoliValkoDbContext` (`IdentityDbContext<StaffUser, IdentityRole, string>`) і міграції в
-  `src/PoliValko.Infrastructure/Persistence/Migrations` (`Initial`, `Prototype`, `LaunchScope`, `CustomerAccounts` і
-  snapshot) — наявні файли міграцій не чіпати; рефакторинг модель не змінює, нова функціональність — нова міграція.
+  `src/PoliValko.Infrastructure/Persistence/Migrations` (`Initial`, `Prototype`, `LaunchScope`, `CustomerAccounts`,
+  `StaffRolePermissions`, `ConsoleCatalogSales`, `ConsoleSiteSettings` і snapshot) — наявні файли міграцій не чіпати; рефакторинг модель
+  не змінює, нова функціональність — нова міграція. У `ConsoleCatalogSales` прибрано згенеровані EF `UpdateData` для
+  рядків `HasData` категорій (вони ставили `NULL` у щойно додані колонки) — міграція містить лише DDL. Так само в
+  `ConsoleSiteSettings` (сторінки, контакти, напрямки послуг).
 - Модель: `IdentityModel.MoveToSchema`, розширення `pg_trgm`, `ApplyConfigurationsFromAssembly` збірки
   Infrastructure (конфігурації outbox, idempotency, audit, sync лишаються в цій збірці), потім `IModelConfigurator`
   у порядку реєстрації (Catalog, Content, Delivery, Ordering, Payments, Fiscal, Customers), `UseSnakeCaseNamingConvention`,
-  таблиця історії `integration.__ef_migrations_history`, схеми з `Schemas` (зокрема `customers`).
+  таблиця історії `integration.__ef_migrations_history`, схеми з `Schemas` (зокрема `customers` і `platform`).
 - Не перейменовувати класи сутностей і їхні властивості (імена таблиць, колонок, ключів і індексів беруться з них),
   не змінювати `HasData(TopLevelCategories.All)`. Перенесення сутності в інший простір імен модель не змінює —
   перевіряє гейт.
@@ -599,8 +882,8 @@ SHA-256 (hex). Підтвердження email діє 3 доби, віднов�
 
 - **Outbox**: колонка `type` = статичний рядок `IOutboxMessage.Type`, не ім'я CLR-типу:
   `ordering.order-placed`, `ordering.payment-succeeded`, `ordering.export-requested`,
-  `ordering.fiscal-receipt-requested`, `ordering.refund-requested`, `content.service-request-submitted`,
-  `integration.alert`. Payload — `System.Text.Json` з `JsonSerializerDefaults.Web`: імена властивостей записів
+  `ordering.fiscal-receipt-requested`, `ordering.refund-requested`, `ordering.paid-after-cancel`,
+  `content.service-request-submitted`, `integration.alert`. Payload — `System.Text.Json` з `JsonSerializerDefaults.Web`: імена властивостей записів
   (camelCase) і числові значення `FiscalTrigger` (`Payment=0`, `Completion=1`, `Refund=2`) не змінюються.
   CLR-простір імен повідомлень змінювати можна.
 - **Завдання синхронізації** (`sync_states.job`, `sync_runs.job`): `navkolo.price-stock`, `navkolo.catalog`,
@@ -609,7 +892,10 @@ SHA-256 (hex). Підтвердження email діє 3 доби, віднов�
 - **Перелічення, що зберігаються рядком** (`HasConversion<string>()`) або видні в OpenAPI: імена членів
   `OrderStatus`, `PaymentStatus`, `PaymentMethod`, `DeliveryMethod`, `RefundMethod`, `RefundStatus`,
   `PaymentAttemptStatus`, `ReceiptKind`, `ReceiptStatus`, `WarehouseType`, `OutboxStatus`, `SyncRunStatus`,
-  `ServiceRequestStatus`, `CustomerTokenPurpose`; `payment_events.state` = `ProviderPaymentState.ToString()`.
+  `ServiceRequestStatus`, `CustomerTokenPurpose`, `AttributeKind`, `AttributeFilterView`, `LabelKind`, `LabelTone`,
+  `RefundChannel`; `payment_events.state` = `ProviderPaymentState.ToString()`. Ключі `platform.settings`
+  (`seo.templates`, `site.home`, `settings.shop`, `settings.delivery`, `settings.notifications`; розділ 5.4) і форма їхнього
+  JSON — теж збережені ідентичності.
   Код способу доставки збереженої адреси (`customer_addresses.delivery_method`) — рядки `DeliveryCodes`
   (`nova_poshta`, `nova_poshta_courier`).
 - Рядкові літерали дій і типів аудиту (`order.status_changed`, `integration.outbox_retried`, `SyncJob`, `CatalogImport`, …),
@@ -622,7 +908,8 @@ SHA-256 (hex). Підтвердження email діє 3 доби, віднов�
   `customer_stamp`. Зміна імені схеми `Customer` чи типу claim робить недійсними cookie покупців.
 - Вбудований ресурс `demo-catalog.json` шукається за суфіксом імені; якщо файл переїжджає, шлях у
   `<EmbeddedResource>` у `PoliValko.Catalog.csproj` переїжджає разом із ним.
-- Ключ кешу `delivery:pickup-points:active`, теги ревалідації вітрини (`StorefrontTags`), структура URL медіа.
+- Ключі кешу `delivery:pickup-points:active`, `content:banners:active`, теги ревалідації вітрини (`StorefrontTags`, зокрема
+  `site` і `home` для головної), структура URL медіа.
 - Імена типізованих HttpClient = короткі імена класів (`NovaPoshtaClient`, `MonoPaymentProvider`,
   `CheckboxFiscalProvider`, `IManagerNotifier`, `IStorefrontCache`) — ці класи не перейменовуються.
 - Категорії логерів (повне ім'я типу) змінюються разом із просторами імен — це прийнятно: жодне налаштування на них
@@ -635,18 +922,20 @@ SHA-256 (hex). Підтвердження email діє 3 доби, віднов�
 
 `ConnectionStrings:PoliValko`; `Outbox` (BatchSize, MaxAttempts, LockDuration, PollInterval); `Sync`
 (AlertAfterFailures); `Media` (Root, PublicPath, MaxUploadBytes); `Site:PublicUrl`; `Web` (RevalidateUrl,
-RevalidateSecret); `Catalog:HiddenNavkoloGroups`; `Seller` (Name, TaxId, Address); `Delivery:NovaPoshta` (ApiKey,
-BaseUrl, SyncInterval, PageSize, PageDelay, MaxRetries, RetryDelay, Timeout); `Payments` (Provider, InvoiceValidity,
-Sandbox:Secret, Mono:BaseUrl, Mono:Token); `Fiscal` (Provider, IssueOn, PaymentTypes, Checkbox:*); `Navkolo`
-(Mode, SyncInterval, CatalogInterval, FreshnessThreshold, Stub:SimulateOutage); `Notifications:Telegram` (BotToken,
-ChatId); `RateLimiting:{Forms,Orders,Login}:{PermitLimit,WindowSeconds}` (типово 5/60, 10/600, 10/60);
+RevalidateSecret); `Catalog:HiddenNavkoloGroups`; `Seller` (Name, TaxId, Address — лише поки реквізити не збережено в
+консолі); `Delivery:NovaPoshta` (ApiKey, BaseUrl, SyncInterval, PageSize, PageDelay, MaxRetries, RetryDelay, Timeout);
+`Payments` (Provider, InvoiceValidity, Sandbox:Secret, Mono:BaseUrl, Mono:Token); `Fiscal` (Provider, IssueOn,
+PaymentTypes, Checkbox:*); `Navkolo` (Mode, SyncInterval, CatalogInterval, FreshnessThreshold, Stub:SimulateOutage);
+`Notifications:Telegram` (BotToken; ChatId — запасний чат, коли в консолі чатів не вказано);
+`RateLimiting:{Forms,Orders,Login}:{PermitLimit,WindowSeconds}` (типово 5/60, 10/600, 10/60);
 `Cors:Origins`; `Api:ExposeDocs`; `Database:ApplyMigrationsOnStartup`, `Database:SeedDemoData`; `Seed:Users`;
 `Email:Mode` (`Log` — типово й поки єдине значення, інше зупиняє запуск); `Customers:SessionCheckInterval` (типово
 `00:01:00`). `Site:PublicUrl` тепер також база посилань у листах покупцю й адреси повернення з оплати в кабінеті.
 
 ### 6.5 HTTP-політики
 
-- Авторизація: політики `staff` (ролі Admin, Manager) і `admin` (Admin); cookie Identity (HttpOnly, SameSite=Strict,
+- Авторизація працівників: політика `staff` (будь-який працівник із cookie `pv_console`) і політики
+  `permission:<ключ>` з каталогу прав (розділ 5.2); cookie Identity (HttpOnly, SameSite=Strict,
   8 год, sliding), блокування після 5 спроб на 15 хв, пароль від 10 символів, перевірка security stamp щохвилини,
   відповіді 401/403 у форматі Problem Details.
 - Покупці: політика `customer`, cookie `pv_customer` (HttpOnly, SameSite=Lax, 30 днів, sliding), блокування після
@@ -674,7 +963,8 @@ ChatId); `RateLimiting:{Forms,Orders,Login}:{PermitLimit,WindowSeconds}` (тип
 - `Fiscal:Provider` = `Disabled` | `Stub` | `Checkbox`.
 - Нова пошта: без `Delivery:NovaPoshta:ApiKey` — `DemoNovaPoshtaDirectory`, з ключем — `NovaPoshtaDbDirectory`
   (вибір під час створення scoped-сервісу).
-- Повідомлення: Telegram, якщо задано BotToken і ChatId, інакше лог.
+- Повідомлення менеджеру: канал Telegram, якщо задано BotToken (чати — з налаштувань сповіщень, запасний — ChatId),
+  інакше лог; перемикачі подій — у налаштуваннях сповіщень (розділ 5.4).
 - Листи покупцю (`ICustomerMailer`): `Email:Mode` = `Log` — заглушка `LogCustomerMailer` пише в лог адресата й
   посилання з токеном. Для продакшну потрібен справжній провайдер (новий режим і реалізація в
   `Notifications/Integrations`), бо посилання в лозі — це робочі токени входу в обліковий запис.
@@ -712,7 +1002,8 @@ ChatId); `RateLimiting:{Forms,Orders,Login}:{PermitLimit,WindowSeconds}` (тип
 1. Створіть `Features/<Область>/<Дія>.cs` з `internal static class <Дія>` і `HandleAsync`.
 2. Записи запиту/відповіді — у тому ж файлі або в `<Область>Dtos.cs`, якщо їх ділять кілька зрізів. Імена DTO
    стануть іменами схем OpenAPI — перевірте, що вони унікальні.
-3. Додайте `Map*` у `<Область>Endpoints.Map` у потрібне місце; маршрути консолі — у групі з `RequireStaff(...)`.
+3. Додайте `Map*` у `<Область>Endpoints.Map` у потрібне місце; маршрути консолі — у групі з `RequireStaff(ключ)`
+   або з `RequirePermission(ключ)` на маршруті (розділ 5.2).
 4. Зберіть рішення: оновлений `openapi/polivalko-api.json` комітиться разом зі змінами, а веб перегенеровує типи.
 5. Тест — у `tests/PoliValko.IntegrationTests/<Модуль>/`.
 
