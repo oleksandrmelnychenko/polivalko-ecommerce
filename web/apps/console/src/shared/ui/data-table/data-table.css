@@ -1,0 +1,287 @@
+.data-table {
+  isolation: isolate;
+  min-width: 0;
+  width: 100%;
+}
+
+.data-table-density-compact {
+  --data-table-row-height: 36px;
+}
+
+.data-table-density-normal {
+  --data-table-row-height: 48px;
+}
+
+.data-table-scroll {
+  max-width: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  position: relative;
+  scrollbar-color: var(--mantine-color-gray-4) transparent;
+  scrollbar-width: thin;
+}
+
+.data-table-scroll::-webkit-scrollbar {
+  height: 10px;
+  width: 8px;
+}
+
+.data-table-scroll::-webkit-scrollbar-thumb {
+  background: var(--mantine-color-gray-4);
+  border-radius: 999px;
+}
+
+.data-table-scroll::-webkit-scrollbar-track,
+.data-table-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.data-table .data-table-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.data-table-th {
+  background: var(--mantine-color-white);
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+  color: var(--mantine-color-gray-7);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  position: sticky;
+  text-align: left;
+  text-transform: none;
+  top: 0;
+  user-select: none;
+  white-space: nowrap;
+  z-index: 3;
+}
+
+.data-table-density-compact .data-table-th {
+  height: 34px;
+  padding: 4px 8px;
+}
+
+.data-table-density-normal .data-table-th {
+  height: 40px;
+  padding: 6px 10px;
+}
+
+.data-table-filler-th,
+.data-table-filler-cell {
+  padding: 0 !important;
+}
+
+.data-table .data-table-header-button,
+.data-table .data-table-header-static {
+  align-items: center;
+  color: inherit;
+  display: flex;
+  font: inherit;
+  gap: 4px;
+  justify-content: flex-start;
+  min-width: 0;
+  width: 100%;
+}
+
+.data-table-header-button {
+  border-radius: 6px;
+  cursor: pointer;
+  margin: -2px -4px;
+  padding: 2px 4px;
+  width: calc(100% + 8px) !important;
+}
+
+.data-table-header-button:hover {
+  color: var(--mantine-color-gray-9);
+}
+
+.data-table-header-button:focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 1px;
+}
+
+.data-table-header-label {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.data-table-th[data-align='center'] :is(.data-table-header-button, .data-table-header-static) {
+  justify-content: center;
+}
+
+.data-table-th[data-align='right'] :is(.data-table-header-button, .data-table-header-static) {
+  justify-content: flex-end;
+}
+
+.data-table-sort-icon {
+  color: var(--brand-accent);
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.data-table-sort-icon[data-sorted='false'] {
+  color: var(--mantine-color-gray-5);
+}
+
+.data-table-cell {
+  background: var(--data-table-cell-bg, var(--mantine-color-white));
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+  color: var(--mantine-color-gray-8);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+.data-table-density-compact .data-table-cell {
+  font-size: 12.5px;
+  line-height: 1.25;
+  padding: 4px 8px;
+}
+
+.data-table-density-normal .data-table-cell {
+  font-size: 13px;
+  line-height: 1.3;
+  padding: 7px 10px;
+}
+
+.data-table-select-th,
+.data-table-select-cell {
+  padding-inline: 0 !important;
+  text-align: center !important;
+}
+
+.data-table-select-th .mantine-Checkbox-root,
+.data-table-select-cell .mantine-Checkbox-root {
+  display: inline-flex;
+  justify-content: center;
+}
+
+.data-table .mantine-Checkbox-input:checked,
+.data-table .mantine-Checkbox-input[data-indeterminate] {
+  background-color: var(--brand-accent);
+  border-color: var(--brand-accent);
+}
+
+.data-table-numeric-cell,
+.data-table-numeric-cell :where(*) {
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table-cell a {
+  color: var(--mantine-color-gray-9);
+  text-decoration: none;
+}
+
+.data-table-cell a:hover {
+  color: var(--brand-accent-hover);
+  text-decoration: underline;
+}
+
+.data-table-cell a:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 1px;
+}
+
+.data-table-row {
+  --data-table-cell-bg: var(--mantine-color-white);
+  cursor: default;
+  height: var(--data-table-row-height);
+}
+
+.data-table-row:nth-child(even) {
+  --data-table-cell-bg: #fafbfa;
+}
+
+.data-table-row.data-table-row-clickable {
+  cursor: pointer;
+}
+
+.data-table-row.data-table-row-clickable:hover .data-table-cell {
+  --data-table-cell-bg: #f3faf6;
+}
+
+.data-table-row.is-selected .data-table-cell,
+.data-table-row.is-selected.data-table-row-clickable:hover .data-table-cell {
+  --data-table-cell-bg: var(--brand-accent-soft);
+}
+
+.data-table[data-fetching='true'] .data-table-table tbody {
+  opacity: 0.55;
+  transition: opacity 160ms ease;
+}
+
+.data-table-empty {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  left: 0;
+  padding: 56px 16px;
+  pointer-events: none;
+  position: sticky;
+  z-index: 2;
+}
+
+.data-table-empty-content {
+  color: var(--mantine-color-gray-6);
+  font-size: 13px;
+  pointer-events: auto;
+  text-align: center;
+}
+
+.data-table-footer {
+  background: var(--mantine-color-white);
+  border-top: 1px solid var(--mantine-color-gray-2);
+  padding: 8px 12px;
+}
+
+.data-table-skeleton-row {
+  pointer-events: none;
+}
+
+.data-table-skeleton-cell-align-center .data-table-skeleton-line {
+  margin-inline: auto;
+}
+
+.data-table-skeleton-cell-align-right .data-table-skeleton-line {
+  margin-left: auto;
+}
+
+.data-table-skeleton-line {
+  --data-table-skeleton-width: 68%;
+  animation: data-table-shimmer 1.2s linear infinite;
+  background: linear-gradient(90deg, var(--mantine-color-gray-1) 0%, var(--mantine-color-gray-2) 42%, var(--mantine-color-gray-1) 84%);
+  background-size: 220% 100%;
+  border-radius: 999px;
+  display: block;
+  height: 10px;
+  max-width: 100%;
+  width: var(--data-table-skeleton-width);
+}
+
+.data-table-skeleton-line-primary {
+  height: 12px;
+}
+
+.data-table-skeleton-line-icon {
+  border-radius: 4px;
+  height: 16px;
+  margin-inline: auto;
+  width: 16px;
+}
+
+@keyframes data-table-shimmer {
+  0% {
+    background-position: 120% 0;
+  }
+
+  100% {
+    background-position: -120% 0;
+  }
+}

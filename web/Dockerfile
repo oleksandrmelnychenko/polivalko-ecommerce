@@ -20,16 +20,20 @@ ENV SITE_URL=$SITE_URL \
     NEXT_PUBLIC_GSC_VERIFICATION=$NEXT_PUBLIC_GSC_VERIFICATION
 RUN npm run build -w $APP
 
-FROM node:24-alpine AS runtime
-ARG APP=shop
+FROM caddy:2-alpine AS console
+COPY apps/console/serve.Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /app/apps/console/dist /srv
+EXPOSE 3000
+
+FROM node:24-alpine AS shop
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
     HOSTNAME=0.0.0.0
-COPY --from=build --chown=node:node /app/apps/$APP/.next/standalone ./
-COPY --from=build --chown=node:node /app/apps/$APP/.next/static ./apps/$APP/.next/static
-WORKDIR /app/apps/$APP
+COPY --from=build --chown=node:node /app/apps/shop/.next/standalone ./
+COPY --from=build --chown=node:node /app/apps/shop/.next/static ./apps/shop/.next/static
+WORKDIR /app/apps/shop
 USER node
 EXPOSE 3000
 CMD ["node", "server.js"]

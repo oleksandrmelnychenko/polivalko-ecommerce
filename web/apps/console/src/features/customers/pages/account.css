@@ -1,0 +1,336 @@
+.account-crumbs {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.account-crumbs a {
+  color: var(--mantine-color-gray-7);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.account-crumbs a:hover {
+  color: var(--brand-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--brand-accent);
+}
+
+.account-crumbs a:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 2px;
+}
+
+.account-crumbs svg {
+  color: var(--mantine-color-gray-5);
+  flex: 0 0 auto;
+}
+
+.account-crumbs [aria-current] {
+  color: var(--brand-ink);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-page {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 auto;
+  max-width: 1480px;
+  padding: 14px;
+  width: 100%;
+}
+
+.account-hero {
+  align-items: center;
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: 12px;
+  display: grid;
+  gap: 16px 24px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 16px 18px;
+}
+
+.account-hero-main {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+  min-width: 0;
+}
+
+.account-avatar {
+  align-items: center;
+  background: var(--brand-accent-soft);
+  border: 1px solid rgba(var(--brand-accent-rgb), 0.3);
+  border-radius: 999px;
+  color: #006f30;
+  display: inline-flex;
+  flex: 0 0 52px;
+  font-size: 17px;
+  font-weight: 700;
+  height: 52px;
+  justify-content: center;
+  width: 52px;
+}
+
+.account-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.account-eyebrow {
+  color: var(--mantine-color-gray-6);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.account-name {
+  color: var(--brand-ink);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.account-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  justify-content: flex-end;
+  margin: 0;
+}
+
+.account-metric dt {
+  color: var(--mantine-color-gray-7);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.account-metric dd {
+  color: var(--brand-ink);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 4px 0 0;
+}
+
+.account-layout {
+  align-items: start;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+}
+
+.account-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.account-card {
+  background: var(--mantine-color-white);
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: 12px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.account-card-head {
+  align-items: center;
+  background: #fafbfa;
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 6px 14px;
+}
+
+.account-card-title {
+  color: var(--mantine-color-gray-8);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.account-card-title::before {
+  background: var(--brand-accent);
+  border-radius: 999px;
+  content: '';
+  display: inline-block;
+  height: 7px;
+  margin-right: 8px;
+  vertical-align: 1px;
+  width: 7px;
+}
+
+.account-card-meta {
+  color: var(--mantine-color-gray-6);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.account-card-note {
+  color: var(--mantine-color-gray-6);
+  font-size: 13.5px;
+  margin: 0;
+  padding: 14px;
+}
+
+.account-facts {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+}
+
+.account-facts > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.account-facts dt {
+  color: var(--mantine-color-gray-6);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.account-facts dd {
+  color: var(--mantine-color-gray-9);
+  font-size: 13.5px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.account-facts a,
+.account-table a {
+  color: var(--brand-ink);
+  font-weight: 600;
+  text-decoration-color: rgba(var(--brand-accent-rgb), 0.5);
+}
+
+.account-facts a:hover,
+.account-table a:hover {
+  color: var(--brand-accent-hover);
+}
+
+.account-addresses {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.account-addresses li {
+  border-top: 1px solid var(--mantine-color-gray-2);
+  display: grid;
+  gap: 2px;
+  padding: 10px 14px;
+}
+
+.account-addresses li:first-child {
+  border-top: 0;
+}
+
+.account-address-title {
+  align-items: center;
+  color: var(--mantine-color-gray-9);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13.5px;
+  font-weight: 600;
+  gap: 6px;
+}
+
+.account-address-default {
+  background: var(--brand-accent-soft);
+  border-radius: 999px;
+  color: #006f30;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 1px 8px;
+}
+
+.account-address-text {
+  color: var(--mantine-color-gray-7);
+  font-size: 13px;
+}
+
+.account-table {
+  font-size: 13px;
+}
+
+.account-table thead th {
+  color: var(--mantine-color-gray-7);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.account-table td {
+  color: var(--mantine-color-gray-8);
+  vertical-align: middle;
+}
+
+.account-table tbody tr:last-child {
+  border-bottom: 0;
+}
+
+.account-table .is-num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.account-table .is-strong {
+  color: var(--mantine-color-gray-9);
+  font-weight: 600;
+}
+
+.account-table .is-nowrap,
+.account-table .is-code {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 62em) {
+  .account-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 36em) {
+  .account-page {
+    padding: 10px;
+  }
+
+  .account-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .account-metrics {
+    justify-content: flex-start;
+  }
+}

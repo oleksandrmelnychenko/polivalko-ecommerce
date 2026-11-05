@@ -1,0 +1,155 @@
+.app-date-range .mantine-InputBase-input,
+.app-date-range.mantine-InputBase-input {
+  text-align: left;
+}
+
+.app-date-range-value {
+  color: var(--mantine-color-gray-9);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.app-date-range-placeholder {
+  color: var(--mantine-color-gray-6);
+  white-space: nowrap;
+}
+
+.app-date-range-menu {
+  background: var(--mantine-color-white);
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: 10px;
+  max-width: calc(100vw - 24px);
+  padding: 12px;
+}
+
+.app-date-range-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.app-date-range-fields {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.app-date-range-menu .mantine-InputWrapper-label {
+  color: var(--mantine-color-gray-8);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.app-date-range-menu .mantine-Input-input {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  height: 36px;
+  min-height: 36px;
+  padding-inline: 10px;
+}
+
+.app-date-range-menu .mantine-Button-root {
+  font-size: 13px;
+  height: 34px;
+  min-height: 34px;
+  padding-inline: 12px;
+}
+
+.app-date-range-error {
+  color: var(--mantine-color-red-7);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.app-date-range-calendar .mantine-DatePicker-presetsList {
+  align-content: start;
+  border-right: 1px solid var(--mantine-color-gray-2);
+  display: grid;
+  gap: 2px;
+  margin-right: 10px;
+  min-width: 132px;
+  padding-right: 10px;
+}
+
+.app-date-range-calendar .mantine-DatePicker-presetButton {
+  border-radius: 6px;
+  color: var(--mantine-color-gray-8);
+  font-size: 13px;
+  font-weight: 500;
+  height: 30px;
+  justify-content: flex-start;
+  padding-inline: 10px;
+}
+
+.app-date-range-calendar .mantine-DatePicker-presetButton:hover {
+  background: var(--brand-accent-soft);
+  color: var(--brand-ink);
+}
+
+.app-date-range-calendar .mantine-DatePicker-calendarHeaderLevel {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.app-date-range-calendar .mantine-DatePicker-weekday {
+  color: var(--mantine-color-gray-6);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.app-date-range-calendar .mantine-DatePicker-day {
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.app-date-range-calendar .mantine-DatePicker-day[data-weekend]:not([data-selected], [data-in-range], [data-outside]) {
+  color: var(--mantine-color-red-6);
+}
+
+.app-date-range-calendar .mantine-DatePicker-day[data-in-range] {
+  background: rgba(var(--brand-accent-rgb), 0.1);
+  border-radius: 0;
+}
+
+.app-date-range-calendar .mantine-DatePicker-day:is([data-first-in-range], [data-last-in-range], [data-selected]) {
+  background: var(--brand-accent);
+  color: var(--mantine-color-white);
+}
+
+.app-date-range-calendar .mantine-DatePicker-day[data-first-in-range] {
+  border-radius: 6px 0 0 6px;
+}
+
+.app-date-range-calendar .mantine-DatePicker-day[data-last-in-range] {
+  border-radius: 0 6px 6px 0;
+}
+
+.app-date-range-calendar .mantine-DatePicker-day[data-first-in-range][data-last-in-range] {
+  border-radius: 6px;
+}
+
+.app-date-range-calendar .mantine-DatePicker-day[data-today]:not([data-selected], [data-in-range]) {
+  outline: 1px solid rgba(var(--brand-accent-rgb), 0.5);
+  outline-offset: -1px;
+}
+
+@media (max-width: 30em) {
+  .app-date-range-calendar .mantine-DatePicker-datePickerRoot,
+  .app-date-range-calendar.mantine-DatePicker-datePickerRoot {
+    flex-direction: column;
+  }
+
+  .app-date-range-calendar .mantine-DatePicker-presetsList {
+    border-bottom: 1px solid var(--mantine-color-gray-2);
+    border-right: 0;
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 0 8px;
+    min-width: 0;
+    padding: 0 0 8px;
+  }
+}

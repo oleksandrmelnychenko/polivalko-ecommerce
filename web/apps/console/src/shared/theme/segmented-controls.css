@@ -1,0 +1,34 @@
+.mantine-SegmentedControl-root {
+  background: var(--mantine-color-white) !important;
+  border-color: transparent !important;
+  border-radius: 9px !important;
+  box-shadow: none !important;
+  height: fit-content;
+  outline: 1px solid var(--mantine-color-gray-2);
+  outline-offset: -1px;
+}
+
+.mantine-SegmentedControl-root .mantine-SegmentedControl-indicator,
+.mantine-SegmentedControl-root .mantine-SegmentedControl-label[data-active]::before {
+  background: var(--brand-accent) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+
+.mantine-SegmentedControl-root .mantine-SegmentedControl-control::before {
+  display: none !important;
+}
+
+.mantine-SegmentedControl-root .mantine-SegmentedControl-label {
+  background: transparent !important;
+  border-radius: 6px !important;
+}
+
+.mantine-SegmentedControl-root .mantine-SegmentedControl-label:not([data-active]):not([data-disabled]) {
+  color: var(--mantine-color-gray-7) !important;
+}
+
+.mantine-SegmentedControl-root .mantine-SegmentedControl-label[data-active],
+.mantine-SegmentedControl-root .mantine-SegmentedControl-label[data-active] .mantine-SegmentedControl-innerLabel {
+  color: var(--mantine-color-white) !important;
+}

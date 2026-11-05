@@ -1,0 +1,41 @@
+.customers-person {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+}
+
+.customers-avatar {
+  align-items: center;
+  background: var(--mantine-color-gray-1);
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: 999px;
+  color: var(--mantine-color-gray-8);
+  display: inline-flex;
+  flex: 0 0 32px;
+  font-size: 12px;
+  font-weight: 700;
+  height: 32px;
+  justify-content: center;
+  letter-spacing: 0.02em;
+  width: 32px;
+}
+
+.data-table-cell a.customers-phone {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.data-table-cell a.customers-orders-link {
+  border-radius: 8px;
+  color: var(--mantine-color-gray-8);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.data-table-cell a.customers-orders-link:hover {
+  border-color: rgba(var(--brand-accent-rgb), 0.45);
+  color: var(--brand-ink);
+  text-decoration: none;
+}

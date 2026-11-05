@@ -1,0 +1,35 @@
+.orders-bulk-bar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  width: 100%;
+}
+
+.orders-bulk-count {
+  align-items: center;
+  background: var(--brand-accent-soft);
+  border: 1px solid rgba(var(--brand-accent-rgb), 0.3);
+  border-radius: 999px;
+  color: #006f30;
+  display: inline-flex;
+  font-size: 13px;
+  gap: 4px;
+  height: 30px;
+  padding: 0 12px;
+}
+
+.orders-bulk-count b {
+  font-variant-numeric: tabular-nums;
+}
+
+.orders-bulk-bar .mantine-Button-root {
+  border-radius: 8px;
+}
+
+@media (max-width: 36em) {
+  .orders-bulk-bar .mantine-Select-root {
+    flex: 1 1 100%;
+    width: 100% !important;
+  }
+}

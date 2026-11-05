@@ -1,4 +1,10 @@
-export { StaffGate, useStaff } from "./components/staff-gate";
-export { AdminOnly } from "./components/admin-only";
-export { LoginScreen } from "./components/login-screen";
-export { logout } from "./api/client";
+export { AuthProvider } from './AuthProvider'
+export { useAuth } from './useAuth'
+export { usePermissions } from './usePermissions'
+export { Can, PermissionGate } from './components/Can'
+export { AccessDenied } from './components/AccessDenied'
+export { PagePermissionBoundary } from './components/PagePermissionBoundary'
+export { ProtectedRoute } from './components/ProtectedRoute'
+export { ChangePasswordModal } from './components/ChangePasswordModal'
+export { LoginPage } from './pages/LoginPage'
+export type { AuthContextValue, AuthStatus } from './AuthContext'

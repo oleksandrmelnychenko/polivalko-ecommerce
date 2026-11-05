@@ -1,10 +1,10 @@
-export function initials(name: string) {
+export function initials(name: string): string {
   return (
     name
       .split(/\s+/)
-      .filter((w) => /^\p{L}/u.test(w))
+      .filter((word) => /^\p{L}/u.test(word))
       .slice(0, 2)
-      .map((w) => w[0]?.toUpperCase())
-      .join("") || "?"
-  );
+      .map((word) => word[0]?.toUpperCase())
+      .join('') || '?'
+  )
 }

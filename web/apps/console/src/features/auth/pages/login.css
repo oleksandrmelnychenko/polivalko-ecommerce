@@ -1,0 +1,122 @@
+.login-page {
+  background:
+    radial-gradient(1200px 520px at 50% -10%, rgba(var(--brand-accent-rgb), 0.1), transparent 70%),
+    var(--app-ground);
+  box-sizing: border-box;
+  color: var(--brand-ink);
+  display: flex;
+  height: 100%;
+  min-height: 100dvh;
+  overflow: auto;
+  padding: 40px 16px;
+}
+
+.login-content {
+  margin: auto;
+  max-width: 440px;
+  width: 100%;
+}
+
+.login-brand {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.login-wordmark {
+  color: var(--brand-ink);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.login-badge {
+  background: var(--brand-accent-soft);
+  border: 1px solid rgba(var(--brand-accent-rgb), 0.3);
+  border-radius: 999px;
+  color: #006f30;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  padding: 0 10px;
+}
+
+.login-card {
+  background: var(--mantine-color-white);
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: 20px;
+  box-shadow: 0 18px 40px rgba(20, 28, 38, 0.06);
+  padding: 32px 32px 24px;
+}
+
+.login-heading {
+  margin-bottom: 22px;
+}
+
+.login-heading h1 {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.login-heading p {
+  color: var(--mantine-color-gray-7);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 8px 0 0;
+}
+
+.login-card .mantine-InputWrapper-label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.login-card .mantine-Input-input {
+  border-color: var(--mantine-color-gray-3);
+  border-radius: 10px;
+  font-size: 15px;
+  height: 44px;
+  min-height: 44px;
+}
+
+.login-card .mantine-PasswordInput-innerInput {
+  height: 42px;
+}
+
+.login-card .mantine-Input-input:focus-within {
+  border-color: var(--brand-accent);
+  box-shadow: var(--app-focus-ring);
+}
+
+.login-card .login-submit {
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  height: 46px;
+  margin-top: 4px;
+}
+
+.login-card .login-alert {
+  width: 100%;
+}
+
+.login-help {
+  border-top: 1px solid var(--mantine-color-gray-2);
+  color: var(--mantine-color-gray-6);
+  font-size: 13px;
+  margin: 22px 0 0;
+  padding-top: 16px;
+  text-align: center;
+}
+
+@media (max-width: 30em) {
+  .login-card {
+    border-radius: 16px;
+    padding: 24px 18px 18px;
+  }
+}

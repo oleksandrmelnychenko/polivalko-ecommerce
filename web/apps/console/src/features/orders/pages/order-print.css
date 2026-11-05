@@ -1,0 +1,104 @@
+@media print {
+  html:has(.order-page),
+  html:has(.order-page) body,
+  html:has(.order-page) #root {
+    background: #fff !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  html:has(.order-page) .mantine-AppShell-header,
+  html:has(.order-page) .mantine-Notifications-root,
+  html:has(.order-page) .order-no-print {
+    display: none !important;
+  }
+
+  html:has(.order-page) .mantine-AppShell-main {
+    background: #fff !important;
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    transition: none !important;
+  }
+
+  html:has(.order-page) .console-content {
+    display: block !important;
+    padding: 0 !important;
+  }
+
+  html:has(.order-page) .console-frame {
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .order-page {
+    display: block;
+    max-width: none;
+    padding: 0;
+  }
+
+  .order-print-only {
+    display: block;
+    font-size: 12px;
+    margin: 0 0 8px;
+  }
+
+  .order-hero {
+    border: 0;
+    border-bottom: 2px solid #000;
+    border-radius: 0;
+    padding: 0 0 10px;
+  }
+
+  .order-layout,
+  .order-col {
+    display: block;
+  }
+
+  .order-card {
+    border-color: #999;
+    border-radius: 0;
+    break-inside: avoid;
+    margin-top: 12px;
+    overflow: visible;
+  }
+
+  .order-card-head {
+    background: #fff;
+    border-bottom-color: #999;
+  }
+
+  .order-card-title::before,
+  .order-metric dt::before,
+  .app-table-chip-dot {
+    display: none;
+  }
+
+  .order-page .mantine-Table-scrollContainer,
+  .order-page .mantine-Table-scrollContainerInner {
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  .order-page .app-table-chip {
+    background: #fff !important;
+    border-color: #333 !important;
+    color: #000 !important;
+  }
+
+  .order-page a {
+    color: #000 !important;
+    text-decoration: none !important;
+  }
+
+  .order-timeline li:first-child::before {
+    background: #000;
+    box-shadow: none;
+  }
+}

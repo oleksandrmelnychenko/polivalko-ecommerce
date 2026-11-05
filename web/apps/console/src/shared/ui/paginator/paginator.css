@@ -1,0 +1,30 @@
+.app-paginator {
+  align-items: center;
+  background: var(--mantine-color-gray-0);
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: 8px;
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 2px;
+  height: 36px;
+  min-width: 0;
+  padding: 3px;
+}
+
+.app-paginator .mantine-Input-input {
+  border-color: var(--mantine-color-gray-3);
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+  height: 28px;
+  min-height: 28px;
+  text-align: center;
+}
+
+.app-paginator-label {
+  color: var(--mantine-color-gray-7);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  padding: 0 4px;
+  white-space: nowrap;
+}

@@ -2,25 +2,40 @@
   "name": "console",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev --port 3001",
-    "build": "next build",
-    "start": "next start --port 3001",
-    "lint": "eslint",
-    "typecheck": "next typegen && tsc --noEmit"
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/onest": "^5.3.1",
+    "@mantine/core": "^9.7.5",
+    "@mantine/dates": "^9.7.5",
+    "@mantine/hooks": "^9.7.5",
+    "@mantine/notifications": "^9.7.5",
     "@polivalko/shared": "*",
-    "next": "16.4.3",
+    "@tabler/icons-react": "^3.50.0",
+    "@tanstack/react-table": "^8.21.3",
+    "dayjs": "^1.11.23",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "react-router-dom": "^7.18.5"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@eslint/js": "^9.39.5",
+    "@types/node": "^20.19.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.2.1",
     "eslint": "^9",
-    "eslint-config-next": "16.4.3",
-    "typescript": "^5"
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^14.0.0",
+    "typescript": "^5",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.6"
   }
 }

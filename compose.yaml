@@ -109,6 +109,7 @@ services:
     image: polivalko-web:${APP_VERSION:-latest}
     build:
       context: web
+      target: shop
       args:
         APP: shop
         SITE_URL: ${SITE_URL:-http://localhost:8080}
@@ -135,22 +136,18 @@ services:
     image: polivalko-console:${APP_VERSION:-latest}
     build:
       context: web
+      target: console
       args:
         APP: console
         SITE_URL: ${SITE_URL:-http://localhost:8080}
     restart: unless-stopped
-    environment:
-      API_INTERNAL_URL: http://api:8080
-      SITE_URL: ${SITE_URL:-http://localhost:8080}
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/login"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 30s
+      start_period: 5s
       start_interval: 2s
-    depends_on:
-      - api
     logging: *logging
 
   caddy:

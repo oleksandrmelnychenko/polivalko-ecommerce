@@ -1,0 +1,239 @@
+.integration-head {
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 12px 10px;
+}
+
+.integration-stale .mantine-Alert-message {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.integration-facts {
+  display: grid;
+  gap: 8px 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+}
+
+.integration-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.integration-fact dt {
+  color: var(--mantine-color-gray-6);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.integration-fact dd {
+  color: var(--mantine-color-gray-9);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.integration-good {
+  color: #00792f;
+}
+
+.integration-bad {
+  color: var(--mantine-color-red-7);
+  font-weight: 600;
+}
+
+.integration-muted {
+  color: var(--mantine-color-gray-6);
+}
+
+.integration-code {
+  color: var(--mantine-color-gray-7);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.integration-note {
+  display: block;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.integration-wrap {
+  display: block;
+  white-space: normal;
+}
+
+.integration-clamp {
+  -webkit-box-orient: vertical;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  white-space: normal;
+}
+
+.integration-link {
+  color: var(--brand-accent-hover) !important;
+  font-weight: 600;
+}
+
+.integration-run {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.integration-error-more {
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  color: var(--mantine-color-red-7);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline dotted;
+  text-underline-offset: 0.2em;
+}
+
+.integration-error-more:hover {
+  color: var(--mantine-color-red-9);
+}
+
+.integration-error-more:focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 2px;
+}
+
+.integration-detail {
+  font-size: 13px;
+}
+
+.integration-pre {
+  background: #fafbfa;
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: 8px;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin: 0;
+  max-height: 60vh;
+  overflow: auto;
+  padding: 10px 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.integration-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  line-height: 1.4;
+  margin: 0 0 8px;
+  max-height: 60vh;
+  overflow: auto;
+  padding-left: 1.4em;
+}
+
+.integration-errors .integration-code {
+  font-weight: 600;
+}
+
+.integration-job-filter {
+  max-width: 360px;
+}
+
+.integration-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+}
+
+.integration-panel[data-fetching] {
+  opacity: 0.6;
+  transition: opacity 160ms ease;
+}
+
+.integration-card {
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: 12px;
+  max-width: 720px;
+  padding: 14px 16px 6px;
+}
+
+.integration-card h2 {
+  margin: 0 0 8px;
+}
+
+.integration-dl {
+  margin: 0;
+}
+
+.integration-dl-row {
+  border-top: 1px solid var(--mantine-color-gray-2);
+  display: grid;
+  gap: 4px 16px;
+  grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+  padding: 9px 0;
+}
+
+.integration-dl-row:first-child {
+  border-top: 0;
+}
+
+.integration-dl-row dt {
+  color: var(--mantine-color-gray-6);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.integration-dl-row dd {
+  color: var(--mantine-color-gray-9);
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0;
+  min-width: 0;
+}
+
+@media (max-width: 48em) {
+  .integration-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .integration-fact {
+    align-items: baseline;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .integration-fact dt {
+    flex: 0 0 112px;
+  }
+
+  .integration-job-filter {
+    max-width: none;
+  }
+}
+
+@media (max-width: 36em) {
+  .integration-dl-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .integration-panel {
+    padding: 12px;
+  }
+}

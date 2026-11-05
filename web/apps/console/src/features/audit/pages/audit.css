@@ -1,0 +1,142 @@
+.audit-search-label {
+  align-items: center;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.audit-search-label svg {
+  color: var(--mantine-color-gray-6);
+  cursor: help;
+}
+
+.audit-nowrap {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.audit-muted {
+  color: var(--mantine-color-gray-6);
+  margin: 0;
+}
+
+.audit-clamp {
+  -webkit-box-orient: vertical;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.audit-code {
+  color: var(--mantine-color-gray-6);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+a.audit-code {
+  color: var(--mantine-color-gray-8);
+}
+
+a.audit-code:hover {
+  color: var(--brand-accent-hover);
+}
+
+.audit-block {
+  display: block;
+  margin-top: 2px;
+}
+
+.audit-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 14px 16px 20px;
+}
+
+.audit-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.audit-section h3 {
+  margin: 0;
+}
+
+.audit-dl {
+  margin: 0;
+}
+
+.audit-dl-row {
+  border-top: 1px solid var(--mantine-color-gray-2);
+  display: grid;
+  gap: 4px 14px;
+  grid-template-columns: 96px minmax(0, 1fr);
+  padding: 8px 0;
+}
+
+.audit-dl-row:first-child {
+  border-top: 0;
+}
+
+.audit-dl-row dt {
+  color: var(--mantine-color-gray-6);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.audit-dl-row dd {
+  color: var(--mantine-color-gray-9);
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.audit-was {
+  color: var(--mantine-color-gray-6);
+  text-decoration: line-through;
+}
+
+.audit-permissions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.audit-permissions li {
+  border-left: 3px solid var(--mantine-color-gray-3);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-left: 8px;
+}
+
+.audit-permissions.is-added li {
+  border-left-color: var(--brand-accent);
+}
+
+.audit-permissions.is-removed li {
+  border-left-color: var(--mantine-color-red-6);
+}
+
+.audit-pre {
+  background: #fafbfa;
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: 8px;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin: 0;
+  overflow: auto;
+  padding: 10px 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

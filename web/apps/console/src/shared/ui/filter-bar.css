@@ -1,0 +1,193 @@
+:root {
+  --app-filter-control-height: 36px;
+  --app-filter-label-gap: 4px;
+  --app-filter-label-height: 17px;
+}
+
+.app-filter-bar {
+  align-items: flex-end;
+  background: #fafbfa;
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  min-width: 0;
+  padding: 8px 10px 10px;
+}
+
+.app-filter-fields {
+  align-items: flex-end;
+  display: flex;
+  flex: 1 1 520px;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  min-width: 0;
+}
+
+.app-filter-fields > *,
+.app-filter-more > * {
+  flex: 1 1 150px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.app-filter-fields > .app-filter-wide {
+  flex: 2 1 240px;
+}
+
+.app-filter-more > .app-filter-date {
+  flex: 0 1 150px;
+}
+
+.app-filter-more > .app-filter-range {
+  flex: 0 1 230px;
+}
+
+.app-filter-more {
+  display: contents;
+}
+
+.app-filter-fields > .app-filter-toggle {
+  display: none;
+}
+
+.app-filter-toggle-count {
+  background: var(--brand-accent);
+  border-radius: 999px;
+  color: var(--mantine-color-white);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 18px;
+  min-width: 18px;
+  padding: 0 5px;
+  text-align: center;
+}
+
+.app-filter-actions {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-left: auto;
+  min-height: var(--app-filter-control-height);
+  min-width: 0;
+}
+
+.app-filter-bar .mantine-InputWrapper-label {
+  color: var(--mantine-color-gray-8);
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  height: var(--app-filter-label-height);
+  letter-spacing: 0;
+  line-height: 1.3;
+  margin-bottom: var(--app-filter-label-gap);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-filter-bar .mantine-Input-input {
+  background: var(--mantine-color-white);
+  border-color: var(--mantine-color-gray-3);
+  border-radius: 8px;
+  font-size: 13px;
+  height: var(--app-filter-control-height);
+  min-height: var(--app-filter-control-height);
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.app-filter-bar .mantine-Input-input::placeholder {
+  color: var(--mantine-color-gray-6);
+}
+
+.app-filter-bar .mantine-Input-input:hover {
+  border-color: var(--mantine-color-gray-4);
+}
+
+.app-filter-bar .mantine-Input-input:focus,
+.app-filter-bar .mantine-Input-input:focus-within {
+  border-color: var(--app-focus-border);
+  box-shadow: var(--app-focus-ring);
+}
+
+.app-filter-bar .app-filter-actions > .mantine-Button-root {
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  height: var(--app-filter-control-height);
+  min-height: var(--app-filter-control-height);
+  padding-inline: 12px;
+}
+
+.app-filter-bar .app-filter-actions > .mantine-ActionIcon-root {
+  border-radius: 8px;
+  height: var(--app-filter-control-height);
+  min-height: var(--app-filter-control-height);
+  min-width: var(--app-filter-control-height);
+  width: var(--app-filter-control-height);
+}
+
+.app-filter-summary {
+  align-items: center;
+  background: var(--mantine-color-white);
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: 999px;
+  color: var(--mantine-color-gray-7);
+  display: inline-flex;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  height: 30px;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+@media (max-width: 48em) {
+  .app-filter-fields > .app-filter-wide {
+    flex: 1 1 0;
+  }
+
+  .app-filter-fields > .app-filter-toggle {
+    border-radius: 8px;
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-size: 13px;
+    height: var(--app-filter-control-height);
+    min-height: var(--app-filter-control-height);
+    padding-inline: 10px;
+  }
+
+  .app-filter-bar:not([data-expanded]) .app-filter-more {
+    display: none;
+  }
+
+  .app-filter-bar[data-expanded] .app-filter-more {
+    display: flex;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    min-width: 0;
+  }
+
+  .app-filter-more > .app-filter-date {
+    flex: 1 1 130px;
+  }
+
+  .app-filter-actions {
+    justify-content: space-between;
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 36em) {
+  .app-filter-summary {
+    display: none;
+  }
+}

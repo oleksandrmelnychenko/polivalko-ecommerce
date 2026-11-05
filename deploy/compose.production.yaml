@@ -27,8 +27,9 @@ services:
       REVALIDATE_SECRET: ${REVALIDATE_SECRET:?Задайте REVALIDATE_SECRET — випадковий рядок}
 
   console:
-    environment:
-      SITE_URL: ${SITE_URL:?Задайте SITE_URL — публічна адреса з https://}
+    build:
+      args:
+        SITE_URL: ${SITE_URL:?Задайте SITE_URL — публічна адреса з https://}
 
   caddy:
     environment:

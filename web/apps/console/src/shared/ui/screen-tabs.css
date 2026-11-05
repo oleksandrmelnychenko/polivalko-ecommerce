@@ -1,0 +1,80 @@
+.app-screen-tabs {
+  align-items: center;
+  background: var(--mantine-color-gray-0);
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 4px;
+  justify-content: safe center;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 6px 8px;
+  scrollbar-width: thin;
+  width: 100%;
+}
+
+.app-screen-tab {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: var(--mantine-color-gray-8);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 500;
+  gap: 6px;
+  justify-content: center;
+  letter-spacing: 0;
+  line-height: 1.2;
+  margin: 0;
+  min-height: 34px;
+  padding: 7px 10px;
+  transition: background-color 140ms ease, color 140ms ease;
+  white-space: nowrap;
+}
+
+.app-screen-tab:hover {
+  background: var(--mantine-color-gray-1);
+}
+
+.app-screen-tab:focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 2px;
+}
+
+.app-screen-tab.is-active {
+  background: var(--brand-accent);
+  color: var(--mantine-color-white);
+  font-weight: 600;
+}
+
+.app-screen-tab-count {
+  background: var(--mantine-color-white);
+  border: 1px solid var(--mantine-color-gray-3);
+  border-radius: 999px;
+  color: var(--mantine-color-gray-7);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 16px;
+  min-width: 20px;
+  padding: 0 6px;
+  text-align: center;
+}
+
+.app-screen-tab-count.is-hot {
+  background: var(--app-hot-bg);
+  border-color: #f5c27a;
+  color: var(--app-hot);
+}
+
+.app-screen-tab.is-active .app-screen-tab-count {
+  background: rgb(255 255 255 / 20%);
+  border-color: rgb(255 255 255 / 35%);
+  color: var(--mantine-color-white);
+}

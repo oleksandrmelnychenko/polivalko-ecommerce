@@ -1,0 +1,92 @@
+:is(.data-table, .app-table-chips, table, [role='table'], [role='grid'], .app-sheet-body, .app-modal) .mantine-Badge-root {
+  --badge-padding-x: 8px;
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+:is(.data-table, .app-table-chips, table, [role='table'], [role='grid'], .app-sheet-body, .app-modal) .mantine-Badge-root {
+  background: var(--table-chip-bg);
+  border: 1px solid var(--table-chip-border);
+  color: var(--table-chip-text);
+}
+
+.app-table-chip {
+  align-items: center;
+  background: var(--app-chip-neutral-bg);
+  border: 1px solid var(--app-chip-neutral-border);
+  border-radius: 999px;
+  color: var(--app-chip-neutral-text);
+  display: inline-flex;
+  font-size: 11.5px;
+  font-weight: 600;
+  gap: 4px;
+  letter-spacing: 0;
+  line-height: 18px;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0 8px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.app-table-chip-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-table-chip-dot {
+  background: currentColor;
+  border-radius: 999px;
+  flex: 0 0 6px;
+  height: 6px;
+  width: 6px;
+}
+
+.app-table-chip.is-document,
+.app-table-chip.is-info {
+  background: var(--app-chip-document-bg);
+  border-color: var(--app-chip-document-border);
+  color: var(--app-chip-document-text);
+}
+
+.app-table-chip.is-product {
+  background: var(--app-chip-product-bg);
+  border-color: var(--app-chip-product-border);
+  color: var(--app-chip-product-text);
+}
+
+.app-table-chip.is-source {
+  background: var(--app-chip-source-bg);
+  border-color: var(--app-chip-source-border);
+  color: var(--app-chip-source-text);
+}
+
+.app-table-chip.is-storage {
+  background: var(--app-chip-storage-bg);
+  border-color: var(--app-chip-storage-border);
+  color: var(--app-chip-storage-text);
+}
+
+.app-table-chip.is-success {
+  background: var(--app-chip-success-bg);
+  border-color: var(--app-chip-success-border);
+  color: var(--app-chip-success-text);
+}
+
+.app-table-chip.is-warning {
+  background: var(--app-chip-warning-bg);
+  border-color: var(--app-chip-warning-border);
+  color: var(--app-chip-warning-text);
+}
+
+.app-table-chip.is-danger {
+  background: var(--app-chip-danger-bg);
+  border-color: var(--app-chip-danger-border);
+  color: var(--app-chip-danger-text);
+}
+
+.app-table-chip.is-size-md { font-size: 12px; line-height: 20px; }
+.app-table-chip.is-size-lg { font-size: 14px; line-height: 22px; }

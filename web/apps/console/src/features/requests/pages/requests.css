@@ -1,0 +1,33 @@
+.data-table-cell a.requests-phone {
+  align-items: center;
+  color: var(--mantine-color-gray-6);
+  display: inline-flex;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.data-table-cell a.requests-phone:hover {
+  color: var(--brand-accent-hover);
+}
+
+.requests-comment {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--mantine-color-gray-8);
+  display: -webkit-box;
+  line-height: 1.35;
+  overflow: hidden;
+  white-space: normal;
+}
+
+.requests-muted {
+  color: var(--mantine-color-gray-6);
+}
+
+.requests-status-select .mantine-Input-input {
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+}

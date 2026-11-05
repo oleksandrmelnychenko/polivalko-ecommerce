@@ -1,0 +1,18 @@
+:is(.mantine-Combobox-option, .mantine-Select-option, .mantine-MultiSelect-option, .mantine-Autocomplete-option) {
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 16px;
+  min-height: 30px;
+  padding: 7px 8px;
+}
+
+:is(.mantine-Combobox-option, .mantine-Select-option, .mantine-MultiSelect-option):is(
+  :hover, [data-combobox-selected], [data-combobox-active], [aria-selected='true']
+):not([data-combobox-disabled]) {
+  background: var(--mantine-color-brand-0);
+  color: var(--mantine-color-gray-9);
+}
+
+:is(.mantine-Combobox-empty, .mantine-Select-empty, .mantine-MultiSelect-empty, .mantine-Autocomplete-empty) {
+  font-size: 13px;
+}
