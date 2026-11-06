@@ -22,7 +22,7 @@ src/
     Outbox/        IOutboxMessage, IOutboxHandler, IOutbox, EfOutbox, OutboxJson, OutboxMessage, OutboxStatus,
                    OutboxMessageConfiguration, OutboxOptions, OutboxRetryPolicy, OutboxProcessor,
                    OutboxHandlerRegistry, OutboxDispatcherService
-    Persistence/   PoliValkoDbContext, IModelConfigurator, Schemas, SqlLike, Migrations/ (не змінюються)
+    Persistence/   PoliValkoDbContext, IModelConfigurator, Schemas, SqlLike, TrigramSearch, Migrations/ (не змінюються)
     Security/      StaffUser, StaffRole, StaffRolePermission, StaffRoles, StaffClaims, StaffPolicies,
                    IdentityModel, AuthProblems, CsrfFilter, CsrfHeaders, CsrfTokenDto, StaffEndpointExtensions
                    (RequireStaff, RequirePermission, RequireCsrf для маршруту й для групи)
@@ -208,7 +208,7 @@ PoliValko.Catalog/
                            характеристик і брендів з товарів, початкові мітки), ProductLabelSet (мітки для сторінки товарів)
   Features/Storefront/     CatalogEndpoints; GetCategoryTree, GetCategory, SearchProducts, GetProduct, GetPhotoCredits,
                            GetCollections, GetSitemap, ResolveRedirect; StorefrontDtos (+ ProductSearchQuery, ProductSort);
-                           ProductFacetBuilder, ProductListing, CategoryQueries, SeoTemplates (мета-шаблони з seo.templates)
+                           ProductFacetBuilder, ProductListing, ProductSearchText, CategoryQueries, SeoTemplates (мета-шаблони з seo.templates)
   Features/Console/        ConsoleCatalogEndpoints (група /catalog), CatalogConsoleValidation (+ бренд і ручні мітки)
     Products/              ProductEndpoints; ListProducts, SetProductsVisibility, GetConsoleProduct, UpdateProduct,
                            UploadProductImage, UpdateProductImages, DeleteProductImage, CountProducts, BulkUpdateProducts;
@@ -862,7 +862,7 @@ cashOnDelivery, pickup }` — `payment|completion|none` з `Fiscal:IssueOn` (у�
 
 - Один `PoliValkoDbContext` (`IdentityDbContext<StaffUser, IdentityRole, string>`) і міграції в
   `src/PoliValko.Infrastructure/Persistence/Migrations` (`Initial`, `Prototype`, `LaunchScope`, `CustomerAccounts`,
-  `StaffRolePermissions`, `ConsoleCatalogSales`, `ConsoleSiteSettings` і snapshot) — наявні файли міграцій не чіпати; рефакторинг модель
+  `StaffRolePermissions`, `ConsoleCatalogSales`, `ConsoleSiteSettings`, `BannerKicker`, `CatalogSearchIndexes` і snapshot) — наявні файли міграцій не чіпати; рефакторинг модель
   не змінює, нова функціональність — нова міграція. У `ConsoleCatalogSales` прибрано згенеровані EF `UpdateData` для
   рядків `HasData` категорій (вони ставили `NULL` у щойно додані колонки) — міграція містить лише DDL. Так само в
   `ConsoleSiteSettings` (сторінки, контакти, напрямки послуг).
@@ -870,6 +870,12 @@ cashOnDelivery, pickup }` — `payment|completion|none` з `Fiscal:IssueOn` (у�
   Infrastructure (конфігурації outbox, idempotency, audit, sync лишаються в цій збірці), потім `IModelConfigurator`
   у порядку реєстрації (Catalog, Content, Delivery, Ordering, Payments, Fiscal, Customers), `UseSnakeCaseNamingConvention`,
   таблиця історії `integration.__ef_migrations_history`, схеми з `Schemas` (зокрема `customers` і `platform`).
+- Пошук товарів спирається на GIN-індекси `gin_trgm_ops` на `products.name`, `products.slug` і `products.brand`
+  (`ix_products_name`, `ix_products_slug_trgm`, `ix_products_brand_trgm`): ними користуються `ILIKE` і оператор
+  схожості `<%`. Поріг схожості `pg_trgm.word_similarity_threshold` = `TrigramSearch.WordSimilarityThreshold` (0,5)
+  `PlatformModule` додає до рядка підключення як `Options=-c …`, тож він діє в кожному сеансі без окремого `SET`.
+  Нечіткий пошук (`ProductSearchText.Similar`) відбирає товари через `id IN (… <% name UNION ALL … <% slug)`, а не
+  через `OR`: з `OR` планувальник недооцінює вартість `<%` і читає всю таблицю (на 10 000 товарах — 550 мс замість 40 мс).
 - Не перейменовувати класи сутностей і їхні властивості (імена таблиць, колонок, ключів і індексів беруться з них),
   не змінювати `HasData(TopLevelCategories.All)`. Перенесення сутності в інший простір імен модель не змінює —
   перевіряє гейт.

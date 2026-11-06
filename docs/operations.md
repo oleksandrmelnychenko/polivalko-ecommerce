@@ -32,7 +32,7 @@ Staging і production можуть працювати на одному серв
 | `api` | ASP.NET Core API, фото в томі `media` | `/health/live`, `/health/ready` через Caddy (зовнішній монітор) |
 | `worker` | фонові процеси: outbox, синхронізації, чеки, повідомлення | журнали й тривоги в Telegram |
 | `web` | Next.js: вітрина й особистий кабінет покупця | healthcheck `GET /robots.txt` |
-| `console` | Консоль для працівників: односторінковий застосунок (Vite, React, Mantine), який віддає Caddy як статику на порту 3000; дані бере з API через `/api` свого піддомену (`CONSOLE_ADDRESS`) | healthcheck `GET /login` |
+| `console` | Консоль для працівників: односторінковий застосунок (Next.js зі статичним експортом, React, Mantine), який віддає Caddy як статику на порту 3000; дані бере з API через `/api` свого піддомену (`CONSOLE_ADDRESS`) | healthcheck `GET /login` |
 | `caddy` | єдиний вхід для двох адрес: HTTPS, `/api/*` і `/health/*` → API, решта → вітрина або консоль; на домені магазину API консолі закритий (404), а вітрина ніде не згадує адресу консолі | healthcheck `GET :2019/config/` (вбудований API керування Caddy) |
 | `backup` | щоденний `pg_dump`, ротація, тест відновлення | healthcheck: є дамп не старший за 26 год |
 | `backup-offsite` | копія дампів і фото в S3-сумісне сховище (профіль `offsite`) | healthcheck: успішне копіювання за останні ~2 год |
@@ -197,7 +197,7 @@ docker compose logs --since 10m api worker | grep -iE "fail|error|exception" || 
 вбудовуються під час збірки — після їх зміни потрібен `docker compose build web`. `SITE_URL` вбудовується й у консоль:
 після його зміни — `docker compose build web console`.
 
-Консоль — статичні файли з хешем версії в іменах (`index.html` не кешується, `/assets/*` кешуються назавжди), тож після
+Консоль — статичні файли з хешем версії в іменах (`index.html` не кешується, `/_next/static/*` кешуються назавжди), тож після
 оновлення працівникам достатньо перезавантажити сторінку; вкладка, що звернулася до файлу попередньої версії,
 перезавантажиться сама.
 
@@ -423,12 +423,43 @@ docker run --rm -i -v "$PWD/tests/load:/scripts:ro" \
 - Статичні файли (`/_next/static`, фото) тест не завантажує: їх кешують браузер і CDN. Обмеження частоти діють
   лише на форми й вхід у консоль, тож на перегляд і перерахунок кошика не впливають.
 
+### Великий каталог
+
+Скрипти в `tests/load/catalog/` (Node 20+, без залежностей) перевіряють сайт на каталозі, більшому за ТЗ:
+
+- `synthetic-catalog.mjs` створює 32 підкатегорії у 8 розділах і через справжній імпорт консолі
+  (`POST /api/v1/console/integration/navkolo/import`, частинами по 2 500 рядків) завантажує синтетичні товари:
+  - артикули `SYN-00001…`, ідентифікатори Navkolo `syn-00001…`;
+  - характеристики й бренди за типом підкатегорії, близько третини товарів — у варіантах;
+  - близько 15 % зі старою ціною, близько 12 % без залишку.
+
+  Після імпорту скрипт ставить підкатегоріям фільтри за характеристиками. Параметри: `--count=10000`,
+  `--chunk=2500`, `--images=<файл рядків «Розділ|адреса фото»>`, `--dry-run` (лише згенерувати й порахувати).
+- `measure-catalog.mjs` міряє відповіді: API вітрини (сторінки списку, фільтри, фасети, пошук з помилкою й за
+  артикулом), сторінки Next.js, `sitemap.xml` і списки консолі. Для кожного запиту — перший виклик, медіана й
+  максимум із `--runs` повторів; `--json=<файл>` зберігає результат.
+- `console-client.mjs` — спільний вхід у консоль. Скрипти читають адміністратора з
+  `src/PoliValko.Api/appsettings.Development.json` або зі змінних `CONSOLE_EMAIL` і `CONSOLE_PASSWORD`. Запити йдуть
+  на `--base` (типово `http://127.0.0.1:8080`) із заголовком `Host` вітрини чи консолі.
+- `remove-synthetic.sql` прибирає все, що додав генератор:
+  - товари `syn-%`;
+  - порожні синтетичні підкатегорії;
+  - бренди й характеристики без товарів і без опису, логотипа, одиниці чи синонімів.
+
+```bash
+node tests/load/catalog/synthetic-catalog.mjs --count=10000
+node tests/load/catalog/measure-catalog.mjs --runs=7 --json=catalog-scale.json
+docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < tests/load/catalog/remove-synthetic.sql
+```
+
+Лише для локального стеку чи staging: на production синтетичні товари потрапили б у вітрину й sitemap.
+
 ## 13. CI
 
 `.github/workflows/ci.yml` на кожен push у `main` і pull request:
 
 - `backend` — збірка .NET, перевірка закоміченого контракту OpenAPI, юніт- та інтеграційні тести (PostgreSQL у Testcontainers);
-- `web` — відповідність TS-типів контракту, перевірка типів, lint і збірка обох застосунків: вітрини (Next.js) і консолі (Vite);
+- `web` — відповідність TS-типів контракту, перевірка типів, lint і збірка обох застосунків на Next.js: вітрини (standalone) і консолі (статичний експорт);
 - `deploy` — `bash -n`/`sh -n`, shellcheck і LF-закінчення скриптів `deploy/backup/`, `docker compose config` для
   локальної, staging- і production-конфігурацій, `caddy validate` для `deploy/Caddyfile`, `k6 inspect` для сценарію
   навантаження й збірка всіх образів (`docker compose --profile app build`) без публікації.

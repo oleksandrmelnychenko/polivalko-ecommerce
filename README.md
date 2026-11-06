@@ -1,6 +1,6 @@
 # Poli Valko
 
-Інтернет-магазин товарів для дому, саду та городу: вітрина на Next.js, консоль на React (Vite), спільний ASP.NET Core API + PostgreSQL.
+Інтернет-магазин товарів для дому, саду та городу: вітрина й консоль на Next.js і React, спільний ASP.NET Core API + PostgreSQL.
 Вітрина з особистим кабінетом покупця живе на основному домені, консоль для працівників — окремим застосунком на власному піддомені (`CONSOLE_ADDRESS`), про який вітрина нічого не знає.
 Архітектура й обґрунтування — у [docs/solution-proposal.md](docs/solution-proposal.md), стан і план до запуску — у [docs/prototype-plan.md](docs/prototype-plan.md),
 відповідність кожної вимоги ТЗ — у [docs/tz-status.md](docs/tz-status.md).
@@ -41,8 +41,9 @@ src/
                              покупцям (поки лог)
 web/                        npm workspaces:
   apps/shop/                Next.js 16: вітрина й особистий кабінет покупця (дизайн за скілом Hallmark), домен магазину
-  apps/console/             консоль для працівників: односторінковий застосунок на Vite (React 19, React Router 7, Mantine 9,
-                            TanStack Table) на ядрі консолі GBA, власний піддомен; у Docker його статику віддає Caddy
+  apps/console/             консоль для працівників: односторінковий застосунок на Next.js 16 (статичний експорт; React 19,
+                            React Router 7, Mantine 9, TanStack Table) на ядрі консолі GBA, власний піддомен; у Docker його
+                            статику віддає Caddy
   packages/shared/          @polivalko/shared: згенеровані типи й клієнт API, іконки, спільні стилі
 .claude/skills/hallmark/    скіл Hallmark для Claude Code, встановлений локально для проєкту
 tests/                      юніт- і інтеграційні тести (HTTP + PostgreSQL у Testcontainers)
@@ -77,7 +78,7 @@ npm run dev -w shop     # вітрина й кабінет: http://localhost:300
 npm run dev -w console  # консоль: http://localhost:3001
 ```
 
-Запити браузера до `/api/*` обидва застосунки проксіюють до API. Вітрина за замовчуванням іде на `http://localhost:5080`
+Запити браузера до `/api/*` обидва застосунки в режимі розробки проксіюють до API (консоль — через `dev-server.mjs`). Вітрина за замовчуванням іде на `http://localhost:5080`
 (`dotnet run`). Консоль за замовчуванням іде через Caddy Docker-стека (`http://127.0.0.1:8080` з `Host: console.localhost:8080`,
 див. нижче); щоб працювати з API з `dotnet run`, запустіть її з `API_INTERNAL_URL=http://localhost:5080`.
 Тестові працівники — `Seed:Users` в `src/PoliValko.Api/appsettings.Development.json` (Адміністратор і Менеджер).

@@ -6,7 +6,8 @@
 - **консоль** `web/apps/console` — застосунок для працівників на власному піддомені (`CONSOLE_ADDRESS`, локально
   http://console.localhost:8080), маршрути — від кореня хоста за розділами меню (`/`, `/login`, `/sales/orders`,
   `/catalog/products`, `/site/home`, `/settings/shop`, `/system/staff`, …). З 2026-11-05 це односторінковий
-  застосунок на Vite, зібраний на ядрі консолі GBA (`gba_console`), а не Next.js (розділ 15);
+  застосунок на ядрі консолі GBA (`gba_console`); з 2026-11-06 його збирає Next.js (статичний експорт), як вимагає
+  ТЗ (розділ 15);
 - **спільний пакет** `web/packages/shared` (`@polivalko/shared`) — клієнт і типи API, хелпери форматування й підписів,
   іконки й базові стилі. Клієнт, типи й хелпери беруть обидва застосунки, іконки й стилі — лише вітрина.
 
@@ -102,7 +103,16 @@ web/
 │  │     │  │               CartScreen/CartView, BuyForm, AddToCart
 │  │     │  ├─ catalog/     дерево розділів, пошук товарів, плитки товарів і розділів (фото й опис категорії, мітки
 │  │     │  │               товарів), лістинг з фільтрами й пейджером, CatalogScreen, CategoryScreen, перенаправлення
-│  │     │  │               старих URL, sitemap-дані
+│  │     │  │               старих URL, sitemap-дані. Лістинг (з 06.11 у стилі XStore): ліва колонка 252 px з блоками
+│  │     │  │               «Підрозділи», «Наявність», «Ціна» (готові діапазони priceRanges + поля від/до), «Бренд»
+│  │     │  │               і характеристики (FacetGroup: пошук у списку від 9 значень, перші 6 + «Ще N»).
+│  │     │  │               ListingFilters — клієнтський: прапорець застосовується одразу (router.push без прокрутки,
+│  │     │  │               плитки притьмарюються), ціна з полів — після Enter чи виходу з поля; без JS — GET-форма
+│  │     │  │               з кнопкою в noscript. ListingToolbar: «Показано 1–24 з N», сортування (4 варіанти) і
+│  │     │  │               «Показувати 24/48/96» (pageSize у URL); над плитками — плашки вибраних фільтрів.
+│  │     │  │               Плитка лістингу (tile--shop): комірки з тонкими лініями, квадратне фото, позначки
+│  │     │  │               прямокутниками зліва вгорі, бренд, назва, ціна, наявність і «У кошик» на всю ширину
+│  │     │  │               (AddToCart block); «переглянути» й «в обране» — квадратиками праворуч угорі
 │  │     │  ├─ product/     ProductScreen: галерея, блок покупки, варіанти, опис і характеристики, схожі товари, JSON-LD
 │  │     │  ├─ home/        HomeScreen: блоки в порядку з консолі — слайдер із банерів, знижки, добірки, розділи,
 │  │     │  │               переваги, послуги, кроки, магазин у Бучі
@@ -126,12 +136,13 @@ web/
 │  │        └─ styles/   print.css
 │  │           ├─ ui/         stepper, fill, lines, totals, summary-layout (.css)
 │  │           └─ responsive/ site, shop (.css)
-│  └─ console/             консоль (workspace "console"), Vite SPA — будова в розділі 15.3
-│     ├─ package.json  index.html  vite.config.ts  tsconfig{,.app,.node}.json  eslint.config.mjs  serve.Caddyfile
+│  └─ console/             консоль (workspace "console"), SPA на Next.js (статичний експорт) — будова в розділі 15.3
+│     ├─ package.json  next.config.ts  dev-server.mjs  tsconfig.json  eslint.config.mjs  serve.Caddyfile
+│     ├─ app/  layout.tsx  [[...slug]]/page.tsx  [[...slug]]/console-client.tsx
 │     ├─ public/favicon.ico
-│     └─ src/  main.tsx  index.css  app/  features/  shared/
+│     └─ src/  index.css  app/  features/  shared/
 └─ packages/
-   └─ shared/              "@polivalko/shared" — TypeScript-джерела без власної збірки (їх компілюють Next.js і Vite)
+   └─ shared/              "@polivalko/shared" — TypeScript-джерела без власної збірки (їх компілює Next.js обох застосунків)
       ├─ package.json  tsconfig.json  eslint.config.mjs
       ├─ api/     browser.ts (browserApi, newIdempotencyKey), server.ts (api, server-only), types.ts (псевдоніми DTO),
       │           problem.ts (Problem і хелпери Problem Details), schema.d.ts (ГЕНЕРУЄТЬСЯ, не редагувати)
@@ -147,7 +158,7 @@ web/
 
 Пакет `@polivalko/shared` не має поля `exports` і власної збірки: застосунки імпортують файли за шляхом
 (`@polivalko/shared/api/browser`, `@polivalko/shared/lib/format`, `@polivalko/shared/ui/icons`), а збирач застосунку
-компілює їх як його частину (Next.js — через `transpilePackages`, Vite — напряму). npm workspaces створюють посилання
+компілює їх як його частину (Next.js обох застосунків — через `transpilePackages`). npm workspaces створюють посилання
 `node_modules/@polivalko/shared → packages/shared`. Консоль бере з пакета лише `api/browser`, `api/schema`, `api/types`,
 `api/problem`, `lib/format`, `lib/labels` і `lib/images`; `api/server`, `ui/icons` і `styles/**` потрібні тільки вітрині.
 
@@ -602,9 +613,9 @@ export default defineConfig([
 ```
 cd web
 npm ci
-npm run typecheck                   # вітрина: next typegen + tsc --noEmit; консоль: tsc -b; пакет: tsc --noEmit
+npm run typecheck                   # вітрина й консоль: next typegen + tsc --noEmit; пакет: tsc --noEmit
 npm run lint                        # eslint у shop, console і packages/shared
-npm run build                       # вітрина: next build; консоль: tsc -b && vite build → apps/console/dist
+npm run build                       # вітрина: next build (standalone); консоль: next build (export) → apps/console/out
 npm run api:types && git diff --exit-code -- packages/shared/api/schema.d.ts
 ```
 
@@ -778,7 +789,7 @@ npm run api:types && git diff --exit-code -- packages/shared/api/schema.d.ts
   передає їх в API, тож cookie `pv_console` і `pv_csrf` (host-only, `SameSite=Strict`) ставляться на хост консолі.
 - Посилання консолі на вітрину абсолютні: `siteUrl(path)` → `${SITE_URL}${path}`. Тоді це був
   `apps/console/src/shared/site-url.ts` з `SITE_URL`, вбудованим через `env` у `apps/console/next.config.ts`; зараз —
-  `@/shared/lib/siteUrl` з `import.meta.env.VITE_SITE_URL`, вбудованим Vite (розділ 15.9). За замовчуванням
+  `@/shared/lib/siteUrl` з `process.env.SITE_URL`, який `apps/console/next.config.ts` вбудовує через `env` (розділ 15.9). За замовчуванням
   `http://localhost:8080`.
 - Сторінка 404 Next.js-консолі мала ту саму розмітку, що й 404 вітрини. Зараз невідома адреса консолі показує
   «Сторінку не знайдено» всередині каркаса консолі (розділ 15.4).
@@ -812,7 +823,7 @@ npm run api:types && git diff --exit-code -- packages/shared/api/schema.d.ts
 | `CONSOLE_ADDRESS` | caddy | `http://console.localhost:8080`; staging — завжди `http://console.localhost:8080`; production — обов'язкова | Адреса сайту консолі для Caddy (`console.example.ua` → HTTPS автоматично) |
 | `CONSOLE_ALLOWED_IPS` | caddy | усі (`0.0.0.0/0 ::/0`) | IP або мережі (CIDR, через пробіл), з яких відкривається консоль; решта отримує 404 |
 | `SITE_URL` | web, **console** (у консолі — лише збірка) | як і раніше | У консолі — основа абсолютних посилань на вітрину |
-| `API_INTERNAL_URL` | web; console — лише `npm run dev` | `http://api:8080` у compose вітрини | У консолі — ціль проксі `/api` сервера розробки Vite (розділ 15.9) |
+| `API_INTERNAL_URL` | web; console — лише `npm run dev` | `http://api:8080` у compose вітрини | У консолі — ціль проксі `/api` сервера розробки `dev-server.mjs` (розділ 15.9) |
 
 На staging (доступ через SSH-тунель на `localhost:8081`) консоль відкривається як http://console.localhost:8081.
 
@@ -859,7 +870,7 @@ npm run api:types && git diff --exit-code -- packages/shared/api/schema.d.ts
 - **`<head>` консолі.** Кореневий макет Next.js-консолі не мав GA4 (`GoogleAnalytics`), `google-site-verification` і
   опису вітрини (`description`), які раніше успадковувалися від спільного кореневого макета; лишилися `title`
   (`%s | Консоль Poli Valko`), `robots: noindex, nofollow`, `themeColor`, шрифт і `preconnect` до Unsplash (фото на
-  сторінці входу). Поточний `<head>` консолі — `apps/console/index.html` (розділ 15.4).
+  сторінці входу). Поточний `<head>` консолі — `apps/console/app/layout.tsx` (розділ 15.4).
 - **Папки фіч без рівня області** (`features/<фіча>`, без проміжної теки застосунку), ключі `edges` — так само.
 - **`api:types`** належить пакету (`npm run api:types -w @polivalko/shared`, кореневий скрипт його викликає); схема
   перегенерована з поточного `openapi/polivalko-api.json` (додалися лише нові шляхи `/api/v1/account/...`).
@@ -1037,7 +1048,8 @@ API кабінету — `/api/v1/account/*` (опис — `docs/architecture-ba
 
 ## 15. Консоль на ядрі gba_console (2026-11-05)
 
-Next.js-консоль замінено односторінковим застосунком (SPA) на Vite. Його ядро — каркас, таблиця, фільтри, пейджер,
+Next.js-консоль замінено односторінковим застосунком (SPA), спершу на Vite; з 2026-11-06 його знову збирає Next.js,
+але як SPA — статичний експорт без серверного рендерингу (розділ 15.12). Його ядро — каркас, таблиця, фільтри, пейджер,
 модальні вікна, шухляди й перевірка прав — перенесено з консолі GBA (`gba_console`), модель прав — з `gba-server`.
 Сервер для консолі той самий: `/api/v1/console/*`, cookie `pv_console`, CSRF; новими стали лише права за ключами й
 ролі з власним набором прав (`docs/architecture-backend.md`, розділ 5.2). Консоль працює тільки в браузері: серверний
@@ -1050,9 +1062,8 @@ Next.js-консоль замінено односторінковим заст�
 `docs/architecture-backend.md`, розділи 5.2–5.4.
 
 Версії: React 19.3, React Router 7, Mantine 9 (`core`, `dates`, `hooks`, `notifications`), TanStack Table 8,
-`@tabler/icons-react`, `dayjs` (локаль `uk`), шрифт Onest з `@fontsource/onest` (локально, без CDN), Vite 8 з
-`@vitejs/plugin-react`, TypeScript 5, ESLint 9 з `typescript-eslint`, `eslint-plugin-react-hooks` 7 і
-`eslint-plugin-react-refresh`.
+`@tabler/icons-react`, `dayjs` (локаль `uk`), шрифт Onest з `@fontsource/onest` (локально, без CDN), Next.js 16.4
+(Turbopack, `output: "export"`), TypeScript 5, ESLint 9 з `eslint-config-next` 16.4 (core-web-vitals і typescript).
 
 ### 15.1. Принципи
 
@@ -1109,26 +1120,31 @@ src/shared  ──►  @polivalko/shared (крім api/server)
 Сторінки решти фіч бере лише реєстр маршрутів (`app/routes/lazyConsolePages.ts`, `React.lazy`), тож `index.ts` їм не
 потрібен. Нове ребро — запис у `edges` і експорт із `index.ts` фічі-залежності.
 
-`eslint.config.mjs` — flat config без спільного `web/eslint.boundaries.mjs`: `@eslint/js` і `typescript-eslint`
-(recommended), `react-hooks` 7 (правила React Compiler: без синхронного `setState` у тілі ефекту, без читання ref під
-час рендеру), `react-refresh` для Vite і правила `no-restricted-imports` з таблиці вище. Єдиний виняток —
+`eslint.config.mjs` — flat config без спільного `web/eslint.boundaries.mjs`: `eslint-config-next` (core-web-vitals і
+typescript, як у вітрини; разом з ним `react-hooks` 7 з правилами React Compiler: без синхронного `setState` у тілі
+ефекту, без читання ref під час рендеру), `@next/next/no-img-element` вимкнено і правила `no-restricted-imports` з
+таблиці вище. Єдиний виняток —
 `react-hooks/incompatible-library` вимкнено для `src/shared/ui/data-table/DataTable.tsx` (TanStack Table).
 
 ### 15.3. Дерево
 
 ```
 web/apps/console/
-├─ index.html            lang="uk", translate="no", robots noindex, nofollow, theme-color, favicon, #root
-├─ vite.config.ts        псевдонім @ → src, порт 3001, проксі /api, VITE_SITE_URL, чанки вендорів
-├─ serve.Caddyfile       роздача dist/ у контейнері (розділ 15.9)
+├─ next.config.ts        output: "export" для збірки (у next dev — без нього), turbopack.root, transpilePackages, env.SITE_URL
+├─ dev-server.mjs        сервер розробки: Next.js (dev) + проксі /api із заданим Host (розділ 15.9)
+├─ app/                  маршрути Next.js; src/app ним не є: Next ігнорує src/app, коли в корені є app/
+│  ├─ layout.tsx         <html lang="uk" translate="no">, ColorSchemeScript Mantine, metadata (назва, robots noindex,
+│  │                     nofollow, google notranslate, favicon), viewport.themeColor, index.css, #root
+│  └─ [[...slug]]/       page.tsx — одна сторінка на всі адреси (generateStaticParams → лише /);
+│                        console-client.tsx — next/dynamic(ConsoleRoot, { ssr: false })
+├─ serve.Caddyfile       роздача out/ у контейнері (розділ 15.9)
 ├─ eslint.config.mjs     межі шарів і фіч (розділ 15.2)
-├─ tsconfig.json         посилання на tsconfig.app.json (src) і tsconfig.node.json (vite.config.ts)
+├─ tsconfig.json         як у вітрини (плагін next, @/* → src/*) + noUnusedLocals, noUnusedParameters
 ├─ public/favicon.ico
 └─ src/
-   ├─ main.tsx           index.css першим, installApiMiddleware(), перезавантаження після vite:preloadError, StrictMode
    ├─ index.css          Onest (@fontsource), стилі Mantine, токени бренду
-   ├─ env.d.ts           тип import.meta.env.VITE_SITE_URL
-   ├─ app/               каркас
+   ├─ app/               каркас консолі (не маршрути Next.js)
+   │  ├─ ConsoleRoot.tsx installApiMiddleware(), AppErrorBoundary → AppProviders → App
    │  ├─ App.tsx         /login, захищений макет, маршрути з реєстру, 404
    │  ├─ providers/      MantineProvider(theme) → DatesProvider(uk) → Notifications → BrowserRouter → AuthProvider
    │  ├─ layout/         ConsoleLayout; components/: ConsoleHeader, ConsoleSectionNav, ConsoleSectionTabs,
@@ -1272,13 +1288,13 @@ web/apps/console/
 символів показує доступні пункти меню; з двох — `GET /api/v1/console/search?q=` (затримка 180 мс) з групами
 «Замовлення», «Товари», «Покупці». Групи, на які немає права, сервер не повертає. Стрілки вибирають, Enter відкриває.
 
-**`<head>`** задає `index.html`: `lang="uk"`, `translate="no"`, `robots: noindex, nofollow`, `theme-color`, favicon і
+**`<head>`** задає `app/layout.tsx`: `lang="uk"`, `translate="no"`, `robots: noindex, nofollow`, `theme-color`, favicon і
 базова назва «Консоль PoliValko». Заголовок вкладки ставлять `useDocumentTitle` / `useDefaultDocumentTitle`.
 
 ### 15.5. API, CSRF і дані
 
 - **Клієнт.** `api` з `@/shared/api/client` — той самий openapi-fetch `browserApi` з пакета з middleware, яку
-  `main.tsx` ставить один раз (`installApiMiddleware`): відповідь 401 (крім `/auth/login` і `/auth/password`) — подія
+  `ConsoleRoot.tsx` ставить один раз (`installApiMiddleware`): відповідь 401 (крім `/auth/login` і `/auth/password`) — подія
   `unauthorized`, вихід і повернення після входу. `apiFetch(url, init)` — те саме для звичайного `fetch` (CSV, файли).
 - **CSRF** (`@/shared/api/csrf`): токен з `GET /api/v1/console/auth/csrf` кешується промісом;
   `withCsrf((headers) => api.POST(…, { headers, body }))` додає `X-CSRF-TOKEN` і один раз повторює запит після
@@ -1403,7 +1419,7 @@ web/apps/console/
 Стилі: тема Mantine (`shared/theme/theme.ts`: шрифт Onest, `primaryColor: brand`, відтінок 6 = `#00A046`, наведення —
 `#008a3c`, текст `#1a1a1a`) і токени в `src/index.css` (`--brand-accent`, `--brand-accent-hover`,
 `--brand-accent-soft`, `--brand-ink`, `--app-ground`, `--app-hot`, `--app-focus-*`). `index.css` (разом зі стилями
-Mantine) імпортується першим у `main.tsx`, інакше Mantine перекриває власні правила. Кожен компонент імпортує свій CSS
+Mantine) імпортує кореневий `app/layout.tsx`, тож він іде перед CSS компонентів, інакше Mantine перекриває власні правила. Кожен компонент імпортує свій CSS
 поруч; спільні класи — `.app-cell-*`, `.app-money`, `.app-number`, `.app-section-title`, `.app-filter-*`,
 `.app-screen-tab*`. Випадні списки Mantine рендеряться в портал, тож стилізуються через `classNames` / `comboboxProps`.
 Лінивий чанк сторінки несе власний CSS: на CSS іншої сторінки покладатися не можна.
@@ -1416,7 +1432,7 @@ Mantine) імпортується першим у `main.tsx`, інакше Manti
 - Свій пароль змінюють у меню облікового запису (або кнопкою «Змінити мій пароль» на сторінці «Працівники»).
 - Дві фіксовані ролі замінено ролями з правами за ключами; нова сторінка «Ролі і права» (`docs/console-guide.md`).
 - Після нового релізу вкладка, що просить уже видалений файл сторінки, один раз перезавантажується сама
-  (`vite:preloadError` у `main.tsx`, не частіше ніж раз на 30 с).
+  (`ChunkLoadError` у `AppErrorBoundary` → `reloadOnStaleChunk` з `@/shared/lib/staleChunk`, не частіше ніж раз на 30 с).
 - Після розширення (розділ 15.11): нове меню й адреси (старі закладки перенаправляються), «Огляд» став «Дашбордом»,
   «Розділи» — «Категоріями», «Добірки головної» — «Добірками»; контакти переїхали в «Налаштування → Магазин»,
   самовивіз — у «Налаштування → Доставка», перенаправлення — у «Сайт → SEO»; імпорт відкривається кнопкою з
@@ -1424,23 +1440,26 @@ Mantine) імпортується першим у `main.tsx`, інакше Manti
 
 ### 15.9. Збірка, Docker, розробка
 
-- **Розробка.** `npm run dev -w console` (з `web/`) — Vite на http://localhost:3001 (`strictPort`). `/api`
-  проксіюється на `API_INTERNAL_URL`, за замовчуванням `http://127.0.0.1:8080` (Caddy Docker-стека) із заголовком
+- **Розробка.** `npm run dev -w console` (з `web/`) — `node dev-server.mjs`: Next.js у режимі розробки (Turbopack, HMR)
+  на http://localhost:3001 (`PORT`) за власним HTTP-сервером. Вбудовані rewrites Next.js не годяться: вони замінюють
+  `Host` на адресу цілі, і Caddy віддав би запит сайту вітрини. Тому `/api` проксіює сам `dev-server.mjs` на
+  `API_INTERNAL_URL`, за замовчуванням `http://127.0.0.1:8080` (Caddy Docker-стека) із заголовком
   `Host: console.localhost:8080`, тож запит проходить сайтом консолі в Caddy так само, як із браузера. Інший `Host` —
   `API_HOST_HEADER`. Якщо `API_INTERNAL_URL` задано, а `API_HOST_HEADER` ні, `Host` стає адресою цілі: так консоль
-  працює з API з `dotnet run` (`API_INTERNAL_URL=http://localhost:5080`). `npm run preview -w console` — зібраний
-  `dist/` на тому самому порту й з тим самим проксі. Тестові облікові записи — `Seed:Users` в
+  працює з API з `dotnet run` (`API_INTERNAL_URL=http://localhost:5080`). Зібрану консоль локально дивляться в
+  Docker-стеку (контейнер `console`). Тестові облікові записи — `Seed:Users` в
   `src/PoliValko.Api/appsettings.Development.json` (Admin — Адміністратор, Manager — Менеджер).
-- **Перевірки й збірка.** `npm run typecheck -w console` (`tsc -b`), `npm run lint -w console` (`eslint .`),
-  `npm run build -w console` (`tsc -b && vite build` → `apps/console/dist`). Вендори розкладено по чанках
-  `vendor-react`, `vendor-mantine`, `vendor-table`, `vendor-icons` і `vendor`; кожна сторінка — окремий лінивий чанк.
-- **`SITE_URL`** вбудовується під час збірки: `vite.config.ts` підставляє `import.meta.env.VITE_SITE_URL` =
-  `VITE_SITE_URL` ?? `SITE_URL` ?? `http://localhost:8080`. З нього `siteUrl(path)` (`@/shared/lib/siteUrl`) будує
+- **Перевірки й збірка.** `npm run typecheck -w console` (`next typegen && tsc --noEmit`), `npm run lint -w console`
+  (`eslint .`), `npm run build -w console` (`next build` зі статичним експортом → `apps/console/out`: `index.html`,
+  `404.html`, `_next/static/…`, `favicon.ico`). Чанки ділить Turbopack; кожна сторінка — окремий лінивий чанк
+  (`React.lazy` у `lazyConsolePages.ts`).
+- **`SITE_URL`** вбудовується під час збірки: `next.config.ts` передає `env.SITE_URL` = `SITE_URL` ??
+  `http://localhost:8080`, і Next.js підставляє `process.env.SITE_URL` у код. З нього `siteUrl(path)` (`@/shared/lib/siteUrl`) будує
   посилання «На сайті», адреси текстових сторінок і кнопку вітрини в шапці. Після зміни `SITE_URL` образ консолі треба
   перезібрати (`docs/operations.md`, розділ 4).
-- **Docker.** Ціль `console` у `web/Dockerfile`: образ `caddy:2-alpine`, у `/srv` — `apps/console/dist` з етапу
+- **Docker.** Ціль `console` у `web/Dockerfile`: образ `caddy:2-alpine`, у `/srv` — `apps/console/out` з етапу
   `build` (`npm run build -w console`, `SITE_URL` з build-arg), конфігурація — `apps/console/serve.Caddyfile`: порт 3000,
-  без HTTPS і API керування, стиснення `zstd`/`gzip`, `/assets/*` з `Cache-Control: public, max-age=31536000, immutable`,
+  без HTTPS і API керування, стиснення `zstd`/`gzip`, `/_next/static/*` з `Cache-Control: public, max-age=31536000, immutable`,
   решта з `no-cache`, будь-який шлях без файлу → `index.html` (адресу на кшталт `/orders/PV-…` можна відкрити напряму).
 - **compose.yaml.** Сервіс `console`: `target: console`, build-args `APP: console` і `SITE_URL`, healthcheck
   `wget http://127.0.0.1:3000/login` (віддає `index.html`). Змінних середовища й залежності від `api` немає: дані браузер
@@ -1496,6 +1515,37 @@ Mantine) імпортується першим у `main.tsx`, інакше Manti
 новий код дії бекенду треба додати туди, інакше журнал покаже його кодом.
 
 Перевірка 2026-11-05: `npm run typecheck -w console` і `npm run lint -w console` — без помилок.
+
+### 15.12. Збірка на Next.js (2026-11-06)
+
+ТЗ вимагає Next.js і React для вебмагазину й адміністративного інтерфейсу, тому збирач консолі змінено з Vite на
+Next.js 16.4. Застосунок лишився односторінковим (SPA) з тим самим ядром gba: React Router, Mantine, TanStack Table,
+реєстр маршрутів, фічі й права. Серверного рендерингу консоль не має. Next.js будує її як статичний експорт, і Caddy
+віддає його так само, як раніше віддавав `dist/`.
+
+- **Точка входу.** Маршрути Next.js лежать у кореневій `apps/console/app/`, а не в `src/app`, бо `src/app` — каркас
+  консолі. Next.js ігнорує `src/app`, коли в корені є `app/`.
+  - `app/[[...slug]]/page.tsx` ловить усі адреси; `generateStaticParams` віддає лише `/`, тож експорт містить один
+    `index.html`.
+  - `console-client.tsx` вантажить `@/app/ConsoleRoot` через `next/dynamic` з `ssr: false`.
+  - Далі адресами керує `BrowserRouter`. Caddy віддає `index.html` на будь-який шлях без файлу.
+- **Що замінено.**
+  - `index.html` → `app/layout.tsx` (metadata і viewport замість тегів `<meta>`, `ColorSchemeScript` Mantine).
+  - `main.tsx` → `src/app/ConsoleRoot.tsx`.
+  - `vite.config.ts` → `next.config.ts` і `dev-server.mjs`.
+  - `import.meta.env.VITE_SITE_URL` → `process.env.SITE_URL`.
+  - `vite:preloadError` → `ChunkLoadError` в `AppErrorBoundary`.
+  - `eslint-plugin-react-refresh` і `typescript-eslint` → `eslint-config-next`.
+  - Вивід збірки `dist/` → `out/`; кешований назавжди префікс `/assets/*` → `/_next/static/*`.
+- **Розробка.** Вбудовані rewrites Next.js не годяться для `/api`: вони ставлять `Host` цілі, і Caddy віддав би
+  запит сайту вітрини. Тому `dev-server.mjs` проксіює `/api` сам (розділ 15.9). `output: "export"` вмикається лише
+  для збірки: у `next dev` він вимагав би перелічити всі адреси в `generateStaticParams`.
+- **Перевірено 2026-11-06.**
+  - `typecheck`, `lint` і `build` консолі проходять. Через правило `react/jsx-key` з `eslint-config-next` у рядки
+    `NovaPoshtaPanel` додано `key`.
+  - `npm run dev -w console`: сторінки й `/api` через Caddy працюють.
+  - Образ у Docker: глибокі адреси, кешування, вхід, дашборд, замовлення, картка замовлення й товари працюють
+    без помилок у консолі браузера.
 
 ## 16. Вітрина: дані з консолі (2026-11-05)
 
