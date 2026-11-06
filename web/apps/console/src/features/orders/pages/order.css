@@ -492,16 +492,104 @@
   text-align: right;
 }
 
-.order-status-actions {
+.order-route {
   display: grid;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.order-status-actions .mantine-Button-root {
+.order-route-step {
+  align-items: center;
+  color: var(--mantine-color-gray-6);
+  display: grid;
+  font-size: 13px;
+  gap: 10px;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  min-height: 30px;
+  position: relative;
+}
+
+.order-route-step:not(:last-child)::after {
+  background: var(--mantine-color-gray-3);
+  bottom: -8px;
+  content: '';
+  left: 8px;
+  position: absolute;
+  top: 22px;
+  width: 2px;
+}
+
+.order-route-step[data-state='done']::after {
+  background: var(--brand-accent);
+}
+
+.order-route-mark {
+  align-items: center;
+  background: var(--mantine-color-white);
+  border: 2px solid var(--mantine-color-gray-4);
+  border-radius: 50%;
+  box-sizing: border-box;
+  color: var(--mantine-color-white);
+  display: inline-flex;
+  height: 18px;
+  justify-content: center;
+  position: relative;
+  width: 18px;
+  z-index: 1;
+}
+
+.order-route-step[data-state='done'] .order-route-mark {
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+}
+
+.order-route-step[data-state='current'] .order-route-mark {
+  border-color: var(--brand-accent);
+  box-shadow: inset 0 0 0 3px var(--mantine-color-white), inset 0 0 0 9px var(--brand-accent);
+}
+
+.order-route-step[data-state='done'] .order-route-label {
+  color: var(--mantine-color-gray-7);
+}
+
+.order-route-step[data-state='current'] .order-route-label {
+  color: var(--mantine-color-gray-9);
+  font-weight: 600;
+}
+
+.order-route-now {
+  background: var(--brand-accent-soft);
+  border-radius: 999px;
+  color: var(--brand-ink);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 8px;
+}
+
+.order-status-next {
+  border-top: 1px solid var(--mantine-color-gray-2);
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.order-status-action {
+  display: grid;
+  gap: 4px;
+}
+
+.order-status-action .mantine-Button-root {
   border-radius: 8px;
   font-size: 13.5px;
   font-weight: 600;
+}
+
+.order-status-cancel {
+  margin-top: 8px;
+  padding-inline: 4px;
 }
 
 .order-refund-form {
