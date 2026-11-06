@@ -24,16 +24,12 @@ export function ProductTile({ product, priority, look }: { product: ProductListI
         )}
         <TileFlashes product={product} discount={discount} />
         {!look && (
-          <>
-            <span className="tile__sign" aria-hidden="true" />
-            <span className="tile__bar">
-              <Link href={href} className="round-btn" aria-label={`Переглянути: ${product.name}`} title="Переглянути">
-                <EyeIcon />
-              </Link>
-              <FavoriteButton productId={product.id} name={product.name} />
-              <AddToCart product={toCartProduct(product)} inStock={product.inStock} round />
-            </span>
-          </>
+          <span className="tile__bar">
+            <Link href={href} className="round-btn" aria-label={`Переглянути: ${product.name}`} title="Переглянути">
+              <EyeIcon />
+            </Link>
+            <FavoriteButton productId={product.id} name={product.name} />
+          </span>
         )}
       </figure>
       <div className="tile__body">
@@ -72,6 +68,14 @@ export function ProductTile({ product, priority, look }: { product: ProductListI
             <p className="tile__name">
               <Link href={href}>{product.name}</Link>
             </p>
+            {!product.inStock && <p className="tile__stock tile__stock--out">Немає в наявності</p>}
+            {product.inStock ? (
+              <AddToCart product={toCartProduct(product)} inStock block />
+            ) : (
+              <Link href={href} className="tile__buy tile__buy--off">
+                Детальніше
+              </Link>
+            )}
           </>
         )}
       </div>

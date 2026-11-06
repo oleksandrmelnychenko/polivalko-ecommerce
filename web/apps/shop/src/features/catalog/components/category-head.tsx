@@ -21,7 +21,7 @@ export function CategoryHead({ category }: { category: Category }) {
       <h1>{category.name}</h1>
       <CategoryIntro description={category.description} />
       {category.children.length > 0 && (
-        <nav aria-label="Підрозділи">
+        <nav aria-label="Підрозділи" className="page-head__subs">
           <ul className="chips chips--grey">
             {category.children.map((child) => (
               <li key={child.id}>

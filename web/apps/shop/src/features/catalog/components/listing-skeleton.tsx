@@ -1,4 +1,3 @@
-import { SORTS } from "../lib/listing-params";
 import { ProductTilesSkeleton } from "./product-tiles-skeleton";
 
 export function ListingSkeleton({ crumbs = false }: { crumbs?: boolean }) {
@@ -27,16 +26,15 @@ export function ListingSkeleton({ crumbs = false }: { crumbs?: boolean }) {
             <div className="skeleton" style={{ height: "24rem" }} />
           </div>
         </div>
-        <div>
+        <div className="catalog__main">
           <div className="toolbar" aria-hidden="true">
-            <p className="skeleton" style={{ width: "6rem" }}>
+            <p className="toolbar__count skeleton" style={{ width: "10rem" }}>
               &nbsp;
             </p>
-            <nav className="seg">
-              {SORTS.map((s) => (
-                <a key={s.value}>{s.label}</a>
-              ))}
-            </nav>
+            <div className="toolbar__controls">
+              <span className="skeleton" style={{ width: "14rem", height: "36px" }} />
+              <span className="skeleton" style={{ width: "9rem", height: "36px" }} />
+            </div>
           </div>
           <ProductTilesSkeleton count={6} columns={3} />
         </div>

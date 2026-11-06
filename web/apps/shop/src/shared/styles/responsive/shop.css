@@ -38,11 +38,19 @@
   .filters-panel__toggle { display: inline-flex; }
   .filters-panel[data-open="false"] .filters-panel__body { display: none; }
   .filters-panel__body { margin-top: var(--space-md); padding: var(--space-lg); border: var(--rule-hair) solid var(--color-rule); }
+  .page-head__subs { display: block; }
+  .fw--nav { display: none; }
+  .filters-panel { padding-right: 0; }
+  .catalog { gap: var(--space-lg); }
+  .toolbar__controls { width: 100%; }
   .facts { grid-template-columns: minmax(0, 1fr); }
   .facts dt { padding-bottom: 0; border-bottom: 0; }
 }
 
 @media (max-width: 40rem) {
+  .tsel span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .tsel:first-child { flex: 1; }
+  .tsel:first-child select { width: 100%; }
   .hero { height: 500px; }
   .hero-slide { padding: var(--space-xl) 16px var(--space-3xl); }
   .hero__arrow { top: auto; bottom: 12px; translate: none; width: 40px; height: 40px; }
