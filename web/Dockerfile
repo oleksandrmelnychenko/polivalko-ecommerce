@@ -22,7 +22,7 @@ RUN npm run build -w $APP
 
 FROM caddy:2-alpine AS console
 COPY apps/console/serve.Caddyfile /etc/caddy/Caddyfile
-COPY --from=build /app/apps/console/dist /srv
+COPY --from=build /app/apps/console/out /srv
 EXPOSE 3000
 
 FROM node:24-alpine AS shop

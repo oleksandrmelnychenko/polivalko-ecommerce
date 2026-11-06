@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type PropsWithChildren, type ReactNode } from 'react'
+import { reloadOnStaleChunk } from '../lib/staleChunk'
 import './app-error-boundary.css'
 
 type AppErrorBoundaryState = {
@@ -13,6 +14,7 @@ export class AppErrorBoundary extends Component<PropsWithChildren, AppErrorBound
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    if (reloadOnStaleChunk(error)) return
     console.error('[AppErrorBoundary]', error, info.componentStack)
   }
 

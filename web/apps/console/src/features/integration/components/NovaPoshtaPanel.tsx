@@ -17,17 +17,17 @@ export function NovaPoshtaPanel({ np, onExpand }: { np: ApiQuery<NovaPoshtaStatu
 
   const rows: [string, ReactNode][] = [
     ['Режим', novaPoshtaModeLabel[data.mode] ?? data.mode],
-    ['Населених пунктів', <span className="app-number">{countFormat.format(data.settlements)}</span>],
+    ['Населених пунктів', <span key="settlements" className="app-number">{countFormat.format(data.settlements)}</span>],
     [
       'Відділень і поштоматів',
-      <span className="app-number">
+      <span key="warehouses" className="app-number">
         {countFormat.format(data.warehouses)}, з них поштоматів {countFormat.format(data.postomats)}
       </span>,
     ],
     ['Остання спроба', when(data.sync.lastAttemptAt)],
     ['Останній успіх', when(data.sync.lastSuccessAt)],
-    ['Збоїв поспіль', <Failures count={data.sync.consecutiveFailures} />],
-    ['Остання помилка', <ErrorText text={data.sync.lastError} title="Нова пошта: остання помилка" onExpand={onExpand} />],
+    ['Збоїв поспіль', <Failures key="failures" count={data.sync.consecutiveFailures} />],
+    ['Остання помилка', <ErrorText key="error" text={data.sync.lastError} title="Нова пошта: остання помилка" onExpand={onExpand} />],
   ]
 
   return (

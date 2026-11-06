@@ -1,8 +1,5 @@
-import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
+import nextVitals from 'eslint-config-next/core-web-vitals'
+import nextTs from 'eslint-config-next/typescript'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 const features = ['auth', 'navigation', 'search', 'dashboard', 'orders', 'customers', 'requests', 'catalog', 'content', 'integration', 'audit', 'staff', 'returns', 'site', 'settings']
@@ -31,13 +28,10 @@ const featureRules = features.flatMap((feature) => {
 })
 
 export default defineConfig([
-  globalIgnores(['dist', 'node_modules']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [js.configs.recommended, tseslint.configs.recommended, reactHooks.configs.flat.recommended, reactRefresh.configs.vite],
-    languageOptions: { globals: globals.browser },
-  },
-  { files: ['vite.config.ts'], languageOptions: { globals: globals.node } },
+  ...nextVitals,
+  ...nextTs,
+  globalIgnores(['.next/**', 'out/**', 'node_modules/**', 'next-env.d.ts']),
+  { rules: { '@next/next/no-img-element': 'off' } },
   { files: ['src/shared/ui/data-table/DataTable.tsx'], rules: { 'react-hooks/incompatible-library': 'off' } },
   { files: ['src/**/*.{ts,tsx}'], rules: { 'no-restricted-imports': restrict() } },
   {
