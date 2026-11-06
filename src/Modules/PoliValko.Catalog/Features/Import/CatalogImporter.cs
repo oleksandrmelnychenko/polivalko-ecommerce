@@ -40,6 +40,7 @@ internal sealed class CatalogImporter(
             .Where(p => skus.Contains(p.Sku))
             .Select(p => new { p.Sku, p.NavkoloId })
             .ToListAsync(ct);
+        var ownersBySku = skuOwners.ToLookup(o => o.Sku, o => o.NavkoloId, StringComparer.Ordinal);
         var categories = await db.Set<Category>().Where(c => c.NavkoloRef != null).ToListAsync(ct);
         var byGroup = categories
             .GroupBy(c => c.NavkoloRef!, StringComparer.OrdinalIgnoreCase)
@@ -53,9 +54,9 @@ internal sealed class CatalogImporter(
         foreach (var record in valid)
         {
             var label = record.Sku!;
-            if (skuOwners.FirstOrDefault(o => o.Sku == record.Sku && o.NavkoloId != record.NavkoloId) is { } owner)
+            if (ownersBySku[record.Sku!].FirstOrDefault(id => id != record.NavkoloId) is { } owner)
             {
-                errors.Add(new SyncError(label, $"Артикул уже належить іншому товару Navkolo ({owner.NavkoloId})."));
+                errors.Add(new SyncError(label, $"Артикул уже належить іншому товару Navkolo ({owner})."));
                 continue;
             }
 

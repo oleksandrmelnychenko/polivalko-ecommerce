@@ -56,7 +56,7 @@ internal static class SearchProducts
             var term = query.Q.Trim();
             var words = ProductSearchText.Words(term);
             var matching = ProductSearchText.Matching(scope, term, words);
-            var similar = await matching.AnyAsync(ct) ? null : ProductSearchText.Similar(scope, words);
+            var similar = await matching.AnyAsync(ct) ? null : ProductSearchText.Similar(scope, db.Set<Product>(), words);
             approximate = similar is not null;
             scope = similar ?? matching;
         }

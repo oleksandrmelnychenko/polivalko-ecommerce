@@ -6,8 +6,6 @@ namespace PoliValko.Catalog.Features.Storefront;
 
 internal static class ProductSearchText
 {
-    public const double MinSimilarity = 0.5;
-
     private const string Escape = "\\";
     private const int MaxWords = 6;
     private const int MinStemLength = 4;
@@ -72,7 +70,7 @@ internal static class ProductSearchText
         return products;
     }
 
-    public static IQueryable<Product>? Similar(IQueryable<Product> products, IReadOnlyList<string> words)
+    public static IQueryable<Product>? Similar(IQueryable<Product> products, IQueryable<Product> catalog, IReadOnlyList<string> words)
     {
         var similar = false;
         foreach (var word in words)
@@ -86,8 +84,9 @@ internal static class ProductSearchText
             }
 
             var slug = IsLatin(stem) ? stem : Transliteration.ToSlug(stem);
-            products = products.Where(p => EF.Functions.TrigramsWordSimilarity(stem, p.Name) >= MinSimilarity
-                || EF.Functions.TrigramsWordSimilarity(slug, p.Slug) >= MinSimilarity);
+            var ids = catalog.Where(p => EF.Functions.TrigramsAreWordSimilar(stem, p.Name)).Select(p => p.Id)
+                .Concat(catalog.Where(p => EF.Functions.TrigramsAreWordSimilar(slug, p.Slug)).Select(p => p.Id));
+            products = products.Where(p => ids.Contains(p.Id));
             similar = true;
         }
 

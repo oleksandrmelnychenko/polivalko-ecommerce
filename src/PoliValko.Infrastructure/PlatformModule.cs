@@ -25,7 +25,7 @@ public static class PlatformModule
                 ?? throw new InvalidOperationException($"Не задано рядок підключення ConnectionStrings:{ConnectionStringName}.");
 
             options
-                .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", Schemas.Integration))
+                .UseNpgsql(TrigramSearch.WithSessionSettings(connectionString), npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", Schemas.Integration))
                 .UseSnakeCaseNamingConvention();
         });
 

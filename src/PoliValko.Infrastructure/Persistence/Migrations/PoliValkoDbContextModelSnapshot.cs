@@ -612,6 +612,18 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     b.HasIndex("VariantGroup")
                         .HasDatabaseName("ix_products_variant_group");
 
+                    b.HasIndex(new[] { "Brand" }, "BrandTrigrams")
+                        .HasDatabaseName("ix_products_brand_trgm");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Brand" }, "BrandTrigrams"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Brand" }, "BrandTrigrams"), new[] { "gin_trgm_ops" });
+
+                    b.HasIndex(new[] { "Slug" }, "SlugTrigrams")
+                        .HasDatabaseName("ix_products_slug_trgm");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Slug" }, "SlugTrigrams"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Slug" }, "SlugTrigrams"), new[] { "gin_trgm_ops" });
+
                     b.ToTable("products", "catalog");
                 });
 

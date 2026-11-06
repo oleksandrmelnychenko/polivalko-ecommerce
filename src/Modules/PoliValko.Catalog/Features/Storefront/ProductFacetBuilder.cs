@@ -35,12 +35,13 @@ internal static class ProductFacetBuilder
             .ToListAsync(ct);
 
         var prices = await scope
+            .Select(p => new { p.Price.Amount, InStock = p.Stock.Quantity > 0 })
             .GroupBy(_ => 1)
             .Select(g => new
             {
-                Min = g.Min(p => p.Price.Amount),
-                Max = g.Max(p => p.Price.Amount),
-                InStock = g.Count(p => p.Stock.Quantity > 0),
+                Min = g.Min(x => x.Amount),
+                Max = g.Max(x => x.Amount),
+                InStock = g.Count(x => x.InStock),
             })
             .FirstOrDefaultAsync(ct);
 

@@ -161,6 +161,8 @@ internal sealed class CatalogModelConfigurator : IModelConfigurator
         builder.HasIndex(p => p.Brand);
 
         builder.HasIndex(p => p.Name).HasMethod("gin").HasOperators("gin_trgm_ops");
+        builder.HasIndex(p => p.Slug, "SlugTrigrams").HasDatabaseName("ix_products_slug_trgm").HasMethod("gin").HasOperators("gin_trgm_ops");
+        builder.HasIndex(p => p.Brand, "BrandTrigrams").HasDatabaseName("ix_products_brand_trgm").HasMethod("gin").HasOperators("gin_trgm_ops");
 
         builder.HasOne<Category>().WithMany().HasForeignKey(p => p.CategoryId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(p => p.Price).WithOne().HasForeignKey<ProductPrice>(x => x.ProductId).OnDelete(DeleteBehavior.Cascade);
