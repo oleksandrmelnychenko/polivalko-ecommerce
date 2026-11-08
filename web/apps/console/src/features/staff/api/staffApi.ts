@@ -27,3 +27,7 @@ export function lockStaffUser(headers: CsrfHeaders, id: string, locked: boolean)
 export function resetStaffPassword(headers: CsrfHeaders, id: string, password: string) {
   return api.POST('/api/v1/console/users/{id}/password', { params: { path: { id } }, headers, body: { password } })
 }
+
+export function resetStaffTwoFactor(headers: CsrfHeaders, id: string, twoFactorCode: string | null) {
+  return api.POST('/api/v1/console/users/{id}/two-factor/reset', { params: { path: { id } }, headers, body: { twoFactorCode } })
+}

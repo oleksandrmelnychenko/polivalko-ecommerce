@@ -1,5 +1,5 @@
-import { Button, Group } from '@mantine/core'
-import { IconKey, IconLock, IconLockOpen, IconPencil } from '@tabler/icons-react'
+import { ActionIcon, Button, Group, Tooltip } from '@mantine/core'
+import { IconKey, IconLock, IconLockOpen, IconPencil, IconShieldOff } from '@tabler/icons-react'
 import { Link } from 'react-router-dom'
 import type { StaffRole } from '@/shared/auth/permissionsApi'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
@@ -15,9 +15,10 @@ type ColumnOptions = {
   onEdit: (user: StaffUser) => void
   onPassword: (user: StaffUser) => void
   onLock: (user: StaffUser) => void
+  onResetTwoFactor: (user: StaffUser) => void
 }
 
-export function staffColumns({ selfEmail, busyId, rolesById, canOpenRoles, onEdit, onPassword, onLock }: ColumnOptions): DataTableColumn<StaffUser>[] {
+export function staffColumns({ selfEmail, busyId, rolesById, canOpenRoles, onEdit, onPassword, onLock, onResetTwoFactor }: ColumnOptions): DataTableColumn<StaffUser>[] {
   const isSelf = (user: StaffUser) => user.email.toLowerCase() === selfEmail.toLowerCase()
   return [
     {
@@ -66,9 +67,17 @@ export function staffColumns({ selfEmail, busyId, rolesById, canOpenRoles, onEdi
       cell: (row) => (row.lockedOut ? <TableChip dot tone="danger" value="Заблоковано" /> : <TableChip dot tone="success" value="Активний" />),
     },
     {
+      id: 'twoFactor',
+      header: 'Двофакторна',
+      accessor: (row) => (row.twoFactorEnabled ? 1 : 0),
+      enableSorting: true,
+      width: 150,
+      cell: (row) => (row.twoFactorEnabled ? <TableChip tone="success" value="Увімкнено" /> : <TableChip tone="neutral" value="Вимкнено" />),
+    },
+    {
       id: 'actions',
       header: <span className="visually-hidden">Дії</span>,
-      width: 380,
+      width: 420,
       align: 'right',
       cell: (row) => (
         <Group gap={6} justify="flex-end" wrap="nowrap" className="staff-row-actions">
@@ -78,6 +87,13 @@ export function staffColumns({ selfEmail, busyId, rolesById, canOpenRoles, onEdi
           <Button size="compact-sm" variant="default" leftSection={<IconKey size={14} stroke={1.8} />} onClick={() => onPassword(row)}>
             Новий пароль
           </Button>
+          {row.twoFactorEnabled && !isSelf(row) ? (
+            <Tooltip label="Скинути двофакторну перевірку">
+              <ActionIcon variant="default" aria-label={`Скинути двофакторну перевірку: ${row.displayName}`} onClick={() => onResetTwoFactor(row)}>
+                <IconShieldOff size={15} stroke={1.8} />
+              </ActionIcon>
+            </Tooltip>
+          ) : null}
           <Button
             className="staff-lock-button"
             size="compact-sm"

@@ -1,5 +1,7 @@
-import { Button, PasswordInput, Stack, Text, TextInput } from '@mantine/core'
+import { Alert, Button, Group, PasswordInput, Stack, Text, TextInput } from '@mantine/core'
+import { IconShieldLock } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
+import { TwoFactorCodeInput, TwoFactorModal, useTwoFactorStatus } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
 import type { StaffRole } from '@/shared/auth/permissionsApi'
 import { AppModal, AppModalFooter } from '@/shared/ui/AppModal'
@@ -10,8 +12,9 @@ import { defaultRoleId } from '../lib/roleText'
 import { FailureAlert } from './FailureAlert'
 import { RoleSelect } from './RoleSelect'
 
-const CREATE_FIELDS = ['email', 'displayName', 'roleId', 'password'] as const
-const EDIT_FIELDS = ['displayName', 'roleId'] as const
+const CREATE_FIELDS = ['email', 'displayName', 'roleId', 'password', 'twoFactorCode'] as const
+const EDIT_FIELDS = ['displayName', 'roleId', 'twoFactorCode'] as const
+const CODE_PROBLEMS = new Set(['staff.two_factor_required', 'staff.two_factor_invalid'])
 
 type StaffUserModalProps = {
   user: StaffUser | null
@@ -28,10 +31,15 @@ export function StaffUserModal({ user, roles, rolesLoading, canGrantSuperuser, o
   const [displayName, setDisplayName] = useState(user?.displayName ?? '')
   const [chosenRole, setChosenRole] = useState<string | null>(user?.roleId ?? null)
   const [password, setPassword] = useState('')
+  const [twoFactorCode, setTwoFactorCode] = useState('')
+  const [twoFactorOpened, setTwoFactorOpened] = useState(false)
   const [failure, setFailure] = useState<Failure | null>(null)
   const [busy, setBusy] = useState(false)
   const roleId = chosenRole ?? defaultRoleId(roles)
   const errors = failure?.fields ?? {}
+  const grantsSuperuser = Boolean(roles.find((role) => role.id === roleId)?.isSuperuser) && roleId !== user?.roleId
+  const twoFactor = useTwoFactorStatus(grantsSuperuser)
+  const needsSetup = grantsSuperuser && twoFactor.data?.enabled === false
 
   function clearField(field: string) {
     setFailure((current) => (current && current.fields[field] ? { ...current, fields: { ...current.fields, [field]: '' } } : current))
@@ -43,12 +51,17 @@ export function StaffUserModal({ user, roles, rolesLoading, canGrantSuperuser, o
 
   async function submit(event: FormEvent) {
     event.preventDefault()
+    const code = grantsSuperuser ? twoFactorCode.replaceAll(' ', '') || null : null
+    if (grantsSuperuser && !needsSetup && !code) {
+      setFailure({ title: '', fields: { twoFactorCode: 'Введіть код із вашого застосунку-автентифікатора.' } })
+      return
+    }
     setBusy(true)
     setFailure(null)
     try {
       const result = user
-        ? await withCsrf((headers) => updateStaffUser(headers, user.id, { displayName: displayName.trim(), roleId: roleId || null }))
-        : await withCsrf((headers) => createStaffUser(headers, { email: email.trim(), displayName: displayName.trim(), roleId: roleId || null, password }))
+        ? await withCsrf((headers) => updateStaffUser(headers, user.id, { displayName: displayName.trim(), roleId: roleId || null, twoFactorCode: code }))
+        : await withCsrf((headers) => createStaffUser(headers, { email: email.trim(), displayName: displayName.trim(), roleId: roleId || null, password, twoFactorCode: code }))
       if (result.data) {
         setBusy(false)
         notifySuccess(
@@ -57,7 +70,14 @@ export function StaffUserModal({ user, roles, rolesLoading, canGrantSuperuser, o
         onSaved(result.data)
         return
       }
-      setFailure(toFailure(result.error, user ? 'Зміни не збережено.' : 'Працівника не додано.'))
+      const next = toFailure(result.error, user ? 'Зміни не збережено.' : 'Працівника не додано.')
+      if (next.code && CODE_PROBLEMS.has(next.code)) {
+        setTwoFactorCode('')
+        setFailure({ title: '', fields: { twoFactorCode: next.detail ?? next.title } })
+      } else {
+        if (next.code === 'staff.two_factor_setup_required') twoFactor.reload()
+        setFailure(next)
+      }
     } catch {
       setFailure(NETWORK_FAILURE)
     }
@@ -132,17 +152,44 @@ export function StaffUserModal({ user, roles, rolesLoading, canGrantSuperuser, o
               }}
             />
           )}
+          {grantsSuperuser ? (
+            needsSetup ? (
+              <Alert color="yellow" variant="light" icon={<IconShieldLock size={18} />} title="Потрібна двофакторна перевірка">
+                <Stack gap={8}>
+                  <span>Роль адміністратора призначається лише з підтвердженням кодом із вашого телефону. Спершу увімкніть перевірку для себе.</span>
+                  <Group>
+                    <Button size="xs" onClick={() => setTwoFactorOpened(true)}>
+                      Налаштувати
+                    </Button>
+                  </Group>
+                </Stack>
+              </Alert>
+            ) : (
+              <TwoFactorCodeInput
+                label="Ваш код підтвердження"
+                description="Роль адміністратора призначається лише з кодом із вашого застосунку-автентифікатора."
+                value={twoFactorCode}
+                error={errors.twoFactorCode || undefined}
+                disabled={busy || twoFactor.isLoading}
+                onChange={(value) => {
+                  setTwoFactorCode(value)
+                  clearField('twoFactorCode')
+                }}
+              />
+            )
+          ) : null}
           <FailureAlert failure={failure} extra={extraFieldMessages(failure, shown)} />
         </Stack>
         <AppModalFooter>
           <Button variant="default" disabled={busy} onClick={close}>
             Скасувати
           </Button>
-          <Button type="submit" loading={busy}>
+          <Button type="submit" loading={busy} disabled={needsSetup}>
             {user ? 'Зберегти' : 'Додати працівника'}
           </Button>
         </AppModalFooter>
       </form>
+      <TwoFactorModal opened={twoFactorOpened} onClose={() => setTwoFactorOpened(false)} onChanged={twoFactor.reload} />
     </AppModal>
   )
 }

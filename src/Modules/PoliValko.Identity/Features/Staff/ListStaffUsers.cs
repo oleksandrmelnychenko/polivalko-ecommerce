@@ -19,6 +19,7 @@ internal static class ListStaffUsers
                 u.Email,
                 u.DisplayName,
                 u.LockoutEnd,
+                u.TwoFactorEnabled,
                 Role = (from link in db.UserRoles
                         where link.UserId == u.Id
                         join role in db.Roles on link.RoleId equals role.Id
@@ -27,7 +28,7 @@ internal static class ListStaffUsers
             })
             .ToListAsync(ct);
         return TypedResults.Ok(rows
-            .Select(u => new StaffUserDto(u.Id, u.Email ?? string.Empty, u.DisplayName, u.Role?.Id ?? string.Empty, u.Role?.DisplayName ?? string.Empty, u.LockoutEnd > now))
+            .Select(u => new StaffUserDto(u.Id, u.Email ?? string.Empty, u.DisplayName, u.Role?.Id ?? string.Empty, u.Role?.DisplayName ?? string.Empty, u.LockoutEnd > now, u.TwoFactorEnabled))
             .ToList());
     }
 }

@@ -16,6 +16,7 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 import { getStaffUsers, lockStaffUser, type StaffUser } from '../api/staffApi'
 import { FailureAlert } from '../components/FailureAlert'
 import { ResetPasswordModal } from '../components/ResetPasswordModal'
+import { ResetTwoFactorModal } from '../components/ResetTwoFactorModal'
 import { staffColumns } from '../components/staffColumns'
 import { StaffFilters } from '../components/StaffFilters'
 import { StaffUserModal } from '../components/StaffUserModal'
@@ -23,7 +24,7 @@ import { NETWORK_FAILURE, notifyFailure, toFailure, type Failure } from '../lib/
 import { filterStaff, useStaffFilters } from '../lib/useStaffFilters'
 import './staff.css'
 
-type Dialog = { kind: 'create' } | { kind: 'edit' | 'password'; user: StaffUser }
+type Dialog = { kind: 'create' } | { kind: 'edit' | 'password' | 'two-factor'; user: StaffUser }
 
 const getRowId = (row: StaffUser) => row.id
 const countFormat = new Intl.NumberFormat('uk-UA')
@@ -89,6 +90,7 @@ export function StaffPage() {
         canOpenRoles,
         onEdit: (user) => setDialog({ kind: 'edit', user }),
         onPassword: (user) => setDialog({ kind: 'password', user }),
+        onResetTwoFactor: (user) => setDialog({ kind: 'two-factor', user }),
         onLock: (user) => {
           if (user.lockedOut) {
             void changeLock(user, false)
@@ -108,6 +110,7 @@ export function StaffPage() {
   function onSaved(saved: StaffUser) {
     replaceUser(saved)
     setDialog(null)
+    users.reload()
     roles.reload()
     if (saved.email.toLowerCase() === selfEmail.toLowerCase()) notifyPermissionsChanged()
   }
@@ -172,7 +175,7 @@ export function StaffPage() {
           getRowId={getRowId}
           isLoading={users.isLoading}
           isFetching={users.isFetching}
-          minWidth={980}
+          minWidth={1180}
           height="100%"
           onRowClick={onRowClick}
           emptyText={emptyText}
@@ -192,6 +195,19 @@ export function StaffPage() {
       ) : null}
 
       {dialog?.kind === 'password' ? <ResetPasswordModal key={dialog.user.id} user={dialog.user} onClose={() => setDialog(null)} /> : null}
+
+      {dialog?.kind === 'two-factor' ? (
+        <ResetTwoFactorModal
+          key={dialog.user.id}
+          user={dialog.user}
+          superuser={Boolean(rolesById.get(dialog.user.roleId)?.isSuperuser)}
+          onClose={() => setDialog(null)}
+          onSaved={(saved) => {
+            replaceUser(saved)
+            setDialog(null)
+          }}
+        />
+      ) : null}
 
       <ChangePasswordModal opened={ownPassword} onClose={() => setOwnPassword(false)} />
 

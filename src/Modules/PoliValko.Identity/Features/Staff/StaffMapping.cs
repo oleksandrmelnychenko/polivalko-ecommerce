@@ -11,7 +11,7 @@ internal static class StaffMapping
     public static async Task<StaffUserDto> ToDtoAsync(PoliValkoDbContext db, StaffUser user, TimeProvider time, CancellationToken ct = default)
     {
         var role = await StaffRolesOf(db, user.Id).FirstOrDefaultAsync(ct);
-        return new StaffUserDto(user.Id, user.Email ?? string.Empty, user.DisplayName, role?.Id ?? string.Empty, role?.DisplayName ?? string.Empty, user.LockoutEnd > time.GetUtcNow());
+        return new StaffUserDto(user.Id, user.Email ?? string.Empty, user.DisplayName, role?.Id ?? string.Empty, role?.DisplayName ?? string.Empty, user.LockoutEnd > time.GetUtcNow(), user.TwoFactorEnabled);
     }
 
     public static IQueryable<StaffRole> StaffRolesOf(PoliValkoDbContext db, string userId) =>

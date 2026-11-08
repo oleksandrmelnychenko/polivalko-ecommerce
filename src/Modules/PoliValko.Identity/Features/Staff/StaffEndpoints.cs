@@ -32,6 +32,11 @@ internal static class StaffEndpoints
             .WithName("ConsoleResetUserPassword")
             .WithSummary("Новий пароль працівнику; активні сесії завершуються")
             .ProducesProblem(StatusCodes.Status404NotFound);
+        users.MapPost("/{id}/two-factor/reset", ResetStaffTwoFactor.HandleAsync)
+            .WithName("ConsoleResetUserTwoFactor")
+            .WithSummary("Вимкнути двофакторну перевірку працівнику, що втратив телефон; для адміністратора — з вашим кодом")
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         console.MapGroup("/auth").WithTags("Console").RequireStaff()
             .MapPost("/password", ChangeOwnPassword.HandleAsync)

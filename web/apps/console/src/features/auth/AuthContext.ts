@@ -3,7 +3,7 @@ import type { MyPermissions, StaffMe } from '@/shared/auth/permissionsApi'
 
 export type AuthStatus = 'loading' | 'anonymous' | 'authenticated'
 
-export type LoginResult = { ok: true } | { ok: false; message: string }
+export type LoginResult = { ok: true } | { ok: false; message: string; twoFactor?: 'required' | 'invalid' }
 
 export type AuthContextValue = {
   status: AuthStatus
@@ -12,7 +12,7 @@ export type AuthContextValue = {
   me: StaffMe | null
   permissions: MyPermissions | null
   hasPermission: (permissionKey: string) => boolean
-  login: (email: string, password: string) => Promise<LoginResult>
+  login: (email: string, password: string, twoFactorCode?: string) => Promise<LoginResult>
   logout: () => Promise<void>
   refresh: () => Promise<void>
 }

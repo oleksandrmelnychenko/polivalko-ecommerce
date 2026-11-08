@@ -9,6 +9,7 @@ using PoliValko.Identity.Features.Auth;
 using PoliValko.Identity.Features.Permissions;
 using PoliValko.Identity.Features.Roles;
 using PoliValko.Identity.Features.Staff;
+using PoliValko.Identity.Features.TwoFactor;
 using PoliValko.Identity.Persistence;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Security;
@@ -34,6 +35,7 @@ public static class IdentityModule
             .AddRoles<StaffRole>()
             .AddEntityFrameworkStores<PoliValkoDbContext>()
             .AddSignInManager()
+            .AddTokenProvider<AuthenticatorTokenProvider<StaffUser>>(TokenOptions.DefaultAuthenticatorProvider)
             .AddClaimsPrincipalFactory<StaffClaimsFactory>();
 
         services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
@@ -78,6 +80,7 @@ public static class IdentityModule
     public static RouteGroupBuilder MapConsoleStaffEndpoints(this RouteGroupBuilder console)
     {
         StaffEndpoints.Map(console);
+        TwoFactorEndpoints.Map(console);
         RoleEndpoints.Map(console);
         PermissionEndpoints.Map(console);
         return console;

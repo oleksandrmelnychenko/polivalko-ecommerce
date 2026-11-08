@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using PoliValko.Identity.Features.TwoFactor;
 using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Security;
@@ -57,6 +58,11 @@ internal static class UpdateStaffUser
             if (await StaffValidation.CanGrantAsync(mine, role, db, ct) is { } cannotGrant)
             {
                 return cannotGrant;
+            }
+
+            if (role.IsSuperuser && await SuperuserConfirmation.CheckAsync(me, request.TwoFactorCode, userManager) is { } unconfirmed)
+            {
+                return unconfirmed;
             }
 
             if (current?.IsSuperuser == true && !role.IsSuperuser && await StaffValidation.IsLastActiveSuperuserAsync(db, user, time, ct))

@@ -239,6 +239,25 @@ docker compose up -d
 Система → Ролі і права). Локально для тестів можна задати
 `ADMIN_EMAIL=admin@polivalko.local` і будь-який пароль, що відповідає вимогам.
 
+Одразу після першого входу адміністратор вмикає двофакторну перевірку (меню профілю → «Двофакторна перевірка»): без
+неї консоль не дасть створити інших адміністраторів чи призначити цю роль. Резервні коди зберігають окремо від
+телефону. Працівнику, що втратив телефон і коди, перевірку скидає адміністратор на сторінці «Працівники».
+
+Якщо доступ втратив єдиний адміністратор, перевірку вимикають у базі, після чого він входить лише з паролем і
+налаштовує її заново (сесії завершаться за хвилину через новий security stamp):
+
+```bash
+docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' <<'SQL'
+with u as (
+  update identity.users
+     set two_factor_enabled = false, security_stamp = gen_random_uuid()::text, access_failed_count = 0, lockout_end = null
+   where normalized_email = upper('admin@example.ua')
+  returning id)
+delete from identity.user_tokens t using u
+ where t.user_id = u.id and t.login_provider = '[AspNetUserStore]' and t.name in ('AuthenticatorKey', 'RecoveryCodes');
+SQL
+```
+
 ## 7. HTTPS і домен
 
 - `SITE_ADDRESS=example.ua` — Caddy сам отримує й поновлює сертифікат (Let's Encrypt / ZeroSSL), перенаправляє

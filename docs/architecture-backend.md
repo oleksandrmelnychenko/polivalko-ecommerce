@@ -357,8 +357,11 @@ PoliValko.Identity/
   Persistence/             IdentitySeeder
   Features/Auth/           AuthEndpoints; Login, Logout, Me, GetCsrfToken; AuthDtos; StaffClaimsFactory
   Features/Staff/          StaffEndpoints (група /users, потім /auth/password); ListStaffUsers, CreateStaffUser,
-                           UpdateStaffUser, LockStaffUser, ResetStaffPassword, ChangeOwnPassword; StaffDtos,
-                           StaffValidation, StaffMapping
+                           UpdateStaffUser, LockStaffUser, ResetStaffPassword, ResetStaffTwoFactor, ChangeOwnPassword;
+                           StaffDtos, StaffValidation, StaffMapping
+  Features/TwoFactor/      TwoFactorEndpoints (група /auth/two-factor); OwnTwoFactor (стан, ключ, увімкнення, резервні
+                           коди, вимкнення), TwoFactorCodes (TOTP, резервні коди, otpauth-адреса),
+                           SuperuserConfirmation (код для ролі адміністратора); TwoFactorDtos
 
 PoliValko.Navkolo/
   NavkoloModule.cs  Contracts/  Configuration/ NavkoloOptions, StubOptions, NavkoloModes
@@ -641,6 +644,21 @@ SHA-256 (hex). Підтвердження email діє 3 доби, віднов�
   (403 `roles.escalation`), призначити роль із такими правами чи роль адміністратора, змінити, заблокувати або скинути
   пароль працівнику із сильнішою роллю (403 `staff.escalation`). Власну роль змінити не можна (409 `auth.self_role`),
   останнього активного адміністратора не можна зняти з ролі чи заблокувати (409 `staff.last_superuser`).
+- **Двофакторна перевірка (TOTP).** `AuthenticatorTokenProvider` Identity (RFC 6238, 30 с, допуск ±2 кроки), ключ і
+  резервні коди — у `identity.user_tokens`, прапорець — `users.two_factor_enabled`. Свій обліковий запис:
+  `GET /console/auth/two-factor` (стан, кількість резервних кодів), `POST …/setup` (новий ключ і `otpauth://`-адреса для
+  QR), `POST …/enable` з кодом (10 резервних кодів), `POST …/recovery-codes` і `POST …/disable` — з поточним кодом.
+  Зміна ключа чи прапорця оновлює security stamp, тож обробники перевидають cookie (`RefreshSignInAsync`).
+  Вхід (`POST /console/auth/login`): пароль перевіряє `CheckPasswordSignInAsync`; з увімкненою перевіркою без
+  `twoFactorCode` — 401 `auth.two_factor_required`, хибний код — 401 `auth.invalid_two_factor_code`; шість цифр
+  звіряються з автентифікатором, інше — як резервний код (одноразовий). Cookie видається з `amr` = `mfa` чи `pwd`.
+- **Призначення ролі адміністратора** (`IsSuperuser`) у `POST /console/users` і в `PUT /console/users/{id}` зі зміною
+  ролі вимагає `twoFactorCode` того, хто призначає (`SuperuserConfirmation`): без увімкненої перевірки — 403
+  `staff.two_factor_setup_required`, без коду — 403 `staff.two_factor_required`, хибний — 403 `staff.two_factor_invalid`.
+  Хибні коди (і тут, і у вході, вимкненні, нових резервних кодах) рахуються як невдалі спроби Identity: п'ять поспіль
+  блокують обліковий запис на 15 хв. `POST /console/users/{id}/two-factor/reset` вимикає перевірку іншому працівнику
+  (власну — 409 `auth.self_two_factor`; для адміністратора — з кодом того, хто скидає). У `StaffUserDto` є
+  `twoFactorEnabled`; журнал: `user.two_factor_enabled|disabled|reset`, `user.recovery_codes_generated`.
 - Будь-якому працівнику доступні `/console/auth/*`, `/console/summary`, `/console/search` (групи результатів
   відсікаються за правами) і `/console/permissions/*`.
 
@@ -942,7 +960,9 @@ PaymentTypes, Checkbox:*); `Navkolo` (Mode, SyncInterval, CatalogInterval, Fresh
 
 - Авторизація працівників: політика `staff` (будь-який працівник із cookie `pv_console`) і політики
   `permission:<ключ>` з каталогу прав (розділ 5.2); cookie Identity (HttpOnly, SameSite=Strict,
-  8 год, sliding), блокування після 5 спроб на 15 хв, пароль від 10 символів, перевірка security stamp щохвилини,
+  8 год, sliding), блокування після 5 спроб на 15 хв (хибні коди двофакторної перевірки теж рахуються), пароль від
+  10 символів, необов'язкова двофакторна перевірка TOTP (обов'язкова, щоб призначати роль адміністратора), перевірка
+  security stamp щохвилини,
   відповіді 401/403 у форматі Problem Details.
 - Покупці: політика `customer`, cookie `pv_customer` (HttpOnly, SameSite=Lax, 30 днів, sliding), блокування після
   5 спроб на 15 хв, пароль 8–128 символів, перевірка security stamp раз на `Customers:SessionCheckInterval`; типова схема

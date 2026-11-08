@@ -84,10 +84,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
   }, [])
 
-  const login = useCallback(async (email: string, password: string): Promise<LoginResult> => {
+  const login = useCallback(async (email: string, password: string, twoFactorCode?: string): Promise<LoginResult> => {
     try {
-      const { data, error, response } = await loginRequest({ email, password })
-      if (!data) return { ok: false, message: loginErrorMessage(response.status, error as Problem | undefined) }
+      const { data, error, response } = await loginRequest({ email, password, twoFactorCode: twoFactorCode || null })
+      if (!data) {
+        const problem = error as Problem | undefined
+        const twoFactor = problem?.code === 'auth.two_factor_required' ? 'required' : problem?.code === 'auth.invalid_two_factor_code' ? 'invalid' : undefined
+        return { ok: false, message: loginErrorMessage(response.status, problem), twoFactor }
+      }
       forgetCsrf()
       const permissions = await loadPermissions()
       lastRefresh.current = Date.now()

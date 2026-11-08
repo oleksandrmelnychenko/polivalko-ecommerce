@@ -105,6 +105,12 @@
   width: 100%;
 }
 
+.login-card .login-switch {
+  align-self: flex-start;
+  margin-top: -6px;
+  padding-inline: 4px;
+}
+
 .login-help {
   border-top: 1px solid var(--mantine-color-gray-2);
   color: var(--mantine-color-gray-6);

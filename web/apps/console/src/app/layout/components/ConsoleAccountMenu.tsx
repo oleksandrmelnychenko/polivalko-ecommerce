@@ -1,12 +1,13 @@
 import { Menu, Text } from '@mantine/core'
-import { IconChevronDown, IconKey, IconLogout, IconUserCircle } from '@tabler/icons-react'
+import { IconChevronDown, IconKey, IconLogout, IconShieldLock, IconUserCircle } from '@tabler/icons-react'
 import { useState } from 'react'
-import { ChangePasswordModal, useAuth } from '@/features/auth'
+import { ChangePasswordModal, TwoFactorModal, useAuth } from '@/features/auth'
 import { TableChip } from '@/shared/ui/TableChip'
 
 export function ConsoleAccountMenu() {
   const { me, logout } = useAuth()
   const [passwordOpened, setPasswordOpened] = useState(false)
+  const [twoFactorOpened, setTwoFactorOpened] = useState(false)
   const displayName = me?.displayName?.trim() || me?.email || 'Обліковий запис'
 
   return (
@@ -36,12 +37,16 @@ export function ConsoleAccountMenu() {
           <Menu.Item leftSection={<IconKey size={16} />} onClick={() => setPasswordOpened(true)}>
             Змінити пароль
           </Menu.Item>
+          <Menu.Item leftSection={<IconShieldLock size={16} />} onClick={() => setTwoFactorOpened(true)}>
+            Двофакторна перевірка
+          </Menu.Item>
           <Menu.Item leftSection={<IconLogout size={16} />} onClick={() => void logout()}>
             Вийти
           </Menu.Item>
         </Menu.Dropdown>
       </Menu>
       <ChangePasswordModal opened={passwordOpened} onClose={() => setPasswordOpened(false)} />
+      <TwoFactorModal opened={twoFactorOpened} onClose={() => setTwoFactorOpened(false)} />
     </>
   )
 }

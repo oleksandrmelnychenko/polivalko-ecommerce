@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using PoliValko.Identity.Features.TwoFactor;
 using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Security;
@@ -51,6 +52,11 @@ internal static class CreateStaffUser
             return denied;
         }
 
+        if (role!.IsSuperuser && await SuperuserConfirmation.CheckAsync(me, request.TwoFactorCode, userManager) is { } unconfirmed)
+        {
+            return unconfirmed;
+        }
+
         var user = new StaffUser { UserName = email, Email = email, EmailConfirmed = true, DisplayName = name! };
         var created = await userManager.CreateAsync(user, request.Password!);
         if (!created.Succeeded)
@@ -59,7 +65,7 @@ internal static class CreateStaffUser
         }
 
         await userManager.AddToRoleAsync(user, role!.Name!);
-        audit.Record("user.created", "StaffUser", email, new { name, role = role.DisplayName });
+        audit.Record("user.created", "StaffUser", email, new { name, role = role.DisplayName, confirmedByCode = role.IsSuperuser });
         await db.SaveChangesAsync(ct);
         access.Invalidate();
         return TypedResults.Created($"/api/v1/console/users/{user.Id}", await StaffMapping.ToDtoAsync(db, user, time, ct));
