@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
+import { seoMetadata } from "@/features/seo";
 import { ServicesScreen } from "@/features/services/server";
 
-export const metadata: Metadata = {
+export const metadata = seoMetadata({
   title: "Послуги",
   description: "Ландшафтний дизайн, автополив, озеленення, газони, догляд за садом і обробка рослин.",
-  alternates: { canonical: "/services" },
-};
+  path: "/services",
+});
 
 export default function ServicesPage() {
   return <ServicesScreen />;

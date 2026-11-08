@@ -35,6 +35,7 @@ async function CategoryContent({ params, searchParams }: CategoryScreenProps) {
         base={{ category: slug }}
         searchParams={sp}
         subcategories={category.children}
+        listName={category.name}
         emptyHint="У цьому розділі поки немає товарів. Загляньте в інші розділи каталогу."
       />
     </>

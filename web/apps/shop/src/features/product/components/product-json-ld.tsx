@@ -1,7 +1,18 @@
 import type { ProductDetails } from "@polivalko/shared/api/types";
+import { breadcrumbJsonLd, JsonLd } from "@/features/seo";
 import { productJsonLd } from "../lib/json-ld";
 
 export function ProductJsonLd({ product }: { product: ProductDetails }) {
-  const data = productJsonLd(product);
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }} />;
+  return (
+    <>
+      <JsonLd data={productJsonLd(product)} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Каталог", path: "/catalog" },
+          { name: product.category.name, path: `/catalog/${product.category.slug}` },
+          { name: product.name, path: `/product/${product.slug}` },
+        ])}
+      />
+    </>
+  );
 }

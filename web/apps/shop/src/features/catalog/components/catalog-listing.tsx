@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { countProducts } from "@polivalko/shared/lib/format";
+import { itemListJsonLd, JsonLd } from "@/features/seo";
 import { searchProducts, type ProductQuery } from "../api/server";
 import { hrefFor, parseListingParams, toQuery, type Parsed, type SearchParams } from "../lib/listing-params";
 import { FiltersPanel } from "./filters-panel";
@@ -39,6 +40,7 @@ export async function CatalogListing({
   searchParams,
   emptyHint,
   subcategories = [],
+  listName,
 }: {
   basePath: string;
   base: ProductQuery;
@@ -46,6 +48,7 @@ export async function CatalogListing({
   searchParams: SearchParams;
   emptyHint: string;
   subcategories?: Subcategory[];
+  listName?: string;
 }) {
   const p = parseListingParams(searchParams);
   const result = await searchProducts(toQuery(base, p));
@@ -61,8 +64,18 @@ export async function CatalogListing({
       ? "Товарів не знайдено"
       : `Показано ${from}–${to} з ${result.totalItems.toLocaleString("uk-UA")}`;
 
+  const itemList =
+    listName && result.items.length > 0
+      ? itemListJsonLd(
+          listName,
+          result.items.map((item) => ({ name: item.name, path: `/product/${item.slug}`, image: item.imageUrl })),
+          (result.page - 1) * result.pageSize,
+        )
+      : null;
+
   return (
     <div className="catalog">
+      {itemList && <JsonLd data={itemList} />}
       <FiltersPanel active={chips.length}>
         {subcategories.length > 0 && (
           <nav className="fw fw--nav" aria-labelledby="subcategories-title">

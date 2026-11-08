@@ -21,7 +21,7 @@ async function InfoContent({ slug, children }: { slug: string; children?: ReactN
 
   return (
     <>
-      <PageHead title={page.title} lead={page.lead} />
+      <PageHead title={page.title} lead={page.lead} path={`/${slug}`} />
       {page.bodyHtml ? (
         <div className="prose" dangerouslySetInnerHTML={{ __html: page.bodyHtml }} />
       ) : (

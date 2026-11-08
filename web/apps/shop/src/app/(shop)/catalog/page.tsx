@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
 import { CatalogScreen } from "@/features/catalog/server";
+import { seoMetadata } from "@/features/seo";
 
-export const metadata: Metadata = {
+export const metadata = seoMetadata({
   title: "Каталог",
-  alternates: { canonical: "/catalog" },
-};
+  description: "Усі розділи Poli Valko: товари для дому, саду та городу з доставкою Новою поштою по Україні й самовивозом у Бучі.",
+  path: "/catalog",
+});
 
 export default function CatalogPage() {
   return <CatalogScreen />;

@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { getSiteHome, type SiteHome } from "@/features/content/server";
+import { getSiteHome, SiteJsonLd, type SiteHome } from "@/features/content/server";
 import { homeBlocks, type HomeBlockKey } from "../lib/home-blocks";
 import { bannerSlides, heroSlides, type HeroSlide } from "../lib/hero-slides";
 import { CollectionPairs } from "./collection-pair";
@@ -37,6 +37,7 @@ async function HomeContent() {
   const slides = home?.banners?.length ? bannerSlides(home.banners) : heroSlides;
   return (
     <>
+      <SiteJsonLd />
       {!blocks.includes("hero") && <h1 className="visually-hidden">Poli Valko: товари для дому, саду та городу</h1>}
       {blocks.map((block) => (
         <HomeBlock key={block} block={block} home={home} slides={slides} />

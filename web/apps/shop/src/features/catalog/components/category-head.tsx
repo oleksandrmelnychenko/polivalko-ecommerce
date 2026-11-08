@@ -1,10 +1,17 @@
 import Link from "next/link";
 import type { Category } from "@polivalko/shared/api/types";
+import { breadcrumbJsonLd, JsonLd } from "@/features/seo";
 import { CategoryIntro } from "./category-intro";
 
 export function CategoryHead({ category }: { category: Category }) {
+  const trail = [
+    { name: "Каталог", path: "/catalog" },
+    ...category.breadcrumbs.map((c) => ({ name: c.name, path: `/catalog/${c.slug}` })),
+    { name: category.name, path: `/catalog/${category.slug}` },
+  ];
   return (
     <header className="page-head">
+      <JsonLd data={breadcrumbJsonLd(trail)} />
       <nav className="crumbs" aria-label="Хлібні крихти">
         <ol>
           <li>

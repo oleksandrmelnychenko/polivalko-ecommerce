@@ -3,12 +3,14 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { sized, thumb } from "@polivalko/shared/lib/images";
 import { pagePhotos } from "@polivalko/shared/lib/stand-in-photos";
+import { breadcrumbJsonLd, JsonLd } from "@/features/seo";
 import { getServiceDirections } from "../api/server";
 import { ServiceRequestForm } from "./service-request-form";
 
 export function ServicesScreen() {
   return (
     <div className="container">
+      <JsonLd data={breadcrumbJsonLd([{ name: "Послуги", path: "/services" }])} />
       <header className="page-head">
         <nav className="crumbs" aria-label="Хлібні крихти">
           <ol>

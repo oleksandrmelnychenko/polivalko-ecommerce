@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
 import { ContactsScreen } from "@/features/content/server";
+import { seoMetadata } from "@/features/seo";
 
-export const metadata: Metadata = {
+export const metadata = seoMetadata({
   title: "Контакти",
   description: "Адреса, графік, телефони магазину й послуг Poli Valko у Бучі.",
-  alternates: { canonical: "/contacts" },
-};
+  path: "/contacts",
+});
 
 export default function ContactsPage() {
   return <ContactsScreen />;

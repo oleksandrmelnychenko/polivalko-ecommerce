@@ -1,16 +1,21 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { getContacts, getPickupPoints } from "../api/server";
+import { contactPageJsonLd, JsonLd } from "@/features/seo";
+import { getContacts, getPickupPoints, getSeller } from "../api/server";
+import { organizationSource } from "../lib/organization";
 import { socialLinks } from "../lib/social-links";
 import { ContactsPhone } from "./contacts-phone";
 import { PageHead } from "./page-head";
 import { SpecialDays } from "./special-days";
 
+const TITLE = "Контакти";
+const LEAD = "Магазин у Бучі: самовивіз, консультації й заявки на послуги.";
+
 export function ContactsScreen() {
   return (
     <div className="container">
-      <PageHead title="Контакти" lead="Магазин у Бучі: самовивіз, консультації й заявки на послуги." />
+      <PageHead title={TITLE} lead={LEAD} path="/contacts" />
       <Suspense fallback={<div className="skeleton" style={{ height: "var(--space-4xl)" }} />}>
         <ContactsContent />
       </Suspense>
@@ -20,11 +25,12 @@ export function ContactsScreen() {
 
 async function ContactsContent() {
   await connection();
-  const [contacts, pickupPoints] = await Promise.all([getContacts(), getPickupPoints()]);
+  const [contacts, pickupPoints, seller] = await Promise.all([getContacts(), getPickupPoints(), getSeller()]);
   const socials = socialLinks(contacts);
 
   return (
     <div className="contacts">
+      <JsonLd data={contactPageJsonLd({ name: TITLE, description: LEAD, path: "/contacts", organization: organizationSource(contacts, seller) })} />
       <dl className="facts">
         <dt>Адреса</dt>
         <dd>

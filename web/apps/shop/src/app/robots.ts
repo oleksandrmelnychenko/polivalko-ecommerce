@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { connection } from "next/server";
+import { siteUrl } from "@/features/seo";
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
   await connection();
@@ -7,8 +8,8 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/internal/", "/search", "/cart", "/checkout", "/order/", "/pay/", "/account"],
+      disallow: ["/api/", "/internal/", "/cart", "/checkout", "/order/", "/pay/", "/account"],
     },
-    sitemap: `${process.env.SITE_URL ?? "http://localhost:3000"}/sitemap.xml`,
+    sitemap: `${siteUrl()}/sitemap.xml`,
   };
 }

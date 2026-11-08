@@ -7,3 +7,4 @@ export { ContactsScreen } from "./components/contacts-screen";
 export { CreditsScreen } from "./components/credits-screen";
 export { OfferScreen } from "./components/offer-screen";
 export { SpecialDays } from "./components/special-days";
+export { SiteJsonLd } from "./components/site-json-ld";
