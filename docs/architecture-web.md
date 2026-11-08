@@ -114,6 +114,8 @@ web/
 │  │     │  │               прямокутниками зліва вгорі, бренд, назва, ціна, наявність і «У кошик» на всю ширину
 │  │     │  │               (AddToCart block); «переглянути» й «в обране» — квадратиками праворуч угорі
 │  │     │  ├─ product/     ProductScreen: галерея, блок покупки, варіанти, опис і характеристики, схожі товари, JSON-LD
+│  │     │  ├─ seo/         seoMetadata (canonical, Open Graph, Twitter, noindex), JsonLd і генератори schema.org,
+│  │     │  │               графік з консолі → OpeningHoursSpecification; стратегія — docs/SEO.md
 │  │     │  ├─ home/        HomeScreen: блоки в порядку з консолі — слайдер із банерів, знижки, добірки, розділи,
 │  │     │  │               переваги, послуги, кроки, магазин у Бучі
 │  │     │  ├─ layout/      хром вітрини: ShopShell, SiteHeader (смуга оголошення, меню, мегаменю, мобільне меню),
@@ -131,7 +133,7 @@ web/
 │  │     │  └─ account/     сторінки кабінету: вхід, реєстрація, відновлення пароля, підтвердження email, AccountShell,
 │  │     │                  замовлення, деталі замовлення, обране, адреси, профіль
 │  │     └─ shared/
-│  │        ├─ lib/quantity.ts (MAX_QUANTITY), page-title.ts (pageTitle)   ui/quantity-stepper.tsx
+│  │        ├─ lib/quantity.ts (MAX_QUANTITY), page-title.ts (pageTitle, hasShopName)   ui/quantity-stepper.tsx
 │  │        │  hooks/use-hydrated.ts
 │  │        └─ styles/   print.css
 │  │           ├─ ui/         stepper, fill, lines, totals, summary-layout (.css)
@@ -198,7 +200,7 @@ src/features/<фіча>/
 | --- | --- | --- |
 | `analytics` | `track`, `TrackPurchase`, `TrackViewItem`, `GoogleAnalytics` | — |
 | `cart` | `CartProvider`, `useCart`, `useCartQuote`, `CartButton`, `CartDrawer`, `CartScreen`, `BuyForm`, `AddToCart` | — |
-| `catalog` | `ProductTile`, `ProductTiles`, `ProductTilesSkeleton`, `CategoryTile`, `CategoryGrid`, `ListingSkeleton`, `ProductLabels`, `discountPercent`, `categoryPhotoUrl`, `pageTitle`, тип `SearchParams` | `getCategory`, `getCategoryTree`, `getCollections`, `getSitemap`, `resolveRedirect`, `searchProducts`, `CatalogListing`, `CatalogScreen`, `CategoryScreen` |
+| `catalog` | `ProductTile`, `ProductTiles`, `ProductTilesSkeleton`, `CategoryTile`, `CategoryGrid`, `ListingSkeleton`, `ProductLabels`, `discountPercent`, `categoryPhotoUrl`, тип `SearchParams` | `getCategory`, `getCategoryTree`, `getCollections`, `getSitemap`, `resolveRedirect`, `searchProducts`, `CatalogListing`, `CatalogScreen`, `CategoryScreen` |
 | `product` | `descriptionText` | `getProduct`, `ProductScreen` |
 | `home` | — | `HomeScreen` |
 | `layout` | — | `ShopShell` |
@@ -207,7 +209,8 @@ src/features/<фіча>/
 | `order` | `OrderFacts`, `OrderHistory`, `OrderItems`, `OrderReceipts`, `isOrderPaid`, `orderWhere` | `OrderScreen` |
 | `payment` | `PayButton`, `PaymentPending`, `SandboxPaymentScreen` | — |
 | `services` | — | `getServiceDirections`, `ServicesScreen` |
-| `content` | — | `getAnnouncement`, `getContacts`, `getSeller`, `getSiteHome`, `pageMetadata`, `socialLinks`, типи `Banner`, `SiteHome`, `TextItem`, `InfoPage`, `ContactsScreen`, `CreditsScreen`, `OfferScreen`, `SpecialDays` |
+| `content` | — | `getAnnouncement`, `getContacts`, `getSeller`, `getSiteHome`, `pageMetadata`, `socialLinks`, типи `Banner`, `SiteHome`, `TextItem`, `InfoPage`, `ContactsScreen`, `CreditsScreen`, `OfferScreen`, `SpecialDays`, `SiteJsonLd` |
+| `seo` | `seoMetadata`, `defaultOpenGraph`, `JsonLd`, `breadcrumbJsonLd`, `itemListJsonLd`, `webSiteJsonLd`, `organizationJsonLd`, `contactPageJsonLd`, `SITE_NAME`, `SITE_LOCALE`, `SITE_LANGUAGE`, `siteUrl`, `absoluteUrl`, `organizationId`, `websiteId`, типи `SeoInput`, `Crumb`, `ListEntry`, `OrganizationSource` | — |
 | `customer` | `AccountButton`, `useCustomer`, `getAddresses`, `postAddress`, `withCsrf`, тип `CsrfHeaders`, `expireOn401`, `loadSession`, `refreshSession`, `setSignedIn`, `sessionEnded`, `signIn`, `signOut`, `signUp`, `currentPath`, `loginHref`, `safeNext`, `addressPlace`, `addressTitle`, типи `CustomerAddress`, `CustomerMe`, `SaveAddressRequest` | — |
 | `favorites` | `FavoriteButton`, `useFavorites`, `getFavoriteProducts`, `HeartIcon` | — |
 | `account` | `LoginScreen`, `RegisterScreen`, `ForgotPasswordScreen`, `ResetPasswordScreen`, `ConfirmEmailScreen`, `AccountShell`, `OrdersScreen`, `OrderDetailScreen`, `FavoritesScreen`, `AddressesScreen`, `ProfileScreen` | — |
@@ -218,8 +221,8 @@ src/features/<фіча>/
   товару); `categoryPhotoUrl(category)` — фото категорії з консолі (`imageUrl`) або тимчасове фото за `slug`, інакше
   `null` (плитка, мобільне меню, `openGraph` сторінки категорії); `pageTitle(title)` — `title` для `metadata`: якщо
   текст уже закінчується на «Poli Valko», повертає `{ absolute }`, щоб шаблон `%s | Poli Valko` не додав назву вдруге.
-  `pageTitle` лежить у `src/shared/lib/page-title.ts`, а `catalog` лише реекспортує його: маршрути не можуть
-  імпортувати `@/shared` (розділ 2), а потрібен він сторінкам товару й категорії.
+  `pageTitle` лежить у `src/shared/lib/page-title.ts`; з 2026-11-07 маршрути отримують його через `seoMetadata`
+  фічі `seo` (docs/SEO.md), реекспорт з `catalog` прибрано.
 - `content/server.ts`: `getSiteHome()` — `GET /api/v1/site/home` (блоки, банери, оголошення, переваги, кроки, блок
   магазину; збій API → `null`, головна тоді показує типові блоки); `getAnnouncement()` — оголошення з тієї самої
   відповіді, лише з непорожнім текстом; `getSeller()` — `GET /api/v1/seller` (футер, оферта); `pageMetadata(slug,
@@ -1113,7 +1116,7 @@ src/shared  ──►  @polivalko/shared (крім api/server)
 
 | Фіча | `index.ts` |
 | --- | --- |
-| `auth` | `AuthProvider`, `useAuth`, `usePermissions`, `Can`, `PermissionGate`, `AccessDenied`, `PagePermissionBoundary`, `ProtectedRoute`, `ChangePasswordModal`, `LoginPage`, типи `AuthContextValue`, `AuthStatus` |
+| `auth` | `AuthProvider`, `useAuth`, `usePermissions`, `Can`, `PermissionGate`, `AccessDenied`, `PagePermissionBoundary`, `ProtectedRoute`, `ChangePasswordModal`, `TwoFactorModal`, `TwoFactorCodeInput`, `useTwoFactorStatus`, `LoginPage`, типи `AuthContextValue`, `AuthStatus` |
 | `navigation` | `NavigationProvider`, `useNavigation`, `NAV_SECTIONS`, `findActive`, `isNavItemAllowed`, `matchesPath`, `sectionByPrefix`, типи `ConsoleSummary`, `NavBadgeTone`, `NavItem`, `NavSection` |
 | `search` | `SearchPalette`, `SearchButton` |
 
@@ -1334,7 +1337,15 @@ web/apps/console/
   - `<PagePermissionBoundary permissionKey homePath>` — для частини сторінки, якій потрібне власне право: лоадер, поки
     права вантажаться, без права — `AccessDenied`;
   - `<AccessDenied permissionKey homePath>` — екран «Недостатньо прав»;
-  - `useAuth()` → `me`, `permissions`, `hasPermission`, `login`, `logout`, `refresh`.
+  - `useAuth()` → `me`, `permissions`, `hasPermission`, `login(email, password, twoFactorCode?)`, `logout`, `refresh`.
+- **Двофакторна перевірка.** `login` повертає `twoFactor: 'required' | 'invalid'` на 401 `auth.two_factor_required` /
+  `auth.invalid_two_factor_code`; `LoginPage` тоді показує другий крок: код із застосунку або резервний код
+  (`TwoFactorCodeInput`, `autocomplete="one-time-code"`). `TwoFactorModal` (меню облікового запису) веде стан → ключ і
+  QR (бібліотека `qrcode`, як у gba_ecommerce) → код → 10 резервних кодів (скопіювати, завантажити .txt), а з
+  увімкненою перевіркою — нові резервні коди чи вимкнення з поточним кодом. `StaffUserModal`, коли роль стає
+  адміністраторською, бере `useTwoFactorStatus()`: без перевірки — попередження з кнопкою «Налаштувати» (вкладений
+  `TwoFactorModal`), з перевіркою — поле «Ваш код підтвердження»; помилки `staff.two_factor_required|invalid`
+  показуються під полем. У таблиці працівників — колонка «Двофакторна» і кнопка скидання (`ResetTwoFactorModal`).
 - **Три рівні:** маршрут (реєстр), пункт меню (модель навігації), дія на сторінці (`can` / `<Can>`). Маршрут і пункт
   меню можуть мати `alsoAllowedBy` — додаткові ключі, будь-якого з яких досить (зараз лише «SEO»). Дії під окремими
   ключами: «Експорт CSV» — `orders.export`; вибір рядків, масова зміна статусу, панель «Змінити статус» і редагування
@@ -1565,8 +1576,8 @@ Next.js 16.4. Застосунок лишився односторінковим
 | Мітки товарів | `labels` (`ProductLabelBadgeDto { name, tone }`) у плитці й на сторінці товару. На плитці перша мітка до 10 символів — стрічка в правому куті фото (`splitRibbon`), решта — чипи; у блоці покупки — чипи над назвою | `catalog/components/tile-flashes.tsx`, `product-labels.tsx`, `catalog/lib/labels.ts`, `product/components/product-buybox.tsx` |
 | Фото й опис категорії | `imageUrl` і `description` у `CategoryNodeDto` / `CategoryDto`: фото — плитка, мобільне меню, `openGraph`; опис — абзаци за рядками під заголовком | `categoryPhotoUrl`, `catalog/components/category-intro.tsx`, `category-head.tsx` |
 | Фото напрямків послуг | `imageUrl` у `ServiceDirectionDto` → мініатюра 72 px біля напрямку | `services/components/services-screen.tsx` |
-| SEO товарів і категорій | `seoTitle` / `seoDescription` з API (порожні сервер заповнює мета-шаблоном) через `pageTitle`; заголовок категорії тепер теж з `seoTitle` | маршрути `product/[slug]`, `catalog/[slug]` |
-| SEO текстових сторінок | `seoTitle` / `seoDescription` у `PageDto` → `pageMetadata` | маршрути `offer`, `privacy`, `returns`, `payment-delivery` |
+| SEO товарів і категорій | `seoTitle` / `seoDescription` з API (порожні сервер заповнює мета-шаблоном) через `seoMetadata` (з 07.11: canonical, Open Graph, Twitter, `noindex, follow` для фільтрів, сторінки `?page=N` індексуються з власним canonical); заголовок категорії тепер теж з `seoTitle` | маршрути `product/[slug]`, `catalog/[slug]` |
+| SEO текстових сторінок | `seoTitle` / `seoDescription` у `PageDto` → `pageMetadata` → `seoMetadata` | маршрути `offer`, `privacy`, `returns`, `payment-delivery` |
 | Футер | реквізити продавця (`getSeller`: назва, код, адреса) замість рядка «Прототип магазину…»; соцмережі через `socialLinks` (з Viber); до трьох найближчих особливих днів | `layout/components/footer-seller.tsx`, `footer-contacts.tsx` |
 | Контакти | соцмережі з Viber, особливі дні під графіком | `content/components/contacts-screen.tsx` |
 | Оформлення | способи отримання з `POST /api/v1/checkout/quote` за налаштуваннями доставки: самовивіз лише коли він увімкнений і є активна точка (раніше вимкнення останньої точки давало 500 під час замовлення); `description` (зона кур'єра) і `priceNote` під назвою способу, `priceNote` — і в підсумку замість «За тарифами перевізника»; немає жодного способу — повідомлення «Зараз немає доступних способів отримання»; обраний спосіб, якого вже немає, замінюється першим доступним; помилки `delivery.method` / `payment.method` перечитують розрахунок | `checkout/hooks/use-checkout.ts`, `checkout/components/checkout-delivery.tsx`, `checkout-summary.tsx` |
