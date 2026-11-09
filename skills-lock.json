@@ -1,11 +1,19 @@
 {
   "version": 1,
   "skills": {
+    "anticopywriting-ai": {
+      "source": "victor-shulga/gtm-skills",
+      "sourceType": "github",
+      "skillPath": "anticopywriting-ai/SKILL.md",
+      "computedHash": "f375dabae1a5dc724bf66e25cb8a6f3ee21974717d718e4a9ae444e0faf9fd30",
+      "installMode": "copy"
+    },
     "copywriting": {
       "source": "aiskillstore/marketplace",
       "sourceType": "github",
       "skillPath": "skills/coreyhaines31/copywriting/SKILL.md",
-      "computedHash": "1804b6127636cea9a16f058606144f979dca270ba01c6577017173636f56c5e2"
+      "computedHash": "1804b6127636cea9a16f058606144f979dca270ba01c6577017173636f56c5e2",
+      "installMode": "copy"
     },
     "hallmark": {
       "source": "nutlope/hallmark",
