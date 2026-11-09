@@ -4,7 +4,7 @@ export type SocialLink = { name: string; url: string };
 
 export function socialLinks(contacts: Contacts | null | undefined): SocialLink[] {
   return [
-    { name: "Instagram", url: contacts?.instagram },
+    { name: contacts?.instagram?.replace(/\/$/, "") === "https://www.instagram.com/poli_valko" ? "Instagram · @poli_valko" : "Instagram", url: contacts?.instagram },
     { name: "Facebook", url: contacts?.facebook },
     { name: "Telegram", url: contacts?.telegram },
     { name: "Viber", url: contacts?.viber },

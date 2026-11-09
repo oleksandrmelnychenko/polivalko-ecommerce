@@ -24,6 +24,8 @@ public static class CatalogModule
         return services
             .AddModelConfigurator<CatalogModelConfigurator>()
             .AddScoped<ICatalogPricing, CatalogPricing>()
+            .AddScoped<ICatalogReservations, CatalogReservations>()
+            .AddOutboxHandler<StockAvailabilityChanged, InvalidateStockAvailability>()
             .AddScoped<ICatalogImporter, CatalogImporter>()
             .AddScoped<ICatalogReporting, CatalogReporting>()
             .AddSingleton<ICatalogDemoFeed, CatalogDemoFeed>()

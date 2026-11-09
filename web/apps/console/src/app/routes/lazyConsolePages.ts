@@ -31,3 +31,5 @@ export const IntegrationPage = lazy(() => import('@/features/integration/pages/I
 export const AuditPage = lazy(() => import('@/features/audit/pages/AuditPage').then((m) => ({ default: m.AuditPage })))
 export const StaffPage = lazy(() => import('@/features/staff/pages/StaffPage').then((m) => ({ default: m.StaffPage })))
 export const RolesPage = lazy(() => import('@/features/staff/pages/RolesPage').then((m) => ({ default: m.RolesPage })))
+
+export const NavkoloSettingsPage = lazy(() => import('@/features/settings/pages/NavkoloSettingsPage').then((m) => ({ default: m.NavkoloSettingsPage })))

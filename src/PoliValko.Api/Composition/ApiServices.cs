@@ -9,6 +9,7 @@ using PoliValko.Fiscal;
 using PoliValko.Identity;
 using PoliValko.Infrastructure;
 using PoliValko.Infrastructure.Persistence;
+using PoliValko.Infrastructure.Security.DataProtection;
 using PoliValko.Infrastructure.Web;
 using PoliValko.Navkolo;
 using PoliValko.Notifications;
@@ -19,14 +20,16 @@ namespace PoliValko.Api.Composition;
 
 public static class ApiServices
 {
-    public static IServiceCollection AddPoliValkoApi(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddPoliValkoApi(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
         services
+            .AddProtectedKeyRing(configuration, environment)
             .AddPlatform()
             .AddCatalogModule(configuration)
             .AddContentModule(configuration)
             .AddDeliveryModule(configuration)
             .AddOrderingModule(configuration)
+            .AddOrderingHttp()
             .AddPaymentsModule(configuration)
             .AddFiscalModule(configuration)
             .AddNavkoloModule(configuration)

@@ -9,3 +9,4 @@ export { OrderDetailScreen } from "./components/order-detail-screen";
 export { FavoritesScreen } from "./components/favorites-screen";
 export { AddressesScreen } from "./components/addresses-screen";
 export { ProfileScreen } from "./components/profile-screen";
+export { CabinetContent } from "./components/cabinet-content";

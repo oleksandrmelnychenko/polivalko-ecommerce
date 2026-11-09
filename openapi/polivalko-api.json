@@ -640,6 +640,106 @@
         }
       }
     },
+    "/api/v1/cart/open": {
+      "post": {
+        "tags": [
+          "Cart"
+        ],
+        "operationId": "OpenCart",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerCartDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cart": {
+      "put": {
+        "tags": [
+          "Cart"
+        ],
+        "operationId": "SaveCart",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerCartDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cart/checkout": {
+      "post": {
+        "tags": [
+          "Cart"
+        ],
+        "operationId": "CheckoutCart",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CartCheckoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderCreatedDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/checkout/quote": {
       "post": {
         "tags": [
@@ -8274,6 +8374,144 @@
         }
       }
     },
+    "/api/v1/console/settings/navkolo": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "operationId": "ConsoleGetNavkoloSettings",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NavkoloConnectionDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "operationId": "ConsoleSaveNavkoloSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveNavkoloConnectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NavkoloConnectionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/settings/navkolo/check": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "operationId": "ConsoleCheckNavkoloConnection",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckNavkoloRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckNavkoloDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/account/csrf": {
       "get": {
         "tags": [
@@ -9749,6 +9987,27 @@
           }
         }
       },
+      "CartCheckoutRequest": {
+        "required": [
+          "cartId",
+          "revision",
+          "order"
+        ],
+        "type": "object",
+        "properties": {
+          "cartId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "order": {
+            "$ref": "#/components/schemas/CreateOrderRequest"
+          }
+        }
+      },
       "CartLineRequest": {
         "required": [
           "productId",
@@ -9970,6 +10229,41 @@
               {
                 "$ref": "#/components/schemas/ServiceRequestStatus"
               }
+            ]
+          }
+        }
+      },
+      "CheckNavkoloDto": {
+        "required": [
+          "stores",
+          "statuses"
+        ],
+        "type": "object",
+        "properties": {
+          "stores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NavkoloStoreDto"
+            }
+          },
+          "statuses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NavkoloStatusDto"
+            }
+          }
+        }
+      },
+      "CheckNavkoloRequest": {
+        "required": [
+          "apiKey"
+        ],
+        "type": "object",
+        "properties": {
+          "apiKey": {
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -10585,6 +10879,34 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "navkoloCancellationRequestedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "navkoloCancellationSynchronizedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "navkoloShippedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "navkoloCancelledAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -12582,6 +12904,68 @@
           }
         }
       },
+      "NavkoloConnectionDto": {
+        "required": [
+          "revision",
+          "mode",
+          "hasKey",
+          "storeId",
+          "storeName",
+          "verifiedAt",
+          "source"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "hasKey": {
+            "type": "boolean"
+          },
+          "storeId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "storeName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "verifiedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "source": {
+            "type": "string"
+          },
+          "cancellationStatusId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "cancellationStatusName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "NavkoloProductFieldsDto": {
         "required": [
           "navkoloId",
@@ -12649,6 +13033,37 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "NavkoloStatusDto": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "NavkoloStoreDto": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
           }
         }
       },
@@ -13863,7 +14278,8 @@
       "ProductLabelBadgeDto": {
         "required": [
           "name",
-          "tone"
+          "tone",
+          "kind"
         ],
         "type": "object",
         "properties": {
@@ -13872,6 +14288,9 @@
           },
           "tone": {
             "$ref": "#/components/schemas/LabelTone"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/LabelKind"
           }
         }
       },
@@ -14639,6 +15058,33 @@
           }
         }
       },
+      "SaveCartRequest": {
+        "required": [
+          "cartId",
+          "revision",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "cartId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CartLineRequest"
+            }
+          }
+        }
+      },
       "SaveCategoryRequest": {
         "required": [
           "parentId",
@@ -14861,6 +15307,50 @@
           },
           "isActive": {
             "type": "boolean"
+          }
+        }
+      },
+      "SaveNavkoloConnectionRequest": {
+        "required": [
+          "revision",
+          "enabled",
+          "apiKey",
+          "clearKey",
+          "storeId"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "apiKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "clearKey": {
+            "type": "boolean"
+          },
+          "storeId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cancellationStatusId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -15156,6 +15646,41 @@
           },
           "category": {
             "$ref": "#/components/schemas/SeoTemplateDto"
+          }
+        }
+      },
+      "ServerCartDto": {
+        "required": [
+          "id",
+          "revision",
+          "items",
+          "lastOrder"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteLineDto"
+            }
+          },
+          "lastOrder": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OrderCreatedDto"
+              }
+            ]
           }
         }
       },
@@ -16111,6 +16636,9 @@
     },
     {
       "name": "Delivery"
+    },
+    {
+      "name": "Cart"
     },
     {
       "name": "Checkout"

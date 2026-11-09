@@ -10,9 +10,9 @@ export function KpiList({ data }: { data: Dashboard }) {
     {
       label: 'Виручка',
       icon: IconWallet,
-      value: formatMoney(c.revenue),
+      value: <span className="money">{formatMoney(c.revenue)}</span>,
       delta: <DeltaChip current={Number(c.revenue.value)} previous={Number(p.revenue.value)} />,
-      foot: `було ${formatMoney(p.revenue)}`,
+      foot: <>було <span className="money">{formatMoney(p.revenue)}</span></>,
     },
     {
       label: 'Замовлення',
@@ -24,9 +24,9 @@ export function KpiList({ data }: { data: Dashboard }) {
     {
       label: 'Середній чек',
       icon: IconReceipt2,
-      value: formatMoney(c.averageOrder),
+      value: <span className="money">{formatMoney(c.averageOrder)}</span>,
       delta: <DeltaChip current={Number(c.averageOrder.value)} previous={Number(p.averageOrder.value)} />,
-      foot: `було ${formatMoney(p.averageOrder)}`,
+      foot: <>було <span className="money">{formatMoney(p.averageOrder)}</span></>,
     },
     {
       label: 'Покупці',

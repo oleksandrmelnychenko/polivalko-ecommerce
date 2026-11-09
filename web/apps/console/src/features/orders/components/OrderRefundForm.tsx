@@ -67,7 +67,7 @@ export function OrderRefundForm({ order, refund }: { order: ConsoleOrder; refund
       />
       <div className="order-refund-actions">
         <Button type="submit" size="sm" leftSection={<IconReceiptRefund size={16} stroke={1.8} />} disabled={!canSubmit} loading={busy}>
-          Повернути {amount > 0 ? formatMoney({ value: amount.toFixed(2), currency: 'UAH' }) : ''}
+          Повернути <span className="money">{amount > 0 ? formatMoney({ value: amount.toFixed(2), currency: 'UAH' }) : ''}</span>
         </Button>
       </div>
       {error ? (

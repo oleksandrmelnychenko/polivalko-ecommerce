@@ -52,11 +52,11 @@ export function OrderItemsCard({ order }: { order: ConsoleOrder }) {
                   </span>
                 </span>
               </Table.Td>
-              <Table.Td className="is-num order-items-price">{formatMoney(item.unitPrice)}</Table.Td>
+              <Table.Td className="is-num order-items-price"><span className="money">{formatMoney(item.unitPrice)}</span></Table.Td>
               <Table.Td className="is-num order-items-qty">
-                <span className="order-items-unit">{formatMoney(item.unitPrice)} </span>× {item.quantity}
+                <span className="order-items-unit"><span className="money">{formatMoney(item.unitPrice)}</span> </span>× {item.quantity}
               </Table.Td>
-              <Table.Td className="is-num is-strong order-items-sum">{formatMoney(item.lineTotal)}</Table.Td>
+              <Table.Td className="is-num is-strong order-items-sum"><span className="money">{formatMoney(item.lineTotal)}</span></Table.Td>
             </Table.Tr>
           ))}
         </Table.Tbody>
@@ -65,14 +65,14 @@ export function OrderItemsCard({ order }: { order: ConsoleOrder }) {
             <Table.Th scope="row" colSpan={3}>
               Разом до сплати
             </Table.Th>
-            <Table.Td className="is-num">{formatMoney(order.total)}</Table.Td>
+            <Table.Td className="is-num"><span className="money">{formatMoney(order.total)}</span></Table.Td>
           </Table.Tr>
           {refunded ? (
             <Table.Tr>
               <Table.Th scope="row" colSpan={3}>
                 Повернено
               </Table.Th>
-              <Table.Td className="is-num">−{formatMoney(order.refundedAmount)}</Table.Td>
+              <Table.Td className="is-num"><span className="money">−{formatMoney(order.refundedAmount)}</span></Table.Td>
             </Table.Tr>
           ) : null}
         </Table.Tfoot>

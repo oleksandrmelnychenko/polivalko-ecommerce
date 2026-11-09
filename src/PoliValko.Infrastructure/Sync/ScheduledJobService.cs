@@ -17,6 +17,8 @@ public abstract class ScheduledJobService(IServiceScopeFactory scopes, TimeProvi
 
     protected abstract bool IsEnabled(IServiceProvider services);
 
+    protected virtual Task<bool> IsEnabledAsync(IServiceProvider services, CancellationToken ct) => Task.FromResult(IsEnabled(services));
+
     protected abstract Task<SyncResult> RunOnceAsync(IServiceProvider services, CancellationToken ct);
 
     protected virtual TimeSpan RetryInterval(IServiceProvider services) =>
@@ -49,7 +51,7 @@ public abstract class ScheduledJobService(IServiceScopeFactory scopes, TimeProvi
     {
         await using var scope = scopes.CreateAsyncScope();
         var services = scope.ServiceProvider;
-        if (!IsEnabled(services))
+        if (!await IsEnabledAsync(services, ct))
         {
             return;
         }

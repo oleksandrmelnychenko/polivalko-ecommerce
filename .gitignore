@@ -25,3 +25,20 @@ Thumbs.db
 
 # Hallmark: скриншоти рендер-перевірки (журнал і preflight лишаються)
 .hallmark/shots/
+
+# Local wrapping keys must never enter source control or build contexts
+.local/
+**/*.key
+**/*.pfx
+**/*.pem
+**/*.p12
+.env.*
+!.env.example
+
+# Local QA data and generated artifacts (automated test source stays versioned)
+/docs/qa/
+/src/PoliValko.Api/media/
+playwright-report/
+test-results/
+coverage/
+*.log

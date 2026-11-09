@@ -10,6 +10,7 @@ internal static class CheckoutEndpoints
 {
     public static IEndpointRouteBuilder Map(IEndpointRouteBuilder api)
     {
+        Features.Cart.CartEndpoints.Map(api);
         var group = api.MapGroup(string.Empty).WithTags("Checkout");
 
         group.MapPost("/checkout/quote", QuoteCheckout.HandleAsync)

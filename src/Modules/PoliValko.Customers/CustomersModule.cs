@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using PoliValko.Customers.Configuration;
 using PoliValko.Customers.Contracts;
 using PoliValko.Customers.Domain;
 using PoliValko.Customers.Features;
@@ -19,7 +18,6 @@ public static class CustomersModule
 {
     public static IServiceCollection AddCustomersModule(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddOptions<CustomersOptions>().BindConfiguration("Customers");
         services.AddCustomerAuthentication();
         return services
             .AddModelConfigurator<CustomersModelConfigurator>()

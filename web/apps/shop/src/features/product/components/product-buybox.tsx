@@ -1,5 +1,5 @@
 import { BuyForm } from "@/features/cart";
-import { discountPercent, ProductLabels } from "@/features/catalog";
+import { discountPercent, ProductLabels, withoutSaleLabel } from "@/features/catalog";
 import { FavoriteButton } from "@/features/favorites";
 import type { ProductDetails } from "@polivalko/shared/api/types";
 import { formatMoney } from "@polivalko/shared/lib/format";
@@ -19,7 +19,7 @@ export function ProductBuybox({ product }: { product: ProductDetails }) {
 
   return (
     <div className="buybox">
-      <ProductLabels labels={product.labels} className="buybox__labels" />
+      <ProductLabels labels={withoutSaleLabel(product.labels, Boolean(discount && product.oldPrice))} className="buybox__labels" />
       <h1>{product.name}</h1>
       <p className="buybox__meta">
         <span>
@@ -40,13 +40,13 @@ export function ProductBuybox({ product }: { product: ProductDetails }) {
             <p className="buybox__was">
               <s className="price-old">
                 <span className="visually-hidden">Стара ціна </span>
-                {formatMoney(product.oldPrice)}
+                <span className="money">{formatMoney(product.oldPrice)}</span>
               </s>
               <span className="flag flag--sale">−{discount}%</span>
             </p>
           )}
           <p className="buybox__price">
-            <strong className={discount ? "price-sale" : undefined}>{formatMoney(product.price)}</strong>
+            <strong className={discount ? "price-sale" : undefined}><span className="money">{formatMoney(product.price)}</span></strong>
           </p>
           <p className={product.inStock ? "stock stock--in" : "stock stock--out"}>{product.inStock ? "В наявності" : "Немає в наявності"}</p>
         </div>

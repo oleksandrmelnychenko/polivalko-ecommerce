@@ -28,7 +28,7 @@ internal static class ProductListing
             p.Brand,
             p.Price.Amount,
             p.Price.OldAmount,
-            p.Stock.Quantity,
+            (p.Stock.Quantity - p.Stock.ReservedQuantity),
             p.Images.OrderBy(i => i.SortOrder).Select(i => i.Url).FirstOrDefault(),
             p.CreatedAt));
 
@@ -55,7 +55,7 @@ internal static class ProductListing
         Badges(labels.For(r.Id, r.Amount, r.OldAmount, r.CreatedAt)));
 
     public static IReadOnlyList<ProductLabelBadgeDto> Badges(IReadOnlyList<ProductLabel> labels) =>
-        labels.Select(l => new ProductLabelBadgeDto(l.Name, l.Tone)).ToList();
+        labels.Select(l => new ProductLabelBadgeDto(l.Name, l.Tone, l.Kind)).ToList();
 
     public static MoneyDto? OldPrice(decimal amount, decimal? oldAmount) =>
         oldAmount is { } old && old > amount ? MoneyDto.Hryvnia(old) : null;

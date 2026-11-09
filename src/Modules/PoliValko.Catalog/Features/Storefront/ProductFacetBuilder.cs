@@ -35,7 +35,7 @@ internal static class ProductFacetBuilder
             .ToListAsync(ct);
 
         var prices = await scope
-            .Select(p => new { p.Price.Amount, InStock = p.Stock.Quantity > 0 })
+            .Select(p => new { p.Price.Amount, InStock = (p.Stock.Quantity - p.Stock.ReservedQuantity) > 0 })
             .GroupBy(_ => 1)
             .Select(g => new
             {

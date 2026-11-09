@@ -9,7 +9,7 @@ import { QuantityStepper } from "@/shared/ui/quantity-stepper";
 import { useCart } from "./cart-provider";
 
 export function CartDrawer() {
-  const { lines, isOpen, close, setQuantity, remove, subtotal, count } = useCart();
+  const { ready, saving, error, lines, isOpen, close, setQuantity, remove, subtotal, count } = useCart();
   const dialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -35,7 +35,8 @@ export function CartDrawer() {
           </button>
         </div>
 
-        {lines.length === 0 ? (
+        {(error || !ready || saving) && <p role="status">{error ?? (saving ? "Зберігаємо кошик…" : "Завантажуємо кошик…")}</p>}
+        {ready && lines.length === 0 ? (
           <div className="drawer__lines">
             <div className="empty" style={{ marginTop: "var(--space-lg)" }}>
               <h2>Кошик порожній</h2>
@@ -66,7 +67,7 @@ export function CartDrawer() {
                     </button>
                   </div>
                 </div>
-                <p className="line__total">{formatPrice(Number(line.price) * line.quantity)}</p>
+                <p className="line__total"><span className="money">{formatPrice(Number(line.price) * line.quantity)}</span></p>
               </li>
             ))}
           </ul>
@@ -76,7 +77,7 @@ export function CartDrawer() {
           <div className="drawer__foot">
             <dl className="totals">
               <dt>Разом, {count} шт.</dt>
-              <dd className="num">{formatPrice(subtotal)}</dd>
+              <dd className="num"><span className="money">{formatPrice(subtotal)}</span></dd>
             </dl>
             <p className="muted" style={{ fontSize: "var(--text-sm)" }}>
               Ціни й наявність ще раз перевіримо під час оформлення. Доставка за тарифами перевізника.

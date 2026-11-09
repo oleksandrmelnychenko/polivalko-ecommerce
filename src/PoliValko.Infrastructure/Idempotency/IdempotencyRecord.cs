@@ -2,6 +2,7 @@ namespace PoliValko.Infrastructure.Idempotency;
 
 public sealed class IdempotencyRecord
 {
+    public string? SubjectHash { get; init; }
     public required string Scope { get; init; }
 
     public required string Key { get; init; }

@@ -12,8 +12,9 @@ namespace PoliValko.Customers.Features.Confirmation;
 
 internal static class ConfirmEmail
 {
-    public static async Task<Results<NoContent, ValidationProblem>> HandleAsync(
+    public static async Task<Results<NoContent, ValidationProblem, ProblemHttpResult>> HandleAsync(
         ConfirmEmailRequest request,
+        HttpContext http,
         PoliValkoDbContext db,
         [FromServices] IEnumerable<ICustomerEmailConfirmedHandler> handlers,
         TimeProvider time,
@@ -26,7 +27,9 @@ internal static class ConfirmEmail
             return AccountProblems.InvalidToken();
         }
 
-        var customer = await db.Set<Customer>().FirstAsync(c => c.Id == token.CustomerId, ct);
+        var customer = await CustomerLoader.LoadAsync(db, http.User, ct);
+        if (customer is null) return AccountProblems.SignedOut();
+        if (customer.Id != token.CustomerId) return AccountProblems.InvalidToken();
         token.UsedAt = now;
         if (customer.ConfirmEmail(now))
         {

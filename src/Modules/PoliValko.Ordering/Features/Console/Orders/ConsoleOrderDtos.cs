@@ -63,7 +63,11 @@ public sealed record ConsoleOrderDto(
     RefundMethod? RefundMethod,
     IReadOnlyList<RefundableItemDto> Refundable,
     string? InternalNote,
-    Guid? CustomerAccountId);
+    Guid? CustomerAccountId,
+    DateTimeOffset? NavkoloCancellationRequestedAt = null,
+    DateTimeOffset? NavkoloCancellationSynchronizedAt = null,
+    DateTimeOffset? NavkoloShippedAt = null,
+    DateTimeOffset? NavkoloCancelledAt = null);
 
 public sealed record ChangeOrderStatusRequest(OrderStatus? Status, string? Reason);
 

@@ -25,6 +25,9 @@ internal sealed class SandboxPaymentProvider(
 
     public string Name => PaymentProviderNames.Sandbox;
 
+    // The test invoice keeps only the refunded total, not which references it came from.
+    public bool CanFindRefunds => false;
+
     public async Task<CreatedInvoice> CreateInvoiceAsync(InvoiceRequest request, CancellationToken ct)
     {
         var now = time.GetUtcNow();
@@ -77,17 +80,17 @@ internal sealed class SandboxPaymentProvider(
             message.Status == "failure" ? "Тестова відмова банку" : null));
     }
 
-    public async Task<ProviderRefundResult> RefundAsync(string providerPaymentId, Guid refundId, decimal amount, IReadOnlyList<PaymentBasketItem> items, CancellationToken ct)
+    public async Task<ProviderRefundResult> RefundAsync(string providerPaymentId, string reference, decimal amount, IReadOnlyList<PaymentBasketItem> items, CancellationToken ct)
     {
         var invoice = await db.Set<SandboxInvoice>().FirstOrDefaultAsync(i => i.Id == providerPaymentId, ct);
         if (invoice is null || invoice.Status != "success" && invoice.Status != "reversed")
         {
-            return new ProviderRefundResult(false, null, "Рахунок не оплачено.");
+            return ProviderRefundResult.Failed("Рахунок не оплачено.");
         }
 
         if (invoice.RefundedAmount + amount > invoice.Amount)
         {
-            return new ProviderRefundResult(false, null, "Сума повернення більша за оплачену.");
+            return ProviderRefundResult.Failed("Сума повернення більша за оплачену.");
         }
 
         invoice.RefundedAmount += amount;
@@ -98,7 +101,25 @@ internal sealed class SandboxPaymentProvider(
         }
 
         await db.SaveChangesAsync(ct);
-        return new ProviderRefundResult(true, $"sbx_refund_{refundId:N}", null);
+        return ProviderRefundResult.Succeeded;
+    }
+
+    public Task<ProviderRefundResult?> FindRefundAsync(string providerPaymentId, string reference, CancellationToken ct) =>
+        throw new NotSupportedException("Тестовий провайдер не зберігає окремих повернень.");
+
+    public async Task<bool> CancelInvoiceAsync(string providerPaymentId, CancellationToken ct)
+    {
+        var now = time.GetUtcNow();
+        var closed = await db.Set<SandboxInvoice>()
+            .Where(i => i.Id == providerPaymentId && (i.Status == "created" || i.Status == "processing"))
+            .ExecuteUpdateAsync(s => s.SetProperty(i => i.Status, "expired").SetProperty(i => i.ModifiedAt, now), ct);
+        if (closed == 1)
+        {
+            return true;
+        }
+
+        var status = await db.Set<SandboxInvoice>().Where(i => i.Id == providerPaymentId).Select(i => i.Status).FirstOrDefaultAsync(ct);
+        return status is null or "expired" or "failure";
     }
 
     internal (byte[] Body, string Signature) BuildWebhook(SandboxInvoice invoice)

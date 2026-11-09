@@ -35,7 +35,9 @@
   --font-body: var(--font-onest), "Onest", ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-oswald), "Oswald", var(--font-body);
   --font-accent: var(--font-display);
-  --font-numeric: var(--font-price), "Outfit", var(--font-body);
+  --font-money: var(--font-outfit), "Outfit", var(--font-body);
+  --font-price: var(--font-money);
+  --font-numeric: var(--font-money);
   --font-outlier: var(--font-body);
   --font-mega: var(--font-display);
   --font-button: var(--font-body);

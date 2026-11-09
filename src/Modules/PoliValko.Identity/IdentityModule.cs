@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
@@ -39,6 +38,10 @@ public static class IdentityModule
             .AddClaimsPrincipalFactory<StaffClaimsFactory>();
 
         services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
+        services.AddSessionCookieProtection(IdentityConstants.ApplicationScheme);
+        services.AddSessionCookieProtection(IdentityConstants.ExternalScheme);
+        services.AddSessionCookieProtection(IdentityConstants.TwoFactorRememberMeScheme);
+        services.AddSessionCookieProtection(IdentityConstants.TwoFactorUserIdScheme);
         services.ConfigureApplicationCookie(options =>
         {
             options.Cookie.Name = CookieName;
@@ -70,7 +73,6 @@ public static class IdentityModule
 
         services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.FromMinutes(1));
 
-        services.AddDataProtection().SetApplicationName("PoliValko").PersistKeysToDbContext<PoliValkoDbContext>();
         return services;
     }
 

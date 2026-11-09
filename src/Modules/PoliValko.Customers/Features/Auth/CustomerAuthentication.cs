@@ -16,6 +16,7 @@ internal static class CustomerAuthentication
 
     public static IServiceCollection AddCustomerAuthentication(this IServiceCollection services)
     {
+        services.AddSessionCookieProtection(Scheme);
         services.PostConfigure<AuthenticationOptions>(options => options.DefaultScheme = SelectorScheme);
         services.AddAuthentication()
             .AddPolicyScheme(SelectorScheme, null, options => options.ForwardDefaultSelector = SelectScheme)

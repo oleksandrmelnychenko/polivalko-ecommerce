@@ -23,7 +23,7 @@ public static class NotificationsModule
 
         if (section.Get<TelegramOptions>()?.IsConfigured == true)
         {
-            services.AddHttpClient<IManagerChannel, TelegramManagerNotifier>(nameof(IManagerNotifier));
+            services.AddHttpClient<IManagerChannel, TelegramManagerNotifier>(nameof(IManagerNotifier)).RemoveAllLoggers();
         }
         else
         {

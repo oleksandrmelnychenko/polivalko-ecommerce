@@ -1,22 +1,24 @@
 import { ProductTilesSkeleton } from "./product-tiles-skeleton";
 
-export function ListingSkeleton({ crumbs = false }: { crumbs?: boolean }) {
+export function ListingSkeleton({ crumbs = false, head = true }: { crumbs?: boolean; head?: boolean }) {
   return (
     <>
-      <header className="page-head" aria-hidden="true">
-        {crumbs && (
-          <div className="crumbs">
-            <ol>
-              <li className="skeleton" style={{ width: "12rem" }}>
-                &nbsp;
-              </li>
-            </ol>
-          </div>
-        )}
-        <h1 className="skeleton" style={{ width: "min(24rem, 70%)" }}>
-          &nbsp;
-        </h1>
-      </header>
+      {head && (
+        <header className="page-head" aria-hidden="true">
+          {crumbs && (
+            <div className="crumbs">
+              <ol>
+                <li className="skeleton" style={{ width: "12rem" }}>
+                  &nbsp;
+                </li>
+              </ol>
+            </div>
+          )}
+          <h1 className="skeleton" style={{ width: "min(24rem, 70%)" }}>
+            &nbsp;
+          </h1>
+        </header>
+      )}
       <div className="catalog" aria-busy="true">
         <div className="filters-panel" data-open="false" aria-hidden="true">
           <button type="button" className="btn btn--quiet btn--small filters-panel__toggle" disabled>

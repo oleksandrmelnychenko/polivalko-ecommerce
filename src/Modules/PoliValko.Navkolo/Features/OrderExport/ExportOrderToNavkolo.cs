@@ -11,18 +11,21 @@ internal sealed class ExportOrderToNavkolo(
     PoliValkoDbContext db,
     IOrderExportSource orders,
     INavkoloClient client,
-    IOptions<NavkoloOptions> options,
-    TimeProvider time) : IOutboxHandler<OrderExportRequested>
+    Contracts.INavkoloSettings settings,
+    TimeProvider time, NavkoloOrderGate gate) : IOutboxHandler<OrderExportRequested>
 {
-    public async Task HandleAsync(OrderExportRequested message, CancellationToken cancellationToken)
+    public Task HandleAsync(OrderExportRequested message, CancellationToken cancellationToken) =>
+        gate.RunAsync(message.OrderId, () => ExportAsync(message, cancellationToken), cancellationToken);
+
+    private async Task ExportAsync(OrderExportRequested message, CancellationToken cancellationToken)
     {
-        if (!options.Value.IsEnabled)
+        if (await settings.GetModeAsync(cancellationToken) == NavkoloModes.Disabled)
         {
             return;
         }
 
         var order = await orders.GetAsync(message.OrderId, cancellationToken);
-        if (order.NavkoloOrderRef is not null)
+        if (order.NavkoloOrderRef is not null || order.Status == OrderStatus.Cancelled)
         {
             return;
         }
@@ -33,6 +36,7 @@ internal sealed class ExportOrderToNavkolo(
             DeliveryMethod.NovaPoshtaCourier => $"Кур'єр НП: {order.SettlementName}, {order.DeliveryAddress}",
             _ => $"НП: {order.SettlementName}, {order.WarehouseName}",
         };
+        if (!await orders.BeginExportAsync(order.Id, time.GetUtcNow(), cancellationToken)) return;
         var reference = await client.SendOrderAsync(
             new NavkoloOrder(
                 order.Number,
@@ -43,7 +47,7 @@ internal sealed class ExportOrderToNavkolo(
                 order.PaymentMethod.ToString(),
                 order.Total,
                 order.Comment,
-                order.Lines.Select(i => new NavkoloOrderLine(i.Sku, i.Name, i.Quantity, i.UnitPrice)).ToList()),
+                order.Lines.Select(i => new NavkoloOrderLine(i.Sku, i.Name, i.Quantity, i.UnitPrice, i.NavkoloId)).ToList(), order.Id),
             cancellationToken);
 
         await orders.MarkExportedAsync(order.Id, reference, time.GetUtcNow(), cancellationToken);

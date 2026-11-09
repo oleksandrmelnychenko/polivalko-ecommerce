@@ -46,7 +46,7 @@ export function OrderPaymentsCard({ number, version }: { number: string; version
                       {row.failureReason ? <span className="order-muted">{row.failureReason}</span> : null}
                     </span>
                   </Table.Td>
-                  <Table.Td className="is-num is-strong">{formatMoney(row.amount)}</Table.Td>
+                  <Table.Td className="is-num is-strong"><span className="money">{formatMoney(row.amount)}</span></Table.Td>
                   <Table.Td className="is-num">{row.eventsCount}</Table.Td>
                 </Table.Tr>
               ))}

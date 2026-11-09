@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
 import { currentPath, loginHref, signOut, useCustomer } from "@/features/customer";
 import { CabinetNav } from "./cabinet-nav";
-import { CabinetSkeleton } from "./cabinet-skeleton";
 import { ConfirmBanner } from "./confirm-banner";
 
 export function CabinetFrame({ children }: { children: ReactNode }) {
@@ -14,6 +13,11 @@ export function CabinetFrame({ children }: { children: ReactNode }) {
   const customer = useCustomer();
   const leaving = useRef(false);
   const me = customer.me;
+
+  useEffect(() => {
+    // Next.js can restore this frame after logout; refs survive while effects restart.
+    leaving.current = false;
+  }, []);
 
   useEffect(() => {
     if (customer.status === "guest" && !leaving.current) router.replace(loginHref(currentPath()));
@@ -42,14 +46,8 @@ export function CabinetFrame({ children }: { children: ReactNode }) {
       <div className="cabinet">
         <CabinetNav pathname={pathname} onLogout={logout} />
         <div className="cabinet__main">
-          {me ? (
-            <>
-              {!me.emailConfirmed && <ConfirmBanner email={me.email} />}
-              {children}
-            </>
-          ) : (
-            <CabinetSkeleton />
-          )}
+          {me && !me.emailConfirmed && <ConfirmBanner email={me.email} />}
+          {children}
         </div>
       </div>
     </div>

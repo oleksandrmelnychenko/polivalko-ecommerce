@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PoliValko.Catalog.Domain;
+using PoliValko.Catalog.Persistence;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.SharedKernel;
 
@@ -15,6 +16,7 @@ internal static class SearchProducts
         TimeProvider time,
         CancellationToken ct)
     {
+        var visibleProducts = await CatalogVisibility.ProductsAsync(db, ct);
         var sort = query.Sort ?? ProductSort.NameAsc;
         if (!ProductSort.All.Contains(sort))
         {
@@ -33,7 +35,7 @@ internal static class SearchProducts
             });
         }
 
-        var scope = db.Set<Product>().AsNoTracking().Where(p => p.IsVisible);
+        var scope = visibleProducts.AsNoTracking().Where(p => p.IsVisible);
         IReadOnlyList<string> filterNames = [];
 
         if (!string.IsNullOrWhiteSpace(query.Category))
@@ -56,7 +58,7 @@ internal static class SearchProducts
             var term = query.Q.Trim();
             var words = ProductSearchText.Words(term);
             var matching = ProductSearchText.Matching(scope, term, words);
-            var similar = await matching.AnyAsync(ct) ? null : ProductSearchText.Similar(scope, db.Set<Product>(), words);
+            var similar = await matching.AnyAsync(ct) ? null : ProductSearchText.Similar(scope, visibleProducts, words);
             approximate = similar is not null;
             scope = similar ?? matching;
         }
@@ -79,7 +81,7 @@ internal static class SearchProducts
 
         if (query.InStock == true)
         {
-            products = products.Where(p => p.Stock.Quantity > 0);
+            products = products.Where(p => (p.Stock.Quantity - p.Stock.ReservedQuantity) > 0);
         }
 
         foreach (var (name, values) in attributeFilters)

@@ -1,4 +1,3 @@
-import { formatMoney } from '@polivalko/shared/lib/format'
 import type { Dashboard } from '../api/dashboardApi'
 
 export const PERIODS = [7, 30, 90] as const
@@ -34,8 +33,7 @@ export function barPath(x: number, y: number, w: number, h: number) {
 
 export function bestDay(data: Dashboard) {
   const best = data.byDay.reduce<Dashboard['byDay'][number] | null>((b, d) => (Number(d.revenue.value) > Number(b?.revenue.value ?? 0) ? d : b), null)
-  if (!best) return 'немає'
-  return `${bestDayDate.format(asDate(best.date))}, ${formatMoney(best.revenue)}`
+  return best ? { date: bestDayDate.format(asDate(best.date)), revenue: best.revenue } : null
 }
 
 export type DeltaValue = { kind: 'flat'; label: string } | { kind: 'up' | 'down'; good: boolean; label: string }

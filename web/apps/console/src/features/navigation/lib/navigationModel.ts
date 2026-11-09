@@ -123,6 +123,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
       { id: 'shop', label: 'Магазин', path: '/settings/shop', permissionKey: PermissionKeys.Settings.ManageShop, icon: IconBuildingStore },
       { id: 'delivery', label: 'Доставка', path: '/settings/delivery', permissionKey: PermissionKeys.Content.ManagePickup, icon: IconTruckDelivery },
       { id: 'payments', label: 'Оплата й чеки', path: '/settings/payments', permissionKey: PermissionKeys.Integration.ViewStatus, icon: IconCreditCard },
+      { id: 'navkolo', label: 'Навколо', path: '/settings/navkolo', permissionKey: PermissionKeys.Settings.ManageNavkolo, icon: IconPlugConnected },
       { id: 'notifications', label: 'Сповіщення', path: '/settings/notifications', permissionKey: PermissionKeys.Settings.ManageNotifications, icon: IconBell },
     ],
   },

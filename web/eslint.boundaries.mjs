@@ -1,4 +1,4 @@
-const deep = { regex: "^@/features/[^/]+/(?!server$).+", message: "Імпортуйте фічу лише через її index.ts або server.ts." };
+const deep = { regex: "^@/features/[^/]+/(?!(server|proxy)$).+", message: "Імпортуйте фічу лише через її index.ts, server.ts або proxy.ts." };
 const legacy = { regex: "^@/(lib|components)(/|$)", message: "Старі шляхи прибрано: використовуйте @/shared, @polivalko/shared або публічний API фічі." };
 const routes = { regex: "^@/app(/|$)", message: "Маршрути не імпортуються." };
 const apps = { regex: "^(shop|console)(/|$)", message: "Застосунки не імпортують один одного: спільний код — лише в @polivalko/shared." };

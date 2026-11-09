@@ -5,3 +5,8 @@
 **/next-env.d.ts
 Dockerfile
 npm-debug.log*
+
+# Local wrapping keys must never enter source control or build contexts
+.local/
+**/*.key
+**/*.pfx

@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
@@ -29,15 +30,28 @@ internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOpti
 
     internal sealed record CreateInvoiceResponse(string InvoiceId, string PageUrl);
 
-    internal sealed record InvoiceStatus(string InvoiceId, string Status, string? FailureReason, long? Amount, long? FinalAmount, DateTimeOffset? ModifiedDate);
+    internal sealed record InvoiceStatus(
+        string InvoiceId,
+        string Status,
+        string? FailureReason,
+        long? Amount,
+        long? FinalAmount,
+        DateTimeOffset? ModifiedDate,
+        IReadOnlyList<CancelListItem>? CancelList = null);
+
+    internal sealed record CancelListItem(string Status, string? ExtRef);
 
     internal sealed record CancelBody(string InvoiceId, string ExtRef, long Amount, IReadOnlyList<BasketItem> Items);
 
     internal sealed record CancelResponse(string Status, DateTimeOffset? ModifiedDate);
 
+    internal sealed record RemoveBody(string InvoiceId);
+
     internal sealed record PubKeyResponse(string Key);
 
     public string Name => PaymentProviderNames.Mono;
+
+    public bool CanFindRefunds => true;
 
     public async Task<CreatedInvoice> CreateInvoiceAsync(InvoiceRequest request, CancellationToken ct)
     {
@@ -89,20 +103,56 @@ internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOpti
         return ToStatus(status);
     }
 
-    public async Task<ProviderRefundResult> RefundAsync(string providerPaymentId, Guid refundId, decimal amount, IReadOnlyList<PaymentBasketItem> items, CancellationToken ct)
+    public async Task<ProviderRefundResult> RefundAsync(string providerPaymentId, string reference, decimal amount, IReadOnlyList<PaymentBasketItem> items, CancellationToken ct)
     {
-        var body = new CancelBody(providerPaymentId, refundId.ToString("N"), Kopecks(amount), Basket(items));
+        var body = new CancelBody(providerPaymentId, reference, Kopecks(amount), Basket(items));
         using var response = await SendAsync(HttpMethod.Post, "/api/merchant/invoice/cancel", body, ct, throwOnError: false);
         if (!response.IsSuccessStatusCode)
         {
-            return new ProviderRefundResult(false, null, $"monobank відхилив повернення: {(int)response.StatusCode} {await response.Content.ReadAsStringAsync(ct)}");
+            var text = await response.Content.ReadAsStringAsync(ct);
+            if (IsTransient(response.StatusCode))
+            {
+                // monobank may have accepted the request; the caller checks cancelList before sending it again.
+                throw new HttpRequestException($"monobank /api/merchant/invoice/cancel: {(int)response.StatusCode} {text}");
+            }
+
+            return ProviderRefundResult.Failed($"monobank відхилив повернення: {(int)response.StatusCode} {text}");
         }
 
         var result = await response.Content.ReadFromJsonAsync<CancelResponse>(Json, ct);
-        return result?.Status == "failure"
-            ? new ProviderRefundResult(false, null, "monobank повідомив про невдале повернення.")
-            : new ProviderRefundResult(true, refundId.ToString("N"), null);
+        return ToRefund(result?.Status);
     }
+
+    public async Task<ProviderRefundResult?> FindRefundAsync(string providerPaymentId, string reference, CancellationToken ct)
+    {
+        using var response = await SendAsync(HttpMethod.Get, $"/api/merchant/invoice/status?invoiceId={Uri.EscapeDataString(providerPaymentId)}", null, ct);
+        var status = await response.Content.ReadFromJsonAsync<InvoiceStatus>(Json, ct)
+            ?? throw new InvalidOperationException("Порожня відповідь monobank на запит статусу.");
+        var cancel = status.CancelList?.FirstOrDefault(c => string.Equals(c.ExtRef, reference, StringComparison.Ordinal));
+        return cancel is null ? null : ToRefund(cancel.Status);
+    }
+
+    public async Task<bool> CancelInvoiceAsync(string providerPaymentId, CancellationToken ct)
+    {
+        using var response = await SendAsync(HttpMethod.Post, "/api/merchant/invoice/remove", new RemoveBody(providerPaymentId), ct, throwOnError: false);
+        if (IsTransient(response.StatusCode))
+        {
+            throw new HttpRequestException($"monobank /api/merchant/invoice/remove: {(int)response.StatusCode} {await response.Content.ReadAsStringAsync(ct)}");
+        }
+
+        // monobank refuses to invalidate an invoice that has already been paid.
+        return response.IsSuccessStatusCode;
+    }
+
+    internal static ProviderRefundResult ToRefund(string? status) => status switch
+    {
+        "success" => ProviderRefundResult.Succeeded,
+        "failure" => ProviderRefundResult.Failed("monobank повідомив про невдале повернення."),
+        _ => ProviderRefundResult.Processing,
+    };
+
+    private static bool IsTransient(HttpStatusCode code) =>
+        (int)code >= 500 || code is HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests;
 
     internal static bool Verify(byte[] body, string signatureBase64, string publicKeyBase64)
     {
@@ -135,7 +185,10 @@ internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOpti
         },
         (status.FinalAmount ?? status.Amount) is { } kop ? kop / 100m : null,
         status.ModifiedDate,
-        status.FailureReason);
+        status.FailureReason)
+    {
+        RemainingAmount = status.Status == "reversed" && status.FinalAmount is { } final ? final / 100m : null,
+    };
 
     private async Task<string> FetchKeyAsync(CancellationToken ct)
     {

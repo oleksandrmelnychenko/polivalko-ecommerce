@@ -8,9 +8,9 @@ export function CartSummary({ quote, count, blocking }: { quote: Quote | null; c
       <h2 id="cart-summary-title">Разом</h2>
       <dl className="totals">
         <dt>Товари, {count} шт.</dt>
-        <dd>{quote ? formatMoney(quote.subtotal) : "…"}</dd>
+        <dd><span className="money">{quote ? formatMoney(quote.subtotal) : "…"}</span></dd>
         <dt className="grand">Сума</dt>
-        <dd className="grand">{quote ? formatMoney(quote.total) : "…"}</dd>
+        <dd className="grand"><span className="money">{quote ? formatMoney(quote.total) : "…"}</span></dd>
       </dl>
 
       {quote && (

@@ -8,10 +8,11 @@ using PoliValko.Navkolo.Contracts;
 
 namespace PoliValko.Navkolo.Features.Freshness;
 
-internal sealed class NavkoloFreshness(PoliValkoDbContext db, IOptions<NavkoloOptions> options, TimeProvider time) : ICatalogFreshness
+internal sealed class NavkoloFreshness(PoliValkoDbContext db, IOptions<NavkoloOptions> options, Features.Settings.NavkoloSettings settings, TimeProvider time) : ICatalogFreshness
 {
     public async Task<bool> IsFreshAsync(CancellationToken ct)
     {
+        if (await settings.GetModeAsync(ct) == NavkoloModes.Disabled) return await settings.ReadAsync(ct) is null;
         var lastSuccess = await db.Set<SyncState>()
             .AsNoTracking()
             .Where(s => s.Job == NavkoloJobs.PriceStock)

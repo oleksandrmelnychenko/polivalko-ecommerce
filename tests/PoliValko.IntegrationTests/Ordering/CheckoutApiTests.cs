@@ -117,6 +117,78 @@ public sealed class CheckoutApiTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Concurrent_requests_with_same_key_create_one_order_and_replay_after_completion()
+    {
+        var product = await api.AddProductAsync("hospodarchi-tovary", "Одночасне оформлення", 315m, stock: 9);
+        var key = Guid.NewGuid().ToString();
+        var body = Order(product.Id, 1, "315.00", UniquePhone());
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => PostOrderAsync(body, key)));
+        var createdNumbers = new List<string>();
+        foreach (var response in responses)
+        {
+            using (response)
+            {
+                if (response.StatusCode == HttpStatusCode.Created)
+                    createdNumbers.Add((await response.Content.ReadFromJsonAsync<OrderCreatedDto>(TestJson.Options, Ct))!.Number);
+                else
+                {
+                    response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+                    (await response.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Code.ShouldBe("idempotency.in_progress");
+                }
+            }
+        }
+
+        createdNumbers.ShouldNotBeEmpty();
+        createdNumbers.Distinct().ShouldHaveSingleItem();
+        using var replay = await PostOrderAsync(body, key);
+        replay.StatusCode.ShouldBe(HttpStatusCode.Created);
+        replay.Headers.GetValues("Idempotent-Replayed").ShouldBe(["true"]);
+        (await replay.Content.ReadFromJsonAsync<OrderCreatedDto>(TestJson.Options, Ct))!.Number.ShouldBe(createdNumbers[0]);
+        (await api.WithDbAsync(db => db.Set<Order>().CountAsync(o => o.IdempotencyKey == key, Ct))).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Replay_is_bound_to_customer_and_rejects_guest_transitions_and_legacy_records()
+    {
+        var product = await api.AddProductAsync("hospodarchi-tovary", "Ізоляція повторів", 50m, stock: 20);
+        var body = Order(product.Id, 1, "50.00", UniquePhone());
+        var key = Guid.NewGuid().ToString();
+        var (owner, _) = await Accounts.RegisterAsync(api);
+        var (other, _) = await Accounts.RegisterAsync(api);
+        var first = await PostOrderAsync(body, key, owner);
+        first.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var firstBody = await first.Content.ReadFromJsonAsync<OrderCreatedDto>(TestJson.Options, Ct);
+        foreach (var client in new[] { other, _client })
+        {
+            var denied = await PostOrderAsync(body, key, client);
+            denied.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+            (await denied.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Code.ShouldBe("idempotency.owner_mismatch");
+            denied.Headers.Contains("Idempotent-Replayed").ShouldBeFalse();
+        }
+        var replay = await PostOrderAsync(body, key, owner);
+        (await replay.Content.ReadFromJsonAsync<OrderCreatedDto>(TestJson.Options, Ct)).ShouldBe(firstBody);
+        replay.Headers.GetValues("Idempotent-Replayed").ShouldBe(["true"]);
+        replay.Headers.Location.ShouldBe(first.Headers.Location);
+        (await PostOrderAsync(body with { Comment = "changed" }, key, owner)).StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+        (await api.WithDbAsync(db => db.Set<Order>().CountAsync(o => o.IdempotencyKey == key, Ct))).ShouldBe(1);
+
+        var guestKey = Guid.NewGuid().ToString();
+        (await PostOrderAsync(body, guestKey)).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await PostOrderAsync(body, guestKey, owner)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        // Existing pre-upgrade rows cannot establish the original subject. Do not return their token or create another order.
+        await api.WithDbAsync(db => db.IdempotencyRecords.Where(r => r.Key == guestKey)
+            .ExecuteUpdateAsync(s => s.SetProperty(r => r.SubjectHash, (string?)null), Ct));
+        (await PostOrderAsync(body, guestKey)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await api.WithDbAsync(db => db.Set<Order>().CountAsync(o => o.IdempotencyKey == guestKey, Ct))).ShouldBe(1);
+        await api.WithDbAsync(db => db.IdempotencyRecords.Where(r => r.Key == key).ExecuteDeleteAsync(Ct));
+        var expired = await PostOrderAsync(body, key, owner);
+        expired.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await expired.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Code.ShouldBe("idempotency.result_expired");
+        (await api.WithDbAsync(db => db.Set<Order>().CountAsync(o => o.IdempotencyKey == key, Ct))).ShouldBe(1);
+    }
+
+    [Fact]
     public async Task Warehouse_from_another_settlement_and_missing_offer_consent_are_validation_errors()
     {
         var product = await api.AddProductAsync("hospodarchi-tovary", "Товар для валідації", 50m);

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { countProducts } from "@polivalko/shared/lib/format";
 import { itemListJsonLd, JsonLd } from "@/features/seo";
 import { searchProducts, type ProductQuery } from "../api/server";
@@ -57,6 +58,10 @@ export async function CatalogListing({
   if (!result) return null;
 
   const href = (patch: Partial<Parsed>) => hrefFor(basePath, fixed, p, patch);
+  // A page past the end (an old link, fewer products now) opens the last page instead of an empty list
+  // with a counter like «2353–10 з 10». A document request already got a real 307 from src/proxy.ts;
+  // this covers client navigations, where inside Suspense the redirect happens in the browser.
+  if (result.totalPages > 0 && result.page > result.totalPages) redirect(href({ page: result.totalPages }));
   const chips = activeChips(p, href);
   const from = result.totalItems === 0 ? 0 : (result.page - 1) * result.pageSize + 1;
   const to = Math.min(result.page * result.pageSize, result.totalItems);
@@ -105,7 +110,7 @@ export async function CatalogListing({
               {chips.map((c) => (
                 <li key={c.key}>
                   <Link href={c.href} scroll={false} aria-label={`Прибрати фільтр «${c.label}»`}>
-                    {c.label}
+                    <span className={c.key === "price" ? "money" : undefined}>{c.label}</span>
                     <span aria-hidden="true">×</span>
                   </Link>
                 </li>

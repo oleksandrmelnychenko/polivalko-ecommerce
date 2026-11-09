@@ -13,6 +13,7 @@ export type PaletteItem = {
   image?: string | null
   title: string
   sub: string
+  sideIsMoney?: boolean
   side?: string
 }
 
@@ -38,6 +39,7 @@ export function paletteGroups(term: string, sections: NavSection[], result: Sear
         icon: IconShoppingBag,
         title: `${order.number} · ${order.customerName}`,
         sub: `${orderStatusLabel[order.status]} · ${formatDateTime(order.createdAt)} · ${order.phone}`,
+        sideIsMoney: true,
         side: formatMoney(order.total),
       })),
     })
@@ -52,6 +54,7 @@ export function paletteGroups(term: string, sections: NavSection[], result: Sear
         image: product.imageUrl,
         title: product.name,
         sub: `${product.sku}${product.isVisible ? '' : ' · прихований'}`,
+        sideIsMoney: true,
         side: formatMoney(product.price),
       })),
     })

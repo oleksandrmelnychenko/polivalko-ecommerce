@@ -69,9 +69,13 @@ src/app (маршрути)  ──►  src/features/<фіча> (index.ts | serve
 Циклічних залежностей між фічами немає. Дозволені ребра вітрини (`apps/shop`, фіча → від чого залежить):
 `favorites → customer`; `cart → analytics`; `catalog → cart, favorites`;
 `product → catalog, cart, analytics, favorites`; `home → catalog, services, content`;
-`layout → cart, catalog, services, content, search, customer`; `search → catalog`; `checkout → cart, analytics, customer`;
+`layout → cart, catalog, services, content, search, customer, assistant`; `search → catalog`; `checkout → cart, analytics, customer`;
 `order → payment, analytics`; `account → customer, favorites, catalog, cart, checkout, order, payment`; `customer`,
-`services`, `content`, `payment`, `analytics` — лише від `shared`.
+`services`, `content`, `payment`, `analytics`, `assistant` — лише від `shared`.
+
+`assistant` володіє плаваючою кнопкою, нативним діалогом, стилями та життєвим циклом 3D-сцени.
+`layout` підключає його через публічний `index.ts`. Three.js імпортується динамічно після відкриття панелі;
+модель завантажується з фіксованого локального шляху. Чату, голосу й серверних API помічника поки немає.
 
 Цей список — мапа `edges` в `apps/shop/eslint.config.mjs`: імпорт фічі, якої немає серед залежностей (зокрема
 власного публічного API зсередини фічі), — помилка `npm run lint` (розділ 7).
@@ -99,7 +103,7 @@ web/
 │  │     │                    (cabinet)/layout.tsx page.tsx orders/ orders/[number]/ favorites/ addresses/ profile/
 │  │     ├─ features/
 │  │     │  ├─ analytics/   GA4: track, TrackPurchase, TrackViewItem, GoogleAnalytics
-│  │     │  ├─ cart/        сховище кошика (localStorage), CartProvider/useCart, useCartQuote, CartButton, CartDrawer,
+│  │     │  ├─ cart/        серверний кошик, CartProvider/useCart, useCartQuote, CartButton, CartDrawer,
 │  │     │  │               CartScreen/CartView, BuyForm, AddToCart
 │  │     │  ├─ catalog/     дерево розділів, пошук товарів, плитки товарів і розділів (фото й опис категорії, мітки
 │  │     │  │               товарів), лістинг з фільтрами й пейджером, CatalogScreen, CategoryScreen, SaleScreen (/sale: товари зі знижкою, фільтр
@@ -275,7 +279,7 @@ src/features/<фіча>/
   хост, через Caddy); серверні запити вітрини — `api` з `@polivalko/shared/api/server` (`API_INTERNAL_URL`). Типи —
   `@polivalko/shared/api/schema` (`paths`, `components`) і псевдоніми в `@polivalko/shared/api/types`. Консоль
   використовує той самий `browserApi` через власну обгортку (розділ 15.5).
-- **Контексти** (`CartContext`) і модульний стан (кошик у `localStorage`, CSRF-токен кабінету, сесія покупця, id
+- **Контексти** (`CartContext`) і модульний стан (кеш серверного кошика в пам’яті, CSRF-токен кабінету, сесія покупця, id
   обраного) створюються рівно в одному модулі.
 - **Коментарі** в коді не пишемо.
 
@@ -550,7 +554,7 @@ const edges = {
   analytics: [],
   customer: [],
   favorites: ["customer"],
-  cart: ["analytics"],
+  cart: ["analytics", "customer"],
   catalog: ["cart", "favorites"],
   product: ["catalog", "cart", "analytics", "favorites"],
   home: ["catalog", "services", "content"],
@@ -1523,7 +1527,7 @@ Mantine) імпортує кореневий `app/layout.tsx`, тож він і�
 Меню перебудовано за дослідженням структури бек-офісів (Shopify, Хорошоп, Prom, KeyCRM, OpenCart): верхній рівень —
 розділи за видом роботи, рідкісне — у «Налаштуваннях» і «Системі». Межі ТЗ збережено: власних знижок, промокодів і
 редагування цін немає (ціни й стара ціна лише з Navkolo, ТЗ §4.6), статус оплати вручну не змінюється, резервів і
-другого платіжного провайдера немає, кинутих кошиків немає (кошик живе в браузері).
+другого платіжного провайдера на цю дату не було. Оновлення 08.11: серверний кошик і локальні резерви описані нижче.
 
 | Фіча | Що додано | API (`/api/v1/console/…`) |
 | --- | --- | --- |
@@ -1632,3 +1636,16 @@ Next.js 16.4. Застосунок лишився односторінковим
 `catalog/styles/labels.css` (після `flashes.css`) і `catalog/styles/category-intro.css` (після `listing.css`); маніфест
 вітрини — 71 рядок. Тон мітки задає `data-tone` (`green`, `red`, `orange`, `blue`, `gray`, `dark`): зелений, червоний,
 сірий і темний — токени вітрини, помаранчевий і синій — власні значення сегмента.
+
+
+## Серверний кошик і повторне оформлення (08.11.2026)
+
+`cart` залежить від `customer` для поточної сесії та CSRF. Джерело кошика — `/api/v1/cart/open`,
+`PUT /api/v1/cart/`, `POST /api/v1/cart/checkout`. localStorage зберігає лише сигнал зміни між вкладками;
+товари, ціни та ключ оформлення з нього не читаються. Запити запису й оновлення серіалізовані, відповідь
+попереднього акаунта не може замінити новий стан. При конфлікті версії відображається актуальний кошик,
+застарілі кількості не перезаписують його. Сесія перевіряється на сервері незалежно від localStorage-підказки.
+
+Checkout передає UUID і ревізію кошика. Результат оформлення сервер зберігає разом із замовленням;
+перезавантаження `/checkout` після втрати відповіді відновлює сторінку створеного замовлення.
+До кошика не додається приватна копія контактів покупця у browser storage.

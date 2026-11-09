@@ -5,6 +5,7 @@ export { CategoryTile } from "./components/category-tile";
 export { CategoryGrid } from "./components/category-grid";
 export { ListingSkeleton } from "./components/listing-skeleton";
 export { ProductLabels } from "./components/product-labels";
+export { withoutSaleLabel } from "./lib/labels";
 export { discountPercent } from "./lib/discount";
 export { categoryPhotoUrl } from "./lib/category-photo";
 export type { SearchParams } from "./lib/listing-params";

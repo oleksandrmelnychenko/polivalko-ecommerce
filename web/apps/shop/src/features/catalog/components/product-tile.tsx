@@ -34,12 +34,12 @@ export function ProductTile({ product, priority }: { product: ProductListItem; p
           {product.oldPrice && discount && (
             <s className="price-old">
               <span className="visually-hidden">Стара ціна </span>
-              {formatMoney(product.oldPrice)}
+              <span className="money">{formatMoney(product.oldPrice)}</span>
             </s>
           )}
           <strong className={discount ? "price-sale" : undefined}>
             {discount && <span className="visually-hidden">Нова ціна </span>}
-            {formatMoney(product.price)}
+            <span className="money">{formatMoney(product.price)}</span>
           </strong>
         </p>
         {product.brand && (

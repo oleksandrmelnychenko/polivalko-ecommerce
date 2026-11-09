@@ -97,7 +97,7 @@ public sealed class DeliveryModelTests
         pickup.GetTableName().ShouldBe("pickup_points");
         var seed = pickup.GetSeedData().ShouldHaveSingleItem();
         seed[nameof(PickupLocation.Code)].ShouldBe(DeliveryModelConfigurator.BuchaStoreCode);
-        seed[nameof(PickupLocation.Name)].ShouldBe("Магазин Poli Valko у Бучі");
+        seed[nameof(PickupLocation.Name)].ShouldBe("Магазин Poli Valko");
         seed[nameof(PickupLocation.IsActive)].ShouldBe(true);
     }
 

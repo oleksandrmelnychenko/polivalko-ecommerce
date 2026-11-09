@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PoliValko.SharedKernel;
 using Microsoft.Extensions.Options;
 using PoliValko.Catalog.Configuration;
 using PoliValko.Catalog.Contracts;
@@ -16,12 +17,15 @@ internal sealed class CatalogImporter(
     IOptions<CatalogOptions> options,
     IRichTextSanitizer sanitizer,
     IStorefrontCache storefront,
-    TimeProvider time) : ICatalogImporter
+    TimeProvider time,
+    ICatalogReservations reservations) : ICatalogImporter
 {
     private const int BatchSize = 500;
 
     public async Task<CatalogImportResult> ImportProductsAsync(IReadOnlyList<NavkoloProductRecord> records, CancellationToken ct)
     {
+        await using var transaction = db.Database.CurrentTransaction is null ? await db.Database.BeginTransactionAsync(ct) : null;
+        await reservations.LockAsync(await db.Set<ProductStock>().Select(s => s.ProductId).ToArrayAsync(ct), ct);
         var errors = new List<SyncError>();
         var valid = ImportValidation.Validate(records, errors);
 
@@ -41,8 +45,25 @@ internal sealed class CatalogImporter(
             .Select(p => new { p.Sku, p.NavkoloId })
             .ToListAsync(ct);
         var ownersBySku = skuOwners.ToLookup(o => o.Sku, o => o.NavkoloId, StringComparer.Ordinal);
-        var categories = await db.Set<Category>().Where(c => c.NavkoloRef != null).ToListAsync(ct);
-        var byGroup = categories
+        var categories = await db.Set<Category>().ToListAsync(ct);
+        // Live API carries both category UUID and title; file imports keep the explicit mapping contract.
+        foreach (var group in valid.Where(r => !string.IsNullOrWhiteSpace(r.GroupName)).GroupBy(r => r.GroupRef!))
+        {
+            if (categories.Any(c => c.NavkoloRef == group.Key)) continue;
+            var name = group.First().GroupName!.Trim();
+            var matching = categories.FirstOrDefault(c => string.Equals(c.NavkoloRef, name, StringComparison.OrdinalIgnoreCase));
+            if (matching is not null) { matching.NavkoloRef = group.Key; continue; }
+            var slug = Transliteration.ToSlug(name);
+            if (string.IsNullOrWhiteSpace(slug)) slug = "navkolo";
+            slug = slug[..Math.Min(slug.Length, 150)];
+            if (categories.Any(c => c.Slug == slug)) slug += "-" + Guid.NewGuid().ToString("N")[..8];
+            var category = new Category { Id = Guid.CreateVersion7(), Name = name[..Math.Min(name.Length, 200)], Slug = slug,
+                NavkoloRef = group.Key, SortOrder = categories.Count,
+                IsVisible = !options.Value.HiddenNavkoloGroups.Contains(name, StringComparer.OrdinalIgnoreCase) };
+            categories.Add(category);
+            db.Add(category);
+        }
+        var byGroup = categories.Where(c => c.NavkoloRef != null)
             .GroupBy(c => c.NavkoloRef!, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.OrderByDescending(c => c.ParentId.HasValue).First(), StringComparer.OrdinalIgnoreCase);
         var slugs = (await db.Set<Product>().Select(p => p.Slug).ToListAsync(ct)).ToHashSet(StringComparer.Ordinal);
@@ -60,7 +81,7 @@ internal sealed class CatalogImporter(
                 continue;
             }
 
-            var isHidden = hidden.Contains(record.GroupRef!);
+            var isHidden = hidden.Contains(record.GroupRef!) || (record.GroupName is { } groupName && hidden.Contains(groupName));
             if (!existing.TryGetValue(record.NavkoloId!, out var product))
             {
                 if (!byGroup.TryGetValue(record.GroupRef!, out var category))
@@ -98,11 +119,14 @@ internal sealed class CatalogImporter(
             await storefront.InvalidateAsync([StorefrontTags.Catalog, StorefrontTags.Products, StorefrontTags.Collections], ct);
         }
 
+        if (transaction is not null) await transaction.CommitAsync(ct);
         return new CatalogImportResult(created, updated, unchanged, errors);
     }
 
     public async Task<CatalogImportResult> ApplyPriceStockAsync(IReadOnlyList<PriceStockRecord> records, CancellationToken ct)
     {
+        await using var transaction = db.Database.CurrentTransaction is null ? await db.Database.BeginTransactionAsync(ct) : null;
+        await reservations.LockAsync(await db.Set<ProductStock>().Select(s => s.ProductId).ToArrayAsync(ct), ct);
         var errors = new List<SyncError>();
         var ids = records.Select(r => r.NavkoloId).Distinct().ToList();
         var products = await db.Set<Product>()
@@ -144,7 +168,14 @@ internal sealed class CatalogImporter(
             await storefront.InvalidateAsync([StorefrontTags.Products, StorefrontTags.Collections], ct);
         }
 
+        if (transaction is not null) await transaction.CommitAsync(ct);
         return new CatalogImportResult(0, updated, unchanged, errors);
+    }
+
+    public async Task DisableMissingAsync(IReadOnlyCollection<string> ids, CancellationToken ct)
+    {
+        await db.Set<Product>().Where(p => !ids.Contains(p.NavkoloId) && p.IsVisible)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsVisible, false), ct);
     }
 
     private Product Create(NavkoloProductRecord record, Guid categoryId, string slug, bool visible, DateTimeOffset now)

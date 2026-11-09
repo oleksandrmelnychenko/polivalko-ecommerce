@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { CartDrawer, CartProvider } from "@/features/cart";
-import { BackToTop } from "./back-to-top";
+import { ShopTools } from "./shop-tools";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 
@@ -9,9 +9,9 @@ export function ShopShell({ children }: { children: ReactNode }) {
     <CartProvider>
       <SiteHeader />
       <main id="main">{children}</main>
+      <Suspense fallback={null}><ShopTools /></Suspense>
       <SiteFooter />
       <CartDrawer />
-      <BackToTop />
     </CartProvider>
   );
 }

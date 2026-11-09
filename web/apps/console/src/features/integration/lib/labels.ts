@@ -4,7 +4,8 @@ import type { SyncJob, SyncRunStatus } from '../api/integrationApi'
 
 export const navkoloModeLabel: Record<string, string> = {
   Disabled: 'вимкнено: ціни й залишки приходять з імпорту файлів',
-  Stub: 'тестова заглушка замість справжнього обміну з Navkolo',
+  DNTrade: 'API Навколо.Торгівля',
+  Stub: 'тестова заглушка: обмін з Navkolo імітується',
 }
 
 export const FILE_IMPORT_JOB = 'navkolo.import'
@@ -20,6 +21,7 @@ export const novaPoshtaModeLabel: Record<string, string> = {
 
 export const messageTypeLabel: Record<string, string> = {
   'ordering.order-placed': 'Сповіщення про нове замовлення',
+  'ordering.cancellation-requested.v1': 'Скасування замовлення в Навколо',
   'ordering.export-requested': 'Передача замовлення в Navkolo',
   'ordering.payment-succeeded': 'Обробка успішної оплати',
   'ordering.refund-requested': 'Повернення коштів',

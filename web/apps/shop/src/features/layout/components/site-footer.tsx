@@ -24,8 +24,12 @@ export function SiteFooter() {
     <footer className="footer">
       <div className="container footer__grid">
         <div className="footer__about">
-          <Link href="/" className="logo logo--footer" translate="no">
-            PoliValko
+          <Link href="/" className="brand-logo" aria-label="Poli-Valko, на головну" translate="no">
+            <img className="brand-logo__emblem" src="/mascot/poli-valka-poster.png" width={253} height={450} alt="" />
+            <span className="brand-logo__wordmark">
+              <span className="brand-logo__name">Poli-Valko</span>
+              <span className="brand-logo__tagline">Дім · сад · город</span>
+            </span>
           </Link>
           <p>Товари для саду, городу й дому. Відправляємо Новою поштою по всій Україні.</p>
           <Suspense fallback={null}>
@@ -50,7 +54,7 @@ export function SiteFooter() {
         </FooterColumn>
       </div>
       <p className="footer__legal">
-        © 2026 Poli Valko. <Link href="/credits">Автори фото</Link>
+        © 2026 Poli-Valko. <Link href="/credits">Автори фото</Link>
       </p>
     </footer>
   );

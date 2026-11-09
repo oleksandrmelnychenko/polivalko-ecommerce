@@ -17,6 +17,7 @@ export function CheckoutForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const checkout = useCheckout(formRef);
 
+  if (!checkout.ready || checkout.recovering) return <p role="status">{checkout.cartError ?? "Завантажуємо кошик…"}</p>;
   if (checkout.lines.length === 0) return <CheckoutEmpty />;
 
   const { field, fieldError } = fieldProps(checkout.errors);
@@ -25,6 +26,7 @@ export function CheckoutForm() {
   return (
     <form ref={formRef} className="checkout" onSubmit={checkout.onSubmit} noValidate>
       <div className="checkout__form">
+        {checkout.cartError && <p role="alert" className="notice notice--error">{checkout.cartError}</p>}
         {checkout.notice && <CheckoutNotice notice={checkout.notice} />}
         <CheckoutContacts field={field} fieldError={fieldError} />
         <CheckoutDelivery

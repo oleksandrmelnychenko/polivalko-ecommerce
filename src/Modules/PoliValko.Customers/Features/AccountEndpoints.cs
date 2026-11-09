@@ -43,6 +43,7 @@ internal static class AccountEndpoints
             .WithSummary("Вихід покупця");
 
         account.MapPost("/email/confirm", ConfirmEmail.HandleAsync)
+            .RequireAuthorization(CustomerPolicies.Customer)
             .RequireCsrf()
             .RequireRateLimiting(RateLimitPolicies.Login)
             .WithName("AccountConfirmEmail")

@@ -9,14 +9,6 @@ let session: Session = UNKNOWN;
 let pending: Promise<Session> | null = null;
 const listeners = new Set<() => void>();
 
-function readHint(): boolean {
-  try {
-    return window.localStorage.getItem(HINT_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
 function writeHint(on: boolean) {
   try {
     if (on) window.localStorage.setItem(HINT_KEY, "1");
@@ -65,16 +57,11 @@ async function fetchSession(): Promise<Session> {
 
 export function loadSession(): Promise<Session> {
   if (session.status !== "unknown") return Promise.resolve(session);
-  if (!readHint()) {
-    set(GUEST);
-    return Promise.resolve(session);
-  }
   pending ??= fetchSession();
   return pending;
 }
 
 export function refreshSession(): Promise<Session> {
-  if (!readHint()) return loadSession();
   pending = fetchSession();
   return pending;
 }

@@ -58,6 +58,28 @@ public sealed class PaymentsApiTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Amount_mismatch_stays_payable_and_same_event_can_be_corrected_once()
+    {
+        var created = await CreateCardOrderAsync(1200m);
+        var start = await StartAsync(created);
+        var invoiceId = start.PageUrl[(start.PageUrl.LastIndexOf('/') + 1)..];
+        var modifiedDate = DateTimeOffset.UtcNow;
+        var wrong = JsonSerializer.SerializeToUtf8Bytes(new { invoiceId, status = "success", amount = "1.00", modifiedDate });
+        (await PostWebhookAsync(wrong, Sign(wrong))).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await PostWebhookAsync(wrong, Sign(wrong))).StatusCode.ShouldBe(HttpStatusCode.OK);
+        await api.ProcessOutboxAsync();
+        api.Notifier.Sent.Count(n => n.Title == $"Розбіжність суми оплати {created.Number}").ShouldBe(1);
+        (await GetOrderAsync(created)).PaymentStatus.ShouldBe(PaymentStatus.Pending);
+        (await StartAsync(created)).PaymentId.ShouldBe(start.PaymentId);
+        var corrected = JsonSerializer.SerializeToUtf8Bytes(new { invoiceId, status = "success", amount = "1200.00", modifiedDate });
+        (await PostWebhookAsync(corrected, Sign(corrected))).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await PostWebhookAsync(corrected, Sign(corrected))).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var paid = await GetOrderAsync(created);
+        paid.PaymentStatus.ShouldBe(PaymentStatus.Succeeded);
+        paid.History.Count(h => h.Status == OrderStatus.Paid).ShouldBe(1);
+    }
+
+    [Fact]
     public async Task Webhook_requires_valid_signature_and_ignores_duplicates()
     {
         var created = await CreateCardOrderAsync(1200m);

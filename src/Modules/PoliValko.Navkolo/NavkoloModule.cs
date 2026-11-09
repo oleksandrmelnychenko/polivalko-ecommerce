@@ -21,15 +21,30 @@ public static class NavkoloModule
     public static IServiceCollection AddNavkoloModule(this IServiceCollection services, IConfiguration configuration)
     {
         var section = configuration.GetSection("Navkolo");
-        services.Configure<NavkoloOptions>(section);
-        services.AddSingleton<INavkoloClient, StubNavkoloClient>();
-        services.AddSingleton<INavkoloSettings, NavkoloSettings>();
-        services.AddOutboxHandler<OrderExportRequested, ExportOrderToNavkolo>();
-
-        if (section.Get<NavkoloOptions>()?.IsEnabled == true)
+        services.AddOptions<NavkoloOptions>().Bind(section)
+            .Validate(o => o.Mode is NavkoloModes.Disabled or NavkoloModes.Stub or NavkoloModes.DnTrade, "Unknown Navkolo mode.")
+            .Validate(o => o.Mode != NavkoloModes.DnTrade || !string.IsNullOrWhiteSpace(o.ApiKey), "Navkolo ApiKey is required for DNTrade.")
+            .Validate(o => o.StoreId is null or "" || Guid.TryParse(o.StoreId, out _), "Navkolo StoreId must be a UUID.")
+            .Validate(o => o.ApiKey.Length <= 2048 && !o.ApiKey.Any(char.IsControl), "Invalid Navkolo API key format.")
+            .ValidateOnStart();
+        services.AddSingleton<DnTradeRequestGate>();
+        services.AddHttpClient("DNTrade", client =>
         {
-            services.Replace(ServiceDescriptor.Scoped<ICatalogFreshness, NavkoloFreshness>());
-        }
+            client.BaseAddress = new Uri("https://api.dntrade.com.ua/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false })
+            .RedactLoggedHeaders(["ApiKey"]);
+        services.AddSingleton<StubNavkoloClient>();
+        services.AddScoped<NavkoloClientFactory>();
+        services.AddScoped<NavkoloSettings>();
+        services.AddScoped<INavkoloClient, ConfiguredNavkoloClient>();
+        services.AddScoped<INavkoloSettings>(sp => sp.GetRequiredService<NavkoloSettings>());
+        services.AddScoped<NavkoloOrderGate>();
+        services.AddScoped<Features.OrderSync.NavkoloInventorySync>();
+        services.AddOutboxHandler<OrderExportRequested, ExportOrderToNavkolo>();
+        services.AddOutboxHandler<OrderCancellationRequested, CancelOrderInNavkolo>();
+
+        services.Replace(ServiceDescriptor.Scoped<ICatalogFreshness, NavkoloFreshness>());
 
         return services;
     }
@@ -38,6 +53,8 @@ public static class NavkoloModule
         services
             .AddHostedService<NavkoloPriceStockJob>()
             .AddHostedService<NavkoloCatalogJob>();
+
+    public static RouteGroupBuilder MapConsoleNavkoloSettingsEndpoints(this RouteGroupBuilder console) => NavkoloSettingsEndpoints.Map(console);
 
     public static RouteGroupBuilder MapConsoleCatalogImportEndpoints(this RouteGroupBuilder console) =>
         CatalogImportEndpoints.Map(console);

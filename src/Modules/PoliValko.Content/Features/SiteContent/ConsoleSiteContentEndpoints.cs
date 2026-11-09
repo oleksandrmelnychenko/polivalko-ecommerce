@@ -16,7 +16,7 @@ internal static class ConsoleSiteContentEndpoints
             .RequirePermission(PermissionKeys.SiteContentManage)
             .WithName("ConsoleListPages")
             .WithSummary("Текстові сторінки");
-        content.MapGet("/pages/{slug}", GetPage.HandleAsync)
+        content.MapGet("/pages/{slug}", GetPage.ConsoleAsync)
             .RequirePermission(PermissionKeys.SiteContentManage)
             .WithName("ConsoleGetPage")
             .WithSummary("Текстова сторінка для редагування")

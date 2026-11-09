@@ -1,8 +1,9 @@
 x-required-env: &required-env
   Site__PublicUrl: ${SITE_URL:?Задайте SITE_URL — публічна адреса з https://}
   Web__RevalidateSecret: ${REVALIDATE_SECRET:?Задайте REVALIDATE_SECRET — випадковий рядок}
-  Payments__Provider: ${PAYMENTS_PROVIDER:?Задайте PAYMENTS_PROVIDER — Sandbox або Mono}
-  Payments__Sandbox__Secret: ${PAYMENTS_SANDBOX_SECRET:?Задайте PAYMENTS_SANDBOX_SECRET — випадковий рядок}
+  Payments__Provider: ${PAYMENTS_PROVIDER:?Задайте PAYMENTS_PROVIDER — Mono або Disabled}
+  # Не змінювати: з тестовою оплатою будь-хто може позначити замовлення оплаченим. API й worker тоді не стартують.
+  Payments__AllowSandbox: "false"
   Fiscal__Provider: ${FISCAL_PROVIDER:?Задайте FISCAL_PROVIDER — Disabled, Stub або Checkbox}
 
 services:
@@ -12,12 +13,26 @@ services:
     ports: !reset []
 
   api:
+    volumes:
+      - type: bind
+        source: ${DATA_PROTECTION_CERTIFICATE_DIR:?Задайте DATA_PROTECTION_CERTIFICATE_DIR — приватний каталог сертифікатів}
+        target: /run/secrets/data-protection
+        read_only: true
+        bind:
+          create_host_path: false
     environment:
       <<: *required-env
       Database__SeedDemoData: ${SEED_DEMO_DATA:-false}
       Api__ExposeDocs: ${EXPOSE_API_DOCS:-false}
 
   worker:
+    volumes:
+      - type: bind
+        source: ${DATA_PROTECTION_CERTIFICATE_DIR:?Задайте DATA_PROTECTION_CERTIFICATE_DIR — приватний каталог сертифікатів}
+        target: /run/secrets/data-protection
+        read_only: true
+        bind:
+          create_host_path: false
     environment:
       <<: *required-env
 
@@ -35,6 +50,7 @@ services:
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:?Задайте SITE_ADDRESS — домен магазину, напр. example.ua}
       CONSOLE_ADDRESS: ${CONSOLE_ADDRESS:?Задайте CONSOLE_ADDRESS — домен консолі, напр. console.example.ua}
+      CONSOLE_ALLOWED_IPS: ${CONSOLE_ALLOWED_IPS:?Задайте CONSOLE_ALLOWED_IPS — мережі офісу або VPN}
     ports: !override
       - "80:80"
       - "443:443"

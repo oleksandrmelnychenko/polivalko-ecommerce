@@ -31,7 +31,6 @@ internal static class UpdateProfile
         customer.Name = name!;
         customer.Phone = phone;
         await db.SaveChangesAsync(ct);
-        await CustomerSession.SignInAsync(http, customer);
         return TypedResults.Ok(CustomerMapping.ToMe(customer));
     }
 }

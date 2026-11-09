@@ -22,7 +22,7 @@ export function ProductEditorNavkolo({ product }: { product: Product }) {
         <dt>Ціна</dt>
         <dd>
           <span className="app-money">{formatMoney(n.price)}</span>
-          {n.oldPrice ? <s className="catalog-muted"> {formatMoney(n.oldPrice)}</s> : null}
+          {n.oldPrice ? <s className="catalog-muted"> <span className="money">{formatMoney(n.oldPrice)}</span></s> : null}
         </dd>
         <dt>Залишок</dt>
         <dd className="app-number">{n.stock}</dd>

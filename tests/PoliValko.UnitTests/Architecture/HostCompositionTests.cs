@@ -1,7 +1,27 @@
+using System.Reflection;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
 namespace PoliValko.UnitTests.Architecture;
 
 public sealed class HostCompositionTests
 {
+    [Fact]
+    public void Worker_services_resolve_without_http_session_services()
+    {
+        var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { DisableDefaults = true });
+        builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
+        var assembly = Assembly.LoadFrom(ExistingHost("PoliValko.Worker.Path"));
+        var composition = assembly.GetType("PoliValko.Worker.Composition.WorkerServices", throwOnError: true)!;
+        composition.GetMethod("AddPoliValkoWorker")!.Invoke(null, [builder.Services, builder.Configuration]);
+        using var provider = builder.Services.BuildServiceProvider(new ServiceProviderOptions
+        {
+            ValidateOnBuild = true,
+            ValidateScopes = true,
+        });
+    }
+
     [Theory]
     [InlineData("PoliValko.Api.Path")]
     [InlineData("PoliValko.Worker.Path")]

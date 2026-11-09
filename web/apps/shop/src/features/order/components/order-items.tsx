@@ -16,26 +16,26 @@ export function OrderItems({ order }: { order: Order }) {
                 <Link href={`/product/${item.slug}`}>{item.name}</Link>
               </p>
               <p className="muted" style={{ fontSize: "var(--text-sm)" }}>
-                <span className="code" translate="no">{item.sku}</span>, {item.quantity} шт. по {formatMoney(item.unitPrice)}
+                <span className="code" translate="no">{item.sku}</span>, {item.quantity} шт. по <span className="money">{formatMoney(item.unitPrice)}</span>
               </p>
             </div>
-            <p className="line__total">{formatMoney(item.lineTotal)}</p>
+            <p className="line__total"><span className="money">{formatMoney(item.lineTotal)}</span></p>
           </li>
         ))}
       </ul>
       <dl className="totals" style={{ marginTop: "var(--space-lg)" }}>
         <dt>Товари</dt>
-        <dd>{formatMoney(order.subtotal)}</dd>
+        <dd><span className="money">{formatMoney(order.subtotal)}</span></dd>
         <dt>Доставка</dt>
         <dd>{order.deliveryMethod === "pickup" ? "безкоштовно" : "за тарифами перевізника"}</dd>
         {Number(order.refundedAmount.value) > 0 && (
           <>
             <dt>Повернено</dt>
-            <dd>{formatMoney(order.refundedAmount)}</dd>
+            <dd><span className="money">{formatMoney(order.refundedAmount)}</span></dd>
           </>
         )}
         <dt className="grand">Разом</dt>
-        <dd className="grand">{formatMoney(order.total)}</dd>
+        <dd className="grand"><span className="money">{formatMoney(order.total)}</span></dd>
       </dl>
     </section>
   );

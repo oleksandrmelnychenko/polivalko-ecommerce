@@ -1,11 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using PoliValko.Catalog.Contracts;
 using PoliValko.Infrastructure.Sync;
 using PoliValko.Navkolo.Configuration;
 using PoliValko.Navkolo.Contracts;
-using PoliValko.Navkolo.Integrations.NavkoloApi;
 
 namespace PoliValko.Navkolo.Jobs;
 
@@ -18,12 +16,10 @@ internal sealed class NavkoloPriceStockJob(IServiceScopeFactory scopes, TimeProv
 
     protected override TimeSpan RetryInterval(IServiceProvider services) => TimeSpan.FromMinutes(1);
 
-    protected override bool IsEnabled(IServiceProvider services) => services.GetRequiredService<IOptions<NavkoloOptions>>().Value.IsEnabled;
+    protected override bool IsEnabled(IServiceProvider services) => true;
+    protected override async Task<bool> IsEnabledAsync(IServiceProvider services, CancellationToken ct) =>
+        await services.GetRequiredService<INavkoloSettings>().GetModeAsync(ct) != NavkoloModes.Disabled;
 
-    protected override async Task<SyncResult> RunOnceAsync(IServiceProvider services, CancellationToken ct)
-    {
-        var records = await services.GetRequiredService<INavkoloClient>().GetPriceStockAsync(ct);
-        var result = await services.GetRequiredService<ICatalogImporter>().ApplyPriceStockAsync(records, ct);
-        return new SyncResult($"Отримано записів: {records.Count}. Змінено: {result.Updated}, без змін: {result.Unchanged}", result.Errors);
-    }
+    protected override Task<SyncResult> RunOnceAsync(IServiceProvider services, CancellationToken ct) =>
+        services.GetRequiredService<Features.OrderSync.NavkoloInventorySync>().RunAsync(ct);
 }

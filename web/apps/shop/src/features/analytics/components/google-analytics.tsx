@@ -1,16 +1,6 @@
-"use client";
-
-import Script from "next/script";
-import { GA_ID } from "../lib/track";
-
 export function GoogleAnalytics() {
-  if (!GA_ID) return null;
-  return (
-    <>
-      <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
-      <Script id="ga4" strategy="afterInteractive">
-        {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}');`}
-      </Script>
-    </>
-  );
+  // Bearer URLs are used by orders and recovery. A global third-party script
+  // can read them even with automatic page views disabled. Keep collection
+  // off until it goes through a first-party, allowlisted event boundary.
+  return null;
 }

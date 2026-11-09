@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
-import { OrdersScreen } from "@/features/account";
+import { CabinetContent, OrdersScreen } from "@/features/account";
 
 export const metadata: Metadata = { title: "Мої замовлення", robots: { index: false, follow: false } };
 
 export default function AccountOrdersPage() {
-  return <OrdersScreen />;
+  return (
+    <CabinetContent>
+      <OrdersScreen />
+    </CabinetContent>
+  );
 }

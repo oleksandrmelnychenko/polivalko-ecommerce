@@ -40,7 +40,8 @@ internal sealed class TelegramManagerNotifier(HttpClient http, IOptions<Telegram
             }
             catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
             {
-                logger.LogWarning(ex, "Telegram недоступний: повідомлення для чату {ChatId} не надіслано", chatId);
+                // Provider exceptions can include the credential-bearing request URI.
+                logger.LogWarning("Telegram недоступний: повідомлення для чату {ChatId} не надіслано ({ErrorType})", chatId, ex.GetType().Name);
             }
         }
 

@@ -18,9 +18,13 @@ internal static class RedirectWriter
 
     public static string? NormalizePath(string? value)
     {
-        var path = value?.Trim();
-        return path is { Length: > 1 and <= 500 } && path.StartsWith('/') && !path.StartsWith("//", StringComparison.Ordinal) && !path.Contains("://", StringComparison.Ordinal)
-            ? path.TrimEnd('/')
-            : null;
+        if (value is null || value.Any(c => char.IsControl(c) || c == '\\')) return null;
+        var path = value.Trim();
+        if (path.Length is < 2 or > 500 || !path.StartsWith('/') || path.StartsWith("//", StringComparison.Ordinal)
+            || path.Contains("://", StringComparison.Ordinal)) return null;
+        var origin = new Uri("https://polivalko.invalid");
+        if (!Uri.TryCreate(origin, path, out var url) || url.Scheme != origin.Scheme || url.Authority != origin.Authority) return null;
+        var local = url.PathAndQuery + url.Fragment;
+        return local.StartsWith("//", StringComparison.Ordinal) ? null : local.TrimEnd('/');
     }
 }

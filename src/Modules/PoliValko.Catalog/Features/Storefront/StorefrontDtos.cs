@@ -21,7 +21,7 @@ public sealed record CategoryDto(
     string? ImageUrl,
     string? Description);
 
-public sealed record ProductLabelBadgeDto(string Name, LabelTone Tone);
+public sealed record ProductLabelBadgeDto(string Name, LabelTone Tone, LabelKind Kind);
 
 public sealed record ProductListItemDto(
     Guid Id,

@@ -1,10 +1,18 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { track } from "@/features/analytics";
-import { clamp, EMPTY, getSnapshot, subscribe, update, type CartLine, type CartProduct } from "../lib/cart-store";
+import { clamp, INITIAL, connect, watchCart, refreshCart, settledCart, getSnapshot, subscribe, update, type CartLine, type CartProduct } from "../lib/cart-store";
+
+import { useCustomer } from "@/features/customer";
 
 type CartContextValue = {
+  ready: boolean;
+  saving: boolean;
+  error: string | null;
+  cart: ReturnType<typeof getSnapshot>["cart"];
+  refresh: typeof refreshCart;
+  settled: typeof settledCart;
   lines: CartLine[];
   count: number;
   subtotal: number;
@@ -20,7 +28,12 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const lines = useSyncExternalStore(subscribe, getSnapshot, () => EMPTY);
+  const state = useSyncExternalStore(subscribe, getSnapshot, () => INITIAL);
+  const { lines } = state;
+  const customer = useCustomer();
+  const owner = customer.status === "unknown" ? null : customer.me?.id ?? "guest";
+  useEffect(() => { if (owner) connect(owner); }, [owner]);
+  useEffect(watchCart, []);
   const [isOpen, setOpen] = useState(false);
 
   const add = useCallback((product: CartProduct, quantity = 1) => {
@@ -41,6 +54,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<CartContextValue>(
     () => ({
+      ...state,
+      refresh: refreshCart,
+      settled: settledCart,
       lines,
       count: lines.reduce((n, l) => n + l.quantity, 0),
       subtotal: lines.reduce((sum, l) => sum + Number(l.price) * l.quantity, 0),
@@ -53,7 +69,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       open: () => setOpen(true),
       close: () => setOpen(false),
     }),
-    [lines, isOpen, add],
+    [state, lines, isOpen, add],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

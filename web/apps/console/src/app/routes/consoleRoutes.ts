@@ -47,6 +47,7 @@ export const consoleRoutes: readonly ConsoleRoute[] = [
   { path: '/settings/shop', title: 'Магазин', permissionKey: PermissionKeys.Settings.ManageShop, page: Pages.ShopSettingsPage },
   { path: '/settings/delivery', title: 'Доставка', permissionKey: PermissionKeys.Content.ManagePickup, page: Pages.DeliverySettingsPage },
   { path: '/settings/payments', title: 'Оплата й чеки', permissionKey: PermissionKeys.Integration.ViewStatus, page: Pages.PaymentSettingsPage },
+  { path: '/settings/navkolo', title: 'Навколо', permissionKey: PermissionKeys.Settings.ManageNavkolo, page: Pages.NavkoloSettingsPage },
   { path: '/settings/notifications', title: 'Сповіщення', permissionKey: PermissionKeys.Settings.ManageNotifications, page: Pages.NotificationSettingsPage },
   { path: '/system/integrations', title: 'Інтеграції', permissionKey: PermissionKeys.Integration.ViewStatus, page: Pages.IntegrationPage },
   { path: '/system/staff', title: 'Працівники', permissionKey: PermissionKeys.Staff.ManageUsers, page: Pages.StaffPage },

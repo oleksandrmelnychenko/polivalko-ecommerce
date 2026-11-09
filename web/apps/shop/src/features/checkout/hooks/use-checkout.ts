@@ -5,9 +5,8 @@ import { useEffect, useRef, useState, type FormEvent, type RefObject } from "rea
 import { track } from "@/features/analytics";
 import { useCart, useCartQuote } from "@/features/cart";
 import type { CustomerAddress } from "@/features/customer";
-import { newIdempotencyKey } from "@polivalko/shared/api/browser";
+import { checkoutCart } from "@/features/cart";
 import type { Problem } from "@polivalko/shared/api/problem";
-import { createOrder } from "../api/client";
 import { orderRequest } from "../lib/order-request";
 import type { CourierPrefill, Errors, Notice } from "../lib/types";
 import { useCheckoutAccount } from "./use-checkout-account";
@@ -15,7 +14,8 @@ import { useDeliveryPoint } from "./use-delivery-point";
 
 export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
   const router = useRouter();
-  const { lines, setQuantity, remove, clear } = useCart();
+  const cartState = useCart();
+  const { lines, setQuantity, remove } = cartState;
   const { items, quote, failed: quoteError, refresh: refreshQuote } = useCartQuote();
   const [chosenDelivery, setDelivery] = useState("nova_poshta");
   const [payment, setPayment] = useState("");
@@ -24,8 +24,12 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
   const [errors, setErrors] = useState<Errors>({});
   const [notice, setNotice] = useState<Notice | null>(null);
   const [sending, setSending] = useState(false);
-  const idempotencyKey = useRef<string | null>(null);
+  const submitting = useRef(false);
   const focusInvalid = useRef(false);
+  const recoveredOrder = cartState.ready && lines.length === 0 ? cartState.cart?.lastOrder : null;
+  useEffect(() => {
+    if (recoveredOrder) router.replace(`/order/${recoveredOrder.number}?token=${encodeURIComponent(recoveredOrder.accessToken)}`);
+  }, [recoveredOrder, router]);
 
   function applyAddress(address: CustomerAddress) {
     setDelivery(address.method);
@@ -62,17 +66,18 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!quote) return;
+    if (!quote || submitting.current || !cartState.ready || cartState.saving) return;
     if (blocking) {
       setNotice({ kind: "error", title: "Частини товарів не вистачає", text: "Змініть кількість або приберіть позиції, позначені в замовленні." });
       return;
     }
     const form = new FormData(event.currentTarget);
+    submitting.current = true;
     setSending(true);
     setNotice(null);
-    idempotencyKey.current ??= newIdempotencyKey();
 
     try {
+      const serverCart = await cartState.settled();
       const request = orderRequest(form, {
         items,
         quote,
@@ -81,11 +86,11 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
         warehouseRef: point.warehouseRef,
         payment: effectivePayment,
       });
-      const { data, error, response } = await createOrder(idempotencyKey.current, request);
+      const { data, error, response } = await checkoutCart(serverCart, request);
 
       if (data) {
         await account.saveAfterOrder(form, request.delivery);
-        clear();
+        await cartState.refresh();
         router.push(`/order/${data.number}?token=${encodeURIComponent(data.accessToken)}`);
         return;
       }
@@ -105,20 +110,25 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
         setNotice({ kind: "error", title: "Частини товарів не вистачає", text: "Змініть кількість або приберіть позиції, позначені нижче." });
       } else if (response.status === 429) {
         setNotice({ kind: "error", title: "Забагато замовлень за короткий час", text: "Спробуйте за кілька хвилин або зателефонуйте нам." });
-      } else if (problem.code === "idempotency.key_mismatch") {
-        idempotencyKey.current = null;
-        setNotice({ kind: "error", title: "Спробуйте ще раз", text: "Дані змінилися з моменту попередньої спроби." });
+      } else if (problem.code === "cart.changed") {
+        await cartState.refresh();
+        setNotice({ kind: "error", title: "Кошик змінився", text: "Перевірте склад і суму замовлення ще раз." });
       } else {
         setNotice({ kind: "error", title: problem.title ?? "Не вдалося оформити замовлення", text: problem.detail });
       }
     } catch {
-      setNotice({ kind: "error", title: "Немає зв'язку з сервером", text: "Натисніть ще раз: друге замовлення не створиться." });
+      await cartState.refresh();
+      setNotice({ kind: "error", title: "Перевіряємо оформлення", text: "Якщо з’єднання не відновилося, оновіть сторінку. Сервер збереже результат і не створить дубль." });
     } finally {
+      submitting.current = false;
       setSending(false);
     }
   }
 
   return {
+    ready: cartState.ready,
+    cartError: cartState.error,
+    recovering: !!recoveredOrder,
     lines,
     setQuantity,
     remove,
@@ -148,7 +158,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
     account,
     errors,
     notice,
-    sending,
+    sending: sending || cartState.saving || !cartState.ready,
     onSubmit,
   };
 }

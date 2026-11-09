@@ -39,7 +39,7 @@ public sealed class ConsoleMediaAndPermissionApiTests(ApiFactory api)
     {
         var admin = await Staff.AdminAsync(api);
         var catalog = await admin.ReadAsync<PermissionCatalogDto>("/api/v1/console/permissions/catalog");
-        catalog.Version.ShouldBe("2026-11-06.1");
+        catalog.Version.ShouldBe("2026-11-08.1");
         var byKey = catalog.Permissions.ToDictionary(p => p.Key);
         foreach (var (key, section) in new[]
                  {
@@ -52,6 +52,7 @@ public sealed class ConsoleMediaAndPermissionApiTests(ApiFactory api)
                      (PermissionKeys.RedirectsManage, "site"),
                      (PermissionKeys.SettingsShopManage, "settings"),
                      (PermissionKeys.SettingsNotificationsManage, "settings"),
+                     (PermissionKeys.SettingsNavkoloManage, "settings"),
                      (PermissionKeys.PickupManage, "settings"),
                      (PermissionKeys.CustomerAccountsManage, "customers"),
                  })
