@@ -93,8 +93,8 @@ web/
 │  │     │  ├─ layout.tsx  globals.css  not-found.tsx  robots.ts  sitemap.ts  favicon.ico
 │  │     │  ├─ internal/revalidate/route.ts
 │  │     │  ├─ pay/layout.tsx  pay/sandbox/[id]/page.tsx
-│  │     │  └─ (shop)/layout.tsx  error.tsx  page.tsx  cart/ catalog/ catalog/[slug]/ checkout/ contacts/ credits/
-│  │     │           offer/ order/[number]/ payment-delivery/ privacy/ product/[slug]/ returns/ search/ services/
+│  │     │  └─ (shop)/layout.tsx  error.tsx  not-found.tsx  page.tsx  cart/ catalog/ catalog/[slug]/ checkout/ contacts/ credits/
+│  │     │           offer/ order/[number]/ payment-delivery/ privacy/ product/[slug]/ returns/ sale/ search/ services/
 │  │     │           account/ login/ register/ forgot-password/ reset-password/ confirm-email/
 │  │     │                    (cabinet)/layout.tsx page.tsx orders/ orders/[number]/ favorites/ addresses/ profile/
 │  │     ├─ features/
@@ -102,7 +102,8 @@ web/
 │  │     │  ├─ cart/        сховище кошика (localStorage), CartProvider/useCart, useCartQuote, CartButton, CartDrawer,
 │  │     │  │               CartScreen/CartView, BuyForm, AddToCart
 │  │     │  ├─ catalog/     дерево розділів, пошук товарів, плитки товарів і розділів (фото й опис категорії, мітки
-│  │     │  │               товарів), лістинг з фільтрами й пейджером, CatalogScreen, CategoryScreen, перенаправлення
+│  │     │  │               товарів), лістинг з фільтрами й пейджером, CatalogScreen, CategoryScreen, SaleScreen (/sale: товари зі знижкою, фільтр
+│  │     │  │               знижки зафіксовано й приховано), перенаправлення
 │  │     │  │               старих URL, sitemap-дані. Лістинг (з 06.11 у стилі XStore): ліва колонка 252 px з блоками
 │  │     │  │               «Підрозділи», «Наявність», «Ціна» (готові діапазони priceRanges + поля від/до), «Бренд»
 │  │     │  │               і характеристики (FacetGroup: пошук у списку від 9 значень, перші 6 + «Ще N»).
@@ -112,20 +113,34 @@ web/
 │  │     │  │               «Показувати 24/48/96» (pageSize у URL); над плитками — плашки вибраних фільтрів.
 │  │     │  │               Плитка лістингу (tile--shop): комірки з тонкими лініями, квадратне фото, позначки
 │  │     │  │               прямокутниками зліва вгорі, бренд, назва, ціна, наявність і «У кошик» на всю ширину
-│  │     │  │               (AddToCart block); «переглянути» й «в обране» — квадратиками праворуч угорі
+│  │     │  │               (AddToCart); «переглянути» й «в обране» квадратиками праворуч угорі. З 09.11 та сама плитка
+│  │     │  │               й на головній, окремого варіанта look для товарів немає
 │  │     │  ├─ product/     ProductScreen: галерея, блок покупки, варіанти, опис і характеристики, схожі товари, JSON-LD
 │  │     │  ├─ seo/         seoMetadata (canonical, Open Graph, Twitter, noindex), JsonLd і генератори schema.org,
 │  │     │  │               графік з консолі → OpeningHoursSpecification; стратегія — docs/SEO.md
 │  │     │  ├─ home/        HomeScreen: блоки в порядку з консолі — слайдер із банерів, знижки, добірки, розділи,
 │  │     │  │               переваги, послуги, кроки, магазин у Бучі
-│  │     │  ├─ layout/      хром вітрини: ShopShell, SiteHeader (смуга оголошення, меню, мегаменю, мобільне меню),
-│  │     │  │               SiteFooter (контакти, соцмережі, особливі дні, реквізити продавця), BackToTop
+│  │     │  ├─ layout/      хром вітрини: ShopShell, SiteHeader (смуга оголошення, липка шапка, меню, мобільне меню),
+│  │     │  │               SiteFooter (контакти, соцмережі, особливі дні, реквізити продавця), BackToTop.
+│  │     │  │               Меню (09.11): «Каталог» — мегаменю з усіма розділами й їхніми підрозділами з
+│  │     │  │               дерева категорій, далі прямі посилання «Акції» (лише коли є товари зі знижкою),
+│  │     │  │               «Послуги», «Доставка й оплата», «Контакти»; юридичні сторінки — у футері.
+│  │     │  │               Мобільне меню: розділи розгортаються в підрозділи (details), нижче сторінки
 │  │     │  ├─ search/      SearchButton (панель пошуку в шапці), SearchScreen
 │  │     │  ├─ checkout/    CheckoutScreen: форма, вибір міста й відділення НП, підсумок, створення замовлення
+│  │     │  │               (09.11: кожен розділ карткою CheckoutStep з іконкою замість номера, способи отримання
+│  │     │  │               й оплати рядками CheckoutOptions, згода з офертою в підсумку над кнопкою; стилі checkout.css)
 │  │     │  ├─ order/       OrderScreen: сторінка результату замовлення, чеки, історія
 │  │     │  ├─ payment/     PayButton, PaymentPending, SandboxPaymentScreen
-│  │     │  ├─ services/    ServicesScreen, ServiceRequestForm, напрямки послуг
-│  │     │  ├─ content/     InfoPage, PageHead, ContactsScreen, CreditsScreen, OfferScreen (реквізити продавця),
+│  │     │  ├─ services/    ServicesScreen (09.11 у стилі XStore: SplitHero, кроки, шахова сітка напрямків «картка /
+│  │     │  │               фото», заявка на сірому тлі; «Залишити заявку» в картці ставить ?direction= і підставляє
+│  │     │  │               напрямок у форму), ServiceRequestForm
+│  │     │  ├─ content/     InfoPage (09.11: PageHead із крихтами, «Зміст» лише від 7 розділів h2/h3 тексту з консолі,
+│  │     │  │               вступ виділеним блоком, розділи з якорями; реквізити продавця
+│  │     │  │               в оферті — темною карткою), PageHead, ContactsScreen (картки зв'язку, бічні картки магазину з інструкцією самовивозу,
+│  │     │  │               соцмереж і продавця), DeliveryScreen (/payment-delivery: картки способів отримання й оплати з
+│  │     │  │               GET /checkout/delivery-methods, текст сторінки з консолі — акордеоном за заголовками h2/h3),
+│  │     │  │               CreditsScreen, OfferScreen (реквізити продавця),
 │  │     │  │               дані з консолі: головна й оголошення, реквізити, соцмережі, особливі дні, SEO сторінок
 │  │     │  ├─ customer/    сесія покупця (зовнішнє сховище + підказка в localStorage), CSRF кабінету, вхід/реєстрація/
 │  │     │  │               вихід, адреси для оформлення, AccountButton у шапці
@@ -133,7 +148,14 @@ web/
 │  │     │  └─ account/     сторінки кабінету: вхід, реєстрація, відновлення пароля, підтвердження email, AccountShell,
 │  │     │                  замовлення, деталі замовлення, обране, адреси, профіль
 │  │     └─ shared/
-│  │        ├─ lib/quantity.ts (MAX_QUANTITY), page-title.ts (pageTitle, hasShopName)   ui/quantity-stepper.tsx
+│  │        ├─ lib/quantity.ts (MAX_QUANTITY), page-title.ts (pageTitle, hasShopName)   ui/quantity-stepper.tsx,
+│  │        │  ui/split-hero.tsx (банер «темна панель + фото» для послуг, доставки й контактів; без фото — для
+│  │        │  текстових сторінок); ui/dropdown-select.tsx (власний випадний список замість усіх <select> вітрини: combobox + listbox,
+│  │        │  стрілки, Home/End, Enter, Escape, Tab, закриття кліком поза ним; варіанти inline (тулбар лістингу)
+│  │        │  і field (форми: name → прихований input, підказка, групи, пошук від 9 пунктів, aria-invalid);
+│  │        │  стилі — styles/ui/dropdown-select.css. Використано: сортування й кількість у лістингу, напрямок
+│  │        │  у заявці на послугу, відділення НП на оформленні й в адресах кабінету);
+│  │        │  блоки .ib-* — у styles/ui/info-blocks.css
 │  │        │  hooks/use-hydrated.ts
 │  │        └─ styles/   print.css
 │  │           ├─ ui/         stepper, fill, lines, totals, summary-layout (.css)
@@ -152,7 +174,7 @@ web/
       ├─ ui/      icons.tsx
       └─ styles/  tokens.css, base.css, layout.css
          └─ ui/   logo, buttons, crumbs, states, page-head, check, seg, pager, buybox-meta, remove, forms, notice, prose,
-                  seg-compact, meta-list (.css)
+                  meta-list (.css)
 ```
 
 Власні `styles/` мають 14 фіч вітрини: `layout`, `search`, `home`, `catalog`, `product`, `content`, `cart`, `order`,
@@ -200,10 +222,10 @@ src/features/<фіча>/
 | --- | --- | --- |
 | `analytics` | `track`, `TrackPurchase`, `TrackViewItem`, `GoogleAnalytics` | — |
 | `cart` | `CartProvider`, `useCart`, `useCartQuote`, `CartButton`, `CartDrawer`, `CartScreen`, `BuyForm`, `AddToCart` | — |
-| `catalog` | `ProductTile`, `ProductTiles`, `ProductTilesSkeleton`, `CategoryTile`, `CategoryGrid`, `ListingSkeleton`, `ProductLabels`, `discountPercent`, `categoryPhotoUrl`, тип `SearchParams` | `getCategory`, `getCategoryTree`, `getCollections`, `getSitemap`, `resolveRedirect`, `searchProducts`, `CatalogListing`, `CatalogScreen`, `CategoryScreen` |
+| `catalog` | `ProductTile`, `ProductTiles`, `ProductTilesSkeleton`, `CategoryTile`, `CategoryGrid`, `ListingSkeleton`, `ProductLabels`, `discountPercent`, `categoryPhotoUrl`, тип `SearchParams` | `getCategory`, `getCategoryTree`, `getCollections`, `getSitemap`, `resolveRedirect`, `searchProducts`, `CatalogListing`, `CatalogScreen`, `CategoryScreen`, `SaleScreen`, `SALE_TITLE`, `SALE_LEAD` |
 | `product` | `descriptionText` | `getProduct`, `ProductScreen` |
 | `home` | — | `HomeScreen` |
-| `layout` | — | `ShopShell` |
+| `layout` | — | `ShopShell`, `NotFoundContent` (404 і в корені, і в `(shop)`) |
 | `search` | `SearchButton` | `SearchScreen` |
 | `checkout` | `CheckoutScreen`, `SettlementPicker`, `CheckoutWarehouseSelect`, `CheckoutCourierFields`, `useDeliveryPoint`, `fieldProps`, `deliveryHint` | — |
 | `order` | `OrderFacts`, `OrderHistory`, `OrderItems`, `OrderReceipts`, `isOrderPaid`, `orderWhere` | `OrderScreen` |
@@ -310,8 +332,9 @@ src/features/<фіча>/
 @import url("../features/layout/styles/header-menu.css");
 ```
 
-Кінець маніфесту вітрини — три сегменти з правилами, які до розділення вітрина отримувала з CSS консолі
-(розділ 12.4): `ui/seg-compact.css`, `ui/meta-list.css` (обидва з пакета) і `src/shared/styles/print.css`.
+Кінець маніфесту вітрини — два сегменти з правилами, які до розділення вітрина отримувала з CSS консолі
+(розділ 12.4): `ui/meta-list.css` (з пакета) і `src/shared/styles/print.css`. `ui/seg-compact.css` прибрано 09.11:
+його `.seg` перебивав картки вибору `.seg--cards` на оформленні (flex замість сітки й зайва рамка).
 
 Новий сегмент додається окремим файлом у `styles/` фічі (або в `src/shared/styles/**` вітрини) і рядком `@import` у
 `globals.css` там, де його правила мають стояти в каскаді. Сегменти не містять `@import` і коментарів, `@media`/`@starting-style`-блоки не розрізаються,
@@ -392,7 +415,7 @@ src/features/<фіча>/
 | 1–26 | змінні .console, .console-loading | `console/shared/styles/root.css` |
 | 27–66 | каркас: бічна панель, верхня смуга | `console/features/shell/styles/shell.css` |
 | 67–82 | заголовок сторінки | `console/shared/styles/page-head.css` |
-| 83–151 | поля, прапорці, кнопки, .seg | `console/shared/styles/controls.css` (поля, прапорці, кнопки), `pkg/styles/ui/seg-compact.css` (`.seg` з кнопками) |
+| 83–151 | поля, прапорці, кнопки, .seg | `console/shared/styles/controls.css` (поля, прапорці, кнопки); `seg-compact.css` видалено 09.11 |
 | 152–165 | рядок фільтрів | `console/shared/styles/filters.css` |
 | 166–187 | картки, панелі, .readonly | `console/shared/styles/cards.css` (до `.readonly dd`), `pkg/styles/ui/meta-list.css` (`dl.buybox__meta`), `console/shared/styles/console-meta.css` (`.console-meta`) |
 | 188–228 | таблиці, чипи статусів | `console/shared/styles/tables.css` |
@@ -1510,7 +1533,7 @@ Mantine) імпортує кореневий `app/layout.tsx`, тож він і�
 | `dashboard` | `CatalogAttention` («Потребує уваги»: наповнення, нові, приховані з залишком) | `GET catalog/products/counts` |
 | `catalog` | `ProductsTabs` (вибірки), фільтри «Бренд», «Мітка», «Наповнення», `ProductsBulkBar` + `ProductsBulkDialog` (категорія, бренд, ручні мітки), `ProductEditorLabels`, бренд у товарі зі списку; `CategoryForm` з фото, описом і фільтрами з довідника (`MultiSelect`, до 10); `AttributesPage`, `BrandsPage` (+ `BrandMergeDialog`), `LabelsPage`; «Добірки головної» → «Добірки» | `GET catalog/products` (+ `brand`, `labelId`, `fill`, `newDays`, `hiddenWithStock`), `GET catalog/products/counts`, `POST catalog/products/bulk`, `catalog/attributes`, `catalog/brands` (+ `{id}/merge`), `catalog/labels`, `POST media/images` |
 | `content` | `PageSeoFields` у редакторі сторінки, фото в `ServiceDirectionDrawer` | `content/pages`, `content/services`, `POST media/images` |
-| `site` (нова) | `HomeSettingsPage` (блоки, смуга оголошення, переваги, кроки, блок магазину), `BannersPage` + `BannerDrawer` (з `kicker` — «Надпис над заголовком»), `SeoPage` з `RedirectsPanel` (перенесено з `catalog`) і `SeoTemplatesPanel` | `site/home`, `site/banners` (+ `PUT site/banners/order`), `site/seo-templates`, `catalog/redirects`, `POST media/images` |
+| `site` (нова) | `HomeSettingsPage` (блоки, смуга оголошення, переваги, кроки, блок магазину), `BannersPage` + `BannerDrawer` (з `kicker` — «Напис над заголовком»), `SeoPage` з `RedirectsPanel` (перенесено з `catalog`) і `SeoTemplatesPanel` | `site/home`, `site/banners` (+ `PUT site/banners/order`), `site/seo-templates`, `catalog/redirects`, `POST media/images` |
 | `settings` (нова) | `ShopSettingsPage` (форма контактів з колишньої `ContactsPage` + особливі дні, соцмережі з Viber, реквізити), `DeliverySettingsPage` (перемикачі способів + точки самовивозу з колишньої `PickupPage`), `PaymentSettingsPage` (лише читання), `NotificationSettingsPage` (з тестовим повідомленням) | `content/contacts`, `settings/shop`, `settings/delivery`, `delivery/pickup-points`, `settings/payments`, `settings/notifications` (+ `POST …/test`) |
 | `integration` | кнопка «Імпорт каталогу з файлу» й посилання з рядка імпорту ведуть на `/catalog/import` | — |
 
@@ -1567,7 +1590,7 @@ Next.js 16.4. Застосунок лишився односторінковим
 
 | Що на вітрині | Звідки | Де в коді |
 | --- | --- | --- |
-| Слайдер першого екрана | `GET /api/v1/site/home` → `banners` (увімкнені й у межах дат, за порядком): фото для комп'ютера й телефона, надпис над заголовком (`kicker`), заголовок, текст, кнопка. Без банерів — тимчасові `heroSlides` | `home/lib/hero-slides.ts` (`bannerSlides`), `home/components/hero-slider.tsx` |
+| Слайдер першого екрана | `GET /api/v1/site/home` → `banners` (увімкнені й у межах дат, за порядком): фото для комп'ютера й телефона, напис над заголовком (`kicker`), заголовок, текст, кнопка. Без банерів — тимчасові `heroSlides` | `home/lib/hero-slides.ts` (`bannerSlides`), `home/components/hero-slider.tsx` |
 | Склад і порядок головної | `site/home` → `blocks`: невідомі й повторені ключі відкидаються, вимкнені пропускаються; без даних — усі вісім у типовому порядку. Без слайдера на сторінці лишається прихований `h1` | `home/lib/home-blocks.ts`, `home/components/home-screen.tsx` |
 | Переваги, кроки, блок «Магазин у Бучі» | `site/home` → `perks`, `steps`, `visit`; порожньо — типові тексти з коду; адреса, графік і телефон блоку — з контактів | `perks.tsx`, `steps.tsx`, `store-visit.tsx` |
 | Смуга оголошення | `site/home` → `announcement` (сервер віддає лише увімкнене в межах дат), посилання — `next/link` | `layout/components/announcement-bar.tsx` у `SiteHeader` |

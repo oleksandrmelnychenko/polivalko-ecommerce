@@ -461,7 +461,7 @@ public partial class Program;
            Content.MapServiceRequestEndpoints        (service-directions, service-requests)
            Content.MapSiteContentEndpoints           (pages, contacts)
            Delivery.MapDeliveryEndpoints
-           Ordering.MapCheckoutEndpoints             (checkout/quote, orders, orders/{number}, seller)
+           Ordering.MapCheckoutEndpoints             (checkout/quote, checkout/delivery-methods, orders, orders/{number}, seller)
            Payments.MapPaymentEndpoints
            Fiscal.MapReceiptEndpoints                (orders/{number}/receipts)
            Content.MapSiteEndpoints                  (site/home; власна група /site)
@@ -894,6 +894,9 @@ cashOnDelivery, pickup }` — `payment|completion|none` з `Fiscal:IssueOn` (у�
   `PlatformModule` додає до рядка підключення як `Options=-c …`, тож він діє в кожному сеансі без окремого `SET`.
   Нечіткий пошук (`ProductSearchText.Similar`) відбирає товари через `id IN (… <% name UNION ALL … <% slug)`, а не
   через `OR`: з `OR` планувальник недооцінює вартість `<%` і читає всю таблицю (на 10 000 товарах — 550 мс замість 40 мс).
+- Фасети списку товарів (`ProductFacetBuilder`: бренди, мін./макс. ціна, кількість у наявності, характеристики)
+  рахуються за областю — розділ, пошук і (з 09.11) `onSale` — до фільтрів бренду, наявності, ціни й характеристик.
+  Тож на сторінці «Акції» лічильники описують лише товари зі знижкою, а вибраний бренд не ховає інші бренди.
 - Не перейменовувати класи сутностей і їхні властивості (імена таблиць, колонок, ключів і індексів беруться з них),
   не змінювати `HasData(TopLevelCategories.All)`. Перенесення сутності в інший простір імен модель не змінює —
   перевіряє гейт.
