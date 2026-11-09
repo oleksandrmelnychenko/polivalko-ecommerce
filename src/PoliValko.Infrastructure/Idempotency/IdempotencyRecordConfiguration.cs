@@ -13,6 +13,7 @@ internal sealed class IdempotencyRecordConfiguration : IEntityTypeConfiguration<
         builder.Property(r => r.Scope).HasMaxLength(200);
         builder.Property(r => r.Key).HasMaxLength(100);
         builder.Property(r => r.RequestHash).HasMaxLength(64);
+        builder.Property(r => r.SubjectHash).HasMaxLength(64);
         builder.Property(r => r.ResponseBody).HasColumnType("jsonb");
         builder.Property(r => r.ResponseLocation).HasMaxLength(500);
         builder.HasIndex(r => r.CreatedAt);

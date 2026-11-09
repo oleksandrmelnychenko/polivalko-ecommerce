@@ -25,6 +25,12 @@ internal sealed class StubNavkoloClient(Microsoft.Extensions.Options.IOptionsMon
         return Task.FromResult($"NK-{order.Number}");
     }
 
+    public Task CancelOrderAsync(Guid orderId, string? reference, CancellationToken ct)
+    {
+        ThrowIfOutage();
+        return Task.CompletedTask;
+    }
+
     private void ThrowIfOutage()
     {
         if (options.CurrentValue.Stub.SimulateOutage)

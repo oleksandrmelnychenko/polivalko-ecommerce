@@ -12,3 +12,8 @@ openapi/
 .idea
 **/*.user
 .env*
+
+# Local wrapping keys must never enter source control or build contexts
+.local/
+**/*.key
+**/*.pfx

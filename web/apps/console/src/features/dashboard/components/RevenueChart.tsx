@@ -5,7 +5,7 @@ import type { DashboardDay } from '../api/dashboardApi'
 import { asDate, barPath, compact, longDate, niceMax, shortDate, type Metric } from '../lib/insights'
 
 const HEIGHT = 260
-const PAD = { top: 28, right: 8, bottom: 30, left: 56 }
+const PAD = { top: 28, right: 8, bottom: 30, left: 72 }
 
 export function RevenueChart({ days, metric }: { days: DashboardDay[]; metric: Metric }) {
   const [box, setBox] = useState<HTMLDivElement | null>(null)
@@ -61,7 +61,7 @@ export function RevenueChart({ days, metric }: { days: DashboardDay[]; metric: M
             {ticks.map((t) => (
               <g key={t}>
                 {t > 0 ? <line x1={PAD.left} x2={width - PAD.right} y1={y(t)} y2={y(t)} /> : null}
-                <text x={PAD.left - 10} y={y(t)} dy="0.32em" textAnchor="end">
+                <text className={metric === 'revenue' ? 'money' : undefined} x={PAD.left - 10} y={y(t)} dy="0.32em" textAnchor="end">
                   {tick(t)}
                 </text>
               </g>
@@ -80,7 +80,7 @@ export function RevenueChart({ days, metric }: { days: DashboardDay[]; metric: M
             )
           })}
           {peakIndex >= 0 && active === null ? (
-            <text className="dash-chart-label" x={PAD.left + peakIndex * band + band / 2} y={y(peak) - 8} textAnchor={peakIndex > days.length - 3 ? 'end' : 'middle'}>
+            <text className={`dash-chart-label${metric === 'revenue' ? ' money' : ''}`} x={PAD.left + peakIndex * band + band / 2} y={y(peak) - 8} textAnchor={peakIndex > days.length - 3 ? 'end' : 'middle'}>
               {format(peak)}
             </text>
           ) : null}
@@ -102,7 +102,7 @@ export function RevenueChart({ days, metric }: { days: DashboardDay[]; metric: M
           aria-live="polite"
         >
           <span>{longDate.format(asDate(current.date))}</span>
-          <b>{formatPrice(current.revenue.value)}</b>
+          <b><span className="money">{formatPrice(current.revenue.value)}</span></b>
           <span>
             {current.orders} {plural(current.orders, 'замовлення', 'замовлення', 'замовлень')}
           </span>
@@ -129,7 +129,7 @@ export function RevenueChart({ days, metric }: { days: DashboardDay[]; metric: M
                 <tr key={d.date}>
                   <td>{longDate.format(asDate(d.date))}</td>
                   <td className="is-num">{d.orders}</td>
-                  <td className="is-num">{formatPrice(d.revenue.value)}</td>
+                  <td className="is-num"><span className="money">{formatPrice(d.revenue.value)}</span></td>
                 </tr>
               ))}
             </tbody>

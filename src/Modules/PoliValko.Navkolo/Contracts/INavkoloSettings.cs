@@ -2,5 +2,5 @@ namespace PoliValko.Navkolo.Contracts;
 
 public interface INavkoloSettings
 {
-    string Mode { get; }
+    Task<string> GetModeAsync(CancellationToken ct);
 }

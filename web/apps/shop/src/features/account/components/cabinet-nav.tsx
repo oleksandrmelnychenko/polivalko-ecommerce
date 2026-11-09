@@ -26,7 +26,11 @@ export function CabinetNav({ pathname, onLogout }: { pathname: string; onLogout:
 
   async function logout() {
     setBusy(true);
-    await onLogout();
+    try {
+      await onLogout();
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (

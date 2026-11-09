@@ -9,4 +9,4 @@ public sealed record NavkoloOrder(
     string Payment,
     decimal Total,
     string? Comment,
-    IReadOnlyList<NavkoloOrderLine> Lines);
+    IReadOnlyList<NavkoloOrderLine> Lines, Guid? Id = null);

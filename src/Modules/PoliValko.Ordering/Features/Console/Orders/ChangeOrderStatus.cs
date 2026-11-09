@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using PoliValko.Catalog.Contracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,7 @@ internal static class ChangeOrderStatus
         ClaimsPrincipal user,
         PoliValkoDbContext db,
         IOutbox outbox,
+        ICatalogReservations reservations,
         IAuditLog audit,
         TimeProvider time,
         CancellationToken ct)
@@ -35,6 +37,8 @@ internal static class ChangeOrderStatus
             return TypedResults.ValidationProblem(new Dictionary<string, string[]> { ["reason"] = ["Не більше 500 символів."] });
         }
 
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        await db.Database.ExecuteSqlAsync($"SELECT 1 FROM ordering.orders WHERE number = {number} FOR UPDATE", ct);
         var order = await OrderLoader.LoadAsync(db, number, tracking: true, ct);
         if (order is null)
         {
@@ -58,10 +62,21 @@ internal static class ChangeOrderStatus
             outbox.Enqueue(new FiscalReceiptRequested(order.Id, FiscalTrigger.Completion));
         }
 
+        if (target == OrderStatus.Cancelled)
+        {
+            outbox.Enqueue(new OrderCancellationRequested(order.Id));
+            if (order.PaymentMethod == PaymentMethod.Card) outbox.Enqueue(new PaymentCancellationRequested(order.Id));
+            // An attempted export may have reached ERP even when its response was lost.
+            if (order.NavkoloExportAttemptedAt is null && order.NavkoloOrderRef is null)
+                await reservations.ReleaseAsync(order.Id, ct);
+        }
+        if (target is OrderStatus.Shipped or OrderStatus.Completed) await reservations.ConsumeAsync(order.Id, ct);
+
         audit.Record("order.status_changed", "Order", order.Number, new { from, to = target, reason });
         try
         {
             await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
         }
         catch (DbUpdateConcurrencyException)
         {

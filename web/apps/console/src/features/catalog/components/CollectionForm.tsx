@@ -137,7 +137,7 @@ export function CollectionForm({ formId, collection, error, onBusy, onSaved }: C
                 <span className="app-cell-stack catalog-pick-main">
                   <span className="app-cell-title">{productName(item)}</span>
                   <span className="app-cell-sub">
-                    {formatMoney(item.price)}
+                    <span className="money">{formatMoney(item.price)}</span>
                     {item.isVisible ? null : " · прихований, на головній не з'явиться"}
                   </span>
                 </span>

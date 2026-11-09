@@ -1,38 +1,17 @@
 import Link from "next/link";
-import { notFound, permanentRedirect } from "next/navigation";
 import { Suspense } from "react";
+import type { ProductDetails } from "@polivalko/shared/api/types";
 import { TrackViewItem } from "@/features/analytics";
-import { resolveRedirect } from "@/features/catalog/server";
-import { getProduct } from "../api/server";
 import { Gallery } from "./gallery";
 import { ProductBuybox } from "./product-buybox";
 import { ProductDescription } from "./product-description";
 import { ProductJsonLd } from "./product-json-ld";
 import { RelatedProducts } from "./related-products";
 
-type ProductScreenProps = { params: Promise<{ slug: string }> };
-
-export function ProductScreen(props: ProductScreenProps) {
+/** The page resolves the product first (see requireProduct), so a missing one is a real 404. */
+export function ProductScreen({ product }: { product: ProductDetails }) {
   return (
     <div className="container">
-      <Suspense fallback={<div className="product"><div className="skeleton" style={{ aspectRatio: "1" }} /><div className="skeleton" style={{ height: "var(--space-4xl)" }} /></div>}>
-        <ProductContent {...props} />
-      </Suspense>
-    </div>
-  );
-}
-
-async function ProductContent({ params }: ProductScreenProps) {
-  const { slug } = await params;
-  const product = await getProduct(slug);
-  if (!product) {
-    const target = await resolveRedirect(`/product/${slug}`);
-    if (target) permanentRedirect(target);
-    notFound();
-  }
-
-  return (
-    <>
       <ProductJsonLd product={product} />
       <TrackViewItem item={{ item_id: product.sku, item_name: product.name, price: Number(product.price.value), quantity: 1 }} />
       <nav className="crumbs product-crumbs" aria-label="Хлібні крихти">
@@ -57,6 +36,6 @@ async function ProductContent({ params }: ProductScreenProps) {
       <Suspense fallback={null}>
         <RelatedProducts category={product.category.slug} exclude={product.id} />
       </Suspense>
-    </>
+    </div>
   );
 }

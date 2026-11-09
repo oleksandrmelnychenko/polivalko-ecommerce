@@ -25,6 +25,10 @@ internal static class CreateRefund
         TimeProvider time,
         CancellationToken ct)
     {
+        // A card refund adds rows but leaves the order row unchanged, so its version check never fires.
+        // The row lock makes parallel requests see each other's refunds when they count what is still refundable.
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        await db.Database.ExecuteSqlAsync($"SELECT 1 FROM ordering.orders WHERE number = {number} FOR UPDATE", ct);
         var order = await OrderLoader.LoadAsync(db, number, tracking: true, ct);
         if (order is null)
         {
@@ -99,6 +103,7 @@ internal static class CreateRefund
         try
         {
             await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
         }
         catch (DbUpdateConcurrencyException)
         {

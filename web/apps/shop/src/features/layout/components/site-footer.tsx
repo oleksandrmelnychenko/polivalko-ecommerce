@@ -25,8 +25,12 @@ export function SiteFooter() {
     <footer className="footer">
       <div className="container footer__grid">
         <div className="footer__about">
-          <Link href="/" className="logo logo--footer" translate="no">
-            PoliValko
+          <Link href="/" className="brand-logo" aria-label="Poli-Valko — на головну" translate="no">
+            <img className="brand-logo__emblem" src="/mascot/poli-valka-poster.png" width={253} height={450} alt="" />
+            <span className="brand-logo__wordmark">
+              <span className="brand-logo__name">Poli-Valko</span>
+              <span className="brand-logo__tagline">Дім · сад · город</span>
+            </span>
           </Link>
           <p>Товари для дому, саду та городу з магазину в Бучі. Відправляємо Новою поштою по всій Україні або чекаємо на самовивіз.</p>
           <Suspense fallback={null}>
@@ -50,7 +54,7 @@ export function SiteFooter() {
           </Suspense>
         </FooterColumn>
       </div>
-      <p className="footer__legal">Copyright © 2026 PoliValko. Усі права захищені.</p>
+      <p className="footer__legal">Copyright © 2026 Poli-Valko. Усі права захищені.</p>
     </footer>
   );
 }

@@ -57,6 +57,11 @@ public sealed class Order
     public string? NavkoloOrderRef { get; private set; }
 
     public DateTimeOffset? NavkoloExportedAt { get; private set; }
+    public DateTimeOffset? NavkoloExportAttemptedAt { get; private set; }
+    public DateTimeOffset? NavkoloCancellationRequestedAt { get; private set; }
+    public DateTimeOffset? NavkoloCancellationSynchronizedAt { get; private set; }
+    public DateTimeOffset? NavkoloShippedAt { get; private set; }
+    public DateTimeOffset? NavkoloCancelledAt { get; private set; }
 
     public DateTimeOffset CreatedAt { get; init; }
 
@@ -96,6 +101,12 @@ public sealed class Order
 
     public void ChangeStatus(OrderStatus to, DateTimeOffset at, string by, string? reason = null)
     {
+        RecordStatus(to, at, by, reason);
+        if (to == OrderStatus.Cancelled) NavkoloCancellationRequestedAt = at;
+    }
+
+    private void RecordStatus(OrderStatus to, DateTimeOffset at, string by, string? reason)
+    {
         History.Add(new OrderStatusChange
         {
             Id = Guid.CreateVersion7(at),
@@ -107,6 +118,32 @@ public sealed class Order
             Reason = reason,
         });
         Status = to;
+    }
+
+    public bool ObserveNavkolo(ExternalOrderState state, DateTimeOffset at)
+    {
+        var shipped = state.Shipped && NavkoloShippedAt is null;
+        var cancelled = state.Cancelled && NavkoloCancelledAt is null;
+        if (!shipped && !cancelled) return false;
+        if (shipped) NavkoloShippedAt = at;
+        if (cancelled) NavkoloCancelledAt = at;
+        // The provider exposes no revision timestamp. Terminal facts never regress on later polls.
+        var target = Status;
+        if (NavkoloShippedAt is not null)
+        {
+            if (Status is not (OrderStatus.Completed or OrderStatus.Cancelled)) target = OrderStatus.Shipped;
+        }
+        else if (cancelled && Status is not (OrderStatus.Shipped or OrderStatus.Completed)) target = OrderStatus.Cancelled;
+        if (target == OrderStatus.Cancelled && state.Cancelled && NavkoloShippedAt is null)
+            NavkoloCancellationSynchronizedAt ??= at;
+        var reason = shipped ? "Відвантаження підтверджено в Навколо; залишки звірено." : "Скасування підтверджено в Навколо.";
+        if ((NavkoloShippedAt is not null && (target == OrderStatus.Cancelled || NavkoloCancelledAt is not null)) ||
+            (cancelled && target is OrderStatus.Shipped or OrderStatus.Completed))
+            reason += " Конфлікт скасування та відвантаження: перевірте облік і повернення товару.";
+        RecordStatus(target, at, "Навколо", reason);
+        // A confirmed remote document also resolves a lost upload response; never upload it again.
+        MarkExported(Id.ToString(), at);
+        return true;
     }
 
     public bool MarkPaid(DateTimeOffset at, string by)

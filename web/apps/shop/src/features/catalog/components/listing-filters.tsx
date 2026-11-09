@@ -154,7 +154,7 @@ export function ListingFilters({
                     }}
                   >
                     <span className="fprice__dot" aria-hidden="true" />
-                    {r.label}
+                    <span className="money">{r.label}</span>
                   </button>
                 </li>
               );
@@ -168,6 +168,7 @@ export function ListingFilters({
           <input
             id="price-min"
             name="priceMin"
+            className="money"
             autoComplete="off"
             type="number"
             inputMode="numeric"
@@ -184,6 +185,7 @@ export function ListingFilters({
           <input
             id="price-max"
             name="priceMax"
+            className="money"
             autoComplete="off"
             type="number"
             inputMode="numeric"
@@ -197,7 +199,7 @@ export function ListingFilters({
         </div>
         {facets.priceMin && facets.priceMax && (
           <p className="fw__hint">
-            У розділі від {formatMoney(facets.priceMin)} до {formatMoney(facets.priceMax)}
+            У розділі від <span className="money">{formatMoney(facets.priceMin)}</span> до <span className="money">{formatMoney(facets.priceMax)}</span>
           </p>
         )}
       </fieldset>

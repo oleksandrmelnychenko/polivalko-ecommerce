@@ -62,6 +62,8 @@ tests/load/                 навантажувальний сценарій k6
 
 ```bash
 docker compose up -d postgres
+# Один раз: ключ шифрування cookie key ring, поза репозиторієм і БД.
+sh deploy/create-key-certificate.sh "$HOME/.local/share/polivalko/data-protection"
 dotnet run --project src/PoliValko.Api --launch-profile http
 ```
 
@@ -81,12 +83,19 @@ npm run dev -w console  # консоль: http://localhost:3001
 Запити браузера до `/api/*` обидва застосунки в режимі розробки проксіюють до API (консоль — через `dev-server.mjs`). Вітрина за замовчуванням іде на `http://localhost:5080`
 (`dotnet run`). Консоль за замовчуванням іде через Caddy Docker-стека (`http://127.0.0.1:8080` з `Host: console.localhost:8080`,
 див. нижче); щоб працювати з API з `dotnet run`, запустіть її з `API_INTERNAL_URL=http://localhost:5080`.
-Тестові працівники — `Seed:Users` в `src/PoliValko.Api/appsettings.Development.json` (Адміністратор і Менеджер).
+Локальних працівників задайте через .NET User Secrets для `src/PoliValko.Api` у секції `Seed:Users`
+(поля `Email`, `Password`, `DisplayName`, `Role`; ролі `Admin` або `Manager`). Наприклад,
+`dotnet user-secrets set "Seed:Users:0:Email" "admin@example.test" --project src/PoliValko.Api`.
+Пароль зберігайте лише у локальному User Secrets або змінних середовища; спільних паролів у репозиторії немає.
+Наявні локальні облікові записи залишаються в базі даних.
 
 ## Увесь стек у Docker
 
 ```bash
 cp .env.example .env
+sh deploy/create-key-certificate.sh .local/data-protection
+# На Linux: надайте UID 1654 читання каталогу/файлів через власника або ACL.
+# Не робіть приватний ключ загальнодоступним; деталі — docs/operations.md.
 docker compose --profile app up -d --build
 ```
 
@@ -96,6 +105,18 @@ Caddy на обох адресах віддає `/api/*` в API, решту — 
 Міграції застосовує окремий сервіс `migrate` (EF migrations bundle) до старту API та Worker.
 
 ## Тести
+
+На macOS запускайте повний backend-прогін у Linux-контейнері:
+
+```bash
+./deploy/test-backend.sh
+```
+
+Скрипт збирає поточний код, запускає всі тести з окремою PostgreSQL і видаляє тестові контейнери після завершення.
+Порти не публікуються, база магазину й сертифікати хоста не монтуються. Це обходить запити macOS Keychain,
+які можуть виникати в довгому нативному прогоні тестів сертифікатів. Пароль Keychain тестам не потрібен.
+
+На Linux або в CI:
 
 ```bash
 dotnet test --solution PoliValko.slnx
@@ -134,7 +155,7 @@ dotnet test --solution PoliValko.slnx
   доставка, оплата й чеки, сповіщення) · Система (інтеграції, працівники, ролі і права, журнал) — див.
   [docs/console-guide.md](docs/console-guide.md). Власних знижок і промокодів консоль не має: ціни й стара ціна — лише з Navkolo (ТЗ §4.6).
 - Працівники з `Seed:Users` створюються під час старту API в будь-якому середовищі (наявні не змінюються):
-  локально — з `appsettings.Development.json`, у Docker — перший адміністратор з `ADMIN_EMAIL`/`ADMIN_PASSWORD`.
+  локально — з .NET User Secrets або змінних `Seed__Users__...`, у Docker — перший адміністратор з `ADMIN_EMAIL`/`ADMIN_PASSWORD`.
 
 ## Міграції
 

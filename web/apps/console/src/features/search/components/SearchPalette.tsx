@@ -145,7 +145,7 @@ export function SearchPalette() {
                     <strong>{item.title}</strong>
                     <span>{item.sub}</span>
                   </span>
-                  {item.side ? <span className="palette-side">{item.side}</span> : null}
+                  {item.side ? <span className={`palette-side${item.sideIsMoney ? ' money' : ''}`}>{item.side}</span> : null}
                 </div>
               )
             })}

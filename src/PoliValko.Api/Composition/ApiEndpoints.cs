@@ -58,6 +58,7 @@ public static class ApiEndpoints
         console.MapConsoleDeliverySettingsEndpoints();
         console.MapConsolePaymentSettingsEndpoints();
         console.MapConsoleNotificationSettingsEndpoints();
+        console.MapConsoleNavkoloSettingsEndpoints();
 
         api.MapAccountEndpoints();
         api.MapAccountOrderEndpoints();

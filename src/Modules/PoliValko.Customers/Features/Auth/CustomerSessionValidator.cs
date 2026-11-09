@@ -2,8 +2,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using PoliValko.Customers.Configuration;
 using PoliValko.Customers.Contracts;
 using PoliValko.Customers.Domain;
 using PoliValko.Infrastructure.Persistence;
@@ -15,13 +13,6 @@ internal static class CustomerSessionValidator
     public static async Task ValidateAsync(CookieValidatePrincipalContext context)
     {
         var services = context.HttpContext.RequestServices;
-        var now = (context.Options.TimeProvider ?? TimeProvider.System).GetUtcNow();
-        var interval = services.GetRequiredService<IOptions<CustomersOptions>>().Value.SessionCheckInterval;
-        if (context.Properties.IssuedUtc is { } issued && now - issued < interval)
-        {
-            return;
-        }
-
         var id = context.Principal.CustomerId();
         var stamp = context.Principal?.FindFirst(CustomerClaims.SecurityStamp)?.Value;
         var customer = id is null
@@ -39,7 +30,10 @@ internal static class CustomerSessionValidator
             return;
         }
 
-        context.ReplacePrincipal(CustomerSession.CreatePrincipal(customer.Id, customer.Email, customer.Name, customer.SecurityStamp));
-        context.ShouldRenew = true;
+        if (context.Principal?.Identity?.Name != customer.Name)
+        {
+            context.ReplacePrincipal(CustomerSession.CreatePrincipal(customer.Id, customer.Email, customer.Name, customer.SecurityStamp));
+            context.ShouldRenew = true;
+        }
     }
 }

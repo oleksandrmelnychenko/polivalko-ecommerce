@@ -806,6 +806,11 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(12,3)")
                         .HasColumnName("quantity");
 
+                    b.Property<decimal>("ReservedQuantity")
+                        .HasPrecision(14, 3)
+                        .HasColumnType("numeric(14,3)")
+                        .HasColumnName("reserved_quantity");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -814,6 +819,41 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasName("pk_product_stock");
 
                     b.ToTable("product_stock", "catalog");
+                });
+
+            modelBuilder.Entity("PoliValko.Catalog.Domain.StockReservation", b =>
+                {
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("order_id");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<bool>("Consumed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("consumed");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer")
+                        .HasColumnName("quantity");
+
+                    b.Property<bool>("Released")
+                        .HasColumnType("boolean")
+                        .HasColumnName("released");
+
+                    b.HasKey("OrderId", "ProductId")
+                        .HasName("pk_stock_reservations");
+
+                    b.HasIndex("ProductId", "Released")
+                        .HasDatabaseName("ix_stock_reservations_product_id_released");
+
+                    b.ToTable("stock_reservations", "catalog");
                 });
 
             modelBuilder.Entity("PoliValko.Catalog.Domain.UrlRedirect", b =>
@@ -1748,6 +1788,11 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("status_code");
 
+                    b.Property<string>("SubjectHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("subject_hash");
+
                     b.HasKey("Scope", "Key")
                         .HasName("pk_idempotency_keys");
 
@@ -2169,6 +2214,22 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("internal_note");
 
+                    b.Property<DateTimeOffset?>("NavkoloCancellationRequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("navkolo_cancellation_requested_at");
+
+                    b.Property<DateTimeOffset?>("NavkoloCancellationSynchronizedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("navkolo_cancellation_synchronized_at");
+
+                    b.Property<DateTimeOffset?>("NavkoloCancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("navkolo_cancelled_at");
+
+                    b.Property<DateTimeOffset?>("NavkoloExportAttemptedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("navkolo_export_attempted_at");
+
                     b.Property<DateTimeOffset?>("NavkoloExportedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("navkolo_exported_at");
@@ -2177,6 +2238,10 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("navkolo_order_ref");
+
+                    b.Property<DateTimeOffset?>("NavkoloShippedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("navkolo_shipped_at");
 
                     b.Property<string>("Number")
                         .IsRequired()
@@ -2489,6 +2554,49 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_order_status_changes_order_id_at");
 
                     b.ToTable("order_status_changes", "ordering");
+                });
+
+            modelBuilder.Entity("PoliValko.Ordering.Domain.ServerCart", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<long?>("CheckoutRevision")
+                        .HasColumnType("bigint")
+                        .HasColumnName("checkout_revision");
+
+                    b.Property<string>("ItemsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("items_json");
+
+                    b.Property<string>("Owner")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("owner");
+
+                    b.Property<string>("ProtectedCheckoutResult")
+                        .HasColumnType("text")
+                        .HasColumnName("protected_checkout_result");
+
+                    b.Property<long>("Revision")
+                        .HasColumnType("bigint")
+                        .HasColumnName("revision");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_carts");
+
+                    b.HasIndex("Owner")
+                        .IsUnique()
+                        .HasDatabaseName("ix_carts_owner");
+
+                    b.ToTable("carts", "ordering");
                 });
 
             modelBuilder.Entity("PoliValko.Payments.Domain.Payment", b =>
@@ -2820,6 +2928,16 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_product_stock_product_product_id");
+                });
+
+            modelBuilder.Entity("PoliValko.Catalog.Domain.StockReservation", b =>
+                {
+                    b.HasOne("PoliValko.Catalog.Domain.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_stock_reservations_product_product_id");
                 });
 
             modelBuilder.Entity("PoliValko.Customers.Domain.CustomerAddress", b =>

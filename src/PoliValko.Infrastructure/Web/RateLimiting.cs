@@ -10,6 +10,7 @@ namespace PoliValko.Infrastructure.Web;
 
 public static class RateLimitPolicies
 {
+    public const string Cart = "cart";
     public const string Forms = "forms";
     public const string Orders = "orders";
     public const string Login = "login";
@@ -22,6 +23,7 @@ public static class RateLimitingRegistration
         services.AddRateLimiter(_ => { });
         services.AddOptions<RateLimiterOptions>().Configure<IConfiguration>((options, configuration) =>
         {
+            AddPerIpPolicy(options, configuration, RateLimitPolicies.Cart, "RateLimiting:Cart", 120);
             AddPerIpPolicy(options, configuration, RateLimitPolicies.Forms, "RateLimiting:Forms", 5);
             AddPerIpPolicy(options, configuration, RateLimitPolicies.Orders, "RateLimiting:Orders", 10, defaultWindowSeconds: 600);
             AddPerIpPolicy(options, configuration, RateLimitPolicies.Login, "RateLimiting:Login", 10);

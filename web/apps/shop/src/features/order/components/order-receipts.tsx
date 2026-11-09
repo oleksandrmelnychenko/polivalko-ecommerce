@@ -10,7 +10,7 @@ export function OrderReceipts({ receipts }: { receipts: Receipt[] }) {
         {receipts.map((r) => (
           <li key={r.id}>
             <span>
-              {receiptKindLabel[r.kind] ?? r.kind}, {formatMoney(r.amount)}
+              {receiptKindLabel[r.kind] ?? r.kind}, <span className="money">{formatMoney(r.amount)}</span>
               <br />
               <span className="muted">
                 Фіскальний номер <span className="code">{r.fiscalCode}</span>

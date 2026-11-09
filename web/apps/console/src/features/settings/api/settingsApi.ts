@@ -63,3 +63,10 @@ export function saveNotificationSettings(headers: CsrfHeaders, body: SaveNotific
 export function sendTestNotification(headers: CsrfHeaders) {
   return api.POST('/api/v1/console/settings/notifications/test', { headers })
 }
+
+export type NavkoloConnection = S['NavkoloConnectionDto']
+export type NavkoloStore = S['NavkoloStoreDto']
+export type NavkoloStatus = S['NavkoloStatusDto']
+export function getNavkoloSettings() { return api.GET('/api/v1/console/settings/navkolo') }
+export function checkNavkolo(headers: CsrfHeaders, body: S['CheckNavkoloRequest']) { return api.POST('/api/v1/console/settings/navkolo/check', { headers, body }) }
+export function saveNavkoloSettings(headers: CsrfHeaders, body: S['SaveNavkoloConnectionRequest']) { return api.PUT('/api/v1/console/settings/navkolo', { headers, body }) }

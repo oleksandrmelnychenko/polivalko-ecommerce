@@ -11,7 +11,7 @@ export function MegaProduct({ product }: { product: ProductListItem }) {
         {product.imageUrl && <img src={thumb(product.imageUrl, 250)} alt="" width={120} height={120} loading="lazy" />}
         <span className="mega-product__name">{product.name}</span>
         <span className="mega-product__price">
-          {product.oldPrice && <s>{formatMoney(product.oldPrice)}</s>} {formatMoney(product.price)}
+          {product.oldPrice && <s><span className="money">{formatMoney(product.oldPrice)}</span></s>} <span className="money">{formatMoney(product.price)}</span>
         </span>
       </Link>
     </div>

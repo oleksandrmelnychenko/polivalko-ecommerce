@@ -14,8 +14,15 @@ x-app-env: &app-env
   Web__RevalidateUrl: http://web:3000/internal/revalidate
   Web__RevalidateSecret: ${REVALIDATE_SECRET:-local-revalidate-secret}
   Navkolo__Mode: ${NAVKOLO_MODE:-Stub}
+  Navkolo__ApiKey: ${NAVKOLO_API_KEY:-}
+  Navkolo__StoreId: ${NAVKOLO_STORE_ID:-}
+  Navkolo__Channel: ${NAVKOLO_CHANNEL:-Poli-Valko}
+  Navkolo__OrderStatusId: ${NAVKOLO_ORDER_STATUS_ID:-}
+  Navkolo__CancellationStatusId: ${NAVKOLO_CANCELLATION_STATUS_ID:-}
   Navkolo__SyncInterval: ${NAVKOLO_SYNC_INTERVAL:-00:05:00}
   Payments__Provider: ${PAYMENTS_PROVIDER:-Sandbox}
+  # Local stack and staging; deploy/compose.production.yaml pins it off.
+  Payments__AllowSandbox: "true"
   Payments__Sandbox__Secret: ${PAYMENTS_SANDBOX_SECRET:-local-sandbox-secret}
   Payments__Mono__Token: ${MONO_TOKEN:-}
   Fiscal__Provider: ${FISCAL_PROVIDER:-Stub}
@@ -77,11 +84,18 @@ services:
       Database__SeedDemoData: ${SEED_DEMO_DATA:-true}
       Api__ExposeDocs: ${EXPOSE_API_DOCS:-true}
       Media__Root: /data/media
+      DataProtection__CertificateDirectory: /run/secrets/data-protection
       Seed__Users__0__Email: ${ADMIN_EMAIL:-}
       Seed__Users__0__Password: ${ADMIN_PASSWORD:-}
       Seed__Users__0__DisplayName: Адміністратор
       Seed__Users__0__Role: Admin
     volumes:
+      - type: bind
+        source: ${DATA_PROTECTION_CERTIFICATE_DIR:-./.local/data-protection}
+        target: /run/secrets/data-protection
+        read_only: true
+        bind:
+          create_host_path: false
       - media:/data/media
     depends_on:
       migrate:
@@ -99,6 +113,14 @@ services:
     environment:
       <<: *app-env
       DOTNET_ENVIRONMENT: ${APP_ENVIRONMENT:-Production}
+      DataProtection__CertificateDirectory: /run/secrets/data-protection
+    volumes:
+      - type: bind
+        source: ${DATA_PROTECTION_CERTIFICATE_DIR:-./.local/data-protection}
+        target: /run/secrets/data-protection
+        read_only: true
+        bind:
+          create_host_path: false
     depends_on:
       migrate:
         condition: service_completed_successfully

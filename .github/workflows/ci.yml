@@ -38,10 +38,12 @@ jobs:
           cache-dependency-path: web/package-lock.json
 
       - run: npm ci
+      - run: npm audit --omit=dev
       - name: TS-типи відповідають контракту OpenAPI
         run: npm run api:types && git diff --exit-code -- packages/shared/api/schema.d.ts
       - run: npm run lint
       - run: npm run typecheck
+      - run: node --test apps/shop/tests/*.test.mjs
       - run: npm run build
 
   deploy:
@@ -66,18 +68,21 @@ jobs:
 
       - name: Конфігурація compose (локально і staging)
         run: |
+          sh -n deploy/test-backend.sh
+          docker compose -f deploy/compose.tests.yaml config -q
           docker compose --profile app --profile offsite config -q
           docker compose -f compose.yaml -f compose.staging.yaml --profile app config -q
 
       - name: Конфігурація compose (production)
         env:
+          DATA_PROTECTION_CERTIFICATE_DIR: /tmp/polivalko-ci-keys
           POSTGRES_PASSWORD: ci-only
           SITE_ADDRESS: shop.example.ua
           SITE_URL: https://shop.example.ua
           CONSOLE_ADDRESS: console.shop.example.ua
+          CONSOLE_ALLOWED_IPS: 203.0.113.0/24
           REVALIDATE_SECRET: ci-only
-          PAYMENTS_PROVIDER: Sandbox
-          PAYMENTS_SANDBOX_SECRET: ci-only
+          PAYMENTS_PROVIDER: Mono
           FISCAL_PROVIDER: Stub
         run: docker compose -f compose.yaml -f deploy/compose.production.yaml --profile app --profile offsite config -q
 

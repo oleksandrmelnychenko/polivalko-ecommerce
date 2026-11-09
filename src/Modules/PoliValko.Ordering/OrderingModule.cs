@@ -31,6 +31,7 @@ public static class OrderingModule
             .AddScoped<IOrderPayments, OrderPayments>()
             .AddScoped<IOrderReceiptSource, OrderReceiptSource>()
             .AddScoped<IOrderExportSource, OrderExportSource>()
+            .AddScoped<IOrderStateSync, Features.Synchronization.OrderStateSync>()
             .AddScoped<IOrderReporting, OrderReporting>()
             .AddScoped<ICustomerEmailConfirmedHandler, LinkGuestOrders>()
             .AddScoped<ICustomerOrderHistory, CustomerOrderHistory>()
@@ -38,6 +39,10 @@ public static class OrderingModule
             .AddOutboxHandler<PaymentSucceeded, NotifyManagerOnPaymentSucceeded>()
             .AddOutboxHandler<OrderPaidAfterCancel, NotifyManagerOnOrderPaidAfterCancel>();
     }
+
+    public static IServiceCollection AddOrderingHttp(this IServiceCollection services) => services
+        .AddScoped<OrderWriter>()
+        .AddScoped<Features.Cart.ServerCartStore>();
 
     public static IEndpointRouteBuilder MapCheckoutEndpoints(this IEndpointRouteBuilder api) =>
         CheckoutEndpoints.Map(api);

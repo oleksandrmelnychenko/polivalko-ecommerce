@@ -253,7 +253,7 @@ function AccountOrders({ account, canViewOrders }: { account: AccountDetails; ca
                   <Table.Td>
                     <OrderStatusChip status={order.status as OrderStatus} />
                   </Table.Td>
-                  <Table.Td className="is-num is-strong">{formatMoney(order.total)}</Table.Td>
+                  <Table.Td className="is-num is-strong"><span className="money">{formatMoney(order.total)}</span></Table.Td>
                 </Table.Tr>
               ))}
             </Table.Tbody>

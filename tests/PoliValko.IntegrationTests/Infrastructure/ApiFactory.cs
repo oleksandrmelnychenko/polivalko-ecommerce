@@ -26,7 +26,11 @@ namespace PoliValko.IntegrationTests;
 
 public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:18").Build();
+    private readonly string? _testConnection = Environment.GetEnvironmentVariable("POLIVALKO_TEST_DATABASE");
+    private PostgreSqlContainer? _postgres;
+    private readonly TestKeyCertificate _keyCertificate = new();
+
+    internal string CertificateDirectory => _keyCertificate.DirectoryPath;
 
     public const string AdminEmail = "admin@tests.polivalko.local";
     public const string ManagerEmail = "manager@tests.polivalko.local";
@@ -43,7 +47,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await _postgres.StartAsync();
+        if (string.IsNullOrWhiteSpace(_testConnection))
+        {
+            _postgres = new PostgreSqlBuilder("postgres:18").Build();
+            await _postgres.StartAsync();
+        }
         await using var scope = Services.CreateAsyncScope();
         await scope.ServiceProvider.GetRequiredService<PoliValkoDbContext>().Database.MigrateAsync();
         await CatalogModule.SyncDictionariesAsync(scope.ServiceProvider);
@@ -54,21 +62,24 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     public override async ValueTask DisposeAsync()
     {
         await base.DisposeAsync();
-        await _postgres.DisposeAsync();
+        _keyCertificate.Dispose();
+        if (_postgres is not null) await _postgres.DisposeAsync();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
-        builder.UseSetting("ConnectionStrings:PoliValko", _postgres.GetConnectionString());
+        builder.UseSetting("DataProtection:CertificateDirectory", _keyCertificate.DirectoryPath);
+        builder.UseSetting("Database:ApplyMigrationsOnStartup", "true");
+        builder.UseSetting("ConnectionStrings:PoliValko", _testConnection ?? _postgres!.GetConnectionString());
         builder.UseSetting("RateLimiting:Forms:PermitLimit", "1000");
         builder.UseSetting("RateLimiting:Orders:PermitLimit", "1000");
         builder.UseSetting("RateLimiting:Login:PermitLimit", "1000");
         builder.UseSetting("Payments:Provider", "Sandbox");
+        builder.UseSetting("Payments:AllowSandbox", "true");
         builder.UseSetting("Payments:Sandbox:Secret", SandboxSecret);
         builder.UseSetting("Fiscal:Provider", "Stub");
         builder.UseSetting("Media:Root", Path.Combine(Path.GetTempPath(), "polivalko-tests-media"));
-        builder.UseSetting("Customers:SessionCheckInterval", "00:00:00");
         SeedUser(builder, 0, AdminEmail, StaffRoles.Admin);
         SeedUser(builder, 1, ManagerEmail, StaffRoles.Manager);
         builder.ConfigureServices(services =>

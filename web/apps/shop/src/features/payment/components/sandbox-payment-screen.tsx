@@ -53,7 +53,7 @@ export function SandboxPaymentScreen() {
     <div className="paypage__card">
       <h1>Тестова оплата</h1>
       <p className="paypage__amount">
-        <span className="code">{formatMoney(invoice.amount)}</span>
+        <span className="code"><span className="money">{formatMoney(invoice.amount)}</span></span>
       </p>
       <p>
         Оплата замовлення <span className="code">{invoice.orderNumber}</span>. Тут не потрібні дані картки: оберіть, чим

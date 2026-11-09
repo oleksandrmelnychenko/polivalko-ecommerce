@@ -13,4 +13,5 @@ public sealed record NavkoloProductRecord(
     string? VariantLabel = null,
     string? Description = null,
     IReadOnlyList<ProductAttributeDto>? Attributes = null,
-    IReadOnlyList<string>? ImageUrls = null);
+    IReadOnlyList<string>? ImageUrls = null,
+    string? GroupName = null);

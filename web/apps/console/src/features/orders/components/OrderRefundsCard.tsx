@@ -49,7 +49,7 @@ export function OrderRefundsCard({ order, onChange }: { order: ConsoleOrder; onC
                       <span className="order-muted">{row.reason}</span>
                     </span>
                   </Table.Td>
-                  <Table.Td className="is-num is-strong">{formatMoney(row.amount)}</Table.Td>
+                  <Table.Td className="is-num is-strong"><span className="money">{formatMoney(row.amount)}</span></Table.Td>
                   <Table.Td>
                     <span className="order-wrap-stack">
                       <span>

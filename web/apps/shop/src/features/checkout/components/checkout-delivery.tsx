@@ -93,7 +93,7 @@ export function CheckoutDelivery({
         </p>
       )}
       {save}
-      {quote && <p className="field__help">{quote.deliveryNote}</p>}
+      {quote && <p className="field__help">{delivery === "pickup" ? "Самовивіз безкоштовний" : quote.deliveryNote}</p>}
     </section>
   );
 }

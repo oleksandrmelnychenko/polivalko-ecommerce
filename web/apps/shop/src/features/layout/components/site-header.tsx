@@ -8,6 +8,7 @@ import { AnnouncementBar } from "./announcement-bar";
 import { HeaderMobileMenu } from "./header-mobile-menu";
 import { HeaderNav } from "./header-nav";
 import { NavFallback } from "./nav-fallback";
+import { HeaderMascot } from "./header-mascot";
 
 export function SiteHeader() {
   return (
@@ -17,8 +18,12 @@ export function SiteHeader() {
       </Suspense>
       <header className="site-header">
         <div className="container site-header__bar">
-          <Link href="/" className="logo" translate="no">
-            PoliValko
+          <Link href="/" className="brand-logo site-header__brand" aria-label="Poli-Valko — на головну" translate="no">
+            <HeaderMascot />
+            <span className="brand-logo__wordmark">
+              <span className="brand-logo__name">Poli-Valko</span>
+              <span className="brand-logo__tagline">Дім · сад · город</span>
+            </span>
           </Link>
           <Suspense fallback={<NavFallback />}>
             <HeaderNav />

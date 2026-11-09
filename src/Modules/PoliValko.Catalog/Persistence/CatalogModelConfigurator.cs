@@ -9,6 +9,14 @@ internal sealed class CatalogModelConfigurator : IModelConfigurator
 {
     public void Configure(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<StockReservation>(b =>
+        {
+            b.ToTable("stock_reservations", Schemas.Catalog);
+            b.HasKey(r => new { r.OrderId, r.ProductId });
+            b.HasIndex(r => new { r.ProductId, r.Released });
+            b.HasOne<Product>().WithMany().HasForeignKey(r => r.ProductId).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<ProductStock>().Property(s => s.ReservedQuantity).HasPrecision(14, 3);
         modelBuilder.Entity<Category>(ConfigureCategory);
         modelBuilder.Entity<Product>(ConfigureProduct);
         modelBuilder.Entity<ProductPrice>(ConfigurePrice);

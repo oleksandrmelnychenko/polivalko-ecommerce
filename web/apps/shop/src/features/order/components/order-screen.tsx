@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { Suspense } from "react";
 import { TrackPurchase } from "@/features/analytics";
 import { PaymentPending, PayButton } from "@/features/payment";
 import { formatMoney } from "@polivalko/shared/lib/format";
@@ -16,17 +15,11 @@ type OrderScreenProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export function OrderScreen(props: OrderScreenProps) {
-  return (
-    <div className="container">
-      <Suspense fallback={<div className="skeleton" style={{ height: "var(--space-4xl)", marginBlock: "var(--space-2xl)" }} />}>
-        <OrderContent {...props} />
-      </Suspense>
-    </div>
-  );
-}
-
-async function OrderContent({ params, searchParams }: OrderScreenProps) {
+/**
+ * Loads the order before anything streams, so an unknown number or a wrong token answers a real 404
+ * (inside Suspense the status would already be 200). The page opts into blocking with `instant = false`.
+ */
+export async function OrderScreen({ params, searchParams }: OrderScreenProps) {
   await connection();
   const [{ number }, sp] = await Promise.all([params, searchParams]);
   const token = typeof sp.token === "string" ? sp.token : "";
@@ -41,7 +34,7 @@ async function OrderContent({ params, searchParams }: OrderScreenProps) {
   const heading = orderHeading(order, paid);
 
   return (
-    <>
+    <div className="container">
       {(paid || (order.paymentMethod !== "card" && order.status !== "cancelled")) && (
         <TrackPurchase
           orderNumber={order.number}
@@ -65,6 +58,6 @@ async function OrderContent({ params, searchParams }: OrderScreenProps) {
 
         <OrderHistory order={order} />
       </div>
-    </>
+    </div>
   );
 }

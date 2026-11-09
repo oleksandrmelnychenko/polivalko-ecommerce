@@ -21,6 +21,9 @@ public sealed class SiteContentApiTests(ApiFactory api)
 
         var page = await api.CreateClient().GetFromJsonAsync<PageDto>("/api/v1/pages/returns", TestJson.Options, Ct);
         page!.Lead.ShouldBe("14 днів");
+        page.UpdatedBy.ShouldBeNull();
+        saved.UpdatedBy.ShouldNotBeNullOrWhiteSpace();
+        (await admin.ReadAsync<PageDto>("/api/v1/console/content/pages/returns")).UpdatedBy.ShouldBe(saved.UpdatedBy);
 
         var contacts = new ContactsDto("+380 67 000 00 00", null, "shop@example.com", "м. Буча, вул. Тестова, 1", "Пн–Нд 9–19",
             "https://maps.example.com/bucha", null, null, null, null);

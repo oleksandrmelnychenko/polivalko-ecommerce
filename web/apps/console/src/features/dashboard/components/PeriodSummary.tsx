@@ -6,6 +6,7 @@ import { DeltaChip } from './DeltaChip'
 
 export function PeriodSummary({ data }: { data: Dashboard }) {
   const { current: c, previous: p } = data
+  const strongest = bestDay(data)
   return (
     <DashboardCard title="Підсумок періоду">
       <dl className="dash-summary">
@@ -20,11 +21,11 @@ export function PeriodSummary({ data }: { data: Dashboard }) {
           {numberFormat.format(c.cancelled)} <DeltaChip current={c.cancelled} previous={p.cancelled} inverse />
         </dd>
         <dt>Середній чек</dt>
-        <dd>{formatMoney(c.averageOrder)}</dd>
+        <dd><span className="money">{formatMoney(c.averageOrder)}</span></dd>
         <dt>Покупців</dt>
         <dd>{numberFormat.format(c.customers)}</dd>
         <dt>Найкращий день</dt>
-        <dd>{bestDay(data)}</dd>
+        <dd>{strongest ? <>{strongest.date}, <span className="money">{formatMoney(strongest.revenue)}</span></> : '—'}</dd>
       </dl>
     </DashboardCard>
   )

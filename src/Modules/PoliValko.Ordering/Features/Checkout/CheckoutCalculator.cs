@@ -81,7 +81,7 @@ internal sealed class CheckoutCalculator(ICatalogPricing pricing)
         {
             errors["items"] = [$"Не більше {MaxLines} позицій в одному замовленні."];
         }
-        else if (items.Any(i => i.Quantity is < 1 or > MaxQuantity))
+        else if (items.Any(i => i is null || i.ProductId == Guid.Empty || i.Quantity is < 1 or > MaxQuantity))
         {
             errors["items"] = [$"Кількість має бути від 1 до {MaxQuantity}."];
         }

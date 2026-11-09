@@ -5,14 +5,15 @@ import { featureBoundaries } from "../../eslint.boundaries.mjs";
 
 const edges = {
   analytics: [],
+  assistant: [],
   customer: [],
   favorites: ["customer"],
-  cart: ["analytics"],
+  cart: ["analytics", "customer"],
   seo: [],
   catalog: ["cart", "favorites", "seo"],
   product: ["catalog", "cart", "analytics", "favorites", "seo"],
   home: ["catalog", "services", "content"],
-  layout: ["cart", "catalog", "services", "content", "search", "customer"],
+  layout: ["cart", "catalog", "services", "content", "search", "customer", "assistant"],
   search: ["catalog"],
   checkout: ["cart", "analytics", "customer"],
   order: ["payment", "analytics"],

@@ -28,7 +28,8 @@ const ACTION_HINT: Partial<Record<OrderStatus, string>> = {
 function orderRoute(order: ConsoleOrder): OrderStatus[] {
   const start: OrderStatus = order.status === 'awaitingConfirmation' ? 'awaitingConfirmation' : 'new'
   const payment: OrderStatus[] = order.paymentMethod === 'card' ? ['awaitingPayment', 'paid'] : []
-  const fulfilment: OrderStatus = order.deliveryMethod === 'pickup' ? 'readyForPickup' : 'shipped'
+  const fulfilment: OrderStatus = order.deliveryMethod === 'pickup' && !order.navkoloShippedAt
+    ? 'readyForPickup' : 'shipped'
   return [start, 'confirmed', ...payment, fulfilment, 'completed']
 }
 

@@ -9,11 +9,13 @@ import { useCart } from "./cart-provider";
 import { CartSummary } from "./cart-summary";
 
 export function CartView() {
-  const { lines, count, setQuantity, remove, clear } = useCart();
+  const { ready, saving, error, refresh, lines, count, setQuantity, remove, clear } = useCart();
   const { quote, failed } = useCartQuote();
   const hydrated = useHydrated();
 
   if (!hydrated) return <div className="skeleton" style={{ height: "var(--space-4xl)" }} aria-busy="true" />;
+
+  if (!ready || error) return <p role="status">{error ?? "Завантажуємо кошик…"} {error && <button type="button" onClick={() => void refresh()}>Спробувати ще раз</button>}</p>;
 
   if (lines.length === 0) return <CartEmpty />;
 
@@ -22,6 +24,7 @@ export function CartView() {
 
   return (
     <div className="cart">
+      {saving && <p role="status">Зберігаємо кошик…</p>}
       <CartLines rows={rows} quote={quote} failed={failed} setQuantity={setQuantity} remove={remove} clear={clear} />
       <CartSummary quote={quote} count={count} blocking={blocking} />
     </div>

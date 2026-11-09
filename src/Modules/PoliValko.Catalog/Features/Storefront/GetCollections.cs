@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PoliValko.Catalog.Domain;
+using PoliValko.Catalog.Persistence;
 using PoliValko.Infrastructure.Persistence;
 
 namespace PoliValko.Catalog.Features.Storefront;
@@ -10,6 +11,7 @@ internal static class GetCollections
 {
     public static async Task<Ok<List<CollectionDto>>> HandleAsync(PoliValkoDbContext db, TimeProvider time, CancellationToken ct)
     {
+        var visibleProducts = await CatalogVisibility.ProductsAsync(db, ct);
         var collections = await db.Set<HomeCollection>()
             .AsNoTracking()
             .Where(c => c.IsVisible)
@@ -17,7 +19,7 @@ internal static class GetCollections
             .ThenBy(c => c.Title)
             .ToListAsync(ct);
         var ids = collections.SelectMany(c => c.ProductIds).Distinct().ToList();
-        var rows = await ProductListing.ListItems(db.Set<Product>().AsNoTracking().Where(p => p.IsVisible && ids.Contains(p.Id))).ToListAsync(ct);
+        var rows = await ProductListing.ListItems(visibleProducts.AsNoTracking().Where(p => p.IsVisible && ids.Contains(p.Id))).ToListAsync(ct);
         var items = (await ProductListing.ToListItemsAsync(db, rows, time, ct)).ToDictionary(r => r.Id);
 
         return TypedResults.Ok(collections

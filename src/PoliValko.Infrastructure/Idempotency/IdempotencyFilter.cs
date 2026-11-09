@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
@@ -35,19 +36,27 @@ internal sealed class IdempotencyFilter<TRequest> : IEndpointFilter
         var ct = http.RequestAborted;
 
         var scope = $"{http.Request.Method} {(http.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText ?? http.Request.Path.Value}";
+        var identities = http.User.Identities.Where(i => i.IsAuthenticated).ToArray();
+        if (identities.Any(i => string.IsNullOrWhiteSpace(i.FindFirst(ClaimTypes.NameIdentifier)?.Value)))
+        {
+            return Results.Unauthorized();
+        }
+        var subject = identities.Select(i => new { scheme = i.AuthenticationType, id = i.FindFirst(ClaimTypes.NameIdentifier)!.Value })
+            .OrderBy(i => i.scheme, StringComparer.Ordinal).ThenBy(i => i.id, StringComparer.Ordinal);
+        var subjectHash = Convert.ToHexStringLower(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(subject)));
         var hash = ComputeHash(context.Arguments.OfType<TRequest>().FirstOrDefault(), http.Request.RouteValues, json);
 
         var inserted = await db.Database.ExecuteSqlAsync(
             $"""
-            INSERT INTO integration.idempotency_keys (scope, key, request_hash, created_at)
-            VALUES ({scope}, {key}, {hash}, {time.GetUtcNow()})
+            INSERT INTO integration.idempotency_keys (scope, key, request_hash, subject_hash, created_at)
+            VALUES ({scope}, {key}, {hash}, {subjectHash}, {time.GetUtcNow()})
             ON CONFLICT DO NOTHING
             """,
             ct);
 
         if (inserted == 0)
         {
-            return await ReplayAsync(db, http, scope, key, hash, ct);
+            return await ReplayAsync(db, http, scope, key, hash, subjectHash, ct);
         }
 
         object? result;
@@ -90,10 +99,19 @@ internal sealed class IdempotencyFilter<TRequest> : IEndpointFilter
         string scope,
         string key,
         string hash,
+        string subjectHash,
         CancellationToken ct)
     {
         var record = await db.IdempotencyRecords.AsNoTracking()
             .SingleOrDefaultAsync(r => r.Scope == scope && r.Key == key, ct);
+
+        // Legacy rows have no trustworthy owner. Never infer it from order email or customer linkage.
+        if (record is not null && record.SubjectHash != subjectHash)
+        {
+            return Problems.Create(StatusCodes.Status409Conflict, "idempotency.owner_mismatch",
+                "Неможливо повторити запит у поточній сесії",
+                "Перевірте, чи операцію вже виконано. Поверніться до початкового акаунта або зверніться до підтримки; не створюйте повторне замовлення.");
+        }
 
         if (record is not null && record.RequestHash != hash)
         {

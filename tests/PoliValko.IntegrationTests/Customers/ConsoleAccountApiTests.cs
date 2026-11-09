@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using PoliValko.Customers.Features.Auth;
 using PoliValko.Customers.Features.Console;
 using PoliValko.Customers.Features.Recovery;
+using PoliValko.Customers.Features.Profile;
 using PoliValko.Infrastructure.Security.Permissions;
 using PoliValko.Ordering.Features.Checkout;
 using PoliValko.SharedKernel;
@@ -66,6 +67,11 @@ public sealed class ConsoleAccountApiTests(ApiFactory api)
         var locked = await (await admin.PostAsJsonAsync($"{Url}/{me.Id}/lock", new SetAccountLockRequest(true), TestJson.Options, Ct))
             .ReadAsync<ConsoleAccountDto>();
         locked.LockedOut.ShouldBeTrue();
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            (await client.PutAsJsonAsync("/api/v1/account/profile", new UpdateProfileRequest("Заблокований", null), Ct))
+                .StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        }
         (await admin.ReadAsync<ConsoleAccountDetailsDto>($"{Url}/{me.Id}")).Blocked.ShouldBeTrue();
         (await admin.ReadAsync<PagedResponse<ConsoleAccountDto>>($"{Url}?q={Uri.EscapeDataString(email)}&status=locked")).Items.ShouldHaveSingleItem();
 

@@ -48,6 +48,8 @@ public static class PermissionKeys
 
     public const string SettingsShopManage = "settings.shop.manage";
 
+    public const string SettingsNavkoloManage = "settings.navkolo.manage";
+
     public const string SettingsNotificationsManage = "settings.notifications.manage";
 
     public const string IntegrationStatusView = "integration.status.view";

@@ -10,6 +10,15 @@ internal sealed class OrderingModelConfigurator : IModelConfigurator
 
     public void Configure(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<ServerCart>(b =>
+        {
+            b.ToTable("carts", Schemas.Ordering);
+            b.HasKey(c => c.Id);
+            b.Property(c => c.Id).ValueGeneratedNever();
+            b.Property(c => c.Owner).HasMaxLength(100);
+            b.HasIndex(c => c.Owner).IsUnique();
+            b.Property(c => c.ItemsJson).HasColumnType("jsonb");
+        });
         modelBuilder.HasSequence<long>(NumberSequence, Schemas.Ordering).StartsAt(100001);
 
         modelBuilder.Entity<Order>(builder =>

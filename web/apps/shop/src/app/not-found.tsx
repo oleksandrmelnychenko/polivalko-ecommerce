@@ -1,20 +1,18 @@
-import Link from "next/link";
+import type { Metadata } from "next";
+import { NotFoundContent, ShopShell } from "@/features/layout/server";
 
+// Drops the root layout's index/follow: Next.js adds its own noindex to a 404, and two tags would contradict.
+export const metadata: Metadata = {
+  title: "Сторінку не знайдено",
+  robots: null,
+};
+
+// Unknown URLs render here, above the (shop) layout, so this page brings the shop header and footer itself.
+// notFound() from shop pages renders (shop)/not-found.tsx inside that layout instead.
 export default function NotFound() {
   return (
-    <main id="main" className="container">
-      <header className="page-head" style={{ paddingBlock: "var(--space-3xl)" }}>
-        <Link href="/" className="wordmark">
-          Poli<b>Valko</b>
-        </Link>
-        <h1 style={{ marginTop: "var(--space-2xl)" }}>Сторінку не знайдено</h1>
-        <p className="lead">Можливо, товар більше не продається або адреса змінилася.</p>
-        <div className="hero__actions">
-          <Link href="/catalog" className="btn">
-            Перейти до каталогу
-          </Link>
-        </div>
-      </header>
-    </main>
+    <ShopShell>
+      <NotFoundContent />
+    </ShopShell>
   );
 }

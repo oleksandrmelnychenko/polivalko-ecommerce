@@ -10,7 +10,7 @@
 .hero__title { position: relative; display: inline-block; margin: 0; padding: 18px 44px; color: #fff; font: 400 1.875rem/1.2 var(--font-display); text-transform: uppercase; isolation: isolate; }
 .hero__title::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--color-hero-veil); }
 .hero__title span { display: inline-block; }
-.hero__sub { max-width: 60ch; color: #fff; font: 400 1.125rem/1.5 "Times New Roman", Times, serif; }
+.hero__sub { max-width: 60ch; color: #fff; font: 400 1.125rem/1.5 var(--font-body); }
 .hero__btn { display: inline-flex; align-items: center; height: 41px; padding-inline: 35px; background: #fff; color: #0a0a0a; font: 600 1.0625rem/1 var(--font-button); text-decoration: none; transition: background-color 0.3s, color 0.3s; }
 .hero__btn:hover { background: var(--color-brand); color: #fff; }
 .hero__arrow { position: absolute; top: 50%; z-index: 2; display: grid; place-items: center; width: 70px; height: 70px; translate: 0 -50%; border: 0; border-radius: 50%; background: rgb(0 0 0 / 0.1); color: #fff; cursor: pointer; transition: background-color 0.3s; }

@@ -26,7 +26,7 @@ export function OrderRow({ order }: { order: AccountOrder }) {
         </p>
       </div>
       <div className="order-row__side">
-        <strong className="order-row__total">{formatMoney(order.total)}</strong>
+        <strong className="order-row__total"><span className="money">{formatMoney(order.total)}</span></strong>
         <span className={`status-chip status-chip--${orderTone(order.status)}`}>{orderStatusLabel[order.status]}</span>
         <span className={order.canPay ? "order-row__pay order-row__pay--due" : "order-row__pay"}>
           {order.canPay ? "Можна оплатити онлайн" : `${paymentMethodLabel[order.paymentMethod] ?? order.paymentMethod}, ${paymentStatusLabel[order.paymentStatus].toLowerCase()}`}

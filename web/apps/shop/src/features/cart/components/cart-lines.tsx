@@ -56,12 +56,12 @@ export function CartLines({
             </div>
             <p className="cart-line__price">
               <span className="cart-line__label">Ціна: </span>
-              {row.unit}
+              <span className="money">{row.unit}</span>
             </p>
             <div className="cart-line__qty">
               <QuantityStepper small value={row.quantity} onChange={(q) => setQuantity(row.productId, q)} label={`Кількість: ${row.name}`} />
             </div>
-            <p className="line__total">{row.total}</p>
+            <p className="line__total"><span className="money">{row.total}</span></p>
             <button type="button" className="cart-line__remove" onClick={() => remove(row.productId)} aria-label={`Прибрати: ${row.name}`} title="Прибрати">
               <CloseIcon />
             </button>

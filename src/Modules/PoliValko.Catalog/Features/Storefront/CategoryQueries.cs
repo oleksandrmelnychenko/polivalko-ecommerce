@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PoliValko.Catalog.Domain;
+using PoliValko.Catalog.Persistence;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Web;
 
@@ -13,12 +14,7 @@ internal static class CategoryQueries
         StringComparer.Create(CultureInfo.GetCultureInfo("uk-UA"), CompareOptions.NumericOrdering);
 
     public static Task<List<Category>> LoadVisibleCategoriesAsync(PoliValkoDbContext db, CancellationToken ct) =>
-        db.Set<Category>()
-            .AsNoTracking()
-            .Where(c => c.IsVisible)
-            .OrderBy(c => c.SortOrder)
-            .ThenBy(c => c.Name)
-            .ToListAsync(ct);
+        CatalogVisibility.CategoriesAsync(db, ct);
 
     public static IEnumerable<Guid> Descendants(Guid id, ILookup<Guid?, Category> byParent) =>
         byParent[id].SelectMany(child => Descendants(child.Id, byParent).Prepend(child.Id));

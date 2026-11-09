@@ -3,9 +3,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Sync;
+using PoliValko.Ordering.Contracts;
 using PoliValko.Payments.Contracts;
 using PoliValko.Payments.Domain;
 using PoliValko.Payments.Features.Processing;
+using PoliValko.Payments.Features.Refunds;
 using PoliValko.Payments.Integrations.Providers;
 
 namespace PoliValko.Payments.Jobs;
@@ -63,6 +65,28 @@ internal sealed class PaymentReconciliationJob(IServiceScopeFactory scopes, Time
             }
         }
 
-        return new SyncResult($"Перевірено незавершених оплат: {pending.Count}, оновлено: {applied}", errors);
+        // Refunds the provider accepted as processing settle here; a refund is never sent again from this job.
+        var settlement = services.GetRequiredService<RefundSettlement>();
+        var refunds = await services.GetRequiredService<IOrderPayments>().ListSubmittedRefundsAsync(settledBefore, 100, ct);
+        var settled = 0;
+        foreach (var refund in refunds)
+        {
+            try
+            {
+                if (await settlement.ReconcileAsync(refund.OrderId, refund.RefundId, ct))
+                {
+                    settled++;
+                }
+            }
+            catch (Exception ex) when (!ct.IsCancellationRequested)
+            {
+                db.ChangeTracker.Clear();
+                errors.Add(new SyncError(refund.OrderNumber, ex.Message));
+            }
+        }
+
+        return new SyncResult(
+            $"Перевірено незавершених оплат: {pending.Count}, оновлено: {applied}; повернень в обробці: {refunds.Count}, завершено: {settled}",
+            errors);
     }
 }

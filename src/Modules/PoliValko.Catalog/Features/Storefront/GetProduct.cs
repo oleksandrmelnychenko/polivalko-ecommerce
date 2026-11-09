@@ -20,7 +20,8 @@ internal static class GetProduct
         TimeProvider time,
         CancellationToken ct)
     {
-        var row = await db.Set<Product>()
+        var visibleProducts = await CatalogVisibility.ProductsAsync(db, ct);
+        var row = await visibleProducts
             .AsNoTracking()
             .AsSplitQuery()
             .Where(p => p.Slug == slug && p.IsVisible)
@@ -34,7 +35,7 @@ internal static class GetProduct
                 p.DescriptionHtml,
                 p.Price.Amount,
                 p.Price.OldAmount,
-                p.Stock.Quantity,
+                Quantity = (p.Stock.Quantity - p.Stock.ReservedQuantity),
                 p.VariantGroup,
                 p.SeoTitle,
                 p.SeoDescription,
@@ -52,10 +53,10 @@ internal static class GetProduct
 
         var variants = row.VariantGroup is null
             ? []
-            : (await db.Set<Product>()
+            : (await visibleProducts
                 .AsNoTracking()
                 .Where(p => p.VariantGroup == row.VariantGroup && p.IsVisible && p.VariantLabel != null)
-                .Select(p => new { p.Id, p.Slug, Label = p.VariantLabel!, p.Stock.Quantity })
+                .Select(p => new { p.Id, p.Slug, Label = p.VariantLabel!, Quantity = (p.Stock.Quantity - p.Stock.ReservedQuantity) })
                 .ToListAsync(ct))
                 .OrderBy(v => v.Label, CategoryQueries.NaturalOrder)
                 .Select(v => new ProductVariantDto(v.Slug, v.Label, v.Quantity > 0, v.Id == row.Id))

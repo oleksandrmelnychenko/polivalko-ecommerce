@@ -29,11 +29,11 @@ public sealed class ConsoleLabelApiTests(ApiFactory api)
         var plain = await api.AddProductAsync("vse-dlia-polyvu", "Дощувач звичайний", 400m, oldPrice: 300m, createdAt: DateTimeOffset.UtcNow.AddDays(-45));
 
         var client = api.CreateClient();
-        (await StorefrontLabelsAsync(client, discounted)).ShouldBe([new ProductLabelBadgeDto("Акція", LabelTone.Red)]);
-        (await StorefrontLabelsAsync(client, newcomer)).ShouldBe([new ProductLabelBadgeDto("Новинка", LabelTone.Green)]);
+        (await StorefrontLabelsAsync(client, discounted)).ShouldBe([new ProductLabelBadgeDto("Акція", LabelTone.Red, LabelKind.Sale)]);
+        (await StorefrontLabelsAsync(client, newcomer)).ShouldBe([new ProductLabelBadgeDto("Новинка", LabelTone.Green, LabelKind.New)]);
         (await StorefrontLabelsAsync(client, plain)).ShouldBeEmpty();
         var details = await client.GetFromJsonAsync<ProductDetailsDto>($"/api/v1/products/{discounted.Slug}", TestJson.Options, Ct);
-        details!.Labels.ShouldBe([new ProductLabelBadgeDto("Акція", LabelTone.Red)]);
+        details!.Labels.ShouldBe([new ProductLabelBadgeDto("Акція", LabelTone.Red, LabelKind.Sale)]);
 
         var hitProduct = await (await admin.PutAsJsonAsync(
                 $"/api/v1/console/catalog/products/{newcomer.Id}",
@@ -44,7 +44,7 @@ public sealed class ConsoleLabelApiTests(ApiFactory api)
         hitProduct.LabelIds.ShouldBe([hit.Id]);
         hitProduct.Labels.Select(l => l.Name).ShouldBe(["Новинка", "Хіт"]);
         hitProduct.CreatedAt.ShouldBe(newcomer.CreatedAt, TimeSpan.FromMilliseconds(1));
-        (await StorefrontLabelsAsync(client, newcomer)).ShouldBe([new ProductLabelBadgeDto("Новинка", LabelTone.Green), new ProductLabelBadgeDto("Хіт", LabelTone.Orange)]);
+        (await StorefrontLabelsAsync(client, newcomer)).ShouldBe([new ProductLabelBadgeDto("Новинка", LabelTone.Green, LabelKind.New), new ProductLabelBadgeDto("Хіт", LabelTone.Orange, LabelKind.Manual)]);
 
         var row = (await admin.ReadAsync<PagedResponse<ConsoleProductListItemDto>>($"/api/v1/console/catalog/products?q={discounted.Sku}")).Items.ShouldHaveSingleItem();
         row.Labels.ShouldBe([new ConsoleProductLabelDto(sale.Id, "Акція", LabelTone.Red, LabelKind.Sale)]);
@@ -89,7 +89,7 @@ public sealed class ConsoleLabelApiTests(ApiFactory api)
                 Ct))
             .ReadAsync<BulkUpdateProductsResult>();
         (await manager.ReadAsync<List<LabelDto>>(CatalogDictionaries.Labels)).Single(l => l.Id == label.Id).ProductCount.ShouldBe(1);
-        (await StorefrontLabelsAsync(api.CreateClient(), product)).ShouldBe([new ProductLabelBadgeDto(label.Name, LabelTone.Blue)]);
+        (await StorefrontLabelsAsync(api.CreateClient(), product)).ShouldBe([new ProductLabelBadgeDto(label.Name, LabelTone.Blue, LabelKind.Manual)]);
 
         var kindChange = await manager.PutAsJsonAsync(
             $"{CatalogDictionaries.Labels}/{label.Id}",

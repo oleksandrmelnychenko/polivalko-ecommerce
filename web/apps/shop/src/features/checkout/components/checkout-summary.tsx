@@ -29,7 +29,7 @@ export function CheckoutSummary({
         <p className="notice">
           <strong>Ціни й наявність потребують підтвердження</strong>
           Зараз ми не можемо звірити їх зі складом. Замовлення прийме менеджер і підтвердить телефоном; онлайн-оплата
-          стане доступною після підтвердження, резерв до того не діє.
+          стане доступною після підтвердження. Товар резервується на сайті після оформлення.
         </p>
       )}
       <ul>
@@ -41,7 +41,7 @@ export function CheckoutSummary({
                 <Link href={`/product/${item.slug}`}>{item.name}</Link>
               </p>
               <p className="muted" style={{ fontSize: "var(--text-sm)" }}>
-                {formatMoney(item.unitPrice)} за шт.
+                <span className="money">{formatMoney(item.unitPrice)}</span> за шт.
               </p>
               <div className="line__controls">
                 <QuantityStepper small value={item.quantity} onChange={(q) => setQuantity(item.productId, q)} label={`Кількість: ${item.name}`} />
@@ -54,7 +54,7 @@ export function CheckoutSummary({
               )}
               {item.issue === "unavailable" && <p className="line__issue">Товар зараз недоступний, приберіть його.</p>}
             </div>
-            <p className="line__total">{formatMoney(item.lineTotal)}</p>
+            <p className="line__total"><span className="money">{formatMoney(item.lineTotal)}</span></p>
           </li>
         ))}
         {!quote && !quoteError && <li className="skeleton" style={{ height: "var(--space-4xl)" }} />}
@@ -62,11 +62,11 @@ export function CheckoutSummary({
       {quote && (
         <dl className="totals">
           <dt>Товари</dt>
-          <dd>{formatMoney(quote.subtotal)}</dd>
+          <dd><span className="money">{formatMoney(quote.subtotal)}</span></dd>
           <dt>Доставка</dt>
           <dd>{delivery === "pickup" ? "Безкоштовно" : priceNote || "За тарифами перевізника"}</dd>
           <dt className="grand">До сплати</dt>
-          <dd className="grand">{formatMoney(quote.total)}</dd>
+          <dd className="grand"><span className="money">{formatMoney(quote.total)}</span></dd>
         </dl>
       )}
       <button type="submit" className="btn btn--wide" disabled={sending} aria-busy={sending}>

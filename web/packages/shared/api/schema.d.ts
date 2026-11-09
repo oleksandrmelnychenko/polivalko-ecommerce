@@ -259,6 +259,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cart/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["OpenCart"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["SaveCart"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cart/checkout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CheckoutCart"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/checkout/quote": {
         parameters: {
             query?: never;
@@ -1934,6 +1982,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/settings/navkolo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleGetNavkoloSettings"];
+        put: operations["ConsoleSaveNavkoloSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/settings/navkolo/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleCheckNavkoloConnection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/account/csrf": {
         parameters: {
             query?: never;
@@ -2388,6 +2468,13 @@ export interface components {
             /** Format: int32 */
             updated: number;
         };
+        CartCheckoutRequest: {
+            /** Format: uuid */
+            cartId: string;
+            /** Format: int64 */
+            revision: number;
+            order: components["schemas"]["CreateOrderRequest"];
+        };
         CartLineRequest: {
             /** Format: uuid */
             productId: string;
@@ -2435,6 +2522,13 @@ export interface components {
         };
         ChangeServiceRequestStatusRequest: {
             status: null | components["schemas"]["ServiceRequestStatus"];
+        };
+        CheckNavkoloDto: {
+            stores: components["schemas"]["NavkoloStoreDto"][];
+            statuses: components["schemas"]["NavkoloStatusDto"][];
+        };
+        CheckNavkoloRequest: {
+            apiKey: null | string;
         };
         CollectionDto: {
             code: string;
@@ -2577,6 +2671,14 @@ export interface components {
             internalNote: null | string;
             /** Format: uuid */
             customerAccountId: null | string;
+            /** Format: date-time */
+            navkoloCancellationRequestedAt?: null | string;
+            /** Format: date-time */
+            navkoloCancellationSynchronizedAt?: null | string;
+            /** Format: date-time */
+            navkoloShippedAt?: null | string;
+            /** Format: date-time */
+            navkoloCancelledAt?: null | string;
         };
         ConsoleOrderHistoryDto: {
             from: null | components["schemas"]["OrderStatus"];
@@ -3055,6 +3157,20 @@ export interface components {
             permissionKeys: string[];
             catalogVersion: string;
         };
+        NavkoloConnectionDto: {
+            /** Format: uuid */
+            revision: null | string;
+            mode: string;
+            hasKey: boolean;
+            storeId: null | string;
+            storeName: null | string;
+            /** Format: date-time */
+            verifiedAt: null | string;
+            source: string;
+            /** Format: int32 */
+            cancellationStatusId?: null | number;
+            cancellationStatusName?: null | string;
+        };
         NavkoloProductFieldsDto: {
             navkoloId: string;
             sku: string;
@@ -3070,6 +3186,15 @@ export interface components {
             stockUpdatedAt: string;
             variantGroup: null | string;
             variantLabel: null | string;
+        };
+        NavkoloStatusDto: {
+            /** Format: int32 */
+            id: number;
+            name: string;
+        };
+        NavkoloStoreDto: {
+            id: string;
+            name: string;
         };
         NotificationEventsDto: {
             newOrder: boolean;
@@ -3386,6 +3511,7 @@ export interface components {
         ProductLabelBadgeDto: {
             name: string;
             tone: components["schemas"]["LabelTone"];
+            kind: components["schemas"]["LabelKind"];
         };
         ProductListItemDto: {
             /** Format: uuid */
@@ -3563,6 +3689,13 @@ export interface components {
             description: null | string;
             logoUrl: null | string;
         };
+        SaveCartRequest: {
+            /** Format: uuid */
+            cartId: string;
+            /** Format: int64 */
+            revision: number;
+            items: null | components["schemas"]["CartLineRequest"][];
+        };
         SaveCategoryRequest: {
             /** Format: uuid */
             parentId: null | string;
@@ -3603,6 +3736,16 @@ export interface components {
             /** Format: int32 */
             sortOrder: number;
             isActive: boolean;
+        };
+        SaveNavkoloConnectionRequest: {
+            /** Format: uuid */
+            revision: null | string;
+            enabled: boolean;
+            apiKey: null | string;
+            clearKey: boolean;
+            storeId: null | string;
+            /** Format: int32 */
+            cancellationStatusId?: null | number;
         };
         SaveNotificationSettingsRequest: {
             telegramChatIds: null | string[];
@@ -3667,6 +3810,14 @@ export interface components {
         SeoTemplatesDto: {
             product: components["schemas"]["SeoTemplateDto"];
             category: components["schemas"]["SeoTemplateDto"];
+        };
+        ServerCartDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            revision: number;
+            items: components["schemas"]["QuoteLineDto"][];
+            lastOrder: null | components["schemas"]["OrderCreatedDto"];
         };
         ServiceDirectionDto: {
             code: string;
@@ -4329,6 +4480,92 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PickupPointDto"][];
+                };
+            };
+        };
+    };
+    OpenCart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServerCartDto"];
+                };
+            };
+        };
+    };
+    SaveCart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveCartRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServerCartDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    CheckoutCart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CartCheckoutRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderCreatedDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
         };
@@ -10346,6 +10583,128 @@ export interface operations {
             };
             /** @description Bad Gateway */
             502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleGetNavkoloSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NavkoloConnectionDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleSaveNavkoloSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveNavkoloConnectionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NavkoloConnectionDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleCheckNavkoloConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckNavkoloRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckNavkoloDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

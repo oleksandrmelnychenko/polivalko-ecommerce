@@ -31,7 +31,7 @@ internal static class GetIntegrationStatus
             .ToDictionaryAsync(x => x.Key, x => x.Count, ct);
 
         return TypedResults.Ok(new IntegrationStatusDto(
-            navkolo.Mode,
+            await navkolo.GetModeAsync(ct),
             await freshness.IsFreshAsync(ct),
             jobs,
             outbox.GetValueOrDefault(OutboxStatus.Pending),

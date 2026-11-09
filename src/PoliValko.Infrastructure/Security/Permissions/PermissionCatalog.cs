@@ -2,7 +2,7 @@ namespace PoliValko.Infrastructure.Security.Permissions;
 
 public static class PermissionCatalog
 {
-    public const string Version = "2026-11-06.1";
+    public const string Version = "2026-11-08.1";
 
     public static readonly IReadOnlyList<PermissionDefinition> Permissions =
     [
@@ -35,6 +35,7 @@ public static class PermissionCatalog
 
         new(PermissionKeys.SettingsShopManage, "Магазин: контакти, графік, реквізити", "Контакти, графік роботи, особливі дні, соцмережі й реквізити продавця.", "settings", "Налаштування", PermissionRisk.High),
         new(PermissionKeys.PickupManage, "Доставка й самовивіз", "Способи доставки, точки самовивозу: адреса, графік, інструкція, видимість.", "settings", "Налаштування", PermissionRisk.Medium),
+        new(PermissionKeys.SettingsNavkoloManage, "Навколо: підключення", "Ключ API, склад і ввімкнення синхронізації.", "settings", "Налаштування", PermissionRisk.High),
         new(PermissionKeys.SettingsNotificationsManage, "Сповіщення", "Куди й про які події надсилати сповіщення працівникам.", "settings", "Налаштування", PermissionRisk.Medium),
 
         new(PermissionKeys.IntegrationStatusView, "Стан синхронізацій", "Останні запуски, помилки, стан Нової пошти, оплати й чеків.", "integration", "Інтеграції", PermissionRisk.Low),

@@ -767,3 +767,8 @@ a.dash-queue-item:focus-visible {
     font-size: 19px;
   }
 }
+
+.dash-chart-axis text.money,
+.dash-chart-label.money {
+  font-family: var(--font-money);
+}

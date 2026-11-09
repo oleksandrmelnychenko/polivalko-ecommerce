@@ -1,4 +1,4 @@
-export const PERMISSION_CATALOG_VERSION = '2026-11-06.1'
+export const PERMISSION_CATALOG_VERSION = '2026-11-08.1'
 
 export const PermissionKeys = {
   Dashboard: {
@@ -39,6 +39,7 @@ export const PermissionKeys = {
   },
   Settings: {
     ManageShop: 'settings.shop.manage',
+    ManageNavkolo: 'settings.navkolo.manage',
     ManageNotifications: 'settings.notifications.manage',
   },
   Integration: {
@@ -82,6 +83,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'site.home.manage': 'Головна й банери',
   'site.seo.manage': 'SEO: мета-шаблони',
   'settings.shop.manage': 'Магазин: контакти, графік, реквізити',
+  'settings.navkolo.manage': 'Навколо: підключення',
   'settings.notifications.manage': 'Сповіщення',
   'delivery.pickup.manage': 'Доставка й самовивіз',
   'integration.status.view': 'Стан синхронізацій',

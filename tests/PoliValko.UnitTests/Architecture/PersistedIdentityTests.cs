@@ -15,10 +15,13 @@ public sealed class PersistedIdentityTests
         ["PaymentSucceeded"] = "ordering.payment-succeeded",
         ["OrderPaidAfterCancel"] = "ordering.paid-after-cancel",
         ["OrderExportRequested"] = "ordering.export-requested",
+        ["OrderCancellationRequested"] = "ordering.cancellation-requested.v1",
+        ["PaymentCancellationRequested"] = "ordering.payment-cancellation-requested.v1",
         ["FiscalReceiptRequested"] = "ordering.fiscal-receipt-requested",
         ["RefundRequested"] = "ordering.refund-requested",
         ["ServiceRequestSubmitted"] = "content.service-request-submitted",
         ["IntegrationAlert"] = "integration.alert",
+        ["StockAvailabilityChanged"] = "catalog.stock-availability-changed.v1",
     };
 
     private static readonly Dictionary<string, string[]> MessageProperties = new(StringComparer.Ordinal)
@@ -27,10 +30,13 @@ public sealed class PersistedIdentityTests
         ["PaymentSucceeded"] = ["OrderId"],
         ["OrderPaidAfterCancel"] = ["OrderId"],
         ["OrderExportRequested"] = ["OrderId"],
+        ["OrderCancellationRequested"] = ["OrderId"],
+        ["PaymentCancellationRequested"] = ["OrderId", "Reason"],
         ["FiscalReceiptRequested"] = ["OrderId", "Trigger", "RefundId"],
         ["RefundRequested"] = ["OrderId", "RefundId"],
         ["ServiceRequestSubmitted"] = ["ServiceRequestId"],
         ["IntegrationAlert"] = ["Title", "Body"],
+        ["StockAvailabilityChanged"] = [],
     };
 
     [Fact]
@@ -69,6 +75,15 @@ public sealed class PersistedIdentityTests
         Enum.GetValues<FiscalTrigger>()
             .ToDictionary(trigger => trigger.ToString(), trigger => (int)trigger)
             .ShouldBe(new Dictionary<string, int> { ["Payment"] = 0, ["Completion"] = 1, ["Refund"] = 2 });
+    }
+
+    [Fact]
+    public void Payment_cancellation_reason_keeps_its_numeric_values()
+    {
+        // Messages queued before the reason existed read as 0.
+        Enum.GetValues<PaymentCancellationReason>()
+            .ToDictionary(reason => reason.ToString(), reason => (int)reason)
+            .ShouldBe(new Dictionary<string, int> { ["OrderCancelled"] = 0, ["OrderPaid"] = 1 });
     }
 
     [Fact]

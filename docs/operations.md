@@ -16,7 +16,7 @@ HTTPS, бекапи з відновленням, моніторинг, відк�
 | `ASPNETCORE_ENVIRONMENT` | `APP_ENVIRONMENT` (Production) | завжди `Staging` | `APP_ENVIRONMENT` (Production) |
 | Демо-товари | так (`SEED_DEMO_DATA=true`) | ні, якщо не ввімкнути явно | ні (за замовчуванням `false`) |
 | Опис API `/api/docs` | так | так | ні (за замовчуванням `false`) |
-| Оплата / фіскалізація | Sandbox / Stub | Sandbox / Stub (інше — лише через `STAGING_*`) | обирається явно, без значень за замовчуванням |
+| Оплата / фіскалізація | Sandbox / Stub | Sandbox / Stub (інше — лише через `STAGING_*`) | обирається явно, без значень за замовчуванням; Sandbox заборонено (`Payments__AllowSandbox=false`) |
 | PostgreSQL ззовні | `127.0.0.1:5432` | `127.0.0.1:5433` | не публікується |
 | Індексація пошуковиками | — | заборонена (`X-Robots-Tag: noindex`) | дозволена |
 | Бекапи | сервіс `backup` (локальний том) | сервіс `backup` (свій том) | `backup` + копія поза сервер (`backup-offsite`) |
@@ -74,12 +74,12 @@ Staging і production можуть працювати на одному серв
 | `SITE_ADDRESS` | caddy | `:8080` | Домен для Caddy (`example.ua`) — сертифікат HTTPS отримується автоматично. Production: обов'язкова | ні |
 | `SITE_URL` | api, worker, web, console (збірка) | `http://localhost:8080` (staging `:8081`) | Публічна адреса: повернення з оплати, вебхуки, sitemap, canonical, посилання в листах покупцям і з консолі на вітрину. Production: обов'язкова, з `https://` | ні |
 | `CONSOLE_ADDRESS` | caddy | `http://console.localhost:8080` | Адреса консолі для Caddy (`console.example.ua`); сама назва піддомену не захищає (розділ 7). Сертифікат отримується автоматично, консоль завжди з `X-Robots-Tag: noindex, nofollow`. Production: обов'язкова | ні |
-| `CONSOLE_ALLOWED_IPS` | caddy | усі | Необов'язково: IP або мережі (CIDR, через пробіл), з яких пускати в консоль; решта отримує 404. Рекомендовано для production (офіс, VPN) | ні |
+| `CONSOLE_ALLOWED_IPS` | caddy | усі | Обов'язково для production overlay: IP або мережі (CIDR, через пробіл), з яких пускати в консоль; решта отримує 404. Рекомендовано для production (офіс, VPN) | ні |
 | `HTTP_PORT` | caddy | `8080` (staging `8081`) | Порт HTTP локально й на staging | ні |
 | `HTTP_BIND` | caddy (staging) | `127.0.0.1` | Адреса, на якій staging приймає з'єднання | ні |
 | `SEARCH_INDEXING` | caddy | `index` | `noindex` додає `X-Robots-Tag: noindex, nofollow`; на staging примусово | ні |
 | `REVALIDATE_SECRET` | api, worker, web | `local-revalidate-secret` | Спільний секрет скидання кешу вітрини (`/internal/revalidate`, лише внутрішня мережа). Production: обов'язкова | так |
-| `GA_MEASUREMENT_ID` | web (збірка) | порожньо | Google Analytics 4 (`G-…`); вбудовується під час збірки образу. На staging не передається | ні |
+| `GA_MEASUREMENT_ID` | web (збірка) | порожньо | Зарезервовано; збір GA вимкнено до безпечної first-party інтеграції | ні |
 | `GSC_VERIFICATION` | web (збірка) | порожньо | Код верифікації Google Search Console; вбудовується під час збірки | ні |
 | `SEED_DEMO_DATA` | api | `true` (staging і production `false`) | Демо-товари під час старту API | ні |
 | `EXPOSE_API_DOCS` | api | `true` (production `false`) | Опис OpenAPI й Scalar на `/api/docs` | ні |
@@ -100,8 +100,8 @@ Staging і production можуть працювати на одному серв
 |---|---|---|---|
 | `NAVKOLO_MODE` | `Stub` | `Disabled` або `Stub` (до доступу до API Navkolo) | ні |
 | `NAVKOLO_SYNC_INTERVAL` | `00:05:00` | Період синхронізації цін і залишків | ні |
-| `PAYMENTS_PROVIDER` | `Sandbox` | `Sandbox` (тестова оплата) або `Mono` (Plata by mono). Production: обов'язкова | ні |
-| `PAYMENTS_SANDBOX_SECRET` | `local-sandbox-secret` | Підпис тестових оплат. Production: обов'язкова (випадковий рядок) | так |
+| `PAYMENTS_PROVIDER` | `Sandbox` | `Sandbox` (тестова оплата), `Mono` (Plata by mono) або `Disabled`. Production: обов'язкова, лише `Mono` або `Disabled` — із `Sandbox` API й worker не стартують, бо тестова оплата дає змогу будь-кому позначити замовлення оплаченим | ні |
+| `PAYMENTS_SANDBOX_SECRET` | `local-sandbox-secret` | Підпис тестових оплат (локально й на staging). На production не використовується | так |
 | `MONO_TOKEN` | порожньо | Токен Plata by mono | так |
 | `STAGING_PAYMENTS_PROVIDER` | `Sandbox` | Лише staging: явне ввімкнення іншого провайдера (з тестовим токеном) | ні |
 | `FISCAL_PROVIDER` | `Stub` | `Disabled`, `Stub` або `Checkbox`. Production: обов'язкова | ні |
@@ -116,7 +116,7 @@ Staging і production можуть працювати на одному серв
 | `TELEGRAM_BOT_TOKEN` | порожньо | Бот для повідомлень менеджеру й тривог; порожньо — лише лог | так |
 | `TELEGRAM_CHAT_ID` | порожньо | Чат або група, куди пише бот, якщо в консолі («Налаштування → Сповіщення») чатів не вказано | ні |
 
-Листи покупцям (підтвердження пошти, скидання пароля) поки йдуть через заглушку `Email:Mode=Log`: посилання пишуться в журнал API.
+Листи покупцям (підтвердження пошти, скидання пароля) поки йдуть через заглушку `Email:Mode=Log`: посилання пишуться в журнал API лише в Development; в інших середовищах журнал не містить токенів.
 До запуску кабінету для покупців потрібен поштовий провайдер — див. [integrations.md](integrations.md).
 
 ### Бекапи
@@ -146,12 +146,12 @@ Staging і production можуть працювати на одному серв
    ```bash
    cd /srv/polivalko
    cp .env.example .env && chmod 600 .env
-   openssl rand -hex 32   # окремо для POSTGRES_PASSWORD, REVALIDATE_SECRET, PAYMENTS_SANDBOX_SECRET
+   openssl rand -hex 32   # окремо для POSTGRES_PASSWORD і REVALIDATE_SECRET
    ```
 
    У `.env` обов'язково: `COMPOSE_FILE=compose.yaml:deploy/compose.production.yaml`, `COMPOSE_PROFILES=app,offsite`,
    `APP_VERSION` (напр. `2026.11.0`), `SITE_ADDRESS`, `SITE_URL`, `CONSOLE_ADDRESS`, `POSTGRES_PASSWORD`, `REVALIDATE_SECRET`,
-   `PAYMENTS_PROVIDER`, `PAYMENTS_SANDBOX_SECRET`, `FISCAL_PROVIDER`, `SEED_DEMO_DATA=false`, `EXPOSE_API_DOCS=false`,
+   `PAYMENTS_PROVIDER` (`Mono` з `MONO_TOKEN` або `Disabled`), `FISCAL_PROVIDER`, `SEED_DEMO_DATA=false`, `EXPOSE_API_DOCS=false`,
    `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `TELEGRAM_*`, `SELLER_*`, `OFFSITE_*`. Без обов'язкових змінних compose
    зупиниться з повідомленням, якої саме бракує. Пароль БД записується під час першого старту `postgres`
    і далі змінюється лише вручну (розділ 10).
@@ -166,7 +166,7 @@ Staging і production можуть працювати на одному серв
    ```
 
 5. **Перевірка.** `curl -fsS https://example.ua/health/ready` повертає `Healthy`; відкрийте вітрину,
-   увійдіть у консоль `https://console.example.ua/login` (адреса з `CONSOLE_ADDRESS`), оформіть тестове замовлення (у режимі Sandbox), зареєструйтеся
+   увійдіть у консоль `https://console.example.ua/login` (адреса з `CONSOLE_ADDRESS`), оформіть тестове замовлення з оплатою під час отримання (оплату карткою перевіряють на staging), зареєструйтеся
    в кабінеті покупця й перевірте, що замовлення з'явилося в «Моїх замовленнях».
 6. **Адміністратор.** Після першого входу приберіть `ADMIN_PASSWORD` з `.env` і виконайте `docker compose up -d api`.
 7. **Бекапи.** Переконайтеся, що з'явився перший дамп і копія поза сервер, і проведіть тест відновлення (розділ 8.5).
@@ -202,6 +202,8 @@ docker compose logs --since 10m api worker | grep -iE "fail|error|exception" || 
 перезавантажиться сама.
 
 ## 5. Відкат
+
+Після ввімкнення шифрування Data Protection старий API без підтримки сертифікатів не прочитає key ring. Для такого переходу звичайний відкат лише коду непридатний: зберігайте сумісну версію з certificate decryption. Деталі першого переходу й ротації наведені в розділі «Шифрування Data Protection і перехід на нову версію».
 
 **Лише код (міграції сумісні).** Поверніть у `.env` попереднє `APP_VERSION` і виконайте
 
@@ -496,3 +498,23 @@ docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB
 - [ ] Навантажувальний тест на погодженій кількості відвідувачів пройдено, результат у протоколі.
 - [ ] Staging розгорнуто, закрито від індексації; реліз перевірено на ньому.
 - [ ] Відкат відпрацьовано: попередній `APP_VERSION` піднімається командою `docker compose up -d`.
+
+### Шифрування Data Protection і перехід на нову версію
+
+API потребує RSA-сертифіката з приватним ключем **поза БД та її резервними копіями**. Підготуйте приватний каталог:
+
+```sh
+sh deploy/create-key-certificate.sh /private/path/to/data-protection
+```
+
+Для Docker задайте `DATA_PROTECTION_CERTIFICATE_DIR` абсолютним шляхом. Каталог монтується лише API, read-only; його `current.crt` і `current.key` повинні читатися UID 1654 контейнера. На Linux налаштуйте власника/ACL під цей UID, не відкривайте приватний ключ усім користувачам. Скрипт створює файли з правами 600 і не перезаписує наявні. Для локального `dotnet run` у Development типовий каталог — `~/.local/share/polivalko/data-protection`; інший шлях задається `DataProtection__CertificateDirectory`. Worker не використовує key ring і не отримує сертифікат.
+
+Перед оновленням зупиніть старі API-репліки: вони не налаштовані читати зашифровані ключі. Застосуйте міграції, потім запустіть нові API. На старті перевіряється розшифрування всіх збережених ключів, а незашифровані записи перетворюються в транзакції зі збереженням key ID, дат і матеріалу ключів. Перепакування key ring зберігає захищені дані, але перехід 2026-11-08 окремо змінює криптографічну версію всіх сесійних cookie: покупці та працівники повинні ввійти повторно. Старі сесії відхиляються одразу, без автоматичного перенесення; нові сесії зберігаються після звичайних перезапусків. Версія сесій фіксована в SessionCookieProtection і має залишатися однаковою на всіх репліках, зокрема при відкаті. Перед переходом зупиніть усі старі API-репліки: старий код ще приймає старі cookie. CSRF не є сесією входу; після повторного входу клієнт отримує свіжий request token. Відсутній або неправильний сертифікат блокує запуск; генерація OpenAPI та EF design-time не запускають цей процес. Повернення до старого коду без налаштування certificate decryption не підтримується.
+
+Ротація виконується у два етапи, оскільки сертифікати завантажуються лише при старті процесу. Спочатку створіть нову пару як `upcoming.crt` / `upcoming.key`, розповсюдьте її на всі репліки поряд із незмінною `current` і перезапустіть **усі** репліки. Лише після цього збережіть попередню `current` як `previous-YYYYMMDD.crt` / `previous-YYYYMMDD.key`, перейменуйте `upcoming` у `current` і виконайте наступний перезапуск. Тоді навіть процеси першого етапу вже вміють дешифрувати ключі новим сертифікатом. Альтернатива — зупинити всі API на час ротації. Усі `*.crt` з відповідними `*.key` доступні для дешифрування; нові ключі шифруються поточним сертифікатом. Не видаляйте попередні пари, доки існують ключі/резервні копії, що потребують їх. Резервуйте каталог окремо та перевіряйте відновлення разом із БД. Старі дампи/WAL можуть містити попередній відкритий матеріал: перепакування поточної таблиці не переписує архіви.
+
+Idempotency тепер зберігає хеш автентифікованого subject (тип identity + ID). Той самий ключ/тіло повторюється лише в початковому акаунті; інший акаунт, перехід гість↔акаунт або старий запис без subject отримує `409 idempotency.owner_mismatch`. Клієнт не скидає ключ автоматично за цим кодом. Перед повторним оформленням перевірте, чи першу операцію вже виконано. Для анонімних запитів ключ разом із точним тілом залишається можливістю повтору: не публікуйте їх і генеруйте випадковий ключ для кожної нової операції.
+
+### Повільний npm у Docker
+
+Збирайте з `--progress=plain`, щоб бачити мережеві запити npm. Dockerfile встановлює лише workspace вибраного `APP` і спільного пакета, щоб магазин не завантажував залежності консолі. Етап `build` успадковує `deps`, без повторного копіювання всього `node_modules`. Він використовує BuildKit cache для `/root/.npm`, `--prefer-offline`, п'ять одночасних з'єднань та обмежені timeout/retry. `--no-audit` прибирає мережеву audit-операцію зі встановлення; перевірка advisories виконується окремо. Якщо з'являється `ECONNRESET`, перевірте доступ до registry.npmjs.org із контейнера та навантаження Docker VM через `docker stats --no-stream`. Не перезапускайте Docker і не видаляйте кеші/контейнери інших проєктів як спосіб виправити цю збірку.

@@ -1,3 +1,4 @@
+@import url("../../../../packages/shared/styles/money.css");
 @import url("../../../../packages/shared/styles/tokens.css");
 @import url("../../../../packages/shared/styles/base.css");
 @import url("../../../../packages/shared/styles/layout.css");
@@ -9,6 +10,7 @@
 @import url("../features/search/styles/search-panel.css");
 @import url("../features/layout/styles/mobile-menu.css");
 @import url("../features/layout/styles/back-to-top.css");
+@import url("../features/assistant/styles/assistant.css");
 @import url("../../../../packages/shared/styles/ui/buttons.css");
 @import url("../shared/styles/ui/stepper.css");
 @import url("../features/home/styles/sections.css");

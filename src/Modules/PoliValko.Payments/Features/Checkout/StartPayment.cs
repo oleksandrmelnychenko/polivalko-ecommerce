@@ -52,18 +52,21 @@ internal static class StartPayment
     {
         if (!order.CanPay)
         {
-            return Problems.Create(
-                StatusCodes.Status409Conflict,
-                "payments.not_payable",
-                "Оплата зараз недоступна",
-                order.PaymentMethod == PaymentMethod.Card
-                    ? "Замовлення ще не підтверджене, уже оплачене або скасоване."
-                    : "Для цього замовлення обрано оплату під час отримання.");
+            return NotPayable(order);
         }
 
         if (providers.Active is not { } provider)
         {
             return Problems.Create(StatusCodes.Status503ServiceUnavailable, "payments.not_configured", "Онлайн-оплата тимчасово недоступна", "Зверніться до менеджера.");
+        }
+
+        // One payment start per order at a time, invoice call included: a second click (another tab, a double tap)
+        // waits here and then reuses the invoice the first one opened. A cancellation waits too, so it sees that invoice.
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        order = await orders.LockPayableAsync(order.Id, ct);
+        if (!order.CanPay)
+        {
+            return NotPayable(order);
         }
 
         var now = time.GetUtcNow();
@@ -111,6 +114,7 @@ internal static class StartPayment
             payment.PageUrl = invoice.PageUrl;
             payment.UpdatedAt = time.GetUtcNow();
             await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
             return TypedResults.Ok(new StartPaymentDto(payment.Id, invoice.PageUrl, payment.ExpiresAt));
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException && !ct.IsCancellationRequested)
@@ -119,7 +123,16 @@ internal static class StartPayment
             payment.Status = PaymentAttemptStatus.Failed;
             payment.FailureReason = "Провайдер недоступний";
             await db.SaveChangesAsync(CancellationToken.None);
+            await transaction.CommitAsync(CancellationToken.None);
             return Problems.Create(StatusCodes.Status503ServiceUnavailable, "payments.provider_unavailable", "Платіжна система недоступна", "Спробуйте ще раз за кілька хвилин.");
         }
     }
+
+    private static ProblemHttpResult NotPayable(PayableOrder order) => Problems.Create(
+        StatusCodes.Status409Conflict,
+        "payments.not_payable",
+        "Оплата зараз недоступна",
+        order.PaymentMethod == PaymentMethod.Card
+            ? "Замовлення ще не підтверджене, уже оплачене або скасоване."
+            : "Для цього замовлення обрано оплату під час отримання.");
 }

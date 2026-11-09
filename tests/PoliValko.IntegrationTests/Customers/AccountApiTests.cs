@@ -103,7 +103,7 @@ public sealed class AccountApiTests(ApiFactory api)
         await ShouldNeedCsrfAsync(await bare.PostAsJsonAsync("/api/v1/account/register", new RegisterCustomerRequest(email, Accounts.Password, "Олена", null), Ct));
         await ShouldNeedCsrfAsync(await bare.PostAsJsonAsync("/api/v1/account/login", new CustomerLoginRequest(email, Accounts.Password), Ct));
         await ShouldNeedCsrfAsync(await bare.PostAsJsonAsync("/api/v1/account/password/forgot", new ForgotPasswordRequest(email), Ct));
-        await ShouldNeedCsrfAsync(await bare.PostAsJsonAsync("/api/v1/account/email/confirm", new ConfirmEmailRequest("token"), Ct));
+        (await bare.PostAsJsonAsync("/api/v1/account/email/confirm", new ConfirmEmailRequest("token"), Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
 
         var (client, _) = await Accounts.RegisterAsync(api);
         var token = client.DefaultRequestHeaders.GetValues(CsrfHeaders.Token).Single();
@@ -161,6 +161,10 @@ public sealed class AccountApiTests(ApiFactory api)
 
         var changed = await first.PostAsJsonAsync("/api/v1/account/password", new ChangeCustomerPasswordRequest(Accounts.Password, "Another-password-1"), Ct);
         changed.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        // A fresh cookie must not acquire the new stamp via an ordinary profile update.
+        (await second.PutAsJsonAsync("/api/v1/account/profile", new UpdateProfileRequest("Стара сесія", null), Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
 
         (await first.GetAsync("/api/v1/account/me", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await first.PutAsJsonAsync("/api/v1/account/profile", new UpdateProfileRequest("Олена", null), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -245,7 +249,11 @@ public sealed class AccountApiTests(ApiFactory api)
         second.ShouldNotBe(first);
 
         var anonymous = await Accounts.AnonymousAsync(api);
-        (await anonymous.PostAsJsonAsync("/api/v1/account/email/confirm", new ConfirmEmailRequest(second), Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await anonymous.PostAsJsonAsync("/api/v1/account/email/confirm", new ConfirmEmailRequest(second), Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        var (wrongAccount, _) = await Accounts.RegisterAsync(api);
+        (await wrongAccount.PostAsJsonAsync("/api/v1/account/email/confirm", new ConfirmEmailRequest(second), Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await client.ReadAsync<CustomerMeDto>("/api/v1/account/me")).EmailConfirmed.ShouldBeFalse();
+        (await client.PostAsJsonAsync("/api/v1/account/email/confirm", new ConfirmEmailRequest(second), Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
         (await client.ReadAsync<CustomerMeDto>("/api/v1/account/me")).EmailConfirmed.ShouldBeTrue();
     }
 

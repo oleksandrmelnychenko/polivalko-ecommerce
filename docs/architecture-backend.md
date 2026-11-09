@@ -138,7 +138,7 @@ tests/                               теки дзеркальні до моду
 | Navkolo | `NavkoloJobs`; `ImportRunDto` (+ `ImportRunDto.From(SyncRun)`); `INavkoloSettings` (режим інтеграції) |
 | Customers | `CustomerClaims` (тип claim, `CustomerId(ClaimsPrincipal)` → `Guid?`), `CustomerPolicies.Customer`, `CustomerEndpointExtensions.RequireCustomer()` (політика + CSRF + 401 у документі); порт `ICustomerDirectory` (Ordering: id покупця з підтвердженим email); гачки `ICustomerEmailConfirmedHandler` (реалізує Ordering), `ICustomerOrderHistory` + `CustomerOrderRecord` (Ordering: кількість і останні замовлення покупця для консолі, статус — рядок у camelCase, як у JSON) і `ICustomerFavoritesCounter` (Catalog: кількість обраного) |
 | Notifications | `IManagerNotifier`, `ManagerNotification` (+ `ManagerEvent` — подія, за якою працює перемикач у налаштуваннях сповіщень); `ICustomerMailer` (листи покупцю: підтвердження email, відновлення пароля) |
-| Ordering | повідомлення `OrderPlaced`, `PaymentSucceeded`, `OrderPaidAfterCancel`, `OrderExportRequested`, `FiscalReceiptRequested` + `FiscalTrigger`, `RefundRequested`; перелічення `OrderStatus`, `PaymentStatus`, `PaymentMethod`, `DeliveryMethod`, `RefundMethod`, `RefundStatus`; `DeliveryCodes`, `PaymentCodes`, `OrderProblems`; `OrderStatusCountDto` + `OrderStatusCounts`; порти `IOrderPayments` (Payments; `FindPayableForCustomerAsync` — для оплати з кабінету), `IOrderReceiptSource` (Fiscal; `BelongsToCustomerAsync` — чеки в кабінеті), `IOrderExportSource` (Navkolo), `IOrderReporting` (Console), гачок `IRefundReceiptStatuses` (реалізує Fiscal: стан останнього чека повернення за id повернення) і їхні записи-знімки (`PayableOrder`, `OrderPaymentTarget`, `PaidOrderResult`, `RefundToProcess`, `OrderForReceipt`, `OrderForExport`, `OrderPeriodRow`, `ProductSalesRow`, `OrderedProductSnapshot`, `OrderSearchHit`, `CustomerSearchHit`); `SellerOptions` — у `Configuration` |
+| Ordering | повідомлення `OrderPlaced`, `PaymentSucceeded`, `OrderPaidAfterCancel`, `OrderExportRequested`, `OrderCancellationRequested`, `PaymentCancellationRequested` + `PaymentCancellationReason`, `FiscalReceiptRequested` + `FiscalTrigger`, `RefundRequested`; перелічення `OrderStatus`, `PaymentStatus`, `PaymentMethod`, `DeliveryMethod`, `RefundMethod`, `RefundStatus`; `DeliveryCodes`, `PaymentCodes`, `OrderProblems`; `OrderStatusCountDto` + `OrderStatusCounts`; порти `IOrderPayments` (Payments; `FindPayableForCustomerAsync` — для оплати з кабінету; `LockPayableAsync` — блокування рядка замовлення на час відкриття рахунку; `RecordOutsideRefundAsync` — повернення, зроблене провайдером поза сайтом), `IOrderReceiptSource` (Fiscal; `BelongsToCustomerAsync` — чеки в кабінеті), `IOrderExportSource` (Navkolo), `IOrderReporting` (Console), гачок `IRefundReceiptStatuses` (реалізує Fiscal: стан останнього чека повернення за id повернення) і їхні записи-знімки (`PayableOrder`, `OrderPaymentTarget`, `PaidOrderResult`, `RefundToProcess`, `SubmittedRefund`, `OrderForReceipt`, `OrderForExport`, `OrderPeriodRow`, `ProductSalesRow`, `OrderedProductSnapshot`, `OrderSearchHit`, `CustomerSearchHit`); `SellerOptions` — у `Configuration` |
 | Payments | `PaymentJobs.Reconcile`; `IPaymentSettings` (провайдер і режим для консолі) |
 | Fiscal | `IFiscalSettings` (провайдер ПРРО, режим і коли видається чек для кожного способу оплати) |
 | Identity, Console | порожньо (нікому не потрібні) |
@@ -263,15 +263,16 @@ PoliValko.Payments/
   Persistence/             PaymentsModelConfigurator
   Integrations/Providers/  IPaymentProvider, IPaymentProviders, PaymentProviders, PaymentProviderNames,
                            PaymentBasketItem, InvoiceRequest, CreatedInvoice, ProviderPaymentState,
-                           ProviderPaymentStatus, ProviderRefundResult, PaymentWebhookRejectedException
+                           ProviderPaymentStatus, ProviderRefundResult, ProviderRefundState, PaymentWebhookRejectedException
   Integrations/Mono/       MonoPaymentProvider (записи формату monobank вкладені)
   Integrations/Sandbox/    SandboxPaymentProvider
   Features/Checkout/       PaymentEndpoints (Map; MapAccount — /account/orders/{number}/payments); StartPayment
                            (HandleAsync за токеном + спільний StartAsync), StartAccountPayment, ReceiveWebhook,
                            GetSandboxInvoice, CompleteSandboxPayment; PaymentDtos
   Features/Console/        ConsolePaymentEndpoints, ListOrderPayments, ConsolePaymentDto
-  Features/Processing/     PaymentProcessor, PaymentUpdateResult
-  Features/Refunds/        ProcessRefundRequested
+  Features/Processing/     PaymentProcessor (зайва оплата → тривога; сторно провайдера → облік на замовленні), PaymentUpdateResult
+  Features/Refunds/        ProcessRefundRequested, RefundSettlement (надсилання з ключем до запиту; звірка «processing»)
+  Features/Cancellation/   CancelOpenPayments (анулює неоплачені рахунки скасованого замовлення)
   Features/Settings/       PaymentSettings (IPaymentSettings)
   Jobs/                    PaymentReconciliationJob
 ```
@@ -387,7 +388,6 @@ PoliValko.Customers/
   CustomersModule.cs       AddCustomersModule, MapAccountEndpoints
   Contracts/               CustomerClaims, CustomerPolicies, CustomerEndpointExtensions (RequireCustomer),
                            ICustomerDirectory, ICustomerEmailConfirmedHandler
-  Configuration/           CustomersOptions (SessionCheckInterval)
   Domain/                  Customer (блокування, зміна пароля зі зміною security stamp), CustomerEmail (нормалізація),
                            CustomerAddress, AddressDeliveryCodes, CustomerToken (+ Issue, Hash), CustomerTokenPurpose
   Persistence/             CustomersModelConfigurator, CustomerLoader (покупець за claims), CustomerTokenQueries
@@ -570,9 +570,8 @@ PoliValko.Console/
   працівника на `/api/v1/account/**` дає 401, cookie покупця на `/api/v1/console/**` — теж 401.
 - 401/403 — Problem Details з кодами `auth.unauthorized` / `auth.forbidden` («Увійдіть до особистого кабінету.»), як у
   працівників (спільний `AuthProblems.WriteAsync`).
-- Security stamp: `CustomerSessionValidator` (`OnValidatePrincipal`) щонайбільше раз на `Customers:SessionCheckInterval`
-  (типово 1 хв) звіряє stamp з БД. Немає покупця або stamp інший — principal відхиляється, cookie видаляється; інакше
-  claims оновлюються (ім'я) і cookie перевидається. Зміна й відновлення пароля змінюють stamp, тож інші сесії
+- Security stamp: `CustomerSessionValidator` (`OnValidatePrincipal`) на кожному запиті звіряє stamp і блокування з БД. Немає покупця або stamp інший — principal відхиляється, cookie видаляється; інакше
+  за потреби оновлюється ім'я у claims. Зміна й відновлення пароля змінюють stamp, тож інші сесії
   завершуються не пізніше ніж за інтервал; зміна пароля одразу перевидає cookie поточної сесії. У тестах інтервал 0.
 
 **CSRF.** Той самий antiforgery і `CsrfFilter`, що й у консолі (cookie `pv_csrf`, заголовок `X-CSRF-TOKEN`).
@@ -925,11 +924,13 @@ cashOnDelivery, pickup }` — `payment|completion|none` з `Fiscal:IssueOn` (у�
 - Рядкові літерали дій і типів аудиту (`order.status_changed`, `integration.outbox_retried`, `SyncJob`, `CatalogImport`, …),
   коди проблем (`catalog.product_not_found`, …), тексти помилок валідації.
 - `idempotency_keys.scope` = `"{METHOD} {шаблон маршруту}"` — шаблони маршрутів і префікси груп не змінюються.
-  Єдиний виняток — перейменування групи консолі 04.11.2026: записи з попереднім префіксом просто спливли за 72 год.
+  `subject_hash` прив’язує повтор до автентифікованих типу identity та ID; чужий subject або legacy NULL відхиляються з 409.
+  Єдиний виняток для шаблону scope — перейменування групи консолі 04.11.2026: записи з попереднім префіксом просто спливли за 72 год.
 - Data Protection: `SetApplicationName("PoliValko")`, ключі в `identity.data_protection_keys`; cookie `pv_console`
   (перейменована 04.11.2026: наявні тоді сесії працівників завершилися), `pv_customer`, `pv_csrf`; заголовок
   `X-CSRF-TOKEN`; схеми `Identity.Application`, `Customer`, `PoliValko` (типова, вибір за шляхом); claim
-  `customer_stamp`. Зміна імені схеми `Customer` чи типу claim робить недійсними cookie покупців.
+  `customer_stamp`. Key ring шифрується RSA-сертифікатом поза БД; старт API перепаковує legacy XML без зміни ID/матеріалу ключів (див. operations.md).
+  Зміна імені схеми `Customer` чи типу claim робить недійсними cookie покупців.
 - Вбудований ресурс `demo-catalog.json` шукається за суфіксом імені; якщо файл переїжджає, шлях у
   `<EmbeddedResource>` у `PoliValko.Catalog.csproj` переїжджає разом із ним.
 - Ключі кешу `delivery:pickup-points:active`, `content:banners:active`, теги ревалідації вітрини (`StorefrontTags`, зокрема
@@ -953,8 +954,7 @@ PaymentTypes, Checkbox:*); `Navkolo` (Mode, SyncInterval, CatalogInterval, Fresh
 `Notifications:Telegram` (BotToken; ChatId — запасний чат, коли в консолі чатів не вказано);
 `RateLimiting:{Forms,Orders,Login}:{PermitLimit,WindowSeconds}` (типово 5/60, 10/600, 10/60);
 `Cors:Origins`; `Api:ExposeDocs`; `Database:ApplyMigrationsOnStartup`, `Database:SeedDemoData`; `Seed:Users`;
-`Email:Mode` (`Log` — типово й поки єдине значення, інше зупиняє запуск); `Customers:SessionCheckInterval` (типово
-`00:01:00`). `Site:PublicUrl` тепер також база посилань у листах покупцю й адреси повернення з оплати в кабінеті.
+`Email:Mode` (`Log` — типово й поки єдине значення, інше зупиняє запуск). `Site:PublicUrl` тепер також база посилань у листах покупцю й адреси повернення з оплати в кабінеті.
 
 ### 6.5 HTTP-політики
 
@@ -965,7 +965,7 @@ PaymentTypes, Checkbox:*); `Navkolo` (Mode, SyncInterval, CatalogInterval, Fresh
   security stamp щохвилини,
   відповіді 401/403 у форматі Problem Details.
 - Покупці: політика `customer`, cookie `pv_customer` (HttpOnly, SameSite=Lax, 30 днів, sliding), блокування після
-  5 спроб на 15 хв, пароль 8–128 символів, перевірка security stamp раз на `Customers:SessionCheckInterval`; типова схема
+  5 спроб на 15 хв, пароль 8–128 символів, перевірка security stamp на кожному запиті; типова схема
   обирає cookie за шляхом (розділ 5.1).
 - Rate limiting: політики `forms`, `orders`, `login` (фіксоване вікно на IP), 429 із `Retry-After` і Problem Details
   «Забагато запитів». Імена політик — `RateLimitPolicies` в Infrastructure. Кабінет: `forms` — реєстрація, «забули
@@ -1057,3 +1057,56 @@ PaymentTypes, Checkbox:*); `Navkolo` (Mode, SyncInterval, CatalogInterval, Fresh
    відповідної групи, щоб не зсувати наявний документ).
 4. Додайте модуль у список `ModuleBoundaryTests`; для образу Docker — рядок `COPY` його `.csproj` у
    `deploy/dotnet.Dockerfile`.
+
+
+## Серверний кошик, оформлення й резерви (08.11.2026)
+
+Міграція `ServerCartsAndReservations` додає `ordering.carts`, `catalog.stock_reservations`
+і `catalog.product_stock.reserved_quantity`. Кошик гостя ідентифікує випадкова HttpOnly cookie
+`pv_cart` (90 днів, SameSite=Lax, Secure на HTTPS); у БД зберігається хеш ідентифікатора.
+Кошик покупця прив'язаний до автентифікованого customer ID. Після входу гостьові кількості додаються
+до акаунта один раз; після виходу дані акаунта не доступні через гостьову cookie.
+
+Усі операції кошика мають CSRF, ліміт запитів і перевірку ревізії. Advisory lock серіалізує записи
+одного власника, UUID кошика не є авторизацією. `OrderWriter` спільний для прямого API та серверного кошика.
+Оформлення блокує рядки залишків у сталому порядку, перевіряє ціни й доступність, записує замовлення,
+резерви, outbox, очищення кошика та зашифрований Data Protection результат однією транзакцією.
+Результат попередньої ревізії відновлюється після втрати відповіді або перезавантаження;
+він не залежить від TTL загального кешу Idempotency-Key. Нове оформлення потребує нової ревізії кошика.
+
+Кошик сам по собі не резервує товар. Резерв виникає після успішного оформлення, включно з
+`AwaitingConfirmation`; перевірка доступності віднімає його і на вітрині, і в quote, і при checkout.
+До першої спроби передачі скасування звільняє резерв один раз одразу. Для переданих замовлень або невідомого результату передачі резерв тримається до підтвердження скасування Навколо. Після `Shipped`/`Completed` він позначений спожитим:
+скасування чи повернення коштів не означають фізичного повернення товару. Спожитий резерв утримується
+до підтвердження відвантаження в ERP і синхронізації залишку. Автоматичного таймера скасування/звільнення
+неоплачених замовлень немає: працівник скасовує їх у консолі, тому пізня оплата не втрачає вже проданий резерв.
+При вимкненій ERP або Stub виконані замовлення продовжують зменшувати доступність локально.
+
+
+### Скасування Навколо (08.11.2026)
+
+`OrderCancellationRequested` записується разом зі статусом `Cancelled`. `NavkoloExportAttemptedAt` фіксується
+окремим атомарним UPDATE до мережевого запиту лише для нескасованого замовлення. Це дозволяє відрізнити
+«ніколи не передавали» від «передали, але втратили відповідь». Для одного UUID експорт і скасування працюють
+під PostgreSQL session advisory lock; блокування звільняється в finally, закриття процесу також звільняє його.
+Скасування в консолі не чекає HTTP-відповіді ERP. Підтвердження в ERP, ідемпотентне звільнення неспожитого
+резерву та відмітка `NavkoloCancellationSynchronizedAt` завершують обробку; останні дві дії — одна транзакція.
+Вичерпання повторів не звільняє резерв автоматично. Журнал/ручний повтор доступні через outbox консолі.
+
+
+### Зворотна синхронізація Навколо (08.11.2026)
+
+`NavkoloInventorySync` виконує зворотну звірку всередині `navkolo.price-stock`. Навколо передає нормалізовані
+`ExternalOrderState` через порт `IOrderStateSync`; лише Ordering змінює замовлення/історію, лише Catalog змінює резерви.
+Порядок блокувань: inventory advisory lock → advisory locks UUID (ті самі ключі, що outbound) → рядки замовлень
+у порядку UUID → рядки залишків. Після отримання блокувань статуси перечитуються; нові UUID поза блокуванням
+чекають наступного циклу. Це не дозволяє пізньому upload перезаписати вже прийняте скасування.
+
+Імпорт залишків, `NavkoloShippedAt`/`NavkoloCancelledAt`, статус, історія, аудит і звільнення резервів комітяться разом.
+Відсутні товари у свіжому знімку відвантаження спричиняють rollback. Втрачену відповідь upload можна підтвердити
+наявним UUID документа; повторного upload після цього немає. Зворотна звірка не генерує подій outbound-скасування.
+
+DNTrade не надає версії статусу в документі; факти terminal-станів накопичуються, а не стираються. `load=1`
+має пріоритет для складського обліку. Конфлікт скасування/відвантаження видно в історії та картці; фінансові
+статуси не змінюються й повернення коштів автоматично не виконується. API не гарантує атомарного знімка
+між сторінками замовлень і товарів; дубльовані UUID відхиляються, подальші зміни ERP підхоплює наступний цикл.

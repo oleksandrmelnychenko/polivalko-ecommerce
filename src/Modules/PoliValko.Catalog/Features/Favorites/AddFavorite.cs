@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PoliValko.Catalog.Domain;
+using PoliValko.Catalog.Persistence;
 using PoliValko.Customers.Contracts;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Web;
@@ -17,8 +18,9 @@ internal static class AddFavorite
         TimeProvider time,
         CancellationToken ct)
     {
+        var visibleProducts = await CatalogVisibility.ProductsAsync(db, ct);
         var customerId = http.User.CustomerId()!.Value;
-        if (!await db.Set<Product>().AnyAsync(p => p.Id == productId && p.IsVisible, ct))
+        if (!await visibleProducts.AnyAsync(p => p.Id == productId && p.IsVisible, ct))
         {
             return Problems.NotFound("catalog.product_not_found", "Товар не знайдено", "Товару немає або він прихований.");
         }

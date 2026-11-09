@@ -15,4 +15,7 @@ public sealed record OrderForExport(
     decimal Total,
     string? Comment,
     string? NavkoloOrderRef,
-    IReadOnlyList<OrderForExportLine> Lines);
+    IReadOnlyList<OrderForExportLine> Lines,
+    OrderStatus Status = OrderStatus.New,
+    DateTimeOffset? ExportAttemptedAt = null,
+    DateTimeOffset? CancellationSynchronizedAt = null);

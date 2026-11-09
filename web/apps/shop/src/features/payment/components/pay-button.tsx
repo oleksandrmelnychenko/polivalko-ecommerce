@@ -48,7 +48,7 @@ export function PayButton({
       </p>
       <div className="pay__actions">
         <button type="button" className="btn" onClick={pay} disabled={busy} aria-busy={busy}>
-          {failed ? `Спробувати ще раз: ${amount}` : `Оплатити ${amount}`}
+          {failed ? "Спробувати ще раз:" : "Оплатити"} <span className="money">{amount}</span>
         </button>
       </div>
       {error && (
