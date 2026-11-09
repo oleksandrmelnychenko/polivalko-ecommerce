@@ -34,7 +34,7 @@ export function LoginForm() {
       {reason === "favorites" && (
         <p className="notice">
           <strong>Обране доступне в кабінеті</strong>
-          Увійдіть або зареєструйтеся, щоб зберігати товари й повертатися до них з будь-якого пристрою.
+          Увійдіть або зареєструйтеся, і збережені товари будуть доступні з будь-якого пристрою.
         </p>
       )}
       <TextField name="email" label="Email" type="email" autoComplete="email" spellCheck={false} required errors={form.errors} />

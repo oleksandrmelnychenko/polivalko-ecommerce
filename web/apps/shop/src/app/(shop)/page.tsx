@@ -2,8 +2,8 @@ import { HomeScreen } from "@/features/home/server";
 import { seoMetadata } from "@/features/seo";
 
 export const metadata = seoMetadata({
-  title: "Poli Valko: товари для дому, саду та городу",
-  description: "Товари для саду, городу й дому з магазину в Бучі: полив, інструмент, садова техніка. Доставка Новою поштою по Україні, самовивіз у Бучі.",
+  title: "Poli Valko: товари для саду, городу й дому",
+  description: "Товари для саду, городу й дому: полив, інструмент, садова техніка. Доставка Новою поштою по Україні або самовивіз з магазину.",
   path: "/",
   exactTitle: true,
 });

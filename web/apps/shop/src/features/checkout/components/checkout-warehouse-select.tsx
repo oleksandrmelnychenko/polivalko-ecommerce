@@ -1,5 +1,11 @@
 import type { Settlement, Warehouse } from "@polivalko/shared/api/types";
+import { DropdownSelect } from "@/shared/ui/dropdown-select";
 import type { FieldProps } from "../lib/field-props";
+
+const GROUPS = [
+  { type: "branch", label: "Відділення" },
+  { type: "postomat", label: "Поштомати" },
+];
 
 export function CheckoutWarehouseSelect({
   settlement,
@@ -14,30 +20,25 @@ export function CheckoutWarehouseSelect({
   warehouseRef: string;
   setWarehouseRef: (ref: string) => void;
 }) {
+  const options = GROUPS.flatMap((group) =>
+    warehouses.filter((w) => w.type === group.type).map((w) => ({ value: w.ref, label: `${w.name}, ${w.address}`, group: group.label })),
+  );
+
   return (
     <div className="field">
       <label htmlFor="warehouse">Відділення або поштомат</label>
-      <select
+      <DropdownSelect
         id="warehouse"
+        variant="field"
         value={warehouseRef}
-        onChange={(e) => setWarehouseRef(e.target.value)}
+        options={options}
+        onChange={setWarehouseRef}
+        placeholder={settlement ? "Оберіть зі списку" : "Спершу оберіть місто"}
+        searchable={options.length > 8}
+        searchPlaceholder="Номер або вулиця"
         disabled={!settlement}
         {...field("delivery.warehouseRef")}
-      >
-        <option value="">{settlement ? "Оберіть зі списку" : "Спершу оберіть місто"}</option>
-        {["branch", "postomat"].map((type) => {
-          const list = warehouses.filter((w) => w.type === type);
-          return list.length ? (
-            <optgroup key={type} label={type === "branch" ? "Відділення" : "Поштомати"}>
-              {list.map((w) => (
-                <option key={w.ref} value={w.ref}>
-                  {w.name}, {w.address}
-                </option>
-              ))}
-            </optgroup>
-          ) : null;
-        })}
-      </select>
+      />
       {fieldError("delivery.warehouseRef")}
     </div>
   );

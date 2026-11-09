@@ -20,19 +20,18 @@ export const heroSlides: HeroSlide[] = [
     key: "store",
     image: { ...sized(pagePhotos.hero.url, HERO_SIZES, 960), alt: pagePhotos.hero.alt },
     kind: "band",
-    kicker: "Магазин у Бучі",
-    title: "Усе для саду, городу й дому",
-    sub: "Відправимо Новою поштою по всій Україні або підготуємо до самовивозу в Бучі",
-    cta: { href: "/catalog", label: "Обрати товари" },
+    title: "Товари для саду, городу й дому",
+    sub: "Відправляємо Новою поштою по всій Україні. Самовивіз з магазину безкоштовний.",
+    cta: { href: "/catalog", label: "Перейти до каталогу" },
   },
   {
     key: "sale",
     image: { ...sized(pagePhotos.heroSale.url, HERO_SIZES, 960), alt: pagePhotos.heroSale.alt },
     kind: "panel",
-    kicker: "Зараз дешевше",
-    title: "Знижки для саду",
-    sub: "Полив, інструмент і садова техніка за ціною, нижчою, ніж була",
-    cta: { href: "/#offers-title", label: "Дивитися знижки" },
+    kicker: "Акції",
+    title: "Товари зі знижкою",
+    sub: "Усі товари зі зниженою ціною зібрані на одній сторінці.",
+    cta: { href: "/sale", label: "Дивитися акції" },
   },
 ];
 
@@ -47,7 +46,7 @@ export function bannerSlides(banners: Banner[]): HeroSlide[] {
       kicker: banner.kicker?.trim() || undefined,
       title: banner.title,
       sub: banner.text?.trim() || undefined,
-      cta: link ? { href: link, label: banner.buttonLabel?.trim() || "Детальніше" } : undefined,
+      cta: link ? { href: link, label: banner.buttonLabel?.trim() || "Переглянути" } : undefined,
     };
   });
 }

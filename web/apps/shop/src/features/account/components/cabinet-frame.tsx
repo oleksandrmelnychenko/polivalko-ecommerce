@@ -37,7 +37,7 @@ export function CabinetFrame({ children }: { children: ReactNode }) {
           </ol>
         </nav>
         <h1>Особистий кабінет</h1>
-        <p className="lead cabinet__hello">{me ? `Вітаємо, ${me.name}!` : "\u00a0"}</p>
+        <p className="lead cabinet__hello">{me ? `Вітаємо, ${me.name}` : "\u00a0"}</p>
       </header>
       <div className="cabinet">
         <CabinetNav pathname={pathname} onLogout={logout} />

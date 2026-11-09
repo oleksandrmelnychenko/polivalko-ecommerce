@@ -1,11 +1,10 @@
+import { UserIcon } from "@polivalko/shared/ui/icons";
 import type { FieldProps } from "../lib/field-props";
+import { CheckoutStep } from "./checkout-step";
 
 export function CheckoutContacts({ field, fieldError }: FieldProps) {
   return (
-    <section aria-labelledby="contacts-title">
-      <h2 id="contacts-title">
-        <span>1</span> Контакти
-      </h2>
+    <CheckoutStep id="contacts-title" icon={<UserIcon />} title="Контакти" hint="Для доставки й зв'язку щодо замовлення">
       <div className="fields-2">
         <div className="field">
           <label htmlFor="name">Ім&apos;я та прізвище</label>
@@ -19,10 +18,12 @@ export function CheckoutContacts({ field, fieldError }: FieldProps) {
         </div>
       </div>
       <div className="field">
-        <label htmlFor="email">Email, якщо хочете лист про замовлення</label>
+        <label htmlFor="email">
+          Email <span className="field__optional">необов&apos;язково, для листа про замовлення</span>
+        </label>
         <input id="email" name="email" type="email" autoComplete="email" spellCheck={false} {...field("customer.email")} />
         {fieldError("customer.email")}
       </div>
-    </section>
+    </CheckoutStep>
   );
 }

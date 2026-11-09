@@ -3,6 +3,8 @@ import { cacheLife, cacheTag } from "next/cache";
 import { api } from "@polivalko/shared/api/server";
 import type { Announcement, SiteHome } from "../lib/site-types";
 
+const PENDING = /уточнюється/i;
+
 export async function getPhotoCredits() {
   "use cache";
   cacheLife("hours");
@@ -16,6 +18,14 @@ export async function getPickupPoints() {
   cacheLife("hours");
   cacheTag("delivery");
   const { data } = await api.GET("/api/v1/delivery/pickup-points");
+  return data ?? [];
+}
+
+export async function getDeliveryMethods() {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("delivery");
+  const { data } = await api.GET("/api/v1/checkout/delivery-methods");
   return data ?? [];
 }
 
@@ -40,7 +50,9 @@ export async function getSeller() {
   cacheLife("hours");
   cacheTag("content");
   const { data } = await api.GET("/api/v1/seller");
-  return data ?? null;
+  if (!data) return null;
+  const seller = PENDING.test(data.name ?? "") ? { ...data, name: "" } : data;
+  return Object.values(seller).some((value) => typeof value === "string" && value.trim()) ? seller : null;
 }
 
 export async function getSiteHome(): Promise<SiteHome | null> {

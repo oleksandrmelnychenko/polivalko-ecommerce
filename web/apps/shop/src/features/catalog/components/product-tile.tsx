@@ -9,13 +9,12 @@ import { toCartProduct } from "../lib/cart-product";
 import { discountPercent } from "../lib/discount";
 import { TileFlashes } from "./tile-flashes";
 
-export function ProductTile({ product, priority, look }: { product: ProductListItem; priority?: boolean; look?: boolean }) {
+export function ProductTile({ product, priority }: { product: ProductListItem; priority?: boolean }) {
   const discount = discountPercent(product.price, product.oldPrice);
   const image = product.imageUrl ? sized(product.imageUrl, "(max-width: 40rem) 46vw, (max-width: 75rem) 30vw, 380px", 330) : null;
   const href = `/product/${product.slug}`;
   return (
-    <li className={look ? "tile tile--product tile--look" : "tile tile--product tile--shop"}>
-      {look && <Link href={href} className="tile__cover" tabIndex={-1} aria-hidden="true" />}
+    <li className="tile tile--product tile--shop">
       <figure className="tile__photo">
         {image ? (
           <img {...image} alt="" width={300} height={400} loading={priority ? "eager" : "lazy"} fetchPriority={priority ? undefined : "low"} decoding="async" />
@@ -23,21 +22,14 @@ export function ProductTile({ product, priority, look }: { product: ProductListI
           <span className="tile__photo-empty">Фото додасть магазин</span>
         )}
         <TileFlashes product={product} discount={discount} />
-        {!look && (
-          <span className="tile__bar">
-            <Link href={href} className="round-btn" aria-label={`Переглянути: ${product.name}`} title="Переглянути">
-              <EyeIcon />
-            </Link>
-            <FavoriteButton productId={product.id} name={product.name} />
-          </span>
-        )}
+        <span className="tile__bar">
+          <Link href={href} className="round-btn" aria-label={`Переглянути: ${product.name}`} title="Переглянути">
+            <EyeIcon />
+          </Link>
+          <FavoriteButton productId={product.id} name={product.name} />
+        </span>
       </figure>
       <div className="tile__body">
-        {look && (
-          <p className="tile__name">
-            <Link href={href}>{product.name}</Link>
-          </p>
-        )}
         <p className="tile__price">
           {product.oldPrice && discount && (
             <s className="price-old">
@@ -50,33 +42,21 @@ export function ProductTile({ product, priority, look }: { product: ProductListI
             {formatMoney(product.price)}
           </strong>
         </p>
-        {look ? (
-          <div className="tile__actions">
-            <Link href={href} className="round-btn" aria-label={`Переглянути: ${product.name}`}>
-              <EyeIcon />
-            </Link>
-            <FavoriteButton productId={product.id} name={product.name} />
-            <AddToCart product={toCartProduct(product)} inStock={product.inStock} round />
-          </div>
+        {product.brand && (
+          <p className="tile__brand" translate="no">
+            {product.brand}
+          </p>
+        )}
+        <p className="tile__name">
+          <Link href={href}>{product.name}</Link>
+        </p>
+        {!product.inStock && <p className="tile__stock tile__stock--out">Немає в наявності</p>}
+        {product.inStock ? (
+          <AddToCart product={toCartProduct(product)} inStock />
         ) : (
-          <>
-            {product.brand && (
-              <p className="tile__brand" translate="no">
-                {product.brand}
-              </p>
-            )}
-            <p className="tile__name">
-              <Link href={href}>{product.name}</Link>
-            </p>
-            {!product.inStock && <p className="tile__stock tile__stock--out">Немає в наявності</p>}
-            {product.inStock ? (
-              <AddToCart product={toCartProduct(product)} inStock block />
-            ) : (
-              <Link href={href} className="tile__buy tile__buy--off">
-                Детальніше
-              </Link>
-            )}
-          </>
+          <Link href={href} className="tile__buy tile__buy--off">
+            Переглянути товар
+          </Link>
         )}
       </div>
     </li>

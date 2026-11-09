@@ -3,9 +3,9 @@ import type { TextItem } from "@/features/content/server";
 import { Heading } from "./heading";
 
 const DEFAULT_STEPS: TextItem[] = [
-  { title: "Оберіть товари", text: "Шукайте за назвою чи артикулом або гортайте розділи: полив, інструмент, техніка, усе для рослин." },
-  { title: "Оформіть без реєстрації", text: "Потрібні лише ім'я й телефон. Ціну й наявність ми ще раз звіримо перед підтвердженням." },
-  { title: "Отримайте замовлення", text: "Новою поштою у відділенні, поштоматі чи кур'єром — або заберіть самі в магазині в Бучі." },
+  { title: "Оберіть товари", text: "Знайдіть товар за назвою чи артикулом або відкрийте потрібний розділ каталогу." },
+  { title: "Оформіть без реєстрації", text: "Достатньо імені й телефону. Ціну й залишок звіримо зі складом перед підтвердженням." },
+  { title: "Отримайте замовлення", text: "Новою поштою в будь-якому місті України. Або заберіть самі з магазину, це безкоштовно." },
 ];
 
 export function Steps({ items }: { items?: TextItem[] | null }) {
@@ -14,7 +14,7 @@ export function Steps({ items }: { items?: TextItem[] | null }) {
   return (
     <section className="steps" aria-labelledby="steps-title">
       <div className="container">
-        <Heading id="steps-title" title="Як замовити" sub={steps.length === 3 ? "Три кроки до покупки" : "Від вибору до отримання"} />
+        <Heading id="steps-title" title="Як замовити" />
         <ol className="steps__list" style={{ "--steps": Math.min(steps.length, 3) } as CSSProperties}>
           {steps.map((s, i) => (
             <li key={`${i}-${s.title}`}>

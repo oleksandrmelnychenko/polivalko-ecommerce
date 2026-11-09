@@ -6,11 +6,11 @@ export function ProductDeliveryFacts() {
     <ul className="facts-list buybox__note">
       <li>
         <TruckIcon />
-        <span>Нова пошта по Україні: відділення, поштомат або кур&apos;єр, за тарифами перевізника</span>
+        <span>Нова пошта по Україні за тарифами перевізника: відділення, поштомат або кур&apos;єр</span>
       </li>
       <li>
         <StoreIcon />
-        <span>Самовивіз з магазину в Бучі безкоштовно</span>
+        <span>Самовивіз з магазину безкоштовно</span>
       </li>
       <li>
         <WalletIcon />
@@ -19,9 +19,9 @@ export function ProductDeliveryFacts() {
       <li>
         <ShieldIcon />
         <span>
-          Обмін і повернення — умови на сторінці{" "}
+          Повернення протягом 14 днів, умови на сторінці{" "}
           <Link href="/returns" className="link">
-            «Повернення»
+            «Повернення й обмін»
           </Link>
         </span>
       </li>

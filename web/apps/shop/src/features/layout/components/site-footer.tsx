@@ -6,18 +6,17 @@ import { FooterLinks } from "./footer-links";
 import { FooterSeller } from "./footer-seller";
 import { FooterServices } from "./footer-services";
 
-const information = [
-  { href: "/payment-delivery", label: "Доставка й оплата" },
-  { href: "/returns", label: "Повернення" },
-  { href: "/offer", label: "Публічна оферта" },
-  { href: "/privacy", label: "Політика приватності" },
+const shop = [
+  { href: "/catalog", label: "Каталог" },
+  { href: "/sale", label: "Акції" },
+  { href: "/contacts", label: "Контакти" },
 ];
 
 const buyers = [
-  { href: "/catalog", label: "Каталог" },
-  { href: "/services", label: "Заявка на послуги" },
-  { href: "/contacts", label: "Контакти" },
-  { href: "/credits", label: "Автори фото" },
+  { href: "/payment-delivery", label: "Доставка й оплата" },
+  { href: "/returns", label: "Повернення й обмін" },
+  { href: "/offer", label: "Публічна оферта" },
+  { href: "/privacy", label: "Політика приватності" },
 ];
 
 export function SiteFooter() {
@@ -28,13 +27,13 @@ export function SiteFooter() {
           <Link href="/" className="logo logo--footer" translate="no">
             PoliValko
           </Link>
-          <p>Товари для дому, саду та городу з магазину в Бучі. Відправляємо Новою поштою по всій Україні або чекаємо на самовивіз.</p>
+          <p>Товари для саду, городу й дому. Відправляємо Новою поштою по всій Україні.</p>
           <Suspense fallback={null}>
             <FooterSeller />
           </Suspense>
         </div>
-        <FooterColumn id="footer-info" title="Інформація">
-          <FooterLinks links={information} />
+        <FooterColumn id="footer-shop" title="Магазин">
+          <FooterLinks links={shop} />
         </FooterColumn>
         <FooterColumn id="footer-buyers" title="Покупцям">
           <FooterLinks links={buyers} />
@@ -50,7 +49,9 @@ export function SiteFooter() {
           </Suspense>
         </FooterColumn>
       </div>
-      <p className="footer__legal">Copyright © 2026 PoliValko. Усі права захищені.</p>
+      <p className="footer__legal">
+        © 2026 Poli Valko. <Link href="/credits">Автори фото</Link>
+      </p>
     </footer>
   );
 }

@@ -12,7 +12,7 @@ export function OrderPayment({ order, returned, reload }: { order: Order; return
     return (
       <p className="notice notice--ok" role="status">
         <strong>Оплату отримано</strong>
-        Дякуємо! Статус замовлення оновиться, щойно менеджер його опрацює.
+        Дякуємо. Статус замовлення оновиться, коли менеджер його опрацює.
       </p>
     );
   if (!order.canPay) return null;

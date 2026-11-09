@@ -1,7 +1,17 @@
+import type { ReactNode } from "react";
 import type { Quote } from "@polivalko/shared/api/types";
+import { StoreIcon, TruckIcon, WalletIcon } from "@polivalko/shared/ui/icons";
 import type { FieldProps } from "../lib/field-props";
+import { CheckoutOptions } from "./checkout-options";
+import { CheckoutStep } from "./checkout-step";
 
 type PaymentOption = Quote["deliveryMethods"][number]["paymentMethods"][number];
+
+const PAYMENT: Record<string, { icon: ReactNode; note: string }> = {
+  card: { icon: <WalletIcon />, note: "Одразу після оформлення" },
+  cash_on_delivery: { icon: <TruckIcon />, note: "Під час отримання посилки" },
+  pay_on_pickup: { icon: <StoreIcon />, note: "Коли забираєте замовлення" },
+};
 
 export function CheckoutPayment({
   paymentOptions,
@@ -13,24 +23,17 @@ export function CheckoutPayment({
   effectivePayment: string;
   setPayment: (code: string) => void;
 }) {
+  const options = paymentOptions.map((p) => ({
+    code: p.code,
+    title: p.name,
+    icon: PAYMENT[p.code]?.icon ?? <WalletIcon />,
+    notes: [PAYMENT[p.code]?.note ?? ""],
+  }));
+
   return (
-    <section aria-labelledby="payment-title">
-      <h2 id="payment-title">
-        <span>3</span> Оплата
-      </h2>
-      <fieldset className="seg seg--cards">
-        <legend className="visually-hidden">Спосіб оплати</legend>
-        {paymentOptions.map((p) => (
-          <span key={p.code}>
-            <input type="radio" id={`payment-${p.code}`} name="payment" value={p.code} checked={effectivePayment === p.code} onChange={() => setPayment(p.code)} />
-            <label htmlFor={`payment-${p.code}`}>
-              <b>{p.name}</b>
-              <small>{p.code === "card" ? "Після створення замовлення" : "Під час отримання"}</small>
-            </label>
-          </span>
-        ))}
-      </fieldset>
+    <CheckoutStep id="payment-title" icon={<WalletIcon />} title="Оплата" hint="Способи залежать від обраної доставки">
+      <CheckoutOptions name="payment" legend="Спосіб оплати" options={options} value={effectivePayment} onChange={setPayment} />
       {fieldError("payment.method")}
-    </section>
+    </CheckoutStep>
   );
 }

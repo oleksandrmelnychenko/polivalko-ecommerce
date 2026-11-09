@@ -11,10 +11,10 @@ export async function SectionsPair() {
   const photo = pagePhotos.sections;
   return (
     <>
-      <Look id="sections-title" title="Розділи каталогу" sub="Усе для дому, саду й городу" ghost="Для вашого городу" photo={photo}>
+      <Look id="sections-title" title="Розділи каталогу" ghost="Каталог" photo={photo}>
         <CategoryGrid categories={categories.slice(0, 6)} columns={3} look />
       </Look>
-      <Strip id="sections-strip-title" title="Розділи каталогу" sub="Від лійки до газонокосарки" side="left">
+      <Strip id="sections-strip-title" title="Розділи каталогу" side="left">
         <ul className="tiles tiles--rail">
           {categories.map((c) => (
             <CategoryTile key={c.id} category={c} look />

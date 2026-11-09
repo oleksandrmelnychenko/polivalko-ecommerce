@@ -2,7 +2,7 @@ import type { Order } from "@polivalko/shared/api/types";
 
 export function orderWhere(order: Order): string {
   return order.deliveryMethod === "pickup"
-    ? (order.delivery.pickupAddress ?? "Магазин у Бучі")
+    ? (order.delivery.pickupAddress ?? "")
     : [order.delivery.settlementName, order.delivery.warehouseName ?? order.delivery.address].filter(Boolean).join(", ");
 }
 

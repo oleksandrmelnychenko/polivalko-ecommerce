@@ -30,7 +30,7 @@ export function BuyForm({
   }
 
   return (
-    <form className={className} onSubmit={onSubmit} aria-label={`Купити: ${product.name}`}>
+    <form className={className} onSubmit={onSubmit} aria-label={`У кошик: ${product.name}`}>
       {children}
       <div className={actionsClassName}>
         {inStock ? (
@@ -38,7 +38,7 @@ export function BuyForm({
             <QuantityStepper value={quantity} onChange={setQuantity} label={`Кількість: ${product.name}`} />
             <button type="submit" className="btn">
               <CartIcon />
-              Купити
+              У кошик
             </button>
           </>
         ) : (

@@ -9,7 +9,7 @@ import { PageHead } from "./page-head";
 export function CreditsScreen() {
   return (
     <div className="container">
-      <PageHead path="/credits" title="Автори фото" lead="Фото в прототипі тимчасові: їх замінять фото товарів магазину. Усі взяті з Unsplash за вільною ліцензією Unsplash." />
+      <PageHead path="/credits" title="Автори фото" lead="Тимчасові фото з Unsplash за ліцензією Unsplash. Згодом їх замінять фото товарів магазину." />
       <Suspense fallback={<div className="skeleton" style={{ height: "var(--space-4xl)" }} />}>
         <Credits />
       </Suspense>

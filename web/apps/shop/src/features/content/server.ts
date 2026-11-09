@@ -4,6 +4,7 @@ export { socialLinks } from "./lib/social-links";
 export type { Banner, SiteHome, TextItem } from "./lib/site-types";
 export { InfoPage } from "./components/info-page";
 export { ContactsScreen } from "./components/contacts-screen";
+export { DeliveryScreen } from "./components/delivery-screen";
 export { CreditsScreen } from "./components/credits-screen";
 export { OfferScreen } from "./components/offer-screen";
 export { SpecialDays } from "./components/special-days";

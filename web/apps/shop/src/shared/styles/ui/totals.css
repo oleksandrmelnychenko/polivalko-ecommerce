@@ -1,4 +1,5 @@
 .totals { display: grid; grid-template-columns: minmax(0, 1fr) auto; row-gap: var(--space-xs); margin: 0; }
 .totals dt { color: var(--color-ink-2); }
 .totals dd { margin: 0; padding-left: var(--space-md); text-align: right; font-variant-numeric: tabular-nums; }
-.totals .grand { padding-top: var(--space-sm); border-top: var(--rule-hair) solid var(--color-rule); font: 600 var(--text-xl)/1.2 var(--font-body); color: var(--color-ink); }
+.totals .grand { padding-top: var(--space-sm); border-top: var(--rule-hair) solid var(--color-rule); font: 400 var(--text-xl)/1.2 var(--font-numeric); color: var(--color-ink); }
+.totals dt.grand { display: flex; align-items: flex-end; align-self: stretch; font: 600 var(--text-lg)/1.2 var(--font-body); }

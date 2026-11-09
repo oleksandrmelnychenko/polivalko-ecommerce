@@ -13,16 +13,22 @@ export async function StoreVisit({ visit }: { visit?: TextItem | null }) {
     <section className="visit" aria-labelledby="visit-title">
       <div className="container visit__inner">
         <div className="visit__copy">
-          <Heading id="visit-title" title={visit?.title?.trim() || "Магазин у Бучі"} sub={visit?.title?.trim() ? (visit.text ?? "") : "Подивіться товар наживо й заберіть замовлення"} />
+          <Heading
+            id="visit-title"
+            title={visit?.title?.trim() || "Наш магазин"}
+            sub={visit?.title?.trim() ? (visit.text ?? "") : "Товар можна подивитися перед покупкою, а замовлення забрати безкоштовно."}
+          />
           <ul className="visit__facts">
             <li>
               <PinIcon />
-              <span>{contacts?.address ?? <span className="fill">Буча, адреса уточнюється</span>}</span>
+              <span>{contacts?.address ?? "Буча, Київська область"}</span>
             </li>
-            <li>
-              <ClockIcon />
-              <span>{contacts?.schedule ?? <span className="fill">графік уточнюється</span>}</span>
-            </li>
+            {contacts?.schedule && (
+              <li>
+                <ClockIcon />
+                <span>{contacts.schedule}</span>
+              </li>
+            )}
             {contacts?.storePhone && (
               <li>
                 <PhoneIcon />

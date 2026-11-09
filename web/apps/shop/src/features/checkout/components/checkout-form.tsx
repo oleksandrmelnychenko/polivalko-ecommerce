@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef } from "react";
 import { useCheckout } from "../hooks/use-checkout";
 import { fieldProps } from "../lib/field-props";
@@ -67,6 +68,24 @@ export function CheckoutForm() {
         sending={checkout.sending}
         setQuantity={checkout.setQuantity}
         remove={checkout.remove}
+        consent={
+          <div className="co-consent">
+            <label className="consent">
+              <input type="checkbox" name="acceptOffer" required {...field("acceptOffer")} />
+              <span>
+                Погоджуюся з{" "}
+                <Link href="/offer" className="link" target="_blank">
+                  публічною офертою
+                </Link>{" "}
+                і{" "}
+                <Link href="/privacy" className="link" target="_blank">
+                  політикою приватності
+                </Link>
+              </span>
+            </label>
+            {fieldError("acceptOffer")}
+          </div>
+        }
       />
     </form>
   );

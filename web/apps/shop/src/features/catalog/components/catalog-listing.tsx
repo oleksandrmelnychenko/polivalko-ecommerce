@@ -15,7 +15,7 @@ const CLEARED: Partial<Parsed> = { brands: [], attrs: [], inStock: false, onSale
 
 function priceChip(min?: number, max?: number) {
   const money = (n: number) => n.toLocaleString("uk-UA");
-  if (min && max) return `Ціна: ${money(min)} – ${money(max)} ₴`;
+  if (min && max) return `Ціна: від ${money(min)} до ${money(max)} ₴`;
   if (min) return `Ціна: від ${money(min)} ₴`;
   return `Ціна: до ${money(max ?? 0)} ₴`;
 }
@@ -41,6 +41,7 @@ export async function CatalogListing({
   emptyHint,
   subcategories = [],
   listName,
+  saleOnly = false,
 }: {
   basePath: string;
   base: ProductQuery;
@@ -49,6 +50,7 @@ export async function CatalogListing({
   emptyHint: string;
   subcategories?: Subcategory[];
   listName?: string;
+  saleOnly?: boolean;
 }) {
   const p = parseListingParams(searchParams);
   const result = await searchProducts(toQuery(base, p));
@@ -62,7 +64,7 @@ export async function CatalogListing({
     ? `Точних збігів немає, ось схожі: ${countProducts(result.totalItems)}`
     : result.totalItems === 0
       ? "Товарів не знайдено"
-      : `Показано ${from}–${to} з ${result.totalItems.toLocaleString("uk-UA")}`;
+      : `Показано ${from}-${to} з ${result.totalItems.toLocaleString("uk-UA")}`;
 
   const itemList =
     listName && result.items.length > 0
@@ -91,7 +93,7 @@ export async function CatalogListing({
             </ul>
           </nav>
         )}
-        <ListingFilters result={result} parsed={p} basePath={basePath} fixed={fixed} />
+        <ListingFilters result={result} parsed={p} basePath={basePath} fixed={fixed} saleOnly={saleOnly} />
       </FiltersPanel>
       <div className="catalog__main">
         <ListingToolbar summary={summary} parsed={p} basePath={basePath} fixed={fixed} />

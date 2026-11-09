@@ -1,17 +1,38 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { newIdempotencyKey } from "@polivalko/shared/api/browser";
 import type { Problem } from "@polivalko/shared/api/problem";
 import type { ServiceDirection } from "@polivalko/shared/api/types";
+import { DropdownSelect } from "@/shared/ui/dropdown-select";
 import { createServiceRequest } from "../api/client";
+import { DIRECTION_EVENT } from "../lib/direction-event";
 
 type State =
   | { status: "idle" | "sending" | "sent" }
   | { status: "error"; message: string; errors?: Record<string, string[]> };
 
-export function ServiceRequestForm({ directions }: { directions: ServiceDirection[] }) {
+export function ServiceRequestForm({ directions, className = "summary" }: { directions: ServiceDirection[]; className?: string; }) {
+  const requested = useSearchParams().get("direction") ?? "";
+  const preset = directions.some((d) => d.code === requested) ? requested : "";
+  const [syncedPreset, setSyncedPreset] = useState(preset);
+  const [direction, setDirection] = useState(preset);
   const [state, setState] = useState<State>({ status: "idle" });
+
+  useEffect(() => {
+    const pick = (event: Event) => {
+      const code = (event as CustomEvent<string>).detail;
+      if (directions.some((d) => d.code === code)) setDirection(code);
+    };
+    window.addEventListener(DIRECTION_EVENT, pick);
+    return () => window.removeEventListener(DIRECTION_EVENT, pick);
+  }, [directions]);
+
+  if (syncedPreset !== preset) {
+    setSyncedPreset(preset);
+    setDirection(preset);
+  }
   const idempotencyKey = useRef<string | null>(null);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -32,6 +53,7 @@ export function ServiceRequestForm({ directions }: { directions: ServiceDirectio
       if (response.ok) {
         idempotencyKey.current = null;
         form.reset();
+        setDirection("");
         setState({ status: "sent" });
         return;
       }
@@ -48,8 +70,8 @@ export function ServiceRequestForm({ directions }: { directions: ServiceDirectio
   const err = (key: string) => errors[key]?.[0];
 
   return (
-    <form onSubmit={onSubmit} noValidate className="summary" aria-labelledby="request-title">
-      <h2 id="request-title">Заявка на послугу</h2>
+    <form onSubmit={onSubmit} noValidate className={className} aria-labelledby="request-form-title">
+      <h2 id="request-form-title">Ваші контакти</h2>
 
       <div className="field">
         <label htmlFor="name">Ім&apos;я</label>
@@ -65,16 +87,17 @@ export function ServiceRequestForm({ directions }: { directions: ServiceDirectio
 
       <div className="field">
         <label htmlFor="direction">Напрямок</label>
-        <select id="direction" name="direction" required defaultValue="" aria-invalid={Boolean(err("direction"))} aria-describedby={err("direction") ? "direction-error" : undefined}>
-          <option value="" disabled>
-            Оберіть напрямок
-          </option>
-          {directions.map((d) => (
-            <option key={d.code} value={d.code}>
-              {d.name}
-            </option>
-          ))}
-        </select>
+        <DropdownSelect
+          id="direction"
+          name="direction"
+          variant="field"
+          value={direction}
+          placeholder="Оберіть напрямок"
+          options={directions.map((d) => ({ value: d.code, label: d.name }))}
+          onChange={setDirection}
+          aria-invalid={Boolean(err("direction"))}
+          aria-describedby={err("direction") ? "direction-error" : undefined}
+        />
         {err("direction") && <p id="direction-error" className="field__error">{err("direction")}</p>}
       </div>
 

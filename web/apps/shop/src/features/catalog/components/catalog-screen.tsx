@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { breadcrumbJsonLd, itemListJsonLd, JsonLd } from "@/features/seo";
 import { getCategoryTree } from "../api/server";
 import { categoryPhotoUrl } from "../lib/category-photo";
-import { CategoryGrid } from "./category-grid";
+import { CategoryCards } from "./category-cards";
 
 export function CatalogScreen() {
   return (
@@ -41,7 +41,7 @@ async function CatalogCategories() {
           )}
         />
       )}
-      <CategoryGrid categories={categories} />
+      <CategoryCards categories={categories} />
     </>
   );
 }

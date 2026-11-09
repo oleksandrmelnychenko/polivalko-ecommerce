@@ -32,14 +32,16 @@
   --color-hero-veil: rgb(0 160 70 / 0.88);
   --color-error: #c8261d; --color-success: #2e8b57;
 
-  --font-display: var(--font-onest), "Onest", ui-sans-serif, system-ui, sans-serif;
-  --font-body: var(--font-display);
-  --font-outlier: var(--font-display);
+  --font-body: var(--font-onest), "Onest", ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-oswald), "Oswald", var(--font-body);
+  --font-accent: var(--font-display);
+  --font-numeric: var(--font-price), "Outfit", var(--font-body);
+  --font-outlier: var(--font-body);
   --font-mega: var(--font-display);
-  --font-button: var(--font-display);
+  --font-button: var(--font-body);
   --radius-sm: 0; --radius-card: 0; --radius-lg: 0; --radius-xl: 0; --radius-pill: 999px;
   --rule-hair: 1px; --rule-bar: 2px;
   --shadow-card: none; --shadow-card-hover: 0 10px 30px -12px rgb(0 0 0 / 0.18); --shadow-pop: 0 10px 30px rgb(0 0 0 / 0.12);
-  --tracking-display: 0; --tracking-caps: 0; --display-weight: 600;
+  --tracking-display: 0.01em; --tracking-caps: 0; --display-weight: 600;
   --bar-height: 96px; --island-top: 0px;
 }

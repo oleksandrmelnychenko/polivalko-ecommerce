@@ -11,15 +11,17 @@ export async function FooterContacts() {
       <ul className="footer__contacts">
         <li>
           <PinIcon />
-          <span>{contacts?.address ?? <span className="fill">Буча, адреса уточнюється</span>}</span>
+          <span>{contacts?.address ?? "Буча, Київська область"}</span>
         </li>
-        <li>
-          <ClockIcon />
-          <div>
-            <span>{contacts?.schedule ?? <span className="fill">графік уточнюється</span>}</span>
-            <SpecialDays days={contacts?.specialDays} limit={3} />
-          </div>
-        </li>
+        {contacts?.schedule && (
+          <li>
+            <ClockIcon />
+            <div>
+              <span>{contacts.schedule}</span>
+              <SpecialDays days={contacts.specialDays} limit={3} />
+            </div>
+          </li>
+        )}
         {contacts?.storePhone && (
           <li>
             <PhoneIcon />

@@ -1,5 +1,10 @@
-.contacts { padding-bottom: var(--space-2xl); }
-.contacts .facts dd p + p { margin-top: var(--space-xs); }
-.contacts__socials { display: flex; flex-wrap: wrap; gap: var(--space-md); margin: 0; padding: 0; list-style: none; }
-.special-days { display: grid; gap: var(--space-2xs); margin: var(--space-sm) 0 0; padding: 0; list-style: none; }
+.contacts-page, .delivery-page { padding-bottom: var(--space-3xl); }
+.contacts-layout { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: var(--space-2xl); align-items: start; }
+.contacts-aside { position: sticky; top: calc(var(--bar-height) + var(--space-md)); display: grid; gap: var(--space-md); margin-top: var(--space-3xl); }
+.contacts-aside .ib-card__buttons { margin-top: var(--space-xs); }
+.contacts-socials { margin: 0; padding: 0; list-style: none; }
+.contacts-seller { margin-top: 0; padding-top: 0; border-top: 0; }
+.contacts-seller div { display: grid; gap: 2px; }
+.contacts-seller dd { font-weight: 500; }
+.special-days { display: grid; gap: var(--space-2xs); margin: var(--space-xs) 0 0; padding: 0; list-style: none; font-size: var(--text-sm); color: var(--color-ink-2); }
 .special-days__date { font-weight: 600; color: var(--color-ink); }

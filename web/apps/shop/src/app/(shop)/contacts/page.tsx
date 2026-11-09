@@ -3,7 +3,7 @@ import { seoMetadata } from "@/features/seo";
 
 export const metadata = seoMetadata({
   title: "Контакти",
-  description: "Адреса, графік, телефони магазину й послуг Poli Valko у Бучі.",
+  description: "Адреса, графік і телефони магазину й послуг Poli Valko.",
   path: "/contacts",
 });
 

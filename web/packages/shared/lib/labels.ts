@@ -30,7 +30,7 @@ export const paymentMethodLabel: Record<string, string> = {
 export const deliveryMethodLabel: Record<string, string> = {
   nova_poshta: "Нова пошта",
   nova_poshta_courier: "Кур'єр Нової пошти",
-  pickup: "Самовивіз у Бучі",
+  pickup: "Самовивіз",
 };
 
 export const serviceRequestStatusLabel: Record<string, string> = {

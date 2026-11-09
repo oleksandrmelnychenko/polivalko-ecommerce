@@ -1,0 +1,5 @@
+.not-found { padding-block: var(--space-3xl) var(--space-4xl); }
+.not-found h1 { font-size: var(--text-display-s); }
+.not-found .lead { margin-top: var(--space-sm); }
+.not-found__search { max-width: 640px; margin-top: var(--space-xl); }
+.not-found__links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md) var(--space-lg); margin: var(--space-lg) 0 0; }

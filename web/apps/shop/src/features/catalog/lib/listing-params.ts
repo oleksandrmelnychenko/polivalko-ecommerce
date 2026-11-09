@@ -4,8 +4,8 @@ import type { ProductQuery } from "../api/server";
 export type SearchParams = Record<string, string | string[] | undefined>;
 
 export const SORTS = [
-  { value: "name_asc", label: "За назвою, А–Я" },
-  { value: "name_desc", label: "За назвою, Я–А" },
+  { value: "name_asc", label: "За назвою, від А до Я" },
+  { value: "name_desc", label: "За назвою, від Я до А" },
   { value: "price_asc", label: "Спочатку дешевші" },
   { value: "price_desc", label: "Спочатку дорожчі" },
 ];
@@ -25,7 +25,7 @@ export function priceRanges(low: number, high: number): PriceRange[] {
   const money = (n: number) => n.toLocaleString("uk-UA");
   return [
     { max: bounds[0], label: `до ${money(bounds[0])} ₴` },
-    ...bounds.slice(1).map((b, i) => ({ min: bounds[i], max: b, label: `${money(bounds[i])} – ${money(b)} ₴` })),
+    ...bounds.slice(1).map((b, i) => ({ min: bounds[i], max: b, label: `від ${money(bounds[i])} до ${money(b)} ₴` })),
     { min: bounds[bounds.length - 1], label: `від ${money(bounds[bounds.length - 1])} ₴` },
   ];
 }
@@ -61,7 +61,7 @@ export function toQuery(base: ProductQuery, p: Parsed): ProductQuery {
     brand: p.brands.length ? p.brands.join(",") : undefined,
     f: p.attrs.length ? p.attrs : undefined,
     inStock: p.inStock || undefined,
-    onSale: p.onSale || undefined,
+    onSale: p.onSale || base.onSale || undefined,
     priceMin: p.priceMin,
     priceMax: p.priceMax,
     sort: p.sort,

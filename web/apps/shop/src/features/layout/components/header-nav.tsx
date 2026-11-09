@@ -1,46 +1,44 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { getCategoryTree, searchProducts } from "@/features/catalog/server";
-import { getServiceDirections } from "@/features/services/server";
-import { ChevronDownIcon } from "@polivalko/shared/ui/icons";
-import { buyerLinks, contactLinks, homeLinks } from "../lib/nav-links";
+import { ArrowRightIcon, ChevronDownIcon } from "@polivalko/shared/ui/icons";
+import { pageLinks, saleLink } from "../lib/nav-links";
 import { MainNav } from "./main-nav";
 import { MegaColumn } from "./mega-column";
-import { MegaProduct } from "./mega-product";
-import { NavDropdown } from "./nav-dropdown";
+import { NavItemLink } from "./nav-item-link";
 
 export async function HeaderNav() {
   await connection();
-  const [categories, directions, sale] = await Promise.all([getCategoryTree(), getServiceDirections(), searchProducts({ onSale: true, inStock: true, sort: "price_desc", pageSize: 1 })]);
-  const half = Math.ceil(categories.length / 2);
-  const toLinks = (list: typeof categories) => list.map((c) => ({ href: `/catalog/${c.slug}`, label: c.name }));
-  const featured = sale?.items[0];
+  const [categories, sale] = await Promise.all([getCategoryTree(), searchProducts({ onSale: true, pageSize: 1 })]);
+  const links = sale && sale.totalItems > 0 ? [saleLink, ...pageLinks] : pageLinks;
 
   return (
     <MainNav>
-      <NavDropdown href="/" label="Головна" links={homeLinks} />
       <li className="nav-item nav-item--mega">
         <Link href="/catalog" className="nav-link" aria-haspopup="true">
           Каталог
           <ChevronDownIcon />
         </Link>
         <div className="sub sub--mega">
-          <MegaColumn title="Розділи" links={toLinks(categories.slice(0, half))} />
-          <MegaColumn title="Ще розділи" links={toLinks(categories.slice(half))} />
-          <MegaColumn
-            title="Популярне"
-            links={[
-              { href: "/#offers-title", label: "Товари зі знижкою" },
-              { href: "/#collection-title", label: "Рекомендовані товари" },
-              { href: "/catalog", label: "Увесь каталог" },
-            ]}
-          />
-          {featured ? <MegaProduct product={featured} /> : <MegaColumn title="Покупцям" links={buyerLinks} />}
+          {categories.map((c) => (
+            <MegaColumn
+              key={c.id}
+              title={c.name}
+              href={`/catalog/${c.slug}`}
+              links={(c.children ?? []).map((child) => ({ href: `/catalog/${child.slug}`, label: child.name }))}
+            />
+          ))}
+          <p className="mega-all">
+            <Link href="/catalog">
+              Увесь каталог
+              <ArrowRightIcon />
+            </Link>
+          </p>
         </div>
       </li>
-      <NavDropdown href="/services" label="Послуги" links={directions.map((d) => ({ href: "/services", label: d.name }))} />
-      <NavDropdown href="/payment-delivery" label="Покупцям" links={buyerLinks} />
-      <NavDropdown href="/contacts" label="Контакти" links={contactLinks} />
+      {links.map((link) => (
+        <NavItemLink key={link.href} {...link} />
+      ))}
     </MainNav>
   );
 }

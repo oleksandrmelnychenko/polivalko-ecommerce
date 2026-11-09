@@ -1,11 +1,16 @@
 import type { ReactNode } from "react";
 import type { Quote, Settlement, Warehouse } from "@polivalko/shared/api/types";
-import { deliveryHint } from "../lib/delivery";
+import { PinIcon, StoreIcon, TruckIcon } from "@polivalko/shared/ui/icons";
+import { deliveryHint, deliveryTitle } from "../lib/delivery";
 import type { FieldProps } from "../lib/field-props";
 import type { CourierPrefill, Errors } from "../lib/types";
 import { CheckoutCourierFields } from "./checkout-courier-fields";
+import { CheckoutOptions } from "./checkout-options";
+import { CheckoutStep } from "./checkout-step";
 import { CheckoutWarehouseSelect } from "./checkout-warehouse-select";
 import { SettlementPicker } from "./settlement-picker";
+
+const ICONS: Record<string, ReactNode> = { nova_poshta: <TruckIcon />, nova_poshta_courier: <PinIcon />, pickup: <StoreIcon /> };
 
 export function CheckoutDelivery({
   quote,
@@ -37,26 +42,17 @@ export function CheckoutDelivery({
   save?: ReactNode;
 }) {
   const methods = quote?.deliveryMethods ?? [];
+  const options = methods.map((d) => ({
+    code: d.code,
+    title: deliveryTitle[d.code] ?? d.name,
+    icon: ICONS[d.code] ?? <TruckIcon />,
+    notes: [deliveryHint[d.code] ?? "", d.description ?? "", d.priceNote ?? ""],
+  }));
+
   return (
-    <section aria-labelledby="delivery-title">
-      <h2 id="delivery-title">
-        <span>2</span> Отримання
-      </h2>
+    <CheckoutStep id="delivery-title" icon={<TruckIcon />} title="Отримання" hint="Нова пошта по Україні або самовивіз з магазину">
       {saved}
-      <fieldset className="seg seg--cards">
-        <legend className="visually-hidden">Спосіб отримання</legend>
-        {methods.map((d) => (
-          <span key={d.code}>
-            <input type="radio" id={`delivery-${d.code}`} name="delivery" value={d.code} checked={delivery === d.code} onChange={() => setDelivery(d.code)} />
-            <label htmlFor={`delivery-${d.code}`}>
-              <b>{d.name}</b>
-              <small>{deliveryHint[d.code] ?? ""}</small>
-              {d.description && <small>{d.description}</small>}
-              {d.priceNote && <small>{d.priceNote}</small>}
-            </label>
-          </span>
-        ))}
-      </fieldset>
+      <CheckoutOptions name="delivery" legend="Спосіб отримання" options={options} value={delivery} onChange={setDelivery} />
       {fieldError("delivery.method")}
 
       {quote && methods.length === 0 ? (
@@ -87,13 +83,16 @@ export function CheckoutDelivery({
           />
         </div>
       ) : (
-        <p className="notice">
-          <strong>Самовивіз з магазину в Бучі</strong>
-          Адресу й графік менеджер підтвердить, коли замовлення буде готове.
-        </p>
+        <div className="co-info">
+          <StoreIcon />
+          <p>
+            <strong>Самовивіз з магазину</strong>
+            Адресу й графік менеджер підтвердить, коли замовлення буде готове.
+          </p>
+        </div>
       )}
       {save}
-      {quote && <p className="field__help">{quote.deliveryNote}</p>}
-    </section>
+      {quote && delivery !== "pickup" && <p className="co-note">{quote.deliveryNote}</p>}
+    </CheckoutStep>
   );
 }

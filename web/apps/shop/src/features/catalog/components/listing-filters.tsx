@@ -16,7 +16,7 @@ const priceOf = (text: string) => {
   return Number.isFinite(n) && n > 0 ? n : undefined;
 };
 
-type Option = { key: string; label: string; count?: number; checked: boolean; name: string; value: string; onToggle: () => void };
+type Option = { key: string; label: string; count?: number; checked: boolean; name: string; value: string; onToggle: () => void; };
 
 function FacetGroup({ title, options }: { title: string; options: Option[] }) {
   const id = useId();
@@ -70,11 +70,13 @@ export function ListingFilters({
   parsed,
   basePath,
   fixed,
+  saleOnly = false,
 }: {
   result: ProductSearch;
   parsed: Parsed;
   basePath: string;
   fixed: Record<string, string>;
+  saleOnly?: boolean;
 }) {
   const { facets } = result;
   const router = useRouter();
@@ -124,7 +126,7 @@ export function ListingFilters({
   const availability: Option[] = [
     { key: "inStock", label: "Лише в наявності", count: facets.inStockCount, checked: selection.inStock, name: "inStock", value: "true", onToggle: () => apply({ inStock: !selection.inStock }) },
     { key: "onSale", label: "Зі знижкою", checked: selection.onSale, name: "onSale", value: "true", onToggle: () => apply({ onSale: !selection.onSale }) },
-  ];
+  ].filter((option) => !(saleOnly && option.key === "onSale"));
 
   return (
     <form action={basePath} className="filters" aria-label="Фільтри" aria-busy={pending} onSubmit={submit}>
@@ -197,7 +199,8 @@ export function ListingFilters({
         </div>
         {facets.priceMin && facets.priceMax && (
           <p className="fw__hint">
-            У розділі від {formatMoney(facets.priceMin)} до {formatMoney(facets.priceMax)}
+            У розділі від {formatMoney(facets.priceMin)} до {" "}
+            {formatMoney(facets.priceMax)}
           </p>
         )}
       </fieldset>

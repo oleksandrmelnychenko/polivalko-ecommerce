@@ -8,7 +8,7 @@ export async function ServicesLook() {
   await connection();
   const directions = await getServiceDirections();
   return (
-    <Look id="services-title" title="Послуги для саду" sub="Проєктуємо, монтуємо й доглядаємо" ghost="Сад під ключ" photo={pagePhotos.services} reverse>
+    <Look id="services-title" title="Послуги для саду" sub="Залиште заявку, і менеджер передзвонить у робочий час." ghost="Послуги" photo={pagePhotos.services} reverse>
       <ol className="directions">
         {directions.map((d) => (
           <li key={d.code}>
@@ -20,8 +20,8 @@ export async function ServicesLook() {
         ))}
       </ol>
       <p className="look__more">
-        <Link href="/services" className="btn">
-          Замовити дзвінок
+        <Link href="/services#request" className="btn">
+          Залишити заявку
         </Link>
       </p>
     </Look>

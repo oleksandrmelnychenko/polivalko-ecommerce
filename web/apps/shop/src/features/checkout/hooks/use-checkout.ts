@@ -112,7 +112,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
         setNotice({ kind: "error", title: problem.title ?? "Не вдалося оформити замовлення", text: problem.detail });
       }
     } catch {
-      setNotice({ kind: "error", title: "Немає зв'язку з сервером", text: "Повторне натискання безпечне: дубль замовлення не створиться." });
+      setNotice({ kind: "error", title: "Немає зв'язку з сервером", text: "Натисніть ще раз: друге замовлення не створиться." });
     } finally {
       setSending(false);
     }

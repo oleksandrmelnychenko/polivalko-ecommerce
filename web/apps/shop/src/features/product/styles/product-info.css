@@ -1,7 +1,7 @@
 .buybox__card { display: flex; flex-direction: column; gap: var(--space-lg); padding-block: var(--space-lg); border-block: var(--rule-hair) solid var(--color-rule); }
 .buybox__was { display: flex; align-items: center; gap: var(--space-xs); margin-bottom: var(--space-2xs); }
 .buybox__was .flag { display: inline-flex; padding: 3px 8px; background: var(--color-error); color: #fff; font-size: var(--text-xs); font-weight: 600; }
-.buybox__price strong { font: 600 clamp(2rem, 1.2vw + 1.5rem, 2.5rem)/1 var(--font-body); font-variant-numeric: tabular-nums; }
+.buybox__price strong { font: 300 clamp(2.125rem, 1.2vw + 1.6rem, 2.75rem)/1 var(--font-numeric); font-variant-numeric: tabular-nums; }
 .buybox__price + .stock { margin-top: var(--space-sm); }
 .buybox__actions { display: flex; gap: var(--space-sm); }
 .buybox__actions .btn { flex: 1; }
@@ -16,7 +16,7 @@
 .specs dt { color: var(--color-muted); }
 .specs dd { margin: 0; overflow-wrap: anywhere; }
 .related { padding-top: var(--section-gap-s); }
-.related h2 { margin-bottom: var(--space-xl); text-align: center; }
+.related h2 { margin-bottom: var(--space-xl); }
 .variants { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin: 0; padding: 0; list-style: none; }
 .variants a, .variants span { display: inline-flex; align-items: center; min-height: 44px; padding-inline: var(--space-lg); border: var(--rule-hair) solid var(--color-rule); text-decoration: none; transition: border-color var(--dur-micro) var(--ease-out); }
 .variants a:hover { border-color: var(--color-ink); }

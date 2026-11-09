@@ -5,8 +5,17 @@
 .mega__title { font: 400 var(--text-2xl)/1 var(--font-display); color: var(--color-ink); text-transform: uppercase; }
 .mega__grid { display: grid; grid-template-columns: minmax(0, 1fr); margin: 0; padding: 0; list-style: none; }
 .mega__grid li { border-bottom: var(--rule-hair) solid var(--color-rule); }
-.mega__grid a { display: flex; align-items: center; gap: var(--space-sm); min-height: 60px; padding-block: 6px; color: var(--color-ink-2); text-decoration: none; font-size: var(--text-md); text-transform: uppercase; }
+.mega__grid a { display: flex; align-items: center; gap: var(--space-sm); min-height: 60px; padding-block: 6px; color: var(--color-ink-2); text-decoration: none; font: 500 var(--text-md)/1.4 var(--font-display); letter-spacing: 0.04em; text-transform: uppercase; }
 .mega__grid img, .mega__dot { width: 46px; height: 46px; flex: none; object-fit: cover; background: var(--color-paper-2); }
 .mega__foot { display: flex; flex-direction: column; align-items: stretch; gap: var(--space-md); margin-top: var(--space-lg); }
 .mega__pages { display: flex; flex-direction: column; gap: var(--space-sm); }
 .mega__pages a { color: var(--color-ink-2); text-decoration: none; }
+.mega__grid summary { display: flex; align-items: center; gap: var(--space-sm); min-height: 60px; padding-block: 6px; color: var(--color-ink-2); font: 500 var(--text-md)/1.4 var(--font-display); letter-spacing: 0.04em; text-transform: uppercase; list-style: none; cursor: pointer; }
+.mega__grid summary::-webkit-details-marker { display: none; }
+.mega__grid summary svg { width: 14px; height: 14px; margin-left: auto; flex: none; transition: transform 0.2s ease; }
+.mega__group[open] summary { color: var(--color-ink); }
+.mega__group[open] summary svg { transform: rotate(180deg); }
+.mega__subs { margin: 0 0 var(--space-sm); padding: 0 0 0 calc(46px + var(--space-sm)); list-style: none; }
+.mega__grid .mega__subs li { border-bottom: 0; }
+.mega__grid .mega__subs a { min-height: 44px; padding-block: 4px; color: var(--color-ink-2); font: 400 var(--text-md)/1.5 var(--font-body); letter-spacing: 0; text-transform: none; }
+.mega__grid .mega__subs li:first-child a { color: var(--color-ink); font-weight: 600; }

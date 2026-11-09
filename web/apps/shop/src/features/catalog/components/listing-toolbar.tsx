@@ -2,7 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { countProducts } from "@polivalko/shared/lib/format";
+import { DropdownSelect } from "@/shared/ui/dropdown-select";
 import { hrefFor, PAGE_SIZES, SORTS, type Parsed } from "../lib/listing-params";
+
+const SIZE_OPTIONS = PAGE_SIZES.map((n) => ({ value: n, label: countProducts(n) }));
 
 export function ListingToolbar({
   summary,
@@ -29,26 +33,8 @@ export function ListingToolbar({
         {summary}
       </p>
       <div className="toolbar__controls">
-        <label className="tsel" htmlFor="listing-sort">
-          <span>Сортування</span>
-          <select id="listing-sort" value={parsed.sort} onChange={(e) => go({ sort: e.currentTarget.value })}>
-            {SORTS.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="tsel" htmlFor="listing-size">
-          <span>Показувати</span>
-          <select id="listing-size" value={parsed.pageSize} onChange={(e) => go({ pageSize: Number(e.currentTarget.value) })}>
-            {PAGE_SIZES.map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </label>
+        <DropdownSelect className="toolbar__sort" label="Сортування" value={parsed.sort} options={SORTS} onChange={(sort) => go({ sort })} />
+        <DropdownSelect className="toolbar__size" label="Показувати" value={parsed.pageSize} options={SIZE_OPTIONS} onChange={(pageSize) => go({ pageSize })} />
       </div>
     </div>
   );

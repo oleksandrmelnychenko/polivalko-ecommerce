@@ -5,7 +5,7 @@ import { RegisterForm } from "./register-form";
 
 export function RegisterScreen() {
   return (
-    <AuthFrame title="Реєстрація" crumb="Реєстрація" lead="Кілька полів, і замовлення, обране та адреси будуть під рукою.">
+    <AuthFrame title="Реєстрація" crumb="Реєстрація" lead="У кабінеті зберігаються ваші замовлення, обране й адреси доставки.">
       <Suspense fallback={<AuthSkeleton />}>
         <RegisterForm />
       </Suspense>

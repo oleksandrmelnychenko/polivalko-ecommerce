@@ -55,7 +55,7 @@ export function OrderDetail() {
           <OrderItems order={order} />
           {receipts.length > 0 && <OrderReceipts receipts={receipts} />}
         </div>
-        <OrderHistory order={order} back={{ href: "/account/orders", label: "До всіх замовлень" }} />
+        <OrderHistory order={order} />
       </div>
     </section>
   );
