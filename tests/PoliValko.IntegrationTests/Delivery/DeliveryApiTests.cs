@@ -25,7 +25,7 @@ public sealed class DeliveryApiTests(ApiFactory api)
 {
     private const string StoreCode = "bucha-store";
     private const string StoreUrl = $"/api/v1/console/delivery/pickup-points/{StoreCode}";
-    private const string StoreName = "Магазин Poli Valko у Бучі";
+    private const string StoreName = "Магазин Poli Valko";
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 

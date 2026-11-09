@@ -152,7 +152,7 @@ public sealed class CheckoutApiTests(ApiFactory api)
         (await unknown.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Code.ShouldBe("delivery.settlement_not_found");
 
         (await _client.GetFromJsonAsync<List<PickupPointDto>>("/api/v1/delivery/pickup-points", TestJson.Options, Ct))!
-            .ShouldHaveSingleItem().Name.ShouldBe("Магазин Poli Valko у Бучі");
+            .ShouldHaveSingleItem().Name.ShouldBe("Магазин Poli Valko");
     }
 
     [Fact]

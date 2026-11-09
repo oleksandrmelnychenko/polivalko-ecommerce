@@ -17,7 +17,7 @@ internal static class CollectionEditor
         var code = request.Code?.Trim().ToLowerInvariant() ?? string.Empty;
         if (!CatalogConsoleValidation.IsSlug(code) || code.Length > 50)
         {
-            errors["code"] = ["Код: латинські літери, цифри й дефіси, до 50 символів."];
+            errors["code"] = ["Вкажіть код до 50 символів: лише латинські літери, цифри й дефіси."];
         }
         else if (await db.Set<HomeCollection>().AnyAsync(c => c.Code == code && c.Id != collection.Id, ct))
         {

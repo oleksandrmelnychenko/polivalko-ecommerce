@@ -4,7 +4,7 @@ namespace PoliValko.Ordering.Domain;
 
 public sealed class OrderStatusChange
 {
-    public const string NoteChanged = "Нотатка змінена";
+    public const string NoteChanged = "Нотатку змінено";
 
     public Guid Id { get; init; }
 

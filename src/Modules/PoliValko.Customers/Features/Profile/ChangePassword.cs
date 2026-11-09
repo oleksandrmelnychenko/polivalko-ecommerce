@@ -27,7 +27,7 @@ internal static class ChangePassword
         if (string.IsNullOrEmpty(request.CurrentPassword)
             || passwords.Verify(customer, request.CurrentPassword) == PasswordVerificationResult.Failed)
         {
-            return TypedResults.ValidationProblem(new Dictionary<string, string[]> { ["currentPassword"] = ["Поточний пароль невірний."] });
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]> { ["currentPassword"] = ["Поточний пароль неправильний."] });
         }
 
         var errors = new Dictionary<string, string[]>();

@@ -33,7 +33,7 @@ internal static class UpdateProduct
         var slug = string.IsNullOrWhiteSpace(request.Slug) ? product.Slug : request.Slug.Trim().ToLowerInvariant();
         if (!CatalogConsoleValidation.IsSlug(slug) || slug.Length > 300)
         {
-            errors["slug"] = ["Адреса: латинські літери, цифри й дефіси, до 300 символів."];
+            errors["slug"] = ["Адреса має бути не довшою за 300 символів і містити лише латинські літери, цифри й дефіси."];
         }
         else if (slug != product.Slug && await db.Set<Product>().AnyAsync(p => p.Slug == slug, ct))
         {

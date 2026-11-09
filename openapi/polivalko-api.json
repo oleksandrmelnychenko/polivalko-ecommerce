@@ -681,6 +681,30 @@
         }
       }
     },
+    "/api/v1/checkout/delivery-methods": {
+      "get": {
+        "tags": [
+          "Checkout"
+        ],
+        "summary": "Увімкнені способи отримання з доступною для кожного оплатою, зоною й приміткою кур'єра",
+        "operationId": "GetDeliveryMethods",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeliveryMethodOptionDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/orders": {
       "post": {
         "tags": [

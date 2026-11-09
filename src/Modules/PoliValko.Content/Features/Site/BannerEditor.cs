@@ -19,13 +19,13 @@ internal static class BannerEditor
             errors["title"] = [$"Вкажіть заголовок до {Banner.TitleLength} символів."];
         }
 
-        var kicker = Limited(errors, "kicker", request.Kicker, Banner.KickerLength, "Надпис над заголовком");
+        var kicker = Limited(errors, "kicker", request.Kicker, Banner.KickerLength, "Напис над заголовком");
         var text = Limited(errors, "text", request.Text, Banner.TextLength, "Текст");
         var buttonLabel = Limited(errors, "buttonLabel", request.ButtonLabel, Banner.ButtonLabelLength, "Напис на кнопці");
         var link = SiteLinks.Clean(request.Link);
         if (link is not null && (link.Length > Banner.LinkLength || !SiteLinks.IsValid(link)))
         {
-            errors["link"] = [$"{SiteLinks.InvalidMessage} До {Banner.LinkLength} символів."];
+            errors["link"] = [$"Посилання має починатися з / або https:// і бути не довшим за {Banner.LinkLength} символів."];
         }
 
         var imageUrl = SiteLinks.Clean(request.ImageUrl);
@@ -46,7 +46,7 @@ internal static class BannerEditor
 
         if (request.StartsAt is { } startsAt && request.EndsAt is { } endsAt && endsAt < startsAt)
         {
-            errors["endsAt"] = ["Дата завершення раніше за дату початку."];
+            errors["endsAt"] = ["Дата завершення не може бути раніше за дату початку."];
         }
 
         if (errors.Count > 0)
@@ -94,7 +94,7 @@ internal static class BannerEditor
         var clean = SiteLinks.Clean(value);
         if (clean is not null && clean.Length > max)
         {
-            errors[field] = [$"{name} — до {max} символів."];
+            errors[field] = [$"{name} має бути не довшим за {max} символів."];
         }
 
         return clean;

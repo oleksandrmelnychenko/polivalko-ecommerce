@@ -92,7 +92,7 @@ internal static class OrderCsv
     {
         DeliveryMethod.NovaPoshta => "Нова пошта",
         DeliveryMethod.NovaPoshtaCourier => "Кур'єр Нової пошти",
-        DeliveryMethod.Pickup => "Самовивіз у Бучі",
+        DeliveryMethod.Pickup => "Самовивіз",
         _ => method.ToString(),
     };
 

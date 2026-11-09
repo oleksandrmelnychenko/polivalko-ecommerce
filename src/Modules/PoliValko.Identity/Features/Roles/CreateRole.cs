@@ -33,7 +33,7 @@ internal static class CreateRole
             var source = await db.Roles.AsNoTracking().FirstOrDefaultAsync(r => r.Id == request.CopyFromRoleId, ct);
             if (source is null)
             {
-                errors["copyFromRoleId"] = ["Роль, з якої копіюються права, не знайдено."];
+                errors["copyFromRoleId"] = ["Не знайдено роль, з якої треба скопіювати права."];
             }
             else
             {

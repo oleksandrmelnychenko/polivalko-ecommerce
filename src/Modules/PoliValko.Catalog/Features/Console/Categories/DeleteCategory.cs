@@ -26,7 +26,7 @@ internal static class DeleteCategory
 
         if (category.ParentId is null)
         {
-            return Problems.Create(StatusCodes.Status409Conflict, "catalog.category_top_level", "Розділ верхнього рівня не видаляється", "Його можна приховати.");
+            return Problems.Create(StatusCodes.Status409Conflict, "catalog.category_top_level", "Розділ верхнього рівня не можна видалити", "Його можна приховати.");
         }
 
         if (await db.Set<Category>().AnyAsync(c => c.ParentId == id, ct) || await db.Set<Product>().AnyAsync(p => p.CategoryId == id, ct))

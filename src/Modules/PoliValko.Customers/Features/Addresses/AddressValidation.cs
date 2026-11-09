@@ -60,7 +60,7 @@ internal static class AddressValidation
 
             if (apartment is { Length: > 20 })
             {
-                errors["address.apartment"] = ["Номер квартири — до 20 символів."];
+                errors["address.apartment"] = ["Номер квартири має бути не довшим за 20 символів."];
             }
         }
 

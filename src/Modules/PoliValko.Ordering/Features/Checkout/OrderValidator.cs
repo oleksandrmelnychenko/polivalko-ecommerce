@@ -19,7 +19,7 @@ internal static class OrderValidator
 
         if (!decimal.TryParse(request.ExpectedTotal, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var expectedTotal))
         {
-            errors["expectedTotal"] = ["Передайте суму, яку бачив покупець, у форматі \"1234.00\"."];
+            errors["expectedTotal"] = ["Передайте суму, яку бачив покупець, у форматі «1234.00»."];
         }
 
         var name = request.Customer?.Name?.Trim();
@@ -122,7 +122,7 @@ internal static class OrderValidator
 
         if (apartment is { Length: > 20 })
         {
-            errors["delivery.address.apartment"] = ["Номер квартири — до 20 символів."];
+            errors["delivery.address.apartment"] = ["Номер квартири має бути не довшим за 20 символів."];
         }
 
         if (string.IsNullOrEmpty(street) || string.IsNullOrEmpty(house) || errors.Keys.Any(k => k.StartsWith("delivery.address", StringComparison.Ordinal)))

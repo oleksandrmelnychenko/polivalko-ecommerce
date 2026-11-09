@@ -9,7 +9,7 @@ namespace PoliValko.Infrastructure.Sync;
 public abstract class ScheduledJobService(IServiceScopeFactory scopes, TimeProvider time, ILogger logger) : BackgroundService
 {
     public const string ScheduleActor = "Розклад";
-    public const string RequestActor = "Запит з адмінки";
+    public const string RequestActor = "Запит з консолі";
 
     protected abstract string Job { get; }
 

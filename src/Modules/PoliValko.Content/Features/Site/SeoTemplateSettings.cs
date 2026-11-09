@@ -15,10 +15,10 @@ internal static partial class SeoTemplateSettings
 
     public static SeoTemplatesDto Defaults { get; } = new(
         new SeoTemplateDto(
-            "{name} — купити в Бучі, ціна {price}",
-            "{name} у магазині Poli Valko: ціна {price}, доставка Новою поштою й самовивіз у Бучі."),
+            "{name}: ціна {price}, купити з доставкою",
+            "{name} у магазині Poli Valko: ціна {price}, доставка Новою поштою по Україні або самовивіз з магазину."),
         new SeoTemplateDto(
-            "{name} — купити в Бучі",
+            "{name}: купити з доставкою по Україні",
             "{name}: ціни, наявність і доставка по Україні."));
 
     public static async Task<SeoTemplatesDto> LoadAsync(ISettingsStore settings, CancellationToken ct)

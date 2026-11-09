@@ -32,7 +32,7 @@ internal sealed class CheckoutCalculator(ICatalogPricing pricing)
         {
             options.Add(new(
                 DeliveryCodes.Pickup,
-                "Самовивіз у Бучі",
+                "Самовивіз",
                 [
                     new(PaymentCodes.Card, "Онлайн карткою"),
                     new(PaymentCodes.PayOnPickup, "Під час самовивозу"),

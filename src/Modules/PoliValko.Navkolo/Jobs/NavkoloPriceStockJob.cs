@@ -24,6 +24,6 @@ internal sealed class NavkoloPriceStockJob(IServiceScopeFactory scopes, TimeProv
     {
         var records = await services.GetRequiredService<INavkoloClient>().GetPriceStockAsync(ct);
         var result = await services.GetRequiredService<ICatalogImporter>().ApplyPriceStockAsync(records, ct);
-        return new SyncResult($"Отримано {records.Count} записів. Змінено: {result.Updated}, без змін: {result.Unchanged}", result.Errors);
+        return new SyncResult($"Отримано записів: {records.Count}. Змінено: {result.Updated}, без змін: {result.Unchanged}", result.Errors);
     }
 }

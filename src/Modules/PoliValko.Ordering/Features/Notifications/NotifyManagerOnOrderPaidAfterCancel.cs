@@ -14,7 +14,7 @@ internal sealed class NotifyManagerOnOrderPaidAfterCancel(PoliValkoDbContext db,
         var order = await db.Set<Order>().AsNoTracking().SingleAsync(o => o.Id == message.OrderId, cancellationToken);
         await notifier.NotifyAsync(
             new ManagerNotification(
-                $"⚠ Оплачено скасоване замовлення {order.Number}",
+                $"Оплачено скасоване замовлення {order.Number}",
                 $"Покупець оплатив замовлення після скасування. Оформіть повернення коштів у консолі.\nСума: {OrderMoney.Money(order.Total)}",
                 ManagerEvent.PaymentAfterCancel),
             cancellationToken);

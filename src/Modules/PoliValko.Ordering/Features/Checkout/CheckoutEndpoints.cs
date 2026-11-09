@@ -16,6 +16,10 @@ internal static class CheckoutEndpoints
             .WithName("QuoteCheckout")
             .WithSummary("Перерахунок кошика на сервері: ціни, наявність, способи отримання й оплати");
 
+        group.MapGet("/checkout/delivery-methods", GetDeliveryMethods.HandleAsync)
+            .WithName("GetDeliveryMethods")
+            .WithSummary("Увімкнені способи отримання з доступною для кожного оплатою, зоною й приміткою кур'єра");
+
         group.MapPost("/orders", CreateOrder.HandleAsync)
             .RequireIdempotency<CreateOrderRequest>()
             .RequireRateLimiting(RateLimitPolicies.Orders)

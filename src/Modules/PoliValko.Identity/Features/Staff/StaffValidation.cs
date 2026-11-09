@@ -17,7 +17,7 @@ internal static class StaffValidation
         var name = value?.Trim();
         if (string.IsNullOrEmpty(name) || name.Length > 100)
         {
-            errors["displayName"] = ["Вкажіть ім'я до 100 символів: воно видно в історії замовлень."];
+            errors["displayName"] = ["Вкажіть ім'я до 100 символів. Його видно в історії замовлень."];
         }
 
         return name;
@@ -98,7 +98,7 @@ internal static class StaffValidation
             "PasswordRequiresLower" => "Додайте в пароль малу літеру.",
             "PasswordRequiresUpper" => "Додайте в пароль велику літеру.",
             "PasswordRequiresNonAlphanumeric" => "Додайте в пароль символ, що не є літерою чи цифрою.",
-            "PasswordMismatch" => "Поточний пароль невірний.",
+            "PasswordMismatch" => "Поточний пароль неправильний.",
             "DuplicateEmail" or "DuplicateUserName" => "Працівник з таким email уже є.",
             "InvalidEmail" or "InvalidUserName" => "Перевірте email.",
             _ => e.Description,

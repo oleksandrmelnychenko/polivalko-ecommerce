@@ -38,7 +38,7 @@ internal static class BulkUpdateProducts
         var remove = await CatalogConsoleValidation.ResolveManualLabelsAsync(db, request.RemoveLabelIds, "removeLabelIds", errors, ct);
         if (add.Intersect(remove).Any())
         {
-            errors["removeLabelIds"] = ["Одну мітку не можна водночас додати й зняти."];
+            errors["removeLabelIds"] = ["Мітку не можна одночасно додати й зняти."];
         }
 
         if (errors.Count == 0 && request.CategoryId is null && request.Brand is null && add.Count == 0 && remove.Count == 0 && request.IsVisible is null)

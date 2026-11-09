@@ -18,7 +18,7 @@ internal static class SuperuserConfirmation
                 StatusCodes.Status403Forbidden,
                 "staff.two_factor_setup_required",
                 "Увімкніть двофакторну перевірку",
-                "Роль адміністратора призначається лише з підтвердженням кодом. Увімкніть двофакторну перевірку в меню профілю.");
+                "Роль адміністратора можна призначити лише з підтвердженням кодом. Увімкніть двофакторну перевірку в меню профілю.");
         }
 
         if (await users.IsLockedOutAsync(actor))

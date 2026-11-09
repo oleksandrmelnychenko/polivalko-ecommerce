@@ -39,7 +39,7 @@ public static class PermissionCatalog
 
         new(PermissionKeys.IntegrationStatusView, "Стан синхронізацій", "Останні запуски, помилки, стан Нової пошти, оплати й чеків.", "integration", "Інтеграції", PermissionRisk.Low),
         new(PermissionKeys.IntegrationJobsRun, "Запуск синхронізацій вручну", "Позаплановий запуск фонових завдань.", "integration", "Інтеграції", PermissionRisk.Medium),
-        new(PermissionKeys.IntegrationOutboxManage, "Черга операцій і повтор", "Перегляд вичерпаних операцій і повторна спроба.", "integration", "Інтеграції", PermissionRisk.High),
+        new(PermissionKeys.IntegrationOutboxManage, "Черга операцій і повтор", "Операції, які не вдалися після всіх автоматичних спроб, і ручний повтор.", "integration", "Інтеграції", PermissionRisk.High),
 
         new(PermissionKeys.AuditView, "Журнал змін", "Хто, коли й що змінив у консолі.", "system", "Система", PermissionRisk.Medium),
         new(PermissionKeys.StaffUsersManage, "Працівники: створення, ролі, паролі, блокування", "Облікові записи працівників і призначення ролей.", "system", "Система", PermissionRisk.High),

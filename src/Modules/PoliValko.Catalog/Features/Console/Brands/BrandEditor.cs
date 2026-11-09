@@ -34,7 +34,7 @@ internal static class BrandEditor
             : request.Slug.Trim().ToLowerInvariant();
         if (!CatalogConsoleValidation.IsSlug(slug) || slug.Length > 200)
         {
-            errors["slug"] = ["Адреса: латинські літери, цифри й дефіси, до 200 символів."];
+            errors["slug"] = ["Адреса має бути не довшою за 200 символів і містити лише латинські літери, цифри й дефіси."];
         }
         else if (taken.Contains(slug))
         {

@@ -27,7 +27,7 @@ internal static class QuoteCheckout
             lines.Select(CheckoutCalculator.ToDto).ToList(),
             MoneyDto.Hryvnia(subtotal),
             MoneyDto.Hryvnia(subtotal),
-            "Доставка оплачується за тарифами перевізника",
+            "Доставку оплачуєте за тарифами перевізника",
             CheckoutCalculator.DeliveryOptions(await delivery.GetAsync(ct)),
             await freshness.IsFreshAsync(ct)));
     }

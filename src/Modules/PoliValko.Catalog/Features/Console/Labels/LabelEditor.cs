@@ -30,7 +30,7 @@ internal static class LabelEditor
 
         if (request.Kind is { } kind && kind != label.Kind)
         {
-            errors["kind"] = ["Тип мітки не змінюється. Створіть нову мітку."];
+            errors["kind"] = ["Тип мітки змінити не можна. Створіть нову мітку."];
         }
 
         if (label.Kind == LabelKind.New && request.NewDays is not (>= 1 and <= 365))

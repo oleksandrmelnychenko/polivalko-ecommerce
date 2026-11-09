@@ -54,7 +54,7 @@ internal static class SaveHomeSettings
         var text = announcement.Text?.Trim() ?? string.Empty;
         if (text.Length > AnnouncementLength)
         {
-            errors["announcement.text"] = [$"Оголошення — до {AnnouncementLength} символів."];
+            errors["announcement.text"] = [$"Оголошення має бути не довшим за {AnnouncementLength} символів."];
         }
         else if (announcement.IsActive && text.Length == 0)
         {
@@ -69,7 +69,7 @@ internal static class SaveHomeSettings
 
         if (announcement.StartsAt is { } startsAt && announcement.EndsAt is { } endsAt && endsAt < startsAt)
         {
-            errors["announcement.endsAt"] = ["Дата завершення раніше за дату початку."];
+            errors["announcement.endsAt"] = ["Дата завершення не може бути раніше за дату початку."];
         }
 
         var perks = Items(errors, "perks", request.Perks);
@@ -83,7 +83,7 @@ internal static class SaveHomeSettings
 
         if (visitText.Length > VisitTextLength)
         {
-            errors["visit.text"] = [$"Текст — до {VisitTextLength} символів."];
+            errors["visit.text"] = [$"Текст має бути не довшим за {VisitTextLength} символів."];
         }
 
         value = HomeSettingsStore.Normalize(new HomeSettingsDto(
@@ -115,7 +115,7 @@ internal static class SaveHomeSettings
 
             if (text.Length > ItemTextLength)
             {
-                errors[$"{field}[{i}].text"] = [$"Текст — до {ItemTextLength} символів."];
+                errors[$"{field}[{i}].text"] = [$"Текст має бути не довшим за {ItemTextLength} символів."];
             }
 
             result.Add(new HomeItemDto(title, text));

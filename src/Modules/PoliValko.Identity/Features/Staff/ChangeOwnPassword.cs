@@ -28,7 +28,7 @@ internal static class ChangeOwnPassword
         if (!result.Succeeded)
         {
             return TypedResults.ValidationProblem(result.Errors.Any(e => e.Code == "PasswordMismatch")
-                ? new Dictionary<string, string[]> { ["currentPassword"] = ["Поточний пароль невірний."] }
+                ? new Dictionary<string, string[]> { ["currentPassword"] = ["Поточний пароль неправильний."] }
                 : StaffValidation.ToErrors(result, "newPassword"));
         }
 

@@ -52,7 +52,7 @@ internal sealed class DeliveryModelConfigurator : IModelConfigurator
             builder.HasData(new PickupLocation
             {
                 Code = BuchaStoreCode,
-                Name = "Магазин Poli Valko у Бучі",
+                Name = "Магазин Poli Valko",
                 Address = "м. Буча (точну адресу надає замовник)",
                 Schedule = "Пн–Нд, 9:00–19:00 (уточнюється)",
                 Instructions = "Дочекайтеся повідомлення, що замовлення готове, і назвіть номер замовлення на касі.",

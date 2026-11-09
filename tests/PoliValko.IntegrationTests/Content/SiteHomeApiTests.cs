@@ -169,8 +169,8 @@ public sealed class SiteHomeApiTests(ApiFactory api)
     public async Task Startup_seed_fills_only_empty_site_data()
     {
         var seeded = await api.WithDbAsync(db => db.Set<Banner>().AsNoTracking().Select(b => b.Title).ToListAsync(Ct));
-        seeded.ShouldContain("Усе для саду, городу й дому");
-        seeded.ShouldContain("Знижки для саду");
+        seeded.ShouldContain("Товари для саду, городу й дому");
+        seeded.ShouldContain("Товари зі знижкою");
 
         await api.WithScopeAsync(async services =>
         {

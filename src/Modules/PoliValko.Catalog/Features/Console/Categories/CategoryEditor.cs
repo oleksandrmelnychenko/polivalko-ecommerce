@@ -28,7 +28,7 @@ internal static class CategoryEditor
         var slug = string.IsNullOrWhiteSpace(request.Slug) ? Transliteration.ToSlug(name ?? string.Empty) : request.Slug.Trim().ToLowerInvariant();
         if (!CatalogConsoleValidation.IsSlug(slug) || slug.Length > 200)
         {
-            errors["slug"] = ["Адреса: латинські літери, цифри й дефіси, до 200 символів."];
+            errors["slug"] = ["Адреса має бути не довшою за 200 символів і містити лише латинські літери, цифри й дефіси."];
         }
         else if (await db.Set<Category>().AnyAsync(c => c.Slug == slug && c.Id != category.Id, ct))
         {

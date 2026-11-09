@@ -75,5 +75,5 @@ internal static class Login
     }
 
     private static ProblemHttpResult InvalidCredentials() =>
-        Problems.Create(StatusCodes.Status401Unauthorized, "auth.invalid_credentials", "Невірний email або пароль");
+        Problems.Create(StatusCodes.Status401Unauthorized, "auth.invalid_credentials", "Неправильний email або пароль");
 }

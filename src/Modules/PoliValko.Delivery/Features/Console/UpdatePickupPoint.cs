@@ -90,7 +90,7 @@ internal static class UpdatePickupPoint
                 || !Uri.TryCreate(mapUrl, UriKind.Absolute, out var uri)
                 || (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp)))
         {
-            errors["mapUrl"] = [$"Посилання на карту: адреса http(s):// до {DeliveryLimits.PickupMapUrlLength} символів або порожнє поле."];
+            errors["mapUrl"] = [$"Посилання на карту має починатися з http:// або https:// і бути не довшим за {DeliveryLimits.PickupMapUrlLength} символів. Поле можна залишити порожнім."];
         }
 
         if (request.IsActive is null)

@@ -28,7 +28,7 @@ internal static class AttributeDefinitionEditor
         var view = request.FilterView ?? (kind == AttributeKind.Number ? definition.FilterView : AttributeFilterView.Checkboxes);
         if (view == AttributeFilterView.Range && kind != AttributeKind.Number)
         {
-            errors["filterView"] = ["Діапазон «від — до» доступний лише для числових характеристик."];
+            errors["filterView"] = ["Вигляд «Діапазон» доступний лише для числових характеристик."];
         }
 
         var aliases = (request.Aliases ?? [])

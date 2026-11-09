@@ -64,7 +64,7 @@ internal sealed class SandboxPaymentProvider(
         var actual = headers[SignatureHeader].ToString();
         if (actual.Length == 0 || !CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(expected), Encoding.ASCII.GetBytes(actual)))
         {
-            throw new PaymentWebhookRejectedException("Невірний підпис тестового повідомлення.");
+            throw new PaymentWebhookRejectedException("Неправильний підпис тестового повідомлення.");
         }
 
         var message = JsonSerializer.Deserialize<SandboxWebhook>(body, JsonSerializerOptions.Web)

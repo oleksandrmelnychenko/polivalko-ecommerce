@@ -56,7 +56,7 @@ internal static class SaveDeliverySettings
         var text = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         if (text is { Length: > TextLength })
         {
-            errors[field] = [$"До {TextLength} символів."];
+            errors[field] = [$"Текст має бути не довшим за {TextLength} символів."];
         }
 
         return text;

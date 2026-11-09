@@ -13,7 +13,7 @@ internal sealed class LocalMediaStorage(IOptions<MediaOptions> options, IHostEnv
         var bytes = buffer.GetBuffer().AsSpan(0, (int)buffer.Length);
 
         var (extension, contentType) = Detect(bytes)
-            ?? throw new MediaValidationException("Підтримуються лише зображення JPEG, PNG або WebP.");
+            ?? throw new MediaValidationException("Завантажте зображення у форматі JPEG, PNG або WebP.");
 
         var now = time.GetUtcNow();
         var relative = Path.Combine(Sanitize(folder), now.ToString("yyyy"), now.ToString("MM"), $"{Guid.CreateVersion7(now):N}{extension}");

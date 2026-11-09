@@ -28,7 +28,7 @@ internal static class SaveServiceDirection
         var errors = new Dictionary<string, string[]>();
         if (request.Description is { Length: > 1000 })
         {
-            errors["description"] = ["Опис — до 1000 символів."];
+            errors["description"] = ["Опис має бути не довшим за 1000 символів."];
         }
 
         var imageUrl = SiteContentMapping.Clean(request.ImageUrl);

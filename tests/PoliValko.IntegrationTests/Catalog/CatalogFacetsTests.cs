@@ -29,6 +29,9 @@ public sealed class CatalogFacetsTests(ApiFactory api)
 
         var onSale = await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={token}&onSale=true", TestJson.Options, Ct);
         onSale!.Items.ShouldHaveSingleItem().OldPrice.ShouldBe(new MoneyDto("150.00", "UAH"));
+        onSale.Facets.Brands.ShouldBe([new BrandFacet("Florovit", 1)]);
+        onSale.Facets.PriceMax.ShouldBe(new MoneyDto("100.00", "UAH"));
+        onSale.Facets.InStockCount.ShouldBe(1);
     }
 
     [Fact]

@@ -57,19 +57,19 @@ internal static partial class SaveShopSettings
         var taxId = Clean(Whitespace().Replace(request?.TaxId ?? string.Empty, string.Empty));
         if (taxId is not null && !TaxId().IsMatch(taxId))
         {
-            errors["seller.taxId"] = ["ЄДРПОУ — 8 цифр, РНОКПП — 10 цифр."];
+            errors["seller.taxId"] = ["Вкажіть ЄДРПОУ (8 цифр) або РНОКПП (10 цифр)."];
         }
 
         var address = Clean(request?.Address);
         if (address is { Length: > AddressLength })
         {
-            errors["seller.address"] = [$"Адреса — до {AddressLength} символів."];
+            errors["seller.address"] = [$"Адреса має бути не довшою за {AddressLength} символів."];
         }
 
         var iban = Clean(Whitespace().Replace(request?.Iban ?? string.Empty, string.Empty).ToUpperInvariant());
         if (iban is not null && !Iban().IsMatch(iban))
         {
-            errors["seller.iban"] = ["IBAN має вигляд UA і 27 цифр."];
+            errors["seller.iban"] = ["IBAN має складатися з літер UA і 27 цифр."];
         }
 
         var email = Clean(request?.Email);
@@ -81,7 +81,7 @@ internal static partial class SaveShopSettings
         var phone = Clean(request?.Phone);
         if (phone is { Length: > PhoneLength })
         {
-            errors["seller.phone"] = [$"Телефон — до {PhoneLength} символів."];
+            errors["seller.phone"] = [$"Телефон має бути не довшим за {PhoneLength} символів."];
         }
 
         return new ShopSellerDto(name, taxId, address, iban, email, phone);

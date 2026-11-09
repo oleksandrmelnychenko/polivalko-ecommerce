@@ -30,7 +30,7 @@ internal static class SendTestNotification
                 StatusCodes.Status409Conflict,
                 "notifications.telegram_not_configured",
                 "Бот Telegram не налаштований",
-                "Токен бота задається в конфігурації сервера (Notifications:Telegram:BotToken).");
+                "Токен бота задають у конфігурації сервера (Notifications:Telegram:BotToken).");
         }
 
         var chats = NotificationSettingsStore.ChatIds(await NotificationSettingsStore.LoadAsync(settings, ct), telegram.Value);

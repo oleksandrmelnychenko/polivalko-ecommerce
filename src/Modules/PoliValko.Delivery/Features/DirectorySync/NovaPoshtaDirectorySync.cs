@@ -173,7 +173,7 @@ internal sealed class NovaPoshtaDirectorySync(
         if (seen == 0 || seen < activeBefore / 2)
         {
             throw new NovaPoshtaException(
-                $"Нова пошта повернула {seen} {what} при {activeBefore} активних у локальній копії; деактивацію пропущено, перевірте API.");
+                $"Нова пошта повернула замало {what}: {seen}, хоча в локальній копії активних {activeBefore}. Записи не вимкнено, перевірте API.");
         }
     }
 

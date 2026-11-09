@@ -51,7 +51,7 @@ internal static class SaveSeoTemplates
     {
         if (template.Length > SeoTemplateSettings.MaxLength)
         {
-            errors[field] = [$"Шаблон — до {SeoTemplateSettings.MaxLength} символів."];
+            errors[field] = [$"Шаблон має бути не довшим за {SeoTemplateSettings.MaxLength} символів."];
             return;
         }
 

@@ -24,7 +24,7 @@ internal static class RoleRules
         var name = request.Name?.Trim();
         if (string.IsNullOrEmpty(name) || name.Length < 2 || name.Length > NameMaxLength)
         {
-            errors["name"] = [$"Назва ролі від 2 до {NameMaxLength} символів."];
+            errors["name"] = [$"Назва ролі має містити від 2 до {NameMaxLength} символів."];
         }
         else
         {
@@ -38,7 +38,7 @@ internal static class RoleRules
         var description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
         if (description is { Length: > DescriptionMaxLength })
         {
-            errors["description"] = [$"Опис до {DescriptionMaxLength} символів."];
+            errors["description"] = [$"Опис має бути не довшим за {DescriptionMaxLength} символів."];
         }
 
         return (name, description);
@@ -82,5 +82,5 @@ internal static class RoleRules
     public static ProblemHttpResult NotFound() => Problems.NotFound("roles.not_found", "Роль не знайдено");
 
     public static ProblemHttpResult Superuser() =>
-        Problems.Create(StatusCodes.Status409Conflict, "roles.superuser", "Роль адміністратора не змінюється", "Адміністратор завжди має всі права.");
+        Problems.Create(StatusCodes.Status409Conflict, "roles.superuser", "Роль адміністратора змінити не можна", "Адміністратор завжди має всі права.");
 }

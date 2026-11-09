@@ -31,7 +31,7 @@ internal static class IdentitySeeder
         var db = provider.GetRequiredService<PoliValkoDbContext>();
         var logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(IdentitySeeder));
 
-        await EnsureSystemRoleAsync(roles, StaffRoles.Admin, "Адміністратор", "Усі права, зокрема працівники, ролі й налаштування. Не редагується.", superuser: true);
+        await EnsureSystemRoleAsync(roles, StaffRoles.Admin, "Адміністратор", "Усі права, зокрема на працівників, ролі й налаштування. Роль не можна змінити.", superuser: true);
         var manager = await EnsureSystemRoleAsync(roles, StaffRoles.Manager, "Менеджер", "Замовлення, покупці, заявки й товари.", superuser: false);
         await ReconcileDefaultsAsync(db, manager, PermissionCatalog.ManagerDefaults, ct);
 

@@ -62,6 +62,6 @@ internal static class Login
         Problems.Create(
             StatusCodes.Status401Unauthorized,
             "account.invalid_credentials",
-            "Невірний email або пароль",
+            "Неправильний email або пароль",
             "Після 5 невдалих спроб вхід блокується на 15 хвилин. Якщо забули пароль, відновіть його через email.");
 }

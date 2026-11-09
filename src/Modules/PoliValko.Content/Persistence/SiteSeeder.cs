@@ -34,10 +34,9 @@ internal static class SiteSeeder
         new()
         {
             Id = Guid.CreateVersion7(now),
-            Kicker = "Магазин у Бучі",
-            Title = "Усе для саду, городу й дому",
-            Text = "Відправимо Новою поштою по всій Україні або підготуємо до самовивозу в Бучі",
-            ButtonLabel = "Обрати товари",
+            Title = "Товари для саду, городу й дому",
+            Text = "Відправляємо Новою поштою по всій Україні. Самовивіз з магазину безкоштовний.",
+            ButtonLabel = "Перейти до каталогу",
             Link = "/catalog",
             ImageUrl = "https://images.unsplash.com/photo-1719324923613-ff0884b031ed?auto=format&fit=crop&q=80&w=1200",
             SortOrder = 1,
@@ -47,11 +46,11 @@ internal static class SiteSeeder
         new()
         {
             Id = Guid.CreateVersion7(now.AddTicks(1)),
-            Kicker = "Зараз дешевше",
-            Title = "Знижки для саду",
-            Text = "Полив, інструмент і садова техніка за ціною, нижчою, ніж була",
-            ButtonLabel = "Дивитися знижки",
-            Link = "/#offers-title",
+            Kicker = "Акції",
+            Title = "Товари зі знижкою",
+            Text = "Усі товари зі зниженою ціною зібрані на одній сторінці.",
+            ButtonLabel = "Дивитися акції",
+            Link = "/sale",
             ImageUrl = "https://images.unsplash.com/photo-1764046860592-9931f0869fc6?auto=format&fit=crop&q=80&w=1200",
             SortOrder = 2,
             IsActive = true,

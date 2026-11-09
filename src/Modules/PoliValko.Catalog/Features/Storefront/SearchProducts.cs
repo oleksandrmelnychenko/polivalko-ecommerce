@@ -61,6 +61,11 @@ internal static class SearchProducts
             scope = similar ?? matching;
         }
 
+        if (query.OnSale == true)
+        {
+            scope = scope.Where(p => p.Price.OldAmount != null && p.Price.OldAmount > p.Price.Amount);
+        }
+
         var facets = await ProductFacetBuilder.BuildFacetsAsync(scope, filterNames, ct);
 
         var products = scope;
@@ -75,11 +80,6 @@ internal static class SearchProducts
         if (query.InStock == true)
         {
             products = products.Where(p => p.Stock.Quantity > 0);
-        }
-
-        if (query.OnSale == true)
-        {
-            products = products.Where(p => p.Price.OldAmount != null && p.Price.OldAmount > p.Price.Amount);
         }
 
         foreach (var (name, values) in attributeFilters)

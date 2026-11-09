@@ -38,19 +38,19 @@ internal static class SavePage
 
         if (request.Lead is { Length: > 500 })
         {
-            errors["lead"] = ["Підзаголовок — до 500 символів."];
+            errors["lead"] = ["Підзаголовок має бути не довшим за 500 символів."];
         }
 
         var seoTitle = SiteContentMapping.Clean(request.SeoTitle);
         if (seoTitle is { Length: > 200 })
         {
-            errors["seoTitle"] = ["SEO-заголовок — до 200 символів."];
+            errors["seoTitle"] = ["SEO-заголовок має бути не довшим за 200 символів."];
         }
 
         var seoDescription = SiteContentMapping.Clean(request.SeoDescription);
         if (seoDescription is { Length: > 500 })
         {
-            errors["seoDescription"] = ["SEO-опис — до 500 символів."];
+            errors["seoDescription"] = ["SEO-опис має бути не довшим за 500 символів."];
         }
 
         var body = sanitizer.Sanitize(request.BodyHtml);

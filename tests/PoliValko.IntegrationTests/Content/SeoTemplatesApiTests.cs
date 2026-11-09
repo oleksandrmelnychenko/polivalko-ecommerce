@@ -58,8 +58,8 @@ public sealed class SeoTemplatesApiTests(ApiFactory api)
     [Fact]
     public async Task Startup_seed_keeps_saved_templates_and_defaults_have_no_shop_name()
     {
-        SeoTemplateSettings.Defaults.Product.Title.ShouldBe("{name} — купити в Бучі, ціна {price}");
-        SeoTemplateSettings.Defaults.Category.Title.ShouldBe("{name} — купити в Бучі");
+        SeoTemplateSettings.Defaults.Product.Title.ShouldBe("{name}: ціна {price}, купити з доставкою");
+        SeoTemplateSettings.Defaults.Category.Title.ShouldBe("{name}: купити з доставкою по Україні");
         SeoTemplateSettings.Defaults.Product.Title.ShouldNotContain("Poli Valko");
         SeoTemplateSettings.Defaults.Product.Title.ShouldNotContain("{shop}");
 

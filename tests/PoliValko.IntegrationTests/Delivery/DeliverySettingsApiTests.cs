@@ -41,6 +41,9 @@ public sealed class DeliverySettingsApiTests(ApiFactory api)
             quote.DeliveryMethods.Select(d => d.Code).ShouldBe([DeliveryCodes.NovaPoshta, DeliveryCodes.NovaPoshtaCourier]);
             quote.DeliveryMethods[0].PaymentMethods.Select(p => p.Code).ShouldBe([PaymentCodes.Card]);
             (quote.DeliveryMethods[1].Description, quote.DeliveryMethods[1].PriceNote).ShouldBe(("Буча, Ірпінь, Гостомель", "Оплачує покупець за тарифом"));
+            var published = await api.CreateClient().GetFromJsonAsync<List<DeliveryMethodOptionDto>>("/api/v1/checkout/delivery-methods", TestJson.Options, Ct);
+            published!.Select(d => $"{d.Code}:{string.Join(',', d.PaymentMethods.Select(p => p.Code))}:{d.Description}:{d.PriceNote}")
+                .ShouldBe(quote.DeliveryMethods.Select(d => $"{d.Code}:{string.Join(',', d.PaymentMethods.Select(p => p.Code))}:{d.Description}:{d.PriceNote}"));
 
             var pickup = await checkout.PostOrderAsync(PickupOrder(product.Id), Guid.NewGuid().ToString());
             pickup.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
