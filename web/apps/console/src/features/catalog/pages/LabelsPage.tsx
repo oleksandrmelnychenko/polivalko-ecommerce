@@ -47,10 +47,10 @@ export function LabelsPage() {
           saveLabel(headers, label.id, { name: label.name, tone: label.tone, kind: label.kind, newDays: label.newDays, sortOrder: label.sortOrder, isActive }),
         )
         if (result.response.ok) {
-          notifySuccess(`«${label.name}» ${isActive ? 'показується на сайті' : 'вимкнено'}.`)
+          notifySuccess(`Мітку «${label.name}» ${isActive ? 'увімкнено' : 'вимкнено'}.`)
           reload()
         } else {
-          notifyError(problemMessage(result.error, 'Не збережено.'))
+          notifyError(problemMessage(result.error, 'Мітку не збережено.'))
         }
       } catch {
         notifyError(NETWORK_ERROR)
@@ -120,7 +120,7 @@ export function LabelsPage() {
 
   function saved() {
     drawer.setOpened(false)
-    notifySuccess('Збережено. Вітрина оновиться протягом хвилини.')
+    notifySuccess('Мітку збережено. Вітрина оновиться протягом хвилини.')
     reload()
   }
 
@@ -214,11 +214,11 @@ export function LabelsPage() {
         message={
           current
             ? current.kind === 'manual' && current.productCount
-              ? `Мітку «${current.name}» буде знято з товарів (${current.productCount}) і видалено.`
-              : `Мітку «${current.name}» буде видалено.`
+              ? `Мітка «${current.name}» зникне з товарів (${current.productCount}) і з довідника. Скасувати видалення не можна.`
+              : `Мітка «${current.name}» зникне з довідника. Скасувати видалення не можна.`
             : ''
         }
-        confirmLabel="Видалити"
+        confirmLabel="Видалити мітку"
         danger
         busy={drawer.busy}
         onConfirm={() => void remove()}

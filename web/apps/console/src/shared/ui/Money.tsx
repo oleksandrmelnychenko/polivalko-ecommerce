@@ -3,7 +3,7 @@ import { formatMoney, formatPrice } from '@polivalko/shared/lib/format'
 import type { ReactNode } from 'react'
 
 export function Money({ value, sub }: { value: MoneyValue | string | number | null | undefined; sub?: ReactNode }) {
-  if (value == null) return <span>—</span>
+  if (value == null) return <span>немає</span>
   const text = typeof value === 'object' ? formatMoney(value) : formatPrice(value)
   if (sub == null) return <span className="app-money">{text}</span>
   return (
@@ -17,7 +17,7 @@ export function Money({ value, sub }: { value: MoneyValue | string | number | nu
 const numberFormat = new Intl.NumberFormat('uk-UA')
 
 export function NumberValue({ value }: { value: number | null | undefined }) {
-  return <span className="app-number">{value == null ? '—' : numberFormat.format(value)}</span>
+  return <span className="app-number">{value == null ? 'немає' : numberFormat.format(value)}</span>
 }
 
 export function CellStack({ title, sub, code = false }: { title: ReactNode; sub?: ReactNode; code?: boolean }) {

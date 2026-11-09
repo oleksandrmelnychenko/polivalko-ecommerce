@@ -37,7 +37,7 @@ export function displayDay(day: string): string {
 export function periodLabel(startsAt: string | null | undefined, endsAt: string | null | undefined): string {
   const from = displayDay(periodDay(startsAt))
   const to = displayDay(periodDay(endsAt))
-  if (from && to) return `${from} — ${to}`
+  if (from && to) return `з ${from} до ${to}`
   if (from) return `з ${from}`
   if (to) return `до ${to}`
   return 'Без обмежень'

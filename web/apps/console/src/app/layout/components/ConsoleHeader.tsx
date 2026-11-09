@@ -18,7 +18,7 @@ export function ConsoleHeader() {
       <div className="console-header-main">
         <div className="console-header-brand">
           <Burger className="console-burger" opened={menuOpened} onClick={menu.toggle} size="sm" aria-label="Відкрити меню розділів" />
-          <Link to="/" className="console-brand" aria-label="PoliValko — консоль, на головну">
+          <Link to="/" className="console-brand" aria-label="На головну консолі PoliValko">
             <span className="console-brand-word" translate="no">
               PoliValko
             </span>

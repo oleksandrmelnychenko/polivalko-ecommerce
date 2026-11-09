@@ -16,7 +16,7 @@ type RoleSummaryProps = {
 
 export function RoleSummary({ role, selectedCount, totalCount, stamp, busy, onEdit, onDelete }: RoleSummaryProps) {
   const updated = updatedText(stamp.updatedAt, stamp.updatedBy)
-  const editHint = role.isSuperuser ? 'Роль адміністратора не змінюється' : null
+  const editHint = role.isSuperuser ? 'Роль адміністратора змінити не можна' : null
   const deleteHint = role.isSystem ? 'Системну роль не можна видалити' : null
 
   return (

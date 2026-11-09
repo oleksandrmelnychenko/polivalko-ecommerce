@@ -108,7 +108,7 @@ function AccountDetail({ id }: { id: string }) {
           <PageState
             kind={account.status === 'forbidden' ? 'forbidden' : 'error'}
             title={account.problem?.title ?? (account.status === 'forbidden' ? undefined : 'Не вдалося завантажити кабінет')}
-            description={account.problem?.detail ?? 'Перевірте, що API працює, і спробуйте ще раз.'}
+            description={account.problem?.detail ?? 'Спробуйте ще раз. Якщо помилка повториться, повідомте розробника.'}
             onRetry={account.status === 'forbidden' ? undefined : account.reload}
           />
         )}
@@ -204,12 +204,12 @@ function AccountDetail({ id }: { id: string }) {
         title={pending === 'reset' ? 'Скидання пароля' : pending === 'lock' ? 'Заблокувати кабінет' : 'Розблокувати кабінет'}
         message={
           pending === 'reset'
-            ? `На ${data.email} буде надіслано лист із посиланням для встановлення нового пароля. Поточний пароль діятиме, доки покупець його не змінить.`
+            ? `Сайт надішле на ${data.email} лист із посиланням для нового пароля. Поточний пароль діятиме, доки покупець його не змінить.`
             : pending === 'lock'
               ? `${name} не зможе увійти в кабінет на сайті, доки його не розблокують.`
               : `${name} знову зможе входити в кабінет на сайті.`
         }
-        confirmLabel={pending === 'reset' ? 'Надіслати лист' : pending === 'lock' ? 'Заблокувати' : 'Розблокувати'}
+        confirmLabel={pending === 'reset' ? 'Надіслати лист' : pending === 'lock' ? 'Заблокувати кабінет' : 'Розблокувати кабінет'}
         danger={pending === 'lock'}
         busy={busy}
         onConfirm={() => void confirm()}

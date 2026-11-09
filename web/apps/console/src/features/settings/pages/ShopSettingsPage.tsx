@@ -31,7 +31,7 @@ export function ShopSettingsPage() {
       {failed ? (
         <PageState
           kind={failed.status === 'forbidden' ? 'forbidden' : 'error'}
-          description={problemMessage(failed.problem, 'Перевірте, що API працює, і спробуйте ще раз.')}
+          description={problemMessage(failed.problem, 'Спробуйте ще раз. Якщо помилка повториться, повідомте розробника.')}
           onRetry={
             failed.status === 'error'
               ? () => {

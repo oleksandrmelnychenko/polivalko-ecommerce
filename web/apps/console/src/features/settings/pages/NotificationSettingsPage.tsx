@@ -17,7 +17,7 @@ export function NotificationSettingsPage() {
       {notifications.status === 'error' || notifications.status === 'forbidden' ? (
         <PageState
           kind={notifications.status}
-          description={problemMessage(notifications.problem, 'Перевірте, що API працює, і спробуйте ще раз.')}
+          description={problemMessage(notifications.problem, 'Спробуйте ще раз. Якщо помилка повториться, повідомте розробника.')}
           onRetry={notifications.status === 'error' ? notifications.reload : undefined}
         />
       ) : (

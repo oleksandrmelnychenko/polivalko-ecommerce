@@ -15,7 +15,7 @@ export function OrderReceiptsCard({ number, version }: { number: string; version
     <OrderCard className="order-area-receipts order-no-print" title="Фіскальні чеки">
       <OrderLoadState
         state={receipts}
-        empty={receipts.status === 'ready' && rows.length === 0 ? 'Чеків ще немає: їх видає ПРРО за погодженими правилами.' : undefined}
+        empty={receipts.status === 'ready' && rows.length === 0 ? 'Чеків ще немає. ПРРО видає їх за правилами з розділу «Оплата й чеки».' : undefined}
       >
         <Table.ScrollContainer minWidth={620} type="native">
           <Table className="order-table" verticalSpacing={8} horizontalSpacing={14}>

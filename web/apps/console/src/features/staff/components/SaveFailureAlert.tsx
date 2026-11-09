@@ -34,7 +34,7 @@ export function SaveFailureAlert({ failure, catalog, onReload }: SaveFailureAler
       <Alert color="red" variant="light" icon={<IconAlertCircle size={18} />} title={failure.title} role="alert">
         <Group justify="space-between" gap="xs" align="center">
           <Text size="sm">
-            Сервер не знає таких прав: {keys.join(', ')}. Каталог прав оновився — завантажте його й повторіть зміни.
+            Сервер не знає таких прав: {keys.join(', ')}. Каталог прав оновився. Завантажте його й внесіть зміни ще раз.
           </Text>
           <Button size="xs" variant="default" leftSection={<IconRefresh size={14} />} onClick={onReload}>
             Оновити каталог
@@ -48,7 +48,7 @@ export function SaveFailureAlert({ failure, catalog, onReload }: SaveFailureAler
     return (
       <Alert color="red" variant="light" icon={<IconAlertCircle size={18} />} title={failure.title} role="alert">
         <Text size="sm">
-          Вашій ролі бракує прав: {permissionNames(problemKeys(failure.problem, 'missingKeys'), catalog)}. Зніміть їх або попросіть працівника з роллю «Адміністратор».
+          Вашій ролі бракує прав: {permissionNames(problemKeys(failure.problem, 'missingKeys'), catalog)}. Зніміть їх або попросіть працівника з роллю «Адміністратор» внести ці зміни.
         </Text>
       </Alert>
     )

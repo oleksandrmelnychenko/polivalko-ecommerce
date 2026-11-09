@@ -34,7 +34,7 @@ export function barPath(x: number, y: number, w: number, h: number) {
 
 export function bestDay(data: Dashboard) {
   const best = data.byDay.reduce<Dashboard['byDay'][number] | null>((b, d) => (Number(d.revenue.value) > Number(b?.revenue.value ?? 0) ? d : b), null)
-  if (!best) return '—'
+  if (!best) return 'немає'
   return `${bestDayDate.format(asDate(best.date))}, ${formatMoney(best.revenue)}`
 }
 

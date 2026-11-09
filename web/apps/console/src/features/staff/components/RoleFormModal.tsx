@@ -29,7 +29,7 @@ export function RoleFormModal({ role, roles, catalog, onClose, onSaved }: RoleFo
   const errors = failure?.fields ?? {}
   const copyOptions = sortRoles(roles).map((item) => ({
     value: item.id,
-    label: `${item.name} — ${item.isSuperuser ? 'усі права' : rightsText(item.permissionCount)}`,
+    label: `${item.name} (${item.isSuperuser ? 'усі права' : rightsText(item.permissionCount)})`,
   }))
 
   function close() {
@@ -40,7 +40,7 @@ export function RoleFormModal({ role, roles, catalog, onClose, onSaved }: RoleFo
     event.preventDefault()
     const trimmed = name.trim()
     if (trimmed.length < NAME_MIN || trimmed.length > NAME_MAX) {
-      setFailure({ title: '', fields: { name: `Назва ролі від ${NAME_MIN} до ${NAME_MAX} символів.` } })
+      setFailure({ title: '', fields: { name: `Назва ролі має містити від ${NAME_MIN} до ${NAME_MAX} символів.` } })
       return
     }
     setBusy(true)
@@ -93,7 +93,7 @@ export function RoleFormModal({ role, roles, catalog, onClose, onSaved }: RoleFo
           {role ? null : (
             <Select
               label="Скопіювати права з"
-              placeholder="Без прав — налаштуєте після створення"
+              placeholder="Не копіювати: права налаштуєте після створення"
               data={copyOptions}
               value={copyFrom}
               clearable
@@ -114,7 +114,7 @@ export function RoleFormModal({ role, roles, catalog, onClose, onSaved }: RoleFo
             Скасувати
           </Button>
           <Button type="submit" loading={busy}>
-            {role ? 'Зберегти' : 'Створити роль'}
+            {role ? 'Зберегти роль' : 'Створити роль'}
           </Button>
         </AppModalFooter>
       </form>

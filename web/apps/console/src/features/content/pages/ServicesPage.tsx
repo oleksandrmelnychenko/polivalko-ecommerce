@@ -29,7 +29,7 @@ export function ServicesPage() {
     <ListPage>
       <PageHeader title="Напрямки послуг" />
       <ContentToolbar
-        note="Опис і фото показуються біля назви напрямку на сторінці послуг. Напрямки йдуть за порядком від меншого числа до більшого."
+        note="Сторінка послуг показує опис і фото біля назви напрямку. Напрямки стоять за полем «Порядок», від меншого числа до більшого."
         summary={services.data ? `Напрямків: ${services.data.length}` : null}
         isLoading={services.isFetching}
         onRefresh={services.reload}

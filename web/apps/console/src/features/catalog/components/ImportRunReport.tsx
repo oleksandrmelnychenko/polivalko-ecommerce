@@ -53,7 +53,7 @@ export function ImportRunReport({ run, open = false }: { run: ImportRun; open?: 
             <Table.Tbody>
               {run.errors.map((error, index) => (
                 <Table.Tr key={index}>
-                  <Table.Td className="catalog-code">{error.item ?? '—'}</Table.Td>
+                  <Table.Td className="catalog-code">{error.item ?? 'немає'}</Table.Td>
                   <Table.Td>{error.message}</Table.Td>
                 </Table.Tr>
               ))}

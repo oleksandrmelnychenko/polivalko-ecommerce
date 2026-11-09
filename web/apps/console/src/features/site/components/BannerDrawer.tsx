@@ -36,7 +36,7 @@ export function BannerDrawer({ editing, onClose, onSaved }: BannerDrawerProps) {
             Скасувати
           </Button>
           <Button type="submit" form={FORM_ID} loading={busy} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
-            {banner ? 'Зберегти' : 'Додати банер'}
+            {banner ? 'Зберегти банер' : 'Додати банер'}
           </Button>
         </Group>
       }
@@ -95,7 +95,7 @@ function validate(values: Values): Record<string, string> {
   if (!values.imageUrl) errors.imageUrl = "Завантажте фото для комп'ютера."
   const link = values.link.trim()
   if (link && !isLink(link)) errors.link = 'Посилання має починатися з / або https://.'
-  if (values.buttonLabel.trim() && !link) errors.link = 'Кнопці потрібне посилання.'
+  if (values.buttonLabel.trim() && !link) errors.link = 'Для кнопки вкажіть посилання.'
   if (invalidPeriod(values.from, values.to)) errors.endsAt = 'Дата завершення раніше за дату початку.'
   return errors
 }
@@ -136,9 +136,9 @@ function BannerForm({ initial, onBusy, onSaved }: BannerFormProps) {
     <form id={FORM_ID} className="site-drawer-form" onSubmit={onSubmit} noValidate aria-label={initial ? `Банер «${initial.title}»` : 'Новий банер'}>
       <Stack gap="md">
         <TextInput
-          label="Надпис над заголовком"
+          label="Напис над заголовком"
           description={`Короткий рядок над заголовком на слайді, до ${BANNER_LIMITS.kicker} символів. Можна лишити порожнім.`}
-          placeholder="Магазин у Бучі"
+          placeholder="Акції"
           value={values.kicker}
           maxLength={BANNER_LIMITS.kicker}
           error={fieldError(form.errors, 'kicker')}
@@ -166,7 +166,7 @@ function BannerForm({ initial, onBusy, onSaved }: BannerFormProps) {
         <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md" verticalSpacing="sm">
           <TextInput
             label="Напис на кнопці"
-            placeholder="Обрати товари"
+            placeholder="Перейти до каталогу"
             value={values.buttonLabel}
             maxLength={BANNER_LIMITS.buttonLabel}
             error={fieldError(form.errors, 'buttonLabel')}
@@ -203,7 +203,7 @@ function BannerForm({ initial, onBusy, onSaved }: BannerFormProps) {
         <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md" verticalSpacing="sm">
           <AppDateInput
             label="Показувати з"
-            description="Порожньо — одразу після збереження."
+            description="Якщо дату не вказати, показ почнеться одразу після збереження."
             value={values.from}
             max={values.to || undefined}
             error={fieldError(form.errors, 'startsAt')}
@@ -211,7 +211,7 @@ function BannerForm({ initial, onBusy, onSaved }: BannerFormProps) {
           />
           <AppDateInput
             label="Показувати до"
-            description="Включно. Порожньо — без кінцевої дати."
+            description="Включно з цією датою. Без дати показ триває без обмежень."
             value={values.to}
             min={values.from || undefined}
             error={fieldError(form.errors, 'endsAt')}

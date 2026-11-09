@@ -105,13 +105,13 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
       const result = await withCsrf((headers) => updateProduct(headers, product.id, body))
       if (result.data) {
         setErrors({})
-        notifySuccess('Збережено. Вітрина оновиться протягом хвилини.')
+        notifySuccess('Товар збережено. Вітрина оновиться протягом хвилини.')
         setBusy(false)
         onBusy(false)
         onSaved(result.data)
         return
       }
-      const message = problemMessage(result.error, 'Не збережено.')
+      const message = problemMessage(result.error, 'Товар не збережено.')
       setErrors(fieldErrors(result.error))
       setFormError(message)
       notifyError(message)
@@ -159,7 +159,7 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
             />
             <Select
               label="Категорія на сайті"
-              description="Приховані категорії позначено; товар у них на сайті не видно."
+              description="Приховані категорії позначено. Товар у такій категорії на сайті не видно."
               inputWrapperOrder={['label', 'input', 'description', 'error']}
               data={categoryData}
               value={fields.categoryId}
@@ -260,7 +260,7 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
         {readOnly ? null : (
           <div className="catalog-form-actions">
             <Button type="submit" leftSection={<IconDeviceFloppy size={16} stroke={1.8} />} loading={busy}>
-              Зберегти
+              Зберегти товар
             </Button>
           </div>
         )}

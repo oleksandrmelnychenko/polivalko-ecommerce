@@ -86,7 +86,7 @@ export function DeliverySettingsForm({ initial, points, onSaved, onEditPoint }: 
         title="Доставка"
         actions={
           <Button type="submit" form={FORM_ID} loading={form.busy} disabled={!dirty || nothingEnabled} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
-            Зберегти
+            Зберегти зміни
           </Button>
         }
       />
@@ -101,7 +101,7 @@ export function DeliverySettingsForm({ initial, points, onSaved, onEditPoint }: 
             <FormAlert error={form.error} />
           )}
 
-          <SectionCard title="Нова пошта" description="Відділення й поштомати по всій Україні. Вартість — за тарифами перевізника.">
+          <SectionCard title="Нова пошта" description="Відділення й поштомати по всій Україні. Доставку покупець оплачує за тарифами перевізника.">
             <Stack gap="sm">
               <Switch
                 label="Доставка у відділення й поштомати"
@@ -155,7 +155,7 @@ export function DeliverySettingsForm({ initial, points, onSaved, onEditPoint }: 
 
           <SectionCard
             title="Самовивіз"
-            description="Покупець бачить самовивіз, лише коли він увімкнений тут і хоча б одна точка доступна для самовивозу. Останню доступну точку можна вимкнути, лише коли самовивіз вимкнений і збережений. Адресу, графік та інструкцію точки покупець бачить під час оформлення."
+            description="Покупець бачить самовивіз, коли його ввімкнено тут і доступна хоча б одна точка. Останню доступну точку можна вимкнути, лише коли самовивіз уже вимкнено й збережено. Адресу, графік та інструкцію точки покупець бачить під час оформлення."
           >
             <Stack gap="sm">
               <Switch

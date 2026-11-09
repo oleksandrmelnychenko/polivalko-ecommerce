@@ -82,7 +82,7 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
         title="Головна"
         actions={
           <Button type="submit" form={FORM_ID} loading={form.busy} disabled={!dirty} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
-            Зберегти
+            Зберегти зміни
           </Button>
         }
       />
@@ -94,7 +94,7 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
             <SectionCard title="Блоки й порядок" description="Вимкнений блок зникає з головної. Решта йде в цьому порядку зверху вниз.">
               <HomeBlocksList blocks={values.blocks} notes={{ hero: heroNote }} onChange={(blocks) => patch({ blocks })} />
             </SectionCard>
-            <SectionCard title="Смуга оголошення" description="Короткий рядок над шапкою сайту: початок сезону, вихідні дні, акція.">
+            <SectionCard title="Смуга оголошення" description="Короткий рядок над шапкою сайту, наприклад про початок сезону чи вихідні дні.">
               <AnnouncementFields value={values.announcement} errors={form.errors} onChange={(announcement) => patch({ announcement })} onClearField={form.clearField} />
             </SectionCard>
           </div>
@@ -103,7 +103,7 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
             description="Стоять в один ряд під добірками, найкраще виглядають 4 пункти."
             actions={
               <Button variant="subtle" size="xs" color="gray" leftSection={<IconRestore size={14} stroke={1.8} />} onClick={() => patch({ perks: itemRows(DEFAULT_PERKS) })}>
-                Типові тексти
+                Повернути типові тексти
               </Button>
             }
           >
@@ -122,7 +122,7 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
             description="Кроки покупки під заголовком «Як замовити». Номери кроків сайт ставить сам."
             actions={
               <Button variant="subtle" size="xs" color="gray" leftSection={<IconRestore size={14} stroke={1.8} />} onClick={() => patch({ steps: itemRows(DEFAULT_STEPS) })}>
-                Типові тексти
+                Повернути типові тексти
               </Button>
             }
           >
@@ -137,15 +137,15 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
             />
           </SectionCard>
           <SectionCard
-            title="Магазин у Бучі"
+            title="Наш магазин"
             description={
               <>
-                Заголовок і підзаголовок блоку. Адреса, графік і телефон беруться з <Link to="/settings/shop">Налаштування → Магазин</Link>.
+                Заголовок і підзаголовок блоку. Адресу, графік і телефон сайт бере з <Link to="/settings/shop">Налаштування → Магазин</Link>.
               </>
             }
             actions={
               <Button variant="subtle" size="xs" color="gray" leftSection={<IconRestore size={14} stroke={1.8} />} onClick={() => patch({ visit: { ...DEFAULT_VISIT } })}>
-                Типові тексти
+                Повернути типові тексти
               </Button>
             }
           >

@@ -51,7 +51,7 @@ export function LabelForm({ formId, label, nextSortOrder, error, onBusy, onSaved
     }
     const days = Number(fields.newDays)
     if (kind === 'new' && (!Number.isInteger(days) || days < 1)) {
-      setErrors({ newDays: 'Від 1 дня.' })
+      setErrors({ newDays: 'Вкажіть щонайменше 1 день.' })
       return
     }
     setBusy(true)
@@ -75,7 +75,7 @@ export function LabelForm({ formId, label, nextSortOrder, error, onBusy, onSaved
         return
       }
       setErrors(fieldErrors(result.error))
-      setFormError(problemMessage(result.error, 'Не збережено.'))
+      setFormError(problemMessage(result.error, 'Мітку не збережено.'))
     } catch {
       setFormError(NETWORK_ERROR)
     }
@@ -136,7 +136,7 @@ export function LabelForm({ formId, label, nextSortOrder, error, onBusy, onSaved
           {auto ? null : (
             <NumberInput
               label="Порядок на плитці"
-              description="Менше число — ближче до початку."
+              description="Що менше число, то ближче мітка до початку."
               inputWrapperOrder={['label', 'input', 'description', 'error']}
               allowDecimal={false}
               value={fields.sortOrder}

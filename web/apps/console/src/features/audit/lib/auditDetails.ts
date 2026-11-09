@@ -61,7 +61,7 @@ export function roleChangeSummary(change: RoleChange, permissionName: Permission
     case 'permissions':
       parts.push(quoted(change.role.name))
       if (change.added.length) parts.push(`Додано: ${change.added.map(permissionName).join(', ')}`)
-      if (change.removed.length) parts.push(`Вилучено: ${change.removed.map(permissionName).join(', ')}`)
+      if (change.removed.length) parts.push(`Знято: ${change.removed.map(permissionName).join(', ')}`)
       break
   }
   return parts.filter(Boolean).join(' · ')
@@ -75,7 +75,7 @@ export function genericSummary(details: unknown): string {
 }
 
 function scalar(value: unknown): string {
-  if (value === null || value === undefined) return '—'
+  if (value === null || value === undefined) return 'немає'
   if (typeof value === 'string') return value
   if (typeof value === 'number' || typeof value === 'boolean') return String(value)
   if (Array.isArray(value)) return value.every((item) => typeof item !== 'object' || item === null) ? value.map(scalar).join(', ') : `[${value.length}]`

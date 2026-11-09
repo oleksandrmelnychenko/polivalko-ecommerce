@@ -60,7 +60,7 @@ export function IntegrationPage() {
       let next: RunRequest
       try {
         const result = await withCsrf((headers) => runJob(headers, name))
-        next = result.response.ok ? { accepted: true } : { error: problemMessage(result.error, 'Запит не прийнято.') }
+        next = result.response.ok ? { accepted: true } : { error: problemMessage(result.error, 'Завдання не запущено.') }
         if (result.response.ok) reloadStatus()
       } catch {
         next = { error: NO_CONNECTION }
@@ -77,12 +77,12 @@ export function IntegrationPage() {
       try {
         const result = await withCsrf((headers) => retryOutbox(headers, message.id))
         if (result.response.ok) {
-          notifySuccess(`«${label}» поставлено в чергу повторно. Worker виконає протягом хвилини.`)
+          notifySuccess(`«${label}» знову в черзі. Фонова служба виконає операцію протягом хвилини.`)
           reloadOutbox()
           reloadStatus()
           notifySummaryStale()
         } else {
-          notifyError(problemMessage(result.error, 'Повтор не прийнято.'))
+          notifyError(problemMessage(result.error, 'Операцію не повторено.'))
         }
       } catch {
         notifyError(NO_CONNECTION)

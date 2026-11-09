@@ -1,7 +1,7 @@
 import { Button, Stack, Text } from '@mantine/core'
 import { problemMessage } from '@/shared/api/problem'
 
-const LOAD_FAILED = 'Не вдалося завантажити дані. Перевірте, що API працює, і спробуйте ще раз.'
+const LOAD_FAILED = 'Не вдалося завантажити дані. Спробуйте ще раз. Якщо помилка повториться, повідомте розробника.'
 
 type ListErrorProps = {
   problem: unknown

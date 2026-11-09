@@ -30,7 +30,7 @@ export function PaymentSettingsPage() {
       ) : payments.status === 'error' || payments.status === 'forbidden' ? (
         <PageState
           kind={payments.status}
-          description={problemMessage(payments.problem, 'Перевірте, що API працює, і спробуйте ще раз.')}
+          description={problemMessage(payments.problem, 'Спробуйте ще раз. Якщо помилка повториться, повідомте розробника.')}
           onRetry={payments.status === 'error' ? payments.reload : undefined}
         />
       ) : (
@@ -47,7 +47,7 @@ function PaymentStatus({ value }: { value: PaymentSettings }) {
     <Stack gap="lg" className="settings-form">
       <p className="settings-lead">Як магазин приймає оплату й видає фіскальні чеки. Сторінка лише для перегляду.</p>
       <Alert color="gray" variant="light" icon={<IconInfoCircle size={18} />}>
-        Провайдер, ключі й режим роботи задаються в конфігурації сервера, а не в консолі: так їх не змінити випадково. Щоб змінити, зверніться до розробника.
+        Провайдера, ключі й режим роботи розробник задає в конфігурації сервера, тому в консолі їх випадково не змінити. Щоб змінити, зверніться до розробника.
       </Alert>
 
       <div className="settings-columns">
@@ -63,7 +63,7 @@ function PaymentStatus({ value }: { value: PaymentSettings }) {
             <dd className="app-number">{value.lastReconcileAt ? formatDateTime(value.lastReconcileAt) : <span className="settings-muted">ще не було</span>}</dd>
           </dl>
           <p className="settings-note">
-            Звірка — фонове завдання, що перевіряє статуси оплат у провайдера. Стан і запуск — у <Link to="/system/integrations">Система → Інтеграції</Link>.
+            Звірка у фоні перевіряє статуси оплат у провайдера. Її стан і запуск дивіться в розділі <Link to="/system/integrations">Система → Інтеграції</Link>.
           </p>
         </SectionCard>
 
@@ -84,7 +84,7 @@ function PaymentStatus({ value }: { value: PaymentSettings }) {
         </SectionCard>
       </div>
 
-      <SectionCard title="Коли видається чек" description="Момент видачі чека для кожного способу оплати. Його визначає бухгалтер магазину.">
+      <SectionCard title="Коли видається чек" description="Момент видачі для кожного способу оплати визначає бухгалтер магазину.">
         <ul className="settings-moments">
           {PAYMENT_METHODS.map((method) => (
             <li key={method.key}>

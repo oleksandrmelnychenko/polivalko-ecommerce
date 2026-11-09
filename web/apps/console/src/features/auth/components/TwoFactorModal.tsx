@@ -250,7 +250,7 @@ export function TwoFactorModal({ opened, onClose, onChanged }: TwoFactorModalPro
               Не зараз
             </Button>
             <Button loading={busy === 'setup'} onClick={() => void startSetup()}>
-              Налаштувати
+              Налаштувати перевірку
             </Button>
           </AppModalFooter>
         </Stack>
@@ -296,10 +296,10 @@ function RecoveryCodes({ codes, fresh, onDone }: { codes: string[]; fresh: boole
       </ol>
       <AppModalFooter>
         <Button variant="default" leftSection={<IconCopy size={16} />} onClick={() => void copy()}>
-          Скопіювати
+          Скопіювати коди
         </Button>
         <Button variant="default" leftSection={<IconDownload size={16} />} onClick={download}>
-          Завантажити
+          Завантажити коди
         </Button>
         <Button onClick={onDone}>Готово</Button>
       </AppModalFooter>

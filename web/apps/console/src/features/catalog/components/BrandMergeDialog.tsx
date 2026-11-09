@@ -65,7 +65,7 @@ export function BrandMergeDialog({ source, brands, onMerged, onClose }: BrandMer
     >
       <form noValidate onSubmit={submit} aria-label="Об'єднати бренди">
         <Stack gap="sm">
-          <Text size="sm">Так зводять різні написання одного бренду, наприклад «GARDENA» і «Gardena».</Text>
+          <Text size="sm">Об&apos;єднання зводить різні написання одного бренду в один, наприклад «GARDENA» і «Gardena».</Text>
           <Select
             label="Залишити бренд"
             placeholder="Оберіть бренд"
@@ -79,7 +79,7 @@ export function BrandMergeDialog({ source, brands, onMerged, onClose }: BrandMer
           />
           {source && target ? (
             <Alert color="yellow" variant="light">
-              Товари «{source.name}» ({source.productCount}) перейдуть до «{target.name}», а «{source.name}» буде видалено з довідника. Скасувати це не можна.
+              Товари «{source.name}» ({source.productCount}) перейдуть до «{target.name}», а бренд «{source.name}» зникне з довідника. Скасувати об&apos;єднання не можна.
             </Alert>
           ) : null}
           {error ? (
@@ -93,7 +93,7 @@ export function BrandMergeDialog({ source, brands, onMerged, onClose }: BrandMer
             Скасувати
           </Button>
           <Button type="submit" color="red" loading={busy} disabled={!target}>
-            Об&apos;єднати
+            Об&apos;єднати бренди
           </Button>
         </AppModalFooter>
       </form>

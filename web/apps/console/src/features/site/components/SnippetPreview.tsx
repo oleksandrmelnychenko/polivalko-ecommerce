@@ -22,7 +22,7 @@ export function LengthCounter({ length, limit }: { length: number; limit: number
   return (
     <span className={`site-length${over ? ' is-over' : ''}`}>
       {length} / {limit}
-      {over ? ' — Google обріже' : ''}
+      {over ? ' · Google обріже' : ''}
     </span>
   )
 }

@@ -97,7 +97,7 @@ export function OrderNoteCard({ order, onSaved }: OrderNoteCardProps) {
                   Скасувати
                 </Button>
                 <Button type="submit" size="xs" loading={busy} disabled={draft.trim() === note.trim()}>
-                  Зберегти
+                  Зберегти нотатку
                 </Button>
               </Group>
             </Group>
@@ -106,7 +106,7 @@ export function OrderNoteCard({ order, onSaved }: OrderNoteCardProps) {
           <p className="order-note-text">{note}</p>
         ) : (
           <Text size="sm" c="dimmed">
-            Нотаток ще немає. Тут можна записати домовленості з покупцем — він їх не побачить.
+            Нотатки ще немає. Тут можна записати домовленості з покупцем, він їх не побачить.
           </Text>
         )}
         {error ? (

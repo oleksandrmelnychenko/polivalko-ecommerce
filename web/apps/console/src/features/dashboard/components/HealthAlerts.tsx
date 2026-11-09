@@ -6,7 +6,7 @@ import type { DashboardSummary } from '../api/dashboardApi'
 export function HealthAlerts({ summary, canOpen }: { summary: DashboardSummary; canOpen: boolean }) {
   const issues = [
     !summary.catalogDataFresh &&
-      `Ціни й залишки не оновлювалися${summary.lastPriceSync ? ` з ${formatDateTime(summary.lastPriceSync)}` : ''}: нові замовлення приймаються як заявки без онлайн-оплати.`,
+      `Ціни й залишки не оновлювалися${summary.lastPriceSync ? ` з ${formatDateTime(summary.lastPriceSync)}` : ''}: сайт приймає нові замовлення як заявки без онлайн-оплати.`,
     summary.failedOperations > 0 && `Невиконаних фонових операцій: ${summary.failedOperations}.`,
     summary.pendingRefunds > 0 && `Повернень коштів в обробці: ${summary.pendingRefunds}.`,
   ].filter((issue): issue is string => Boolean(issue))
@@ -19,7 +19,7 @@ export function HealthAlerts({ summary, canOpen }: { summary: DashboardSummary; 
           <span>Інтеграції в нормі{summary.lastPriceSync ? `, ціни оновлено ${formatDateTime(summary.lastPriceSync)}` : ''}.</span>
           {canOpen ? (
             <Link to="/system/integrations" className="dash-link">
-              Інтеграції
+              Відкрити інтеграції
             </Link>
           ) : null}
         </p>
@@ -30,7 +30,7 @@ export function HealthAlerts({ summary, canOpen }: { summary: DashboardSummary; 
             <span>{issue}</span>
             {canOpen ? (
               <Link to="/system/integrations" className="dash-link">
-                Розібратися
+                Відкрити інтеграції
               </Link>
             ) : null}
           </p>

@@ -141,7 +141,7 @@ export function BrandsPage() {
 
   function saved(next: Brand | undefined) {
     drawer.setOpened(false)
-    notifySuccess(next && current && next.name !== current.name && current.productCount > 0 ? `Перейменовано на «${next.name}» у ${current.productCount} тов.` : 'Збережено.')
+    notifySuccess(next && current && next.name !== current.name && current.productCount > 0 ? `Бренд перейменовано на «${next.name}», товарів: ${current.productCount}.` : 'Бренд збережено.')
     brands.reload()
   }
 
@@ -256,8 +256,8 @@ export function BrandsPage() {
       <ConfirmDialog
         opened={drawer.confirming}
         title="Видалити бренд"
-        message={current ? `Бренд «${current.name}» буде видалено з довідника.` : ''}
-        confirmLabel="Видалити"
+        message={current ? `Бренд «${current.name}» зникне з довідника. Скасувати видалення не можна.` : ''}
+        confirmLabel="Видалити бренд"
         danger
         busy={drawer.busy}
         onConfirm={() => void remove()}

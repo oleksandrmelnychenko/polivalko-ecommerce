@@ -156,10 +156,10 @@ export function StaffUserModal({ user, roles, rolesLoading, canGrantSuperuser, o
             needsSetup ? (
               <Alert color="yellow" variant="light" icon={<IconShieldLock size={18} />} title="Потрібна двофакторна перевірка">
                 <Stack gap={8}>
-                  <span>Роль адміністратора призначається лише з підтвердженням кодом із вашого телефону. Спершу увімкніть перевірку для себе.</span>
+                  <span>Щоб призначити роль адміністратора, підтвердьте дію кодом із вашого телефону. Спершу увімкніть двофакторну перевірку для себе.</span>
                   <Group>
                     <Button size="xs" onClick={() => setTwoFactorOpened(true)}>
-                      Налаштувати
+                      Налаштувати перевірку
                     </Button>
                   </Group>
                 </Stack>
@@ -167,7 +167,7 @@ export function StaffUserModal({ user, roles, rolesLoading, canGrantSuperuser, o
             ) : (
               <TwoFactorCodeInput
                 label="Ваш код підтвердження"
-                description="Роль адміністратора призначається лише з кодом із вашого застосунку-автентифікатора."
+                description="Щоб призначити роль адміністратора, введіть код із вашого застосунку-автентифікатора."
                 value={twoFactorCode}
                 error={errors.twoFactorCode || undefined}
                 disabled={busy || twoFactor.isLoading}
@@ -185,7 +185,7 @@ export function StaffUserModal({ user, roles, rolesLoading, canGrantSuperuser, o
             Скасувати
           </Button>
           <Button type="submit" loading={busy} disabled={needsSetup}>
-            {user ? 'Зберегти' : 'Додати працівника'}
+            {user ? 'Зберегти зміни' : 'Додати працівника'}
           </Button>
         </AppModalFooter>
       </form>

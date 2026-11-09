@@ -47,7 +47,7 @@ export const productsColumns: DataTableColumn<ProductRow>[] = [
           ))}
         </span>
       ) : (
-        <span className="catalog-muted">—</span>
+        <span className="catalog-muted">немає</span>
       ),
   },
   { id: 'price', header: 'Ціна', width: 120, align: 'right', numeric: true, cell: (row) => <Money value={row.price} /> },

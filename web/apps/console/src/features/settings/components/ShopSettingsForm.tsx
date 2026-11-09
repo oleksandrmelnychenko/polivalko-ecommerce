@@ -118,13 +118,13 @@ export function ShopSettingsForm({ contacts, shop, onSaved }: ShopSettingsFormPr
         title="Магазин"
         actions={
           <Button type="submit" form={FORM_ID} loading={form.busy} disabled={!dirty} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
-            Зберегти
+            Зберегти зміни
           </Button>
         }
       />
       <form id={FORM_ID} ref={formRef} className="settings-form" onSubmit={onSubmit} noValidate aria-label="Налаштування магазину">
         <Stack gap="lg">
-          <p className="settings-lead">Контакти, графік і реквізити магазину. Сайт показує їх на сторінці контактів, на головній і у футері. Порожнє поле сайт не показує.</p>
+          <p className="settings-lead">Сайт показує контакти й графік на сторінці контактів, на головній і у футері. Порожнє поле на сайті не з&apos;являється.</p>
           <FormAlert error={form.error} />
 
           <SectionCard title="Зв'язок">
@@ -169,7 +169,7 @@ export function ShopSettingsForm({ contacts, shop, onSaved }: ShopSettingsFormPr
             <Textarea
               mt="sm"
               label="Звичайний графік"
-              description="Як на сайті, наприклад: Пн–Пт 9:00–19:00, Сб–Нд 10:00–17:00."
+              description="Як на сайті, наприклад: Пн-Пт 9:00-19:00, Сб-Нд 10:00-17:00."
               autosize
               minRows={2}
               maxLength={SHOP_LIMITS.schedule}
@@ -208,7 +208,7 @@ export function ShopSettingsForm({ contacts, shop, onSaved }: ShopSettingsFormPr
 
           <SectionCard title="Реквізити продавця">
             <Alert color="orange" variant="light" icon={<IconAlertTriangle size={18} />} mb="md">
-              Реквізити друкуються в оферті, на сайті під офертою й у фіскальних чеках. Перевірте їх з бухгалтером перед збереженням. Уже оформлені замовлення
+              Реквізити стоять в оферті, на сайті під офертою й у фіскальних чеках. Перед збереженням звірте їх з бухгалтером. Уже оформлені замовлення
               зберігають реквізити на момент оформлення.
             </Alert>
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" verticalSpacing="sm">

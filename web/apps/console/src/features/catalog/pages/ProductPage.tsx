@@ -65,11 +65,11 @@ export function ProductPage() {
                 variant="default"
                 leftSection={<IconExternalLink size={16} stroke={1.8} />}
               >
-                На сайті
+                Відкрити на сайті
               </Button>
               <Can permission={PermissionKeys.Catalog.EditProducts}>
                 <Button type="submit" form={FORM_ID} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />} loading={saving}>
-                  Зберегти
+                  Зберегти товар
                 </Button>
               </Can>
             </>

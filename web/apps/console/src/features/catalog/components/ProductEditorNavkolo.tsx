@@ -12,7 +12,7 @@ export function ProductEditorNavkolo({ product }: { product: Product }) {
         З Navkolo
       </h2>
       <Text size="xs" c="dimmed" mb="sm">
-        Ці поля оновлює синхронізація з обліком. На сайті вони не редагуються.
+        Ці поля оновлює синхронізація з обліком. Тут їх змінити не можна.
       </Text>
       <dl className="catalog-dl">
         <dt>Артикул</dt>

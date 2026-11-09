@@ -17,7 +17,7 @@ export function HomeSettingsPage() {
       {home.status === 'error' || home.status === 'forbidden' ? (
         <PageState
           kind={home.status}
-          description={problemMessage(home.problem, 'Перевірте, що API працює, і спробуйте ще раз.')}
+          description={problemMessage(home.problem, 'Спробуйте ще раз. Якщо помилка повториться, повідомте розробника.')}
           onRetry={home.status === 'error' ? home.reload : undefined}
         />
       ) : (

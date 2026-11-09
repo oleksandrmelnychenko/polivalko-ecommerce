@@ -21,7 +21,7 @@ export function ContentPageEditorPage() {
       {page.status === 'error' || page.status === 'forbidden' ? (
         <PageState
           kind={page.status}
-          description={problemMessage(page.problem, 'Перевірте, що API працює, і спробуйте ще раз.')}
+          description={problemMessage(page.problem, 'Спробуйте ще раз. Якщо помилка повториться, повідомте розробника.')}
           onRetry={page.status === 'error' ? page.reload : undefined}
         />
       ) : (

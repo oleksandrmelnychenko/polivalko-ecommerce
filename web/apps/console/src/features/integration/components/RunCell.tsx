@@ -21,15 +21,15 @@ export function RunCell({ job, request, canRun, canImport, onRun }: RunCellProps
         Завантажити файл
       </Link>
     ) : (
-      <span className="integration-muted">—</span>
+      <span className="integration-muted">недоступно</span>
     )
   if (request?.accepted)
     return (
       <span role="status" className="integration-note">
-        Запит прийнято, Worker виконає протягом хвилини.
+        Запит прийнято, завдання запуститься протягом хвилини.
       </span>
     )
-  if (waitsForWorker(job)) return <span className="integration-muted integration-note">Запит від {when(job.runRequestedAt)} чекає Worker.</span>
+  if (waitsForWorker(job)) return <span className="integration-muted integration-note">Запит від {when(job.runRequestedAt)} чекає на фонову службу.</span>
   if (!canRun) return <span className="integration-muted">за розкладом</span>
   return (
     <span className="integration-run">

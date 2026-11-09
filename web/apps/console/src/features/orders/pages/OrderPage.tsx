@@ -70,7 +70,7 @@ function OrderDetail({ number }: { number: string }) {
           <PageState
             kind={order.status === 'forbidden' ? 'forbidden' : 'error'}
             title={order.problem?.title}
-            description={order.problem?.detail ?? 'Перевірте, що API працює, і спробуйте ще раз.'}
+            description={order.problem?.detail ?? 'Спробуйте ще раз. Якщо помилка повториться, повідомте розробника.'}
             onRetry={order.status === 'forbidden' ? undefined : order.reload}
           />
         )}

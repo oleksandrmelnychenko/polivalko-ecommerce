@@ -39,7 +39,7 @@ export function SeoTemplatesPanel() {
       {templates.status === 'error' || templates.status === 'forbidden' ? (
         <PageState
           kind={templates.status}
-          description={problemMessage(templates.problem, 'Перевірте, що API працює, і спробуйте ще раз.')}
+          description={problemMessage(templates.problem, 'Спробуйте ще раз. Якщо помилка повториться, повідомте розробника.')}
           onRetry={templates.status === 'error' ? templates.reload : undefined}
         />
       ) : (
@@ -55,7 +55,7 @@ const ENTITIES: { key: Entity; title: string; description: string; tokens: Templ
   {
     key: 'product',
     title: 'Товари',
-    description: 'Для товарів без власного SEO-заголовка чи опису. Порожня змінна (наприклад, бренд) просто випадає з тексту.',
+    description: 'Для товарів без власного SEO-заголовка чи опису. Якщо змінна порожня (наприклад, бренд), шаблон її пропускає.',
     tokens: PRODUCT_TOKENS,
     sample: PRODUCT_SAMPLE,
     url: siteUrl('/product/shlang-gardena-20m'),
@@ -105,7 +105,7 @@ function SeoTemplatesForm({ initial, onSaved }: { initial: SeoTemplates; onSaved
         title={TITLE}
         actions={
           <Button type="submit" form={FORM_ID} loading={form.busy} disabled={!dirty} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
-            Зберегти
+            Зберегти зміни
           </Button>
         }
       />

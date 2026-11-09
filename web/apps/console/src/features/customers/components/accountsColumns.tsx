@@ -32,7 +32,7 @@ export const accountsColumns: DataTableColumn<AccountRow>[] = [
           {row.phone}
         </a>
       ) : (
-        '—'
+        'не вказано'
       ),
   },
   {

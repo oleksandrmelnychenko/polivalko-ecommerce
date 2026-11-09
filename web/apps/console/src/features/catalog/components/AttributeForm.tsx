@@ -77,7 +77,7 @@ export function AttributeForm({ formId, attribute, nextSortOrder, error, onBusy,
         return
       }
       setErrors(fieldErrors(result.error))
-      setFormError(problemMessage(result.error, 'Не збережено.'))
+      setFormError(problemMessage(result.error, 'Характеристику не збережено.'))
     } catch {
       setFormError(NETWORK_ERROR)
     }
@@ -111,7 +111,7 @@ export function AttributeForm({ formId, attribute, nextSortOrder, error, onBusy,
         </SimpleGrid>
         {renamed && attribute ? (
           <Alert color="yellow" variant="light" icon={<IconAlertTriangle size={18} />}>
-            Назву буде змінено в усіх товарах ({attribute.productCount}) і у фільтрах категорій ({attribute.categoryCount}). Значення характеристик залишаться.
+            Нова назва з&apos;явиться в усіх товарах ({attribute.productCount}) і у фільтрах категорій ({attribute.categoryCount}). Значення характеристик не зміняться.
           </Alert>
         ) : null}
         <div>
@@ -131,12 +131,12 @@ export function AttributeForm({ formId, attribute, nextSortOrder, error, onBusy,
             onChange={(value) => set('filterView', value as AttributeFilterView)}
           />
           <Text size="xs" c="dimmed" mt={4}>
-            Діапазон «від — до» доступний лише для числових характеристик.
+            Вигляд «Діапазон» доступний лише для числових характеристик.
           </Text>
         </div>
         <TagsInput
           label="Синоніми з Navkolo й імпорту"
-          description="Інші написання цієї назви в Navkolo чи файлах імпорту. Enter або кома — додати."
+          description="Інші написання цієї назви в Navkolo чи файлах імпорту. Щоб додати синонім, натисніть Enter або кому."
           inputWrapperOrder={['label', 'input', 'description', 'error']}
           value={fields.aliases}
           splitChars={[',']}

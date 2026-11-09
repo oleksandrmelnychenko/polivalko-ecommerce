@@ -79,7 +79,7 @@ export function OrderStatusPanel({ order, status }: { order: ConsoleOrder; statu
 
         {order.status === 'awaitingPayment' ? (
           <Text size="xs" c="dimmed" mt="sm">
-            Чекаємо на оплату покупцем. Статус зміниться сам, щойно платіжний провайдер підтвердить оплату.
+            Чекаємо, поки покупець оплатить замовлення. Статус зміниться сам, щойно платіжний провайдер підтвердить оплату.
           </Text>
         ) : null}
 
@@ -149,7 +149,7 @@ export function OrderStatusPanel({ order, status }: { order: ConsoleOrder; statu
         onClose={() => setCancelOpen(false)}
       >
         <Text size="sm" mb="sm">
-          Покупець побачить статус «Скасоване». Скасування не можна відмінити.
+          Покупець побачить статус «Скасоване». Змінити статус після цього вже не можна.
         </Text>
         <Textarea
           label="Причина скасування"

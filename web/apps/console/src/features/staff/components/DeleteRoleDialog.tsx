@@ -54,7 +54,7 @@ export function DeleteRoleDialog({ role, canOpenStaff, onClose, onDeleted, onSta
             Роль «{role.name}» призначено: {usersText(inUseCount)}. Спершу змініть їм роль на сторінці «Працівники», потім видаліть роль.
           </Text>
         ) : (
-          <Text size="sm">Видалити роль «{role.name}»? Права ролі зникнуть разом із нею, дію не можна скасувати.</Text>
+          <Text size="sm">Видалити роль «{role.name}»? Права ролі зникнуть разом із нею. Скасувати видалення не можна.</Text>
         )}
         <FailureAlert failure={failure} />
       </Stack>
@@ -70,7 +70,7 @@ export function DeleteRoleDialog({ role, canOpenStaff, onClose, onDeleted, onSta
           ) : null
         ) : (
           <Button color="red" loading={busy} leftSection={<IconTrash size={16} stroke={1.8} />} onClick={() => void confirm()} data-autofocus>
-            Видалити
+            Видалити роль
           </Button>
         )}
       </AppModalFooter>

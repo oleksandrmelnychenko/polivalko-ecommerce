@@ -150,7 +150,7 @@ export function BannersPage() {
             ''
           )
         }
-        confirmLabel="Видалити"
+        confirmLabel="Видалити банер"
         danger
         busy={removeBusy}
         onConfirm={() => void remove()}

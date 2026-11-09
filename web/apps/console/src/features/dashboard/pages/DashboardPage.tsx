@@ -67,7 +67,7 @@ export function DashboardPage() {
 
       <div className="dash-toolbar">
         <p className="dash-toolbar-note">
-          Останні {days} днів порівняно з попередніми {days}. Час — київський.
+          Останні {days} днів порівняно з попередніми {days}. Час за Києвом.
         </p>
         <div className="dash-toolbar-actions">
           <SegmentedControl aria-label="Період" data={PERIOD_OPTIONS} value={String(days)} onChange={setPeriod} />

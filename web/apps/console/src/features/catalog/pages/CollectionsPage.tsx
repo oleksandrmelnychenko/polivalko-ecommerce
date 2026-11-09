@@ -63,7 +63,7 @@ export function CollectionsPage() {
 
   function saved() {
     setOpened(false)
-    notifySuccess('Збережено.')
+    notifySuccess('Добірку збережено.')
     collections.reload()
   }
 
@@ -161,7 +161,7 @@ export function CollectionsPage() {
                 Скасувати
               </Button>
               <Button type="submit" form={FORM_ID} loading={busy}>
-                Зберегти
+                Зберегти добірку
               </Button>
             </Group>
           </Group>
@@ -173,8 +173,8 @@ export function CollectionsPage() {
       <ConfirmDialog
         opened={confirming}
         title="Видалити добірку"
-        message={current ? `Добірку «${current.title}» буде прибрано з головної та видалено.` : ''}
-        confirmLabel="Видалити"
+        message={current ? `Добірка «${current.title}» зникне з головної. Скасувати видалення не можна.` : ''}
+        confirmLabel="Видалити добірку"
         danger
         busy={busy}
         onConfirm={() => void remove()}

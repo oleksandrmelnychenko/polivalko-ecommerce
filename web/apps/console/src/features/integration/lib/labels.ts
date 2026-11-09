@@ -4,7 +4,7 @@ import type { SyncJob, SyncRunStatus } from '../api/integrationApi'
 
 export const navkoloModeLabel: Record<string, string> = {
   Disabled: 'вимкнено: ціни й залишки приходять з імпорту файлів',
-  Stub: 'тестова заглушка: обмін з Navkolo імітується',
+  Stub: 'тестова заглушка замість справжнього обміну з Navkolo',
 }
 
 export const FILE_IMPORT_JOB = 'navkolo.import'
@@ -43,7 +43,7 @@ export const runStatusTone: Record<SyncRunStatus, TableChipTone> = {
 }
 
 export function when(iso: string | null | undefined): string {
-  return iso ? formatDateTime(iso) : '—'
+  return iso ? formatDateTime(iso) : 'немає'
 }
 
 export const countFormat = new Intl.NumberFormat('uk-UA')

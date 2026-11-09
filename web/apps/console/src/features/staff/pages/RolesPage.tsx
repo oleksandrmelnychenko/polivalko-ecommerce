@@ -299,7 +299,7 @@ export function RolesPage() {
               <div className="roles-alerts">
                 {selectedRole?.isSuperuser ? (
                   <Alert color="gray" variant="light" icon={<IconLock size={18} />} title="Роль «Адміністратор» не редагується">
-                    Адміністратор завжди має всі права: їх не можна зняти, а саму роль — перейменувати чи видалити.
+                    Адміністратор завжди має всі права. Зняти їх, перейменувати чи видалити роль не можна.
                   </Alert>
                 ) : null}
                 {catalogMismatch ? (
@@ -315,13 +315,13 @@ export function RolesPage() {
                 {loaded && !readOnly && baseline.size === 0 && changes === 0 ? (
                   <p className="roles-note">
                     <IconInfoCircle size={16} stroke={1.8} aria-hidden="true" />
-                    У ролі ще немає прав. Позначте потрібні й натисніть «Зберегти».
+                    У ролі ще немає прав. Позначте потрібні й натисніть «Зберегти права».
                   </p>
                 ) : null}
                 {lockedCount > 0 ? (
                   <p className="roles-note">
                     <IconInfoCircle size={16} stroke={1.8} aria-hidden="true" />
-                    Права із замком відсутні у вашій ролі, тому надати їх цій ролі не можна.
+                    Прав із замком немає у вашій ролі, тому цій ролі ви їх надати не можете.
                   </p>
                 ) : null}
               </div>
@@ -365,7 +365,7 @@ export function RolesPage() {
               {selfLockout ? (
                 <p className="roles-footer-warning">
                   <IconAlertTriangle size={16} stroke={1.8} aria-hidden="true" />
-                  Ви знімаєте з власної ролі право «Ролі та права» — після збереження ця сторінка стане недоступною.
+                  Ви знімаєте з власної ролі право «Ролі та права». Після збереження ця сторінка стане для вас недоступною.
                 </p>
               ) : null}
               <div className="roles-footer-actions">
@@ -373,7 +373,7 @@ export function RolesPage() {
                   Скасувати зміни
                 </Button>
                 <Button leftSection={<IconDeviceFloppy size={16} stroke={1.8} />} disabled={!dirty || catalogMismatch} loading={saving} onClick={() => void save()}>
-                  Зберегти
+                  Зберегти права
                 </Button>
               </div>
             </footer>

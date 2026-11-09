@@ -62,7 +62,7 @@ export function ProductEditorImages({ product, readOnly, onChange }: ProductEdit
   }
 
   function reorder(next: { id: string; alt: string }[]) {
-    void run(() => withCsrf((headers) => reorderImages(headers, product.id, next)), 'Порядок не збережено.')
+    void run(() => withCsrf((headers) => reorderImages(headers, product.id, next)), 'Зміни фото не збережено.')
   }
 
   function move(index: number, delta: number) {
@@ -133,7 +133,7 @@ export function ProductEditorImages({ product, readOnly, onChange }: ProductEdit
         </ul>
       ) : (
         <Text size="sm" c="dimmed">
-          Фото ще немає: на вітрині показується «Фото додасть магазин».
+          Фото ще немає. Вітрина показує заглушку «Фото додасть магазин».
         </Text>
       )}
 
@@ -154,7 +154,7 @@ export function ProductEditorImages({ product, readOnly, onChange }: ProductEdit
           />
           <TextInput label="Опис фото для незрячих" placeholder="Що на фото" maxLength={300} value={alt} disabled={busy} onChange={(event) => setAlt(event.currentTarget.value)} />
           <Button type="submit" variant="default" leftSection={<IconUpload size={16} stroke={1.7} />} loading={busy}>
-            Завантажити
+            Завантажити фото
           </Button>
         </form>
       )}
@@ -168,8 +168,8 @@ export function ProductEditorImages({ product, readOnly, onChange }: ProductEdit
       <ConfirmDialog
         opened={removing !== null}
         title="Видалити фото"
-        message="Фото буде видалено з товару і з вітрини."
-        confirmLabel="Видалити"
+        message="Фото зникне з товару й з вітрини. Скасувати видалення не можна."
+        confirmLabel="Видалити фото"
         danger
         busy={busy}
         onConfirm={() => void confirmRemove()}

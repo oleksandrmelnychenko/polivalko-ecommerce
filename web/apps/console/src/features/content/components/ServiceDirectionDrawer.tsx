@@ -32,7 +32,7 @@ export function ServiceDirectionDrawer({ direction, opened, onClose, onSaved }: 
             Скасувати
           </Button>
           <Button type="submit" form={FORM_ID} loading={busy} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
-            Зберегти
+            Зберегти напрямок
           </Button>
         </Group>
       }
@@ -66,7 +66,7 @@ function DirectionForm({ initial, onBusy, onSaved }: DirectionFormProps) {
     onBusy(true)
     const result = await form.submit(
       (headers) => saveService(headers, initial.code, { description: description.trim() || null, sortOrder: order, isVisible: visible, imageUrl: imageUrl || null }),
-      { done: 'Збережено.', failed: 'Напрямок не збережено.' },
+      { done: 'Напрямок збережено.', failed: 'Напрямок не збережено.' },
     )
     onBusy(false)
     if (result?.data) onSaved(result.data)
@@ -97,7 +97,7 @@ function DirectionForm({ initial, onBusy, onSaved }: DirectionFormProps) {
         />
         <ImageField
           label="Фото"
-          description="Показується біля напрямку на сторінці послуг. Найкраще горизонтальне, від 960 px завширшки."
+          description="Стоїть біля напрямку на сторінці послуг. Найкраще горизонтальне, від 960 px завширшки."
           shape="wide"
           value={imageUrl}
           error={form.errors.imageUrl}

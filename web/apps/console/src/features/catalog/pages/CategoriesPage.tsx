@@ -58,7 +58,7 @@ export function CategoriesPage() {
 
   function saved() {
     setOpened(false)
-    notifySuccess('Збережено.')
+    notifySuccess('Категорію збережено.')
     categories.reload()
   }
 
@@ -232,7 +232,7 @@ export function CategoriesPage() {
                 Скасувати
               </Button>
               <Button type="submit" form={FORM_ID} loading={busy}>
-                Зберегти
+                Зберегти категорію
               </Button>
             </Group>
           </Group>
@@ -253,8 +253,8 @@ export function CategoriesPage() {
       <ConfirmDialog
         opened={confirming}
         title="Видалити категорію"
-        message={current ? `Категорію «${current.name}» буде видалено.` : ''}
-        confirmLabel="Видалити"
+        message={current ? `Категорія «${current.name}» зникне з каталогу. Скасувати видалення не можна.` : ''}
+        confirmLabel="Видалити категорію"
         danger
         busy={busy}
         onConfirm={() => void remove()}

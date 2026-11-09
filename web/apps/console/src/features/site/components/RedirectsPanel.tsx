@@ -41,7 +41,7 @@ export function RedirectsPanel() {
       } else {
         const byField = fieldErrors(result.error)
         setErrors(byField)
-        if (!byField.fromPath && !byField.toPath) notifyError(problemMessage(result.error, 'Не збережено.'))
+        if (!byField.fromPath && !byField.toPath) notifyError(problemMessage(result.error, 'Перенаправлення не додано.'))
       }
     } catch {
       notifyError(NETWORK_ERROR)
@@ -59,7 +59,7 @@ export function RedirectsPanel() {
         notifySuccess('Перенаправлення видалено.')
         redirects.reload()
       } else {
-        notifyError(problemMessage(result.error, 'Не видалено.'))
+        notifyError(problemMessage(result.error, 'Перенаправлення не видалено.'))
       }
     } catch {
       notifyError(NETWORK_ERROR)
@@ -127,7 +127,7 @@ export function RedirectsPanel() {
         </Button>
       </Stack>
     ) : (
-      "Перенаправлень ще немає: вони з'являються після зміни адреси товару чи категорії."
+      'Перенаправлень ще немає. Сайт створює їх сам після зміни адреси товару чи категорії.'
     )
 
   return (
@@ -194,8 +194,8 @@ export function RedirectsPanel() {
       <ConfirmDialog
         opened={removing !== null}
         title="Видалити перенаправлення"
-        message={removing ? `${removing.fromPath} → ${removing.toPath}` : ''}
-        confirmLabel="Видалити"
+        message={removing ? `${removing.fromPath} → ${removing.toPath}. Після видалення стара адреса перестане вести на нову.` : ''}
+        confirmLabel="Видалити перенаправлення"
         danger
         busy={busy}
         onConfirm={() => void remove()}

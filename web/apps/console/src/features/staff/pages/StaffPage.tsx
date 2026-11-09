@@ -215,7 +215,7 @@ export function StaffPage() {
         opened={lockTarget !== null}
         title="Заблокувати доступ"
         danger
-        confirmLabel="Заблокувати"
+        confirmLabel="Заблокувати доступ"
         busy={busyId !== null}
         message={
           lockTarget ? (

@@ -84,7 +84,7 @@ export function CollectionForm({ formId, collection, error, onBusy, onSaved }: C
         return
       }
       setErrors(fieldErrors(result.error))
-      setFormError(problemMessage(result.error, 'Не збережено.'))
+      setFormError(problemMessage(result.error, 'Добірку не збережено.'))
     } catch {
       setFormError(NETWORK_ERROR)
     }

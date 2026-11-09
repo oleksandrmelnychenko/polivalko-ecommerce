@@ -8,8 +8,8 @@ export function IntegrationSummary({ status }: { status: IntegrationStatus }) {
     <div className="integration-head">
       {!status.catalogDataFresh ? (
         <Alert color="red" variant="light" icon={<IconAlertTriangle size={18} />} title="Ціни й залишки застаріли" role="status" className="integration-stale">
-          Нові замовлення приймаються як заявки без онлайн-оплати й без резерву: менеджер підтверджує ціну й наявність вручну. Онлайн-оплата повернеться після
-          вдалої синхронізації цін і залишків з Navkolo.
+          Сайт приймає нові замовлення як заявки без онлайн-оплати й без резерву: менеджер підтверджує ціну й наявність вручну. Онлайн-оплата повернеться
+          після вдалої синхронізації цін і залишків з Navkolo.
         </Alert>
       ) : null}
       <dl className="integration-facts">

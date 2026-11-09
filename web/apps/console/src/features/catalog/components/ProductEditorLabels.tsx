@@ -36,7 +36,7 @@ export function ProductEditorLabels({ product, labels, value, onChange, error }:
       </h2>
       {labels === null ? (
         <Text size="sm" c="dimmed">
-          Довідник міток зараз недоступний, мітки товару не змінюються.
+          Довідник міток зараз недоступний, тому мітки товару змінити не можна.
         </Text>
       ) : (
         <>
@@ -44,7 +44,7 @@ export function ProductEditorLabels({ product, labels, value, onChange, error }:
             label="Мітки на плитці товару"
             description={
               <>
-                Лише ручні мітки. Колір і порядок задаються в{' '}
+                Лише ручні мітки. Колір і порядок змінюють у{' '}
                 {can(PermissionKeys.Catalog.ManageLabels) ? (
                   <Link to="/catalog/labels" className="catalog-link">
                     довіднику міток

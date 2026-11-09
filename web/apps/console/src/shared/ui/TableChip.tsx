@@ -10,7 +10,7 @@ type TableChipProps = {
 
 export function TableChip({ value, tone = 'neutral', size, dot = false, title }: TableChipProps) {
   const text = value == null ? '' : String(value).trim()
-  if (!text) return <span>—</span>
+  if (!text) return <span>немає</span>
   return (
     <span className={`app-table-chip is-${tone}${size ? ` is-size-${size}` : ''}`} title={title ?? text}>
       {dot ? <span className="app-table-chip-dot" aria-hidden="true" /> : null}

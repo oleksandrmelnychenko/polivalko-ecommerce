@@ -21,7 +21,7 @@ export function DateRangeFilter({ from, to, label = 'Період', className, o
   const [draft, setDraft] = useState<DateRange>({ from, to })
   const invalid = Boolean(draft.from && draft.to && draft.from > draft.to)
   const selected = Boolean(from || to)
-  const summary = selected ? `${displayDate(from)} — ${displayDate(to)}` : 'Увесь період'
+  const summary = selected ? rangeText(from, to) : 'Увесь період'
 
   function changeOpened(next: boolean) {
     if (next) setDraft({ from, to })
@@ -113,6 +113,11 @@ export function DateRangeFilter({ from, to, label = 'Період', className, o
       </Popover.Dropdown>
     </Popover>
   )
+}
+
+function rangeText(from: string, to: string) {
+  if (from && to) return `${displayDate(from)}-${displayDate(to)}`
+  return from ? `з ${displayDate(from)}` : `до ${displayDate(to)}`
 }
 
 function displayDate(value: string) {

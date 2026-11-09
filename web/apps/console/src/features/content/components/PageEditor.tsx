@@ -64,7 +64,7 @@ export function PageEditor({ initial, onSaved }: PageEditorProps) {
           seoTitle: seoTitle.trim() || null,
           seoDescription: seoDescription.trim() || null,
         }),
-      { done: 'Сторінку збережено. У полі тепер текст після очищення сервером.', failed: 'Сторінку не збережено.' },
+      { done: 'Сторінку збережено. У полі тепер текст, очищений сервером.', failed: 'Сторінку не збережено.' },
     )
     if (!result?.data) return
     const page = result.data
@@ -96,7 +96,7 @@ export function PageEditor({ initial, onSaved }: PageEditorProps) {
               Відкрити на сайті
             </Button>
             <Button type="submit" form={FORM_ID} loading={form.busy} disabled={!dirty} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
-              Зберегти
+              Зберегти сторінку
             </Button>
           </>
         }
@@ -135,7 +135,7 @@ export function PageEditor({ initial, onSaved }: PageEditorProps) {
             />
             <Textarea
               label="Текст сторінки, HTML"
-              description="Дозволено абзаци, заголовки h2–h4, списки, цитати, таблиці й посилання (http, https, mailto, tel). Решту розмітки, стилі й скрипти сервер прибирає під час збереження."
+              description="Дозволено абзаци, заголовки h2, h3 і h4, списки, цитати, таблиці й посилання (http, https, mailto, tel). Решту розмітки, стилі й скрипти сервер прибирає під час збереження."
               classNames={{ input: 'content-code-input' }}
               value={body}
               autosize

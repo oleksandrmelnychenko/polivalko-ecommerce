@@ -30,7 +30,7 @@ export function ProductEditorAttributes({ attributes, setAttributes, categoryId,
         Характеристики
       </h2>
       <Text size="xs" c="dimmed" mb="sm">
-        Фільтри категорії будуються за назвами, погодженими в налаштуваннях категорії.
+        Фільтри категорії працюють за назвами, які задано в налаштуваннях категорії.
       </Text>
       {attributes.length > 0 ? (
         <div className="catalog-attr-list" role="list">

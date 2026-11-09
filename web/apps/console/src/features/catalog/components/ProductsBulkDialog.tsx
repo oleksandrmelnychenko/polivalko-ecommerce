@@ -22,10 +22,10 @@ type ProductsBulkDialogProps = {
 }
 
 const COPY: Record<BulkAction, { title: string; field: string; placeholder: string; submit: string; empty: string }> = {
-  category: { title: 'Призначити категорію', field: 'Категорія', placeholder: 'Оберіть категорію', submit: 'Призначити', empty: 'Категорій немає.' },
-  brand: { title: 'Призначити бренд', field: 'Бренд', placeholder: 'Оберіть бренд', submit: 'Призначити', empty: 'Довідник брендів порожній.' },
-  addLabel: { title: 'Додати мітку', field: 'Мітка', placeholder: 'Оберіть мітку', submit: 'Додати', empty: 'Ручних міток ще немає.' },
-  removeLabel: { title: 'Зняти мітку', field: 'Мітка', placeholder: 'Оберіть мітку', submit: 'Зняти', empty: 'Ручних міток ще немає.' },
+  category: { title: 'Призначити категорію', field: 'Категорія', placeholder: 'Оберіть категорію', submit: 'Призначити категорію', empty: 'Категорій немає.' },
+  brand: { title: 'Призначити бренд', field: 'Бренд', placeholder: 'Оберіть бренд', submit: 'Призначити бренд', empty: 'Довідник брендів порожній.' },
+  addLabel: { title: 'Додати мітку', field: 'Мітка', placeholder: 'Оберіть мітку', submit: 'Додати мітку', empty: 'Ручних міток ще немає.' },
+  removeLabel: { title: 'Зняти мітку', field: 'Мітка', placeholder: 'Оберіть мітку', submit: 'Зняти мітку', empty: 'Ручних міток ще немає.' },
 }
 
 export function ProductsBulkDialog({ action, count, categories, brands, labels, busy, error, onSubmit, onClose }: ProductsBulkDialogProps) {
@@ -53,10 +53,10 @@ export function ProductsBulkDialog({ action, count, categories, brands, labels, 
             {action === 'category'
               ? `Вибрані товари (${count}) перейдуть у вибрану категорію.`
               : action === 'brand'
-                ? `Бренд буде замінено у вибраних товарах (${count}).`
+                ? `Вибрані товари (${count}) отримають вибраний бренд.`
                 : action === 'addLabel'
-                  ? `Мітку буде додано до вибраних товарів (${count}). Автоматичні мітки («Акція», «Новинка») ставляться самі й тут не призначаються.`
-                  : `Мітку буде знято з вибраних товарів (${count}), де вона є.`}
+                  ? `Вибрані товари (${count}) отримають вибрану мітку. Автоматичні мітки («Акція», «Новинка») ставляться самі, тому в списку їх немає.`
+                  : `Мітка зникне з вибраних товарів, у яких вона є. Вибрано: ${count}.`}
           </Text>
           <Select
             label={copy.field}

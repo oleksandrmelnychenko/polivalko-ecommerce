@@ -34,7 +34,7 @@ export function TemplateField({ label, value, example, limit, tokens, multiline 
 
   const description = (
     <>
-      <LengthCounter length={example.length} limit={limit} /> · приклад: {example || '—'}
+      <LengthCounter length={example.length} limit={limit} /> · приклад: {example || 'порожньо'}
     </>
   )
 

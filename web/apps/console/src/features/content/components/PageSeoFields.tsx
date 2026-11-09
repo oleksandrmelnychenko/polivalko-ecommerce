@@ -26,7 +26,7 @@ export function PageSeoFields({ slug, title, seoTitle, seoDescription, errors, o
           label="SEO-заголовок"
           description={
             <>
-              Порожньо — заголовок сторінки. Сайт додає «{SHOP_SUFFIX.trim()}» у кінці. <Counter length={shownTitle.length} limit={SEO_TITLE_LIMIT} />
+              Якщо поле порожнє, сайт візьме заголовок сторінки. Сайт додає «{SHOP_SUFFIX.trim()}» у кінці. <Counter length={shownTitle.length} limit={SEO_TITLE_LIMIT} />
             </>
           }
           inputWrapperOrder={['label', 'input', 'description', 'error']}
@@ -66,7 +66,7 @@ function Counter({ length, limit }: { length: number; limit: number }) {
   return (
     <span className={`content-length${over ? ' is-over' : ''}`}>
       {length} / {limit}
-      {over ? ' — Google обріже' : ''}
+      {over ? ' · Google обріже' : ''}
     </span>
   )
 }

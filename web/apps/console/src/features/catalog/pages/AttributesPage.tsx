@@ -93,7 +93,7 @@ export function AttributesPage() {
               {row.aliases.join(', ')}
             </span>
           ) : (
-            <span className="catalog-muted">—</span>
+            <span className="catalog-muted">немає</span>
           ),
       },
       { id: 'products', header: 'Товарів', width: 100, align: 'right', numeric: true, sortDescFirst: true, accessor: (row) => row.productCount, cell: (row) => <NumberValue value={row.productCount} /> },
@@ -105,7 +105,7 @@ export function AttributesPage() {
         numeric: true,
         sortDescFirst: true,
         accessor: (row) => row.categoryCount,
-        cell: (row) => (row.categoryCount ? <NumberValue value={row.categoryCount} /> : <span className="catalog-muted">—</span>),
+        cell: (row) => (row.categoryCount ? <NumberValue value={row.categoryCount} /> : <span className="catalog-muted">немає</span>),
       },
       { id: 'sortOrder', header: 'Порядок', width: 96, align: 'right', numeric: true, accessor: (row) => row.sortOrder, cell: (row) => <NumberValue value={row.sortOrder} /> },
       {
@@ -127,7 +127,7 @@ export function AttributesPage() {
 
   function saved(next: AttributeDefinition | undefined) {
     drawer.setOpened(false)
-    notifySuccess(next && current && next.name !== current.name ? `Перейменовано на «${next.name}».` : 'Збережено.')
+    notifySuccess(next && current && next.name !== current.name ? `Характеристику перейменовано на «${next.name}».` : 'Характеристику збережено.')
     attributes.reload()
   }
 
@@ -236,10 +236,10 @@ export function AttributesPage() {
         title="Видалити характеристику"
         message={
           current
-            ? `«${current.name}» зникне з довідника.${current.productCount ? ` Значення в товарах (${current.productCount}) залишаться.` : ''}`
+            ? `«${current.name}» зникне з довідника.${current.productCount ? ` Значення в товарах (${current.productCount}) залишаться.` : ''} Скасувати видалення не можна.`
             : ''
         }
-        confirmLabel="Видалити"
+        confirmLabel="Видалити характеристику"
         danger
         busy={drawer.busy}
         onConfirm={() => void remove()}

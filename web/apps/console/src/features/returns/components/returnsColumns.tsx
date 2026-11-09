@@ -39,12 +39,12 @@ export const returnsColumns: DataTableColumn<RefundRow>[] = [
     header: 'Причина',
     width: 280,
     fill: true,
-    cell: (row) => <span className="returns-reason">{row.reason || '—'}</span>,
+    cell: (row) => <span className="returns-reason">{row.reason || 'не вказано'}</span>,
   },
   {
     id: 'createdBy',
     header: 'Оформив',
     width: 180,
-    cell: (row) => row.createdBy || '—',
+    cell: (row) => row.createdBy || 'не вказано',
   },
 ]

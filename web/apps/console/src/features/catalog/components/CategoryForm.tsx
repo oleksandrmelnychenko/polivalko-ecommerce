@@ -66,7 +66,7 @@ export function CategoryForm({ formId, category, all, attributes, error, onBusy,
     const excluded = category ? descendantIds(all, category.id) : new Set<string>()
     return orderCategories(all)
       .filter((c) => !excluded.has(c.id))
-      .map((c) => ({ value: c.id, label: `${'— '.repeat(c.depth)}${c.name}` }))
+      .map((c) => ({ value: c.id, label: `${'· '.repeat(c.depth)}${c.name}` }))
   }, [all, category])
 
   const usage = useMemo(() => new Map((names.data ?? []).map((entry) => [entry.name.toLowerCase(), entry.productCount])), [names.data])
@@ -91,7 +91,7 @@ export function CategoryForm({ formId, category, all, attributes, error, onBusy,
           .slice(0, 12)
           .map((n) => `${n.name} (${n.productCount})`)
           .join(', ')}.`
-      : 'Порожньо — фільтри батьківської категорії.'
+      : 'Якщо поле порожнє, діють фільтри батьківської категорії.'
 
   function set<K extends keyof Fields>(name: K, value: Fields[K]) {
     setFields((current) => ({ ...current, [name]: value }))
@@ -127,7 +127,7 @@ export function CategoryForm({ formId, category, all, attributes, error, onBusy,
         return
       }
       setErrors(fieldErrors(result.error))
-      setFormError(problemMessage(result.error, 'Не збережено.'))
+      setFormError(problemMessage(result.error, 'Категорію не збережено.'))
     } catch {
       setFormError(NETWORK_ERROR)
     }
@@ -162,7 +162,9 @@ export function CategoryForm({ formId, category, all, attributes, error, onBusy,
           data-autofocus
         />
         <TextInput
-          label="Адреса (порожньо — з назви)"
+          label="Адреса"
+          description="Залиште порожнім, і адреса утвориться з назви."
+          inputWrapperOrder={['label', 'input', 'description', 'error']}
           maxLength={200}
           spellCheck={false}
           autoComplete="off"

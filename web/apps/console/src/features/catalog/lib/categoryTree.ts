@@ -43,7 +43,7 @@ export function descendantIds(all: ConsoleCategory[], id: string): Set<string> {
 export function consoleCategoryOptions(all: ConsoleCategory[]): CategoryOption[] {
   return orderCategories(all).map((category) => ({
     value: category.id,
-    label: `${'— '.repeat(category.depth)}${category.name}${isHidden(category) ? ' (прихована)' : ''}`,
+    label: `${'· '.repeat(category.depth)}${category.name}${isHidden(category) ? ' (прихована)' : ''}`,
   }))
 }
 

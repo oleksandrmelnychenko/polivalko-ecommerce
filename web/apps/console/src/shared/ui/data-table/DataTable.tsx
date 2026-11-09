@@ -14,7 +14,7 @@ const SELECT_COLUMN_WIDTH = 44
 const DEFAULT_LABELS: DataTableLabels = {
   noData: 'Даних не знайдено',
   loadingData: 'Завантаження даних',
-  emptyValue: '—',
+  emptyValue: 'немає',
   yes: 'Так',
   no: 'Ні',
   sortAscending: 'Сортувати за зростанням',

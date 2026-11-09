@@ -11,7 +11,7 @@ export function NovaPoshtaPanel({ np, onExpand }: { np: ApiQuery<NovaPoshtaStatu
   const data = np.data
   if (!data) {
     if (np.status === 'error' || np.status === 'forbidden')
-      return <PageState kind={np.status} description={problemMessage(np.problem, 'Перевірте, що API працює, і спробуйте ще раз.')} onRetry={np.reload} />
+      return <PageState kind={np.status} description={problemMessage(np.problem, 'Спробуйте ще раз. Якщо помилка повториться, повідомте розробника.')} onRetry={np.reload} />
     return <PageState kind="loading" />
   }
 

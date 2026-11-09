@@ -61,7 +61,7 @@ export function BrandForm({ formId, brand, error, onBusy, onSaved }: BrandFormPr
         return
       }
       setErrors(fieldErrors(result.error))
-      setFormError(problemMessage(result.error, 'Не збережено.'))
+      setFormError(problemMessage(result.error, 'Бренд не збережено.'))
     } catch {
       setFormError(NETWORK_ERROR)
     }
@@ -85,11 +85,13 @@ export function BrandForm({ formId, brand, error, onBusy, onSaved }: BrandFormPr
         />
         {renamed && brand ? (
           <Alert color="yellow" variant="light" icon={<IconAlertTriangle size={18} />}>
-            Бренд буде перейменовано в усіх його товарах ({brand.productCount}).
+            Нова назва з&apos;явиться в усіх товарах бренду ({brand.productCount}).
           </Alert>
         ) : null}
         <TextInput
-          label="Адреса (порожньо — з назви)"
+          label="Адреса"
+          description="Залиште порожнім, і адреса утвориться з назви."
+          inputWrapperOrder={['label', 'input', 'description', 'error']}
           maxLength={200}
           spellCheck={false}
           autoComplete="off"

@@ -50,7 +50,7 @@ export function OrderLoadState({ state, empty, children }: { state: LoadState; e
     return (
       <OrderCardBody>
         <Alert color="red" variant="light" icon={<IconAlertTriangle size={16} />} title="Не вдалося завантажити дані" role="alert">
-          Перевірте, що API працює, і спробуйте ще раз.{' '}
+          Спробуйте ще раз. Якщо помилка повториться, повідомте розробника.{' '}
           <Button variant="subtle" color="red" size="compact-xs" onClick={state.reload}>
             Повторити
           </Button>

@@ -100,7 +100,7 @@ export function NotificationSettingsForm({ initial, onSaved }: NotificationSetti
       const result = await withCsrf((headers) => sendTestNotification(headers))
       if (!result.data) notifyError(problemMessage(result.error, 'Тестове повідомлення не надіслано.'))
       else if (result.data.delivered >= result.data.chats) notifySuccess(`Тестове повідомлення доставлено в чати: ${result.data.delivered}. Перевірте Telegram.`)
-      else notifyError(`Доставлено лише в ${result.data.delivered} з ${result.data.chats} чатів. Перевірте ID чатів і чи доданий бот у групи.`)
+      else notifyError(`Доставлено лише в ${result.data.delivered} з ${result.data.chats} чатів. Перевірте ID чатів і чи є бот у цих групах.`)
     } catch {
       notifyError(NETWORK_ERROR)
     }
@@ -113,13 +113,13 @@ export function NotificationSettingsForm({ initial, onSaved }: NotificationSetti
         title="Сповіщення"
         actions={
           <Button type="submit" form={FORM_ID} loading={form.busy} disabled={!dirty} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
-            Зберегти
+            Зберегти зміни
           </Button>
         }
       />
       <form id={FORM_ID} className="settings-form" onSubmit={onSubmit} noValidate aria-label="Налаштування сповіщень">
         <Stack gap="lg">
-          <p className="settings-lead">Хто й про що дізнається одразу: нові замовлення, заявки на послуги та збої, які потребують реакції менеджера.</p>
+          <p className="settings-lead">Хто й про що дізнається одразу: нові замовлення, заявки на послуги та збої, на які має зреагувати менеджер.</p>
           <FormAlert error={form.error} />
 
           <SectionCard
@@ -135,7 +135,7 @@ export function NotificationSettingsForm({ initial, onSaved }: NotificationSetti
                 title={dirty ? 'Спершу збережіть зміни' : configured === false ? 'Бот не налаштований на сервері' : undefined}
                 onClick={() => void sendTest()}
               >
-                Надіслати тестове
+                Надіслати тестове повідомлення
               </Button>
             }
           >
@@ -148,7 +148,7 @@ export function NotificationSettingsForm({ initial, onSaved }: NotificationSetti
                 ) : null}
                 <span className="settings-muted">
                   {configured === false
-                    ? 'Токен бота задається в конфігурації сервера. Поки його немає, повідомлення лише пишуться в журнал сервера.'
+                    ? 'Токен бота задає розробник у конфігурації сервера. Поки токена немає, сервер лише записує повідомлення у свій журнал.'
                     : 'Токен бота зберігається в конфігурації сервера, у консолі його немає.'}
                 </span>
               </div>
@@ -174,7 +174,7 @@ export function NotificationSettingsForm({ initial, onSaved }: NotificationSetti
             </Stack>
           </SectionCard>
 
-          <SectionCard title="Email" description="Отримувачі листів про ті самі події. Листи надсилаються, лише коли на сервері налаштована пошта.">
+          <SectionCard title="Email" description="Адреси для листів про ті самі події. Сайт надсилає листи, лише коли на сервері налаштовано пошту.">
             <TagsInput
               label="Адреси"
               description="Введіть адресу й натисніть Enter."
@@ -192,7 +192,7 @@ export function NotificationSettingsForm({ initial, onSaved }: NotificationSetti
             />
           </SectionCard>
 
-          <SectionCard title="Події" description="Вимкнена подія не надсилається.">
+          <SectionCard title="Події" description="Про вимкнені події сайт не повідомляє.">
             <Stack gap="md">
               {EVENTS.map((item) => (
                 <Switch

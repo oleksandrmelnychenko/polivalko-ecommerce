@@ -60,7 +60,7 @@ export function AnnouncementFields({ value, errors, onChange, onClearField }: An
       <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md" verticalSpacing="sm">
         <AppDateInput
           label="Показувати з"
-          description="Порожньо — одразу після збереження."
+          description="Якщо дату не вказати, показ почнеться одразу після збереження."
           value={value.from}
           max={value.to || undefined}
           error={fieldError(errors, 'announcement', 'startsAt')}
@@ -68,7 +68,7 @@ export function AnnouncementFields({ value, errors, onChange, onClearField }: An
         />
         <AppDateInput
           label="Показувати до"
-          description="Включно. Порожньо — без кінцевої дати."
+          description="Включно з цією датою. Без дати показ триває без обмежень."
           value={value.to}
           min={value.from || undefined}
           error={fieldError(errors, 'announcement', 'endsAt')}

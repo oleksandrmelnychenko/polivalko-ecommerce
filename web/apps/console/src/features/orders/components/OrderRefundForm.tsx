@@ -12,7 +12,7 @@ export function OrderRefundForm({ order, refund }: { order: ConsoleOrder; refund
     <form className="order-refund-form" onSubmit={(event) => void submit(event)} noValidate>
       <Text size="xs" c="dimmed">
         {order.refundMethod === 'provider'
-          ? 'Кошти повернуться на картку покупця через платіжну систему; чек повернення видасться автоматично.'
+          ? 'Платіжна система поверне кошти на картку покупця. Чек повернення сайт видасть автоматично.'
           : 'Повернення готівкою чи переказом поза сайтом: сайт зафіксує його й видасть чек повернення, якщо продаж фіскалізував сайт.'}
       </Text>
       <Table.ScrollContainer minWidth={300} type="native">

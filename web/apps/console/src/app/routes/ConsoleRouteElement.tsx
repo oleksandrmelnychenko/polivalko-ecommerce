@@ -28,5 +28,5 @@ export function ConsoleRouteElement({ route }: { route: ConsoleRoute }) {
 
 export function NotFoundRoute() {
   useDocumentTitle('Сторінку не знайдено')
-  return <PageState kind="empty" title="Сторінку не знайдено" description="Такої адреси в консолі немає. Скористайтеся меню розділів угорі." />
+  return <PageState kind="empty" title="Сторінку не знайдено" description="Такої адреси в консолі немає. Оберіть розділ у меню вгорі." />
 }

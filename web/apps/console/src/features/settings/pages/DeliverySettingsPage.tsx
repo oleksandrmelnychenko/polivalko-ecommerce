@@ -29,7 +29,7 @@ export function DeliverySettingsPage() {
           {delivery.status === 'error' || delivery.status === 'forbidden' ? (
             <PageState
               kind={delivery.status}
-              description={problemMessage(delivery.problem, 'Перевірте, що API працює, і спробуйте ще раз.')}
+              description={problemMessage(delivery.problem, 'Спробуйте ще раз. Якщо помилка повториться, повідомте розробника.')}
               onRetry={delivery.status === 'error' ? delivery.reload : undefined}
             />
           ) : (

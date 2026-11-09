@@ -130,7 +130,7 @@ export function validateShop(form: ShopForm): Record<string, string> {
   const seller = form.seller
   if (!seller.name.trim()) errors['seller.name'] = 'Вкажіть назву продавця.'
   const taxId = seller.taxId.replace(/\s+/g, '')
-  if (taxId && !/^(\d{8}|\d{10})$/.test(taxId)) errors['seller.taxId'] = 'ЄДРПОУ — 8 цифр, РНОКПП — 10 цифр.'
+  if (taxId && !/^(\d{8}|\d{10})$/.test(taxId)) errors['seller.taxId'] = 'ЄДРПОУ має 8 цифр, РНОКПП має 10 цифр.'
   const iban = seller.iban.replace(/\s+/g, '').toUpperCase()
   if (iban && !/^UA\d{27}$/.test(iban)) errors['seller.iban'] = 'IBAN має вигляд UA і 27 цифр.'
   if (seller.email.trim() && !EMAIL.test(seller.email.trim())) errors['seller.email'] = 'Перевірте email.'

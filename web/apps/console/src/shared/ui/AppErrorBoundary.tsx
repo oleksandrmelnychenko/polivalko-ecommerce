@@ -28,7 +28,7 @@ export class AppErrorBoundary extends Component<PropsWithChildren, AppErrorBound
     return (
       <div className="app-error-boundary" role="alert">
         <div className="app-error-boundary__card">
-          <div className="app-error-boundary__title">Щось пішло не так</div>
+          <div className="app-error-boundary__title">Не вдалося показати сторінку</div>
           <div className="app-error-boundary__message">{this.state.error.message}</div>
           <div className="app-error-boundary__actions">
             <button className="app-error-boundary__button" type="button" onClick={this.handleRetry}>

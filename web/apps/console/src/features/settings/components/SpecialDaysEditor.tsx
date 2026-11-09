@@ -45,7 +45,7 @@ export function SpecialDaysEditor({ days, errors, onChange, onClearField }: Spec
                 />
                 <TextInput
                   label="Години роботи"
-                  placeholder="10:00–15:00"
+                  placeholder="10:00-15:00"
                   value={day.closed ? '' : day.hours}
                   disabled={day.closed}
                   maxLength={SHOP_LIMITS.hours}

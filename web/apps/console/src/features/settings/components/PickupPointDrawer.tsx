@@ -31,7 +31,7 @@ export function PickupPointDrawer({ point, opened, onClose, onSaved }: PickupPoi
             Скасувати
           </Button>
           <Button type="submit" form={FORM_ID} loading={busy} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
-            Зберегти
+            Зберегти точку
           </Button>
         </Group>
       }

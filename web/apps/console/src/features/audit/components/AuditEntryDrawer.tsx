@@ -83,26 +83,26 @@ function RoleChangeView({ change, permissionName }: { change: RoleChange; permis
             <Row label="Назва">
               {change.before.name !== change.after.name ? (
                 <>
-                  <span className="audit-was">{change.before.name ?? '—'}</span> → {change.after.name ?? '—'}
+                  <span className="audit-was">{change.before.name ?? 'немає'}</span> → {change.after.name ?? 'немає'}
                 </>
               ) : (
-                (change.after.name ?? '—')
+                (change.after.name ?? 'немає')
               )}
             </Row>
             <Row label="Опис">
               {change.before.description !== change.after.description ? (
                 <>
-                  <span className="audit-was">{change.before.description ?? '—'}</span> → {change.after.description ?? '—'}
+                  <span className="audit-was">{change.before.description ?? 'немає'}</span> → {change.after.description ?? 'немає'}
                 </>
               ) : (
-                (change.after.description ?? '—')
+                (change.after.description ?? 'немає')
               )}
             </Row>
           </>
         ) : (
           <>
-            <Row label="Назва">{change.role.name ?? '—'}</Row>
-            {change.kind === 'created' ? <Row label="Опис">{change.role.description ?? '—'}</Row> : null}
+            <Row label="Назва">{change.role.name ?? 'немає'}</Row>
+            {change.kind === 'created' ? <Row label="Опис">{change.role.description ?? 'немає'}</Row> : null}
           </>
         )}
         {change.kind === 'created' ? (
@@ -115,7 +115,7 @@ function RoleChangeView({ change, permissionName }: { change: RoleChange; permis
             <Row label="Додано">
               <PermissionList keys={change.added} permissionName={permissionName} tone="added" />
             </Row>
-            <Row label="Вилучено">
+            <Row label="Знято">
               <PermissionList keys={change.removed} permissionName={permissionName} tone="removed" />
             </Row>
           </>
