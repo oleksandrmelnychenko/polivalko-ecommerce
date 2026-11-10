@@ -1,4 +1,5 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG TARGETARCH
 WORKDIR /src
 ENV OpenApiGenerateDocuments=false \
     DOTNET_CLI_TELEMETRY_OPTOUT=1
@@ -24,11 +25,13 @@ RUN dotnet restore src/PoliValko.Api/PoliValko.Api.csproj \
  && dotnet tool restore
 
 COPY src/ src/
-RUN dotnet publish src/PoliValko.Api -c Release --no-restore -o /out/api \
+RUN runtime_arch="$TARGETARCH" \
+ && if [ "$runtime_arch" = "amd64" ]; then runtime_arch=x64; fi \
+ && dotnet publish src/PoliValko.Api -c Release --no-restore -o /out/api \
  && dotnet publish src/PoliValko.Worker -c Release --no-restore -o /out/worker \
  && dotnet tool run dotnet-ef migrations bundle \
       --project src/PoliValko.Infrastructure --startup-project src/PoliValko.Api \
-      --configuration Release --self-contained -r linux-x64 -o /out/migrate/efbundle
+      --configuration Release --self-contained -r "linux-$runtime_arch" -o /out/migrate/efbundle
 
 FROM mcr.microsoft.com/dotnet/runtime-deps:10.0 AS migrate
 WORKDIR /app
