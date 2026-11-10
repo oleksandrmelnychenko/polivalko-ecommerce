@@ -1,0 +1,69 @@
+name: Sync production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: sync-production-main
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.ref == 'refs/heads/main' && github.repository == 'oleksandrmelnychenko/polivalko-ecommerce'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production-sync
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Transfer main to the Vercel repository
+        shell: bash
+        env:
+          DEPLOY_KEY: ${{ secrets.POLIVALKO_PUSH_KEY }}
+        run: |
+          set -euo pipefail
+          eval "$(ssh-agent -s)" > /dev/null
+          trap 'ssh-agent -k > /dev/null' EXIT
+          ssh-add - <<< "$DEPLOY_KEY"
+          unset DEPLOY_KEY
+          echo 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' > "$RUNNER_TEMP/github_known_hosts"
+          export GIT_SSH_COMMAND="ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$RUNNER_TEMP/github_known_hosts"
+          git remote add production git@github.com:oleksandrmelnychenko/polivalko.git
+          git fetch --quiet --no-tags production main
+          production_tip=$(git rev-parse FETCH_HEAD)
+          git fetch --quiet --no-tags origin main
+          source_tip=$(git rev-parse FETCH_HEAD)
+
+          # The seven earlier commits were transferred manually through this revision.
+          previous=$(git log "$production_tip" --first-parent -1 --grep='^Polivalko-Ecommerce-Source: [0-9a-f]\{40\}$' --format='%(trailers:key=Polivalko-Ecommerce-Source,valueonly)')
+          previous=${previous:-e0c76f75cacd64467deb1e1c695de8f296d0235a}
+          if [[ "$previous" == "$source_tip" ]]; then
+            echo "Production already includes $source_tip"
+            exit 0
+          fi
+          if ! git merge-base --is-ancestor "$previous" "$source_tip"; then
+            echo "::error::Source main history diverged. Reconcile the last synchronized revision before retrying."
+            exit 1
+          fi
+
+          git switch --quiet --detach "$production_tip"
+          patch="$RUNNER_TEMP/source-changes.patch"
+          git diff --binary --full-index --no-renames "$previous" "$source_tip" -- . ':(exclude).github/workflows/**' > "$patch"
+          if [[ -s "$patch" ]]; then
+            git apply --3way --index "$patch"
+          fi
+          git config user.name 'oleksandrmelnychenko'
+          git config user.email '7407215+oleksandrmelnychenko@users.noreply.github.com'
+          git commit --quiet --allow-empty -m "Release polivalko-ecommerce at ${source_tip:0:12}" \
+            -m "Changes: https://github.com/oleksandrmelnychenko/polivalko-ecommerce/compare/$previous...$source_tip" \
+            -m "Polivalko-Ecommerce-Source: $source_tip"
+          git push production HEAD:refs/heads/main
