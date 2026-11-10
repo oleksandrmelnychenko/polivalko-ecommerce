@@ -23,6 +23,15 @@
         "dev"
       ],
       "port": 3000
+    },
+    {
+      "name": "shop-docker-api",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set API_INTERNAL_URL=http://localhost:8080&& npm --prefix web/apps/shop run dev"
+      ],
+      "port": 3000
     }
   ]
 }
