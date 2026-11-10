@@ -21,6 +21,12 @@ export function useRefund(order: ConsoleOrder, onChange: (order: ConsoleOrder) =
     setQuantities((current) => ({ ...current, [productId]: Math.max(0, Math.min(Math.floor(value) || 0, max)) }))
   }
 
+  function reset() {
+    setQuantities({})
+    setReason("")
+    setError(null)
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (!canSubmit) return
@@ -50,7 +56,7 @@ export function useRefund(order: ConsoleOrder, onChange: (order: ConsoleOrder) =
     }
   }
 
-  return { quantities, setQuantity, reason, setReason, busy, error, refundable, amount, canSubmit, submit }
+  return { quantities, setQuantity, reason, setReason, busy, error, refundable, amount, canSubmit, submit, reset }
 }
 
 export type OrderRefundState = ReturnType<typeof useRefund>

@@ -27,7 +27,7 @@
 }
 
 .integration-fact dt {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 12px;
   font-weight: 600;
 }
@@ -51,7 +51,7 @@
 }
 
 .integration-muted {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
 }
 
 .integration-code {
@@ -195,7 +195,7 @@
 }
 
 .integration-dl-row dt {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 13px;
   font-weight: 600;
 }

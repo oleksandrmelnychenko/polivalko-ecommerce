@@ -130,7 +130,7 @@
 }
 
 .roles-item-meta {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 12px;
   line-height: 1.3;
 }
@@ -196,7 +196,7 @@
 }
 
 .roles-summary-meta {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   display: flex;
   flex-wrap: wrap;
   font-size: 12.5px;
@@ -249,12 +249,12 @@
 }
 
 .roles-note svg {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   flex: 0 0 auto;
 }
 
 .roles-empty {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 13px;
   margin: 0;
   padding: 36px 12px;
@@ -393,7 +393,7 @@
 
 .roles-perm-meta {
   align-items: baseline;
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   display: flex;
   flex-wrap: wrap;
   font-size: 12px;
@@ -406,7 +406,7 @@
 }
 
 .roles-perm-key {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 11px;
 }
@@ -420,7 +420,7 @@
 
 .roles-perm-lock {
   align-items: center;
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   display: inline-flex;
 }
 

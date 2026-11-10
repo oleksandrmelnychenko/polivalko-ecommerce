@@ -5,7 +5,7 @@
 .palette-bar {
   align-items: center;
   border-bottom: 1px solid var(--mantine-color-gray-2);
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   display: flex;
   gap: 10px;
   padding: 12px 14px;
@@ -32,7 +32,7 @@
 }
 
 .palette-group-title {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 11.5px;
   font-weight: 600;
   margin: 6px 8px 4px;
@@ -94,7 +94,7 @@
 }
 
 .palette-main span {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 12px;
 }
 
@@ -107,7 +107,7 @@
 }
 
 .palette-empty {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 13px;
   margin: 0;
   padding: 18px 8px;
@@ -117,7 +117,7 @@
 .palette-foot {
   background: var(--mantine-color-gray-0);
   border-top: 1px solid var(--mantine-color-gray-2);
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   display: flex;
   flex-wrap: wrap;
   font-size: 12px;

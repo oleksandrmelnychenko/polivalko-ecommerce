@@ -88,7 +88,7 @@
 }
 
 .account-eyebrow {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -184,14 +184,14 @@
 }
 
 .account-card-meta {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 12.5px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .account-card-note {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 13.5px;
   margin: 0;
   padding: 14px;
@@ -211,7 +211,7 @@
 }
 
 .account-facts dt {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 12px;
   font-weight: 600;
 }

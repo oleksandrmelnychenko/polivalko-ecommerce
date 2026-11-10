@@ -10,7 +10,7 @@
 }
 
 .app-date-range-placeholder {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   white-space: nowrap;
 }
 
@@ -93,7 +93,7 @@
 }
 
 .app-date-range-calendar .mantine-DatePicker-weekday {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 11px;
   font-weight: 600;
   text-transform: capitalize;

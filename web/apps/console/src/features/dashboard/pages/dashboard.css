@@ -75,7 +75,7 @@
 }
 
 .dash-muted {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 12.5px;
   margin: 0;
 }
@@ -321,7 +321,7 @@ a.dash-queue-item:focus-visible {
 
 .dash-kpi-foot {
   align-items: center;
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   display: flex;
   flex-wrap: wrap;
   font-size: 12px;
@@ -416,7 +416,7 @@ a.dash-queue-item:focus-visible {
 }
 
 .dash-barlist-value small {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-weight: 400;
   margin-left: 6px;
 }
@@ -457,7 +457,7 @@ a.dash-queue-item:focus-visible {
 }
 
 .dash-rank-n {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   flex: 0 0 18px;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
@@ -510,7 +510,7 @@ a.dash-queue-item:focus-visible {
 }
 
 .dash-rank-empty {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 13px;
   margin: 0;
   padding: 28px var(--dash-pad);
@@ -526,7 +526,7 @@ a.dash-queue-item:focus-visible {
 }
 
 .dash-summary dt {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
 }
 
 .dash-summary dd {
@@ -633,7 +633,7 @@ a.dash-queue-item:focus-visible {
 }
 
 .dash-chart-empty {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   display: grid;
   font-size: 13px;
   height: 230px;

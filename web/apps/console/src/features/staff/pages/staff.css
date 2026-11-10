@@ -1,5 +1,5 @@
 .staff-self {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-weight: 400;
 }
 
@@ -38,6 +38,6 @@
 }
 
 .staff-role-option-sub {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 12px;
 }

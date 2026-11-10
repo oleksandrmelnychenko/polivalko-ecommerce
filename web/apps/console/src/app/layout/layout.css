@@ -191,7 +191,7 @@
   background: var(--mantine-color-gray-0);
   border: 1px solid var(--mantine-color-gray-2);
   border-radius: 10px;
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   display: inline-flex;
   gap: 8px;
   height: 36px;
@@ -246,7 +246,7 @@
 }
 
 .console-account-icon {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   flex: 0 0 auto;
 }
 
@@ -284,7 +284,7 @@
 }
 
 .console-account-email {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   overflow-wrap: anywhere;
 }
 
@@ -449,7 +449,7 @@
 }
 
 .console-mobile-section-title {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 12px;
   font-weight: 600;
   margin: 6px 8px 4px;

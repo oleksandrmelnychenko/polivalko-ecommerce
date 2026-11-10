@@ -229,7 +229,7 @@
 }
 
 .data-table-empty-content {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 13px;
   pointer-events: auto;
   text-align: center;

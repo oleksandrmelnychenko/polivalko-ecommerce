@@ -4,7 +4,7 @@
 }
 
 .catalog-muted {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 12.5px;
 }
 
@@ -125,7 +125,7 @@
 }
 
 .catalog-crumbs a {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   flex: 0 0 auto;
   font-weight: 500;
   text-decoration: none;
@@ -391,7 +391,7 @@
 }
 
 .catalog-dl dt {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 12px;
   font-weight: 600;
   padding-top: 1px;
@@ -435,7 +435,7 @@
 }
 
 .catalog-pick-index {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   flex: 0 0 18px;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
@@ -536,7 +536,7 @@ details.catalog-run > .catalog-run-summary {
 }
 
 .catalog-run-chevron {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   flex: 0 0 16px;
   transition: transform 140ms ease;
   width: 16px;

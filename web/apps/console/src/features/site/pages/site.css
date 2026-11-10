@@ -29,7 +29,7 @@
 }
 
 .site-muted {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 13px;
 }
 
@@ -169,7 +169,7 @@
 }
 
 .site-block.is-hidden .site-block-name {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
 }
 
 .site-block-index,
@@ -190,7 +190,7 @@
 
 .site-block.is-hidden .site-block-index {
   background: var(--mantine-color-gray-1);
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
 }
 
 .site-block-text {
@@ -207,7 +207,7 @@
 
 .site-block-hint,
 .site-block-note {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   font-size: 12.5px;
   line-height: 1.35;
 }
@@ -539,7 +539,7 @@
 }
 
 .site-token-label {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
 }
 
 .site-template-preview {

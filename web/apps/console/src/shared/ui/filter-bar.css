@@ -103,7 +103,7 @@
 }
 
 .app-filter-bar .mantine-Input-input::placeholder {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
 }
 
 .app-filter-bar .mantine-Input-input:hover {

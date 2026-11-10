@@ -1,6 +1,6 @@
 .data-table-cell a.requests-phone {
   align-items: center;
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
   display: inline-flex;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
@@ -23,7 +23,7 @@
 }
 
 .requests-muted {
-  color: var(--mantine-color-gray-6);
+  color: var(--mantine-color-gray-7);
 }
 
 .requests-status-select .mantine-Input-input {
