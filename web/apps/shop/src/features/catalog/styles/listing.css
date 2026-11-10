@@ -8,7 +8,7 @@
 .fw__title { float: left; width: 100%; margin: 0 0 var(--space-sm); padding: 0; font-family: var(--font-accent); font-size: var(--text-sm); font-weight: 500; letter-spacing: 0.08em; line-height: 1.3; text-transform: uppercase; color: var(--color-ink); }
 .fw__title + * { clear: both; }
 .fw__search { position: relative; margin-bottom: var(--space-xs); }
-.fw__search input { width: 100%; height: 36px; padding: 0 34px 0 var(--space-sm); border: var(--rule-hair) solid var(--color-rule); background: var(--color-paper); color: var(--color-ink); font: inherit; font-size: var(--text-sm); outline: 2px solid transparent; outline-offset: -2px; }
+.fw__search input { border-radius: var(--radius); width: 100%; height: 36px; padding: 0 34px 0 var(--space-sm); border: var(--rule-hair) solid var(--color-rule); background: var(--color-paper); color: var(--color-ink); font: inherit; font-size: var(--text-sm); outline: 2px solid transparent; outline-offset: -2px; }
 .fw__search input:focus-visible { outline-color: var(--color-focus); }
 .fw__search svg { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); color: var(--color-muted); pointer-events: none; }
 .fw__list, .fw__links { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
@@ -16,7 +16,7 @@
 .fw__links a:hover { color: var(--color-ink); text-decoration: underline; text-underline-offset: 3px; }
 .fcheck { display: flex; align-items: center; gap: 10px; min-height: 32px; color: var(--color-ink-2); font-size: var(--text-sm); cursor: pointer; }
 .fcheck input { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; }
-.fcheck__box { position: relative; flex: none; width: 16px; height: 16px; border: var(--rule-hair) solid #b8b8b8; background: var(--color-paper); transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
+.fcheck__box { border-radius: 5px; position: relative; flex: none; width: 16px; height: 16px; border: var(--rule-hair) solid #b8b8b8; background: var(--color-paper); transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
 .fcheck__box::after { content: ""; position: absolute; left: 4px; top: 1px; width: 5px; height: 9px; border: solid var(--color-accent-ink); border-width: 0 2px 2px 0; transform: rotate(45deg); opacity: 0; }
 .fcheck:hover { color: var(--color-ink); }
 .fcheck:hover .fcheck__box { border-color: var(--color-ink); }
@@ -38,7 +38,7 @@
 .fprice:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .fw .range { margin-top: var(--space-xs); }
 .fw .range input { min-height: 36px; font-size: var(--text-sm); }
-.filters__submit { position: sticky; bottom: 0; z-index: var(--z-base); box-shadow: 0 0 0 var(--space-sm) var(--color-paper), 0 var(--space-sm) 0 var(--space-sm) var(--color-paper); }
+.filters__submit { border-radius: var(--radius); position: sticky; bottom: 0; z-index: var(--z-base); box-shadow: 0 0 0 var(--space-sm) var(--color-paper), 0 var(--space-sm) 0 var(--space-sm) var(--color-paper); }
 .page-head__subs { display: none; }
 .catalog .tiles { transition: opacity 0.15s ease; }
 .catalog:has(.filters[aria-busy="true"], .toolbar[aria-busy="true"]) .tiles { opacity: 0.55; }

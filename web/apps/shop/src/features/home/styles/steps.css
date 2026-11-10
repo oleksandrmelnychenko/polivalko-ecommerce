@@ -1,6 +1,6 @@
 .steps { margin-top: var(--section-gap); }
 .steps__list { display: grid; grid-template-columns: repeat(var(--steps, 3), minmax(0, 1fr)); gap: var(--space-xl); margin: 0; padding: 0; list-style: none; }
-.steps__list li { position: relative; padding: var(--space-xl) var(--space-xl) var(--space-xl); background: var(--color-paper-2); overflow: hidden; }
+.steps__list li { border-radius: var(--radius); position: relative; padding: var(--space-xl) var(--space-xl) var(--space-xl); background: var(--color-paper-2); overflow: hidden; }
 .steps__list h3 { position: relative; margin: 0; padding-bottom: var(--space-sm); font: 400 var(--text-xl)/1.3 var(--font-display); color: var(--color-ink); text-transform: uppercase; }
 .steps__list h3::after { content: ""; position: absolute; left: 0; bottom: 0; width: 40px; height: 2px; background: var(--color-brand); }
 .steps__list p { margin-top: var(--space-sm); }

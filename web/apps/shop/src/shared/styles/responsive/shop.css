@@ -15,19 +15,17 @@
   .hero-slide--panel { justify-items: center; }
   .hero-slide__panel { margin-right: 0; padding: 36px 32px; }
   .perks__list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .perks__list li:nth-child(3) { border-left: 0; }
-  .perks__list li:nth-child(n + 3) { border-top: var(--rule-hair) solid var(--color-rule); }
   .steps__list, .visit__inner { grid-template-columns: minmax(0, 1fr); }
   .visit__inner { gap: var(--space-xl); padding-block: var(--space-2xl); }
   .hero__title { padding: 12px 24px; font-size: 1.5rem; }
   .look, .look--reverse { grid-template-columns: minmax(0, 1fr); }
-  .look__photo { min-height: 320px; order: 0 !important; }
+  .look__photo, .look--reverse .look__photo { min-height: 320px; margin: 0 var(--edge-inset); order: 0 !important; }
   .look__ghost { display: none; }
   .look__content, .look--reverse .look__content { order: 1; padding: var(--space-2xl) var(--gutter) 0; }
   .strip__inner, .strip--right .strip__inner { grid-template-columns: minmax(0, 1fr); }
   .strip--right .heading { order: 0; }
   .heading--side { writing-mode: horizontal-tb; rotate: none; flex-direction: column; align-items: flex-start; margin-bottom: var(--space-lg); text-align: left; }
-  .tiles--rail { grid-auto-columns: calc((100% - var(--gap-columns)) / 2); }
+  .tiles--rail { grid-auto-columns: calc((100% - var(--tile-gap)) / 2); }
   .rail { padding-inline: 0; }
   .rail__arrow { display: none; }
   .product, .description, .checkout, .cart, .order-head, .catalog { grid-template-columns: minmax(0, 1fr); }
@@ -52,14 +50,13 @@
   .toolbar__sort { flex: 1; }
   .toolbar__sort .dsel__box, .toolbar__sort .dsel__trigger { width: 100%; min-width: 0; }
   .toolbar .dsel__popup { min-width: 100%; }
-  .hero { height: 500px; }
+  .hero { height: 500px; border-radius: var(--radius); }
   .hero-slide { padding: var(--space-xl) 16px var(--space-3xl); }
   .hero__arrow { top: auto; bottom: 12px; translate: none; width: 40px; height: 40px; }
   .hero__arrow--prev { left: calc(50% - 48px); }
   .hero__arrow--next { right: calc(50% - 48px); }
   .hero-panel__title { font-size: 1.75rem; }
   .perks__list { grid-template-columns: minmax(0, 1fr); }
-  .perks__list li + li { border-left: 0; border-top: var(--rule-hair) solid var(--color-rule); }
   .perks__list li { padding: var(--space-xl) var(--space-md); }
   .directions { grid-template-columns: minmax(0, 1fr); }
   .steps__list li { padding: var(--space-lg); }

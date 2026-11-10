@@ -2,7 +2,7 @@
 .tiles--4 { --cols: 4; }
 .tiles--3 { --cols: 3; }
 .tiles--2 { --cols: 2; }
-.tiles--rail { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: calc((100% - 2 * var(--gap-columns)) / 3); }
+.tiles--rail { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: calc((100% - 2 * var(--tile-gap)) / 3); }
 .tiles--rail > li { scroll-snap-align: start; }
 .tile { position: relative; display: flex; flex-direction: column; gap: var(--space-sm); }
 .tile__photo { position: relative; aspect-ratio: 3 / 4; margin: 0; background: var(--color-paper-2); overflow: hidden; }
@@ -26,33 +26,40 @@
 .round-btn { display: inline-grid; place-items: center; width: 50px; height: 50px; margin: 0 4px; border: 0; border-radius: 50%; background: rgb(0 0 0 / 0.35); color: #fff; cursor: pointer; transition: background-color 0.3s, color 0.3s; }
 .round-btn:hover { background: #fff; color: var(--color-brand); }
 .round-btn svg { width: 18px; height: 18px; }
+.tile--look .tile__photo { border-radius: var(--radius); }
+.tile--look .tile__actions { position: absolute; top: 0; left: 0; z-index: 4; display: grid; place-items: center; width: 100%; aspect-ratio: 3 / 4; pointer-events: none; }
+.tile--look .tile__actions .round-btn { width: 56px; height: 56px; margin: 0; border: 0; background: var(--color-brand); color: #fff; box-shadow: 0 12px 28px -12px rgb(0 0 0 / 0.55); opacity: 0; scale: 0.6; transition: opacity 0.35s var(--ease-soft), scale 0.5s var(--ease-soft); }
+.tile--look .tile__actions svg { width: 22px; height: 22px; stroke-width: 2; translate: -6px 0; transition: translate 0.5s var(--ease-soft); }
 @media (hover: hover) {
   .tile--look { overflow: hidden; }
-  .tile--look .tile__photo::after { content: ""; position: absolute; inset: 0; z-index: 2; background: rgb(0 0 0 / 0.5); opacity: 0; transition: opacity 0.35s; }
+  .tile--look .tile__photo::after { content: ""; position: absolute; inset: 0; z-index: 2; background: rgb(0 0 0 / 0.22); opacity: 0; transition: opacity 0.45s var(--ease-soft); }
   .tile--look:hover .tile__photo::after, .tile--look:focus-within .tile__photo::after { opacity: 1; }
-  .tile--look .tile__photo img { transition: transform 0.5s; }
-  .tile--look:hover .tile__photo img { transform: scale(1.5); }
+  .tile--look .tile__photo img { transition: transform 0.9s var(--ease-soft); }
+  .tile--look:hover .tile__photo img { transform: scale(1.07); }
+  .tile--look:hover .tile__actions .round-btn, .tile--look:focus-within .tile__actions .round-btn { opacity: 1; scale: 1; }
+  .tile--look:hover .tile__actions svg, .tile--look:focus-within .tile__actions svg { translate: 0 0; }
   .tile--look .tile__name a::after { display: none; }
   .tile--look .tile__name a { position: relative; z-index: 4; }
   .tile--look .tile__name--caps { text-transform: uppercase; letter-spacing: var(--tracking-caps); }
 }
 @media (hover: none) {
   .tile__cover { display: none; }
+  .tile--look .tile__actions { display: none; }
 }
 
-.tiles:has(> .tile--shop) { gap: 0; border-top: var(--rule-hair) solid var(--color-rule); border-left: var(--rule-hair) solid var(--color-rule); }
-.tile--shop { gap: 0; border-right: var(--rule-hair) solid var(--color-rule); border-bottom: var(--rule-hair) solid var(--color-rule); background: var(--color-paper); transition: box-shadow 0.3s var(--ease-out); }
-.tile--shop .tile__photo { aspect-ratio: 1 / 1; margin: 12px 12px 0; background: var(--color-paper-2); }
-.tile--shop .tile__photo img { transition: transform var(--dur-long) var(--ease-out); }
+.tiles:has(> .tile--shop) { gap: var(--tile-gap); }
+.tile--shop { gap: 0; border: var(--rule-hair) solid var(--color-rule); border-radius: var(--radius); background: var(--color-paper); transition: box-shadow 0.5s var(--ease-soft), transform 0.5s var(--ease-soft), border-color 0.3s var(--ease-out); }
+.tile--shop .tile__photo { border-radius: var(--radius); aspect-ratio: 1 / 1; margin: 12px 12px 0; background: var(--color-paper-2); }
+.tile--shop .tile__photo img { transition: transform 0.9s var(--ease-soft); }
 .tile--shop .tile__flashes { inset: 0 auto auto 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px; overflow: visible; }
-.tile--shop .flash { position: static; display: inline-flex; align-items: center; width: auto; height: auto; min-height: 22px; padding: 2px 8px; translate: none; rotate: none; background: var(--color-price-sale); color: #fff; font: 700 0.6875rem/1.3 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; }
+.tile--shop .flash { border-radius: var(--radius); position: static; display: inline-flex; align-items: center; width: auto; height: auto; min-height: 22px; padding: 2px 8px; translate: none; rotate: none; background: var(--color-price-sale); color: #fff; font: 700 0.6875rem/1.3 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; }
 .tile--shop .flash--out { background: var(--color-muted); }
 .tile--shop .flash--label { background: var(--tone); }
 .tile--shop :is(.flash--label, .label)[data-tone="green"] { background: #007f37; }
 .tile--shop :is(.flash--label, .label)[data-tone="red"] { background: var(--color-price-sale); }
 .tile--shop .tile__labels { position: static; flex-direction: column; align-items: flex-start; }
 .tile__bar { position: absolute; top: 10px; right: 10px; z-index: var(--z-raised); display: flex; flex-direction: column; gap: 6px; opacity: 0; transform: translateX(6px); transition: opacity 0.25s var(--ease-out), transform 0.25s var(--ease-out); }
-.tile__bar .round-btn { width: 36px; height: 36px; margin: 0; border: var(--rule-hair) solid var(--color-rule); border-radius: 0; background: var(--color-paper); color: var(--color-ink-2); }
+.tile__bar .round-btn { width: 36px; height: 36px; margin: 0; border: var(--rule-hair) solid var(--color-rule); border-radius: 50%; background: var(--color-paper); color: var(--color-ink-2); }
 .tile__bar .round-btn:hover, .tile__bar .round-btn:focus-visible { background: var(--color-ink); border-color: var(--color-ink); color: #fff; }
 .tile__bar .round-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .tile__bar .fav-toggle[aria-pressed="true"] { color: var(--color-price-sale); }
@@ -66,10 +73,11 @@
 .tile__stock { order: 4; grid-column: 2; justify-self: end; display: inline-flex; white-space: nowrap; align-items: center; gap: 6px; color: var(--color-muted); font-size: 0.75rem; }
 .tile__stock::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--color-brand); }
 .tile__stock--out::before { background: #b8b8b8; }
-.tile__buy { order: 5; grid-column: 1 / -1; align-self: end; position: relative; z-index: var(--z-raised); display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 40px; margin-top: auto; padding: 0 12px; border: var(--rule-hair) solid var(--color-ink); background: var(--color-paper); color: var(--color-ink); font: 600 var(--text-sm)/1 var(--font-body); text-decoration: none; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
+.tile__buy { border-radius: var(--radius); order: 5; grid-column: 1 / -1; align-self: end; position: relative; z-index: var(--z-raised); display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 40px; margin-top: auto; padding: 0 12px; border: var(--rule-hair) solid var(--color-ink); background: var(--color-paper); color: var(--color-ink); font: 600 var(--text-sm)/1 var(--font-body); text-decoration: none; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out), scale var(--dur-micro) var(--ease-out); }
 .tile__buy svg { width: 18px; height: 18px; }
 .tile__buy:hover { border-color: #007f37; background: #007f37; color: #fff; }
 .tile__buy:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.tile__buy:active:not(:disabled) { scale: 0.97; }
 .tile__buy--off { border-color: var(--color-rule); color: var(--color-ink-2); }
 .tile__buy--off:hover { border-color: var(--color-ink); background: var(--color-paper); color: var(--color-ink); }
 .tile--shop .tile__buy { margin-top: 8px; }
@@ -78,8 +86,8 @@
 .tile--shop .tile__price, .tile--shop .tile__stock { grid-row: 3; }
 .tile--shop .tile__buy { grid-row: 4; align-self: end; }
 @media (hover: hover) {
-  .tile--shop:hover, .tile--shop:focus-within { position: relative; z-index: 2; box-shadow: 0 10px 30px rgb(0 0 0 / 0.08); }
-  .tile--shop:hover .tile__photo img { transform: scale(1.04); }
+  .tile--shop:hover, .tile--shop:focus-within { position: relative; z-index: 2; border-color: transparent; box-shadow: var(--shadow-lift); transform: translateY(-4px); }
+  .tile--shop:hover .tile__photo img { transform: scale(1.07); }
   .tile--shop:hover .tile__bar, .tile--shop:focus-within .tile__bar { opacity: 1; transform: none; }
   .tile--shop:hover .tile__name a { text-decoration: underline; text-underline-offset: 3px; }
 }
@@ -88,6 +96,7 @@
   .tile__bar .round-btn { width: 32px; height: 32px; }
 }
 @media (max-width: 40rem) {
+  .tiles { --tile-gap: 10px; }
   .tile--shop .tile__photo { margin: 8px 8px 0; }
   .tile--shop .tile__body { padding: 10px 10px 12px; }
   .tile--shop .tile__price { margin-top: 10px; }
@@ -99,5 +108,5 @@
   .tile__buy span { font-size: 0.8125rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .tile--shop, .tile__bar, .tile--shop .tile__photo img, .tile__buy { transition: none; }
+  .tile--shop, .tile__bar, .tile--shop .tile__photo img, .tile__buy, .tile--look .tile__photo img, .tile--look .tile__actions .round-btn, .tile--look .tile__actions svg { transition: none; }
 }

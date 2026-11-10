@@ -2,5 +2,5 @@
 .page-head h1 { font-size: var(--text-display-s); }
 .page-head p:not(.lead) { color: var(--color-ink-2); }
 .chips { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin: var(--space-2xs) 0 0; padding: 0; list-style: none; }
-.chips a { display: inline-flex; align-items: center; min-height: 40px; padding-inline: var(--space-md); border: var(--rule-hair) solid var(--color-rule); color: var(--color-ink); font-size: var(--text-sm); text-decoration: none; transition: border-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
+.chips a { border-radius: var(--radius); display: inline-flex; align-items: center; min-height: 40px; padding-inline: var(--space-md); border: var(--rule-hair) solid var(--color-rule); color: var(--color-ink); font-size: var(--text-sm); text-decoration: none; transition: border-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
 .chips a:hover { border-color: var(--color-accent); color: var(--color-accent); }

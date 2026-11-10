@@ -10,9 +10,9 @@
 .heading--side p { white-space: nowrap; }
 .heading--left { rotate: 180deg; }
 .rail { position: relative; padding-inline: 15px; }
-.rail__track { overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; outline-offset: 4px; }
+.rail__track { margin-block: -10px -34px; padding-block: 10px 34px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; outline-offset: 4px; }
 .rail__track::-webkit-scrollbar { display: none; }
-.rail__arrow { position: absolute; top: 50%; z-index: var(--z-raised); display: grid; place-items: center; width: 42px; height: 46px; translate: 0 -50%; border: var(--rule-hair) solid var(--color-rule); background: var(--color-paper); color: var(--color-ink); box-shadow: 0 1px 4px rgb(0 0 0 / 0.12); cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
+.rail__arrow { border-radius: 50%; position: absolute; top: 50%; z-index: var(--z-raised); display: grid; place-items: center; width: 42px; height: 46px; translate: 0 -50%; border: var(--rule-hair) solid var(--color-rule); background: var(--color-paper); color: var(--color-ink); box-shadow: 0 1px 4px rgb(0 0 0 / 0.12); cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
 .rail__arrow:hover { background: var(--color-ink); color: #fff; }
 .rail__arrow svg { width: 18px; height: 18px; stroke-width: 2.4; }
 .rail__arrow--prev { left: 0; }

@@ -1,5 +1,5 @@
 .paypage { display: grid; place-items: center; min-height: 100dvh; padding: var(--space-lg); background: var(--color-paper-2); }
-.paypage__card { display: grid; gap: var(--space-md); width: min(480px, 100%); padding: var(--space-xl); background: var(--color-paper); box-shadow: var(--shadow-pop); border-top: 3px solid var(--color-brand); }
+.paypage__card { border-radius: var(--radius); display: grid; gap: var(--space-md); width: min(480px, 100%); padding: var(--space-xl); background: var(--color-paper); box-shadow: var(--shadow-pop); border-top: 3px solid var(--color-brand); }
 .paypage__card h1 { font-size: var(--text-title); }
 .paypage__amount { font: 600 var(--text-display-s)/1 var(--font-body); color: var(--color-ink); font-variant-numeric: tabular-nums; }
 .paypage__actions { display: grid; gap: var(--space-sm); }

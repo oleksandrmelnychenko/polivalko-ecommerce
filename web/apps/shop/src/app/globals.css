@@ -43,6 +43,7 @@
 @import url("../../../../packages/shared/styles/ui/seg.css");
 @import url("../../../../packages/shared/styles/ui/pager.css");
 @import url("../features/product/styles/product.css");
+@import url("../features/product/styles/viewer.css");
 @import url("../../../../packages/shared/styles/ui/buybox-meta.css");
 @import url("../features/product/styles/product-info.css");
 @import url("../features/cart/styles/drawer.css");
@@ -75,4 +76,5 @@
 @import url("../features/account/styles/addresses.css");
 @import url("../features/account/styles/profile.css");
 @import url("../../../../packages/shared/styles/ui/meta-list.css");
+@import url("../shared/styles/ui/motion.css");
 @import url("../shared/styles/print.css");

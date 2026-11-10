@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { sized, thumb } from "@polivalko/shared/lib/images";
+import { SearchIcon } from "@polivalko/shared/ui/icons";
+import { PhotoViewer } from "./photo-viewer";
 
 type Image = { url: string; alt: string };
 
@@ -9,6 +11,7 @@ const GALLERY_SIZES = "(max-width: 40rem) 250px, (max-width: 60rem) 92vw, 640px"
 
 export function Gallery({ images, name }: { images: Image[]; name: string }) {
   const [active, setActive] = useState(0);
+  const [viewing, setViewing] = useState(false);
   const current = images[active];
   const main = current ? sized(current.url, GALLERY_SIZES, 960) : null;
 
@@ -16,7 +19,13 @@ export function Gallery({ images, name }: { images: Image[]; name: string }) {
     <div className="gallery">
       <figure className="gallery__main">
         {current && main ? (
-          <img key={current.url} {...main} alt={current.alt || name} width={960} height={960} fetchPriority="high" decoding="async" />
+          <button type="button" className="gallery__open" onClick={() => setViewing(true)} aria-label={`Відкрити фото: ${current.alt || name}`}>
+            <img key={current.url} {...main} alt={current.alt || name} width={960} height={960} fetchPriority="high" decoding="async" />
+            <span className="gallery__hint" aria-hidden="true">
+              <SearchIcon />
+              Збільшити
+            </span>
+          </button>
         ) : (
           <span className="tile__photo-empty">Фото додасть магазин</span>
         )}
@@ -32,6 +41,7 @@ export function Gallery({ images, name }: { images: Image[]; name: string }) {
           ))}
         </ul>
       )}
+      {current && <PhotoViewer images={images} name={name} index={active} open={viewing} onIndex={setActive} onClose={() => setViewing(false)} />}
     </div>
   );
 }

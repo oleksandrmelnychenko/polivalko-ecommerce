@@ -6,7 +6,7 @@
 .nav-link svg { width: 13px; height: 13px; stroke-width: 2.4; }
 .nav-item:hover > .nav-link, .nav-item:focus-within > .nav-link, .nav-link[aria-current="page"] { color: var(--color-brand); }
 
-.sub { position: absolute; top: 100%; z-index: var(--z-dropdown); margin: 0; max-height: calc(100dvh - var(--bar-height)); overflow-y: auto; overscroll-behavior: contain; background: #fff; color: var(--color-ink); box-shadow: 0 0 4px rgb(0 0 0 / 0.2); visibility: hidden; opacity: 0; transform: translateY(40px); transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s linear 0.35s; pointer-events: none; }
+.sub { border-radius: 0 0 var(--radius) var(--radius); position: absolute; top: 100%; z-index: var(--z-dropdown); margin: 0; max-height: calc(100dvh - var(--bar-height)); overflow-y: auto; overscroll-behavior: contain; background: #fff; color: var(--color-ink); box-shadow: 0 0 4px rgb(0 0 0 / 0.2); visibility: hidden; opacity: 0; transform: translateY(40px); transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s linear 0.35s; pointer-events: none; }
 .nav-item:hover > .sub, .nav-item:focus-within > .sub { visibility: visible; opacity: 1; transform: none; transition-delay: 0s; pointer-events: auto; }
 .site-nav[data-closed] .sub { visibility: hidden; opacity: 0; pointer-events: none; }
 .sub--mega { left: 0; right: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 28px; padding: 32px 0 24px; }

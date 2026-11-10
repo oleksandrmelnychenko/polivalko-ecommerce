@@ -1,0 +1,26 @@
+@keyframes rise-in { from { opacity: 0; translate: 0 40px; } }
+@keyframes photo-drift { from { translate: 0 -5%; } to { translate: 0 5%; } }
+@keyframes badge-pop { 0% { scale: 0.4; } 60% { scale: 1.25; } 100% { scale: 1; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .cart-button__count { animation: badge-pop 0.45s var(--ease-soft); }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    :is(.section__head, .heading:not(.heading--side), .strip__inner > .heading--side, .tiles:not(.tiles--rail) > li, .tiles--rail, .ctiles > li, .perks__list > li, .steps__list > li, .directions > li, .look__content, .visit__inner > *, .ib-section__head, .ib-cards > li, .ib-steps > li, .svc-grid > li) {
+      animation: rise-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+    :is(.tiles:not(.tiles--rail), .ctiles, .perks__list, .steps__list, .ib-cards, .svc-grid) > li:nth-child(4n + 2) { animation-range: entry 8% entry 68%; }
+    :is(.tiles:not(.tiles--rail), .ctiles, .perks__list, .steps__list, .ib-cards, .svc-grid) > li:nth-child(4n + 3) { animation-range: entry 16% entry 76%; }
+    :is(.tiles:not(.tiles--rail), .ctiles, .perks__list, .steps__list, .ib-cards, .svc-grid) > li:nth-child(4n + 4) { animation-range: entry 24% entry 84%; }
+    :is(.look__photo, .visit__photo) img {
+      scale: 1.12;
+      animation: photo-drift linear both;
+      animation-timeline: view();
+      animation-range: cover;
+    }
+  }
+}

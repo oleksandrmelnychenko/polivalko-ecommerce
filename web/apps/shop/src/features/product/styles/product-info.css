@@ -5,7 +5,7 @@
 .buybox__price + .stock { margin-top: var(--space-sm); }
 .buybox__actions { display: flex; gap: var(--space-sm); }
 .buybox__actions .btn { flex: 1; }
-.buybox__note { padding: var(--space-lg); background: var(--color-paper-2); font-size: var(--text-sm); }
+.buybox__note { border-radius: var(--radius); padding: var(--space-lg); background: var(--color-paper-2); font-size: var(--text-sm); }
 .buybox__note svg { width: 22px; height: 22px; }
 .description { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--space-2xl); padding-top: var(--section-gap-s); }
 .description h2, .related h2 { font-size: var(--text-xl); }
@@ -18,7 +18,7 @@
 .related { padding-top: var(--section-gap-s); }
 .related h2 { margin-bottom: var(--space-xl); }
 .variants { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin: 0; padding: 0; list-style: none; }
-.variants a, .variants span { display: inline-flex; align-items: center; min-height: 44px; padding-inline: var(--space-lg); border: var(--rule-hair) solid var(--color-rule); text-decoration: none; transition: border-color var(--dur-micro) var(--ease-out); }
+.variants a, .variants span { border-radius: var(--radius); display: inline-flex; align-items: center; min-height: 44px; padding-inline: var(--space-lg); border: var(--rule-hair) solid var(--color-rule); text-decoration: none; transition: border-color var(--dur-micro) var(--ease-out); }
 .variants a:hover { border-color: var(--color-ink); }
 .variants [aria-current="true"] { border: 2px solid var(--color-brand); font-weight: 600; }
 .variants .is-out { color: var(--color-muted); text-decoration: line-through; }

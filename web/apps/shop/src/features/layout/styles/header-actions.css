@@ -1,5 +1,5 @@
 .site-header__actions { display: flex; align-items: center; gap: var(--space-lg); }
-.icon-btn { position: relative; display: inline-grid; place-items: center; width: 44px; height: 44px; flex: none; border: 0; background: transparent; color: var(--color-ink); cursor: pointer; transition: color 0.3s, background-color 0.3s; }
+.icon-btn { border-radius: 50%; position: relative; display: inline-grid; place-items: center; width: 44px; height: 44px; flex: none; border: 0; background: transparent; color: var(--color-ink); cursor: pointer; transition: color 0.3s, background-color 0.3s; }
 .icon-btn:hover { background: var(--color-paper-2); }
 .icon-btn svg { width: 22px; height: 22px; }
 .icon-btn--chrome { color: var(--color-ink); }

@@ -1,4 +1,4 @@
-.notice { padding: var(--space-md) var(--space-lg); border-left: 3px solid var(--color-field); background: var(--color-paper-2); }
+.notice { border-radius: var(--radius); padding: var(--space-md) var(--space-lg); border-left: 3px solid var(--color-field); background: var(--color-paper-2); }
 .notice--error { border-left-color: var(--color-error); background: color-mix(in oklab, var(--color-error) 7%, var(--color-paper)); }
 .notice--ok { border-left-color: var(--color-accent); background: var(--color-accent-soft); }
 .notice strong { display: block; margin-bottom: var(--space-2xs); }

@@ -1,11 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Onest, Oswald, Outfit } from "next/font/google";
+import { Onest, Oswald } from "next/font/google";
 import { GoogleAnalytics } from "@/features/analytics";
 import { defaultOpenGraph, SITE_NAME, siteUrl } from "@/features/seo";
 import "./globals.css";
 
 const onest = Onest({ variable: "--font-onest", subsets: ["latin", "cyrillic"], display: "swap" });
-const priceFont = Outfit({ variable: "--font-outfit", subsets: ["latin"], weight: ["300"], display: "swap" });
 const displayFont = Oswald({
   variable: "--font-oswald",
   subsets: ["latin", "cyrillic"],
@@ -36,7 +35,7 @@ export const viewport: Viewport = { themeColor: "#ffffff" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="uk" data-scroll-behavior="smooth" className={`${onest.variable} ${priceFont.variable} ${displayFont.variable}`}>
+    <html lang="uk" data-scroll-behavior="smooth" className={`${onest.variable} ${displayFont.variable}`}>
       <head>
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="" />
       </head>

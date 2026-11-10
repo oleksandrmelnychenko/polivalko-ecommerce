@@ -1,5 +1,5 @@
 .pager { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2xs); margin-top: var(--space-2xl); }
-.pager a, .pager span { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; padding-inline: var(--space-sm); border: var(--rule-hair) solid var(--color-rule); text-decoration: none; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pager a, .pager span { border-radius: var(--radius); display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; padding-inline: var(--space-sm); border: var(--rule-hair) solid var(--color-rule); text-decoration: none; font-weight: 600; font-variant-numeric: tabular-nums; }
 .pager a:hover { border-color: var(--color-ink); }
 .pager [aria-current="page"] { background: var(--color-ink); border-color: var(--color-ink); color: var(--color-paper); }
 .pager span[aria-hidden="true"] { border-color: transparent; }

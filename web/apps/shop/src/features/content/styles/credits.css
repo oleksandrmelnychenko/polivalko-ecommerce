@@ -1,5 +1,5 @@
 .credits { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-md) var(--gap-columns); margin: 0 0 var(--space-2xl); padding: 0; list-style: none; }
 .credits li { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: var(--space-md); align-items: center; padding-bottom: var(--space-md); border-bottom: var(--rule-hair) solid var(--color-rule); }
-.credits img { width: 72px; height: 72px; object-fit: cover; background: var(--color-paper-2); }
+.credits img { border-radius: var(--radius); width: 72px; height: 72px; object-fit: cover; background: var(--color-paper-2); }
 .credits span { display: grid; gap: 2px; font-size: var(--text-sm); line-height: 1.5; }
 .credits__credit { color: var(--color-ink-2); }

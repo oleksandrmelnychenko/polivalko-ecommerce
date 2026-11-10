@@ -1,6 +1,6 @@
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: var(--text-sm); font-weight: 600; }
-.field input, .field select, .field textarea { width: 100%; min-height: 48px; padding: var(--space-sm) var(--space-md); border: var(--rule-hair) solid var(--color-field); border-radius: 0; background: var(--color-paper); color: var(--color-ink); outline: 2px solid transparent; outline-offset: -2px; transition: border-color var(--dur-micro) var(--ease-out); }
+.field input, .field select, .field textarea { width: 100%; min-height: 48px; padding: var(--space-sm) var(--space-md); border: var(--rule-hair) solid var(--color-field); border-radius: var(--radius); background: var(--color-paper); color: var(--color-ink); outline: 2px solid transparent; outline-offset: -2px; transition: border-color var(--dur-micro) var(--ease-out); }
 .field input:hover, .field select:hover, .field textarea:hover { border-color: var(--color-ink-2); }
 .field textarea { min-height: 112px; resize: vertical; }
 .field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible { outline-color: var(--color-focus); }

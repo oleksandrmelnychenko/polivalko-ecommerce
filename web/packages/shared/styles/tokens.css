@@ -35,13 +35,12 @@
   --font-body: var(--font-onest), "Onest", ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-oswald), "Oswald", var(--font-body);
   --font-accent: var(--font-display);
-  --font-money: var(--font-outfit), "Outfit", var(--font-body);
-  --font-price: var(--font-money);
   --font-numeric: var(--font-money);
   --font-outlier: var(--font-body);
   --font-mega: var(--font-display);
   --font-button: var(--font-body);
-  --radius-sm: 0; --radius-card: 0; --radius-lg: 0; --radius-xl: 0; --radius-pill: 999px;
+  --radius: 10px; --radius-pill: 999px;
+  --tile-gap: 12px; --edge-inset: clamp(8px, 1.4vw, 24px); --shadow-lift: 0 24px 48px -28px rgb(0 0 0 / 0.35), 0 6px 14px -8px rgb(0 0 0 / 0.12); --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --rule-hair: 1px; --rule-bar: 2px;
   --shadow-card: none; --shadow-card-hover: 0 10px 30px -12px rgb(0 0 0 / 0.18); --shadow-pop: 0 10px 30px rgb(0 0 0 / 0.12);
   --tracking-display: 0.01em; --tracking-caps: 0; --display-weight: 600;

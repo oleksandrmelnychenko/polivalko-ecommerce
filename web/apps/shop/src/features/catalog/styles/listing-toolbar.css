@@ -1,5 +1,5 @@
 .range { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-xs); }
-.range input { width: 100%; min-width: 0; min-height: 44px; padding-inline: var(--space-sm); border: var(--rule-hair) solid var(--color-field); background: var(--color-paper); color: var(--color-ink); outline: 2px solid transparent; outline-offset: -2px; }
+.range input { border-radius: var(--radius); width: 100%; min-width: 0; min-height: 44px; padding-inline: var(--space-sm); border: var(--rule-hair) solid var(--color-field); background: var(--color-paper); color: var(--color-ink); outline: 2px solid transparent; outline-offset: -2px; }
 .range input:focus-visible { outline-color: var(--color-focus); }
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-sm) var(--space-lg); margin-bottom: var(--space-lg); padding-bottom: var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-rule); }
 .toolbar__count { margin: 0; color: var(--color-muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
@@ -7,7 +7,7 @@
 .active-filters { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-sm); margin: calc(-1 * var(--space-xs)) 0 var(--space-lg); }
 .active-filters__title { color: var(--color-muted); font-size: var(--text-sm); }
 .active-filters ul { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin: 0; padding: 0; list-style: none; }
-.active-filters ul a { display: inline-flex; align-items: center; gap: var(--space-xs); min-height: 32px; padding: 0 var(--space-sm); border: var(--rule-hair) solid var(--color-rule); background: var(--color-paper-2); color: var(--color-ink); font-size: var(--text-sm); text-decoration: none; }
+.active-filters ul a { border-radius: var(--radius); display: inline-flex; align-items: center; gap: var(--space-xs); min-height: 32px; padding: 0 var(--space-sm); border: var(--rule-hair) solid var(--color-rule); background: var(--color-paper-2); color: var(--color-ink); font-size: var(--text-sm); text-decoration: none; }
 .active-filters ul a span { color: var(--color-muted); font-size: 1.05rem; line-height: 1; }
 .active-filters ul a:hover { border-color: var(--color-ink); }
 .active-filters ul a:hover span { color: var(--color-ink); }

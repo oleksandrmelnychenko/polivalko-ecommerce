@@ -1,7 +1,7 @@
 .fav-toggle svg { transition: fill var(--dur-micro) var(--ease-out); }
 .fav-toggle[aria-pressed="true"] svg { fill: currentColor; }
 .tile__bar .fav-toggle[aria-pressed="true"], .tile__bar .fav-toggle[aria-pressed="true"]:hover { color: var(--color-brand); }
-.fav-toggle--box { display: inline-grid; place-items: center; width: 48px; min-height: 44px; flex: none; padding: 0; border: 2px solid var(--color-ink); background: transparent; color: var(--color-ink); cursor: pointer; transition: border-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out); }
+.fav-toggle--box { border-radius: var(--radius); display: inline-grid; place-items: center; width: 48px; min-height: 44px; flex: none; padding: 0; border: 2px solid var(--color-ink); background: transparent; color: var(--color-ink); cursor: pointer; transition: border-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out); }
 .fav-toggle--box:hover { border-color: var(--color-brand); color: var(--color-brand-strong); }
 .fav-toggle--box[aria-pressed="true"] { border-color: var(--color-brand); color: var(--color-brand); }
 .fav-toggle--box svg { width: 22px; height: 22px; }
