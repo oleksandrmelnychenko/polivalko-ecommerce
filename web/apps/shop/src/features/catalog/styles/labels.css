@@ -5,7 +5,7 @@
 :is(.label, .flash--label)[data-tone="orange"] { --tone: #b45309; }
 :is(.label, .flash--label)[data-tone="blue"] { --tone: #1d5fc1; }
 :is(.label, .flash--label)[data-tone="dark"] { --tone: var(--color-ink); }
-.label { border-radius: var(--radius); display: inline-flex; align-items: center; min-height: 22px; padding: 2px 8px; background: var(--tone); color: #fff; font: 500 0.75rem/1.3 var(--font-accent); letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+.label { border-radius: var(--radius); display: inline-flex; align-items: center; min-height: 22px; padding: 2px 8px; background: var(--tone); color: #fff; font: 500 0.6875rem/1.3 var(--font-body); letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
 .flash--label { background: var(--tone); }
 .flash--label[data-tone="red"] { background: var(--color-sale); }
 .flash--label[data-tone="green"] { background: var(--color-ribbon); }

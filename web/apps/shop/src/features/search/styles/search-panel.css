@@ -1,4 +1,4 @@
-.search-panel { border-radius: var(--radius); inset: calc(var(--bar-height) + 10px) auto auto 50%; translate: -50% 0; width: min(760px, calc(100vw - 2 * var(--gutter))); margin: 0; padding: var(--space-lg); border: 0; border-top: 2px solid var(--color-brand); background: var(--color-paper); color: var(--color-ink); box-shadow: var(--shadow-pop); }
+.search-panel { border-radius: var(--radius); inset: calc(var(--bar-height) + 10px) auto auto 50%; translate: -50% 0; width: min(760px, calc(100vw - 2 * var(--gutter))); margin: 0; padding: var(--space-lg); border: 0; background: var(--color-paper); color: var(--color-ink); box-shadow: var(--shadow-pop); }
 .search-panel::backdrop { background: rgb(0 0 0 / 0.45); }
 .search { position: relative; display: flex; align-items: center; }
 .search > svg { position: absolute; left: var(--space-md); width: 20px; height: 20px; color: var(--color-muted); pointer-events: none; }

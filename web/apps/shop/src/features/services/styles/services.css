@@ -1,6 +1,6 @@
 .services-page { padding-bottom: var(--space-3xl); }
-.svc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
-.svc-card { display: flex; flex-direction: column; justify-content: center; gap: var(--space-sm); min-height: 260px; padding: var(--space-xl); background: var(--color-paper); }
+.svc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--tile-gap); margin: 0; padding: 0; list-style: none; }
+.svc-card { border-radius: var(--radius); display: flex; flex-direction: column; justify-content: center; gap: var(--space-sm); min-height: 260px; padding: var(--space-xl); background: var(--color-paper); }
 .svc-grid > li:nth-child(odd) { background: var(--color-accent-soft); }
 .svc-card__thumb { border-radius: var(--radius); width: 56px; height: 56px; object-fit: cover; background: var(--color-paper-2); }
 .svc-card h3 { position: relative; margin: 0; padding-bottom: var(--space-sm); font-size: var(--text-xl); line-height: 1.25; }

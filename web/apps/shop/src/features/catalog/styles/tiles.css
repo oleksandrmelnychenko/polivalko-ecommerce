@@ -52,7 +52,7 @@
 .tile--shop .tile__photo { border-radius: var(--radius); aspect-ratio: 1 / 1; margin: 12px 12px 0; background: var(--color-paper-2); }
 .tile--shop .tile__photo img { transition: transform 0.9s var(--ease-soft); }
 .tile--shop .tile__flashes { inset: 0 auto auto 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px; overflow: visible; }
-.tile--shop .flash { border-radius: var(--radius); position: static; display: inline-flex; align-items: center; width: auto; height: auto; min-height: 22px; padding: 2px 8px; translate: none; rotate: none; background: var(--color-price-sale); color: #fff; font: 700 0.6875rem/1.3 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; }
+.tile--shop .flash { border-radius: var(--radius); position: static; display: inline-flex; align-items: center; width: auto; height: auto; min-height: 22px; padding: 2px 8px; translate: none; rotate: none; background: var(--color-price-sale); color: #fff; font: 500 0.6875rem/1.3 var(--font-body); letter-spacing: 0.05em; text-transform: uppercase; }
 .tile--shop .flash--out { background: var(--color-muted); }
 .tile--shop .flash--label { background: var(--tone); }
 .tile--shop :is(.flash--label, .label)[data-tone="green"] { background: #007f37; }
