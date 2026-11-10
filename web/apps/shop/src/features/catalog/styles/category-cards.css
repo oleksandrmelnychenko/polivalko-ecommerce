@@ -1,7 +1,7 @@
 .ctiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-lg); margin: 0 0 var(--space-3xl); padding: 0; list-style: none; }
-.ctile { border-radius: var(--radius); position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: var(--color-ink); isolation: isolate; }
+.ctile { border-radius: var(--radius); position: relative; display: flex; flex-direction: column; justify-content: flex-end; aspect-ratio: 4 / 5; overflow: hidden; background: var(--color-ink); isolation: isolate; }
 .ctile:has(.ctile__link:focus-visible) { outline: 2px solid var(--color-focus); outline-offset: 3px; }
-.ctile__photo { position: absolute; inset: 0; margin: 0; }
+.ctile__photo { position: absolute; inset: 0; z-index: -1; margin: 0; }
 .ctile__photo img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s var(--ease-out); }
 .ctile__photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(0 0 0 / 0.08) 0%, rgb(0 0 0 / 0) 30%, rgb(0 0 0 / 0.78) 100%); transition: background-color var(--dur-long) var(--ease-out); }
 .ctile:hover .ctile__photo img { transform: scale(1.06); }
@@ -11,7 +11,7 @@
 .ctile__go svg { width: 16px; height: 16px; }
 .ctile:hover .ctile__go { transform: translateX(4px); background: var(--color-brand-strong); }
 
-.ctile__body { position: absolute; inset: auto 0 0; z-index: 2; display: grid; gap: 10px; padding: 22px; color: #fff; pointer-events: none; }
+.ctile__body { display: grid; gap: 10px; padding: 22px; color: #fff; pointer-events: none; }
 .ctile__bar { width: 32px; height: 3px; background: var(--color-brand); transition: width var(--dur-long) var(--ease-out); }
 .ctile:hover .ctile__bar { width: 64px; }
 .ctile__name { margin: 0; color: #fff; font-size: clamp(1.25rem, 0.9vw + 0.95rem, 1.625rem); line-height: 1.1; letter-spacing: 0.02em; text-shadow: 0 1px 12px rgb(0 0 0 / 0.25); }
