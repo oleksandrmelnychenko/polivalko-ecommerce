@@ -178,6 +178,38 @@ public sealed class ConsoleAttributeApiTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Details_list_values_by_product_count_and_filter_categories()
+    {
+        var admin = await Staff.AdminAsync(api);
+        var name = CatalogDictionaries.Unique("Матеріал ручки");
+        var definition = await CatalogDictionaries.EnsureAttributeAsync(admin, name);
+        var first = await api.AddProductAsync("vse-dlia-polyvu", "Сапка з дерев'яною ручкою", 250m);
+        var second = await api.AddProductAsync("vse-dlia-polyvu", "Граблі з дерев'яною ручкою", 270m);
+        var third = await api.AddProductAsync("vse-dlia-polyvu", "Лопата з металевою ручкою", 320m);
+        await UpdateAttributesAsync(admin, first, [new ProductAttributeDto(name, "Дерево")]);
+        await UpdateAttributesAsync(admin, second, [new ProductAttributeDto(name.ToLowerInvariant(), " Дерево ")]);
+        await UpdateAttributesAsync(admin, third, [new ProductAttributeDto(name, "Метал")]);
+
+        var parent = (await admin.ReadAsync<List<ConsoleCategoryDto>>(Categories)).Single(c => c.Slug == "vse-dlia-polyvu");
+        var category = await (await admin.PostAsJsonAsync(Categories, new SaveCategoryRequest(
+                parent.Id, "Ручний інструмент", $"ruchnyi-{Guid.NewGuid().ToString("N")[..6]}", 1, false, null, [name], null, null), TestJson.Options, Ct))
+            .ReadAsync<ConsoleCategoryDto>(HttpStatusCode.Created);
+
+        var details = await admin.ReadAsync<AttributeDetailsDto>($"{CatalogDictionaries.Attributes}/{definition.Id}/details");
+        details.Id.ShouldBe(definition.Id);
+        details.ValueCount.ShouldBe(2);
+        details.Values.ShouldBe([new AttributeValueUsageDto("Дерево", 2), new AttributeValueUsageDto("Метал", 1)]);
+        details.Categories.ShouldBe([new AttributeFilterCategoryDto(category.Id, "Ручний інструмент", category.Slug, parent.Name, false)]);
+
+        var missing = await admin.GetAsync($"{CatalogDictionaries.Attributes}/{Guid.NewGuid()}/details", Ct);
+        missing.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await missing.ProblemCodeAsync()).ShouldBe("catalog.attribute_not_found");
+
+        var manager = await Staff.ManagerAsync(api);
+        (await manager.GetAsync($"{CatalogDictionaries.Attributes}/{definition.Id}/details", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
     public async Task Manager_reads_the_dictionary_but_cannot_change_it()
     {
         var manager = await Staff.ManagerAsync(api);

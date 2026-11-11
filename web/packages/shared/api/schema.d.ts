@@ -1340,6 +1340,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/catalog/attributes/{id}/details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Значення характеристики з кількістю товарів (до 200 найчастіших) і категорії, де вона є фільтром */
+        get: operations["ConsoleGetAttributeDetails"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/catalog/brands": {
         parameters: {
             query?: never;
@@ -2408,9 +2425,25 @@ export interface components {
             /** Format: int32 */
             categoryCount: number;
         };
+        AttributeDetailsDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            valueCount: number;
+            values: components["schemas"]["AttributeValueUsageDto"][];
+            categories: components["schemas"]["AttributeFilterCategoryDto"][];
+        };
         AttributeFacet: {
             name: string;
             values: components["schemas"]["AttributeValueFacet"][];
+        };
+        AttributeFilterCategoryDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            slug: string;
+            parentName: null | string;
+            isVisible: boolean;
         };
         /** @enum {unknown} */
         AttributeFilterView: "checkboxes" | "range";
@@ -2425,6 +2458,11 @@ export interface components {
             value: string;
             /** Format: int32 */
             count: number;
+        };
+        AttributeValueUsageDto: {
+            value: string;
+            /** Format: int32 */
+            productCount: number;
         };
         AuditEntryDto: {
             /** Format: uuid */
@@ -8132,6 +8170,55 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleGetAttributeDetails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttributeDetailsDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

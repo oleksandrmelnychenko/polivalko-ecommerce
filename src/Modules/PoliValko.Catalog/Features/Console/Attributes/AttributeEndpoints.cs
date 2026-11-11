@@ -30,6 +30,11 @@ internal static class AttributeEndpoints
             .WithSummary("Видалення з довідника; значення в товарах лишаються. Не можна, поки характеристика є фільтром категорії.")
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
+        attributes.MapGet("/{id:guid}/details", GetAttributeDetails.HandleAsync)
+            .RequirePermission(PermissionKeys.ProductsView, PermissionKeys.AttributesManage, PermissionKeys.CategoriesManage)
+            .WithName("ConsoleGetAttributeDetails")
+            .WithSummary("Значення характеристики з кількістю товарів (до 200 найчастіших) і категорії, де вона є фільтром")
+            .ProducesProblem(StatusCodes.Status404NotFound);
 
         return catalog;
     }

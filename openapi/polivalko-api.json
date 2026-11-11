@@ -5307,6 +5307,68 @@
         }
       }
     },
+    "/api/v1/console/catalog/attributes/{id}/details": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Значення характеристики з кількістю товарів (до 200 найчастіших) і категорії, де вона є фільтром",
+        "operationId": "ConsoleGetAttributeDetails",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttributeDetailsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/console/catalog/brands": {
       "get": {
         "tags": [
@@ -9663,6 +9725,37 @@
           }
         }
       },
+      "AttributeDetailsDto": {
+        "required": [
+          "id",
+          "valueCount",
+          "values",
+          "categories"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "valueCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttributeValueUsageDto"
+            }
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttributeFilterCategoryDto"
+            }
+          }
+        }
+      },
       "AttributeFacet": {
         "required": [
           "name",
@@ -9678,6 +9771,37 @@
             "items": {
               "$ref": "#/components/schemas/AttributeValueFacet"
             }
+          }
+        }
+      },
+      "AttributeFilterCategoryDto": {
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "parentName",
+          "isVisible"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "parentName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isVisible": {
+            "type": "boolean"
           }
         }
       },
@@ -9721,6 +9845,22 @@
             "type": "string"
           },
           "count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AttributeValueUsageDto": {
+        "required": [
+          "value",
+          "productCount"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "productCount": {
             "type": "integer",
             "format": "int32"
           }
