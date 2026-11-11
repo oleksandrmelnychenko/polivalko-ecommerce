@@ -1,12 +1,27 @@
-import { ActionIcon, Alert, Button, FileInput, Text, TextInput, Tooltip } from '@mantine/core'
-import { IconAlertCircle, IconArrowLeft, IconArrowRight, IconPhotoUp, IconTrash, IconUpload } from '@tabler/icons-react'
-import { useState, type FormEvent } from 'react'
+import { ActionIcon, Alert, Button, Loader, Text, Tooltip } from '@mantine/core'
+import { IconAlertCircle, IconArrowLeft, IconArrowRight, IconCheck, IconPhotoOff, IconPhotoUp, IconTrash, IconUpload } from '@tabler/icons-react'
+import { useEffect, useRef, useState, type DragEvent } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { TableChip } from '@/shared/ui/TableChip'
 import { deleteImage, reorderImages, uploadProductImage, type Product, type ProductImage } from '../api/catalogApi'
 import { ProductImageAlt } from './ProductImageAlt'
+
+const MAX_IMAGES = 20
+const MAX_BYTES = 10 * 1024 * 1024
+const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp']
+
+type UploadState = 'waiting' | 'uploading' | 'done' | 'failed'
+
+type UploadItem = {
+  key: string
+  name: string
+  preview: string | null
+  state: UploadState
+  queued: boolean
+  error?: string
+}
 
 type ProductEditorImagesProps = {
   product: Product
@@ -17,10 +32,20 @@ type ProductEditorImagesProps = {
 export function ProductEditorImages({ product, readOnly, onChange }: ProductEditorImagesProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [file, setFile] = useState<File | null>(null)
-  const [alt, setAlt] = useState('')
   const [removing, setRemoving] = useState<ProductImage | null>(null)
+  const [queue, setQueue] = useState<UploadItem[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  const input = useRef<HTMLInputElement>(null)
+  const previews = useRef(new Set<string>())
   const images = product.images
+  const free = Math.max(0, MAX_IMAGES - images.length)
+  const locked = busy || uploading
+
+  useEffect(() => {
+    const urls = previews.current
+    return () => urls.forEach((url) => URL.revokeObjectURL(url))
+  }, [])
 
   async function run(action: () => Promise<{ data?: Product; error?: unknown }>, fallback: string) {
     setBusy(true)
@@ -35,30 +60,86 @@ export function ProductEditorImages({ product, readOnly, onChange }: ProductEdit
     setBusy(false)
   }
 
-  async function upload(event: FormEvent) {
-    event.preventDefault()
-    if (!file || file.size === 0) {
-      setError('Оберіть файл фото.')
-      return
+  function patch(key: string, next: Partial<UploadItem>) {
+    setQueue((current) => current.map((item) => (item.key === key ? { ...item, ...next } : item)))
+  }
+
+  function release(items: UploadItem[]) {
+    for (const item of items) {
+      if (!item.preview) continue
+      URL.revokeObjectURL(item.preview)
+      previews.current.delete(item.preview)
     }
-    setBusy(true)
+  }
+
+  async function addFiles(files: File[]) {
+    if (locked || files.length === 0) return
     setError(null)
-    const data = new FormData()
-    data.set('file', file)
-    if (alt.trim()) data.set('alt', alt.trim())
-    try {
-      const result = await uploadProductImage(product.id, data)
-      if (result.data) {
-        setFile(null)
-        setAlt('')
-        onChange(result.data)
-      } else {
-        setError(result.problem?.errors?.file?.[0] ?? (result.problem ? problemMessage(result.problem, 'Фото не завантажено.') : 'Фото не завантажено.'))
+    release(queue)
+    const stamp = Date.now()
+    const items: UploadItem[] = []
+    const accepted: { key: string; file: File }[] = []
+    files.forEach((file, index) => {
+      const key = `${stamp}-${index}`
+      let problem: string | undefined
+      if (!ACCEPTED.includes(file.type)) problem = 'Це не JPEG, PNG чи WebP.'
+      else if (file.size === 0) problem = 'Файл порожній.'
+      else if (file.size > MAX_BYTES) problem = 'Файл більший за 10 МБ.'
+      else if (accepted.length >= free) problem = `Більше ${MAX_IMAGES} фото в товару не можна.`
+      const preview = problem ? null : URL.createObjectURL(file)
+      if (preview) previews.current.add(preview)
+      items.push({ key, name: file.name, preview, state: problem ? 'failed' : 'waiting', queued: !problem, error: problem })
+      if (!problem) accepted.push({ key, file })
+    })
+    setQueue(items)
+    if (accepted.length === 0) return
+
+    setUploading(true)
+    for (const { key, file } of accepted) {
+      patch(key, { state: 'uploading' })
+      const data = new FormData()
+      data.set('file', file)
+      try {
+        const result = await uploadProductImage(product.id, data)
+        if (result.data) {
+          onChange(result.data)
+          patch(key, { state: 'done' })
+        } else {
+          const message = result.problem?.errors?.file?.[0] ?? (result.problem ? problemMessage(result.problem, 'Фото не завантажено.') : 'Фото не завантажено.')
+          patch(key, { state: 'failed', error: message })
+        }
+      } catch {
+        patch(key, { state: 'failed', error: NETWORK_ERROR })
       }
-    } catch {
-      setError(NETWORK_ERROR)
     }
-    setBusy(false)
+    setUploading(false)
+    setQueue((current) => {
+      release(current.filter((item) => item.state === 'done'))
+      return current.filter((item) => item.state !== 'done')
+    })
+  }
+
+  function clearQueue() {
+    release(queue)
+    setQueue([])
+  }
+
+  function dragOver(event: DragEvent<HTMLDivElement>) {
+    if (!event.dataTransfer.types.includes('Files')) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = locked || free === 0 ? 'none' : 'copy'
+    setDragging(true)
+  }
+
+  function dragLeave(event: DragEvent<HTMLDivElement>) {
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false)
+  }
+
+  function drop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+    setDragging(false)
+    if (locked || free === 0) return
+    void addFiles(Array.from(event.dataTransfer.files))
   }
 
   function reorder(next: { id: string; alt: string }[]) {
@@ -79,13 +160,18 @@ export function ProductEditorImages({ product, readOnly, onChange }: ProductEdit
     setRemoving(null)
   }
 
+  const total = queue.filter((item) => item.queued).length
+  const processed = queue.filter((item) => item.queued && (item.state === 'done' || item.state === 'failed')).length
+  const failed = queue.filter((item) => item.state === 'failed').length
+
   return (
     <section className="catalog-card" aria-labelledby="images-title">
       <h2 id="images-title" className="app-section-title catalog-card-title">
         Фото
+        {images.length > 0 ? <span className="catalog-card-count">{images.length} з {MAX_IMAGES}</span> : null}
       </h2>
       {images.length > 0 ? (
-        <ul className="catalog-images" aria-busy={busy || undefined}>
+        <ul className="catalog-images" aria-busy={locked || undefined}>
           {images.map((image, index) => (
             <li key={image.id} className="catalog-image">
               <div className="catalog-image-frame">
@@ -106,22 +192,22 @@ export function ProductEditorImages({ product, readOnly, onChange }: ProductEdit
                     key={`${image.id}:${image.alt}`}
                     id={image.id}
                     value={image.alt}
-                    disabled={busy}
+                    disabled={locked}
                     onSave={(text) => reorder(images.map((item) => ({ id: item.id, alt: item.id === image.id ? text : item.alt })))}
                   />
                   <div className="catalog-image-actions">
                     <Tooltip label="Раніше">
-                      <ActionIcon variant="default" aria-label="Раніше" disabled={busy || index === 0} onClick={() => move(index, -1)}>
+                      <ActionIcon variant="default" aria-label="Раніше" disabled={locked || index === 0} onClick={() => move(index, -1)}>
                         <IconArrowLeft size={16} stroke={1.7} />
                       </ActionIcon>
                     </Tooltip>
                     <Tooltip label="Пізніше">
-                      <ActionIcon variant="default" aria-label="Пізніше" disabled={busy || index === images.length - 1} onClick={() => move(index, 1)}>
+                      <ActionIcon variant="default" aria-label="Пізніше" disabled={locked || index === images.length - 1} onClick={() => move(index, 1)}>
                         <IconArrowRight size={16} stroke={1.7} />
                       </ActionIcon>
                     </Tooltip>
                     <Tooltip label="Видалити">
-                      <ActionIcon variant="subtle" color="red" ml="auto" aria-label="Видалити" disabled={busy} onClick={() => setRemoving(image)}>
+                      <ActionIcon variant="subtle" color="red" ml="auto" aria-label="Видалити" disabled={locked} onClick={() => setRemoving(image)}>
                         <IconTrash size={16} stroke={1.7} />
                       </ActionIcon>
                     </Tooltip>
@@ -138,26 +224,97 @@ export function ProductEditorImages({ product, readOnly, onChange }: ProductEdit
       )}
 
       {readOnly ? null : (
-        <form className="catalog-upload" onSubmit={upload} aria-label="Нове фото">
-          <FileInput
-            label="Нове фото (JPEG, PNG, WebP до 10 МБ)"
-            placeholder="Оберіть файл"
-            accept="image/jpeg,image/png,image/webp"
-            leftSection={<IconPhotoUp size={16} stroke={1.7} />}
-            clearable
-            value={file}
-            disabled={busy}
-            onChange={(value) => {
-              setFile(value)
-              setError(null)
+        <div
+          className="catalog-drop"
+          data-dragging={dragging || undefined}
+          data-disabled={locked || free === 0 || undefined}
+          onDragEnter={dragOver}
+          onDragOver={dragOver}
+          onDragLeave={dragLeave}
+          onDrop={drop}
+        >
+          <IconPhotoUp className="catalog-drop-icon" size={28} stroke={1.5} aria-hidden="true" />
+          {free === 0 ? (
+            <p className="catalog-drop-title">У товару {MAX_IMAGES} фото, більше додати не можна. Видаліть зайве, щоб додати нове.</p>
+          ) : (
+            <>
+              <p className="catalog-drop-title">{dragging ? 'Відпустіть, щоб завантажити' : 'Перетягніть фото сюди або оберіть файли'}</p>
+              <p className="catalog-drop-hint">
+                JPEG, PNG чи WebP до 10 МБ кожне, кілька одразу. Можна додати ще {free}. Опис для незрячих спершу збігається з
+                назвою товару, його можна змінити під кожним фото.
+              </p>
+              <Button
+                variant="default"
+                leftSection={<IconUpload size={16} stroke={1.7} />}
+                loading={uploading}
+                disabled={busy}
+                onClick={() => input.current?.click()}
+              >
+                Обрати файли
+              </Button>
+            </>
+          )}
+          <input
+            ref={input}
+            type="file"
+            accept={ACCEPTED.join(',')}
+            multiple
+            hidden
+            onChange={(event) => {
+              const files = Array.from(event.currentTarget.files ?? [])
+              event.currentTarget.value = ''
+              void addFiles(files)
             }}
           />
-          <TextInput label="Опис фото для незрячих" placeholder="Що на фото" maxLength={300} value={alt} disabled={busy} onChange={(event) => setAlt(event.currentTarget.value)} />
-          <Button type="submit" variant="default" leftSection={<IconUpload size={16} stroke={1.7} />} loading={busy}>
-            Завантажити фото
-          </Button>
-        </form>
+        </div>
       )}
+
+      {queue.length > 0 ? (
+        <div className="catalog-queue" aria-live="polite">
+          <div className="catalog-queue-head">
+            <span>
+              {uploading
+                ? `Завантажується ${Math.min(processed + 1, total)} з ${total}`
+                : failed > 0
+                  ? `Не завантажено: ${failed}`
+                  : 'Готово'}
+            </span>
+            {!uploading ? (
+              <Button variant="subtle" size="compact-xs" onClick={clearQueue}>
+                Сховати
+              </Button>
+            ) : null}
+          </div>
+          <ul>
+            {queue.map((item) => (
+              <li key={item.key} data-state={item.state}>
+                {item.preview ? (
+                  <img src={item.preview} alt="" />
+                ) : (
+                  <span className="catalog-queue-placeholder" aria-hidden="true">
+                    <IconPhotoOff size={16} stroke={1.6} />
+                  </span>
+                )}
+                <span className="catalog-queue-name">{item.name}</span>
+                <span className="catalog-queue-state">
+                  {item.state === 'waiting' ? 'У черзі' : null}
+                  {item.state === 'uploading' ? (
+                    <>
+                      <Loader size={14} color="brand" /> Завантажується
+                    </>
+                  ) : null}
+                  {item.state === 'done' ? (
+                    <>
+                      <IconCheck size={15} stroke={2} /> Додано
+                    </>
+                  ) : null}
+                  {item.state === 'failed' ? item.error : null}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {error ? (
         <Alert color="red" variant="light" icon={<IconAlertCircle size={18} />} role="alert" mt="sm">

@@ -1,7 +1,6 @@
-import { ActionIcon, Button, Switch, Tooltip } from '@mantine/core'
-import { IconPencil, IconPlus, IconRefresh } from '@tabler/icons-react'
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { ActionIcon, Button, Tooltip } from '@mantine/core'
+import { IconPlus, IconRefresh } from '@tabler/icons-react'
+import { useCallback, useMemo, useState } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
@@ -11,22 +10,25 @@ import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
-import { NumberValue } from '@/shared/ui/Money'
 import { notifyError, notifySuccess } from '@/shared/ui/notify'
 import { PageHeader } from '@/shared/ui/PageHeader'
-import { TableChip } from '@/shared/ui/TableChip'
+import { getProductCounts } from '../api/catalogApi'
 import { deleteLabel, getLabels, saveLabel, type ProductLabel } from '../api/dictionariesApi'
 import { EditorDrawerFooter } from '../components/EditorDrawerFooter'
 import { LabelChip } from '../components/LabelChip'
+import { LabelDetailPane } from '../components/LabelDetailPane'
 import { LabelForm } from '../components/LabelForm'
 import { listEmptyText } from '../components/ListEmpty'
-import { canDeleteLabel, isAutoLabel, LABEL_KIND_LABELS, labelRule, sortLabels } from '../lib/labels'
+import { canDeleteLabel, isAutoLabel, sortLabels } from '../lib/labels'
 import { useEditorDrawer } from '../lib/useEditorDrawer'
+import { useListParams } from '../lib/useListParams'
 import '../components/catalog.css'
 import '../components/catalog-dictionaries.css'
+import '../components/catalog-split.css'
 
 const FORM_ID = 'catalog-label-form'
 const getRowId = (row: ProductLabel) => row.id
+const SELECT_KEYS = ['id'] as const
 const countFormat = new Intl.NumberFormat('uk-UA')
 
 export function LabelsPage() {
@@ -39,39 +41,51 @@ export function LabelsPage() {
   const nextSortOrder = rows.length ? Math.max(...rows.map((row) => row.sortOrder)) + 10 : 10
   const { reload, setData } = labels
 
-  const columns = useMemo<DataTableColumn<ProductLabel>[]>(() => {
-    async function toggle(label: ProductLabel, isActive: boolean) {
-      setToggling(label.id)
-      try {
-        const result = await withCsrf((headers) =>
-          saveLabel(headers, label.id, { name: label.name, tone: label.tone, kind: label.kind, newDays: label.newDays, sortOrder: label.sortOrder, isActive }),
-        )
-        if (result.response.ok) {
-          notifySuccess(`Мітку «${label.name}» ${isActive ? 'увімкнено' : 'вимкнено'}.`)
-          reload()
-        } else {
-          notifyError(problemMessage(result.error, 'Мітку не збережено.'))
-        }
-      } catch {
-        notifyError(NETWORK_ERROR)
-      }
-      setToggling(null)
-    }
+  const { values: picked, set: pick } = useListParams(SELECT_KEYS)
+  const selected = rows.find((row) => row.id === picked.id) ?? rows[0] ?? null
+  const selectedId = selected?.id ?? null
+  const productCounts = useApiQuery('catalog-products-counts', () => getProductCounts())
+  const selectRow = useCallback((row: ProductLabel) => pick({ id: row.id }), [pick])
+  const rowClassName = useCallback((row: ProductLabel) => (row.id === selectedId ? 'catalog-split-row-active' : undefined), [selectedId])
 
-    return [
+  async function toggle(label: ProductLabel, isActive: boolean) {
+    setToggling(label.id)
+    try {
+      const result = await withCsrf((headers) =>
+        saveLabel(headers, label.id, { name: label.name, tone: label.tone, kind: label.kind, newDays: label.newDays, sortOrder: label.sortOrder, isActive }),
+      )
+      if (result.response.ok) {
+        notifySuccess(`Мітку «${label.name}» ${isActive ? 'увімкнено' : 'вимкнено'}.`)
+        reload()
+      } else {
+        notifyError(problemMessage(result.error, 'Мітку не збережено.'))
+      }
+    } catch {
+      notifyError(NETWORK_ERROR)
+    }
+    setToggling(null)
+  }
+
+  const columns = useMemo<DataTableColumn<ProductLabel>[]>(
+    () => [
       {
         id: 'preview',
         header: 'Мітка',
-        width: 180,
+        width: 200,
+        fill: true,
         cell: (row) => <LabelChip name={row.name} tone={row.tone} muted={!row.isActive} />,
       },
       {
         id: 'kind',
         header: 'Як ставиться',
-        width: 140,
-        cell: (row) => <TableChip tone={isAutoLabel(row) ? 'document' : 'neutral'} value={LABEL_KIND_LABELS[row.kind] ?? row.kind} />,
+        width: 150,
+        cell: (row) => (
+          <span className={row.isActive ? 'catalog-split-item-meta' : 'catalog-split-item-meta is-off'}>
+            {isAutoLabel(row) ? 'автоматично' : 'вручну'}
+            {row.isActive ? '' : ', вимкнена'}
+          </span>
+        ),
       },
-      { id: 'rule', header: 'Правило', width: 320, fill: true, cell: (row) => <span className="catalog-rule-text">{labelRule(row)}</span> },
       {
         id: 'products',
         header: 'Товарів',
@@ -80,43 +94,14 @@ export function LabelsPage() {
         numeric: true,
         cell: (row) =>
           row.productCount ? (
-            <Link className="catalog-link" to={`/catalog/products?labelId=${encodeURIComponent(row.id)}`}>
-              {countFormat.format(row.productCount)}
-            </Link>
+            <span className="catalog-split-item-count">{countFormat.format(row.productCount)}</span>
           ) : (
-            <NumberValue value={0} />
+            <span className="catalog-split-item-meta is-off">0</span>
           ),
       },
-      { id: 'sortOrder', header: 'Порядок', width: 96, align: 'right', numeric: true, cell: (row) => <NumberValue value={row.sortOrder} /> },
-      {
-        id: 'active',
-        header: 'На сайті',
-        width: 104,
-        cell: (row) => (
-          <Switch
-            size="sm"
-            checked={row.isActive}
-            disabled={toggling !== null}
-            aria-label={`${row.isActive ? 'Вимкнути' : 'Увімкнути'} «${row.name}»`}
-            onChange={(event) => void toggle(row, event.currentTarget.checked)}
-          />
-        ),
-      },
-      {
-        id: 'edit',
-        header: <span className="visually-hidden">Дія</span>,
-        width: 56,
-        align: 'center',
-        cell: (row) => (
-          <Tooltip label="Змінити">
-            <ActionIcon variant="subtle" color="gray" aria-label={`Змінити «${row.name}»`} onClick={() => open(row)}>
-              <IconPencil size={16} stroke={1.7} />
-            </ActionIcon>
-          </Tooltip>
-        ),
-      },
-    ]
-  }, [open, reload, toggling])
+    ],
+    [],
+  )
 
   function saved() {
     drawer.setOpened(false)
@@ -172,19 +157,31 @@ export function LabelsPage() {
       />
 
       <ListPageBody>
-        <DataTable
-          ariaLabel="Мітки товарів"
-          columns={columns}
-          data={labels.status === 'error' || labels.status === 'forbidden' ? [] : rows}
-          getRowId={getRowId}
-          isLoading={labels.isLoading}
-          isFetching={labels.isFetching}
-          minWidth={920}
-          height="100%"
-          manualSorting
-          onRowClick={open}
-          emptyText={listEmptyText(labels, 'Не вдалося завантажити мітки.', 'Міток ще немає.')}
-        />
+        <div className="catalog-split-layout">
+          <div className="catalog-split-list">
+            <DataTable
+              ariaLabel="Мітки товарів"
+              columns={columns}
+              data={labels.status === 'error' || labels.status === 'forbidden' ? [] : rows}
+              getRowId={getRowId}
+              isLoading={labels.isLoading}
+              isFetching={labels.isFetching}
+              minWidth={420}
+              height="100%"
+              manualSorting
+              onRowClick={selectRow}
+              rowClassName={rowClassName}
+              emptyText={listEmptyText(labels, 'Не вдалося завантажити мітки.', 'Міток ще немає.')}
+            />
+          </div>
+          <LabelDetailPane
+            label={selected}
+            totalProducts={productCounts.data?.all ?? null}
+            toggling={toggling !== null}
+            onEdit={open}
+            onToggle={(label, isActive) => void toggle(label, isActive)}
+          />
+        </div>
       </ListPageBody>
 
       <AppDrawer

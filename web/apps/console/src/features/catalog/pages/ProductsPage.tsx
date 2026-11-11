@@ -20,10 +20,13 @@ import { NO_BRAND, ProductsBulkDialog, type BulkAction } from '../components/Pro
 import { productsColumns } from '../components/productsColumns'
 import { ProductsFilters } from '../components/ProductsFilters'
 import { ProductsTabs } from '../components/ProductsTabs'
+import { ProductsTiles } from '../components/ProductsTiles'
+import { ProductsViewToggle } from '../components/ProductsViewToggle'
 import { consoleCategoryOptions } from '../lib/categoryTree'
 import { manualLabelOptions, sortLabels } from '../lib/labels'
 import { activeTab, hasActiveFilters, productHref, tabPatch, toProductsQuery, type ProductsTab } from '../lib/productFilters'
 import { useProductsState } from '../lib/useProductsState'
+import { useProductsView } from '../lib/useProductsView'
 import '../components/catalog.css'
 
 const getRowId = (row: ProductRow) => row.id
@@ -52,6 +55,7 @@ export function ProductsPage() {
   const navigate = useNavigate()
   const { can } = usePermissions()
   const { state, params, update, reset } = useProductsState()
+  const [view, setView] = useProductsView()
   const query = useMemo(() => toProductsQuery(state), [state])
   const products = useApiQuery(`catalog-products:${JSON.stringify(query)}`, () => getProducts(query))
   const counts = useApiQuery('catalog-products-counts', () => getProductCounts())
@@ -188,6 +192,7 @@ export function ProductsPage() {
         reset={reset}
         actions={
           <>
+            <ProductsViewToggle value={view} onChange={setView} />
             {page ? <span className="app-filter-summary">Знайдено: {countFormat.format(page.totalItems)}</span> : null}
             <Paginator
               page={state.page}
@@ -203,20 +208,31 @@ export function ProductsPage() {
       />
 
       <ListPageBody>
-        <DataTable
-          ariaLabel="Товари"
-          columns={productsColumns}
-          data={rows}
-          getRowId={getRowId}
-          isLoading={products.isLoading}
-          isFetching={products.isFetching}
-          minWidth={1180}
-          height="100%"
-          manualSorting
-          onRowClick={onRowClick}
-          selection={tableSelection}
-          emptyText={emptyText}
-        />
+        {view === 'tiles' ? (
+          <ProductsTiles
+            rows={rows}
+            isLoading={products.isLoading}
+            isFetching={products.isFetching}
+            skeletons={state.pageSize}
+            emptyText={emptyText}
+            selection={tableSelection}
+          />
+        ) : (
+          <DataTable
+            ariaLabel="Товари"
+            columns={productsColumns}
+            data={rows}
+            getRowId={getRowId}
+            isLoading={products.isLoading}
+            isFetching={products.isFetching}
+            minWidth={1180}
+            height="100%"
+            manualSorting
+            onRowClick={onRowClick}
+            selection={tableSelection}
+            emptyText={emptyText}
+          />
+        )}
       </ListPageBody>
 
       {selected.size > 0 ? (

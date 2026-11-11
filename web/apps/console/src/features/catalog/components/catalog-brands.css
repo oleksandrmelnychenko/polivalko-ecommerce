@@ -1,0 +1,40 @@
+.catalog-brand-mark {
+  align-items: center;
+  background: var(--brand-accent-soft);
+  border: 1px solid rgb(0 160 70 / 14%);
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: var(--brand-accent-hover);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-weight: 700;
+  justify-content: center;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+}
+
+.catalog-brand-mark.is-sm {
+  font-size: 11px;
+  height: 28px;
+  width: 28px;
+}
+
+.catalog-brand-mark.is-lg {
+  border-radius: 14px;
+  font-size: 22px;
+  height: 64px;
+  width: 64px;
+}
+
+.catalog-brand-mark img {
+  background: var(--mantine-color-white);
+  height: 100%;
+  object-fit: contain;
+  width: 100%;
+}
+
+.data-table-row.catalog-split-row-active .catalog-brand-mark {
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: var(--mantine-color-white);
+}

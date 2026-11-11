@@ -1,29 +1,29 @@
 import { ActionIcon, Button, Select, Tooltip } from '@mantine/core'
-import { IconFilterOff, IconPencil, IconPlus, IconRefresh } from '@tabler/icons-react'
-import { useMemo } from 'react'
+import { IconFilterOff, IconPlus, IconRefresh } from '@tabler/icons-react'
+import { useCallback, useMemo } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemCode, problemMessage, type Problem } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { AppDrawer } from '@/shared/ui/AppDrawer'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
-import { DataTable } from '@/shared/ui/data-table/DataTable'
-import type { DataTableColumn } from '@/shared/ui/data-table/types'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
-import { CellStack, NumberValue } from '@/shared/ui/Money'
 import { notifySuccess } from '@/shared/ui/notify'
 import { PageHeader } from '@/shared/ui/PageHeader'
-import { TableChip } from '@/shared/ui/TableChip'
-import { deleteAttribute, getAttributes, type AttributeDefinition } from '../api/dictionariesApi'
+import { getProductCounts } from '../api/catalogApi'
+import { deleteAttribute, getAttributeDetails, getAttributes, type AttributeDefinition } from '../api/dictionariesApi'
+import { AttributeDetailPane } from '../components/AttributeDetailPane'
 import { AttributeForm } from '../components/AttributeForm'
+import { AttributeListPane } from '../components/AttributeListPane'
 import { EditorDrawerFooter } from '../components/EditorDrawerFooter'
 import { listEmptyText } from '../components/ListEmpty'
 import { ListSearch } from '../components/ListSearch'
-import { ATTRIBUTE_KIND_LABELS, ATTRIBUTE_KIND_OPTIONS, FILTER_VIEW_LABELS, matchesAttribute, sortAttributes } from '../lib/attributes'
+import { ATTRIBUTE_KIND_OPTIONS, matchesAttribute, sortAttributes } from '../lib/attributes'
 import { useEditorDrawer } from '../lib/useEditorDrawer'
 import { useListParams } from '../lib/useListParams'
 import '../components/catalog.css'
 import '../components/catalog-dictionaries.css'
+import '../components/catalog-split.css'
 
 const FORM_ID = 'catalog-attribute-form'
 const PARAM_KEYS = ['q', 'kind', 'usage'] as const
@@ -31,7 +31,7 @@ const USAGE_OPTIONS = [
   { value: 'filters', label: 'Є фільтром' },
   { value: 'unused', label: 'Без товарів' },
 ]
-const getRowId = (row: AttributeDefinition) => row.id
+const SELECT_KEYS = ['id'] as const
 const countFormat = new Intl.NumberFormat('uk-UA')
 
 function deleteProblemText(error: unknown): string {
@@ -65,70 +65,18 @@ export function AttributesPage() {
   const filtered = Boolean(values.q || values.kind || values.usage)
   const nextSortOrder = all.length ? Math.max(...all.map((row) => row.sortOrder)) + 10 : 10
 
-  const columns = useMemo<DataTableColumn<AttributeDefinition>[]>(
-    () => [
-      {
-        id: 'name',
-        header: 'Характеристика',
-        width: 240,
-        minWidth: 200,
-        fill: true,
-        accessor: (row) => row.name,
-        cell: (row) => <CellStack title={row.name} sub={row.unit ? <span className="catalog-code">{row.unit}</span> : undefined} />,
-      },
-      { id: 'kind', header: 'Тип', width: 110, accessor: (row) => ATTRIBUTE_KIND_LABELS[row.kind], cell: (row) => ATTRIBUTE_KIND_LABELS[row.kind] ?? row.kind },
-      {
-        id: 'filterView',
-        header: 'У фільтрі',
-        width: 120,
-        cell: (row) => <TableChip tone={row.filterView === 'range' ? 'document' : 'neutral'} value={FILTER_VIEW_LABELS[row.filterView] ?? row.filterView} />,
-      },
-      {
-        id: 'aliases',
-        header: 'Синоніми',
-        width: 220,
-        cell: (row) =>
-          row.aliases.length ? (
-            <span className="catalog-ellipsis" title={row.aliases.join(', ')}>
-              {row.aliases.join(', ')}
-            </span>
-          ) : (
-            <span className="catalog-muted">немає</span>
-          ),
-      },
-      { id: 'products', header: 'Товарів', width: 100, align: 'right', numeric: true, sortDescFirst: true, accessor: (row) => row.productCount, cell: (row) => <NumberValue value={row.productCount} /> },
-      {
-        id: 'categories',
-        header: 'Фільтр у категоріях',
-        width: 160,
-        align: 'right',
-        numeric: true,
-        sortDescFirst: true,
-        accessor: (row) => row.categoryCount,
-        cell: (row) => (row.categoryCount ? <NumberValue value={row.categoryCount} /> : <span className="catalog-muted">немає</span>),
-      },
-      { id: 'sortOrder', header: 'Порядок', width: 96, align: 'right', numeric: true, accessor: (row) => row.sortOrder, cell: (row) => <NumberValue value={row.sortOrder} /> },
-      {
-        id: 'edit',
-        header: <span className="visually-hidden">Дія</span>,
-        width: 56,
-        align: 'center',
-        cell: (row) => (
-          <Tooltip label="Змінити">
-            <ActionIcon variant="subtle" color="gray" aria-label={`Змінити «${row.name}»`} onClick={() => open(row)}>
-              <IconPencil size={16} stroke={1.7} />
-            </ActionIcon>
-          </Tooltip>
-        ),
-      },
-    ],
-    [open],
-  )
+  const { values: picked, set: pick } = useListParams(SELECT_KEYS)
+  const selected = rows.find((row) => row.id === picked.id) ?? rows[0] ?? null
+  const selectedId = selected?.id ?? null
+  const selectAttribute = useCallback((id: string) => pick({ id }), [pick])
+  const productCounts = useApiQuery('catalog-products-counts', () => getProductCounts())
+  const details = useApiQuery(`catalog-attribute-details:${selectedId}`, () => getAttributeDetails(selectedId ?? ''), { enabled: Boolean(selectedId) })
 
   function saved(next: AttributeDefinition | undefined) {
     drawer.setOpened(false)
     notifySuccess(next && current && next.name !== current.name ? `Характеристику перейменовано на «${next.name}».` : 'Характеристику збережено.')
     attributes.reload()
+    details.reload()
   }
 
   async function remove() {
@@ -192,22 +140,21 @@ export function AttributesPage() {
       </FilterBar>
 
       <ListPageBody>
-        <DataTable
-          ariaLabel="Довідник характеристик"
-          columns={columns}
-          data={attributes.status === 'error' || attributes.status === 'forbidden' ? [] : rows}
-          getRowId={getRowId}
-          isLoading={attributes.isLoading}
-          isFetching={attributes.isFetching}
-          minWidth={1000}
-          height="100%"
-          onRowClick={open}
-          emptyText={listEmptyText(
-            attributes,
-            'Не вдалося завантажити характеристики.',
-            filtered ? 'Нічого не знайдено.' : 'Довідник порожній. Додайте першу характеристику.',
-          )}
-        />
+        <div className="catalog-split-layout">
+          <AttributeListPane
+            rows={attributes.status === 'error' || attributes.status === 'forbidden' ? [] : rows}
+            selectedId={selectedId}
+            isLoading={attributes.isLoading}
+            isFetching={attributes.isFetching}
+            emptyText={listEmptyText(
+              attributes,
+              'Не вдалося завантажити характеристики.',
+              filtered ? 'Нічого не знайдено.' : 'Довідник порожній. Додайте першу характеристику.',
+            )}
+            onSelect={selectAttribute}
+          />
+          <AttributeDetailPane attribute={selected} details={details} totalProducts={productCounts.data?.all ?? null} onEdit={open} />
+        </div>
       </ListPageBody>
 
       <AppDrawer

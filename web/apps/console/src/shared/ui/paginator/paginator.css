@@ -21,6 +21,70 @@
   text-align: center;
 }
 
+.app-paginator-size {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--mantine-color-gray-7);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 500;
+  gap: 4px;
+  height: 28px;
+  padding: 0 6px 0 8px;
+  transition: background-color 140ms ease, color 140ms ease;
+  white-space: nowrap;
+}
+
+.app-paginator-size:hover:not(:disabled),
+.app-paginator-size[aria-expanded='true'] {
+  background: var(--mantine-color-gray-1);
+  color: var(--mantine-color-gray-9);
+}
+
+.app-paginator-size:focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 1px;
+}
+
+.app-paginator-size:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.app-paginator-size-value {
+  color: var(--mantine-color-gray-9);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.app-paginator-size-chevron {
+  color: var(--mantine-color-gray-6);
+  transition: transform 140ms ease;
+}
+
+.app-paginator-size[aria-expanded='true'] .app-paginator-size-chevron {
+  transform: rotate(180deg);
+}
+
+.app-paginator-size-option {
+  font-variant-numeric: tabular-nums;
+}
+
+.app-paginator-size-option[data-active] {
+  color: var(--brand-accent-hover);
+  font-weight: 600;
+}
+
+.app-paginator-divider {
+  align-self: stretch;
+  background: var(--mantine-color-gray-2);
+  margin: 4px 4px;
+  width: 1px;
+}
+
 .app-paginator-label {
   color: var(--mantine-color-gray-7);
   font-variant-numeric: tabular-nums;

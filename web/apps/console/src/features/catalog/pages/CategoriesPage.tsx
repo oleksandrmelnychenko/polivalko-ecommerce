@@ -1,5 +1,5 @@
 import { ActionIcon, Button, CloseButton, Group, Stack, Text, TextInput, Tooltip } from '@mantine/core'
-import { IconPencil, IconPlus, IconRefresh, IconSearch, IconTrash } from '@tabler/icons-react'
+import { IconPlus, IconRefresh, IconSearch, IconTrash } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
@@ -10,19 +10,22 @@ import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
-import { NumberValue } from '@/shared/ui/Money'
 import { notifySuccess } from '@/shared/ui/notify'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { TableChip } from '@/shared/ui/TableChip'
 import { deleteCategory, getCategories, type ConsoleCategory } from '../api/catalogApi'
 import { getAttributes } from '../api/dictionariesApi'
+import { CategoryDetailPane } from '../components/CategoryDetailPane'
 import { CategoryForm } from '../components/CategoryForm'
 import { ProductThumb } from '../components/ProductThumb'
 import { isHidden, orderCategories, type OrderedCategory } from '../lib/categoryTree'
+import { useListParams } from '../lib/useListParams'
 import '../components/catalog.css'
+import '../components/catalog-split.css'
 
 const FORM_ID = 'catalog-category-form'
 const getRowId = (row: OrderedCategory) => row.id
+const SELECT_KEYS = ['id'] as const
 const countFormat = new Intl.NumberFormat('uk-UA')
 
 type Editing = { category: ConsoleCategory | null; key: number }
@@ -84,63 +87,70 @@ export function CategoriesPage() {
     setBusy(false)
   }
 
+  const { values: picked, set: pick } = useListParams(SELECT_KEYS)
+  const selected = rows.find((row) => row.id === picked.id) ?? rows[0] ?? null
+  const selectedId = selected?.id ?? null
+  const selectCategory = useCallback((id: string) => pick({ id }), [pick])
+  const selectRow = useCallback((row: OrderedCategory) => pick({ id: row.id }), [pick])
+  const inherits = useMemo(() => {
+    const byId = new Map(all.map((item) => [item.id, item]))
+    const ids = new Set<string>()
+    for (const item of all) {
+      if (item.filterAttributes.length) continue
+      for (let parent = item.parentId ? byId.get(item.parentId) : undefined, depth = 0; parent && depth < 10; parent = parent.parentId ? byId.get(parent.parentId) : undefined, depth++) {
+        if (parent.filterAttributes.length) {
+          ids.add(item.id)
+          break
+        }
+      }
+    }
+    return ids
+  }, [all])
+  const rowClassName = useCallback((row: OrderedCategory) => (row.id === selectedId ? 'catalog-split-row-active' : undefined), [selectedId])
+
   const columns = useMemo<DataTableColumn<OrderedCategory>[]>(
     () => [
       {
         id: 'name',
         header: 'Категорія',
-        width: 300,
-        minWidth: 220,
+        width: 280,
+        minWidth: 200,
         fill: true,
         cell: (row) => (
           <span className="catalog-tree-cell" style={{ paddingLeft: row.depth * 20 }}>
             {row.depth > 0 ? <span className="catalog-tree-branch" aria-hidden="true" /> : null}
-            <ProductThumb url={row.imageUrl} size={32} />
-            <span className="app-cell-stack">
-              <span className="app-cell-title catalog-tree-title">
-                {row.name}
-                {isHidden(row) ? <TableChip value="прихована" title={row.isVisible ? 'Прихована батьківська категорія' : undefined} /> : null}
-              </span>
-              <span className="app-cell-sub catalog-code">/catalog/{row.slug}</span>
-            </span>
+            <ProductThumb url={row.imageUrl} size={28} />
+            <span className="catalog-split-item-name">{row.name}</span>
+            {isHidden(row) ? <TableChip value="прихована" title={row.isVisible ? 'Прихована батьківська категорія' : undefined} /> : null}
           </span>
         ),
       },
       {
-        id: 'navkoloRef',
-        header: 'Група Navkolo',
-        width: 220,
-        cell: (row) => (row.navkoloRef ? <span className="catalog-ellipsis">{row.navkoloRef}</span> : <span className="catalog-muted">не задано</span>),
-      },
-      {
         id: 'filters',
         header: 'Фільтри',
-        width: 260,
+        width: 130,
         cell: (row) =>
           row.filterAttributes.length ? (
-            <span className="catalog-ellipsis" title={row.filterAttributes.join(', ')}>
-              {row.filterAttributes.join(', ')}
-            </span>
+            <span className="catalog-split-item-meta">{row.filterAttributes.length}</span>
           ) : (
-            <span className="catalog-muted">успадковані</span>
+            <span className="catalog-split-item-meta is-off">{inherits.has(row.id) ? 'успадковані' : 'немає'}</span>
           ),
       },
-      { id: 'products', header: 'Товарів', width: 100, align: 'right', numeric: true, cell: (row) => <NumberValue value={row.productCount} /> },
       {
-        id: 'edit',
-        header: <span className="visually-hidden">Дія</span>,
-        width: 56,
-        align: 'center',
-        cell: (row) => (
-          <Tooltip label="Змінити">
-            <ActionIcon variant="subtle" color="gray" aria-label={`Змінити «${row.name}»`} onClick={() => open(row)}>
-              <IconPencil size={16} stroke={1.7} />
-            </ActionIcon>
-          </Tooltip>
-        ),
+        id: 'products',
+        header: 'Товарів',
+        width: 100,
+        align: 'right',
+        numeric: true,
+        cell: (row) =>
+          row.productCount ? (
+            <span className="catalog-split-item-count">{countFormat.format(row.productCount)}</span>
+          ) : (
+            <span className="catalog-split-item-meta is-off">0</span>
+          ),
       },
     ],
-    [open],
+    [inherits],
   )
 
   const current = editing?.category ?? null
@@ -197,19 +207,31 @@ export function CategoriesPage() {
       />
 
       <ListPageBody>
-        <DataTable
-          ariaLabel="Категорії каталогу"
-          columns={columns}
-          data={categories.status === 'error' ? [] : rows}
-          getRowId={getRowId}
-          isLoading={categories.isLoading}
-          isFetching={categories.isFetching}
-          minWidth={940}
-          height="100%"
-          manualSorting
-          onRowClick={open}
-          emptyText={emptyText}
-        />
+        <div className="catalog-split-layout">
+          <div className="catalog-split-list">
+            <DataTable
+              ariaLabel="Категорії каталогу"
+              columns={columns}
+              data={categories.status === 'error' ? [] : rows}
+              getRowId={getRowId}
+              isLoading={categories.isLoading}
+              isFetching={categories.isFetching}
+              minWidth={460}
+              height="100%"
+              manualSorting
+              onRowClick={selectRow}
+              rowClassName={rowClassName}
+              emptyText={emptyText}
+            />
+          </div>
+          <CategoryDetailPane
+            category={selected}
+            all={all}
+            attributes={attributes.status === 'ready' ? (attributes.data ?? null) : null}
+            onEdit={open}
+            onSelect={selectCategory}
+          />
+        </div>
       </ListPageBody>
 
       <AppDrawer

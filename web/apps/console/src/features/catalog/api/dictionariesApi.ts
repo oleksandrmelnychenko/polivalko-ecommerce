@@ -9,6 +9,7 @@ export type AttributeKind = S['AttributeKind']
 export type AttributeFilterView = S['AttributeFilterView']
 export type AttributeDefinition = S['AttributeDefinitionDto']
 export type SaveAttributeRequest = S['SaveAttributeDefinitionRequest']
+export type AttributeDetails = S['AttributeDetailsDto']
 export type Brand = S['BrandDto']
 export type SaveBrandRequest = S['SaveBrandRequest']
 export type LabelTone = S['LabelTone']
@@ -29,6 +30,10 @@ export function saveAttribute(headers: CsrfHeaders, id: string | null, body: Sav
 
 export function deleteAttribute(headers: CsrfHeaders, id: string) {
   return api.DELETE('/api/v1/console/catalog/attributes/{id}', { params: { path: { id } }, headers })
+}
+
+export function getAttributeDetails(id: string) {
+  return api.GET('/api/v1/console/catalog/attributes/{id}/details', { params: { path: { id } } })
 }
 
 export function getBrands() {

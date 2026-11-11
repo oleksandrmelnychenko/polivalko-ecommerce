@@ -1,6 +1,6 @@
 import { ActionIcon, Button, Group, Stack, Text, Tooltip } from '@mantine/core'
 import { IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
@@ -10,34 +10,54 @@ import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
-import { CellStack, NumberValue } from '@/shared/ui/Money'
 import { notifySuccess } from '@/shared/ui/notify'
 import { PageHeader } from '@/shared/ui/PageHeader'
-import { TableChip } from '@/shared/ui/TableChip'
 import { deleteCollection, getCollections, type ConsoleCollection } from '../api/catalogApi'
+import { CollectionDetailPane } from '../components/CollectionDetailPane'
 import { CollectionForm } from '../components/CollectionForm'
+import { useListParams } from '../lib/useListParams'
 import '../components/catalog.css'
+import '../components/catalog-split.css'
 
 const FORM_ID = 'catalog-collection-form'
 const getRowId = (row: ConsoleCollection) => row.id
 const countFormat = new Intl.NumberFormat('uk-UA')
 
+const SELECT_KEYS = ['id'] as const
+
 const columns: DataTableColumn<ConsoleCollection>[] = [
   {
     id: 'title',
     header: 'Добірка',
-    width: 320,
+    width: 240,
     fill: true,
-    cell: (row) => <CellStack title={row.title} sub={<span className="catalog-code">{row.code}</span>} />,
+    cell: (row) => (
+      <span className="catalog-split-name-cell">
+        <span className="catalog-split-item-name">{row.title}</span>
+        <span className="catalog-split-code">{row.code}</span>
+      </span>
+    ),
   },
-  { id: 'products', header: 'Товарів', width: 110, align: 'right', numeric: true, cell: (row) => <NumberValue value={row.products.length} /> },
   {
     id: 'visible',
     header: 'На головній',
-    width: 150,
-    cell: (row) => (row.isVisible ? <TableChip tone="success" dot value="Показується" /> : <TableChip value="Прихована" />),
+    width: 130,
+    cell: (row) =>
+      row.isVisible ? <span className="catalog-split-item-meta">показується</span> : <span className="catalog-split-item-meta is-off">прихована</span>,
   },
-  { id: 'sortOrder', header: 'Порядок', width: 110, align: 'right', numeric: true, cell: (row) => <NumberValue value={row.sortOrder} /> },
+  {
+    id: 'products',
+    header: 'Товарів',
+    width: 100,
+    align: 'right',
+    numeric: true,
+    cell: (row) =>
+      row.products.length ? (
+        <span className="catalog-split-item-count">{countFormat.format(row.products.length)}</span>
+      ) : (
+        <span className="catalog-split-item-meta is-off">0</span>
+      ),
+  },
 ]
 
 type Editing = { collection: ConsoleCollection | null; key: number }
@@ -89,6 +109,17 @@ export function CollectionsPage() {
   }
 
   const current = editing?.collection ?? null
+  const rows = useMemo(() => (collections.status === 'error' ? [] : (collections.data ?? [])), [collections.data, collections.status])
+  const { values: picked, set: pick } = useListParams(SELECT_KEYS)
+  const selected = rows.find((row) => row.id === picked.id) ?? rows[0] ?? null
+  const selectedId = selected?.id ?? null
+  const selectRow = useCallback((row: ConsoleCollection) => pick({ id: row.id }), [pick])
+  const rowClassName = useCallback((row: ConsoleCollection) => (row.id === selectedId ? 'catalog-split-row-active' : undefined), [selectedId])
+  const position = useMemo(() => {
+    if (!selected) return 0
+    const shown = [...rows].filter((row) => row.isVisible && row.products.length > 0).sort((a, b) => a.sortOrder - b.sortOrder)
+    return shown.findIndex((row) => row.id === selected.id) + 1
+  }, [rows, selected])
   const emptyText =
     collections.status === 'error' ? (
       <Stack align="center" gap={8}>
@@ -126,19 +157,25 @@ export function CollectionsPage() {
       />
 
       <ListPageBody>
-        <DataTable
-          ariaLabel="Добірки"
-          columns={columns}
-          data={collections.status === 'error' ? [] : (collections.data ?? [])}
-          getRowId={getRowId}
-          isLoading={collections.isLoading}
-          isFetching={collections.isFetching}
-          minWidth={720}
-          height="100%"
-          manualSorting
-          onRowClick={open}
-          emptyText={emptyText}
-        />
+        <div className="catalog-split-layout">
+          <div className="catalog-split-list">
+            <DataTable
+              ariaLabel="Добірки"
+              columns={columns}
+              data={rows}
+              getRowId={getRowId}
+              isLoading={collections.isLoading}
+              isFetching={collections.isFetching}
+              minWidth={420}
+              height="100%"
+              manualSorting
+              onRowClick={selectRow}
+              rowClassName={rowClassName}
+              emptyText={emptyText}
+            />
+          </div>
+          <CollectionDetailPane collection={selected} position={position} onEdit={open} />
+        </div>
       </ListPageBody>
 
       <AppDrawer

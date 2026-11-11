@@ -1,7 +1,7 @@
-import { ActionIcon, Group, NumberInput, Select, Text, Tooltip } from '@mantine/core'
-import { IconChevronLeft, IconChevronRight, IconRefresh } from '@tabler/icons-react'
+import { ActionIcon, Group, Menu, NumberInput, Text, Tooltip } from '@mantine/core'
+import { IconCheck, IconChevronDown, IconChevronLeft, IconChevronRight, IconRefresh } from '@tabler/icons-react'
 import { useState } from 'react'
-import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from './pageSize'
+import { PAGE_SIZE_OPTIONS } from './pageSize'
 import './paginator.css'
 
 export type PaginatorProps = {
@@ -48,17 +48,34 @@ export function Paginator({
   return (
     <Group className={['app-paginator', className].filter(Boolean).join(' ')} gap={2} wrap="nowrap" role="navigation" aria-label="Сторінки">
       {onPageSizeChange ? (
-        <Select
-          allowDeselect={false}
-          aria-label="Кількість рядків на сторінці"
-          data={pageSizeOptions.map(String)}
-          disabled={isLoading}
-          size="xs"
-          value={String(pageSize)}
-          w={68}
-          comboboxProps={{ width: 90 }}
-          onChange={(value) => onPageSizeChange(Number(value) || DEFAULT_PAGE_SIZE)}
-        />
+        <>
+          <Menu position="bottom-start" offset={6} width={180} withinPortal shadow="md" radius="md">
+            <Menu.Target>
+              <button type="button" className="app-paginator-size" disabled={isLoading} aria-label={`Рядків на сторінці: ${pageSize}`}>
+                <span className="app-paginator-size-value">{pageSize}</span>
+                <span>рядків</span>
+                <IconChevronDown className="app-paginator-size-chevron" size={14} stroke={1.8} aria-hidden="true" />
+              </button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Label>Рядків на сторінці</Menu.Label>
+              {pageSizeOptions.map((size) => (
+                <Menu.Item
+                  key={size}
+                  className="app-paginator-size-option"
+                  data-active={size === pageSize || undefined}
+                  rightSection={size === pageSize ? <IconCheck size={15} stroke={2} /> : null}
+                  onClick={() => {
+                    if (size !== pageSize) onPageSizeChange(size)
+                  }}
+                >
+                  {size}
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Menu>
+          <span className="app-paginator-divider" aria-hidden="true" />
+        </>
       ) : null}
       <Text className="app-paginator-label" size="xs">
         стор.

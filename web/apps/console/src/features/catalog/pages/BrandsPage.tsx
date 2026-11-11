@@ -1,7 +1,6 @@
 import { ActionIcon, Button, Select, Tooltip } from '@mantine/core'
-import { IconArrowMerge, IconFilterOff, IconPencil, IconPhoto, IconPlus, IconRefresh } from '@tabler/icons-react'
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { IconArrowMerge, IconFilterOff, IconPlus, IconRefresh } from '@tabler/icons-react'
+import { useCallback, useMemo, useState } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemCode, problemMessage, type Problem } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
@@ -11,11 +10,13 @@ import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
-import { CellStack, NumberValue } from '@/shared/ui/Money'
 import { notifySuccess } from '@/shared/ui/notify'
 import { PageHeader } from '@/shared/ui/PageHeader'
+import { getProductCounts } from '../api/catalogApi'
 import { deleteBrand, getBrands, type Brand } from '../api/dictionariesApi'
+import { BrandDetailPane } from '../components/BrandDetailPane'
 import { BrandForm } from '../components/BrandForm'
+import { BrandMark } from '../components/BrandMark'
 import { BrandMergeDialog } from '../components/BrandMergeDialog'
 import { EditorDrawerFooter } from '../components/EditorDrawerFooter'
 import { listEmptyText } from '../components/ListEmpty'
@@ -24,9 +25,12 @@ import { useEditorDrawer } from '../lib/useEditorDrawer'
 import { useListParams } from '../lib/useListParams'
 import '../components/catalog.css'
 import '../components/catalog-dictionaries.css'
+import '../components/catalog-split.css'
+import '../components/catalog-brands.css'
 
 const FORM_ID = 'catalog-brand-form'
 const PARAM_KEYS = ['q', 'usage'] as const
+const SELECT_KEYS = ['id'] as const
 const USAGE_OPTIONS = [
   { value: 'used', label: 'З товарами' },
   { value: 'unused', label: 'Без товарів' },
@@ -34,10 +38,6 @@ const USAGE_OPTIONS = [
 ]
 const getRowId = (row: Brand) => row.id
 const countFormat = new Intl.NumberFormat('uk-UA')
-
-function BrandLogo({ url }: { url: string | null }) {
-  return <span className="catalog-logo">{url ? <img src={url} alt="" loading="lazy" /> : <IconPhoto size={16} stroke={1.5} aria-hidden="true" />}</span>
-}
 
 function deleteProblemText(error: unknown): string {
   const problem = error as Problem | undefined
@@ -69,34 +69,35 @@ export function BrandsPage() {
   }, [all, values.q, values.usage])
   const filtered = Boolean(values.q || values.usage)
 
+  const { values: picked, set: pick } = useListParams(SELECT_KEYS)
+  const selected = rows.find((row) => row.id === picked.id) ?? rows[0] ?? null
+  const selectedId = selected?.id ?? null
+  const productCounts = useApiQuery('catalog-products-counts', () => getProductCounts())
+  const selectBrand = useCallback((row: Brand) => pick({ id: row.id }), [pick])
+  const rowClassName = useCallback((row: Brand) => (row.id === selectedId ? 'catalog-split-row-active' : undefined), [selectedId])
+
   const columns = useMemo<DataTableColumn<Brand>[]>(
     () => [
       {
         id: 'name',
         header: 'Бренд',
-        width: 280,
-        minWidth: 220,
+        width: 240,
+        minWidth: 180,
+        fill: true,
         accessor: (row) => row.name,
         cell: (row) => (
-          <span className="catalog-product-cell">
-            <BrandLogo url={row.logoUrl} />
-            <CellStack title={row.name} sub={<span className="catalog-code">{row.slug}</span>} />
+          <span className="catalog-split-name-cell">
+            <BrandMark name={row.name} logoUrl={row.logoUrl} />
+            <span className="catalog-split-item-name">{row.name}</span>
           </span>
         ),
       },
       {
-        id: 'description',
-        header: 'Опис',
-        width: 320,
-        fill: true,
-        cell: (row) =>
-          row.description ? (
-            <span className="catalog-ellipsis" title={row.description}>
-              {row.description}
-            </span>
-          ) : (
-            <span className="catalog-muted">немає</span>
-          ),
+        id: 'slug',
+        header: 'Адреса',
+        width: 190,
+        accessor: (row) => row.slug,
+        cell: (row) => <span className="catalog-split-code">{row.slug}</span>,
       },
       {
         id: 'products',
@@ -108,35 +109,13 @@ export function BrandsPage() {
         accessor: (row) => row.productCount,
         cell: (row) =>
           row.productCount ? (
-            <Link className="catalog-link" to={`/catalog/products?brand=${encodeURIComponent(row.name)}`}>
-              {countFormat.format(row.productCount)}
-            </Link>
+            <span className="catalog-split-item-count">{countFormat.format(row.productCount)}</span>
           ) : (
-            <NumberValue value={0} />
+            <span className="catalog-split-item-meta is-off">немає</span>
           ),
       },
-      {
-        id: 'actions',
-        header: <span className="visually-hidden">Дії</span>,
-        width: 92,
-        align: 'center',
-        cell: (row) => (
-          <span className="catalog-row-actions">
-            <Tooltip label="Об'єднати з…">
-              <ActionIcon variant="subtle" color="gray" aria-label={`Об'єднати «${row.name}» з іншим брендом`} onClick={() => setMerging(row)}>
-                <IconArrowMerge size={16} stroke={1.7} />
-              </ActionIcon>
-            </Tooltip>
-            <Tooltip label="Змінити">
-              <ActionIcon variant="subtle" color="gray" aria-label={`Змінити «${row.name}»`} onClick={() => open(row)}>
-                <IconPencil size={16} stroke={1.7} />
-              </ActionIcon>
-            </Tooltip>
-          </span>
-        ),
-      },
     ],
-    [open],
+    [],
   )
 
   function saved(next: Brand | undefined) {
@@ -212,18 +191,24 @@ export function BrandsPage() {
       </FilterBar>
 
       <ListPageBody>
-        <DataTable
-          ariaLabel="Довідник брендів"
-          columns={columns}
-          data={brands.status === 'error' || brands.status === 'forbidden' ? [] : rows}
-          getRowId={getRowId}
-          isLoading={brands.isLoading}
-          isFetching={brands.isFetching}
-          minWidth={860}
-          height="100%"
-          onRowClick={open}
-          emptyText={listEmptyText(brands, 'Не вдалося завантажити бренди.', filtered ? 'Нічого не знайдено.' : 'Брендів ще немає.')}
-        />
+        <div className="catalog-split-layout">
+          <div className="catalog-split-list">
+            <DataTable
+              ariaLabel="Довідник брендів"
+              columns={columns}
+              data={brands.status === 'error' || brands.status === 'forbidden' ? [] : rows}
+              getRowId={getRowId}
+              isLoading={brands.isLoading}
+              isFetching={brands.isFetching}
+              minWidth={480}
+              height="100%"
+              onRowClick={selectBrand}
+              rowClassName={rowClassName}
+              emptyText={listEmptyText(brands, 'Не вдалося завантажити бренди.', filtered ? 'Нічого не знайдено.' : 'Брендів ще немає.')}
+            />
+          </div>
+          <BrandDetailPane brand={selected} totalProducts={productCounts.data?.all ?? null} onEdit={open} onMerge={setMerging} />
+        </div>
       </ListPageBody>
 
       <AppDrawer
