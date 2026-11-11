@@ -1,24 +1,15 @@
-import { ActionIcon, Button, Group, Tooltip } from '@mantine/core'
-import { IconKey, IconLock, IconLockOpen, IconPencil, IconShieldOff } from '@tabler/icons-react'
-import { Link } from 'react-router-dom'
 import type { StaffRole } from '@/shared/auth/permissionsApi'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
-import { CellStack } from '@/shared/ui/Money'
 import { TableChip } from '@/shared/ui/TableChip'
 import type { StaffUser } from '../api/staffApi'
+import { StaffAvatar } from './StaffAvatar'
 
 type ColumnOptions = {
   selfEmail: string
-  busyId: string | null
   rolesById: ReadonlyMap<string, StaffRole>
-  canOpenRoles: boolean
-  onEdit: (user: StaffUser) => void
-  onPassword: (user: StaffUser) => void
-  onLock: (user: StaffUser) => void
-  onResetTwoFactor: (user: StaffUser) => void
 }
 
-export function staffColumns({ selfEmail, busyId, rolesById, canOpenRoles, onEdit, onPassword, onLock, onResetTwoFactor }: ColumnOptions): DataTableColumn<StaffUser>[] {
+export function staffColumns({ selfEmail, rolesById }: ColumnOptions): DataTableColumn<StaffUser>[] {
   const isSelf = (user: StaffUser) => user.email.toLowerCase() === selfEmail.toLowerCase()
   return [
     {
@@ -26,18 +17,20 @@ export function staffColumns({ selfEmail, busyId, rolesById, canOpenRoles, onEdi
       header: 'Працівник',
       accessor: (row) => row.displayName.toLocaleLowerCase('uk'),
       enableSorting: true,
-      width: 280,
+      width: 300,
+      minWidth: 220,
       fill: true,
       cell: (row) => (
-        <CellStack
-          title={
-            <>
+        <span className="app-split-name-cell">
+          <StaffAvatar name={row.displayName} size="sm" locked={row.lockedOut} />
+          <span className="staff-person">
+            <span className="app-split-item-name">
               {row.displayName}
               {isSelf(row) ? <span className="staff-self"> (ви)</span> : null}
-            </>
-          }
-          sub={row.email}
-        />
+            </span>
+            <span className="staff-person-email">{row.email}</span>
+          </span>
+        </span>
       ),
     },
     {
@@ -45,25 +38,15 @@ export function staffColumns({ selfEmail, busyId, rolesById, canOpenRoles, onEdi
       header: 'Роль',
       accessor: (row) => row.roleName.toLocaleLowerCase('uk'),
       enableSorting: true,
-      width: 200,
-      cell: (row) => {
-        const role = rolesById.get(row.roleId)
-        const chip = <TableChip tone={role?.isSuperuser ? 'document' : 'neutral'} value={row.roleName} />
-        return canOpenRoles ? (
-          <Link className="staff-role-link" to={`/system/roles?role=${encodeURIComponent(row.roleId)}`} title={`Права ролі «${row.roleName}»`}>
-            {chip}
-          </Link>
-        ) : (
-          chip
-        )
-      },
+      width: 160,
+      cell: (row) => <TableChip tone={rolesById.get(row.roleId)?.isSuperuser ? 'document' : 'neutral'} value={row.roleName} />,
     },
     {
       id: 'access',
       header: 'Доступ',
       accessor: (row) => (row.lockedOut ? 1 : 0),
       enableSorting: true,
-      width: 150,
+      width: 140,
       cell: (row) => (row.lockedOut ? <TableChip dot tone="danger" value="Заблоковано" /> : <TableChip dot tone="success" value="Активний" />),
     },
     {
@@ -71,43 +54,8 @@ export function staffColumns({ selfEmail, busyId, rolesById, canOpenRoles, onEdi
       header: 'Двофакторна',
       accessor: (row) => (row.twoFactorEnabled ? 1 : 0),
       enableSorting: true,
-      width: 150,
-      cell: (row) => (row.twoFactorEnabled ? <TableChip tone="success" value="Увімкнено" /> : <TableChip tone="neutral" value="Вимкнено" />),
-    },
-    {
-      id: 'actions',
-      header: <span className="visually-hidden">Дії</span>,
-      width: 420,
-      align: 'right',
-      cell: (row) => (
-        <Group gap={6} justify="flex-end" wrap="nowrap" className="staff-row-actions">
-          <Button size="compact-sm" variant="default" leftSection={<IconPencil size={14} stroke={1.8} />} onClick={() => onEdit(row)}>
-            Змінити
-          </Button>
-          <Button size="compact-sm" variant="default" leftSection={<IconKey size={14} stroke={1.8} />} onClick={() => onPassword(row)}>
-            Новий пароль
-          </Button>
-          {row.twoFactorEnabled && !isSelf(row) ? (
-            <Tooltip label="Скинути двофакторну перевірку">
-              <ActionIcon variant="default" aria-label={`Скинути двофакторну перевірку: ${row.displayName}`} onClick={() => onResetTwoFactor(row)}>
-                <IconShieldOff size={15} stroke={1.8} />
-              </ActionIcon>
-            </Tooltip>
-          ) : null}
-          <Button
-            className="staff-lock-button"
-            size="compact-sm"
-            variant={row.lockedOut ? 'default' : 'light'}
-            color={row.lockedOut ? 'gray' : 'red'}
-            leftSection={row.lockedOut ? <IconLockOpen size={14} stroke={1.8} /> : <IconLock size={14} stroke={1.8} />}
-            disabled={busyId !== null}
-            loading={busyId === row.id}
-            onClick={() => onLock(row)}
-          >
-            {row.lockedOut ? 'Розблокувати' : 'Заблокувати'}
-          </Button>
-        </Group>
-      ),
+      width: 130,
+      cell: (row) => (row.twoFactorEnabled ? <TableChip tone="success" value="Увімкнено" /> : <span className="app-split-item-meta is-off">вимкнено</span>),
     },
   ]
 }

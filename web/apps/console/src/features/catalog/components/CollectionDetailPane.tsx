@@ -15,27 +15,27 @@ type CollectionDetailPaneProps = {
 }
 
 export function CollectionDetailPane({ collection, position, onEdit }: CollectionDetailPaneProps) {
-  if (!collection) return <section className="catalog-split-detail catalog-split-detail-empty">Оберіть добірку зліва.</section>
+  if (!collection) return <section className="app-split-detail app-split-detail-empty">Оберіть добірку зліва.</section>
 
   const products = collection.products
   const inStock = products.filter((product) => product.stock > 0).length
   const hidden = products.filter((product) => !product.isVisible).length
 
   return (
-    <section key={collection.id} className="catalog-split-detail" aria-labelledby="collection-detail-title">
-      <header className="catalog-split-hero">
-        <div className="catalog-split-hero-top">
-          <div className="catalog-split-head">
+    <section key={collection.id} className="app-split-detail" aria-labelledby="collection-detail-title">
+      <header className="app-split-hero">
+        <div className="app-split-hero-top">
+          <div className="app-split-head">
             <span className="catalog-category-photo" aria-hidden="true">
               <IconLayoutGrid size={26} stroke={1.5} />
             </span>
-            <div className="catalog-split-hero-main">
-              <p className="catalog-split-hero-kicker catalog-split-mono">{collection.code}</p>
+            <div className="app-split-hero-main">
+              <p className="app-split-hero-kicker app-split-mono">{collection.code}</p>
               <h2 id="collection-detail-title" className="catalog-category-title">
                 {collection.title}
                 {collection.isVisible ? <TableChip tone="success" dot value="На головній" /> : <TableChip value="Прихована" />}
               </h2>
-              <p className="catalog-split-description">
+              <p className="app-split-description">
                 {!collection.isVisible
                   ? 'На головній не показується.'
                   : position === 0
@@ -46,7 +46,7 @@ export function CollectionDetailPane({ collection, position, onEdit }: Collectio
               </p>
             </div>
           </div>
-          <div className="catalog-split-actions">
+          <div className="app-split-actions">
             <Button variant="default" size="sm" leftSection={<IconPencil size={16} stroke={1.7} />} onClick={() => onEdit(collection)}>
               Змінити
             </Button>
@@ -60,7 +60,7 @@ export function CollectionDetailPane({ collection, position, onEdit }: Collectio
           </div>
         </div>
 
-        <dl className="catalog-split-stats">
+        <dl className="app-split-stats">
           <div>
             <dt>Товарів</dt>
             <dd>{countFormat.format(products.length)}</dd>
@@ -86,7 +86,7 @@ export function CollectionDetailPane({ collection, position, onEdit }: Collectio
         {products.length ? (
           <ProductTilesGrid items={products} />
         ) : (
-          <p className="catalog-split-blank">У добірці ще немає товарів. Додати їх можна кнопкою «Змінити».</p>
+          <p className="app-split-blank">У добірці ще немає товарів. Додати їх можна кнопкою «Змінити».</p>
         )}
       </PreviewCard>
     </section>

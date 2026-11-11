@@ -1,11 +1,8 @@
-import { Link } from 'react-router-dom'
-import { formatDateTime } from '@polivalko/shared/lib/format'
-import { siteUrl } from '@/shared/lib/siteUrl'
+import { IconFileText, IconPhoto } from '@tabler/icons-react'
+import { shortWhen } from '@/shared/lib/when'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
-import { CellStack } from '@/shared/ui/Money'
 import { TableChip } from '@/shared/ui/TableChip'
 import type { PageListItem, ServiceDirection } from '../api/contentApi'
-import { pageEditorHref } from '../lib/contentLinks'
 
 export const pagesColumns: DataTableColumn<PageListItem>[] = [
   {
@@ -13,18 +10,18 @@ export const pagesColumns: DataTableColumn<PageListItem>[] = [
     header: 'Сторінка',
     accessor: (row) => row.title,
     fill: true,
-    width: 280,
-    cell: (row) => <CellStack title={<Link to={pageEditorHref(row.slug)}>{row.title}</Link>} />,
-  },
-  {
-    id: 'slug',
-    header: 'Адреса на сайті',
-    accessor: (row) => row.slug,
-    width: 240,
+    width: 300,
+    minWidth: 220,
     cell: (row) => (
-      <a href={siteUrl(`/${row.slug}`)} className="content-code" target="_blank" rel="noopener">
-        /{row.slug}
-      </a>
+      <span className="app-split-name-cell">
+        <span className="app-split-kind-icon">
+          <IconFileText size={16} stroke={1.6} />
+        </span>
+        <span className="app-split-row-text">
+          <span className="app-split-item-name">{row.title}</span>
+          <span className="app-split-row-sub">/{row.slug}</span>
+        </span>
+      </span>
     ),
   },
   {
@@ -32,8 +29,8 @@ export const pagesColumns: DataTableColumn<PageListItem>[] = [
     header: 'Оновлено',
     accessor: (row) => row.updatedAt,
     sortDescFirst: true,
-    width: 240,
-    cell: (row) => <CellStack title={formatDateTime(row.updatedAt)} sub={row.updatedBy ?? undefined} />,
+    width: 190,
+    cell: (row) => <span className="app-split-item-meta">{shortWhen(row.updatedAt)}</span>,
   },
 ]
 
@@ -44,40 +41,31 @@ export const servicesColumns: DataTableColumn<ServiceDirection>[] = [
     accessor: (row) => row.sortOrder,
     align: 'right',
     numeric: true,
-    width: 104,
-  },
-  {
-    id: 'image',
-    header: 'Фото',
-    width: 104,
-    cell: (row) =>
-      row.imageUrl ? (
-        <span className="content-thumb">
-          <img src={row.imageUrl} alt="" loading="lazy" />
-        </span>
-      ) : (
-        <span className="content-muted">немає</span>
-      ),
+    width: 96,
+    cell: (row) => <span className="app-split-item-count">{row.sortOrder}</span>,
   },
   {
     id: 'name',
     header: 'Напрямок',
     accessor: (row) => row.name,
-    width: 280,
-    cell: (row) => <CellStack title={row.name} sub={row.code} />,
-  },
-  {
-    id: 'description',
-    header: 'Опис',
     fill: true,
-    width: 360,
-    cell: (row) => (row.description ? <span className="content-clamp">{row.description}</span> : <span className="content-muted">немає</span>),
+    width: 300,
+    minWidth: 220,
+    cell: (row) => (
+      <span className="app-split-name-cell">
+        <span className="content-thumb">{row.imageUrl ? <img src={row.imageUrl} alt="" loading="lazy" /> : <IconPhoto size={15} stroke={1.5} aria-hidden="true" />}</span>
+        <span className="app-split-row-text">
+          <span className="app-split-item-name">{row.name}</span>
+          <span className="app-split-row-sub">{row.description ?? 'без опису'}</span>
+        </span>
+      </span>
+    ),
   },
   {
     id: 'isVisible',
     header: 'На сайті',
     accessor: (row) => row.isVisible,
-    width: 190,
-    cell: (row) => (row.isVisible ? <TableChip dot tone="success" value="Показується" /> : <TableChip dot tone="neutral" value="Прихований на сайті" />),
+    width: 150,
+    cell: (row) => (row.isVisible ? <TableChip dot tone="success" value="Показується" /> : <TableChip dot tone="neutral" value="Прихований" />),
   },
 ]

@@ -24,7 +24,8 @@ import { useEditorDrawer } from '../lib/useEditorDrawer'
 import { useListParams } from '../lib/useListParams'
 import '../components/catalog.css'
 import '../components/catalog-dictionaries.css'
-import '../components/catalog-split.css'
+import '@/shared/ui/split/split.css'
+import '../components/catalog-detail.css'
 
 const FORM_ID = 'catalog-label-form'
 const getRowId = (row: ProductLabel) => row.id
@@ -46,7 +47,7 @@ export function LabelsPage() {
   const selectedId = selected?.id ?? null
   const productCounts = useApiQuery('catalog-products-counts', () => getProductCounts())
   const selectRow = useCallback((row: ProductLabel) => pick({ id: row.id }), [pick])
-  const rowClassName = useCallback((row: ProductLabel) => (row.id === selectedId ? 'catalog-split-row-active' : undefined), [selectedId])
+  const rowClassName = useCallback((row: ProductLabel) => (row.id === selectedId ? 'app-split-row-active' : undefined), [selectedId])
 
   async function toggle(label: ProductLabel, isActive: boolean) {
     setToggling(label.id)
@@ -80,7 +81,7 @@ export function LabelsPage() {
         header: 'Як ставиться',
         width: 150,
         cell: (row) => (
-          <span className={row.isActive ? 'catalog-split-item-meta' : 'catalog-split-item-meta is-off'}>
+          <span className={row.isActive ? 'app-split-item-meta' : 'app-split-item-meta is-off'}>
             {isAutoLabel(row) ? 'автоматично' : 'вручну'}
             {row.isActive ? '' : ', вимкнена'}
           </span>
@@ -94,9 +95,9 @@ export function LabelsPage() {
         numeric: true,
         cell: (row) =>
           row.productCount ? (
-            <span className="catalog-split-item-count">{countFormat.format(row.productCount)}</span>
+            <span className="app-split-item-count">{countFormat.format(row.productCount)}</span>
           ) : (
-            <span className="catalog-split-item-meta is-off">0</span>
+            <span className="app-split-item-meta is-off">0</span>
           ),
       },
     ],
@@ -157,8 +158,8 @@ export function LabelsPage() {
       />
 
       <ListPageBody>
-        <div className="catalog-split-layout">
-          <div className="catalog-split-list">
+        <div className="app-split-layout">
+          <div className="app-split-list">
             <DataTable
               ariaLabel="Мітки товарів"
               columns={columns}

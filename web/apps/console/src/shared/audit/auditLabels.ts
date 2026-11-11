@@ -105,3 +105,19 @@ export function entityHref(entityType: string, entityId: string | null, can: (pe
   if (!link || !entityId || !can(link.permission)) return undefined
   return link.href(entityId)
 }
+
+export type AuditTone = 'success' | 'danger' | 'neutral'
+
+export function actionTone(action: string): AuditTone {
+  if (/(deleted|\.locked|two_factor_disabled|two_factor_reset)$/.test(action)) return 'danger'
+  if (/(created|added|uploaded|imported|unlocked|two_factor_enabled)$/.test(action)) return 'success'
+  return 'neutral'
+}
+
+export function actionText(action: string): string {
+  return actionLabel[action] ?? action
+}
+
+export function entityText(entityType: string): string {
+  return entityTypeLabel[entityType] ?? entityType
+}

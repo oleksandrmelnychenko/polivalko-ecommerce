@@ -17,19 +17,21 @@ import { ScreenTabs, type ScreenTab } from '@/shared/ui/ScreenTabs'
 import { getIntegrationStatus, getNovaPoshta, getOutbox, getRuns, retryOutbox, runJob, type OutboxMessage, type SyncJob, type SyncRun } from '../api/integrationApi'
 import { useDetailModal } from '../components/DetailModal'
 import { IntegrationSummary } from '../components/IntegrationSummary'
+import { JobDetailPane, type RunRequest } from '../components/JobDetailPane'
 import { jobsColumns } from '../components/jobsColumns'
-import type { RunRequest } from '../components/RunCell'
 import { ListError } from '../components/ListError'
-import { NovaPoshtaPanel } from '../components/NovaPoshtaPanel'
 import { outboxColumns } from '../components/outboxColumns'
 import { runsColumns } from '../components/runsColumns'
 import { messageTypeLabel } from '../lib/labels'
 import { useIntegrationState, type IntegrationTab } from '../lib/useIntegrationState'
+import '@/shared/ui/split/split.css'
 import './integration.css'
 
 const jobRowId = (row: SyncJob) => row.job
 const runRowId = (row: SyncRun) => row.id
 const outboxRowId = (row: OutboxMessage) => row.id
+
+const JOB_COLUMNS = jobsColumns()
 
 const NO_CONNECTION = "Немає зв'язку з сервером."
 
@@ -38,11 +40,11 @@ export function IntegrationPage() {
   const canRun = can(PermissionKeys.Integration.RunJobs)
   const canManageOutbox = can(PermissionKeys.Integration.ManageOutbox)
   const canImport = can(PermissionKeys.Catalog.RunImport)
-  const { tab, job, setTab, setJob } = useIntegrationState(canManageOutbox)
+  const { tab, job, setTab, selectJob, setJob } = useIntegrationState(canManageOutbox)
   const detail = useDetailModal()
 
   const status = useApiQuery('integration-status', () => getIntegrationStatus())
-  const runs = useApiQuery(`integration-runs:${job}`, () => getRuns(job || undefined))
+  const runs = useApiQuery(`integration-runs:${job}`, () => getRuns(job || undefined), { enabled: tab === 'runs' })
   const outbox = useApiQuery('integration-outbox', () => getOutbox(), { enabled: canManageOutbox })
   const np = useApiQuery('integration-novaposhta', () => getNovaPoshta())
   const reloadStatus = status.reload
@@ -50,9 +52,14 @@ export function IntegrationPage() {
 
   const [requests, setRequests] = useState<Record<string, RunRequest>>({})
   const [retrying, setRetrying] = useState<string | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const jobs = useMemo(() => status.data?.jobs ?? [], [status.data])
   const titles = useMemo(() => new Map(jobs.map((item) => [item.job, item.title])), [jobs])
+  const selected = jobs.find((item) => item.job === job) ?? jobs[0] ?? null
+  const selectedId = selected?.job ?? null
+  const rowClassName = useCallback((row: SyncJob) => (row.job === selectedId ? 'app-split-row-active' : undefined), [selectedId])
+  const pickJob = useCallback((row: SyncJob) => selectJob(row.job), [selectJob])
 
   const run = useCallback(
     async (name: string) => {
@@ -92,33 +99,27 @@ export function IntegrationPage() {
     [reloadOutbox, reloadStatus],
   )
 
-  const jobColumns = useMemo(
-    () => jobsColumns({ requests, canRun, canImport, onRun: (name) => void run(name), onExpand: detail.show }),
-    [requests, canRun, canImport, run, detail.show],
-  )
   const runColumns = useMemo(() => runsColumns({ titles, onExpand: detail.show }), [titles, detail.show])
   const messageColumns = useMemo(() => outboxColumns({ busy: retrying, onRetry: (message) => void retry(message), onExpand: detail.show }), [retrying, retry, detail.show])
-  const openRuns = useCallback((row: SyncJob) => setJob(row.job), [setJob])
+  const openOutbox = useCallback(() => setTab('outbox'), [setTab])
 
   function refresh() {
+    status.reload()
     if (tab === 'jobs') {
       setRequests({})
-      status.reload()
+      setRefreshKey((value) => value + 1)
+      np.reload()
     } else if (tab === 'runs') runs.reload()
-    else if (tab === 'outbox') {
-      outbox.reload()
-      status.reload()
-    } else np.reload()
+    else outbox.reload()
   }
 
-  const refreshing = tab === 'jobs' ? status.isFetching : tab === 'runs' ? runs.isFetching : tab === 'outbox' ? outbox.isFetching : np.isFetching
+  const refreshing = status.isFetching || (tab === 'runs' ? runs.isFetching : tab === 'outbox' ? outbox.isFetching : np.isFetching)
 
   const failedOutbox = (outbox.data ?? []).some((message) => message.status === 'failed')
   const tabs: ScreenTab<IntegrationTab>[] = [
-    { value: 'jobs', label: 'Фонові завдання', count: status.data ? jobs.length : null },
-    { value: 'runs', label: 'Останні запуски', count: runs.data ? runs.data.length : null },
+    { value: 'jobs', label: 'Фонові завдання', count: status.data ? jobs.length : null, hot: jobs.some((item) => item.consecutiveFailures > 0) },
+    { value: 'runs', label: 'Журнал запусків' },
     ...(canManageOutbox ? [{ value: 'outbox' as const, label: 'Черга операцій', count: outbox.data ? outbox.data.length : null, hot: failedOutbox }] : []),
-    { value: 'novaposhta', label: 'Нова пошта' },
   ]
 
   const jobOptions = useMemo(() => {
@@ -149,7 +150,7 @@ export function IntegrationPage() {
         }
       />
 
-      {status.data ? <IntegrationSummary status={status.data} /> : null}
+      {status.data ? <IntegrationSummary status={status.data} onOpenJob={selectJob} onOpenOutbox={canManageOutbox ? openOutbox : undefined} /> : null}
 
       <ScreenTabs tabs={tabs} value={tab} label="Розділи інтеграцій" onChange={setTab} />
 
@@ -170,66 +171,78 @@ export function IntegrationPage() {
         />
       ) : null}
 
-      {tab === 'novaposhta' ? (
-        <NovaPoshtaPanel np={np} onExpand={detail.show} />
-      ) : (
-        <ListPageBody>
-          {tab === 'jobs' ? (
-            <DataTable
-              ariaLabel="Фонові завдання"
-              columns={jobColumns}
-              data={statusFailed ? [] : jobs}
-              getRowId={jobRowId}
-              isLoading={status.isLoading}
-              isFetching={status.isFetching}
-              minWidth={1180}
-              height="100%"
-              onRowClick={openRuns}
-              emptyText={statusFailed ? <ListError problem={status.problem} onRetry={status.reload} /> : 'Завдань немає.'}
+      <ListPageBody>
+        {tab === 'jobs' ? (
+          <div className="app-split-layout">
+            <div className="app-split-list">
+              <DataTable
+                ariaLabel="Фонові завдання"
+                columns={JOB_COLUMNS}
+                data={statusFailed ? [] : jobs}
+                getRowId={jobRowId}
+                isLoading={status.isLoading}
+                isFetching={status.isFetching}
+                minWidth={560}
+                height="100%"
+                onRowClick={pickJob}
+                rowClassName={rowClassName}
+                emptyText={statusFailed ? <ListError problem={status.problem} onRetry={status.reload} /> : 'Завдань немає.'}
+              />
+            </div>
+            <JobDetailPane
+              job={selected}
+              request={selected ? requests[selected.job] : undefined}
+              canRun={canRun}
+              canImport={canImport}
+              np={np}
+              refreshKey={refreshKey}
+              onRun={(name) => void run(name)}
+              onExpand={detail.show}
+              onOpenRuns={setJob}
             />
-          ) : null}
-          {tab === 'runs' ? (
-            <DataTable
-              ariaLabel="Останні запуски"
-              columns={runColumns}
-              data={runsFailed ? [] : (runs.data ?? [])}
-              getRowId={runRowId}
-              isLoading={runs.isLoading}
-              isFetching={runs.isFetching}
-              minWidth={1280}
-              height="100%"
-              emptyText={
-                runsFailed ? (
-                  <ListError problem={runs.problem} onRetry={runs.reload} />
-                ) : job ? (
-                  'Це завдання ще не запускалося.'
-                ) : (
-                  'Запусків ще не було.'
-                )
-              }
-            />
-          ) : null}
-          {tab === 'outbox' && canManageOutbox ? (
-            <DataTable
-              ariaLabel="Черга операцій"
-              columns={messageColumns}
-              data={outboxFailed ? [] : (outbox.data ?? [])}
-              getRowId={outboxRowId}
-              isLoading={outbox.isLoading}
-              isFetching={outbox.isFetching}
-              minWidth={1240}
-              height="100%"
-              emptyText={
-                outboxFailed ? (
-                  <ListError problem={outbox.problem} onRetry={outbox.reload} />
-                ) : (
-                  'Невдалих і відкладених операцій немає.'
-                )
-              }
-            />
-          ) : null}
-        </ListPageBody>
-      )}
+          </div>
+        ) : null}
+        {tab === 'runs' ? (
+          <DataTable
+            ariaLabel="Журнал запусків"
+            columns={runColumns}
+            data={runsFailed ? [] : (runs.data ?? [])}
+            getRowId={runRowId}
+            isLoading={runs.isLoading}
+            isFetching={runs.isFetching}
+            minWidth={1280}
+            height="100%"
+            emptyText={
+              runsFailed ? (
+                <ListError problem={runs.problem} onRetry={runs.reload} />
+              ) : job ? (
+                'Це завдання ще не запускалося.'
+              ) : (
+                'Запусків ще не було.'
+              )
+            }
+          />
+        ) : null}
+        {tab === 'outbox' && canManageOutbox ? (
+          <DataTable
+            ariaLabel="Черга операцій"
+            columns={messageColumns}
+            data={outboxFailed ? [] : (outbox.data ?? [])}
+            getRowId={outboxRowId}
+            isLoading={outbox.isLoading}
+            isFetching={outbox.isFetching}
+            minWidth={1240}
+            height="100%"
+            emptyText={
+              outboxFailed ? (
+                <ListError problem={outbox.problem} onRetry={outbox.reload} />
+              ) : (
+                'Невдалих і відкладених операцій немає.'
+              )
+            }
+          />
+        ) : null}
+      </ListPageBody>
 
       {detail.modal}
     </ListPage>

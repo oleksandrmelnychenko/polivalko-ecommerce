@@ -1,25 +1,70 @@
-import { Button, Stack, Textarea, TextInput } from '@mantine/core'
+import { Button } from '@mantine/core'
 import { useHotkeys } from '@mantine/hooks'
-import { IconDeviceFloppy, IconRestore } from '@tabler/icons-react'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { IconDeviceFloppy } from '@tabler/icons-react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useApiQuery } from '@/shared/api/useApiQuery'
+import { DataTable } from '@/shared/ui/data-table/DataTable'
+import type { DataTableColumn } from '@/shared/ui/data-table/types'
+import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { PageHeader } from '@/shared/ui/PageHeader'
+import { TableChip } from '@/shared/ui/TableChip'
 import { getBanners, saveHome, type HomeSettings } from '../api/siteApi'
-import { DEFAULT_PERKS, DEFAULT_STEPS, DEFAULT_VISIT, itemRows, LIMITS, toHomeBody, toHomeForm, validateHome, type HomeForm } from '../lib/homeSettings'
-import { periodState } from '../lib/period'
-import { fieldError, useSaveForm } from '../lib/useSaveForm'
-import { AnnouncementFields } from './AnnouncementFields'
+import { blockHint, blockName, toHomeBody, toHomeForm, validateHome, type HomeForm } from '../lib/homeSettings'
+import { periodEnd, periodStart, periodState } from '../lib/period'
+import { useSaveForm } from '../lib/useSaveForm'
 import { FormAlert } from './FormAlert'
-import { HomeBlocksList } from './HomeBlocksList'
-import { ItemsEditor } from './ItemsEditor'
-import { SectionCard } from './SectionCard'
+import { HomeSectionPane, SECTION_ICONS, type HomeSectionKey } from './HomeSectionPane'
 
 const FORM_ID = 'site-home-form'
 
 type HomeSettingsFormProps = {
   initial: HomeSettings
   onSaved: (value: HomeSettings) => void
+}
+
+type SectionRow = {
+  key: HomeSectionKey
+  name: string
+  hint: string
+  visible: boolean
+  invalid: boolean
+}
+
+const getSectionId = (row: SectionRow) => row.key
+
+const SECTION_COLUMNS: DataTableColumn<SectionRow>[] = [
+  {
+    id: 'name',
+    header: 'Блок',
+    fill: true,
+    width: 320,
+    minWidth: 240,
+    cell: (row) => {
+      const Icon = SECTION_ICONS[row.key]
+      return (
+        <span className="app-split-name-cell">
+          <span className="app-split-kind-icon">
+            <Icon size={16} stroke={1.6} />
+          </span>
+          <span className="app-split-row-text">
+            <span className="app-split-item-name">{row.name}</span>
+            <span className={`app-split-row-sub${row.invalid ? ' site-home-invalid' : ''}`}>{row.invalid ? 'Є помилки в полях' : row.hint}</span>
+          </span>
+        </span>
+      )
+    },
+  },
+  {
+    id: 'visible',
+    header: 'На сайті',
+    width: 150,
+    cell: (row) => (row.visible ? <TableChip dot tone="success" value="Показується" /> : <TableChip dot tone="neutral" value="Приховано" />),
+  },
+]
+
+function sectionOf(errorKey: string): string {
+  return errorKey.split('.')[0]
 }
 
 export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
@@ -29,7 +74,27 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
   const [saved, setSaved] = useState(() => JSON.stringify(toHomeBody(toHomeForm(initial))))
   const dirty = JSON.stringify(toHomeBody(values)) !== saved
   const banners = useApiQuery('site-banners', () => getBanners())
-  const liveBanners = banners.data ? banners.data.filter((banner) => periodState(banner.isActive, banner.startsAt, banner.endsAt) === 'live').length : null
+  const [params, setParams] = useSearchParams()
+  const sections: HomeSectionKey[] = ['announcement', ...values.blocks.map((block) => block.key as HomeSectionKey)]
+  const raw = params.get('block') as HomeSectionKey | null
+  const section: HomeSectionKey = raw && sections.includes(raw) ? raw : 'announcement'
+  const errorKeys = Object.keys(form.errors)
+    .filter((key) => form.errors[key])
+    .map(sectionOf)
+    .join(',')
+
+  const select = useCallback(
+    (next: HomeSectionKey) =>
+      setParams(
+        (current) => {
+          const query = new URLSearchParams(current)
+          query.set('block', next)
+          return query
+        },
+        { replace: true },
+      ),
+    [setParams],
+  )
 
   useEffect(() => {
     if (!dirty) return undefined
@@ -48,8 +113,11 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
     event.preventDefault()
     if (form.busy || !dirty) return
     const errors = validateHome(values)
-    if (Object.keys(errors).length > 0) {
+    const keys = Object.keys(errors)
+    if (keys.length > 0) {
       form.invalid(errors)
+      const first = sectionOf(keys[0]) as HomeSectionKey
+      if (sections.includes(first)) select(first)
       return
     }
     const body = toHomeBody(values)
@@ -65,118 +133,61 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
     onSaved(next)
   }
 
-  const heroNote =
-    liveBanners === null ? null : liveBanners === 0 ? (
-      <span className="site-warning-text">
-        Зараз не показується жоден банер. <Link to="/site/banners">Відкрити банери</Link>
-      </span>
-    ) : (
-      <span>
-        Показується банерів: {liveBanners}. <Link to="/site/banners">Відкрити банери</Link>
-      </span>
-    )
+  const { announcement, blocks } = values
+  const rows = useMemo<SectionRow[]>(() => {
+    const invalid = new Set(errorKeys.split(','))
+    return [
+      {
+        key: 'announcement',
+        name: 'Смуга оголошення',
+        hint: 'Рядок над шапкою сайту',
+        visible: periodState(announcement.isActive && Boolean(announcement.text.trim()), periodStart(announcement.from), periodEnd(announcement.to)) === 'live',
+        invalid: invalid.has('announcement'),
+      },
+      ...blocks.map((block) => {
+        const key = block.key as HomeSectionKey
+        return { key, name: blockName(key), hint: blockHint(key), visible: block.visible, invalid: invalid.has(key) }
+      }),
+    ]
+  }, [announcement, blocks, errorKeys])
+
+  const rowClassName = useCallback((row: SectionRow) => (row.key === section ? 'app-split-row-active' : undefined), [section])
 
   return (
-    <div className="site-page">
+    <ListPage>
       <PageHeader
         title="Головна"
         actions={
-          <Button type="submit" form={FORM_ID} loading={form.busy} disabled={!dirty} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
-            Зберегти зміни
-          </Button>
+          <>
+            {dirty ? <span className="site-home-dirty">Є незбережені зміни</span> : null}
+            <Button type="submit" form={FORM_ID} loading={form.busy} disabled={!dirty} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
+              Зберегти зміни
+            </Button>
+          </>
         }
       />
-      <form id={FORM_ID} ref={formRef} className="site-form" onSubmit={onSubmit} noValidate aria-label="Налаштування головної сторінки">
-        <Stack gap="lg">
-          <p className="site-lead">Що показує головна сторінка сайту і в якому порядку. Зміни з&apos;являються на сайті після збереження.</p>
-          <FormAlert error={form.error} />
-          <div className="site-columns">
-            <SectionCard title="Блоки й порядок" description="Вимкнений блок зникає з головної. Решта йде в цьому порядку зверху вниз.">
-              <HomeBlocksList blocks={values.blocks} notes={{ hero: heroNote }} onChange={(blocks) => patch({ blocks })} />
-            </SectionCard>
-            <SectionCard title="Смуга оголошення" description="Короткий рядок над шапкою сайту, наприклад про початок сезону чи вихідні дні.">
-              <AnnouncementFields value={values.announcement} errors={form.errors} onChange={(announcement) => patch({ announcement })} onClearField={form.clearField} />
-            </SectionCard>
+      <ListPageBody>
+        <form id={FORM_ID} ref={formRef} className="app-split-layout site-form" onSubmit={onSubmit} noValidate aria-label="Налаштування головної сторінки">
+          <div className="app-split-list">
+            {form.error ? (
+              <div className="site-home-alert">
+                <FormAlert error={form.error} />
+              </div>
+            ) : null}
+            <DataTable
+              ariaLabel="Блоки головної за порядком"
+              columns={SECTION_COLUMNS}
+              data={rows}
+              getRowId={getSectionId}
+              minWidth={480}
+              height="100%"
+              onRowClick={(row) => select(row.key)}
+              rowClassName={rowClassName}
+            />
           </div>
-          <SectionCard
-            title="Переваги"
-            description="Стоять в один ряд під добірками, найкраще виглядають 4 пункти."
-            actions={
-              <Button variant="subtle" size="xs" color="gray" leftSection={<IconRestore size={14} stroke={1.8} />} onClick={() => patch({ perks: itemRows(DEFAULT_PERKS) })}>
-                Повернути типові тексти
-              </Button>
-            }
-          >
-            <ItemsEditor
-              name="perks"
-              noun="Перевага"
-              items={values.perks}
-              max={LIMITS.perks}
-              errors={form.errors}
-              onChange={(perks) => patch({ perks })}
-              onClearField={form.clearField}
-            />
-          </SectionCard>
-          <SectionCard
-            title="Як замовити"
-            description="Кроки покупки під заголовком «Як замовити». Номери кроків сайт ставить сам."
-            actions={
-              <Button variant="subtle" size="xs" color="gray" leftSection={<IconRestore size={14} stroke={1.8} />} onClick={() => patch({ steps: itemRows(DEFAULT_STEPS) })}>
-                Повернути типові тексти
-              </Button>
-            }
-          >
-            <ItemsEditor
-              name="steps"
-              noun="Крок"
-              items={values.steps}
-              max={LIMITS.steps}
-              errors={form.errors}
-              onChange={(steps) => patch({ steps })}
-              onClearField={form.clearField}
-            />
-          </SectionCard>
-          <SectionCard
-            title="Наш магазин"
-            description={
-              <>
-                Заголовок і підзаголовок блоку. Адресу, графік і телефон сайт бере з <Link to="/settings/shop">Налаштування → Магазин</Link>.
-              </>
-            }
-            actions={
-              <Button variant="subtle" size="xs" color="gray" leftSection={<IconRestore size={14} stroke={1.8} />} onClick={() => patch({ visit: { ...DEFAULT_VISIT } })}>
-                Повернути типові тексти
-              </Button>
-            }
-          >
-            <div className="site-visit-fields">
-              <TextInput
-                label="Заголовок"
-                value={values.visit.title}
-                maxLength={LIMITS.visitTitle}
-                required
-                error={fieldError(form.errors, 'visit', 'title')}
-                onChange={(event) => {
-                  patch({ visit: { ...values.visit, title: event.currentTarget.value } })
-                  form.clearField('visit', 'title')
-                }}
-              />
-              <Textarea
-                label="Підзаголовок"
-                value={values.visit.text}
-                maxLength={LIMITS.visitText}
-                autosize
-                minRows={2}
-                error={fieldError(form.errors, 'visit', 'text')}
-                onChange={(event) => {
-                  patch({ visit: { ...values.visit, text: event.currentTarget.value } })
-                  form.clearField('visit', 'text')
-                }}
-              />
-            </div>
-          </SectionCard>
-        </Stack>
-      </form>
-    </div>
+          <HomeSectionPane section={section} values={values} errors={form.errors} banners={banners.data ?? null} patch={patch} onClearField={form.clearField} />
+        </form>
+      </ListPageBody>
+    </ListPage>
   )
 }

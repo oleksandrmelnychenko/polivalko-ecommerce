@@ -4,7 +4,7 @@ import { IconFilterOff, IconInfoCircle, IconSearch } from '@tabler/icons-react'
 import { useState, type ReactNode } from 'react'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import type { AuditPatch, AuditState } from '../lib/auditFilters'
-import { ENTITY_TYPE_OPTIONS } from '../lib/auditLabels'
+import { ENTITY_TYPE_OPTIONS } from '@/shared/audit/auditLabels'
 
 const SEARCH_HELP = "Пошук: точний номер чи код об'єкта, ім'я працівника або частина коду дії."
 

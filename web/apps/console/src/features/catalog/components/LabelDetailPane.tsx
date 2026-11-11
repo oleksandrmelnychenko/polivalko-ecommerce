@@ -23,26 +23,26 @@ function share(part: number, whole: number): string {
 }
 
 export function LabelDetailPane({ label, totalProducts, toggling, onEdit, onToggle }: LabelDetailPaneProps) {
-  if (!label) return <section className="catalog-split-detail catalog-split-detail-empty">Оберіть мітку зліва.</section>
+  if (!label) return <section className="app-split-detail app-split-detail-empty">Оберіть мітку зліва.</section>
 
   const auto = isAutoLabel(label)
 
   return (
-    <section key={label.id} className="catalog-split-detail" aria-labelledby="label-detail-title">
-      <header className="catalog-split-hero">
-        <div className="catalog-split-hero-top">
-          <div className="catalog-split-head">
+    <section key={label.id} className="app-split-detail" aria-labelledby="label-detail-title">
+      <header className="app-split-hero">
+        <div className="app-split-hero-top">
+          <div className="app-split-head">
             <span className="catalog-label-hero-chip" aria-hidden="true">
               <LabelChip name={label.name} tone={label.tone} muted={!label.isActive} />
             </span>
-            <div className="catalog-split-hero-main">
-              <p className="catalog-split-hero-kicker">{auto ? 'Ставиться автоматично' : 'Ставиться вручну'}</p>
+            <div className="app-split-hero-main">
+              <p className="app-split-hero-kicker">{auto ? 'Ставиться автоматично' : 'Ставиться вручну'}</p>
               <h2 id="label-detail-title">{label.name}</h2>
-              <p className="catalog-split-description">{labelRule(label)}.</p>
+              <p className="app-split-description">{labelRule(label)}.</p>
             </div>
           </div>
-          <div className="catalog-split-actions">
-            <span className="catalog-split-switch">
+          <div className="app-split-actions">
+            <span className="app-split-switch">
               <Switch
                 size="sm"
                 label="На сайті"
@@ -57,7 +57,7 @@ export function LabelDetailPane({ label, totalProducts, toggling, onEdit, onTogg
           </div>
         </div>
 
-        <dl className="catalog-split-stats">
+        <dl className="app-split-stats">
           <div>
             <dt>Товарів з міткою</dt>
             <dd>

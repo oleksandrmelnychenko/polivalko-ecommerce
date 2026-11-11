@@ -33,7 +33,7 @@
   width: 100%;
 }
 
-.data-table-row.catalog-split-row-active .catalog-brand-mark {
+.data-table-row.app-split-row-active .catalog-brand-mark {
   background: var(--brand-accent);
   border-color: var(--brand-accent);
   color: var(--mantine-color-white);

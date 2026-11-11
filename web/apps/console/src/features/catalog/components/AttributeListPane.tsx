@@ -17,9 +17,9 @@ const COLUMNS: DataTableColumn<AttributeDefinition>[] = [
     fill: true,
     accessor: (row) => row.name,
     cell: (row) => (
-      <span className="catalog-split-name-cell">
+      <span className="app-split-name-cell">
         <AttributeKindIcon kind={row.kind} size={15} />
-        <span className="catalog-split-item-name">{row.name}</span>
+        <span className="app-split-item-name">{row.name}</span>
       </span>
     ),
   },
@@ -31,11 +31,11 @@ const COLUMNS: DataTableColumn<AttributeDefinition>[] = [
     accessor: (row) => row.categoryCount,
     cell: (row) =>
       row.categoryCount ? (
-        <span className="catalog-split-item-meta">
+        <span className="app-split-item-meta">
           у {row.categoryCount} {plural(row.categoryCount, 'категорії', 'категоріях', 'категоріях')}
         </span>
       ) : (
-        <span className="catalog-split-item-meta is-off">не фільтр</span>
+        <span className="app-split-item-meta is-off">не фільтр</span>
       ),
   },
   {
@@ -46,7 +46,7 @@ const COLUMNS: DataTableColumn<AttributeDefinition>[] = [
     numeric: true,
     sortDescFirst: true,
     accessor: (row) => row.productCount,
-    cell: (row) => <span className="catalog-split-item-count">{countFormat.format(row.productCount)}</span>,
+    cell: (row) => <span className="app-split-item-count">{countFormat.format(row.productCount)}</span>,
   },
 ]
 
@@ -60,11 +60,11 @@ type AttributeListPaneProps = {
 }
 
 export function AttributeListPane({ rows, selectedId, isLoading, isFetching, emptyText, onSelect }: AttributeListPaneProps) {
-  const rowClassName = useCallback((row: AttributeDefinition) => (row.id === selectedId ? 'catalog-split-row-active' : undefined), [selectedId])
+  const rowClassName = useCallback((row: AttributeDefinition) => (row.id === selectedId ? 'app-split-row-active' : undefined), [selectedId])
   const select = useCallback((row: AttributeDefinition) => onSelect(row.id), [onSelect])
 
   return (
-    <div className="catalog-split-list">
+    <div className="app-split-list">
       <DataTable
         ariaLabel="Характеристики"
         columns={COLUMNS}

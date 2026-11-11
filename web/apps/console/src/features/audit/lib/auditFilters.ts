@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { DEFAULT_PAGE_SIZE, normalizePageSize } from '@/shared/ui/paginator/pageSize'
-import type { AuditQuery } from '../api/auditApi'
+import type { AuditQuery } from '@/shared/audit/auditApi'
 
 export type AuditState = { q: string; entityType: string; page: number; pageSize: number }
 

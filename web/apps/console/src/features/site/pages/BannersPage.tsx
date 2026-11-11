@@ -1,6 +1,7 @@
 import { Button, Text } from '@mantine/core'
 import { IconPlus } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
@@ -10,12 +11,14 @@ import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { notifyError, notifySuccess } from '@/shared/ui/notify'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { deleteBanner, getBanners, reorderBanners, type Banner } from '../api/siteApi'
+import { BannerDetailPane } from '../components/BannerDetailPane'
 import { BannerDrawer } from '../components/BannerDrawer'
-import { bannersColumns } from '../components/bannersColumns'
+import { BANNER_COLUMNS } from '../components/bannersColumns'
 import { ListError } from '../components/ListError'
 import { SiteToolbar } from '../components/SiteToolbar'
 import { moveItem } from '../lib/homeSettings'
 import { periodLabel, periodState } from '../lib/period'
+import '@/shared/ui/split/split.css'
 import './site.css'
 
 const getRowId = (row: Banner) => row.id
@@ -62,17 +65,23 @@ export function BannersPage() {
     [rows, setData, reload],
   )
 
-  const columns = useMemo(
-    () =>
-      bannersColumns({
-        count: rows.length,
-        indexOf: (id) => positions.get(id) ?? 0,
-        busy: ordering,
-        onMove: (index, delta) => void move(index, delta),
-        onDelete: setRemoving,
-      }),
-    [rows.length, positions, ordering, move],
+  const [params, setParams] = useSearchParams()
+  const pickedId = params.get('id')
+  const selected = rows.find((row) => row.id === pickedId) ?? rows[0] ?? null
+  const selectedId = selected?.id ?? null
+  const selectBanner = useCallback(
+    (banner: Banner) =>
+      setParams(
+        (current) => {
+          const next = new URLSearchParams(current)
+          next.set('id', banner.id)
+          return next
+        },
+        { replace: true },
+      ),
+    [setParams],
   )
+  const rowClassName = useCallback((row: Banner) => (row.id === selectedId ? 'app-split-row-active' : undefined), [selectedId])
 
   const openBanner = useCallback((banner: Banner) => setEditing((current) => ({ banner, opened: true, seq: current.seq + 1 })), [])
 
@@ -84,6 +93,7 @@ export function BannersPage() {
     const next = created ? [...rows, banner] : rows.map((row) => (row.id === banner.id ? banner : row))
     setData(next)
     setEditing((current) => ({ ...current, banner, opened: false }))
+    selectBanner(banner)
     reload()
   }
 
@@ -124,18 +134,32 @@ export function BannersPage() {
         onRefresh={reload}
       />
       <ListPageBody>
-        <DataTable
-          ariaLabel="Банери"
-          columns={columns}
-          data={rows}
-          getRowId={getRowId}
-          isLoading={banners.isLoading}
-          isFetching={banners.isFetching}
-          minWidth={1060}
-          height="100%"
-          onRowClick={openBanner}
-          emptyText={failed ? <ListError problem={banners.problem} onRetry={reload} /> : 'Банерів ще немає. Додайте перший, і слайдер з’явиться на головній.'}
-        />
+        <div className="app-split-layout">
+          <div className="app-split-list">
+            <DataTable
+              ariaLabel="Банери"
+              columns={BANNER_COLUMNS}
+              data={rows}
+              getRowId={getRowId}
+              isLoading={banners.isLoading}
+              isFetching={banners.isFetching}
+              minWidth={560}
+              height="100%"
+              onRowClick={selectBanner}
+              rowClassName={rowClassName}
+              emptyText={failed ? <ListError problem={banners.problem} onRetry={reload} /> : 'Банерів ще немає. Додайте перший, і слайдер з’явиться на головній.'}
+            />
+          </div>
+          <BannerDetailPane
+            banner={selected}
+            index={selected ? (positions.get(selected.id) ?? 0) : 0}
+            count={rows.length}
+            busy={ordering}
+            onEdit={openBanner}
+            onDelete={setRemoving}
+            onMove={(index, delta) => void move(index, delta)}
+          />
+        </div>
       </ListPageBody>
       <BannerDrawer editing={editing} onClose={() => setEditing((current) => ({ ...current, opened: false }))} onSaved={onSaved} />
       <ConfirmDialog

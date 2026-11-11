@@ -329,13 +329,17 @@ a.content-code {
 }
 
 .content-thumb {
+  align-items: center;
   background: #f4f5f3;
   border: 1px solid var(--mantine-color-gray-2);
-  border-radius: 6px;
-  display: block;
-  height: 44px;
+  border-radius: 7px;
+  color: var(--mantine-color-gray-5);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 34px;
+  justify-content: center;
   overflow: hidden;
-  width: 72px;
+  width: 34px;
 }
 
 .content-thumb img,
@@ -451,6 +455,97 @@ a.content-code {
 .content-length.is-over {
   color: var(--app-hot);
   font-weight: 600;
+}
+
+.content-page-icon,
+.content-service-photo {
+  align-items: center;
+  background: var(--mantine-color-gray-0);
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: 14px;
+  color: var(--mantine-color-gray-6);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 64px;
+  justify-content: center;
+  overflow: hidden;
+  width: 64px;
+}
+
+.content-page-icon {
+  background: var(--brand-accent-soft);
+  border-color: rgb(0 160 70 / 14%);
+  color: var(--brand-accent-hover);
+}
+
+.content-service-photo img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.content-detail-frame {
+  background: var(--mantine-color-white);
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: 10px;
+  display: block;
+  height: 460px;
+  margin-top: 4px;
+  width: 100%;
+}
+
+.content-service-preview {
+  align-items: flex-start;
+  background: var(--mantine-color-gray-0);
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: 12px;
+  display: flex;
+  gap: 16px;
+  margin-top: 4px;
+  padding: 16px;
+}
+
+.content-service-preview.is-hidden {
+  opacity: 0.55;
+}
+
+.content-service-preview-photo {
+  align-items: center;
+  background: var(--mantine-color-white);
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: 10px;
+  color: var(--mantine-color-gray-5);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 72px;
+  justify-content: center;
+  overflow: hidden;
+  width: 72px;
+}
+
+.content-service-preview-photo img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.content-service-preview-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.content-service-preview-text strong {
+  color: var(--brand-ink, var(--mantine-color-gray-9));
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.content-service-preview-text span {
+  color: var(--mantine-color-gray-7);
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 @media (max-width: 62em) {

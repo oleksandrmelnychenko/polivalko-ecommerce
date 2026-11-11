@@ -24,7 +24,7 @@ function share(part: number, whole: number): string {
 }
 
 export function AttributeDetailPane({ attribute, details, totalProducts, onEdit }: AttributeDetailPaneProps) {
-  if (!attribute) return <section className="catalog-split-detail catalog-split-detail-empty">Оберіть характеристику зліва.</section>
+  if (!attribute) return <section className="app-split-detail app-split-detail-empty">Оберіть характеристику зліва.</section>
 
   const data = details.data?.id === attribute.id ? details.data : null
   const loading = !data && (details.isLoading || details.isFetching)
@@ -35,25 +35,25 @@ export function AttributeDetailPane({ attribute, details, totalProducts, onEdit 
     : 'не фільтр'
 
   return (
-    <section key={attribute.id} className="catalog-split-detail" aria-labelledby="attribute-detail-title">
-      <header className="catalog-split-hero">
-        <div className="catalog-split-hero-top">
-          <div className="catalog-split-hero-main">
-            <p className="catalog-split-hero-kicker">
+    <section key={attribute.id} className="app-split-detail" aria-labelledby="attribute-detail-title">
+      <header className="app-split-hero">
+        <div className="app-split-hero-top">
+          <div className="app-split-hero-main">
+            <p className="app-split-hero-kicker">
               {kind} · {filter}
             </p>
             <h2 id="attribute-detail-title">
               {attribute.name}
-              {attribute.unit ? <span className="catalog-split-hero-unit">{attribute.unit}</span> : null}
+              {attribute.unit ? <span className="app-split-hero-unit">{attribute.unit}</span> : null}
             </h2>
-            {attribute.aliases.length ? <p className="catalog-split-hero-aliases">Також: {attribute.aliases.join(', ')}</p> : null}
+            {attribute.aliases.length ? <p className="app-split-hero-aliases">Також: {attribute.aliases.join(', ')}</p> : null}
           </div>
           <Button variant="default" size="sm" leftSection={<IconPencil size={16} stroke={1.7} />} onClick={() => onEdit(attribute)}>
             Змінити
           </Button>
         </div>
 
-        <dl className="catalog-split-stats">
+        <dl className="app-split-stats">
           <div>
             <dt>Товарів</dt>
             <dd>
@@ -71,8 +71,8 @@ export function AttributeDetailPane({ attribute, details, totalProducts, onEdit 
           </div>
         </dl>
 
-        <section className="catalog-split-hero-values" aria-labelledby="attribute-values-title">
-          <header className="catalog-split-card-head">
+        <section className="app-split-hero-values" aria-labelledby="attribute-values-title">
+          <header className="app-split-card-head">
             <h3 id="attribute-values-title">Значення</h3>
             {data && data.valueCount > data.values.length ? (
               <span>
@@ -82,22 +82,22 @@ export function AttributeDetailPane({ attribute, details, totalProducts, onEdit 
           </header>
 
           {loading ? (
-            <div className="catalog-split-tags">
+            <div className="app-split-tags">
               {Array.from({ length: 8 }, (_, index) => (
                 <Skeleton key={index} height={28} width={90 + (index % 3) * 30} radius="xl" />
               ))}
             </div>
           ) : data && data.values.length > 0 ? (
-            <ul className="catalog-split-tags">
+            <ul className="app-split-tags">
               {data.values.map((value) => (
                 <li key={value.value} title={`${value.value}: ${countFormat.format(value.productCount)} ${plural(value.productCount, 'товар', 'товари', 'товарів')}`}>
-                  <span className="catalog-split-tag-name">{value.value}</span>
-                  <span className="catalog-split-tag-count">{countFormat.format(value.productCount)}</span>
+                  <span className="app-split-tag-name">{value.value}</span>
+                  <span className="app-split-tag-count">{countFormat.format(value.productCount)}</span>
                 </li>
               ))}
             </ul>
           ) : data ? (
-            <p className="catalog-split-blank">У жодного товару ще немає цієї характеристики.</p>
+            <p className="app-split-blank">У жодного товару ще немає цієї характеристики.</p>
           ) : null}
         </section>
       </header>
@@ -108,8 +108,8 @@ export function AttributeDetailPane({ attribute, details, totalProducts, onEdit 
         </Alert>
       ) : null}
 
-      <section className="catalog-split-card" aria-labelledby="attribute-categories-title">
-        <header className="catalog-split-card-head">
+      <section className="app-split-card" aria-labelledby="attribute-categories-title">
+        <header className="app-split-card-head">
           <h3 id="attribute-categories-title">Фільтр у категоріях</h3>
           {data && data.categories.length ? (
             <span>
@@ -120,33 +120,33 @@ export function AttributeDetailPane({ attribute, details, totalProducts, onEdit 
         </header>
 
         {loading ? (
-          <div className="catalog-split-sections">
+          <div className="app-split-sections">
             {Array.from({ length: 3 }, (_, index) => (
               <Skeleton key={index} height={84} radius={12} />
             ))}
           </div>
         ) : groups.length > 0 ? (
-          <div className="catalog-split-sections">
+          <div className="app-split-sections">
             {groups.map((group) => (
-              <div key={group.title} className="catalog-split-section">
-                <p className="catalog-split-section-head">
+              <div key={group.title} className="app-split-section">
+                <p className="app-split-section-head">
                   <IconFolder size={16} stroke={1.8} aria-hidden="true" />
                   <span>{group.title}</span>
                   <em>{group.items.length}</em>
                 </p>
-                <ul className="catalog-split-tags">
+                <ul className="app-split-tags">
                   {group.items.map((category) =>
                     category.isVisible ? (
                       <li key={category.id} className="is-link">
                         <a href={siteUrl(`/catalog/${category.slug}`)} target="_blank" rel="noopener" title="Відкрити категорію на сайті">
-                          <span className="catalog-split-tag-name">{category.name}</span>
+                          <span className="app-split-tag-name">{category.name}</span>
                           <IconArrowUpRight size={13} stroke={2} aria-hidden="true" />
                         </a>
                       </li>
                     ) : (
                       <li key={category.id} className="is-hidden" title="Категорія прихована на сайті">
                         <IconEyeOff size={13} stroke={1.8} aria-hidden="true" />
-                        <span className="catalog-split-tag-name">{category.name}</span>
+                        <span className="app-split-tag-name">{category.name}</span>
                       </li>
                     ),
                   )}
@@ -155,7 +155,7 @@ export function AttributeDetailPane({ attribute, details, totalProducts, onEdit 
             ))}
           </div>
         ) : data ? (
-          <p className="catalog-split-blank">
+          <p className="app-split-blank">
             Жодна категорія не показує її у фільтрах. Додати можна в <Link to="/catalog/categories">категоріях</Link>.
           </p>
         ) : null}

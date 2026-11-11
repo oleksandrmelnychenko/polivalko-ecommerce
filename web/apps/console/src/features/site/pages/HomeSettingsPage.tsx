@@ -4,6 +4,7 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 import { PageState } from '@/shared/ui/PageState'
 import { getHome } from '../api/siteApi'
 import { HomeSettingsForm } from '../components/HomeSettingsForm'
+import '@/shared/ui/split/split.css'
 import './site.css'
 
 export function HomeSettingsPage() {

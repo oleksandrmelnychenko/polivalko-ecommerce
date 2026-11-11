@@ -8,15 +8,17 @@ const SHOP_SUFFIX = ' | Poli Valko'
 type PageSeoFieldsProps = {
   slug: string
   title: string
+  lead: string
   seoTitle: string
   seoDescription: string
   errors: Record<string, string>
   onChange: (field: 'seoTitle' | 'seoDescription', value: string) => void
 }
 
-export function PageSeoFields({ slug, title, seoTitle, seoDescription, errors, onChange }: PageSeoFieldsProps) {
+export function PageSeoFields({ slug, title, lead, seoTitle, seoDescription, errors, onChange }: PageSeoFieldsProps) {
   const shownTitle = `${seoTitle.trim() || title.trim() || 'Без заголовка'}${SHOP_SUFFIX}`
   const description = seoDescription.trim()
+  const shownDescription = description || lead.trim()
 
   return (
     <fieldset className="content-fieldset content-seo">
@@ -39,7 +41,7 @@ export function PageSeoFields({ slug, title, seoTitle, seoDescription, errors, o
           label="SEO-опис"
           description={
             <>
-              Текст під заголовком у результатах пошуку. <Counter length={description.length} limit={SEO_DESCRIPTION_LIMIT} />
+              Текст під заголовком у результатах пошуку. Якщо поле порожнє, сайт візьме підзаголовок сторінки. <Counter length={description.length} limit={SEO_DESCRIPTION_LIMIT} />
             </>
           }
           inputWrapperOrder={['label', 'input', 'description', 'error']}
@@ -54,7 +56,7 @@ export function PageSeoFields({ slug, title, seoTitle, seoDescription, errors, o
           <span className="content-snippet-site">Poli Valko</span>
           <span className="content-snippet-url">{siteUrl(`/${slug}`)}</span>
           <span className="content-snippet-title">{clip(shownTitle, SEO_TITLE_LIMIT)}</span>
-          <span className="content-snippet-description">{description ? clip(description, SEO_DESCRIPTION_LIMIT) : 'Опису немає: Google візьме уривок тексту зі сторінки.'}</span>
+          <span className="content-snippet-description">{shownDescription ? clip(shownDescription, SEO_DESCRIPTION_LIMIT) : 'Опису немає: Google візьме уривок тексту зі сторінки.'}</span>
         </figure>
       </Stack>
     </fieldset>

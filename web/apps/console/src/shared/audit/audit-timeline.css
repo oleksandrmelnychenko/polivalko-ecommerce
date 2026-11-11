@@ -1,0 +1,91 @@
+.audit-timeline {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+  position: relative;
+}
+
+.audit-timeline::before {
+  background: var(--mantine-color-gray-2);
+  bottom: 14px;
+  content: '';
+  left: 6px;
+  position: absolute;
+  top: 14px;
+  width: 1px;
+}
+
+.audit-timeline-item {
+  --timeline-dot: var(--mantine-color-gray-5);
+  position: relative;
+}
+
+.audit-timeline-item.is-success {
+  --timeline-dot: var(--brand-accent);
+}
+
+.audit-timeline-item.is-danger {
+  --timeline-dot: var(--mantine-color-red-6);
+}
+
+.audit-timeline-row {
+  align-items: flex-start;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  color: inherit;
+  display: flex;
+  font: inherit;
+  gap: 12px;
+  padding: 7px 8px 7px 0;
+  text-align: left;
+  width: 100%;
+}
+
+button.audit-timeline-row {
+  cursor: pointer;
+}
+
+button.audit-timeline-row:hover .audit-timeline-action {
+  color: var(--brand-accent-hover);
+}
+
+button.audit-timeline-row:focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 1px;
+}
+
+.audit-timeline-item.is-active .audit-timeline-action {
+  color: var(--brand-accent-hover);
+}
+
+.audit-timeline-dot {
+  background: var(--timeline-dot);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px var(--mantine-color-white);
+  flex: 0 0 auto;
+  height: 9px;
+  margin: 5px 0 0 2px;
+  position: relative;
+  width: 9px;
+}
+
+.audit-timeline-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.audit-timeline-action {
+  color: var(--mantine-color-gray-9);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.audit-timeline-meta {
+  color: var(--mantine-color-gray-7);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}

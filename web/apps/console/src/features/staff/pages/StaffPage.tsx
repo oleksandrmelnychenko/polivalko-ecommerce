@@ -1,6 +1,7 @@
 import { ActionIcon, Button, Stack, Text, Tooltip } from '@mantine/core'
 import { IconKey, IconRefresh, IconUserPlus } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ChangePasswordModal, useAuth, usePermissions } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
 import { problemMessage } from '@/shared/api/problem'
@@ -17,11 +18,13 @@ import { getStaffUsers, lockStaffUser, type StaffUser } from '../api/staffApi'
 import { FailureAlert } from '../components/FailureAlert'
 import { ResetPasswordModal } from '../components/ResetPasswordModal'
 import { ResetTwoFactorModal } from '../components/ResetTwoFactorModal'
+import { StaffDetailPane } from '../components/StaffDetailPane'
 import { staffColumns } from '../components/staffColumns'
 import { StaffFilters } from '../components/StaffFilters'
 import { StaffUserModal } from '../components/StaffUserModal'
 import { NETWORK_FAILURE, notifyFailure, toFailure, type Failure } from '../lib/problems'
 import { filterStaff, useStaffFilters } from '../lib/useStaffFilters'
+import '@/shared/ui/split/split.css'
 import './staff.css'
 
 type Dialog = { kind: 'create' } | { kind: 'edit' | 'password' | 'two-factor'; user: StaffUser }
@@ -81,31 +84,36 @@ export function StaffPage() {
     [replaceUser],
   )
 
-  const columns = useMemo(
-    () =>
-      staffColumns({
-        selfEmail,
-        busyId,
-        rolesById,
-        canOpenRoles,
-        onEdit: (user) => setDialog({ kind: 'edit', user }),
-        onPassword: (user) => setDialog({ kind: 'password', user }),
-        onResetTwoFactor: (user) => setDialog({ kind: 'two-factor', user }),
-        onLock: (user) => {
-          if (user.lockedOut) {
-            void changeLock(user, false)
-            return
-          }
-          setLockFailure(null)
-          setLockTarget(user)
-        },
-      }),
-    [busyId, canOpenRoles, changeLock, rolesById, selfEmail],
-  )
+  const columns = useMemo(() => staffColumns({ selfEmail, rolesById }), [rolesById, selfEmail])
 
-  const onRowClick = useCallback((user: StaffUser) => setDialog({ kind: 'edit', user }), [])
   const failed = users.status === 'error' || users.status === 'forbidden'
   const rows = useMemo(() => (failed ? [] : filterStaff(userList ?? [], filters)), [failed, filters, userList])
+  const [params, setParams] = useSearchParams()
+  const pickedId = params.get('id')
+  const selected = rows.find((row) => row.id === pickedId) ?? rows[0] ?? null
+  const selectedId = selected?.id ?? null
+  const selectUser = useCallback(
+    (user: StaffUser) =>
+      setParams(
+        (current) => {
+          const next = new URLSearchParams(current)
+          next.set('id', user.id)
+          return next
+        },
+        { replace: true },
+      ),
+    [setParams],
+  )
+  const rowClassName = useCallback((row: StaffUser) => (row.id === selectedId ? 'app-split-row-active' : undefined), [selectedId])
+
+  function requestLock(user: StaffUser) {
+    if (user.lockedOut) {
+      void changeLock(user, false)
+      return
+    }
+    setLockFailure(null)
+    setLockTarget(user)
+  }
 
   function onSaved(saved: StaffUser) {
     replaceUser(saved)
@@ -168,18 +176,35 @@ export function StaffPage() {
       />
 
       <ListPageBody>
-        <DataTable
-          ariaLabel="Працівники"
-          columns={columns}
-          data={rows}
-          getRowId={getRowId}
-          isLoading={users.isLoading}
-          isFetching={users.isFetching}
-          minWidth={1180}
-          height="100%"
-          onRowClick={onRowClick}
-          emptyText={emptyText}
-        />
+        <div className="app-split-layout">
+          <div className="app-split-list">
+            <DataTable
+              ariaLabel="Працівники"
+              columns={columns}
+              data={rows}
+              getRowId={getRowId}
+              isLoading={users.isLoading}
+              isFetching={users.isFetching}
+              minWidth={620}
+              height="100%"
+              onRowClick={selectUser}
+              rowClassName={rowClassName}
+              emptyText={emptyText}
+            />
+          </div>
+          <StaffDetailPane
+            user={selected}
+            role={selected ? rolesById.get(selected.roleId) : undefined}
+            isSelf={Boolean(selected && selected.email.toLowerCase() === selfEmail.toLowerCase())}
+            busy={busyId !== null && busyId === selectedId}
+            canOpenRoles={canOpenRoles}
+            canViewAudit={can(PermissionKeys.Audit.View)}
+            onEdit={(user) => setDialog({ kind: 'edit', user })}
+            onPassword={(user) => setDialog({ kind: 'password', user })}
+            onResetTwoFactor={(user) => setDialog({ kind: 'two-factor', user })}
+            onLock={requestLock}
+          />
+        </div>
       </ListPageBody>
 
       {dialog?.kind === 'create' || dialog?.kind === 'edit' ? (

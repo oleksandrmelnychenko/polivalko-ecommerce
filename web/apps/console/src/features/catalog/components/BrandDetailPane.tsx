@@ -24,7 +24,7 @@ function share(part: number, whole: number): string {
 }
 
 export function BrandDetailPane({ brand, totalProducts, onEdit, onMerge }: BrandDetailPaneProps) {
-  if (!brand) return <section className="catalog-split-detail catalog-split-detail-empty">Оберіть бренд зліва.</section>
+  if (!brand) return <section className="app-split-detail app-split-detail-empty">Оберіть бренд зліва.</section>
   return <BrandDetail key={brand.id} brand={brand} totalProducts={totalProducts} onEdit={onEdit} onMerge={onMerge} />
 }
 
@@ -38,22 +38,22 @@ function BrandDetail({ brand, totalProducts, onEdit, onMerge }: BrandDetailPaneP
   const count = (query: typeof inStock) => (!hasProducts ? '0' : query.data ? countFormat.format(query.data.totalItems) : '·')
 
   return (
-    <section className="catalog-split-detail" aria-labelledby="brand-detail-title">
-      <header className="catalog-split-hero">
-        <div className="catalog-split-hero-top">
-          <div className="catalog-split-head">
+    <section className="app-split-detail" aria-labelledby="brand-detail-title">
+      <header className="app-split-hero">
+        <div className="app-split-hero-top">
+          <div className="app-split-head">
             <BrandMark name={brand.name} logoUrl={brand.logoUrl} size="lg" />
-            <div className="catalog-split-hero-main">
-              <p className="catalog-split-hero-kicker catalog-split-mono">/{brand.slug}</p>
+            <div className="app-split-hero-main">
+              <p className="app-split-hero-kicker app-split-mono">/{brand.slug}</p>
               <h2 id="brand-detail-title">{brand.name}</h2>
               {brand.description ? (
-                <p className="catalog-split-description">{brand.description}</p>
+                <p className="app-split-description">{brand.description}</p>
               ) : (
-                <p className="catalog-split-hero-aliases">Опису й логотипа ще немає.</p>
+                <p className="app-split-hero-aliases">Опису й логотипа ще немає.</p>
               )}
             </div>
           </div>
-          <div className="catalog-split-actions">
+          <div className="app-split-actions">
             <Button variant="default" size="sm" leftSection={<IconPencil size={16} stroke={1.7} />} onClick={() => onEdit(brand)}>
               Змінити
             </Button>
@@ -79,7 +79,7 @@ function BrandDetail({ brand, totalProducts, onEdit, onMerge }: BrandDetailPaneP
           </div>
         </div>
 
-        <dl className="catalog-split-stats">
+        <dl className="app-split-stats">
           <div>
             <dt>Товарів</dt>
             <dd>

@@ -45,8 +45,8 @@ type PreviewCardProps = {
 
 export function PreviewCard({ title, aside, children }: PreviewCardProps) {
   return (
-    <section className="catalog-split-card" aria-label={title}>
-      <header className="catalog-split-card-head">
+    <section className="app-split-card" aria-label={title}>
+      <header className="app-split-card-head">
         <h3>{title}</h3>
         {aside}
       </header>
@@ -82,7 +82,7 @@ export function ProductPreviewGrid({ title, cacheKey, filter, listHref, enabled,
       }
     >
       {!enabled ? (
-        <p className="catalog-split-blank">{emptyText}</p>
+        <p className="app-split-blank">{emptyText}</p>
       ) : preview.isLoading ? (
         <div className="catalog-preview-grid">
           {Array.from({ length: 6 }, (_, index) => (
@@ -90,7 +90,7 @@ export function ProductPreviewGrid({ title, cacheKey, filter, listHref, enabled,
           ))}
         </div>
       ) : items.length === 0 ? (
-        <p className="catalog-split-blank">{emptyText}</p>
+        <p className="app-split-blank">{emptyText}</p>
       ) : (
         <ProductTilesGrid items={items} />
       )}

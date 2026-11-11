@@ -21,7 +21,8 @@ import { ProductThumb } from '../components/ProductThumb'
 import { isHidden, orderCategories, type OrderedCategory } from '../lib/categoryTree'
 import { useListParams } from '../lib/useListParams'
 import '../components/catalog.css'
-import '../components/catalog-split.css'
+import '@/shared/ui/split/split.css'
+import '../components/catalog-detail.css'
 
 const FORM_ID = 'catalog-category-form'
 const getRowId = (row: OrderedCategory) => row.id
@@ -106,7 +107,7 @@ export function CategoriesPage() {
     }
     return ids
   }, [all])
-  const rowClassName = useCallback((row: OrderedCategory) => (row.id === selectedId ? 'catalog-split-row-active' : undefined), [selectedId])
+  const rowClassName = useCallback((row: OrderedCategory) => (row.id === selectedId ? 'app-split-row-active' : undefined), [selectedId])
 
   const columns = useMemo<DataTableColumn<OrderedCategory>[]>(
     () => [
@@ -120,7 +121,7 @@ export function CategoriesPage() {
           <span className="catalog-tree-cell" style={{ paddingLeft: row.depth * 20 }}>
             {row.depth > 0 ? <span className="catalog-tree-branch" aria-hidden="true" /> : null}
             <ProductThumb url={row.imageUrl} size={28} />
-            <span className="catalog-split-item-name">{row.name}</span>
+            <span className="app-split-item-name">{row.name}</span>
             {isHidden(row) ? <TableChip value="прихована" title={row.isVisible ? 'Прихована батьківська категорія' : undefined} /> : null}
           </span>
         ),
@@ -131,9 +132,9 @@ export function CategoriesPage() {
         width: 130,
         cell: (row) =>
           row.filterAttributes.length ? (
-            <span className="catalog-split-item-meta">{row.filterAttributes.length}</span>
+            <span className="app-split-item-meta">{row.filterAttributes.length}</span>
           ) : (
-            <span className="catalog-split-item-meta is-off">{inherits.has(row.id) ? 'успадковані' : 'немає'}</span>
+            <span className="app-split-item-meta is-off">{inherits.has(row.id) ? 'успадковані' : 'немає'}</span>
           ),
       },
       {
@@ -144,9 +145,9 @@ export function CategoriesPage() {
         numeric: true,
         cell: (row) =>
           row.productCount ? (
-            <span className="catalog-split-item-count">{countFormat.format(row.productCount)}</span>
+            <span className="app-split-item-count">{countFormat.format(row.productCount)}</span>
           ) : (
-            <span className="catalog-split-item-meta is-off">0</span>
+            <span className="app-split-item-meta is-off">0</span>
           ),
       },
     ],
@@ -207,8 +208,8 @@ export function CategoriesPage() {
       />
 
       <ListPageBody>
-        <div className="catalog-split-layout">
-          <div className="catalog-split-list">
+        <div className="app-split-layout">
+          <div className="app-split-list">
             <DataTable
               ariaLabel="Категорії каталогу"
               columns={columns}

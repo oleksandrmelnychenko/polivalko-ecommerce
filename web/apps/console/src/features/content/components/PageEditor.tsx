@@ -152,6 +152,7 @@ export function PageEditor({ initial, onSaved }: PageEditorProps) {
             <PageSeoFields
               slug={saved.slug}
               title={title}
+              lead={lead}
               seoTitle={seoTitle}
               seoDescription={seoDescription}
               errors={form.errors}

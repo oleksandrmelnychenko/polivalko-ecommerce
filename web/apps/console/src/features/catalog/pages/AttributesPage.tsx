@@ -23,7 +23,8 @@ import { useEditorDrawer } from '../lib/useEditorDrawer'
 import { useListParams } from '../lib/useListParams'
 import '../components/catalog.css'
 import '../components/catalog-dictionaries.css'
-import '../components/catalog-split.css'
+import '@/shared/ui/split/split.css'
+import '../components/catalog-detail.css'
 
 const FORM_ID = 'catalog-attribute-form'
 const PARAM_KEYS = ['q', 'kind', 'usage'] as const
@@ -140,7 +141,7 @@ export function AttributesPage() {
       </FilterBar>
 
       <ListPageBody>
-        <div className="catalog-split-layout">
+        <div className="app-split-layout">
           <AttributeListPane
             rows={attributes.status === 'error' || attributes.status === 'forbidden' ? [] : rows}
             selectedId={selectedId}

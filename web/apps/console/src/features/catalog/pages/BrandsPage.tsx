@@ -25,7 +25,8 @@ import { useEditorDrawer } from '../lib/useEditorDrawer'
 import { useListParams } from '../lib/useListParams'
 import '../components/catalog.css'
 import '../components/catalog-dictionaries.css'
-import '../components/catalog-split.css'
+import '@/shared/ui/split/split.css'
+import '../components/catalog-detail.css'
 import '../components/catalog-brands.css'
 
 const FORM_ID = 'catalog-brand-form'
@@ -74,7 +75,7 @@ export function BrandsPage() {
   const selectedId = selected?.id ?? null
   const productCounts = useApiQuery('catalog-products-counts', () => getProductCounts())
   const selectBrand = useCallback((row: Brand) => pick({ id: row.id }), [pick])
-  const rowClassName = useCallback((row: Brand) => (row.id === selectedId ? 'catalog-split-row-active' : undefined), [selectedId])
+  const rowClassName = useCallback((row: Brand) => (row.id === selectedId ? 'app-split-row-active' : undefined), [selectedId])
 
   const columns = useMemo<DataTableColumn<Brand>[]>(
     () => [
@@ -86,9 +87,9 @@ export function BrandsPage() {
         fill: true,
         accessor: (row) => row.name,
         cell: (row) => (
-          <span className="catalog-split-name-cell">
+          <span className="app-split-name-cell">
             <BrandMark name={row.name} logoUrl={row.logoUrl} />
-            <span className="catalog-split-item-name">{row.name}</span>
+            <span className="app-split-item-name">{row.name}</span>
           </span>
         ),
       },
@@ -97,7 +98,7 @@ export function BrandsPage() {
         header: 'Адреса',
         width: 190,
         accessor: (row) => row.slug,
-        cell: (row) => <span className="catalog-split-code">{row.slug}</span>,
+        cell: (row) => <span className="app-split-code">{row.slug}</span>,
       },
       {
         id: 'products',
@@ -109,9 +110,9 @@ export function BrandsPage() {
         accessor: (row) => row.productCount,
         cell: (row) =>
           row.productCount ? (
-            <span className="catalog-split-item-count">{countFormat.format(row.productCount)}</span>
+            <span className="app-split-item-count">{countFormat.format(row.productCount)}</span>
           ) : (
-            <span className="catalog-split-item-meta is-off">немає</span>
+            <span className="app-split-item-meta is-off">немає</span>
           ),
       },
     ],
@@ -191,8 +192,8 @@ export function BrandsPage() {
       </FilterBar>
 
       <ListPageBody>
-        <div className="catalog-split-layout">
-          <div className="catalog-split-list">
+        <div className="app-split-layout">
+          <div className="app-split-list">
             <DataTable
               ariaLabel="Довідник брендів"
               columns={columns}

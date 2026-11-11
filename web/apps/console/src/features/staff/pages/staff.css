@@ -3,26 +3,131 @@
   font-weight: 400;
 }
 
-.staff-role-link {
-  border-radius: 999px;
+.staff-avatar {
+  align-items: center;
+  background: var(--brand-accent-soft);
+  border: 1px solid rgb(0 160 70 / 14%);
+  border-radius: 50%;
+  box-sizing: border-box;
+  color: var(--brand-accent-hover);
   display: inline-flex;
-  max-width: 100%;
+  flex: 0 0 auto;
+  font-weight: 700;
+  justify-content: center;
+  letter-spacing: 0.02em;
+}
+
+.staff-avatar.is-sm {
+  font-size: 11px;
+  height: 30px;
+  width: 30px;
+}
+
+.staff-avatar.is-lg {
+  font-size: 22px;
+  height: 64px;
+  width: 64px;
+}
+
+.staff-avatar.is-locked {
+  background: var(--mantine-color-gray-1);
+  border-color: var(--mantine-color-gray-3);
+  color: var(--mantine-color-gray-6);
+}
+
+.data-table-row.app-split-row-active .staff-avatar:not(.is-locked) {
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: var(--mantine-color-white);
+}
+
+.staff-person {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.staff-person-email {
+  color: var(--mantine-color-gray-7);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.staff-email {
+  color: inherit;
   text-decoration: none;
 }
 
-.staff-role-link:hover .app-table-chip,
-.staff-role-link:focus-visible .app-table-chip {
-  box-shadow: 0 0 0 2px var(--mantine-color-gray-2);
+.staff-email:hover {
+  color: var(--brand-accent-hover);
+  text-decoration: underline;
 }
 
-.staff-row-actions .mantine-Button-root {
-  border-radius: 7px;
+.staff-stats dd {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0;
+  word-spacing: normal;
+}
+
+.staff-stats dd {
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+
+.staff-stats dd small {
+  color: var(--mantine-color-gray-7);
+  white-space: nowrap;
+}
+
+.staff-stats dd.is-good {
+  color: var(--app-chip-success-text);
+}
+
+.staff-stats dd.is-bad {
+  color: var(--mantine-color-red-7);
+}
+
+.staff-hero-bar {
+  align-items: center;
+  border-top: 1px solid var(--mantine-color-gray-2);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 10px 20px;
+}
+
+.staff-hero-bar:empty {
+  display: none;
+}
+
+.staff-card-link {
+  align-items: center;
+  color: var(--brand-accent-hover);
+  display: inline-flex;
   font-size: 12.5px;
   font-weight: 600;
+  gap: 4px;
+  text-decoration: none;
 }
 
-.staff-row-actions .staff-lock-button {
-  min-width: 132px;
+.staff-card-link:hover {
+  text-decoration: underline;
+}
+
+.app-split-card-head .staff-card-link {
+  color: var(--brand-accent-hover);
+}
+
+.staff-role-description {
+  color: var(--mantine-color-gray-8);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 10px;
 }
 
 .staff-role-option {

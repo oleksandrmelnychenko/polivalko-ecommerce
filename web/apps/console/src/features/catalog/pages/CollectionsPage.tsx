@@ -17,7 +17,8 @@ import { CollectionDetailPane } from '../components/CollectionDetailPane'
 import { CollectionForm } from '../components/CollectionForm'
 import { useListParams } from '../lib/useListParams'
 import '../components/catalog.css'
-import '../components/catalog-split.css'
+import '@/shared/ui/split/split.css'
+import '../components/catalog-detail.css'
 
 const FORM_ID = 'catalog-collection-form'
 const getRowId = (row: ConsoleCollection) => row.id
@@ -32,9 +33,9 @@ const columns: DataTableColumn<ConsoleCollection>[] = [
     width: 240,
     fill: true,
     cell: (row) => (
-      <span className="catalog-split-name-cell">
-        <span className="catalog-split-item-name">{row.title}</span>
-        <span className="catalog-split-code">{row.code}</span>
+      <span className="app-split-name-cell">
+        <span className="app-split-item-name">{row.title}</span>
+        <span className="app-split-code">{row.code}</span>
       </span>
     ),
   },
@@ -43,7 +44,7 @@ const columns: DataTableColumn<ConsoleCollection>[] = [
     header: 'На головній',
     width: 130,
     cell: (row) =>
-      row.isVisible ? <span className="catalog-split-item-meta">показується</span> : <span className="catalog-split-item-meta is-off">прихована</span>,
+      row.isVisible ? <span className="app-split-item-meta">показується</span> : <span className="app-split-item-meta is-off">прихована</span>,
   },
   {
     id: 'products',
@@ -53,9 +54,9 @@ const columns: DataTableColumn<ConsoleCollection>[] = [
     numeric: true,
     cell: (row) =>
       row.products.length ? (
-        <span className="catalog-split-item-count">{countFormat.format(row.products.length)}</span>
+        <span className="app-split-item-count">{countFormat.format(row.products.length)}</span>
       ) : (
-        <span className="catalog-split-item-meta is-off">0</span>
+        <span className="app-split-item-meta is-off">0</span>
       ),
   },
 ]
@@ -114,7 +115,7 @@ export function CollectionsPage() {
   const selected = rows.find((row) => row.id === picked.id) ?? rows[0] ?? null
   const selectedId = selected?.id ?? null
   const selectRow = useCallback((row: ConsoleCollection) => pick({ id: row.id }), [pick])
-  const rowClassName = useCallback((row: ConsoleCollection) => (row.id === selectedId ? 'catalog-split-row-active' : undefined), [selectedId])
+  const rowClassName = useCallback((row: ConsoleCollection) => (row.id === selectedId ? 'app-split-row-active' : undefined), [selectedId])
   const position = useMemo(() => {
     if (!selected) return 0
     const shown = [...rows].filter((row) => row.isVisible && row.products.length > 0).sort((a, b) => a.sortOrder - b.sortOrder)
@@ -157,8 +158,8 @@ export function CollectionsPage() {
       />
 
       <ListPageBody>
-        <div className="catalog-split-layout">
-          <div className="catalog-split-list">
+        <div className="app-split-layout">
+          <div className="app-split-list">
             <DataTable
               ariaLabel="Добірки"
               columns={columns}

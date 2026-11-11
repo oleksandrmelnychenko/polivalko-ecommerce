@@ -21,7 +21,7 @@ type CategoryDetailPaneProps = {
 }
 
 export function CategoryDetailPane({ category, all, attributes, onEdit, onSelect }: CategoryDetailPaneProps) {
-  if (!category) return <section className="catalog-split-detail catalog-split-detail-empty">Оберіть категорію зліва.</section>
+  if (!category) return <section className="app-split-detail app-split-detail-empty">Оберіть категорію зліва.</section>
   return <CategoryDetail key={category.id} category={category} all={all} attributes={attributes} onEdit={onEdit} onSelect={onSelect} />
 }
 
@@ -45,15 +45,15 @@ function CategoryDetail({ category, all, attributes, onEdit, onSelect }: Categor
   const hidden = isHidden(category)
 
   return (
-    <section className="catalog-split-detail" aria-labelledby="category-detail-title">
-      <header className="catalog-split-hero">
-        <div className="catalog-split-hero-top">
-          <div className="catalog-split-head">
+    <section className="app-split-detail" aria-labelledby="category-detail-title">
+      <header className="app-split-hero">
+        <div className="app-split-hero-top">
+          <div className="app-split-head">
             <span className="catalog-category-photo" aria-hidden="true">
               {category.imageUrl ? <img src={category.imageUrl} alt="" loading="lazy" /> : <IconCategory size={26} stroke={1.5} />}
             </span>
-            <div className="catalog-split-hero-main">
-              <p className="catalog-split-hero-kicker catalog-category-path">
+            <div className="app-split-hero-main">
+              <p className="app-split-hero-kicker catalog-category-path">
                 {ancestors.length ? (
                   ancestors.map((item, index) => (
                     <Fragment key={item.id}>
@@ -71,14 +71,14 @@ function CategoryDetail({ category, all, attributes, onEdit, onSelect }: Categor
                 {category.name}
                 {hidden ? <TableChip value={category.isVisible ? 'прихована батьківська' : 'прихована'} /> : null}
               </h2>
-              <p className="catalog-split-hero-aliases catalog-category-meta">
-                <span className="catalog-split-mono">/catalog/{category.slug}</span>
+              <p className="app-split-hero-aliases catalog-category-meta">
+                <span className="app-split-mono">/catalog/{category.slug}</span>
                 <span>{category.navkoloRef ? `Група Navkolo: ${category.navkoloRef}` : 'Група Navkolo не задана'}</span>
               </p>
-              {category.description ? <p className="catalog-split-description">{category.description}</p> : null}
+              {category.description ? <p className="app-split-description">{category.description}</p> : null}
             </div>
           </div>
-          <div className="catalog-split-actions">
+          <div className="app-split-actions">
             <Button variant="default" size="sm" leftSection={<IconPencil size={16} stroke={1.7} />} onClick={() => onEdit(category)}>
               Змінити
             </Button>
@@ -101,7 +101,7 @@ function CategoryDetail({ category, all, attributes, onEdit, onSelect }: Categor
           </div>
         </div>
 
-        <dl className="catalog-split-stats">
+        <dl className="app-split-stats">
           <div>
             <dt>Товарів</dt>
             <dd>
@@ -123,8 +123,8 @@ function CategoryDetail({ category, all, attributes, onEdit, onSelect }: Categor
         </dl>
       </header>
 
-      <section className="catalog-split-card" aria-labelledby="category-filters-title">
-        <header className="catalog-split-card-head">
+      <section className="app-split-card" aria-labelledby="category-filters-title">
+        <header className="app-split-card-head">
           <h3 id="category-filters-title">Фільтри на сайті</h3>
           {inheritedFrom ? (
             <span>
@@ -137,41 +137,41 @@ function CategoryDetail({ category, all, attributes, onEdit, onSelect }: Categor
           ) : null}
         </header>
         {filters.length ? (
-          <ul className="catalog-split-tags">
+          <ul className="app-split-tags">
             {filters.map((name) => {
               const id = attributeIds.get(name.toUpperCase())
               return id ? (
                 <li key={name} className="is-link">
                   <Link to={`/catalog/attributes?id=${id}`}>
-                    <span className="catalog-split-tag-name">{name}</span>
+                    <span className="app-split-tag-name">{name}</span>
                   </Link>
                 </li>
               ) : (
                 <li key={name}>
-                  <span className="catalog-split-tag-name">{name}</span>
+                  <span className="app-split-tag-name">{name}</span>
                 </li>
               )
             })}
           </ul>
         ) : (
-          <p className="catalog-split-blank">Фільтрів немає ні тут, ні в батьківських категоріях. Додати можна кнопкою «Змінити».</p>
+          <p className="app-split-blank">Фільтрів немає ні тут, ні в батьківських категоріях. Додати можна кнопкою «Змінити».</p>
         )}
       </section>
 
       {children.length ? (
-        <section className="catalog-split-card" aria-labelledby="category-children-title">
-          <header className="catalog-split-card-head">
+        <section className="app-split-card" aria-labelledby="category-children-title">
+          <header className="app-split-card-head">
             <h3 id="category-children-title">Підкатегорії</h3>
             <span>
               {children.length} {plural(children.length, 'підкатегорія', 'підкатегорії', 'підкатегорій')}
             </span>
           </header>
-          <ul className="catalog-split-tags">
+          <ul className="app-split-tags">
             {children.map((child) => (
               <li key={child.id} className={child.isVisible ? 'is-link' : 'is-link is-muted'}>
                 <button type="button" onClick={() => onSelect(child.id)}>
-                  <span className="catalog-split-tag-name">{child.name}</span>
-                  <span className="catalog-split-tag-count">{countFormat.format(child.productCount)}</span>
+                  <span className="app-split-tag-name">{child.name}</span>
+                  <span className="app-split-tag-count">{countFormat.format(child.productCount)}</span>
                 </button>
               </li>
             ))}
