@@ -245,6 +245,47 @@
         }
       }
     },
+    "/api/v1/bestsellers": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Товари, які найчастіше замовляли за останні 90 днів (без скасованих), лише видимі й у наявності",
+        "operationId": "GetBestsellers",
+        "parameters": [
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BestsellersResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/catalog/photo-credits": {
       "get": {
         "tags": [
@@ -9995,6 +10036,41 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "BestsellerDto": {
+        "required": [
+          "product",
+          "orders"
+        ],
+        "type": "object",
+        "properties": {
+          "product": {
+            "$ref": "#/components/schemas/ProductListItemDto"
+          },
+          "orders": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "BestsellersResponse": {
+        "required": [
+          "items",
+          "periodDays"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BestsellerDto"
+            }
+          },
+          "periodDays": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

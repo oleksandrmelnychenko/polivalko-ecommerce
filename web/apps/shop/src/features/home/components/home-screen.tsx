@@ -1,8 +1,24 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { getBestsellers, getCategoryTree, searchProducts } from "@/features/catalog/server";
 import { getSiteHome, SiteJsonLd, type SiteHome } from "@/features/content/server";
 import { homeBlocks, type HomeBlockKey } from "../lib/home-blocks";
-import { bannerSlides, heroSlides, type HeroSlide } from "../lib/hero-slides";
+import {
+  bannerCategorySlugs,
+  bannerSlides,
+  bestsellerFeature,
+  catalogSections,
+  categorySubsections,
+  findCategory,
+  heroSlides,
+  saleDeals,
+  type HeroData,
+  type HeroDeals,
+  type HeroFeatured,
+  type HeroSections,
+  type HeroSlide,
+  type HeroSubsections,
+} from "../lib/hero-slides";
 import { CollectionPairs } from "./collection-pair";
 import { HeroSlider } from "./hero-slider";
 import { LookSkeleton } from "./look-skeleton";
@@ -34,7 +50,9 @@ async function HomeContent() {
   await connection();
   const home = await getSiteHome();
   const blocks = homeBlocks(home?.blocks);
-  const slides = home?.banners?.length ? bannerSlides(home.banners) : heroSlides;
+  const banners = home?.banners ?? [];
+  const data = blocks.includes("hero") ? await heroData(bannerCategorySlugs(banners)) : {};
+  const slides = banners.length ? bannerSlides(banners, data) : heroSlides(data);
   return (
     <>
       <SiteJsonLd />
@@ -44,6 +62,53 @@ async function HomeContent() {
       ))}
     </>
   );
+}
+
+async function heroData(categorySlugs: string[]): Promise<HeroData> {
+  const [deals, sections, featured, categories] = await Promise.all([heroDeals(), heroSections(), heroFeatured(), heroCategories(categorySlugs)]);
+  return { deals, sections, featured, categories };
+}
+
+async function heroCategories(slugs: string[]): Promise<Record<string, HeroSubsections>> {
+  if (slugs.length === 0) return {};
+  try {
+    const tree = await getCategoryTree();
+    const entries = await Promise.all(
+      slugs.map(async (slug) => {
+        const children = findCategory(tree, slug)?.children ?? [];
+        const cheapest = await Promise.all(children.map((child) => searchProducts({ category: child.slug, inStock: true, sort: "price_asc", pageSize: 1 }).catch(() => null)));
+        return [slug, categorySubsections(children, cheapest)] as const;
+      }),
+    );
+    return Object.fromEntries(entries.filter((entry): entry is readonly [string, HeroSubsections] => entry[1] !== undefined));
+  } catch {
+    return {};
+  }
+}
+
+async function heroDeals(): Promise<HeroDeals | undefined> {
+  try {
+    return saleDeals(await searchProducts({ onSale: true, inStock: true, sort: "price_asc", pageSize: 12 }));
+  } catch {
+    return undefined;
+  }
+}
+
+async function heroSections(): Promise<HeroSections | undefined> {
+  try {
+    const [categories, all] = await Promise.all([getCategoryTree(), searchProducts({ pageSize: 1 })]);
+    return catalogSections(categories, all?.totalItems ?? null);
+  } catch {
+    return undefined;
+  }
+}
+
+async function heroFeatured(): Promise<HeroFeatured | undefined> {
+  try {
+    return bestsellerFeature(await getBestsellers(1));
+  } catch {
+    return undefined;
+  }
 }
 
 function HomeBlock({ block, home, slides }: { block: HomeBlockKey; home: SiteHome | null; slides: HeroSlide[] }) {

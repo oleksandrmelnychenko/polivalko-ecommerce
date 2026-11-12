@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PoliValko.Catalog.Contracts;
 using PoliValko.Customers.Contracts;
 using PoliValko.Infrastructure;
 using PoliValko.Ordering.Configuration;
@@ -33,6 +34,7 @@ public static class OrderingModule
             .AddScoped<IOrderExportSource, OrderExportSource>()
             .AddScoped<IOrderStateSync, Features.Synchronization.OrderStateSync>()
             .AddScoped<IOrderReporting, OrderReporting>()
+            .AddScoped<IProductSalesSource, ProductSalesSource>()
             .AddScoped<ICustomerEmailConfirmedHandler, LinkGuestOrders>()
             .AddScoped<ICustomerOrderHistory, CustomerOrderHistory>()
             .AddOutboxHandler<OrderPlaced, NotifyManagerOnOrderPlaced>()

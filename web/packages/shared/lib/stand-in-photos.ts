@@ -21,7 +21,7 @@ export const categoryPhotos: Record<string, StandIn> = {
 
 export const pagePhotos = {
   hero: photo("photo-1719324923613-ff0884b031ed", "Сучасна тераса з садовими меблями й парасолею"),
-  heroSale: photo("photo-1764046860592-9931f0869fc6", "Доріжка серед квітучих клумб у саду"),
+  heroSale: photo("photo-1729603596055-22a2c182903b", "Рослини в горщиках на старій дерев'яній лаві біля стіни"),
   offers: photo("photo-1786459558726-2b672982ba55", "Оцинкована лійка на грядці серед зелені"),
   collection: photo("photo-1765097732474-973a92d6fb4c", "Білі металеві садові меблі серед рослин"),
   sections: photo("photo-1591857177580-dc82b9ac4e1e", "Підняті грядки із зеленню"),

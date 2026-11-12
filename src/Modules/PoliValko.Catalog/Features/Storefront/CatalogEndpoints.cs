@@ -29,6 +29,10 @@ internal static class CatalogEndpoints
             .WithSummary("Картка товару")
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        group.MapGet("/bestsellers", GetBestsellers.HandleAsync)
+            .WithName("GetBestsellers")
+            .WithSummary("Товари, які найчастіше замовляли за останні 90 днів (без скасованих), лише видимі й у наявності");
+
         group.MapGet("/catalog/photo-credits", GetPhotoCredits.HandleAsync)
             .WithName("GetPhotoCredits")
             .WithSummary("Автори й ліцензії фото товарів з відкритих джерел");

@@ -11,6 +11,7 @@ export type Category = S["CategoryDto"];
 export type ProductListItem = S["ProductListItemDto"];
 export type ProductDetails = S["ProductDetailsDto"];
 export type ProductSearch = S["ProductSearchResponse"];
+export type Bestsellers = S["BestsellersResponse"];
 export type Money = S["MoneyDto"];
 export type ServiceDirection = S["ServiceDirectionDto"];
 export type PickupPoint = S["PickupPointDto"];

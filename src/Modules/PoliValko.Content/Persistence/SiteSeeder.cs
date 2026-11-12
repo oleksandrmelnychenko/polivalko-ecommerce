@@ -46,15 +46,36 @@ internal static class SiteSeeder
         new()
         {
             Id = Guid.CreateVersion7(now.AddTicks(1)),
-            Kicker = "Акції",
-            Title = "Товари зі знижкою",
-            Text = "Усі товари зі зниженою ціною зібрані на одній сторінці.",
-            ButtonLabel = "Дивитися акції",
-            Link = "/sale",
-            ImageUrl = "https://images.unsplash.com/photo-1764046860592-9931f0869fc6?auto=format&fit=crop&q=80&w=1200",
+            Kicker = "Хіт продажів",
+            Title = "Найчастіше купують",
+            ButtonLabel = "Переглянути товар",
+            Link = "/bestseller",
+            ImageUrl = "https://images.unsplash.com/photo-1729603596055-22a2c182903b?auto=format&fit=crop&q=80&w=1200",
             SortOrder = 2,
             IsActive = true,
             UpdatedAt = now,
         },
+        new()
+        {
+            Id = Guid.CreateVersion7(now.AddTicks(2)),
+            Kicker = "Новий рік",
+            Title = "Готуємося до свят",
+            Text = "Ялинки, гірлянди й прикраси. Відправляємо Новою поштою по всій Україні.",
+            ButtonLabel = "Усе до Нового року",
+            Link = "/catalog/novyi-rik",
+            ImageUrl = "https://images.unsplash.com/photo-1482517967863-00e15c9b44be?auto=format&fit=crop&q=80&w=1200",
+            StartsAt = NewYearSeason(now).StartsAt,
+            EndsAt = NewYearSeason(now).EndsAt,
+            SortOrder = 3,
+            IsActive = true,
+            UpdatedAt = now,
+        },
     ];
+
+    private static (DateTimeOffset StartsAt, DateTimeOffset EndsAt) NewYearSeason(DateTimeOffset now)
+    {
+        var kyiv = TimeSpan.FromHours(2);
+        var endYear = now.Month == 1 && now.Day < 8 ? now.Year : now.Year + 1;
+        return (new DateTimeOffset(endYear - 1, 11, 1, 0, 0, 0, kyiv), new DateTimeOffset(endYear, 1, 8, 0, 0, 0, kyiv));
+    }
 }

@@ -72,3 +72,11 @@ export async function resolveRedirect(path: string) {
   const { data } = await api.GET("/api/v1/redirects/resolve", { params: { query: { path } } });
   return data?.to ?? null;
 }
+
+export async function getBestsellers(take: number) {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("catalog", "products", "bestsellers");
+  const { data } = await api.GET("/api/v1/bestsellers", { params: { query: { take } } });
+  return data ?? null;
+}

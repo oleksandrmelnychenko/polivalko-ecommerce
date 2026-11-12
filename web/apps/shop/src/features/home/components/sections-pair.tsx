@@ -11,7 +11,7 @@ export async function SectionsPair() {
   const photo = pagePhotos.sections;
   return (
     <>
-      <Look id="sections-title" title="Розділи каталогу" ghost="Каталог" photo={photo}>
+      <Look id="sections-title" title="Розділи каталогу" ghost="Каталог" photo={photo} more={{ href: "/catalog", label: "Увесь каталог" }}>
         <CategoryGrid categories={categories.slice(0, 6)} columns={3} look />
       </Look>
       <Strip id="sections-strip-title" title="Розділи каталогу" side="left">

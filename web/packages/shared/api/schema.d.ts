@@ -72,6 +72,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/bestsellers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Товари, які найчастіше замовляли за останні 90 днів (без скасованих), лише видимі й у наявності */
+        get: operations["GetBestsellers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/catalog/photo-credits": {
         parameters: {
             query?: never;
@@ -2495,6 +2512,16 @@ export interface components {
             updatedAt: string;
             kicker: null | string;
         };
+        BestsellerDto: {
+            product: components["schemas"]["ProductListItemDto"];
+            /** Format: int32 */
+            orders: number;
+        };
+        BestsellersResponse: {
+            items: components["schemas"]["BestsellerDto"][];
+            /** Format: int32 */
+            periodDays: number;
+        };
         BrandDto: {
             /** Format: uuid */
             id: string;
@@ -4227,6 +4254,37 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetBestsellers: {
+        parameters: {
+            query?: {
+                take?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BestsellersResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
         };

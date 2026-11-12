@@ -2,6 +2,7 @@ const WIKIMEDIA_THUMB = /^https:\/\/(?:upload|thumb)\.wikimedia\.org\/wikipedia\
 const UNSPLASH = /^https:\/\/images\.unsplash\.com\//;
 const WIKIMEDIA_WIDTHS = [330, 500, 960] as const;
 const UNSPLASH_WIDTHS = [360, 540, 800, 1200, 1600] as const;
+const PORTRAIT_WIDTHS = [540, 800, 1200] as const;
 
 const resizeWikimedia = (url: string, width: number) => url.replace(/\/\d+px-([^/]+)$/, `/${width}px-$1`);
 
@@ -25,6 +26,11 @@ export function sized(url: string, sizes: string, fallbackWidth: 330 | 500 | 960
   }
   if (!WIKIMEDIA_THUMB.test(url)) return { src: url };
   return { src: resizeWikimedia(url, fallbackWidth), srcSet: WIKIMEDIA_WIDTHS.map((w) => `${resizeWikimedia(url, w)} ${w}w`).join(", "), sizes };
+}
+
+export function portrait(url: string, sizes: string): Sized {
+  if (!UNSPLASH.test(url)) return sized(url, sizes, 960);
+  return { src: resizeUnsplash(url, 800, 1200), srcSet: PORTRAIT_WIDTHS.map((w) => `${resizeUnsplash(url, w, w * 1.5)} ${w}w`).join(", "), sizes };
 }
 
 export function thumb(url: string, width: 120 | 250 = 250): string {

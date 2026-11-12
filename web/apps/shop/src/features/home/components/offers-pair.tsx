@@ -17,7 +17,7 @@ export async function OffersPair() {
   const sub = `${countProducts(sale?.totalItems ?? items.length)} зі зниженою ціною`;
   return (
     <>
-      <Look id="offers-title" title="Акції" sub={sub} ghost="Знижки" photo={photo}>
+      <Look id="offers-title" title="Акції" sub={sub} ghost="Знижки" photo={photo} more={{ href: "/sale", label: "Усі акції" }}>
         <ProductTiles products={items.slice(0, 6)} columns={3} />
         <p className="look__more">
           <Link href="/sale" className="btn">
