@@ -1,41 +1,76 @@
-.customers-person {
-  align-items: center;
-  display: flex;
-  gap: 10px;
-  min-width: 0;
+.customers-hero-chips {
+  margin-top: 10px;
 }
 
-.customers-avatar {
-  align-items: center;
-  background: var(--mantine-color-gray-1);
-  border: 1px solid var(--mantine-color-gray-2);
-  border-radius: 999px;
-  color: var(--mantine-color-gray-8);
+.customers-actions {
   display: inline-flex;
-  flex: 0 0 32px;
-  font-size: 12px;
-  font-weight: 700;
-  height: 32px;
-  justify-content: center;
-  letter-spacing: 0.02em;
-  width: 32px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.data-table-cell a.customers-phone {
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.data-table-cell a.customers-orders-link {
-  border-radius: 8px;
-  color: var(--mantine-color-gray-8);
+.customers-card-link {
+  align-items: center;
+  background: none;
+  border: 0;
+  color: var(--brand-accent-hover);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
   font-size: 12.5px;
   font-weight: 600;
-  text-decoration: none;
+  gap: 4px;
+  padding: 0;
 }
 
-.data-table-cell a.customers-orders-link:hover {
-  border-color: rgba(var(--brand-accent-rgb), 0.45);
-  color: var(--brand-ink);
-  text-decoration: none;
+.customers-card-link:hover {
+  text-decoration: underline;
+}
+
+.customers-card-link:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 2px;
+}
+
+.customers-addresses {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+
+.customers-addresses li {
+  border-top: 1px solid var(--mantine-color-gray-2);
+  display: grid;
+  gap: 2px;
+  padding: 10px 0;
+}
+
+.customers-addresses li:first-child {
+  border-top: 0;
+}
+
+.customers-address-title {
+  align-items: center;
+  color: var(--mantine-color-gray-9);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13.5px;
+  font-weight: 600;
+  gap: 6px;
+}
+
+.customers-address-default {
+  background: var(--brand-accent-soft);
+  border-radius: 999px;
+  color: var(--brand-accent-hover);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 1px 8px;
+}
+
+.customers-address-text {
+  color: var(--mantine-color-gray-7);
+  font-size: 13px;
 }

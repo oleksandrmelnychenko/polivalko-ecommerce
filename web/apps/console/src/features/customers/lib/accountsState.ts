@@ -49,10 +49,8 @@ export function toAccountsQuery(state: AccountsState): AccountsQuery {
 }
 
 export function accountHref(id: string): string {
-  return `/sales/customers/accounts/${encodeURIComponent(id)}`
+  return `/sales/customers?tab=accounts&id=${encodeURIComponent(id)}`
 }
-
-export const ACCOUNTS_LIST_PATH = '/sales/customers?tab=accounts'
 
 export function useAccountsState() {
   const [params, setParams] = useSearchParams()
