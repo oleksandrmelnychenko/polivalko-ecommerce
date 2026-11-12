@@ -1190,7 +1190,7 @@ web/apps/console/
    │  ├─ dashboard/      Дашборд: стан, черга, «Потребує уваги» (лічильники товарів), показники
    │  ├─ orders/         список (еталон сторінки списку) і картка замовлення з друком і нотаткою для працівників
    │  ├─ returns/        список повернень коштів (ReturnsPage)
-   │  ├─ customers/      покупці: вкладки «За замовленнями» й «Кабінети», картка кабінету (AccountPage)
+   │  ├─ customers/      покупці: вкладки «За замовленнями» й «Кабінети» зі списком і карткою (AccountPage лише перенаправляє)
    │  ├─ requests/       заявки на послуги
    │  ├─ catalog/        товари (вкладки наповнення, масові дії) і редактор товару, категорії, довідники
    │  │                  характеристик, брендів і міток (AttributesPage, BrandsPage, LabelsPage), добірки, імпорт
@@ -1227,7 +1227,7 @@ web/apps/console/
 | `/sales/requests` | Заявки | `requests/RequestsPage` | `requests.page.view` |
 | `/sales/returns` | Повернення | `returns/ReturnsPage` | `orders.page.view` |
 | `/sales/customers` | Покупці | `customers/CustomersPage` (`?tab=accounts` — «Кабінети») | `customers.page.view` |
-| `/sales/customers/accounts/:id` | Кабінет покупця | `customers/AccountPage` | `customers.page.view` |
+| `/sales/customers/accounts/:id` | Кабінет покупця (перенаправлення на `/sales/customers?tab=accounts&id=…`) | `customers/AccountPage` | `customers.page.view` |
 | `/catalog/products`, `/catalog/products/:id` | Товари, Товар | `catalog/ProductsPage`, `ProductPage` | `catalog.products.view` |
 | `/catalog/categories` | Категорії | `catalog/CategoriesPage` | `catalog.categories.manage` |
 | `/catalog/attributes` | Характеристики | `catalog/AttributesPage` | `catalog.attributes.manage` |
@@ -1537,7 +1537,7 @@ Mantine) імпортує кореневий `app/layout.tsx`, тож він і�
 | Фіча | Що додано | API (`/api/v1/console/…`) |
 | --- | --- | --- |
 | `returns` (нова) | `ReturnsPage`: усі повернення коштів зі станом грошей і чека | `GET refunds` |
-| `customers` | `CustomersPage` з вкладками «За замовленнями» (колишній список) і «Кабінети», `AccountPage` з блокуванням і листом для скидання пароля | `GET customers`, `GET accounts`, `GET accounts/{id}`, `POST accounts/{id}/lock`, `POST accounts/{id}/password-reset` |
+| `customers` | `CustomersPage` з вкладками «За замовленнями» (колишній список) і «Кабінети», картка кабінету `AccountDetailPane` з блокуванням і листом для скидання пароля (див. 15.23) | `GET customers`, `GET accounts`, `GET accounts/{id}`, `POST accounts/{id}/lock`, `POST accounts/{id}/password-reset` |
 | `orders` | `OrderNoteCard` («Нотатка для працівників»), рядок «Кабінет» у `OrderBuyerCard` (`customerAccountId`) | `PUT orders/{number}/note` |
 | `dashboard` | `CatalogAttention` («Потребує уваги»: наповнення, нові, приховані з залишком) | `GET catalog/products/counts` |
 | `catalog` | `ProductsTabs` (вибірки), фільтри «Бренд», «Мітка», «Наповнення», `ProductsBulkBar` + `ProductsBulkDialog` (категорія, бренд, ручні мітки), `ProductEditorLabels`, бренд у товарі зі списку; `CategoryForm` з фото, описом і фільтрами з довідника (`MultiSelect`, до 10); `AttributesPage`, `BrandsPage` (+ `BrandMergeDialog`), `LabelsPage`; «Добірки головної» → «Добірки» | `GET catalog/products` (+ `brand`, `labelId`, `fill`, `newDays`, `hiddenWithStock`), `GET catalog/products/counts`, `POST catalog/products/bulk`, `catalog/attributes`, `catalog/brands` (+ `{id}/merge`), `catalog/labels`, `POST media/images` |
@@ -1848,6 +1848,46 @@ API приймає одне фото на запит (`POST /console/catalog/pro
   обраного з посиланнями на обидві адреси та «Видалити»; нове перенаправлення після створення стає обраним.
   `site-create-bar` видалено. Мета-шаблони лишилися формою; `.site-card` і `.site-scroll` отримали той самий вигляд
   карток на сірому тлі.
+
+### 15.23. Заявки, повернення й покупці на розкладці «список + картка» (2026-11-12)
+
+Спільне: `shared/ui/split/SplitAvatar` (ініціали, `app-split-avatar` sm/lg, `is-muted`; в активному рядку заливається
+зеленим), `shared/lib/initials`, у `split.css` нові `app-split-icon` (64 px, тони `is-success` / `is-warning` /
+`is-danger`), `app-split-bar` (смуга під числами шапки), `app-split-text` (текст з переносами), `app-split-dot`
+(роздільник «·»), посилання в `app-split-card-head`. `shared/sales/salesLookups` — `findOrders`, `findRefunds`,
+`findAccounts` (перша сторінка відповідного списку з `q`) і `orderHref` / `ordersSearchHref`; `shared/sales/SalesLists`
+— `OrdersList` і `RefundsList` (номер, коли, чип стану, сума) і `refundTone`. Картки беруть стан запиту з
+`isFetching`, а не `isLoading`: `useApiQuery` тримає дані попереднього ключа, поки вантажиться новий, а вимкнений запит
+має стан `loading`.
+
+- **Заявки** (`RequestsPage`, `RequestDetailPane`): вкладки статусів і пагінатор лишилися; таблиця «Клієнт (аватар,
+  ім'я, телефон) · Напрямок · Статус · Отримано», `?id=`. Статус більше не змінюється в рядку: у картці
+  `SegmentedControl` у смузі «Статус заявки» (з правом `requests.status.change`). Якщо заявка після зміни статусу зникла
+  з поточної вкладки, картка лишається відкритою (останню змінену заявку тримає стан `changed`). Картка: ім'я з
+  чипом, телефон і напрямок, «Подзвонити» (`tel:`); числа — отримано, напрямок з кодом, скільки замовлень з цього
+  номера (з правом на замовлення, інакше телефон); «Коментар клієнта»; «Замовлення з цього номера» — до 5 з
+  `findOrders(phone)` і посилання на список замовлень з пошуком за телефоном. `requests.css` видалено.
+- **Повернення** (`ReturnsPage`, `ReturnDetailPane`): фільтри лишилися; таблиця «Замовлення (номер, коли) · Сума ·
+  Стан», `?id=`; рядок більше не відкриває замовлення, для цього кнопка «Відкрити замовлення» в картці. Картка: сума
+  шрифтом цифр з чипом стану, хто оформив; числа — оформлено, спосіб, чек повернення; «Причина»; «Замовлення» з
+  `findOrders(orderNumber)` (покупець і телефон, дата, статуси замовлення й оплати, отримання, сума); «Повернення за цим
+  замовленням» з `findRefunds(orderNumber)` і підсумком «повернуто X з Y» (рахуються лише виконані).
+  `returnsLabels` позбувся `refundTone`, `orderHref` і `refundMethodLabel`.
+- **Покупці → За замовленнями** (`OrderCustomersTab`, `CustomerDetailPane`): таблиця «Покупець (аватар, ім'я,
+  телефон) · Замовлень · Сума покупок · Останнє» з тим самим серверним сортуванням, `?id=` = телефон. Картка: ім'я,
+  телефон, email, «Постійний покупець» від двох замовлень, «Усі замовлення»; числа — замовлень, сума покупок, середній
+  чек; останні 5 замовлень з датою першого; «Кабінет на сайті» — `findAccounts` спершу за телефоном (збіг цифр), потім
+  за email, з кнопкою «Відкрити кабінет» (вкладка «Кабінети» з цим `id`); «Повернення» з `findRefunds(phone)`, якщо
+  вони є.
+- **Покупці → Кабінети** (`AccountsTab`, `AccountDetailPane`): таблиця «Покупець (аватар, ім'я, email) · Стан (один
+  чип: вхід заблоковано, пошта підтверджена чи ні) · Замовлень · Зареєстровано», `?id=`. Картка вантажить
+  `getAccount(id)` і показується, навіть якщо кабінету немає на поточній сторінці списку. Вміст колишньої
+  `AccountPage`: чипи стану, email і телефон; числа — замовлень, в обраному, адрес; у смузі дата реєстрації й дії з
+  правом `customers.accounts.manage` (лист для скидання пароля, блокування з підтвердженням; після блокування список
+  перезавантажується); «Замовлення через кабінет» (`OrdersList`) і «Збережені адреси». `AccountPage` тепер лише
+  перенаправляє `/sales/customers/accounts/:id` на `/sales/customers?tab=accounts&id=…` (`accountHref`), тож
+  посилання з картки замовлення працює як раніше. `account.css` і `customers/lib/initials.ts` видалено,
+  `ACCOUNTS_LIST_PATH` прибрано.
 
 ## 16. Вітрина: дані з консолі (2026-11-05)
 
