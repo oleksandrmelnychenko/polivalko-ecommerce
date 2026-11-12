@@ -167,7 +167,7 @@ export function OrdersPage() {
           getRowId={getRowId}
           isLoading={orders.isLoading}
           isFetching={orders.isFetching}
-          minWidth={980}
+          minWidth={1400}
           height="100%"
           manualSorting
           sorting={sorting}

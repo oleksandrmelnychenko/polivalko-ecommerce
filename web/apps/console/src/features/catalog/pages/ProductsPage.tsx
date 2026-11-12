@@ -225,7 +225,7 @@ export function ProductsPage() {
             getRowId={getRowId}
             isLoading={products.isLoading}
             isFetching={products.isFetching}
-            minWidth={1180}
+            minWidth={1470}
             height="100%"
             manualSorting
             onRowClick={onRowClick}

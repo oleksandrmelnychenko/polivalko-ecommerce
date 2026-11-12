@@ -19,7 +19,7 @@ const SORTS: readonly OrderSort[] = ['newest', 'oldest', 'totalDesc', 'totalAsc'
 const ORDER_STATUSES = Object.keys(orderStatusLabel) as OrderStatus[]
 const PAYMENT_STATUSES = Object.keys(paymentStatusLabel) as PaymentStatus[]
 
-export const SORT_COLUMN = { date: 'number', total: 'total' } as const
+export const SORT_COLUMN = { date: 'createdAt', total: 'total' } as const
 
 export function readOrdersState(params: URLSearchParams): OrdersState {
   const value = (key: FilterKey) => params.get(key) ?? ''

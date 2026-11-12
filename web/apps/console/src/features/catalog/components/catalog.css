@@ -31,19 +31,24 @@
   text-decoration: underline;
 }
 
-.catalog-product-cell {
-  align-items: center;
-  display: flex;
-  gap: 10px;
+.data-table-cell a.catalog-product-name {
+  color: var(--mantine-color-gray-9);
+  display: block;
+  font-weight: 600;
   min-width: 0;
-}
-
-.catalog-product-cell a {
-  color: inherit;
+  overflow: hidden;
   text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.catalog-product-cell a:hover {
+.data-table-cell.catalog-cell-strong .app-money,
+.data-table-cell.catalog-cell-strong .app-number {
+  color: var(--mantine-color-gray-9);
+  font-weight: 700;
+}
+
+.data-table-cell a.catalog-product-name:hover {
   color: var(--brand-accent-hover);
   text-decoration: underline;
 }
