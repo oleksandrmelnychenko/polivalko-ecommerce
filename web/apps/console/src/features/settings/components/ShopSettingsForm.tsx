@@ -1,10 +1,13 @@
-import { Alert, Button, SimpleGrid, Stack, Textarea, TextInput } from '@mantine/core'
+import { Alert, Button, SimpleGrid, Textarea, TextInput } from '@mantine/core'
 import { useHotkeys } from '@mantine/hooks'
-import { IconAlertTriangle, IconDeviceFloppy } from '@tabler/icons-react'
+import { IconAlertTriangle, IconCalendarEvent, IconDeviceFloppy, IconFileCertificate, IconMapPin, IconPhone, IconShare } from '@tabler/icons-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { PageHeader } from '@/shared/ui/PageHeader'
+import { TableChip } from '@/shared/ui/TableChip'
 import { saveContacts, saveShopSettings, type Contacts, type ShopSettings } from '../api/settingsApi'
 import {
+  isPastDay,
   SELLER_LIMITS,
   SHOP_LIMITS,
   toContactsBody,
@@ -17,10 +20,14 @@ import {
 } from '../lib/shopForm'
 import { fieldError, useSaveForm, type SaveStep } from '../lib/useSaveForm'
 import { FormAlert } from './FormAlert'
-import { SectionCard } from './SectionCard'
+import { FillState, SettingsCard, SettingsDirty, SettingsHero, SettingsSectionList, useErrorSections, useJumpToErrors, useSettingsSection, type SettingsSection } from './SettingsSplit'
 import { SpecialDaysEditor } from './SpecialDaysEditor'
 
 const FORM_ID = 'settings-shop-form'
+
+type ShopSectionKey = 'connection' | 'address' | 'specialDays' | 'social' | 'seller'
+
+const SECTION_KEYS: readonly ShopSectionKey[] = ['connection', 'address', 'specialDays', 'social', 'seller']
 
 type ShopSettingsFormProps = {
   contacts: Contacts
@@ -61,6 +68,31 @@ const SELLER: TextField<keyof SellerValues>[] = [
   { name: 'phone', label: 'Телефон', type: 'tel', placeholder: '+380 67 123 45 67' },
 ]
 
+const CONTACT_SECTION: Record<string, ShopSectionKey> = {
+  storephone: 'connection',
+  servicesphone: 'connection',
+  email: 'connection',
+  address: 'address',
+  mapurl: 'address',
+  schedule: 'address',
+  instagram: 'social',
+  facebook: 'social',
+  telegram: 'social',
+  viber: 'social',
+  youtube: 'social',
+}
+
+function sectionOfField(field: string): ShopSectionKey | null {
+  const head = field.split('.')[0]
+  if (head === 'seller') return 'seller'
+  if (head === 'specialdays') return 'specialDays'
+  return CONTACT_SECTION[head] ?? null
+}
+
+function filled(values: string[]): number {
+  return values.filter((value) => value.trim()).length
+}
+
 export function ShopSettingsForm({ contacts, shop, onSaved }: ShopSettingsFormProps) {
   const formRef = useRef<HTMLFormElement>(null)
   const form = useSaveForm(formRef)
@@ -71,6 +103,9 @@ export function ShopSettingsForm({ contacts, shop, onSaved }: ShopSettingsFormPr
   const contactsDirty = current.contacts !== saved.contacts
   const shopDirty = current.shop !== saved.shop
   const dirty = contactsDirty || shopDirty
+  const [active, select] = useSettingsSection(SECTION_KEYS)
+  const invalid = useErrorSections(form.errors, sectionOfField)
+  useJumpToErrors(SECTION_KEYS, invalid, active, select)
 
   useEffect(() => {
     if (!dirty) return undefined
@@ -112,128 +147,156 @@ export function ShopSettingsForm({ contacts, shop, onSaved }: ShopSettingsFormPr
     onSaved(nextContacts, nextShop)
   }
 
+  const c = values.contacts
+  const upcoming = values.specialDays.filter((day) => !isPastDay(day.date)).length
+  const sellerReady = filled([values.seller.name, values.seller.taxId, values.seller.address, values.seller.iban]) === 4
+
+  const sections: SettingsSection<ShopSectionKey>[] = [
+    { key: 'connection', name: "Зв'язок", hint: 'Телефони й email магазину', icon: IconPhone, state: <FillState filled={filled([c.storePhone, c.servicesPhone, c.email])} total={3} /> },
+    { key: 'address', name: 'Адреса й графік', hint: 'Адреса, карта і звичайний графік', icon: IconMapPin, state: <FillState filled={filled([c.address, c.mapUrl, c.schedule])} total={3} /> },
+    {
+      key: 'specialDays',
+      name: 'Особливі дні',
+      hint: 'Свята, скорочені й передноворічні дні',
+      icon: IconCalendarEvent,
+      state: upcoming ? <TableChip dot tone="success" value={`Попереду: ${upcoming}`} /> : <TableChip dot tone="neutral" value="Немає" />,
+    },
+    { key: 'social', name: 'Соцмережі', hint: 'Посилання на сторінки магазину', icon: IconShare, state: <FillState filled={filled([c.instagram, c.facebook, c.telegram, c.viber, c.youTube])} total={5} /> },
+    {
+      key: 'seller',
+      name: 'Реквізити продавця',
+      hint: 'Для оферти й фіскальних чеків',
+      icon: IconFileCertificate,
+      state: sellerReady ? <TableChip dot tone="success" value="Заповнено" /> : <TableChip dot tone="warning" value="Не все заповнено" />,
+    },
+  ].map((section) => ({ ...section, invalid: invalid.has(section.key as ShopSectionKey) })) as SettingsSection<ShopSectionKey>[]
+
+  const section = sections.find((item) => item.key === active) ?? sections[0]
+
+  function textFields<G extends 'contacts' | 'seller'>(group: G, fields: TextField<string>[], cols: number) {
+    return (
+      <SimpleGrid cols={cols} spacing="md" verticalSpacing="sm">
+        {fields.map((field) => {
+          const path = group === 'seller' ? ['seller', field.name] : [field.name]
+          const value = (values[group] as Record<string, string>)[field.name]
+          return (
+            <TextInput
+              key={field.name}
+              label={field.label}
+              type={field.type}
+              inputMode={field.type === 'tel' ? 'tel' : field.name === 'taxId' ? 'numeric' : undefined}
+              autoComplete="off"
+              spellCheck={field.type === 'url' || group === 'seller' ? false : undefined}
+              required={field.required}
+              description={field.description}
+              placeholder={field.placeholder}
+              maxLength={field.maxLength ?? (group === 'seller' ? SELLER_LIMITS[field.name as keyof SellerValues] : undefined)}
+              value={value}
+              error={fieldError(form.errors, ...path)}
+              onChange={(event) => setGroup(group, field.name as keyof ShopForm[G], event.currentTarget.value, path)}
+            />
+          )
+        })}
+      </SimpleGrid>
+    )
+  }
+
   return (
-    <div className="settings-page">
+    <ListPage>
       <PageHeader
         title="Магазин"
         actions={
-          <Button type="submit" form={FORM_ID} loading={form.busy} disabled={!dirty} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
-            Зберегти зміни
-          </Button>
+          <>
+            <SettingsDirty dirty={dirty} />
+            <Button type="submit" form={FORM_ID} loading={form.busy} disabled={!dirty} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
+              Зберегти зміни
+            </Button>
+          </>
         }
       />
-      <form id={FORM_ID} ref={formRef} className="settings-form" onSubmit={onSubmit} noValidate aria-label="Налаштування магазину">
-        <Stack gap="lg">
-          <p className="settings-lead">Сайт показує контакти й графік на сторінці контактів, на головній і у футері. Порожнє поле на сайті не з&apos;являється.</p>
-          <FormAlert error={form.error} />
+      <ListPageBody>
+        <form id={FORM_ID} ref={formRef} className="app-split-layout settings-form" onSubmit={onSubmit} noValidate aria-label="Налаштування магазину">
+          <SettingsSectionList label="Розділи налаштувань магазину" sections={sections} active={active} onSelect={select} top={form.error ? <FormAlert error={form.error} /> : null} />
 
-          <SectionCard title="Зв'язок">
-            <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md" verticalSpacing="sm">
-              {CONNECTION.map((field) => (
-                <TextInput
-                  key={field.name}
-                  label={field.label}
-                  type={field.type}
-                  inputMode={field.type === 'tel' ? 'tel' : undefined}
-                  autoComplete="off"
-                  placeholder={field.placeholder}
-                  maxLength={field.maxLength}
-                  value={values.contacts[field.name]}
-                  error={fieldError(form.errors, field.name)}
-                  onChange={(event) => setGroup('contacts', field.name, event.currentTarget.value, [field.name])}
-                />
-              ))}
-            </SimpleGrid>
-          </SectionCard>
+          <section key={active} className="app-split-detail" aria-label={section.name}>
+            {active === 'connection' ? (
+              <>
+                <SettingsHero section={section} kicker="Магазин" description="Сайт показує телефони й email на сторінці контактів, на головній і у футері. Порожнє поле на сайті не з'являється." />
+                <SettingsCard title="Телефони й email">{textFields('contacts', CONNECTION, 1)}</SettingsCard>
+              </>
+            ) : null}
 
-          <SectionCard title="Адреса й графік">
-            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" verticalSpacing="sm">
-              <TextInput
-                label="Адреса магазину"
-                maxLength={SHOP_LIMITS.address}
-                value={values.contacts.address}
-                autoComplete="off"
-                error={fieldError(form.errors, 'address')}
-                onChange={(event) => setGroup('contacts', 'address', event.currentTarget.value, ['address'])}
-              />
-              <TextInput
-                label="Посилання на карту"
-                type="url"
-                placeholder="https://maps.app.goo.gl/…"
-                value={values.contacts.mapUrl}
-                autoComplete="off"
-                error={fieldError(form.errors, 'mapUrl')}
-                onChange={(event) => setGroup('contacts', 'mapUrl', event.currentTarget.value, ['mapUrl'])}
-              />
-            </SimpleGrid>
-            <Textarea
-              mt="sm"
-              label="Звичайний графік"
-              description="Як на сайті, наприклад: Пн-Пт 9:00-19:00, Сб-Нд 10:00-17:00."
-              autosize
-              minRows={2}
-              maxLength={SHOP_LIMITS.schedule}
-              value={values.contacts.schedule}
-              error={fieldError(form.errors, 'schedule')}
-              onChange={(event) => setGroup('contacts', 'schedule', event.currentTarget.value, ['schedule'])}
-            />
-          </SectionCard>
+            {active === 'address' ? (
+              <>
+                <SettingsHero section={section} kicker="Магазин" description="Адреса й графік стоять на сторінці контактів, на головній і у футері. Порожнє поле на сайті не з'являється." />
+                <SettingsCard title="Де і коли працює магазин">
+                  <SimpleGrid cols={1} spacing="md" verticalSpacing="sm">
+                    <TextInput
+                      label="Адреса магазину"
+                      maxLength={SHOP_LIMITS.address}
+                      value={c.address}
+                      autoComplete="off"
+                      error={fieldError(form.errors, 'address')}
+                      onChange={(event) => setGroup('contacts', 'address', event.currentTarget.value, ['address'])}
+                    />
+                    <TextInput
+                      label="Посилання на карту"
+                      type="url"
+                      placeholder="https://maps.app.goo.gl/…"
+                      value={c.mapUrl}
+                      autoComplete="off"
+                      error={fieldError(form.errors, 'mapUrl')}
+                      onChange={(event) => setGroup('contacts', 'mapUrl', event.currentTarget.value, ['mapUrl'])}
+                    />
+                    <Textarea
+                      label="Звичайний графік"
+                      description="Як на сайті, наприклад: Пн-Пт 9:00-19:00, Сб-Нд 10:00-17:00."
+                      autosize
+                      minRows={2}
+                      maxLength={SHOP_LIMITS.schedule}
+                      value={c.schedule}
+                      error={fieldError(form.errors, 'schedule')}
+                      onChange={(event) => setGroup('contacts', 'schedule', event.currentTarget.value, ['schedule'])}
+                    />
+                  </SimpleGrid>
+                </SettingsCard>
+              </>
+            ) : null}
 
-          <SectionCard title="Особливі дні" description="Свята, скорочені й передноворічні дні. Сайт показує їх поруч зі звичайним графіком, поки дата не мине.">
-            <SpecialDaysEditor
-              days={values.specialDays}
-              errors={form.errors}
-              onChange={(specialDays) => setValues((state) => ({ ...state, specialDays }))}
-              onClearField={form.clearField}
-            />
-          </SectionCard>
+            {active === 'specialDays' ? (
+              <>
+                <SettingsHero section={section} kicker="Магазин" description="Сайт показує особливі дні поруч зі звичайним графіком, поки дата не мине." />
+                <SettingsCard title="Дні">
+                  <SpecialDaysEditor
+                    days={values.specialDays}
+                    errors={form.errors}
+                    onChange={(specialDays) => setValues((state) => ({ ...state, specialDays }))}
+                    onClearField={form.clearField}
+                  />
+                </SettingsCard>
+              </>
+            ) : null}
 
-          <SectionCard title="Соцмережі">
-            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" verticalSpacing="sm">
-              {SOCIAL.map((field) => (
-                <TextInput
-                  key={field.name}
-                  label={field.label}
-                  type="url"
-                  autoComplete="off"
-                  spellCheck={false}
-                  placeholder={field.placeholder}
-                  value={values.contacts[field.name]}
-                  error={fieldError(form.errors, field.name)}
-                  onChange={(event) => setGroup('contacts', field.name, event.currentTarget.value, [field.name])}
-                />
-              ))}
-            </SimpleGrid>
-          </SectionCard>
+            {active === 'social' ? (
+              <>
+                <SettingsHero section={section} kicker="Магазин" description="Сайт показує лише заповнені посилання." />
+                <SettingsCard title="Посилання">{textFields('contacts', SOCIAL.map((field) => ({ ...field, type: 'url' as const })), 1)}</SettingsCard>
+              </>
+            ) : null}
 
-          <SectionCard title="Реквізити продавця">
-            <Alert color="orange" variant="light" icon={<IconAlertTriangle size={18} />} mb="md">
-              Реквізити стоять в оферті, на сайті під офертою й у фіскальних чеках. Перед збереженням звірте їх з бухгалтером. Уже оформлені замовлення
-              зберігають реквізити на момент оформлення.
-            </Alert>
-            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" verticalSpacing="sm">
-              {SELLER.map((field) => (
-                <TextInput
-                  key={field.name}
-                  label={field.label}
-                  type={field.type}
-                  inputMode={field.type === 'tel' ? 'tel' : field.name === 'taxId' ? 'numeric' : undefined}
-                  autoComplete="off"
-                  spellCheck={false}
-                  required={field.required}
-                  description={field.description}
-                  placeholder={field.placeholder}
-                  maxLength={SELLER_LIMITS[field.name]}
-                  value={values.seller[field.name]}
-                  error={fieldError(form.errors, 'seller', field.name)}
-                  onChange={(event) => setGroup('seller', field.name, event.currentTarget.value, ['seller', field.name])}
-                />
-              ))}
-            </SimpleGrid>
-          </SectionCard>
-        </Stack>
-      </form>
-    </div>
+            {active === 'seller' ? (
+              <>
+                <SettingsHero section={section} kicker="Магазин" description="Реквізити стоять в оферті, на сайті під офертою й у фіскальних чеках." />
+                <Alert color="orange" variant="light" icon={<IconAlertTriangle size={18} />}>
+                  Перед збереженням звірте реквізити з бухгалтером. Уже оформлені замовлення зберігають реквізити на момент оформлення.
+                </Alert>
+                <SettingsCard title="Реквізити">{textFields('seller', SELLER, 2)}</SettingsCard>
+              </>
+            ) : null}
+          </section>
+        </form>
+      </ListPageBody>
+    </ListPage>
   )
 }
 

@@ -8,7 +8,7 @@ export const pickupColumns: DataTableColumn<PickupPoint>[] = [
     id: 'name',
     header: 'Точка',
     accessor: (row) => row.name,
-    width: 220,
+    width: 170,
     cell: (row) => <CellStack title={row.name} sub={row.code} />,
   },
   {
@@ -16,22 +16,23 @@ export const pickupColumns: DataTableColumn<PickupPoint>[] = [
     header: 'Адреса',
     accessor: (row) => row.address,
     fill: true,
-    width: 220,
+    width: 160,
+    minWidth: 140,
     cell: (row) => <span className="settings-clamp">{row.address}</span>,
   },
   {
     id: 'schedule',
     header: 'Графік роботи',
-    width: 180,
+    width: 150,
     cell: (row) => <span className="settings-clamp">{row.schedule}</span>,
   },
   {
     id: 'mapUrl',
-    header: 'Посилання на карту',
-    width: 170,
+    header: 'Карта',
+    width: 120,
     cell: (row) =>
       row.mapUrl ? (
-        <a href={row.mapUrl} target="_blank" rel="noopener noreferrer" className="settings-ellipsis">
+        <a href={row.mapUrl} target="_blank" rel="noopener noreferrer" className="settings-ellipsis" data-row-click-ignore>
           {row.mapUrl.replace(/^https?:\/\//, '')}
         </a>
       ) : (
@@ -42,7 +43,7 @@ export const pickupColumns: DataTableColumn<PickupPoint>[] = [
     id: 'isActive',
     header: 'Стан',
     accessor: (row) => row.isActive,
-    width: 130,
+    width: 110,
     cell: (row) => (row.isActive ? <TableChip dot tone="success" value="Доступна" /> : <TableChip dot tone="neutral" value="Вимкнена" />),
   },
 ]

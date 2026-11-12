@@ -1,17 +1,28 @@
 import { Button, Stack, Switch, TagsInput } from '@mantine/core'
-import { IconDeviceFloppy, IconSend } from '@tabler/icons-react'
+import { IconBell, IconBrandTelegram, IconDeviceFloppy, IconMail, IconSend } from '@tabler/icons-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
+import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { notifyError, notifySuccess } from '@/shared/ui/notify'
 import { TableChip } from '@/shared/ui/TableChip'
 import { saveNotificationSettings, sendTestNotification, type NotificationEvents, type NotificationSettings } from '../api/settingsApi'
 import { fieldError, useSaveForm } from '../lib/useSaveForm'
 import { FormAlert } from './FormAlert'
-import { SectionCard } from './SectionCard'
+import { SettingsCard, SettingsDirty, SettingsHero, SettingsSectionList, useErrorSections, useJumpToErrors, useSettingsSection, type SettingsSection } from './SettingsSplit'
 
 const FORM_ID = 'settings-notifications-form'
+
+type NotificationSectionKey = 'telegram' | 'email' | 'events'
+
+const SECTION_KEYS: readonly NotificationSectionKey[] = ['telegram', 'email', 'events']
+
+function sectionOfField(field: string): NotificationSectionKey | null {
+  if (field.startsWith('telegramchatids')) return 'telegram'
+  if (field.startsWith('emails')) return 'email'
+  return null
+}
 const CHAT_ID = /^(-?\d{5,20}|@[A-Za-z0-9_]{5,32})$/
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_RECIPIENTS = 10
@@ -68,6 +79,9 @@ export function NotificationSettingsForm({ initial, onSaved }: NotificationSetti
   const dirty = JSON.stringify(toBody(values)) !== saved
   const configured = initial.telegramConfigured
   const savedChats = (JSON.parse(saved) as Values).telegramChatIds.length
+  const [active, select] = useSettingsSection(SECTION_KEYS)
+  const invalid = useErrorSections(form.errors, sectionOfField)
+  useJumpToErrors(SECTION_KEYS, invalid, active, select)
 
   useEffect(() => {
     if (!dirty) return undefined
@@ -107,109 +121,158 @@ export function NotificationSettingsForm({ initial, onSaved }: NotificationSetti
     setTesting(false)
   }
 
+  const telegramState =
+    configured === false ? (
+      <TableChip dot tone="warning" value="Бот не налаштований" />
+    ) : values.telegramChatIds.length ? (
+      <TableChip dot tone="success" value={`Чатів: ${values.telegramChatIds.length}`} />
+    ) : (
+      <TableChip dot tone="neutral" value="Чат із конфігурації" />
+    )
+  const enabledEvents = EVENTS.filter((item) => values.events[item.key]).length
+
+  const sections: SettingsSection<NotificationSectionKey>[] = [
+    { key: 'telegram', name: 'Telegram', hint: 'Бот надсилає повідомлення в чати й групи', icon: IconBrandTelegram, state: telegramState, invalid: invalid.has('telegram') },
+    {
+      key: 'email',
+      name: 'Email',
+      hint: 'Листи про ті самі події',
+      icon: IconMail,
+      state: values.emails.length ? <TableChip dot tone="success" value={`Адрес: ${values.emails.length}`} /> : <TableChip dot tone="neutral" value="Адрес немає" />,
+      invalid: invalid.has('email'),
+    },
+    {
+      key: 'events',
+      name: 'Події',
+      hint: 'Про що повідомляти',
+      icon: IconBell,
+      state: <TableChip dot tone={enabledEvents ? 'success' : 'neutral'} value={enabledEvents === EVENTS.length ? 'Усі ввімкнено' : `Увімкнено ${enabledEvents} з ${EVENTS.length}`} />,
+    },
+  ]
+  const section = sections.find((item) => item.key === active) ?? sections[0]
+
   return (
-    <div className="settings-page">
+    <ListPage>
       <PageHeader
         title="Сповіщення"
         actions={
-          <Button type="submit" form={FORM_ID} loading={form.busy} disabled={!dirty} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
-            Зберегти зміни
-          </Button>
+          <>
+            <SettingsDirty dirty={dirty} />
+            <Button type="submit" form={FORM_ID} loading={form.busy} disabled={!dirty} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
+              Зберегти зміни
+            </Button>
+          </>
         }
       />
-      <form id={FORM_ID} className="settings-form" onSubmit={onSubmit} noValidate aria-label="Налаштування сповіщень">
-        <Stack gap="lg">
-          <p className="settings-lead">Хто й про що дізнається одразу: нові замовлення, заявки на послуги та збої, на які має зреагувати менеджер.</p>
-          <FormAlert error={form.error} />
+      <ListPageBody>
+        <form id={FORM_ID} className="app-split-layout settings-form" onSubmit={onSubmit} noValidate aria-label="Налаштування сповіщень">
+          <SettingsSectionList label="Канали й події сповіщень" sections={sections} active={active} onSelect={select} top={form.error ? <FormAlert error={form.error} /> : null} />
 
-          <SectionCard
-            title="Telegram"
-            description="Бот надсилає повідомлення в усі вказані чати й групи. Додайте бота в групу, перш ніж вказувати її ID."
-            actions={
-              <Button
-                variant="default"
-                size="xs"
-                leftSection={<IconSend size={14} stroke={1.8} />}
-                loading={testing}
-                disabled={configured === false || dirty}
-                title={dirty ? 'Спершу збережіть зміни' : configured === false ? 'Бот не налаштований на сервері' : undefined}
-                onClick={() => void sendTest()}
-              >
-                Надіслати тестове повідомлення
-              </Button>
-            }
-          >
-            <Stack gap="sm">
-              <div className="settings-inline">
-                {configured === false ? (
-                  <TableChip dot tone="warning" value="Бот не налаштований" />
-                ) : configured ? (
-                  <TableChip dot tone="success" value="Бот підключений" />
-                ) : null}
-                <span className="settings-muted">
-                  {configured === false
-                    ? 'Токен бота задає розробник у конфігурації сервера. Поки токена немає, сервер лише записує повідомлення у свій журнал.'
-                    : 'Токен бота зберігається в конфігурації сервера, у консолі його немає.'}
-                </span>
-              </div>
-              <TagsInput
-                label="Чати й групи"
-                description={
-                  savedChats === 0
-                    ? 'Список порожній: повідомлення йдуть у чат із конфігурації сервера, якщо він заданий. Введіть ID і натисніть Enter.'
-                    : 'ID чату або групи, наприклад -1001234567890. Введіть ID і натисніть Enter.'
-                }
-                placeholder={values.telegramChatIds.length < MAX_RECIPIENTS ? 'ID чату' : undefined}
-                value={values.telegramChatIds}
-                maxTags={MAX_RECIPIENTS}
-                splitChars={[',', ' ', ';']}
-                clearable
-                acceptValueOnBlur
-                error={fieldError(form.errors, 'telegramChatIds')}
-                onChange={(telegramChatIds) => {
-                  setValues((current) => ({ ...current, telegramChatIds }))
-                  form.clearField('telegramChatIds')
-                }}
-              />
-            </Stack>
-          </SectionCard>
-
-          <SectionCard title="Email" description="Адреси для листів про ті самі події. Сайт надсилає листи, лише коли на сервері налаштовано пошту.">
-            <TagsInput
-              label="Адреси"
-              description="Введіть адресу й натисніть Enter."
-              placeholder={values.emails.length < MAX_RECIPIENTS ? 'manager@example.com' : undefined}
-              value={values.emails}
-              maxTags={MAX_RECIPIENTS}
-              splitChars={[',', ' ', ';']}
-              clearable
-              acceptValueOnBlur
-              error={fieldError(form.errors, 'emails')}
-              onChange={(emails) => {
-                setValues((current) => ({ ...current, emails }))
-                form.clearField('emails')
-              }}
-            />
-          </SectionCard>
-
-          <SectionCard title="Події" description="Про вимкнені події сайт не повідомляє.">
-            <Stack gap="md">
-              {EVENTS.map((item) => (
-                <Switch
-                  key={item.key}
-                  label={item.label}
-                  description={item.description}
-                  checked={values.events[item.key]}
-                  onChange={(event) => {
-                    const checked = event.currentTarget.checked
-                    setValues((current) => ({ ...current, events: { ...current.events, [item.key]: checked } }))
-                  }}
+          <section key={active} className="app-split-detail" aria-label={section.name}>
+            {active === 'telegram' ? (
+              <>
+                <SettingsHero
+                  section={section}
+                  kicker="Сповіщення"
+                  description="Хто й про що дізнається одразу: нові замовлення, заявки на послуги та збої. Бот надсилає повідомлення в усі вказані чати й групи; додайте бота в групу, перш ніж вказувати її ID."
+                  actions={
+                    <Button
+                      variant="default"
+                      leftSection={<IconSend size={16} stroke={1.8} />}
+                      loading={testing}
+                      disabled={configured === false || dirty}
+                      title={dirty ? 'Спершу збережіть зміни' : configured === false ? 'Бот не налаштований на сервері' : undefined}
+                      onClick={() => void sendTest()}
+                    >
+                      Тестове повідомлення
+                    </Button>
+                  }
                 />
-              ))}
-            </Stack>
-          </SectionCard>
-        </Stack>
-      </form>
-    </div>
+                <SettingsCard title="Бот">
+                  <div className="settings-inline">
+                    {configured === false ? (
+                      <TableChip dot tone="warning" value="Бот не налаштований" />
+                    ) : configured ? (
+                      <TableChip dot tone="success" value="Бот підключений" />
+                    ) : null}
+                    <span className="settings-muted">
+                      {configured === false
+                        ? 'Токен бота задає розробник у конфігурації сервера. Поки токена немає, сервер лише записує повідомлення у свій журнал.'
+                        : 'Токен бота зберігається в конфігурації сервера, у консолі його немає.'}
+                    </span>
+                  </div>
+                </SettingsCard>
+                <SettingsCard title="Чати й групи">
+                  <TagsInput
+                    label="ID чатів"
+                    description={
+                      savedChats === 0
+                        ? 'Список порожній: повідомлення йдуть у чат із конфігурації сервера, якщо він заданий. Введіть ID і натисніть Enter.'
+                        : 'ID чату або групи, наприклад -1001234567890. Введіть ID і натисніть Enter.'
+                    }
+                    placeholder={values.telegramChatIds.length < MAX_RECIPIENTS ? 'ID чату' : undefined}
+                    value={values.telegramChatIds}
+                    maxTags={MAX_RECIPIENTS}
+                    splitChars={[',', ' ', ';']}
+                    clearable
+                    acceptValueOnBlur
+                    error={fieldError(form.errors, 'telegramChatIds')}
+                    onChange={(telegramChatIds) => {
+                      setValues((current) => ({ ...current, telegramChatIds }))
+                      form.clearField('telegramChatIds')
+                    }}
+                  />
+                </SettingsCard>
+              </>
+            ) : null}
+
+            {active === 'email' ? (
+              <>
+                <SettingsHero section={section} kicker="Сповіщення" description="Адреси для листів про ті самі події. Сайт надсилає листи, лише коли на сервері налаштовано пошту." />
+                <SettingsCard title="Адреси">
+                  <TagsInput
+                    label="Email"
+                    description="Введіть адресу й натисніть Enter."
+                    placeholder={values.emails.length < MAX_RECIPIENTS ? 'manager@example.com' : undefined}
+                    value={values.emails}
+                    maxTags={MAX_RECIPIENTS}
+                    splitChars={[',', ' ', ';']}
+                    clearable
+                    acceptValueOnBlur
+                    error={fieldError(form.errors, 'emails')}
+                    onChange={(emails) => {
+                      setValues((current) => ({ ...current, emails }))
+                      form.clearField('emails')
+                    }}
+                  />
+                </SettingsCard>
+              </>
+            ) : null}
+
+            {active === 'events' ? (
+              <>
+                <SettingsHero section={section} kicker="Сповіщення" description="Про вимкнені події сайт не повідомляє ні в Telegram, ні на пошту." />
+                <SettingsCard title="Події">
+                  <Stack gap="md">
+                    {EVENTS.map((item) => (
+                      <Switch
+                        key={item.key}
+                        label={item.label}
+                        description={item.description}
+                        checked={values.events[item.key]}
+                        onChange={(event) => {
+                          const checked = event.currentTarget.checked
+                          setValues((current) => ({ ...current, events: { ...current.events, [item.key]: checked } }))
+                        }}
+                      />
+                    ))}
+                  </Stack>
+                </SettingsCard>
+              </>
+            ) : null}
+          </section>
+        </form>
+      </ListPageBody>
+    </ListPage>
   )
 }
