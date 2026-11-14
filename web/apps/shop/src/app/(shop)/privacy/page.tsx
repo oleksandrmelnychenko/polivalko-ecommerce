@@ -6,5 +6,5 @@ export function generateMetadata(): Promise<Metadata> {
 }
 
 export default function PrivacyPage() {
-  return <InfoPage slug="privacy" />;
+  return <InfoPage slug="privacy" layout="rows" />;
 }
