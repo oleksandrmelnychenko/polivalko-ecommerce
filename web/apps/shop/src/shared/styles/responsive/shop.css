@@ -88,12 +88,10 @@
   .ib-split { grid-template-columns: minmax(0, 1fr); gap: var(--space-md); }
   .svc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .svc-request { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); }
-  .contacts-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
-  .contacts-aside { position: static; margin-top: var(--space-2xl); grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 40rem) {
   .split-hero__panel { padding: var(--space-xl) var(--space-lg); }
-  .ib-cards, .svc-grid, .contacts-aside { grid-template-columns: minmax(0, 1fr); }
+  .ib-cards, .svc-grid { grid-template-columns: minmax(0, 1fr); }
   .ib-card { padding: var(--space-lg); }
   .svc-card, .svc-grid__photo { min-height: 0; }
   .svc-grid__photo { aspect-ratio: 16 / 9; }

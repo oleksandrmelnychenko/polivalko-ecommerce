@@ -1,10 +1,38 @@
 .contacts-page, .delivery-page { padding-bottom: var(--space-3xl); }
-.contacts-layout { display: grid; grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: var(--space-2xl); align-items: start; }
-.contacts-aside { position: sticky; top: calc(var(--bar-height) + var(--space-md)); display: grid; gap: var(--space-md); margin-top: var(--space-3xl); }
-.contacts-aside .ib-card__buttons { margin-top: var(--space-xs); }
-.contacts-socials { margin: 0; padding: 0; list-style: none; }
-.contacts-seller { margin-top: 0; padding-top: 0; border-top: 0; }
-.contacts-seller div { display: grid; gap: 2px; }
-.contacts-seller dd { font-weight: 500; }
+.contacts-header { padding-block: var(--space-xl) var(--space-2xl); }
+.contacts-header .crumbs { margin-bottom: var(--space-xl); }
+.contacts-header h1 { margin: 0; font-size: clamp(2.5rem, 4vw, 4rem); line-height: 1.1; }
+.contacts-details { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: clamp(32px, 7vw, 100px); border-top: 1px solid var(--color-rule); padding-top: var(--space-xl); }
+.contacts-details h2 { margin: 0 0 var(--space-lg); font-size: 1.25rem; }
+.contacts-list { margin: 0; }
+.contacts-list > div { display: grid; grid-template-columns: 155px minmax(0, 1fr); gap: var(--space-lg); padding-block: var(--space-lg); border-bottom: 1px solid var(--color-rule); }
+.contacts-list > div:first-child { padding-top: 0; }
+.contacts-list dt { color: var(--color-ink-2); font-size: var(--text-sm); }
+.contacts-list dd { margin: 0; overflow-wrap: anywhere; }
+.contacts-details p { margin: 0; line-height: 1.7; }
+.contacts-details p + p, .contacts-details p + a { margin-top: var(--space-sm); }
+.contacts-link { display: inline-block; color: var(--color-brand-strong); font-weight: 500; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.contacts-link:hover { color: var(--color-ink); }
+.contacts-phone { font-size: clamp(1.125rem, 2vw, 1.5rem); font-weight: 600; color: var(--color-ink); text-decoration: none; }
+.contacts-phone:hover { color: var(--color-brand-strong); text-decoration: underline; text-underline-offset: 4px; }
+.contacts-pickup { padding-top: var(--space-xl); max-width: 42rem; }
+.contacts-pickup h3 { margin: 0 0 var(--space-sm); font-family: inherit; font-size: var(--text-md); font-weight: 600; text-transform: none; }
+.contacts-pickup p { color: var(--color-ink-2); font-size: var(--text-sm); }
+.contacts-secondary { display: grid; align-content: start; gap: var(--space-xl); }
+.contacts-secondary > section + section { border-top: 1px solid var(--color-rule); padding-top: var(--space-xl); }
+.contacts-secondary p { color: var(--color-ink-2); }
+.contacts-socials { display: flex; flex-wrap: wrap; gap: var(--space-sm) var(--space-lg); margin: 0; padding: 0; list-style: none; }
+.contacts-list--seller { margin-bottom: var(--space-md); font-size: var(--text-sm); }
+.contacts-list--seller > div { grid-template-columns: 65px minmax(0, 1fr); padding-block: var(--space-sm); border: 0; }
 .special-days { display: grid; gap: var(--space-2xs); margin: var(--space-xs) 0 0; padding: 0; list-style: none; font-size: var(--text-sm); color: var(--color-ink-2); }
 .special-days__date { font-weight: 600; color: var(--color-ink); }
+
+@media (max-width: 48rem) {
+  .contacts-header { padding-bottom: var(--space-xl); }
+  .contacts-details { grid-template-columns: minmax(0, 1fr); gap: var(--space-xl); }
+  .contacts-secondary { border-top: 1px solid var(--color-rule); padding-top: var(--space-xl); }
+}
+
+@media (max-width: 30rem) {
+  .contacts-list > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-xs); }
+}
