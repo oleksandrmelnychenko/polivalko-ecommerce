@@ -6,5 +6,5 @@ export function generateMetadata(): Promise<Metadata> {
 }
 
 export default function PrivacyPage() {
-  return <InfoPage slug="privacy" layout="rows" />;
+  return <InfoPage slug="privacy" title="Політика приватності" lead="Які дані ми збираємо під час замовлення і як їх використовуємо." layout="rows" />;
 }

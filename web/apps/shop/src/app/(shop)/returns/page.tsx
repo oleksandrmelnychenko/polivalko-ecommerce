@@ -6,5 +6,5 @@ export function generateMetadata(): Promise<Metadata> {
 }
 
 export default function ReturnsPage() {
-  return <InfoPage slug="returns" layout="rows" />;
+  return <InfoPage slug="returns" title="Повернення й обмін" lead="Як повернути товар і отримати кошти." layout="rows" />;
 }

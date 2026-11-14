@@ -8,19 +8,24 @@ import { PageHead } from "./page-head";
 
 const TOC_MIN_SECTIONS = 7;
 
-type InfoPageProps = { slug: string; children?: ReactNode; layout?: "document" | "rows" };
+type InfoPageProps = { slug: string; title: string; lead?: string; children?: ReactNode; layout?: "document" | "rows" };
 
-export function InfoPage({ slug, children, layout = "document" }: InfoPageProps) {
+export function InfoPage({ slug, title, lead, children, layout = "document" }: InfoPageProps) {
   return (
     <div className={`container doc-page doc-page--${layout}`}>
-      <Suspense fallback={<div className="skeleton" style={{ height: 320, marginBlock: "var(--space-xl)" }} />}>
+      <Suspense fallback={
+        <>
+          <PageHead path={`/${slug}`} title={title} lead={lead} />
+          <div className="doc__loading" role="status">Завантажуємо текст сторінки…</div>
+        </>
+      }>
         <InfoContent slug={slug} layout={layout}>{children}</InfoContent>
       </Suspense>
     </div>
   );
 }
 
-async function InfoContent({ slug, children, layout }: InfoPageProps) {
+async function InfoContent({ slug, children, layout }: Omit<InfoPageProps, "title" | "lead">) {
   await connection();
   const page = await getPage(slug);
   if (!page) notFound();
