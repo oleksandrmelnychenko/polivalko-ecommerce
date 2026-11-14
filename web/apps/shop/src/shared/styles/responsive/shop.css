@@ -86,17 +86,11 @@
   .ib-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ib-steps { grid-template-columns: minmax(0, 1fr); gap: var(--space-md); }
   .ib-split { grid-template-columns: minmax(0, 1fr); gap: var(--space-md); }
-  .svc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .svc-request { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); }
 }
 @media (max-width: 40rem) {
   .split-hero__panel { padding: var(--space-xl) var(--space-lg); }
-  .ib-cards, .svc-grid { grid-template-columns: minmax(0, 1fr); }
+  .ib-cards { grid-template-columns: minmax(0, 1fr); }
   .ib-card { padding: var(--space-lg); }
-  .svc-card, .svc-grid__photo { min-height: 0; }
-  .svc-grid__photo { aspect-ratio: 16 / 9; }
-  .svc-request { padding: var(--space-lg) var(--space-md); }
-  .svc-request__form { padding: var(--space-lg); }
   .ib-band { padding: var(--space-xl) var(--space-lg); }
   .ib-faq__answer { padding-right: 0; }
 }

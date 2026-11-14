@@ -1,7 +1,6 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { ArrowRightIcon } from "@polivalko/shared/ui/icons";
 import { DIRECTION_EVENT } from "../lib/direction-event";
 
 export function DirectionRequestLink({ code }: { code: string }) {
@@ -17,9 +16,8 @@ export function DirectionRequestLink({ code }: { code: string }) {
   }
 
   return (
-    <a className="ib-card__link" href={href} onClick={onClick}>
+    <a className="services-link" href={href} onClick={onClick}>
       Залишити заявку
-      <ArrowRightIcon />
     </a>
   );
 }
