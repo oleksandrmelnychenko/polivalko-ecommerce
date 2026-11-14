@@ -8,7 +8,7 @@ import { PageHead } from "./page-head";
 
 export function CreditsScreen() {
   return (
-    <div className="container">
+    <div className="container credits-page">
       <PageHead path="/credits" title="Автори фото" lead="Тимчасові фото з Unsplash за ліцензією Unsplash. Згодом їх замінять фото товарів магазину." />
       <Suspense fallback={<div className="skeleton" style={{ height: "var(--space-4xl)" }} />}>
         <Credits />
@@ -28,12 +28,10 @@ async function Credits() {
       {all.map((p) => (
         <li key={p.url}>
           <img src={thumb(p.url, 250)} alt="" width={120} height={120} loading="lazy" decoding="async" />
-          <span>
-            <span className="credits__credit">{p.credit}</span>
-            <a className="link" href={sourcePage(p.url)} rel="noopener" target="_blank">
-              Сторінка фото
-            </a>
-          </span>
+          <span className="credits__credit">{p.credit}</span>
+          <a className="credits__source" href={sourcePage(p.url)} rel="noopener" target="_blank">
+            Сторінка фото
+          </a>
         </li>
       ))}
     </ul>

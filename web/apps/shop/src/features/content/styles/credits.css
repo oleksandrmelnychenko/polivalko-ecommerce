@@ -1,5 +1,19 @@
-.credits { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-md) var(--gap-columns); margin: 0 0 var(--space-2xl); padding: 0; list-style: none; }
-.credits li { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: var(--space-md); align-items: center; padding-bottom: var(--space-md); border-bottom: var(--rule-hair) solid var(--color-rule); }
-.credits img { border-radius: var(--radius); width: 72px; height: 72px; object-fit: cover; background: var(--color-paper-2); }
-.credits span { display: grid; gap: 2px; font-size: var(--text-sm); line-height: 1.5; }
-.credits__credit { color: var(--color-ink-2); }
+.credits-page { padding-bottom: var(--space-3xl); }
+.credits-page .page-head { padding-block: var(--space-xl) var(--space-2xl); margin: 0; }
+.credits-page .page-head .crumbs { margin-bottom: var(--space-xl); }
+.credits-page .page-head h1 { margin: 0; font-size: clamp(2.5rem, 4vw, 4rem); line-height: 1.1; }
+.credits-page .page-head .lead { max-width: 48rem; margin: var(--space-md) 0 0; color: var(--color-ink-2); line-height: 1.7; }
+.credits { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-rule); }
+.credits li { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: var(--space-xl); align-items: center; padding-block: var(--space-lg); border-bottom: 1px solid var(--color-rule); }
+.credits img { width: 64px; height: 64px; object-fit: cover; }
+.credits__credit { color: var(--color-ink); line-height: 1.7; overflow-wrap: anywhere; }
+.credits__source { color: var(--color-brand-strong); font-size: var(--text-sm); font-weight: 500; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.credits__source:hover { color: var(--color-ink); }
+
+@media (max-width: 40rem) {
+  .credits-page .page-head { padding-bottom: var(--space-xl); }
+  .credits li { grid-template-columns: 64px minmax(0, 1fr); gap: var(--space-xs) var(--space-md); align-items: start; }
+  .credits img { grid-row: span 2; }
+  .credits__credit { font-size: var(--text-sm); }
+  .credits__source { grid-column: 2; justify-self: start; }
+}
