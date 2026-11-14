@@ -3,7 +3,7 @@ import { SellerDetails } from "./seller-details";
 
 export function OfferScreen() {
   return (
-    <InfoPage slug="offer">
+    <InfoPage slug="offer" layout="rows">
       <SellerDetails />
     </InfoPage>
   );

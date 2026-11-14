@@ -39,6 +39,11 @@
 .doc-page--rows .doc__section .prose { max-width: 48rem; min-width: 0; margin: 0; }
 .doc-page--rows .doc__toc { border-radius: 0; padding: 0; background: transparent; }
 .doc-page--rows .doc__toc a { padding-left: 0; }
+.doc-page--rows .doc__seller { margin-top: 0; padding-inline: 0; background: transparent; color: var(--color-ink); }
+.doc-page--rows .doc__seller h2 { color: var(--color-ink); }
+.doc-page--rows .doc__facts { grid-template-columns: minmax(0, 1fr); gap: var(--space-md); }
+.doc-page--rows .doc__facts dt { color: var(--color-ink-2); font-size: var(--text-sm); letter-spacing: normal; text-transform: none; }
+.doc-page--rows .doc__facts dd { color: var(--color-ink); }
 
 @media (max-width: 48rem) {
   .doc-page--rows .page-head { padding-bottom: var(--space-xl); }
