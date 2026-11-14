@@ -1,11 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { Suspense, type CSSProperties, type ReactNode } from "react";
+import { Suspense } from "react";
 import { breadcrumbJsonLd, JsonLd } from "@/features/seo";
-import { pagePhotos } from "@polivalko/shared/lib/stand-in-photos";
-import { ArrowRightIcon, PinIcon, StoreIcon, TruckIcon, WalletIcon } from "@polivalko/shared/ui/icons";
-import { SplitHero } from "@/shared/ui/split-hero";
 import { getContacts, getDeliveryMethods, getPage, getPickupPoints } from "../api/server";
 import { htmlSections } from "../lib/html-sections";
 
@@ -16,19 +13,16 @@ const CARRIER_RATE = "за тарифами перевізника";
 type Method = Awaited<ReturnType<typeof getDeliveryMethods>>[number];
 type PickupPoint = Awaited<ReturnType<typeof getPickupPoints>>[number];
 
-const PAYMENTS: Record<string, { icon: ReactNode; title: string; text: string }> = {
+const PAYMENTS: Record<string, { title: string; text: string }> = {
   card: {
-    icon: <WalletIcon />,
     title: "Онлайн карткою",
     text: "На захищеній сторінці платіжної системи. Коли платіж пройде, статус оплати зміниться на сторінці замовлення.",
   },
   cash_on_delivery: {
-    icon: <TruckIcon />,
     title: "Післяплата",
     text: "Оплата у відділенні Нової пошти або кур'єру, коли отримуєте посилку.",
   },
   pay_on_pickup: {
-    icon: <StoreIcon />,
     title: "У магазині",
     text: "Оплата в магазині, коли забираєте замовлення.",
   },
@@ -55,57 +49,49 @@ async function DeliveryContent() {
   return (
     <>
       <JsonLd data={breadcrumbJsonLd([{ name: title, path: `/${SLUG}` }])} />
-      <SplitHero
-        title={title}
-        lead={page.lead || "Нова пошта по Україні або самовивіз з магазину. Спосіб отримання й оплати обираєте під час оформлення."}
-        icon={<TruckIcon />}
-        photo={pagePhotos.collection}
-        actions={
-          <>
-            <Link className="btn" href="/catalog">
-              Перейти до каталогу
-            </Link>
-          </>
-        }
-      />
+      <header className="delivery-header">
+        <nav className="crumbs" aria-label="Хлібні крихти">
+          <ol>
+            <li><Link href="/">Головна</Link></li>
+            <li aria-current="page">{title}</li>
+          </ol>
+        </nav>
+        <h1>{title}</h1>
+        <p>{page.lead || "Нова пошта по Україні або самовивіз з магазину. Спосіб отримання й оплати обираєте під час оформлення."}</p>
+      </header>
 
       {methods.length > 0 && (
-        <section className="ib-section" aria-labelledby="delivery-title">
-          <div className="ib-section__head">
+        <section className="delivery-section" aria-labelledby="delivery-title">
+          <div className="delivery-section__head">
             <h2 id="delivery-title">Способи отримання</h2>
             <p>Доставку Новою поштою оплачуєте {CARRIER_RATE}, самовивіз безкоштовний.</p>
           </div>
-          <ul className="ib-cards" style={{ "--cols": Math.min(methods.length, 3) } as CSSProperties}>
-            {methods.map((method, index) => (
-              <DeliveryCard key={method.code} method={method} point={pickupPoints[0]} tint={index % 2 === 0} />
+          <ul className="delivery-options">
+            {methods.map((method) => (
+              <DeliveryOption key={method.code} method={method} point={pickupPoints[0]} />
             ))}
           </ul>
         </section>
       )}
 
       {payments.length > 0 && (
-        <section className="ib-section" aria-labelledby="payment-title">
-          <div className="ib-section__head">
+        <section className="delivery-section" aria-labelledby="payment-title">
+          <div className="delivery-section__head">
             <h2 id="payment-title">Способи оплати</h2>
-            <p>Під кожним способом указано, з якою доставкою він працює.</p>
           </div>
-          <ul className="ib-cards" style={{ "--cols": Math.min(payments.length, 3) } as CSSProperties}>
+          <ul className="delivery-options">
             {payments.map((code) => (
-              <li key={code} className="ib-card">
-                <span className="ib-card__icon" aria-hidden="true">
-                  {PAYMENTS[code].icon}
-                </span>
+              <li key={code} className="delivery-option">
                 <h3>{PAYMENTS[code].title}</h3>
-                <p>{PAYMENTS[code].text}</p>
-                <ul className="ib-chips" aria-label="Працює з доставкою">
-                  {methods
-                    .filter((m) => m.paymentMethods.some((p) => p.code === code))
-                    .map((m) => (
-                      <li key={m.code} className="ib-chip">
-                        {shortName(m)}
-                      </li>
-                    ))}
-                </ul>
+                <div className="delivery-option__body">
+                  <p>{PAYMENTS[code].text}</p>
+                  <p className="delivery-option__availability">
+                    Доступно для: {methods
+                      .filter((method) => method.paymentMethods.some((payment) => payment.code === code))
+                      .map(shortName)
+                      .join(", ")}
+                  </p>
+                </div>
               </li>
             ))}
           </ul>
@@ -113,8 +99,8 @@ async function DeliveryContent() {
       )}
 
       {terms && (
-        <section className="ib-section ib-split" aria-labelledby="terms-title">
-          <div className="ib-split__aside">
+        <section className="delivery-section delivery-terms" aria-labelledby="terms-title">
+          <div className="delivery-section__head">
             <h2 id="terms-title">Після оформлення</h2>
           </div>
           <div>
@@ -133,21 +119,16 @@ async function DeliveryContent() {
         </section>
       )}
 
-      <section className="ib-band" aria-labelledby="delivery-help-title">
-        <div>
-          <h2 id="delivery-help-title">Є питання щодо замовлення?</h2>
-          <p>{contacts?.storePhone ? `Зателефонуйте в магазин: ${contacts.storePhone}.` : "Телефони й графік магазину є на сторінці контактів."}</p>
-        </div>
-        <div className="ib-band__actions">
+      <section className="delivery-help" aria-labelledby="delivery-help-title">
+        <h2 id="delivery-help-title">Є питання щодо замовлення?</h2>
+        <div className="delivery-help__links">
           {contacts?.storePhone && (
-            <a className="btn" href={`tel:${contacts.storePhone.replace(/[^\d+]/g, "")}`}>
-              Подзвонити
+            <a className="delivery-link" href={`tel:${contacts.storePhone.replace(/[^\d+]/g, "")}`}>
+              {contacts.storePhone}
             </a>
           )}
-          <Link className="btn btn--outline" href="/contacts">
-            Контакти
-            <ArrowRightIcon />
-          </Link>
+          <Link className="delivery-link" href="/contacts">Контакти магазину</Link>
+          <Link className="delivery-link" href="/catalog">Перейти до каталогу</Link>
         </div>
       </section>
     </>
@@ -161,10 +142,9 @@ function shortName(method: Method): string {
   return method.name;
 }
 
-function DeliveryCard({ method, point, tint }: { method: Method; point?: PickupPoint; tint: boolean }) {
+function DeliveryOption({ method, point }: { method: Method; point?: PickupPoint }) {
   const pickup = method.code === "pickup";
   const courier = method.code === "nova_poshta_courier";
-  const icon = pickup ? <StoreIcon /> : courier ? <PinIcon /> : <TruckIcon />;
   const text = pickup
     ? point?.instructions || "Дочекайтеся повідомлення, що замовлення готове, і заберіть його в магазині."
     : courier
@@ -180,20 +160,19 @@ function DeliveryCard({ method, point, tint }: { method: Method; point?: PickupP
   facts.push({ label: "Оплата", value: method.paymentMethods.map((p) => p.name).join(", ") });
 
   return (
-    <li className={tint ? "ib-card ib-card--tint" : "ib-card"}>
-      <span className="ib-card__icon" aria-hidden="true">
-        {icon}
-      </span>
+    <li className="delivery-option">
       <h3>{method.name}</h3>
-      <p>{text}</p>
-      <dl className="ib-card__meta">
-        {facts.map((f) => (
-          <div key={f.label}>
-            <dt>{f.label}:</dt>
-            <dd>{f.value}</dd>
-          </div>
-        ))}
-      </dl>
+      <div className="delivery-option__body">
+        <p>{text}</p>
+        <dl className="delivery-facts">
+          {facts.map((fact) => (
+            <div key={fact.label}>
+              <dt>{fact.label}</dt>
+              <dd>{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     </li>
   );
 }
