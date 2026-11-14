@@ -8,17 +8,19 @@ import { PageHead } from "./page-head";
 
 const TOC_MIN_SECTIONS = 7;
 
-export function InfoPage({ slug, children }: { slug: string; children?: ReactNode }) {
+type InfoPageProps = { slug: string; children?: ReactNode; layout?: "document" | "rows" };
+
+export function InfoPage({ slug, children, layout = "document" }: InfoPageProps) {
   return (
-    <div className="container doc-page">
+    <div className={`container doc-page doc-page--${layout}`}>
       <Suspense fallback={<div className="skeleton" style={{ height: 320, marginBlock: "var(--space-xl)" }} />}>
-        <InfoContent slug={slug}>{children}</InfoContent>
+        <InfoContent slug={slug} layout={layout}>{children}</InfoContent>
       </Suspense>
     </div>
   );
 }
 
-async function InfoContent({ slug, children }: { slug: string; children?: ReactNode }) {
+async function InfoContent({ slug, children, layout }: InfoPageProps) {
   await connection();
   const page = await getPage(slug);
   if (!page) notFound();
@@ -47,7 +49,7 @@ async function InfoContent({ slug, children }: { slug: string; children?: ReactN
         <div className="doc__body">
           {intro && (
             <div className="doc__note">
-              <AlertIcon />
+              {layout === "document" && <AlertIcon />}
               <div className="prose" dangerouslySetInnerHTML={{ __html: intro }} />
             </div>
           )}

@@ -6,5 +6,5 @@ export function generateMetadata(): Promise<Metadata> {
 }
 
 export default function ReturnsPage() {
-  return <InfoPage slug="returns" />;
+  return <InfoPage slug="returns" layout="rows" />;
 }
