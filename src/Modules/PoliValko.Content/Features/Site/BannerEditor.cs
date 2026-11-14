@@ -61,8 +61,8 @@ internal static class BannerEditor
         banner.Link = link;
         banner.ImageUrl = imageUrl!;
         banner.MobileImageUrl = mobileImageUrl;
-        banner.StartsAt = request.StartsAt;
-        banner.EndsAt = request.EndsAt;
+        banner.StartsAt = request.StartsAt?.ToUniversalTime();
+        banner.EndsAt = request.EndsAt?.ToUniversalTime();
         banner.IsActive = request.IsActive;
         return errors;
     }

@@ -4,6 +4,7 @@ using PoliValko.Content.Domain;
 using PoliValko.Content.Features.Site;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Settings;
+using PoliValko.SharedKernel;
 
 namespace PoliValko.Content.Persistence;
 
@@ -72,10 +73,10 @@ internal static class SiteSeeder
         },
     ];
 
-    private static (DateTimeOffset StartsAt, DateTimeOffset EndsAt) NewYearSeason(DateTimeOffset now)
+    internal static (DateTimeOffset StartsAt, DateTimeOffset EndsAt) NewYearSeason(DateTimeOffset now)
     {
-        var kyiv = TimeSpan.FromHours(2);
-        var endYear = now.Month == 1 && now.Day < 8 ? now.Year : now.Year + 1;
-        return (new DateTimeOffset(endYear - 1, 11, 1, 0, 0, 0, kyiv), new DateTimeOffset(endYear, 1, 8, 0, 0, 0, kyiv));
+        var today = KyivTime.DateOf(now);
+        var endYear = today.Month == 1 && today.Day < 8 ? today.Year : today.Year + 1;
+        return (KyivTime.StartOfDay(new DateOnly(endYear - 1, 11, 1)), KyivTime.StartOfDay(new DateOnly(endYear, 1, 8)));
     }
 }

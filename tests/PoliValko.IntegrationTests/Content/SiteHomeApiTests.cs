@@ -90,6 +90,43 @@ public sealed class SiteHomeApiTests(ApiFactory api)
         }
     }
 
+    [Theory]
+    [InlineData(2)]
+    [InlineData(3)]
+    public async Task Banner_dates_with_offsets_are_saved_as_utc_on_create_and_update(int offsetHours)
+    {
+        var admin = await Staff.AdminAsync(api);
+        var startsAt = new DateTimeOffset(2026, 11, 1, 0, 0, 0, TimeSpan.FromHours(offsetHours));
+        var request = Request("Банер із часовим поясом") with { StartsAt = startsAt, EndsAt = startsAt.AddDays(5) };
+        var created = await CreateAsync(admin, request);
+        try
+        {
+            created.StartsAt.ShouldBe(startsAt.ToUniversalTime());
+            created.StartsAt!.Value.Offset.ShouldBe(TimeSpan.Zero);
+            created.EndsAt.ShouldBe(request.EndsAt!.Value.ToUniversalTime());
+            created.EndsAt!.Value.Offset.ShouldBe(TimeSpan.Zero);
+
+            var update = request with { StartsAt = startsAt.AddDays(1), EndsAt = startsAt.AddDays(7) };
+            var updated = await (await admin.PutAsJsonAsync($"{Banners}/{created.Id}", update, TestJson.Options, Ct)).ReadAsync<BannerDto>();
+            updated.StartsAt.ShouldBe(update.StartsAt!.Value.ToUniversalTime());
+            updated.EndsAt.ShouldBe(update.EndsAt!.Value.ToUniversalTime());
+
+            var stored = await api.WithDbAsync(db => db.Set<Banner>().AsNoTracking().SingleAsync(b => b.Id == created.Id, Ct));
+            stored.StartsAt.ShouldBe(updated.StartsAt);
+            stored.EndsAt.ShouldBe(updated.EndsAt);
+            stored.StartsAt!.Value.Offset.ShouldBe(TimeSpan.Zero);
+            stored.EndsAt!.Value.Offset.ShouldBe(TimeSpan.Zero);
+
+            var cleared = await (await admin.PutAsJsonAsync($"{Banners}/{created.Id}", request with { StartsAt = null, EndsAt = null }, TestJson.Options, Ct)).ReadAsync<BannerDto>();
+            cleared.StartsAt.ShouldBeNull();
+            cleared.EndsAt.ShouldBeNull();
+        }
+        finally
+        {
+            await admin.DeleteAsync($"{Banners}/{created.Id}", Ct);
+        }
+    }
+
     [Fact]
     public async Task Invalid_banner_is_rejected_and_manager_has_no_access()
     {
@@ -170,7 +207,12 @@ public sealed class SiteHomeApiTests(ApiFactory api)
     {
         var seeded = await api.WithDbAsync(db => db.Set<Banner>().AsNoTracking().Select(b => b.Title).ToListAsync(Ct));
         seeded.ShouldContain("Товари для саду, городу й дому");
-        seeded.ShouldContain("Товари зі знижкою");
+        seeded.ShouldContain("Найчастіше купують");
+        var seasonal = await api.WithDbAsync(db => db.Set<Banner>().AsNoTracking().SingleAsync(b => b.Title == "Готуємося до свят", Ct));
+        seasonal.StartsAt.ShouldNotBeNull();
+        seasonal.EndsAt.ShouldNotBeNull();
+        seasonal.StartsAt.Value.Offset.ShouldBe(TimeSpan.Zero);
+        seasonal.EndsAt.Value.Offset.ShouldBe(TimeSpan.Zero);
 
         await api.WithScopeAsync(async services =>
         {
