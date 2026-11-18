@@ -5,6 +5,7 @@ import { FooterContacts } from "./footer-contacts";
 import { FooterLinks } from "./footer-links";
 import { FooterSeller } from "./footer-seller";
 import { FooterServices } from "./footer-services";
+import { FooterYear } from "./footer-year";
 
 const shop = [
   { href: "/catalog", label: "Каталог" },
@@ -54,7 +55,11 @@ export function SiteFooter() {
         </FooterColumn>
       </div>
       <p className="footer__legal">
-        © 2026 Poli-Valko. <Link href="/credits">Автори фото</Link>
+        ©{" "}
+        <Suspense fallback={null}>
+          <FooterYear />
+        </Suspense>
+        Poli-Valko. <Link href="/credits">Автори фото</Link>
       </p>
     </footer>
   );

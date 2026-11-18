@@ -8,7 +8,7 @@ import { Heading } from "./heading";
 
 export async function StoreVisit({ visit }: { visit?: TextItem | null }) {
   await connection();
-  const contacts = await getContacts();
+  const contacts = await getContacts().catch(() => null);
   return (
     <section className="visit" aria-labelledby="visit-title">
       <div className="container visit__inner">

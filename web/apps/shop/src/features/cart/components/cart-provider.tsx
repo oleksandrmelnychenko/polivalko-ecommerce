@@ -2,16 +2,16 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { track } from "@/features/analytics";
-import { clamp, INITIAL, connect, watchCart, refreshCart, settledCart, getSnapshot, subscribe, update, type CartLine, type CartProduct } from "../lib/cart-store";
+import { clamp, INITIAL, connect, watchCart, refreshCart, settledCart, getSnapshot, subscribe, update, setQuantity, type CartLine, type CartProduct } from "../lib/cart-store";
 
-import { useCustomer } from "@/features/customer";
+import { refreshSession, useCustomer } from "@/features/customer";
 
 type CartContextValue = {
   ready: boolean;
   saving: boolean;
   error: string | null;
   cart: ReturnType<typeof getSnapshot>["cart"];
-  refresh: typeof refreshCart;
+  refresh: () => Promise<void>;
   settled: typeof settledCart;
   lines: CartLine[];
   count: number;
@@ -32,6 +32,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { lines } = state;
   const customer = useCustomer();
   const owner = customer.status === "unknown" ? null : customer.me?.id ?? "guest";
+  const sessionFailed = customer.status === "unknown" && Boolean(customer.failed);
   useEffect(() => { if (owner) connect(owner); }, [owner]);
   useEffect(watchCart, []);
   const [isOpen, setOpen] = useState(false);
@@ -55,21 +56,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const value = useMemo<CartContextValue>(
     () => ({
       ...state,
-      refresh: refreshCart,
+      error: state.error ?? (sessionFailed ? "Немає зв'язку з сервером. Кошик завантажиться, щойно зв'язок відновиться." : null),
+      refresh: () => (sessionFailed ? refreshSession().then(() => undefined) : refreshCart()),
       settled: settledCart,
       lines,
       count: lines.reduce((n, l) => n + l.quantity, 0),
       subtotal: lines.reduce((sum, l) => sum + Number(l.price) * l.quantity, 0),
       isOpen,
       add,
-      setQuantity: (productId, quantity) =>
-        update((current) => current.map((l) => (l.productId === productId ? { ...l, quantity: clamp(quantity) } : l))),
+      setQuantity,
       remove: (productId) => update((current) => current.filter((l) => l.productId !== productId)),
       clear: () => update(() => []),
       open: () => setOpen(true),
       close: () => setOpen(false),
     }),
-    [state, lines, isOpen, add],
+    [state, lines, isOpen, add, sessionFailed],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

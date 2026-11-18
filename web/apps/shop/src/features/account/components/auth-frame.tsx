@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { AuthPerks } from "./auth-perks";
 
-export function AuthFrame({ title, crumb, lead, perks = true, children }: { title: string; crumb: string; lead?: string; perks?: boolean; children: ReactNode }) {
+export function AuthFrame({ title, crumb, lead, perks = true, children }: { title: string; crumb: string; lead?: ReactNode; perks?: boolean; children: ReactNode }) {
   return (
     <div className="container">
       <header className="page-head">
@@ -15,7 +15,7 @@ export function AuthFrame({ title, crumb, lead, perks = true, children }: { titl
           </ol>
         </nav>
         <h1>{title}</h1>
-        {lead && <p className="lead">{lead}</p>}
+        {typeof lead === "string" ? <p className="lead">{lead}</p> : lead}
       </header>
       <div className={perks ? "auth" : "auth auth--single"}>
         <div className="auth__main">{children}</div>

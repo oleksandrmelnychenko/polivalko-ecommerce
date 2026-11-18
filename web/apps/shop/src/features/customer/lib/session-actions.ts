@@ -23,12 +23,16 @@ export async function signUp(body: S["RegisterCustomerRequest"]) {
   return result;
 }
 
-export async function signOut() {
+export async function signOut(): Promise<boolean> {
   try {
-    await withCsrf((h) => postLogout(h));
-  } catch {}
+    const { response } = await withCsrf((h) => postLogout(h));
+    if (!response.ok && response.status !== 401) return false;
+  } catch {
+    return false;
+  }
   forgetCsrf();
   setSignedOut();
+  return true;
 }
 
 export function sessionEnded() {

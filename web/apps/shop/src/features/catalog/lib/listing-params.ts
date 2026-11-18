@@ -13,6 +13,8 @@ export const SORTS = [
 export const PAGE_SIZES = [24, 48, 96];
 const DEFAULT_PAGE_SIZE = PAGE_SIZES[0];
 
+const MAX_PAGE = 100_000;
+
 const PRICE_STEPS = [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000];
 
 export type PriceRange = { min?: number; max?: number; label: string };
@@ -30,25 +32,35 @@ export function priceRanges(low: number, high: number): PriceRange[] {
   ];
 }
 
+export function parsePage(value: string | string[] | undefined): number {
+  const page = Number(first(value));
+  return Number.isInteger(page) && page >= 1 && page <= MAX_PAGE ? page : 1;
+}
+
+export function priceOrder(min: number | undefined, max: number | undefined): [number | undefined, number | undefined] {
+  return min !== undefined && max !== undefined && min > max ? [max, min] : [min, max];
+}
+
 export function parseListingParams(sp: SearchParams) {
   const all = (key: string) => {
     const v = sp[key];
-    return (Array.isArray(v) ? v : v ? [v] : []).flatMap((x) => x.split(",")).filter(Boolean);
+    return [...new Set((Array.isArray(v) ? v : v ? [v] : []).flatMap((x) => x.split(",")).filter(Boolean))];
   };
   const num = (key: string) => {
     const n = Number(first(sp[key]));
     return Number.isFinite(n) && n > 0 ? n : undefined;
   };
-  const attrs = (Array.isArray(sp.f) ? sp.f : sp.f ? [sp.f] : []).filter((x) => x.includes(":"));
+  const attrs = [...new Set((Array.isArray(sp.f) ? sp.f : sp.f ? [sp.f] : []).filter((x) => x.includes(":")))];
+  const [priceMin, priceMax] = priceOrder(num("priceMin"), num("priceMax"));
   return {
     brands: all("brand"),
     attrs,
     inStock: first(sp.inStock) === "true",
     onSale: first(sp.onSale) === "true",
-    priceMin: num("priceMin"),
-    priceMax: num("priceMax"),
+    priceMin,
+    priceMax,
     sort: SORTS.some((s) => s.value === first(sp.sort)) ? first(sp.sort)! : "name_asc",
-    page: Math.max(Number(first(sp.page)) || 1, 1),
+    page: parsePage(sp.page),
     pageSize: PAGE_SIZES.includes(Number(first(sp.pageSize))) ? Number(first(sp.pageSize)) : DEFAULT_PAGE_SIZE,
   };
 }
@@ -84,4 +96,9 @@ export function hrefFor(basePath: string, fixed: Record<string, string>, p: Pars
   if (next.page > 1) qs.set("page", String(next.page));
   const s = qs.toString();
   return s ? `${basePath}?${s}` : basePath;
+}
+
+export function listingIndexState(sp: SearchParams) {
+  const parsed = parseListingParams(sp);
+  return { page: parsed.page, filtered: hrefFor("", {}, parsed, { page: 1 }) !== "" };
 }

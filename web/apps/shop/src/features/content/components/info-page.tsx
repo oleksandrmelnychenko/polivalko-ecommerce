@@ -1,8 +1,9 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
 import { AlertIcon } from "@polivalko/shared/ui/icons";
-import { getPage } from "../api/server";
+import { getContacts, getPage } from "../api/server";
 import { htmlSections } from "../lib/html-sections";
 import { PageHead } from "./page-head";
 
@@ -29,6 +30,7 @@ async function InfoContent({ slug, children, layout }: Omit<InfoPageProps, "titl
   await connection();
   const page = await getPage(slug);
   if (!page) notFound();
+  const phone = page.bodyHtml ? null : (await getContacts().catch(() => null))?.storePhone?.trim() || null;
   const { intro, sections } = page.bodyHtml ? htmlSections(page.bodyHtml) : { intro: "", sections: [] };
   const anchor = (index: number) => `part-${index + 1}`;
   const toc = sections.length >= TOC_MIN_SECTIONS;
@@ -43,7 +45,7 @@ async function InfoContent({ slug, children, layout }: Omit<InfoPageProps, "titl
             <p className="doc__toc-title">Зміст</p>
             <ul>
               {sections.map((section, index) => (
-                <li key={section.title}>
+                <li key={anchor(index)}>
                   <a href={`#${anchor(index)}`}>{section.title}</a>
                 </li>
               ))}
@@ -59,7 +61,7 @@ async function InfoContent({ slug, children, layout }: Omit<InfoPageProps, "titl
             </div>
           )}
           {sections.map((section, index) => (
-            <section key={section.title} id={anchor(index)} className="doc__section" aria-labelledby={`${anchor(index)}-title`}>
+            <section key={anchor(index)} id={anchor(index)} className="doc__section" aria-labelledby={`${anchor(index)}-title`}>
               <h2 id={`${anchor(index)}-title`}>{section.title}</h2>
               <div className="prose" dangerouslySetInnerHTML={{ __html: section.html }} />
             </section>
@@ -67,7 +69,17 @@ async function InfoContent({ slug, children, layout }: Omit<InfoPageProps, "titl
           {!page.bodyHtml && (
             <div className="empty">
               <h2>Текст ще не додано</h2>
-              <p>Поки що умови можна уточнити телефоном у магазині.</p>
+              {phone ? (
+                <p>Поки що умови можна уточнити телефоном у магазині: {phone}.</p>
+              ) : (
+                <p>
+                  Поки що умови можна уточнити в магазині: контакти є на сторінці{" "}
+                  <Link href="/contacts" className="link">
+                    «Контакти»
+                  </Link>
+                  .
+                </p>
+              )}
             </div>
           )}
           {children}

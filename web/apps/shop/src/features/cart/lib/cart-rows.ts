@@ -4,7 +4,7 @@ import type { CartLine } from "./cart-store";
 
 export function cartRows(quote: Quote | null, lines: CartLine[]) {
   return quote
-    ? quote.items.map((i) => ({ ...i, unit: formatMoney(i.unitPrice), total: formatMoney(i.lineTotal) }))
+    ? quote.items.map((i) => ({ ...i, quantity: lines.find((l) => l.productId === i.productId)?.quantity ?? i.quantity, unit: formatMoney(i.unitPrice), total: formatMoney(i.lineTotal) }))
     : lines.map((l) => ({
         ...l,
         issue: null,

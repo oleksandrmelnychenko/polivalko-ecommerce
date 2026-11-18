@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { currentPath, loginHref, signOut, useCustomer } from "@/features/customer";
 import { CabinetNav } from "./cabinet-nav";
 import { ConfirmBanner } from "./confirm-banner";
 
-export function CabinetFrame({ children }: { children: ReactNode }) {
+export function CabinetFrame({ mailDelivers, children }: { mailDelivers: boolean; children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const customer = useCustomer();
   const leaving = useRef(false);
+  const [logoutFailed, setLogoutFailed] = useState(false);
   const me = customer.me;
 
   useEffect(() => {
@@ -25,8 +26,13 @@ export function CabinetFrame({ children }: { children: ReactNode }) {
 
   async function logout() {
     leaving.current = true;
-    await signOut();
-    router.replace("/");
+    setLogoutFailed(false);
+    if (await signOut()) {
+      router.replace("/");
+      return;
+    }
+    leaving.current = false;
+    setLogoutFailed(true);
   }
 
   return (
@@ -41,12 +47,17 @@ export function CabinetFrame({ children }: { children: ReactNode }) {
           </ol>
         </nav>
         <h1>Особистий кабінет</h1>
-        <p className="lead cabinet__hello">{me ? `Вітаємо, ${me.name}` : "\u00a0"}</p>
+        <p className="lead cabinet__hello">{me ? `Вітаємо, ${me.name}` : " "}</p>
       </header>
       <div className="cabinet">
         <CabinetNav pathname={pathname} onLogout={logout} />
         <div className="cabinet__main">
-          {me && !me.emailConfirmed && <ConfirmBanner email={me.email} />}
+          {logoutFailed && (
+            <p className="notice notice--error" role="alert">
+              Не вдалося вийти. Спробуйте ще раз.
+            </p>
+          )}
+          {me && !me.emailConfirmed && <ConfirmBanner email={me.email} mailDelivers={mailDelivers} />}
           {children}
         </div>
       </div>

@@ -1,25 +1,44 @@
+import type { ReactNode } from "react";
 import type { Order } from "@polivalko/shared/api/types";
-import { deliveryMethodLabel, orderStatusLabel, paymentMethodLabel, paymentStatusLabel } from "@polivalko/shared/lib/labels";
+import { deliveryMethodLabel, paymentMethodLabel, paymentStatusLabel } from "@polivalko/shared/lib/labels";
+import { StoreIcon, TruckIcon, UserIcon, WalletIcon } from "@polivalko/shared/ui/icons";
 
 const PENDING_SELLER = /уточнюється/i;
 
 export function OrderFacts({ order, where }: { order: Order; where: string }) {
-  const rows = [
-    { label: "Статус", value: orderStatusLabel[order.status], strong: true },
-    { label: "Оплата", value: `${paymentMethodLabel[order.paymentMethod] ?? order.paymentMethod}, ${paymentStatusLabel[order.paymentStatus].toLowerCase()}` },
-    { label: "Отримання", value: `${deliveryMethodLabel[order.deliveryMethod] ?? order.deliveryMethod}${where ? `: ${where}` : ""}` },
-    { label: "Покупець", value: `${order.customer.name}, ${order.customer.phone}` },
-    { label: "Продавець", value: PENDING_SELLER.test(order.sellerName) ? "" : order.sellerName },
-  ].filter((row) => row.value);
+  const rows: { label: string; icon: ReactNode; value: string; sub?: string }[] = [
+    {
+      label: "Отримання",
+      icon: order.deliveryMethod === "pickup" ? <StoreIcon /> : <TruckIcon />,
+      value: deliveryMethodLabel[order.deliveryMethod] ?? order.deliveryMethod,
+      sub: where || undefined,
+    },
+    {
+      label: "Оплата",
+      icon: <WalletIcon />,
+      value: paymentMethodLabel[order.paymentMethod] ?? order.paymentMethod,
+      sub: paymentStatusLabel[order.paymentStatus],
+    },
+    { label: "Покупець", icon: <UserIcon />, value: order.customer.name, sub: [order.customer.phone, order.customer.email].filter(Boolean).join(" · ") },
+  ];
+  if (order.sellerName && !PENDING_SELLER.test(order.sellerName)) {
+    rows.push({ label: "Продавець", icon: <StoreIcon />, value: order.sellerName });
+  }
 
   return (
-    <section className="order-facts" aria-labelledby="order-facts-title">
+    <section className="order-card order-facts" aria-labelledby="order-facts-title">
       <h2 id="order-facts-title">Деталі</h2>
       <dl>
         {rows.map((row) => (
           <div key={row.label}>
+            <span className="order-facts__icon" aria-hidden="true">
+              {row.icon}
+            </span>
             <dt>{row.label}</dt>
-            <dd>{row.strong ? <strong>{row.value}</strong> : row.value}</dd>
+            <dd>
+              <span className="order-facts__value">{row.value}</span>
+              {row.sub && <span className="order-facts__sub">{row.sub}</span>}
+            </dd>
           </div>
         ))}
       </dl>

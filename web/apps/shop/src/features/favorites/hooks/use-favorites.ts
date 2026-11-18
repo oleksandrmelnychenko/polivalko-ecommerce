@@ -12,10 +12,10 @@ export function useFavorites() {
   const owner = customer.me?.id ?? null;
 
   useEffect(() => {
-    if (owner) loadFavorites(owner);
+    if (owner) void loadFavorites(owner);
     else if (customer.status === "guest") resetFavorites();
   }, [owner, customer.status]);
 
   const ready = owner !== null && favorites.owner === owner;
-  return { status: customer.status, ready, ids: ready ? favorites.ids : NONE };
+  return { status: customer.status, owner, ready, ids: ready ? favorites.ids : NONE };
 }

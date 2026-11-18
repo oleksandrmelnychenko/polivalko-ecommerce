@@ -4,7 +4,7 @@
 .drawer::backdrop { background: rgb(0 0 0 / 0.45); }
 .drawer__inner { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; }
 .drawer__head { display: flex; justify-content: space-between; align-items: center; padding: var(--space-md) var(--space-md) var(--space-md) var(--space-lg); background: var(--color-chrome); color: #fff; }
-.drawer__head h2 { font-size: var(--text-xl); }
+.drawer__head h2 { color: #fff; font-size: var(--text-xl); }
 .drawer__head .icon-btn { color: #fff; }
 .drawer__head .icon-btn:hover { background: transparent; color: var(--color-brand); }
 .drawer__lines { margin: 0; padding: 0 var(--space-lg); list-style: none; overflow-y: auto; overscroll-behavior: contain; }

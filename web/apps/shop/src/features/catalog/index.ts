@@ -8,4 +8,5 @@ export { ProductLabels } from "./components/product-labels";
 export { withoutSaleLabel } from "./lib/labels";
 export { discountPercent } from "./lib/discount";
 export { categoryPhotoUrl } from "./lib/category-photo";
+export { listingIndexState } from "./lib/listing-params";
 export type { SearchParams } from "./lib/listing-params";

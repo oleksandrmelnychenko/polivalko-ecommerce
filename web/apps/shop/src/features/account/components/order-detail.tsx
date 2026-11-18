@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { OrderFacts, OrderHistory, OrderItems, OrderReceipts, orderWhere } from "@/features/order";
+import { OrderFacts, OrderItems, OrderProgress, OrderReceipts, orderHeading, orderWhere } from "@/features/order";
 import { formatDateTime } from "@polivalko/shared/lib/format";
 import { getOrder } from "../api/client";
 import { useAccountData } from "../hooks/use-account-data";
@@ -34,8 +34,8 @@ export function OrderDetail() {
   const { order, receipts } = data;
   return (
     <section aria-labelledby="cabinet-title">
-      <div className="order-head account-order-head">
-        <div>
+      <div className="account-order-head">
+        <div className="account-order-head__main">
           <p className="account-back">
             <Link href="/account/orders" className="link">
               Усі замовлення
@@ -44,18 +44,21 @@ export function OrderDetail() {
           <h2 id="cabinet-title">
             Замовлення <span className="code">{order.number}</span>
           </h2>
+          <p className={order.status === "cancelled" ? "account-order-head__state account-order-head__state--alert" : "account-order-head__state"}>{orderHeading(order)}</p>
           <p className="muted">Оформлено {formatDateTime(order.createdAt)}</p>
           <RepeatOrder order={order} />
         </div>
-        <OrderFacts order={order} where={orderWhere(order)} />
+        <OrderProgress order={order} />
       </div>
-      <div className="checkout account-order">
-        <div className="checkout__form">
+      <div className="order-body account-order">
+        <div className="order-body__main">
           <OrderPayment order={order} returned={returned} reload={reload} />
           <OrderItems order={order} />
           {receipts.length > 0 && <OrderReceipts receipts={receipts} />}
         </div>
-        <OrderHistory order={order} />
+        <aside className="order-body__side">
+          <OrderFacts order={order} where={orderWhere(order)} />
+        </aside>
       </div>
     </section>
   );

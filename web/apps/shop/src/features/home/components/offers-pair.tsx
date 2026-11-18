@@ -10,7 +10,7 @@ import { Strip } from "./strip";
 
 export async function OffersPair() {
   await connection();
-  const sale = await searchProducts({ onSale: true, inStock: true, sort: "price_asc", pageSize: 12 });
+  const sale = await searchProducts({ onSale: true, inStock: true, sort: "price_asc", pageSize: 12 }).catch(() => null);
   const items = (sale?.items ?? []).filter((p) => discountPercent(p.price, p.oldPrice) !== null);
   if (items.length === 0) return null;
   const photo = pagePhotos.offers;

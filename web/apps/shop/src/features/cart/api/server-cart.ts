@@ -7,8 +7,18 @@ type OrderCreated = components["schemas"]["OrderCreatedDto"];
 
 export type ServerCart = { id: string; revision: number; items: Quote["items"]; lastOrder: OrderCreated | null };
 async function request<T>(path: string, method: string, headers: CsrfHeaders, body?: unknown) {
-  const response = await fetch(path, { method, credentials: "same-origin", cache: "no-store", headers: { ...headers, "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
-  const value = await response.json();
+  let response: Response;
+  let value: unknown;
+  try {
+    response = await fetch(path, { method, credentials: "same-origin", cache: "no-store", headers: { ...headers, "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
+  } catch {
+    throw new Error("Немає зв'язку з сервером. Перевірте інтернет і спробуйте ще раз.");
+  }
+  try {
+    value = await response.json();
+  } catch {
+    throw new Error("Сервер тимчасово недоступний. Спробуйте ще раз за хвилину.");
+  }
   return { response, data: response.ok ? value as T : undefined, error: response.ok ? undefined : value as Problem };
 }
 export async function openCart(): Promise<ServerCart> {

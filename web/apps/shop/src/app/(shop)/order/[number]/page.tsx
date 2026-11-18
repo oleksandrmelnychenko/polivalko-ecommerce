@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { customerMailDelivers } from "@/features/content/server";
 import { OrderScreen } from "@/features/order/server";
 
 export const metadata: Metadata = { title: "Замовлення", robots: { index: false, follow: false } };
@@ -7,5 +8,5 @@ export const metadata: Metadata = { title: "Замовлення", robots: { ind
 export const instant = false;
 
 export default function OrderPage(props: PageProps<"/order/[number]">) {
-  return <OrderScreen {...props} />;
+  return <OrderScreen {...props} mailDelivers={customerMailDelivers} />;
 }

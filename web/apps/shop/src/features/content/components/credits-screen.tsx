@@ -19,7 +19,7 @@ export function CreditsScreen() {
 
 async function Credits() {
   await connection();
-  const products = await getPhotoCredits();
+  const products = await getPhotoCredits().catch(() => []);
   const site = [...Object.values(categoryPhotos), ...Object.values(pagePhotos)].map((p) => ({ credit: p.credit, url: p.url }));
   const all = [...new Map([...products, ...site].map((p) => [p.url.split("?")[0], p])).values()];
 

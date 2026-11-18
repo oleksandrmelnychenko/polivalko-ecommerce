@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { MAX_QUANTITY } from "@/shared/lib/quantity";
 
 export function QuantityStepper({
@@ -15,10 +16,29 @@ export function QuantityStepper({
   max?: number;
   small?: boolean;
 }) {
-  const set = (n: number) => onChange(Math.min(Math.max(Number.isFinite(n) ? Math.round(n) : 1, 1), max));
+  const [typed, setTyped] = useState<string | null>(null);
+  const [shown, setShown] = useState(value);
+  const set = (n: number) => onChange(Math.min(Math.max(Math.round(n), 1), max));
+
+  if (shown !== value) {
+    setShown(value);
+    if (typed !== null && Number(typed) !== value) setTyped(null);
+  }
+
+  function step(next: number) {
+    setTyped(null);
+    set(next);
+  }
+
+  function type(text: string) {
+    setTyped(text);
+    const n = Number(text);
+    if (text.trim() !== "" && Number.isFinite(n) && n >= 1) set(n);
+  }
+
   return (
     <div className={small ? "stepper stepper--small" : "stepper"} role="group" aria-label={label}>
-      <button type="button" onClick={() => set(value - 1)} disabled={value <= 1} aria-label="Зменшити кількість">
+      <button type="button" onClick={() => step(value - 1)} disabled={value <= 1} aria-label="Зменшити кількість">
         &minus;
       </button>
       <input
@@ -28,11 +48,12 @@ export function QuantityStepper({
         autoComplete="off"
         min={1}
         max={max}
-        value={value}
+        value={typed ?? value}
         aria-label="Кількість"
-        onChange={(e) => set(Number(e.target.value))}
+        onChange={(e) => type(e.target.value)}
+        onBlur={() => setTyped(null)}
       />
-      <button type="button" onClick={() => set(value + 1)} disabled={value >= max} aria-label="Збільшити кількість">
+      <button type="button" onClick={() => step(value + 1)} disabled={value >= max} aria-label="Збільшити кількість">
         +
       </button>
     </div>

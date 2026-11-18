@@ -44,12 +44,16 @@ export function plainText(html: string | null | undefined): string[] {
     .filter(Boolean);
 }
 
+const yearIn = (date: Date) => new Intl.DateTimeFormat("en-CA", { year: "numeric", timeZone: "Europe/Kyiv" }).format(date);
+
 export function formatDateTime(iso: string): string {
+  const date = new Date(iso);
   return new Intl.DateTimeFormat("uk-UA", {
     day: "numeric",
     month: "long",
+    year: yearIn(date) === yearIn(new Date()) ? undefined : "numeric",
     hour: "2-digit",
     minute: "2-digit",
     timeZone: "Europe/Kyiv",
-  }).format(new Date(iso));
+  }).format(date);
 }

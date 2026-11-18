@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { getAnnouncement } from "@/features/content/server";
 
 export async function AnnouncementBar() {
-  const announcement = await getAnnouncement();
+  await connection();
+  const announcement = await getAnnouncement().catch(() => null);
   if (!announcement) return null;
   const link = announcement.link?.trim();
   return (

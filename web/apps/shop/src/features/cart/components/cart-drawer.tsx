@@ -35,7 +35,8 @@ export function CartDrawer() {
           </button>
         </div>
 
-        {(error || !ready || saving) && <p role="status">{error ?? (saving ? "Зберігаємо кошик…" : "Завантажуємо кошик…")}</p>}
+        {(error || !ready) && <p role="status">{error ?? "Завантажуємо кошик…"}</p>}
+        <p role="status" className="visually-hidden">{ready && !error && saving ? "Зберігаємо кошик…" : ""}</p>
         {ready && lines.length === 0 ? (
           <div className="drawer__lines">
             <div className="empty" style={{ marginTop: "var(--space-lg)" }}>

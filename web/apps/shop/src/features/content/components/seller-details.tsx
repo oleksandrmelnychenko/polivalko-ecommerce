@@ -1,7 +1,9 @@
+import { connection } from "next/server";
 import { getSeller } from "../api/server";
 
 export async function SellerDetails() {
-  const seller = await getSeller();
+  await connection();
+  const seller = await getSeller().catch(() => null);
   if (!seller) return null;
   const rows = [
     { label: "Продавець", value: seller.name },

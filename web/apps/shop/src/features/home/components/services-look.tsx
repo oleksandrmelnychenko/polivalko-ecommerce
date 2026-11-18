@@ -6,7 +6,8 @@ import { Look } from "./look";
 
 export async function ServicesLook() {
   await connection();
-  const directions = await getServiceDirections();
+  const directions = await getServiceDirections().catch(() => []);
+  if (directions.length === 0) return null;
   return (
     <Look id="services-title" title="Послуги для саду" sub="Залиште заявку, і менеджер передзвонить у робочий час." ghost="Послуги" photo={pagePhotos.services} more={{ href: "/services", label: "Усі послуги" }} reverse>
       <ol className="directions">

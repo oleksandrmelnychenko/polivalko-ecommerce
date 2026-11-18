@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState, useTransition, type FormEvent, type KeyboardEvent } from "react";
 import type { ProductSearch } from "@polivalko/shared/api/types";
 import { formatMoney } from "@polivalko/shared/lib/format";
-import { hrefFor, priceRanges, type Parsed } from "../lib/listing-params";
+import { hrefFor, priceOrder, priceRanges, type Parsed } from "../lib/listing-params";
 
 const LIST_LIMIT = 6;
 const SEARCH_FROM = 9;
@@ -103,8 +103,9 @@ export function ListingFilters({
   }
 
   function applyPrice() {
-    const min = priceOf(priceMin);
-    const max = priceOf(priceMax);
+    const [min, max] = priceOrder(priceOf(priceMin), priceOf(priceMax));
+    setPriceMin(min ? String(min) : "");
+    setPriceMax(max ? String(max) : "");
     if (min !== selection.priceMin || max !== selection.priceMax) apply({ priceMin: min, priceMax: max });
   }
 

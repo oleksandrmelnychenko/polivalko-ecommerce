@@ -33,7 +33,7 @@ export function ContactsScreen() {
 
 async function ContactsContent() {
   await connection();
-  const [contacts, pickupPoints, seller] = await Promise.all([getContacts(), getPickupPoints(), getSeller()]);
+  const [contacts, pickupPoints, seller] = await Promise.all([getContacts(), getPickupPoints().catch(() => []), getSeller().catch(() => null)]);
   const socials = socialLinks(contacts);
   const point = pickupPoints[0];
   const address = contacts?.address || point?.address || "Буча, Київська область";

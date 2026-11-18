@@ -28,5 +28,5 @@ function isClientFetch(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/order/:number", "/catalog/:slug", "/search"],
+  matcher: ["/order/:number", "/catalog/:slug", "/sale", "/search"],
 };

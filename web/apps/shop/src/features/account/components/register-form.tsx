@@ -11,7 +11,7 @@ import { FormStatus } from "./form-status";
 import { RegisterDone } from "./register-done";
 import { TextField } from "./text-field";
 
-export function RegisterForm() {
+export function RegisterForm({ mailDelivers }: { mailDelivers: boolean }) {
   const params = useSearchParams();
   const next = safeNext(params.get("next"));
   const customer = useCustomer();
@@ -32,7 +32,7 @@ export function RegisterForm() {
 
   return (
     <>
-      <div aria-live="polite">{email && <RegisterDone email={email} next={next} />}</div>
+      <div aria-live="polite">{email && <RegisterDone email={email} next={next} mailDelivers={mailDelivers} />}</div>
       {signedInBefore && (
         <p className="notice">
           <strong>Ви вже увійшли</strong>

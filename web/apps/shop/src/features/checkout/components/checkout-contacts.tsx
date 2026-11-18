@@ -2,7 +2,7 @@ import { UserIcon } from "@polivalko/shared/ui/icons";
 import type { FieldProps } from "../lib/field-props";
 import { CheckoutStep } from "./checkout-step";
 
-export function CheckoutContacts({ field, fieldError }: FieldProps) {
+export function CheckoutContacts({ field, fieldError, mailDelivers }: FieldProps & { mailDelivers: boolean }) {
   return (
     <CheckoutStep id="contacts-title" icon={<UserIcon />} title="Контакти" hint="Для доставки й зв'язку щодо замовлення">
       <div className="fields-2">
@@ -18,11 +18,10 @@ export function CheckoutContacts({ field, fieldError }: FieldProps) {
         </div>
       </div>
       <div className="field">
-        <label htmlFor="email">
-          Email <span className="field__optional">необов&apos;язково, для листа про замовлення</span>
-        </label>
-        <input id="email" name="email" type="email" autoComplete="email" spellCheck={false} {...field("customer.email")} />
+        <label htmlFor="email">Email</label>
+        <input id="email" name="email" type="email" autoComplete="email" spellCheck={false} required maxLength={200} {...field("customer.email")} />
         {fieldError("customer.email")}
+        <p className="field__help">{mailDelivers ? "Надішлемо посилання на сторінку замовлення: там статус, оплата й чеки." : "Для зв'язку щодо замовлення."}</p>
       </div>
     </CheckoutStep>
   );

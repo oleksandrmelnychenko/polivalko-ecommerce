@@ -10,7 +10,7 @@ import { CartSummary } from "./cart-summary";
 
 export function CartView() {
   const { ready, saving, error, refresh, lines, count, setQuantity, remove, clear } = useCart();
-  const { quote, failed } = useCartQuote();
+  const { quote, failed, refresh: refreshQuote } = useCartQuote();
   const hydrated = useHydrated();
 
   if (!hydrated) return <div className="skeleton" style={{ height: "var(--space-4xl)" }} aria-busy="true" />;
@@ -24,8 +24,8 @@ export function CartView() {
 
   return (
     <div className="cart">
-      {saving && <p role="status">Зберігаємо кошик…</p>}
-      <CartLines rows={rows} quote={quote} failed={failed} setQuantity={setQuantity} remove={remove} clear={clear} />
+      <p role="status" className="visually-hidden">{saving ? "Зберігаємо кошик…" : ""}</p>
+      <CartLines rows={rows} quote={quote} failed={failed} retryQuote={() => void refreshQuote()} setQuantity={setQuantity} remove={remove} clear={clear} />
       <CartSummary quote={quote} count={count} blocking={blocking} />
     </div>
   );

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { withCsrf } from "@/features/customer";
 import { postResendConfirmation } from "../api/client";
 
-export function ConfirmBanner({ email }: { email: string }) {
+export function ConfirmBanner({ email, mailDelivers }: { email: string; mailDelivers: boolean }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -25,6 +25,16 @@ export function ConfirmBanner({ email }: { email: string }) {
     }
     setBusy(false);
   }
+
+  if (!mailDelivers)
+    return (
+      <div className="notice cabinet-banner">
+        <p>
+          <strong>Email ще не підтверджено</strong>
+          Листи з сайту поки не надсилаються, тому підтвердити email зараз не вийде.
+        </p>
+      </div>
+    );
 
   return (
     <div className="notice cabinet-banner">

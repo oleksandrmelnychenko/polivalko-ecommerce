@@ -55,3 +55,21 @@ export function ForgotPasswordForm() {
     </>
   );
 }
+
+export function NoPasswordMail() {
+  return (
+    <div className="auth__done">
+      <p className="notice">
+        <strong>Відновлення пароля поштою поки не працює</strong>
+        Зверніться в магазин: контакти на сторінці{" "}
+        <Link href="/contacts" className="link">
+          «Контакти»
+        </Link>
+        .
+      </p>
+      <Link href="/account/login" className="btn btn--quiet">
+        Повернутися до входу
+      </Link>
+    </div>
+  );
+}

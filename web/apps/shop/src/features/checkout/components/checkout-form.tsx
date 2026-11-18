@@ -13,9 +13,9 @@ import { CheckoutPayment } from "./checkout-payment";
 import { CheckoutSavedAddresses } from "./checkout-saved-addresses";
 import { CheckoutSummary } from "./checkout-summary";
 
-export function CheckoutForm() {
+export function CheckoutForm({ mailDelivers, phone }: { mailDelivers: boolean; phone: string | null }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const checkout = useCheckout(formRef);
+  const checkout = useCheckout(formRef, phone);
 
   if (!checkout.ready || checkout.recovering) return <p role="status">{checkout.cartError ?? "Завантажуємо кошик…"}</p>;
   if (checkout.lines.length === 0) return <CheckoutEmpty />;
@@ -28,7 +28,7 @@ export function CheckoutForm() {
       <div className="checkout__form">
         {checkout.cartError && <p role="alert" className="notice notice--error">{checkout.cartError}</p>}
         {checkout.notice && <CheckoutNotice notice={checkout.notice} />}
-        <CheckoutContacts field={field} fieldError={fieldError} />
+        <CheckoutContacts field={field} fieldError={fieldError} mailDelivers={mailDelivers} />
         <CheckoutDelivery
           quote={checkout.quote}
           delivery={checkout.delivery}
@@ -42,6 +42,7 @@ export function CheckoutForm() {
           field={field}
           fieldError={fieldError}
           courier={checkout.courier}
+          phone={phone}
           saved={account.addresses.length > 0 && <CheckoutSavedAddresses addresses={account.addresses} chosen={account.chosen} choose={account.choose} />}
           save={
             account.canSave &&
@@ -65,9 +66,11 @@ export function CheckoutForm() {
       <CheckoutSummary
         quote={checkout.quote}
         quoteError={checkout.quoteError}
+        retryQuote={() => void checkout.refreshQuote()}
         delivery={checkout.delivery}
         priceNote={checkout.deliveryOption?.priceNote}
         sending={checkout.sending}
+        quantities={checkout.quantities}
         setQuantity={checkout.setQuantity}
         remove={checkout.remove}
         consent={

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type RefObject } from "react";
 import { track } from "@/features/analytics";
 import { useCart, useCartQuote } from "@/features/cart";
 import type { CustomerAddress } from "@/features/customer";
@@ -12,7 +12,7 @@ import type { CourierPrefill, Errors, Notice } from "../lib/types";
 import { useCheckoutAccount } from "./use-checkout-account";
 import { useDeliveryPoint } from "./use-delivery-point";
 
-export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
+export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: string | null) {
   const router = useRouter();
   const cartState = useCart();
   const { lines, setQuantity, remove } = cartState;
@@ -38,6 +38,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
   }
 
   const account = useCheckoutAccount(formRef, lines.length > 0, applyAddress);
+  const quantities = useMemo(() => new Map(lines.map((l) => [l.productId, l.quantity])), [lines]);
 
   useEffect(() => {
     if (!focusInvalid.current) return;
@@ -66,6 +67,11 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!quote && quoteError) {
+      setNotice({ kind: "error", title: "Не вдалося перевірити ціни", text: "Перевірте зв'язок і підтвердіть замовлення ще раз." });
+      void refreshQuote();
+      return;
+    }
     if (!quote || submitting.current || !cartState.ready || cartState.saving) return;
     if (blocking) {
       setNotice({ kind: "error", title: "Частини товарів не вистачає", text: "Змініть кількість або приберіть позиції, позначені в замовленні." });
@@ -109,7 +115,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
         await refreshQuote();
         setNotice({ kind: "error", title: "Частини товарів не вистачає", text: "Змініть кількість або приберіть позиції, позначені нижче." });
       } else if (response.status === 429) {
-        setNotice({ kind: "error", title: "Забагато замовлень за короткий час", text: "Спробуйте за кілька хвилин або зателефонуйте нам." });
+        setNotice({ kind: "error", title: "Забагато замовлень за короткий час", text: phone ? `Спробуйте за кілька хвилин або зателефонуйте нам: ${phone}.` : "Спробуйте за кілька хвилин. Якщо не вийде, зверніться в магазин: контакти на сторінці «Контакти»." });
       } else if (problem.code === "cart.changed") {
         await cartState.refresh();
         setNotice({ kind: "error", title: "Кошик змінився", text: "Перевірте склад і суму замовлення ще раз." });
@@ -130,10 +136,12 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>) {
     cartError: cartState.error,
     recovering: !!recoveredOrder,
     lines,
+    quantities,
     setQuantity,
     remove,
     quote,
     quoteError,
+    refreshQuote,
     delivery,
     deliveryOption,
     setDelivery: (code: string) => {

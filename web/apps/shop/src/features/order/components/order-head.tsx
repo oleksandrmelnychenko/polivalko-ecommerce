@@ -1,36 +1,43 @@
 import Link from "next/link";
 import type { Order } from "@polivalko/shared/api/types";
+import { formatDateTime } from "@polivalko/shared/lib/format";
 import { AlertIcon, ArrowRightIcon, CheckIcon, ClockIcon } from "@polivalko/shared/ui/icons";
-import { OrderFacts } from "./order-facts";
+import { OrderProgress } from "./order-progress";
 
-export function OrderHead({ order, heading, where }: { order: Order; heading: string; where: string }) {
+export function OrderHead({ order, heading, mailDelivers }: { order: Order; heading: string; mailDelivers: boolean }) {
   const cancelled = order.status === "cancelled";
   const waiting = order.status === "awaitingConfirmation";
   const tone = cancelled ? "alert" : waiting ? "wait" : "ok";
 
   return (
-    <header className="order-head">
-      <div className="order-head__main">
-        <span className={`order-head__icon order-head__icon--${tone}`} aria-hidden="true">
+    <header className="order-hero">
+      <div className="order-hero__top">
+        <span className={`order-hero__icon order-hero__icon--${tone}`} aria-hidden="true">
           {cancelled ? <AlertIcon /> : waiting ? <ClockIcon /> : <CheckIcon />}
         </span>
-        <h1>{heading}</h1>
-        <p className="order-head__number">
-          Замовлення <span className="code">{order.number}</span>
-        </p>
-        <p className="order-head__note">На цій сторінці видно статус замовлення, оплату й чеки. Збережіть посилання на неї.</p>
-        {waiting && (
-          <p className="notice">
-            Ми не змогли звірити ціну й залишок зі складом, тому їх підтвердить менеджер. Оплата карткою стане доступною після цього. Товар
-            уже зарезервовано.
+        <div className="order-hero__title">
+          <h1>{heading}</h1>
+          <p>
+            Замовлення <span className="order-hero__number">{order.number}</span> від {formatDateTime(order.createdAt)}
           </p>
-        )}
-        <Link className="order-head__back" href="/catalog">
+        </div>
+        <Link className="btn btn--outline order-hero__back" href="/catalog">
           Продовжити покупки
           <ArrowRightIcon />
         </Link>
       </div>
-      <OrderFacts order={order} where={where} />
+      {waiting && (
+        <p className="notice order-hero__notice">
+          Ми не змогли звірити ціну й залишок зі складом, тому їх підтвердить менеджер. Оплата карткою стане доступною після цього. Товар уже
+          зарезервовано.
+        </p>
+      )}
+      <OrderProgress order={order} />
+      <p className="order-hero__note">
+        {mailDelivers && order.customer.email
+          ? `Посилання на цю сторінку ми надіслали на ${order.customer.email}. Тут видно статус замовлення, оплату й чеки.`
+          : "Збережіть посилання на цю сторінку: тут видно статус замовлення, оплату й чеки."}
+      </p>
     </header>
   );
 }

@@ -4,7 +4,7 @@ import { receiptKindLabel } from "@polivalko/shared/lib/labels";
 
 export function OrderReceipts({ receipts }: { receipts: Receipt[] }) {
   return (
-    <section aria-labelledby="receipts-title">
+    <section className="order-card" aria-labelledby="receipts-title">
       <h2 id="receipts-title">Чеки</h2>
       <ul className="receipts">
         {receipts.map((r) => (

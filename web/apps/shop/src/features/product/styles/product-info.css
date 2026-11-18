@@ -7,10 +7,20 @@
 .buybox__actions .btn { flex: 1; }
 .buybox__note { border-radius: var(--radius); padding: var(--space-lg); background: var(--color-paper-2); font-size: var(--text-sm); }
 .buybox__note svg { width: 22px; height: 22px; }
-.description { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--space-2xl); padding-top: var(--section-gap-s); }
-.description h2, .related h2 { font-size: var(--text-xl); }
-.description .prose { margin-top: var(--space-lg); padding-bottom: 0; }
-.description > div > p { margin-top: var(--space-lg); }
+.related h2 { font-size: var(--text-xl); }
+.description { padding-top: var(--section-gap-s); }
+.ptabs { display: grid; gap: var(--space-xl); }
+.ptabs__list { position: relative; isolation: isolate; display: inline-flex; justify-self: start; gap: 2px; max-width: 100%; overflow-x: auto; padding: 4px; border: var(--rule-hair) solid var(--color-rule); border-radius: 14px; background: var(--color-paper); scrollbar-width: none; }
+.ptabs__list::-webkit-scrollbar { display: none; }
+.ptabs__tab { position: relative; z-index: 1; flex: none; min-height: 40px; padding: 0 18px; border: 0; border-radius: 10px; background: none; color: var(--color-muted); font: 500 var(--text-md)/1.2 var(--font-display); letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out); }
+.ptabs__tab[aria-selected="true"] { color: #fff; }
+.ptabs__list:not([data-ready]) .ptabs__tab[aria-selected="true"] { background: var(--color-brand); }
+.ptabs__tab:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .ptabs__tab:not([aria-selected="true"]):hover { color: var(--color-ink); } }
+.ptabs__glide { position: absolute; z-index: 0; top: 4px; left: 0; height: calc(100% - 8px); border-radius: 10px; background: var(--color-brand); transition: transform 0.44s var(--ease-glide), width 0.44s var(--ease-glide); }
+.ptabs__panel { min-width: 0; max-width: 820px; }
+.ptabs__panel .prose { padding-bottom: 0; }
+.ptabs__panel .specs { margin-top: 0; }
 .specs { margin: var(--space-lg) 0 0; border-top: var(--rule-hair) solid var(--color-rule); }
 .specs div { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-md); padding-block: var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-rule); }
 .specs dt { color: var(--color-muted); }

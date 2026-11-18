@@ -7,7 +7,8 @@ import { Strip } from "./strip";
 
 export async function SectionsPair() {
   await connection();
-  const categories = await getCategoryTree();
+  const categories = await getCategoryTree().catch(() => []);
+  if (categories.length === 0) return null;
   const photo = pagePhotos.sections;
   return (
     <>

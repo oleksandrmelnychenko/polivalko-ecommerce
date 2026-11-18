@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Quote, Settlement, Warehouse } from "@polivalko/shared/api/types";
 import { PinIcon, StoreIcon, TruckIcon } from "@polivalko/shared/ui/icons";
@@ -11,6 +12,14 @@ import { CheckoutWarehouseSelect } from "./checkout-warehouse-select";
 import { SettlementPicker } from "./settlement-picker";
 
 const ICONS: Record<string, ReactNode> = { nova_poshta: <TruckIcon />, nova_poshta_courier: <PinIcon />, pickup: <StoreIcon /> };
+
+function stepHint(codes: string[]) {
+  const carrier = codes.some((code) => code !== "pickup");
+  const pickup = codes.includes("pickup");
+  if (carrier && !pickup) return "Нова пошта по Україні";
+  if (pickup && !carrier) return "Самовивіз з магазину";
+  return "Нова пошта по Україні або самовивіз з магазину";
+}
 
 export function CheckoutDelivery({
   quote,
@@ -27,6 +36,7 @@ export function CheckoutDelivery({
   courier,
   saved,
   save,
+  phone,
 }: FieldProps & {
   quote: Quote | null;
   delivery: string;
@@ -40,6 +50,7 @@ export function CheckoutDelivery({
   courier?: CourierPrefill;
   saved?: ReactNode;
   save?: ReactNode;
+  phone: string | null;
 }) {
   const methods = quote?.deliveryMethods ?? [];
   const options = methods.map((d) => ({
@@ -50,7 +61,7 @@ export function CheckoutDelivery({
   }));
 
   return (
-    <CheckoutStep id="delivery-title" icon={<TruckIcon />} title="Отримання" hint="Нова пошта по Україні або самовивіз з магазину">
+    <CheckoutStep id="delivery-title" icon={<TruckIcon />} title="Отримання" hint={stepHint(methods.map((d) => d.code))}>
       {saved}
       <CheckoutOptions name="delivery" legend="Спосіб отримання" options={options} value={delivery} onChange={setDelivery} />
       {fieldError("delivery.method")}
@@ -58,7 +69,17 @@ export function CheckoutDelivery({
       {quote && methods.length === 0 ? (
         <p className="notice">
           <strong>Зараз немає доступних способів отримання</strong>
-          Зателефонуйте нам, і менеджер допоможе оформити замовлення.
+          {phone ? (
+            `Зателефонуйте нам: ${phone}, і менеджер допоможе оформити замовлення.`
+          ) : (
+            <>
+              Зверніться в магазин, і менеджер допоможе оформити замовлення. Контакти на сторінці{" "}
+              <Link href="/contacts" className="link">
+                «Контакти»
+              </Link>
+              .
+            </>
+          )}
         </p>
       ) : delivery === "nova_poshta_courier" ? (
         <CheckoutCourierFields

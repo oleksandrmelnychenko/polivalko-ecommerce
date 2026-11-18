@@ -63,7 +63,7 @@ function BrokenLink({ text }: { text: string }) {
       <strong>Посилання не спрацювало</strong>
       {text}{" "}
       <Link href="/account/forgot-password" className="link">
-        Надіслати новий лист
+        Запросити нове посилання
       </Link>
     </p>
   );

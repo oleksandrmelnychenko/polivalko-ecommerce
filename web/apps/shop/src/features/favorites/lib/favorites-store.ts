@@ -6,7 +6,7 @@ export type FavoritesState = { owner: string | null; ids: ReadonlySet<string> };
 const EMPTY: FavoritesState = { owner: null, ids: new Set() };
 
 let state: FavoritesState = EMPTY;
-let loadingFor: string | null = null;
+let loading: { owner: string; promise: Promise<boolean> } | null = null;
 const busy = new Set<string>();
 const listeners = new Set<() => void>();
 
@@ -25,23 +25,28 @@ export function subscribeFavorites(listener: () => void) {
   };
 }
 
-export function loadFavorites(owner: string) {
-  if (state.owner === owner || loadingFor === owner) return;
-  loadingFor = owner;
-  void getFavoriteIds()
+export function loadFavorites(owner: string): Promise<boolean> {
+  if (state.owner === owner) return Promise.resolve(true);
+  if (loading?.owner === owner) return loading.promise;
+  const promise = getFavoriteIds()
     .then(expireOn401)
     .then(({ data }) => {
-      if (loadingFor !== owner) return;
-      loadingFor = null;
-      if (data) set({ owner, ids: new Set(data) });
+      if (loading?.owner !== owner) return false;
+      loading = null;
+      if (!data) return false;
+      set({ owner, ids: new Set(data) });
+      return true;
     })
     .catch(() => {
-      if (loadingFor === owner) loadingFor = null;
+      if (loading?.owner === owner) loading = null;
+      return false;
     });
+  loading = { owner, promise };
+  return promise;
 }
 
 export function resetFavorites() {
-  loadingFor = null;
+  loading = null;
   if (state.owner) set(EMPTY);
 }
 
@@ -52,18 +57,22 @@ function withId(ids: ReadonlySet<string>, id: string, on: boolean) {
   return next;
 }
 
-export async function toggleFavorite(id: string): Promise<boolean> {
-  if (busy.has(id) || !state.owner) return false;
-  const owner = state.owner;
-  const on = !state.ids.has(id);
+export async function toggleFavorite(id: string, owner: string): Promise<boolean> {
+  if (busy.has(id)) return true;
   busy.add(id);
-  set({ owner, ids: withId(state.ids, id, on) });
-  let ok = false;
   try {
-    const { response } = expireOn401(await withCsrf((h) => (on ? putFavorite(h, id) : deleteFavorite(h, id))));
-    ok = response.ok;
-  } catch {}
-  busy.delete(id);
-  if (!ok && state.owner === owner) set({ owner, ids: withId(state.ids, id, !on) });
-  return ok;
+    if (state.owner !== owner && !(await loadFavorites(owner))) return false;
+    if (state.owner !== owner) return false;
+    const on = !state.ids.has(id);
+    set({ owner, ids: withId(state.ids, id, on) });
+    let ok = false;
+    try {
+      const { response } = expireOn401(await withCsrf((h) => (on ? putFavorite(h, id) : deleteFavorite(h, id))));
+      ok = response.ok;
+    } catch {}
+    if (!ok && state.owner === owner) set({ owner, ids: withId(state.ids, id, !on) });
+    return ok;
+  } finally {
+    busy.delete(id);
+  }
 }

@@ -4,7 +4,7 @@ import { ClockIcon, PhoneIcon, PinIcon } from "@polivalko/shared/ui/icons";
 
 export async function FooterContacts() {
   await connection();
-  const contacts = await getContacts();
+  const contacts = await getContacts().catch(() => null);
   const socials = socialLinks(contacts);
   return (
     <>

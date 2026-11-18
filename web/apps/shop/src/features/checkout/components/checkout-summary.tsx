@@ -8,18 +8,22 @@ import { QuantityStepper } from "@/shared/ui/quantity-stepper";
 export function CheckoutSummary({
   quote,
   quoteError,
+  retryQuote,
   delivery,
   priceNote,
   sending,
+  quantities,
   setQuantity,
   remove,
   consent,
 }: {
   quote: Quote | null;
   quoteError: boolean;
+  retryQuote: () => void;
   delivery: string;
   priceNote?: string | null;
   sending: boolean;
+  quantities: ReadonlyMap<string, number>;
   setQuantity: (productId: string, quantity: number) => void;
   remove: (productId: string) => void;
   consent: ReactNode;
@@ -31,7 +35,15 @@ export function CheckoutSummary({
         <h2 id="summary-title">Ваше замовлення</h2>
         {count > 0 && <span>{countProducts(count)}</span>}
       </header>
-      {quoteError && <p className="notice notice--error">Не вдалося перевірити ціни. Оновіть сторінку.</p>}
+      {quoteError && (
+        <p className="notice notice--error" role="alert">
+          <strong>Не вдалося перевірити ціни</strong>
+          Перевірте зв&apos;язок і спробуйте ще раз.{" "}
+          <button type="button" className="btn btn--quiet btn--small" onClick={retryQuote}>
+            Спробувати ще раз
+          </button>
+        </p>
+      )}
       {quote && !quote.dataFresh && (
         <p className="notice">
           <strong>Ціни й наявність потребують підтвердження</strong>
@@ -51,7 +63,7 @@ export function CheckoutSummary({
                 <span className="money">{formatMoney(item.unitPrice)}</span> за шт.
               </p>
               <div className="line__controls">
-                <QuantityStepper small value={item.quantity} onChange={(q) => setQuantity(item.productId, q)} label={`Кількість: ${item.name}`} />
+                <QuantityStepper small value={quantities.get(item.productId) ?? item.quantity} onChange={(q) => setQuantity(item.productId, q)} label={`Кількість: ${item.name}`} />
                 <button type="button" className="remove" onClick={() => remove(item.productId)}>
                   Прибрати
                 </button>

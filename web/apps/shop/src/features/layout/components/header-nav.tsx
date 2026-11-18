@@ -5,11 +5,13 @@ import { ArrowRightIcon, ChevronDownIcon } from "@polivalko/shared/ui/icons";
 import { pageLinks, saleLink } from "../lib/nav-links";
 import { MainNav } from "./main-nav";
 import { MegaColumn } from "./mega-column";
+import { NavFallback } from "./nav-fallback";
 import { NavItemLink } from "./nav-item-link";
 
 export async function HeaderNav() {
   await connection();
-  const [categories, sale] = await Promise.all([getCategoryTree(), searchProducts({ onSale: true, pageSize: 1 })]);
+  const [categories, sale] = await Promise.all([getCategoryTree().catch(() => null), searchProducts({ onSale: true, pageSize: 1 }).catch(() => null)]);
+  if (!categories) return <NavFallback />;
   const links = sale && sale.totalItems > 0 ? [saleLink, ...pageLinks] : pageLinks;
 
   return (

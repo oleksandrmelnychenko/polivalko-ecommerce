@@ -37,7 +37,7 @@ export function ServicesScreen() {
 
 async function ServicesContent() {
   await connection();
-  const [directions, contacts] = await Promise.all([getServiceDirections(), getContacts()]);
+  const [directions, contacts] = await Promise.all([getServiceDirections(), getContacts().catch(() => null)]);
 
   return (
     <>

@@ -189,7 +189,8 @@ export function heroSlides({ deals, sections, featured }: HeroData): HeroSlide[]
 }
 
 export function bannerSlides(banners: Banner[], { deals, sections, featured, categories }: HeroData): HeroSlide[] {
-  return banners.map((banner, i) => {
+  const shown = featured ? banners : banners.filter((banner) => !BESTSELLER_LINK.test(banner.link?.trim() ?? ""));
+  return shown.map((banner, i) => {
     const link = banner.link?.trim();
     const side = i % 2 === 0 ? "left" : "right";
     const bannerDeals = link && SALE_LINK.test(link) ? deals : undefined;

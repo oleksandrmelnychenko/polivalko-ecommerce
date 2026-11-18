@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { newIdempotencyKey } from "@polivalko/shared/api/browser";
 import type { Problem } from "@polivalko/shared/api/problem";
 import { startPayment } from "../api/client";
@@ -24,18 +24,32 @@ export function PayButton({
   const [error, setError] = useState<string | null>(null);
   const key = useRef<string | null>(null);
 
+  useEffect(() => {
+    const restored = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+      key.current = null;
+      setBusy(false);
+    };
+    window.addEventListener("pageshow", restored);
+    return () => window.removeEventListener("pageshow", restored);
+  }, []);
+
   async function pay() {
     setBusy(true);
     setError(null);
     key.current ??= newIdempotencyKey();
-    const { data, error: problem } = await (start ? start(key.current) : startPayment(number, token, key.current));
-    if (data) {
-      window.location.assign(data.pageUrl);
-      return;
+    try {
+      const { data, error: problem } = await (start ? start(key.current) : startPayment(number, token, key.current));
+      if (data) {
+        window.location.assign(data.pageUrl);
+        return;
+      }
+      key.current = null;
+      setError((problem as Problem | undefined)?.title ?? "Не вдалося відкрити оплату. Спробуйте ще раз.");
+    } catch {
+      setError("Немає зв'язку з сервером. Перевірте інтернет і спробуйте ще раз.");
     }
-    key.current = null;
     setBusy(false);
-    setError((problem as Problem | undefined)?.title ?? "Не вдалося відкрити оплату. Спробуйте ще раз.");
   }
 
   return (

@@ -2,7 +2,9 @@ import { Suspense, type ReactNode } from "react";
 import { CabinetFrame } from "./cabinet-frame";
 import { CabinetSkeleton } from "./cabinet-skeleton";
 
-export function AccountShell({ children }: { children: ReactNode }) {
+type AccountShellProps = { mailDelivers: () => Promise<boolean>; children: ReactNode };
+
+export function AccountShell({ mailDelivers, children }: AccountShellProps) {
   return (
     <Suspense
       fallback={
@@ -11,7 +13,11 @@ export function AccountShell({ children }: { children: ReactNode }) {
         </div>
       }
     >
-      <CabinetFrame>{children}</CabinetFrame>
+      <AccountFrame mailDelivers={mailDelivers}>{children}</AccountFrame>
     </Suspense>
   );
+}
+
+async function AccountFrame({ mailDelivers, children }: AccountShellProps) {
+  return <CabinetFrame mailDelivers={await mailDelivers()}>{children}</CabinetFrame>;
 }

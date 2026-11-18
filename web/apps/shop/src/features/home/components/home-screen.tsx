@@ -1,7 +1,8 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { getBestsellers, getCategoryTree, searchProducts } from "@/features/catalog/server";
-import { getSiteHome, SiteJsonLd, type SiteHome } from "@/features/content/server";
+import { enabledDeliveryFacts, getSiteHome, SiteJsonLd, type SiteHome } from "@/features/content/server";
+import type { DeliveryFacts } from "@/shared/lib/delivery-facts";
 import { homeBlocks, type HomeBlockKey } from "../lib/home-blocks";
 import {
   bannerCategorySlugs,
@@ -48,17 +49,22 @@ function HomeSkeleton() {
 
 async function HomeContent() {
   await connection();
-  const home = await getSiteHome();
+  const home = await getSiteHome().catch(() => null);
   const blocks = homeBlocks(home?.blocks);
   const banners = home?.banners ?? [];
-  const data = blocks.includes("hero") ? await heroData(bannerCategorySlugs(banners)) : {};
-  const slides = banners.length ? bannerSlides(banners, data) : heroSlides(data);
+  const needsFacts = blocks.includes("perks") && !home?.perks?.some((p) => p.title?.trim());
+  const [data, facts] = await Promise.all([
+    blocks.includes("hero") ? heroData(bannerCategorySlugs(banners)) : Promise.resolve<HeroData>({}),
+    needsFacts ? enabledDeliveryFacts() : Promise.resolve(null),
+  ]);
+  const fromBanners = bannerSlides(banners, data);
+  const slides = fromBanners.length ? fromBanners : heroSlides(data);
   return (
     <>
       <SiteJsonLd />
       {!blocks.includes("hero") && <h1 className="visually-hidden">Poli Valko: товари для саду, городу й дому</h1>}
       {blocks.map((block) => (
-        <HomeBlock key={block} block={block} home={home} slides={slides} />
+        <HomeBlock key={block} block={block} home={home} slides={slides} facts={facts} />
       ))}
     </>
   );
@@ -111,7 +117,7 @@ async function heroFeatured(): Promise<HeroFeatured | undefined> {
   }
 }
 
-function HomeBlock({ block, home, slides }: { block: HomeBlockKey; home: SiteHome | null; slides: HeroSlide[] }) {
+function HomeBlock({ block, home, slides, facts }: { block: HomeBlockKey; home: SiteHome | null; slides: HeroSlide[]; facts: DeliveryFacts | null }) {
   switch (block) {
     case "hero":
       return <HeroSlider slides={slides} />;
@@ -134,7 +140,7 @@ function HomeBlock({ block, home, slides }: { block: HomeBlockKey; home: SiteHom
         </Suspense>
       );
     case "perks":
-      return <Perks items={home?.perks} />;
+      return <Perks items={home?.perks} facts={facts} />;
     case "services":
       return (
         <Suspense fallback={<LookSkeleton />}>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import type { ProductDetails } from "@polivalko/shared/api/types";
+import type { DeliveryFacts } from "@/shared/lib/delivery-facts";
 import { TrackViewItem } from "@/features/analytics";
 import { Gallery } from "./gallery";
 import { ProductBuybox } from "./product-buybox";
@@ -9,7 +10,7 @@ import { ProductJsonLd } from "./product-json-ld";
 import { RelatedProducts } from "./related-products";
 
 /** The page resolves the product first (see requireProduct), so a missing one is a real 404. */
-export function ProductScreen({ product }: { product: ProductDetails }) {
+export function ProductScreen({ product, deliveryFacts }: { product: ProductDetails; deliveryFacts: () => Promise<DeliveryFacts | null> }) {
   return (
     <div className="container">
       <ProductJsonLd product={product} />
@@ -28,7 +29,7 @@ export function ProductScreen({ product }: { product: ProductDetails }) {
 
       <div className="product">
         <Gallery images={product.images} name={product.name} />
-        <ProductBuybox product={product} />
+        <ProductBuybox product={product} deliveryFacts={deliveryFacts} />
       </div>
 
       <ProductDescription product={product} />

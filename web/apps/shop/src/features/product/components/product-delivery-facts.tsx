@@ -1,21 +1,37 @@
 import Link from "next/link";
+import { carrierPlaces, paymentWords, type DeliveryFacts } from "@/shared/lib/delivery-facts";
 import { ShieldIcon, StoreIcon, TruckIcon, WalletIcon } from "@polivalko/shared/ui/icons";
 
-export function ProductDeliveryFacts() {
+const PAYMENT_WORDS: Record<string, string> = {
+  card: "карткою онлайн",
+  cash_on_delivery: "післяплатою",
+  pay_on_pickup: "в магазині",
+};
+
+export async function ProductDeliveryFacts({ load }: { load: () => Promise<DeliveryFacts | null> }) {
+  const facts = await load();
+  const places = facts ? carrierPlaces(facts) : "";
+  const payments = facts ? paymentWords(facts, PAYMENT_WORDS) : "";
   return (
     <ul className="facts-list buybox__note">
-      <li>
-        <TruckIcon />
-        <span>Нова пошта по Україні за тарифами перевізника: відділення, поштомат або кур&apos;єр</span>
-      </li>
-      <li>
-        <StoreIcon />
-        <span>Самовивіз з магазину безкоштовно</span>
-      </li>
-      <li>
-        <WalletIcon />
-        <span>Оплата карткою онлайн, післяплатою або в магазині</span>
-      </li>
+      {places && (
+        <li>
+          <TruckIcon />
+          <span>Нова пошта по Україні за тарифами перевізника: {places}</span>
+        </li>
+      )}
+      {facts?.pickup && (
+        <li>
+          <StoreIcon />
+          <span>Самовивіз з магазину безкоштовно</span>
+        </li>
+      )}
+      {payments && (
+        <li>
+          <WalletIcon />
+          <span>Оплата {payments}</span>
+        </li>
+      )}
       <li>
         <ShieldIcon />
         <span>

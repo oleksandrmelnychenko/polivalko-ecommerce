@@ -40,7 +40,12 @@ export function DeliveryScreen() {
 
 async function DeliveryContent() {
   await connection();
-  const [page, methods, pickupPoints, contacts] = await Promise.all([getPage(SLUG), getDeliveryMethods(), getPickupPoints(), getContacts()]);
+  const [page, methods, pickupPoints, contacts] = await Promise.all([
+    getPage(SLUG),
+    getDeliveryMethods().catch(() => []),
+    getPickupPoints().catch(() => []),
+    getContacts().catch(() => null),
+  ]);
   if (!page) notFound();
   const title = page.title?.trim() || FALLBACK_TITLE;
   const terms = page.bodyHtml ? htmlSections(page.bodyHtml) : null;
@@ -107,8 +112,8 @@ async function DeliveryContent() {
             {terms.intro && <div className="prose" dangerouslySetInnerHTML={{ __html: terms.intro }} />}
             {terms.sections.length > 0 && (
               <div className="ib-faq">
-                {terms.sections.map((section) => (
-                  <details key={section.title}>
+                {terms.sections.map((section, index) => (
+                  <details key={index}>
                     <summary>{section.title}</summary>
                     <div className="ib-faq__answer prose" dangerouslySetInnerHTML={{ __html: section.html }} />
                   </details>

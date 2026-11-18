@@ -25,7 +25,7 @@ export function orderRequest(
     customer: {
       name: String(form.get("name") ?? ""),
       phone: String(form.get("phone") ?? ""),
-      email: String(form.get("email") ?? "") || null,
+      email: String(form.get("email") ?? "").trim(),
     },
     delivery: {
       method: delivery,

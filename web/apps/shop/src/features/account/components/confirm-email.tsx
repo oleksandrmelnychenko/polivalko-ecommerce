@@ -9,10 +9,11 @@ import { postConfirmEmail } from "../api/client";
 
 type State = { kind: "pending" } | { kind: "ok" } | { kind: "error"; text: string };
 
-export function ConfirmEmail() {
+export function ConfirmEmail({ mailDelivers }: { mailDelivers: boolean }) {
   const token = useSearchParams().get("token") ?? "";
   const customer = useCustomer();
   const [state, setState] = useState<State>({ kind: "pending" });
+  const [logoutFailed, setLogoutFailed] = useState(false);
   const sent = useRef<string | null>(null);
 
   useEffect(() => {
@@ -31,6 +32,12 @@ export function ConfirmEmail() {
     );
   }, [token, customer.status]);
 
+  async function switchAccount() {
+    setLogoutFailed(false);
+    if (await signOut()) sent.current = null;
+    else setLogoutFailed(true);
+  }
+
   if (token && customer.status === "guest") return (
     <div className="auth__done">
       <p className="notice">Увійдіть до акаунта, для якого надіслано цей лист. Якщо ви не реєструвалися, спочатку відновіть пароль.</p>
@@ -47,17 +54,25 @@ export function ConfirmEmail() {
       {current.kind === "ok" && (
         <p className="notice notice--ok">
           <strong>Email підтверджено</strong>
-          Дякуємо. Листи про замовлення надходитимуть на цю адресу, а замовлення, оформлені з нею раніше, з&apos;являться в кабінеті.
+          {mailDelivers
+            ? "Дякуємо. Листи про замовлення надходитимуть на цю адресу, а замовлення, оформлені з нею раніше, з'являться в кабінеті."
+            : "Дякуємо. Замовлення, оформлені з цією адресою раніше, з'являться в кабінеті."}
         </p>
       )}
       {current.kind === "error" && (
         <p className="notice notice--error">
           <strong>Посилання не спрацювало</strong>
-          {current.text} Перевірте, чи ви увійшли до потрібного акаунта, або надішліть лист ще раз.
+          {current.text}{" "}
+          {mailDelivers ? "Перевірте, чи ви увійшли до потрібного акаунта, або надішліть лист ще раз." : "Перевірте, чи ви увійшли до потрібного акаунта."}
         </p>
       )}
       {current.kind === "error" && customer.status === "signedIn" && (
-        <button type="button" className="btn" onClick={() => { sent.current = null; void signOut(); }}>Увійти в інший акаунт</button>
+        <button type="button" className="btn" onClick={switchAccount}>Увійти в інший акаунт</button>
+      )}
+      {logoutFailed && (
+        <p className="notice notice--error" role="alert">
+          Не вдалося вийти. Спробуйте ще раз.
+        </p>
       )}
       {current.kind !== "pending" && (
         <Link href="/account" className="btn">

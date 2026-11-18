@@ -61,7 +61,7 @@ export async function CatalogListing({
   // A page past the end (an old link, fewer products now) opens the last page instead of an empty list
   // with a counter like «2353–10 з 10». A document request already got a real 307 from src/proxy.ts;
   // this covers client navigations, where inside Suspense the redirect happens in the browser.
-  if (result.totalPages > 0 && result.page > result.totalPages) redirect(href({ page: result.totalPages }));
+  if (result.page > Math.max(result.totalPages, 1)) redirect(href({ page: Math.max(result.totalPages, 1) }));
   const chips = activeChips(p, href);
   const from = result.totalItems === 0 ? 0 : (result.page - 1) * result.pageSize + 1;
   const to = Math.min(result.page * result.pageSize, result.totalItems);

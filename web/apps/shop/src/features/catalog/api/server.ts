@@ -1,6 +1,7 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { api } from "@polivalko/shared/api/server";
+import { loaded } from "@/shared/lib/api-result";
 
 export async function getCategoryTree() {
   "use cache";
@@ -53,30 +54,28 @@ export async function getCollections() {
   "use cache";
   cacheLife("minutes");
   cacheTag("catalog", "collections");
-  const { data } = await api.GET("/api/v1/collections");
-  return data ?? [];
+  return loaded(await api.GET("/api/v1/collections"), "добірки") ?? [];
 }
 
 export async function getSitemap() {
   "use cache";
   cacheLife("hours");
   cacheTag("catalog", "products", "categories");
-  const { data } = await api.GET("/api/v1/catalog/sitemap");
-  return data ?? { categories: [], products: [] };
+  const data = loaded(await api.GET("/api/v1/catalog/sitemap"), "карту сайту");
+  if (!data) throw new Error("API: не вдалося завантажити карту сайту");
+  return data;
 }
 
 export async function resolveRedirect(path: string) {
   "use cache";
   cacheLife("minutes");
   cacheTag("redirects");
-  const { data } = await api.GET("/api/v1/redirects/resolve", { params: { query: { path } } });
-  return data?.to ?? null;
+  return loaded(await api.GET("/api/v1/redirects/resolve", { params: { query: { path } } }), "перенаправлення")?.to ?? null;
 }
 
 export async function getBestsellers(take: number) {
   "use cache";
   cacheLife("minutes");
   cacheTag("catalog", "products", "bestsellers");
-  const { data } = await api.GET("/api/v1/bestsellers", { params: { query: { take } } });
-  return data ?? null;
+  return loaded(await api.GET("/api/v1/bestsellers", { params: { query: { take } } }), "хіти продажів");
 }

@@ -9,6 +9,7 @@ export function CartLines({
   rows,
   quote,
   failed,
+  retryQuote,
   setQuantity,
   remove,
   clear,
@@ -16,6 +17,7 @@ export function CartLines({
   rows: CartRow[];
   quote: Quote | null;
   failed: boolean;
+  retryQuote: () => void;
   setQuantity: (productId: string, quantity: number) => void;
   remove: (productId: string) => void;
   clear: () => void;
@@ -25,7 +27,15 @@ export function CartLines({
       <h2 id="cart-lines-title" className="visually-hidden">
         Товари в кошику
       </h2>
-      {failed && <p className="notice notice--error">Не вдалося перевірити ціни й наявність. Оновіть сторінку.</p>}
+      {failed && (
+        <p className="notice notice--error" role="alert">
+          <strong>Не вдалося перевірити ціни й наявність</strong>
+          Перевірте зв&apos;язок і спробуйте ще раз.{" "}
+          <button type="button" className="btn btn--quiet btn--small" onClick={retryQuote}>
+            Спробувати ще раз
+          </button>
+        </p>
+      )}
       {quote && !quote.dataFresh && (
         <p className="notice">
           <strong>Ціни й наявність потребують підтвердження</strong>

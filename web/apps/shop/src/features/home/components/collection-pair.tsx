@@ -8,7 +8,7 @@ import { Strip } from "./strip";
 
 export async function CollectionPairs() {
   await connection();
-  const [first, ...rest] = (await getCollections()).filter((c) => c.items.length > 0);
+  const [first, ...rest] = (await getCollections().catch(() => [])).filter((c) => c.items.length > 0);
   if (!first) return null;
   return (
     <>

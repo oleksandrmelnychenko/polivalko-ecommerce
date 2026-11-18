@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { CheckoutForm } from "./checkout-form";
 
-export function CheckoutScreen() {
+type CheckoutScreenProps = { mailDelivers: () => Promise<boolean>; storePhone: () => Promise<string | null> };
+
+export function CheckoutScreen(props: CheckoutScreenProps) {
   return (
     <div className="container">
       <header className="page-head">
@@ -18,7 +21,14 @@ export function CheckoutScreen() {
         </nav>
         <h1>Оформлення замовлення</h1>
       </header>
-      <CheckoutForm />
+      <Suspense fallback={<p role="status">Завантажуємо кошик…</p>}>
+        <CheckoutContent {...props} />
+      </Suspense>
     </div>
   );
+}
+
+async function CheckoutContent({ mailDelivers, storePhone }: CheckoutScreenProps) {
+  const [mail, phone] = await Promise.all([mailDelivers(), storePhone()]);
+  return <CheckoutForm mailDelivers={mail} phone={phone} />;
 }
