@@ -14,7 +14,7 @@ HTTPS, бекапи з відновленням, моніторинг, відк�
 | Проєкт compose (префікс контейнерів і томів) | `polivalko` | `polivalko-staging` | `polivalko` |
 | Адреса | http://localhost:8080 | http://127.0.0.1:8081 на сервері (SSH-тунель) | https://домен (порти 80 і 443) |
 | `ASPNETCORE_ENVIRONMENT` | `APP_ENVIRONMENT` (Production) | завжди `Staging` | `APP_ENVIRONMENT` (Production) |
-| Демо-товари | так (`SEED_DEMO_DATA=true`) | ні, якщо не ввімкнути явно | ні (за замовчуванням `false`) |
+| Демо-товари | так (`SEED_DEMO_DATA=true`) | `SEED_DEMO_DATA` за замовчуванням `false`, але заглушка Navkolo (`NAVKOLO_MODE=Stub`, значення за замовчуванням) однаково імпортує 32 демо-товари | так само, як на staging: без демо-товарів лише з `NAVKOLO_MODE=Disabled` або `DNTrade` (розділ 2) |
 | Опис API `/api/docs` | так | так | ні (за замовчуванням `false`) |
 | Оплата / фіскалізація | Sandbox / Stub | Sandbox / Stub (інше — лише через `STAGING_*`) | обирається явно, без значень за замовчуванням; Sandbox заборонено (`Payments__AllowSandbox=false`) |
 | PostgreSQL ззовні | `127.0.0.1:5432` | `127.0.0.1:5433` | не публікується |
@@ -30,7 +30,7 @@ Staging і production можуть працювати на одному серв
 | `postgres` | PostgreSQL 18, том `pgdata` | `pg_isready` (healthcheck) |
 | `migrate` | EF migrations bundle: застосовує міграції й завершується | код виходу 0 |
 | `api` | ASP.NET Core API, фото в томі `media` | `/health/live`, `/health/ready` через Caddy (зовнішній монітор) |
-| `worker` | фонові процеси: outbox, синхронізації, чеки, повідомлення | журнали й тривоги в Telegram |
+| `worker` | фонові процеси: outbox, синхронізації, звірка оплат, скасування неоплачених замовлень карткою, чеки, повідомлення | журнали й тривоги в Telegram |
 | `web` | Next.js: вітрина й особистий кабінет покупця | healthcheck `GET /robots.txt` |
 | `console` | Консоль для працівників: односторінковий застосунок (Next.js зі статичним експортом, React, Mantine), який віддає Caddy як статику на порту 3000; дані бере з API через `/api` свого піддомену (`CONSOLE_ADDRESS`) | healthcheck `GET /login` |
 | `caddy` | єдиний вхід для двох адрес: HTTPS, `/api/*` і `/health/*` → API, решта → вітрина або консоль; на домені магазину API консолі закритий (404), а вітрина ніде не згадує адресу консолі | healthcheck `GET :2019/config/` (вбудований API керування Caddy) |
@@ -39,7 +39,7 @@ Staging і production можуть працювати на одному серв
 
 ### Вимоги до сервера
 
-- Linux x86_64 (migrations bundle збирається під `linux-x64`), Docker Engine 25+ з Compose 2.24+.
+- Linux x86_64 або arm64 (migrations bundle збирається під архітектуру образу: `linux-x64` чи `linux-arm64`), Docker Engine 25+ з Compose 2.24+.
 - Орієнтовно від 2 vCPU, 4 ГБ RAM і 40 ГБ SSD; точний розмір підтверджує навантажувальний тест (розділ 12).
 - DNS-записи домену й піддомену консолі (`CONSOLE_ADDRESS`) на IP сервера, відкриті вхідні порти 22, 80, 443 (UDP 443 — для HTTP/3).
 - Синхронізація часу (NTP): від неї залежать розклад бекапів і TLS.
@@ -74,14 +74,15 @@ Staging і production можуть працювати на одному серв
 | `SITE_ADDRESS` | caddy | `:8080` | Домен для Caddy (`example.ua`) — сертифікат HTTPS отримується автоматично. Production: обов'язкова | ні |
 | `SITE_URL` | api, worker, web, console (збірка) | `http://localhost:8080` (staging `:8081`) | Публічна адреса: повернення з оплати, вебхуки, sitemap, canonical, посилання в листах покупцям і з консолі на вітрину. Production: обов'язкова, з `https://` | ні |
 | `CONSOLE_ADDRESS` | caddy | `http://console.localhost:8080` | Адреса консолі для Caddy (`console.example.ua`); сама назва піддомену не захищає (розділ 7). Сертифікат отримується автоматично, консоль завжди з `X-Robots-Tag: noindex, nofollow`. Production: обов'язкова | ні |
-| `CONSOLE_ALLOWED_IPS` | caddy | усі | Обов'язково для production overlay: IP або мережі (CIDR, через пробіл), з яких пускати в консоль; решта отримує 404. Рекомендовано для production (офіс, VPN) | ні |
+| `CONSOLE_ALLOWED_IPS` | caddy | усі | IP або мережі (CIDR, через пробіл), з яких пускати в консоль (офіс, VPN); решта отримує 404. Production: обов'язкова | ні |
 | `HTTP_PORT` | caddy | `8080` (staging `8081`) | Порт HTTP локально й на staging | ні |
 | `HTTP_BIND` | caddy (staging) | `127.0.0.1` | Адреса, на якій staging приймає з'єднання | ні |
 | `SEARCH_INDEXING` | caddy | `index` | `noindex` додає `X-Robots-Tag: noindex, nofollow`; на staging примусово | ні |
 | `REVALIDATE_SECRET` | api, worker, web | `local-revalidate-secret` | Спільний секрет скидання кешу вітрини (`/internal/revalidate`, лише внутрішня мережа). Production: обов'язкова | так |
+| `DATA_PROTECTION_CERTIFICATE_DIR` | api, worker | `./.local/data-protection` | Каталог на сервері з сертифікатом Data Protection (`current.crt`, `current.key`); монтується в обидва контейнери лише для читання, без нього API й Worker не стартують (див. «Шифрування Data Protection і перехід на нову версію»). Production: обов'язкова, абсолютний шлях | ні (вміст каталогу — так) |
 | `GA_MEASUREMENT_ID` | web (збірка) | порожньо | Зарезервовано; збір GA вимкнено до безпечної first-party інтеграції | ні |
 | `GSC_VERIFICATION` | web (збірка) | порожньо | Код верифікації Google Search Console; вбудовується під час збірки | ні |
-| `SEED_DEMO_DATA` | api | `true` (staging і production `false`) | Демо-товари під час старту API | ні |
+| `SEED_DEMO_DATA` | api | `true` (staging і production `false`) | Демо-товари під час старту API. На заглушку Navkolo не впливає: з `NAVKOLO_MODE=Stub` демо-товари з'являться й при `false` | ні |
 | `EXPOSE_API_DOCS` | api | `true` (production `false`) | Опис OpenAPI й Scalar на `/api/docs` | ні |
 
 Змінні API й Worker передаються в .NET як `Розділ__Ключ` (див. `x-app-env` у `compose.yaml`):
@@ -98,9 +99,14 @@ Staging і production можуть працювати на одному серв
 
 | Змінна | За замовчуванням | Призначення | Секрет |
 |---|---|---|---|
-| `NAVKOLO_MODE` | `Stub` | `Disabled` або `Stub` (до доступу до API Navkolo) | ні |
+| `NAVKOLO_MODE` | `Stub` | `Disabled` — обмін вимкнено; `Stub` — заглушка з демо-даними; `DNTrade` — справжній API ([integrations.md](integrations.md)). `Stub` діє за замовчуванням і з production-конфігурацією: Worker імпортує 32 демо-товари (під час першого запуску й далі раз на добу) і кожні 5 хв повертає їм демо-ціни й залишки, навіть якщо `SEED_DEMO_DATA=false`. Магазин, де демо-товарів бути не повинно: `Disabled` або `DNTrade` | ні |
+| `NAVKOLO_API_KEY` | порожньо | Ключ API DNTrade для режиму `DNTrade` | так |
+| `NAVKOLO_STORE_ID` | порожньо | UUID складу в Navkolo; порожньо — єдиний склад визначається автоматично, якщо складів кілька — синхронізація завершується помилкою | ні |
+| `NAVKOLO_CHANNEL` | `Poli-Valko` | Назва каналу, з якою сайт передає замовлення й за якою читає їхні статуси | ні |
+| `NAVKOLO_ORDER_STATUS_ID` | порожньо | Числовий ID початкового статусу переданого замовлення (необов'язково) | ні |
+| `NAVKOLO_CANCELLATION_STATUS_ID` | порожньо | Числовий ID статусу, який сайт ставить у Navkolo під час скасування замовлення | ні |
 | `NAVKOLO_SYNC_INTERVAL` | `00:05:00` | Період синхронізації цін і залишків | ні |
-| `PAYMENTS_PROVIDER` | `Sandbox` | `Sandbox` (тестова оплата), `Mono` (Plata by mono) або `Disabled`. Production: обов'язкова, лише `Mono` або `Disabled` — із `Sandbox` API й worker не стартують, бо тестова оплата дає змогу будь-кому позначити замовлення оплаченим | ні |
+| `PAYMENTS_PROVIDER` | `Sandbox` | `Sandbox` (тестова оплата), `Mono` (Plata by mono) або `Disabled`. Production: обов'язкова, лише `Mono` або `Disabled` — із `Sandbox` API й worker не стартують, бо тестова оплата дає змогу будь-кому позначити замовлення оплаченим. Оплата карткою пропонується на оформленні лише з `Mono` або `Sandbox`; з `Disabled` покупець бачить тільки післяплату й оплату під час самовивозу | ні |
 | `PAYMENTS_SANDBOX_SECRET` | `local-sandbox-secret` | Підпис тестових оплат (локально й на staging). На production не використовується | так |
 | `MONO_TOKEN` | порожньо | Токен Plata by mono | так |
 | `STAGING_PAYMENTS_PROVIDER` | `Sandbox` | Лише staging: явне ввімкнення іншого провайдера (з тестовим токеном) | ні |
@@ -116,8 +122,13 @@ Staging і production можуть працювати на одному серв
 | `TELEGRAM_BOT_TOKEN` | порожньо | Бот для повідомлень менеджеру й тривог; порожньо — лише лог | так |
 | `TELEGRAM_CHAT_ID` | порожньо | Чат або група, куди пише бот, якщо в консолі («Налаштування → Сповіщення») чатів не вказано | ні |
 
+Після збереження в консолі («Налаштування → Навколо») режим, ключ, склад і статус скасування Navkolo беруться звідти, а не з `.env`.
+
 Листи покупцям (підтвердження пошти, скидання пароля) поки йдуть через заглушку `Email:Mode=Log`: посилання пишуться в журнал API лише в Development; в інших середовищах журнал не містить токенів.
+Іншого режиму ще немає: будь-яке інше значення `Email:Mode` зупиняє старт API й Worker. Чи доставляються листи, API повідомляє в `GET /api/v1/customer-mail` (зараз `delivers: false`).
 До запуску кабінету для покупців потрібен поштовий провайдер — див. [integrations.md](integrations.md).
+
+Неоплачені замовлення карткою скасовує завдання Worker «Скасування неоплачених замовлень» (у консолі — «Система → Інтеграції»). Кожні 15 хвилин воно шукає замовлення з оплатою карткою, які перебувають у статусі «Чекає оплати» довше за `Ordering:UnpaidCardOrderHours` годин (за замовчуванням 24; `0` вимикає завдання) і не оплачені, та скасовує їх так само, як скасування з консолі: відкритий рахунок анулюється, резерв товару звільняється (якщо замовлення вже передане в Navkolo — після підтвердження скасування там). Замовлення з післяплатою й оплатою під час самовивозу автоматично не скасовуються. Змінної немає у файлах compose: щоб змінити строк, додайте `Ordering__UnpaidCardOrderHours` в `environment` сервісу `worker` у власному override-файлі й допишіть цей файл у `COMPOSE_FILE`.
 
 ### Бекапи
 
@@ -147,14 +158,22 @@ Staging і production можуть працювати на одному серв
    cd /srv/polivalko
    cp .env.example .env && chmod 600 .env
    openssl rand -hex 32   # окремо для POSTGRES_PASSWORD і REVALIDATE_SECRET
+   # сертифікат Data Protection: приватний каталог поза репозиторієм і поза бекапами БД
+   sh deploy/create-key-certificate.sh /srv/polivalko-keys/data-protection
    ```
 
+   Каталог сертифіката і файли `current.crt`, `current.key` має читати UID 1654 (користувач контейнерів API й Worker):
+   налаштуйте власника або ACL, не відкриваючи ключ усім. Абсолютний шлях запишіть у `DATA_PROTECTION_CERTIFICATE_DIR`
+   і збережіть копію каталогу окремо від дампів БД (розділ 8.1).
+
    У `.env` обов'язково: `COMPOSE_FILE=compose.yaml:deploy/compose.production.yaml`, `COMPOSE_PROFILES=app,offsite`,
-   `APP_VERSION` (напр. `2026.11.0`), `SITE_ADDRESS`, `SITE_URL`, `CONSOLE_ADDRESS`, `POSTGRES_PASSWORD`, `REVALIDATE_SECRET`,
+   `APP_VERSION` (напр. `2026.11.0`), `SITE_ADDRESS`, `SITE_URL`, `CONSOLE_ADDRESS`, `CONSOLE_ALLOWED_IPS`,
+   `DATA_PROTECTION_CERTIFICATE_DIR`, `POSTGRES_PASSWORD`, `REVALIDATE_SECRET`,
    `PAYMENTS_PROVIDER` (`Mono` з `MONO_TOKEN` або `Disabled`), `FISCAL_PROVIDER`, `SEED_DEMO_DATA=false`, `EXPOSE_API_DOCS=false`,
    `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `TELEGRAM_*`, `SELLER_*`, `OFFSITE_*`. Без обов'язкових змінних compose
-   зупиниться з повідомленням, якої саме бракує. Пароль БД записується під час першого старту `postgres`
-   і далі змінюється лише вручну (розділ 10).
+   зупиниться з повідомленням, якої саме бракує. `NAVKOLO_MODE` compose не перевіряє: якщо її не задати, діє `Stub`
+   і в магазині з'являться демо-товари — задайте `Disabled` або `DNTrade` (розділ 2). Пароль БД записується під час
+   першого старту `postgres` і далі змінюється лише вручну (розділ 10).
 
 4. **Збірка, міграції, запуск.**
 
@@ -234,7 +253,9 @@ docker compose up -d
 Під час старту API створює працівника з `ADMIN_EMAIL` і `ADMIN_PASSWORD` з роллю Admin, якщо такого email ще немає.
 Неповний запис (немає email чи пароля) пропускається з попередженням у лозі; наявних користувачів API не змінює,
 тож зміна `ADMIN_PASSWORD` пізніше не змінить пароль. Вимоги до пароля: щонайменше 10 символів, великі й малі
-літери, цифра й спецсимвол — інакше API не стартує й пише причину в лог.
+літери, цифра й спецсимвол — інакше адміністратор не створюється: API пише причину в лог
+(`Seed:Users: працівника … не створено`) і стартує далі без нього. Виправте пароль у `.env` і виконайте
+`docker compose up -d api`.
 
 Після першого входу приберіть пароль з `.env` і перестворіть API (`docker compose up -d api`), щоб він не лишався
 в змінних контейнера. Інших працівників і ролі з правами додає адміністратор у консолі (Система → Працівники,
@@ -274,7 +295,8 @@ SQL
   (лише IP офісу чи VPN; решта бачить 404). Якщо сервер за Cloudflare чи іншим проксі, Caddy бачить IP проксі —
   тоді обмеження треба налаштовувати з `trusted_proxies`.
 - Сертифікати зберігаються в томі `caddy_data`. Не видаляйте його: часті повторні випуски впираються в ліміти CA.
-- Заголовки безпеки (HSTS, `nosniff`, `Referrer-Policy`) задає `deploy/Caddyfile`. Шлях `/internal/*` закритий ззовні.
+- Заголовки безпеки (HSTS, `nosniff`, `Referrer-Policy`, `X-Frame-Options: SAMEORIGIN` і
+  `Content-Security-Policy: frame-ancestors 'self'`) задає `deploy/Caddyfile` для вітрини й консолі. Шлях `/internal/*` закритий ззовні.
 - Перевірка: `curl -I https://example.ua` (статус 200, заголовок `strict-transport-security`),
   `curl -I http://example.ua` (перенаправлення 308 на HTTPS), `curl -I https://console.example.ua/login`
   (200 і `x-robots-tag: noindex, nofollow`).
@@ -293,8 +315,10 @@ SQL
 - Де лежать: том `polivalko_backups` (`docker compose exec backup ls -lh /backups`) або каталог `BACKUP_PATH`.
   Забрати файл на свій комп'ютер: `docker compose cp backup:/backups/<файл> .`
 
-У дамп БД не входять: фото з консолі (том `media`) — їх копіює `backup-offsite`; сертифікати (`caddy_data`) —
-випускаються заново; файл `.env` — зберігайте його копію в менеджері паролів власника.
+У дамп БД не входять: фото з консолі (том `media`) — їх копіює `backup-offsite`; сертифікати HTTPS (`caddy_data`) —
+випускаються заново; файл `.env` — зберігайте його копію в менеджері паролів власника; каталог сертифіката
+Data Protection (`DATA_PROTECTION_CERTIFICATE_DIR`) — його не копіює ні `backup`, ні `backup-offsite`, тож зберігайте
+копію самі, окремо від дампів: без нього API й Worker на відновленій базі не стартують.
 
 ### 8.2. Копія поза сервер (обов'язково для production)
 
@@ -330,7 +354,9 @@ docker compose up -d
 
 ### 8.4. Відновлення на новому сервері
 
-Розгорніть код і `.env` (розділ 3, кроки 1–3), запустіть `docker compose up -d postgres backup`, покладіть дамп
+Розгорніть код і `.env` (розділ 3, кроки 1–3) і поверніть збережену копію каталогу сертифіката Data Protection
+у шлях із `DATA_PROTECTION_CERTIFICATE_DIR` — новий сертифікат не створюйте: ключі у відновленій базі зашифровані
+старим, без нього API й Worker не стартують. Запустіть `docker compose up -d postgres backup`, покладіть дамп
 у `/backups` (`docker compose cp`), виконайте `restore.sh`, потім `docker compose run --rm migrate` і
 `docker compose up -d`. Фото поверніть з папки `media/` бакета в том `polivalko_media`
 (напр., `rclone copy` з тими самими ключами).
@@ -399,8 +425,9 @@ Staging — копія production для перевірки релізів пе�
   `COMPOSE_FILE=compose.yaml:compose.staging.yaml`, `COMPOSE_PROFILES=app`, інші паролі й секрети.
   Команди ті самі, що в розділах 3–5; проєкт називається `polivalko-staging`, томи — `polivalko-staging_*`,
   образи — `polivalko-staging-*`.
-- Staging примусово працює як `Staging`, не індексується (`X-Robots-Tag: noindex`), не має GA4, за замовчуванням
-  без демо-товарів (увімкнути — `SEED_DEMO_DATA=true`), з тестовою оплатою й фіскалізацією-заглушкою. Справжній
+- Staging примусово працює як `Staging`, не індексується (`X-Robots-Tag: noindex`), не має GA4, з тестовою оплатою
+  й фіскалізацією-заглушкою. `SEED_DEMO_DATA` за замовчуванням `false`, але із заглушкою Navkolo (`NAVKOLO_MODE=Stub`,
+  значення за замовчуванням) 32 демо-товари однаково імпортуються; без них — `NAVKOLO_MODE=Disabled`. Справжній
   провайдер вмикається лише окремо: `STAGING_PAYMENTS_PROVIDER=Mono` з тестовим токеном,
   `STAGING_FISCAL_PROVIDER=Checkbox` з тестовою касою.
 - Доступ: staging слухає `127.0.0.1:8081` на сервері. Тестувальники відкривають його через SSH-тунель
@@ -408,8 +435,9 @@ Staging — копія production для перевірки релізів пе�
   лише разом з обмеженням за IP у файрволі провайдера (опубліковані Docker порти обходять ufw).
 - Публічний staging з HTTPS на власному домені — на окремому невеликому сервері: там використовуйте
   production-конфігурацію (`compose.yaml:deploy/compose.production.yaml`) зі значеннями staging у `.env`:
-  `APP_ENVIRONMENT=Staging`, `SEARCH_INDEXING=noindex`, `SEED_DEMO_DATA=false`, `PAYMENTS_PROVIDER=Sandbox`,
-  `FISCAL_PROVIDER=Stub`, порожні `GA_MEASUREMENT_ID` і `GSC_VERIFICATION`.
+  `APP_ENVIRONMENT=Staging`, `SEARCH_INDEXING=noindex`, `SEED_DEMO_DATA=false`, `PAYMENTS_PROVIDER=Mono` з тестовим
+  токеном або `Disabled`, `FISCAL_PROVIDER=Stub`, порожні `GA_MEASUREMENT_ID` і `GSC_VERIFICATION`. `Sandbox` тут
+  не запуститься: production-конфігурація закріплює `Payments__AllowSandbox=false`, і API з worker із ним не стартують.
 - Дані з production на staging переносьте лише для тестів відновлення: у них персональні дані покупців.
 
 Порядок релізу: тег → staging (розділ 4) → перевірка сценаріїв і, за потреби, навантажувальний тест → той самий тег на production.
@@ -441,8 +469,17 @@ docker run --rm -i -v "$PWD/tests/load:/scripts:ro" \
   підсумком k6 (файл `load-test-<дата>.txt`), конфігурацією сервера й версією (`APP_VERSION`).
 - Запускайте з іншої машини, не з самого сервера. На спільному з production сервері тест staging навантажує й
   production — проводьте його до запуску або в години найменшого трафіку; під час тесту стежте за `docker stats`.
-- Статичні файли (`/_next/static`, фото) тест не завантажує: їх кешують браузер і CDN. Обмеження частоти діють
-  лише на форми й вхід у консоль, тож на перегляд і перерахунок кошика не впливають.
+- Статичні файли (`/_next/static`, фото) тест не завантажує: їх кешують браузер і CDN.
+- Обмеження частоти (на одну IP-адресу; відповідь 429). Перегляд сторінок і каталогу не обмежений. Політика «cart» —
+  120 запитів на хвилину: кошик (`POST /api/v1/cart/open`, `PUT /api/v1/cart`), перерахунок
+  `POST /api/v1/checkout/quote` і відкриття оплати `POST /api/v1/orders/{number}/payments`. Замовлення
+  (`POST /api/v1/orders`, `POST /api/v1/cart/checkout`) — 10 за 10 хвилин. Форми (заявка на послугу, реєстрація, лист
+  скидання пароля, повторний лист підтвердження, перевірка й збереження підключення Навколо в консолі) — 5 на
+  хвилину. Вхід покупця, вхід працівника в консоль, підтвердження пошти, зміна й скидання пароля — 10 на хвилину.
+- Перерахунок кошика входить у сценарій, а k6 з однієї машини — це одна IP-адреса. Відвідувач сценарію робить
+  перерахунок приблизно раз на 12–13 с, тож понад ~25 одночасних відвідувачів частина перерахунків отримає 429 і
+  порушить поріг помилок. На час тесту підніміть ліміт на staging: `RateLimiting__Cart__PermitLimit` в `environment`
+  сервісу `api` у власному override-файлі (у файлах compose цієї змінної немає).
 
 ### Великий каталог
 
@@ -459,15 +496,17 @@ docker run --rm -i -v "$PWD/tests/load:/scripts:ro" \
 - `measure-catalog.mjs` міряє відповіді: API вітрини (сторінки списку, фільтри, фасети, пошук з помилкою й за
   артикулом), сторінки Next.js, `sitemap.xml` і списки консолі. Для кожного запиту — перший виклик, медіана й
   максимум із `--runs` повторів; `--json=<файл>` зберігає результат.
-- `console-client.mjs` — спільний вхід у консоль. Скрипти читають адміністратора з
-  `src/PoliValko.Api/appsettings.Development.json` або зі змінних `CONSOLE_EMAIL` і `CONSOLE_PASSWORD`. Запити йдуть
-  на `--base` (типово `http://127.0.0.1:8080`) із заголовком `Host` вітрини чи консолі.
+- `console-client.mjs` — спільний вхід у консоль. Обліковий запис адміністратора передавайте змінними `CONSOLE_EMAIL`
+  і `CONSOLE_PASSWORD`. Без них скрипт шукає `Seed:Users` у `src/PoliValko.Api/appsettings.Development.json`, де цієї
+  секції вже немає, і завершується помилкою. Запити йдуть на `--base` (типово `http://127.0.0.1:8080`) із заголовком
+  `Host` вітрини чи консолі.
 - `remove-synthetic.sql` прибирає все, що додав генератор:
   - товари `syn-%`;
   - порожні синтетичні підкатегорії;
   - бренди й характеристики без товарів і без опису, логотипа, одиниці чи синонімів.
 
 ```bash
+export CONSOLE_EMAIL=<email адміністратора> CONSOLE_PASSWORD=<його пароль>
 node tests/load/catalog/synthetic-catalog.mjs --count=10000
 node tests/load/catalog/measure-catalog.mjs --runs=7 --json=catalog-scale.json
 docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < tests/load/catalog/remove-synthetic.sql
@@ -480,19 +519,23 @@ docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB
 `.github/workflows/ci.yml` на кожен push у `main` і pull request:
 
 - `backend` — збірка .NET, перевірка закоміченого контракту OpenAPI, юніт- та інтеграційні тести (PostgreSQL у Testcontainers);
-- `web` — відповідність TS-типів контракту, перевірка типів, lint і збірка обох застосунків на Next.js: вітрини (standalone) і консолі (статичний експорт);
+- `web` — по черзі: `npm ci`; `npm audit --omit=dev` (відома вразливість у робочих залежностях зупиняє завдання, і наступні кроки не виконуються); відповідність TS-типів контракту; lint; перевірка типів; тести вітрини на Node (`node --test apps/shop/tests/*.test.mjs`); збірка обох застосунків на Next.js: вітрини (standalone) і консолі (статичний експорт);
 - `deploy` — `bash -n`/`sh -n`, shellcheck і LF-закінчення скриптів `deploy/backup/`, `docker compose config` для
   локальної, staging- і production-конфігурацій, `caddy validate` для `deploy/Caddyfile`, `k6 inspect` для сценарію
   навантаження й збірка всіх образів (`docker compose --profile app build`) без публікації.
 
-Розгортання не автоматизоване: реліз виконується вручну за розділом 4 після зеленого CI.
+`.github/workflows/sync-production.yml` на кожен push у `main` (і за ручним запуском `workflow_dispatch`) переносить
+зміни з `main` у production-репозиторій `oleksandrmelnychenko/polivalko` одним комітом
+«Release polivalko-ecommerce at <коміт>»; каталог `.github/workflows/` не переноситься. Цей workflow запускається
+окремо від CI й не чекає на його результат: коміт потрапляє в production-репозиторій, навіть якщо завдання CI впали.
+Розділ 4 описує оновлення сервера з Docker Compose.
 
 ## 14. Чек-лист перед запуском
 
 - [ ] Домен і HTTPS: `curl -I https://…` — 200 і HSTS; HTTP перенаправляє на HTTPS; консоль на окремому піддомені з noindex, `CONSOLE_ALLOWED_IPS` задано; `https://<домен>/api/v1/console/auth/me` — 404.
-- [ ] Поштовий провайдер для листів покупцям підключено (`Email:Mode` не `Log`), лист підтвердження й скидання пароля доходять.
+- [ ] Для листів покупцям реалізовано й увімкнено справжній відправник пошти: зараз існує лише `Email:Mode=Log`, який листів не надсилає, а інше значення зупиняє старт (див. [integrations.md](integrations.md)); лист підтвердження й скидання пароля доходять.
 - [ ] `.env`: усі секрети згенеровані, `chmod 600`, копія в менеджері паролів; `ADMIN_PASSWORD` прибрано.
-- [ ] `SEED_DEMO_DATA=false`, `EXPOSE_API_DOCS=false`, обрано `PAYMENTS_PROVIDER` і `FISCAL_PROVIDER`, заповнено `SELLER_*`.
+- [ ] `SEED_DEMO_DATA=false`, `EXPOSE_API_DOCS=false`, `NAVKOLO_MODE` — `DNTrade` або `Disabled` (не `Stub`: він імпортує демо-товари), обрано `PAYMENTS_PROVIDER` і `FISCAL_PROVIDER`, заповнено `SELLER_*`.
 - [ ] Бекапи: є щоденний дамп, копія поза сервер (дампи й `media/`), тест відновлення пройдено й записано.
 - [ ] Зовнішній монітор `/health/ready` і головної; тестова тривога в Telegram дійшла.
 - [ ] Навантажувальний тест на погодженій кількості відвідувачів пройдено, результат у протоколі.
@@ -501,13 +544,13 @@ docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB
 
 ### Шифрування Data Protection і перехід на нову версію
 
-API потребує RSA-сертифіката з приватним ключем **поза БД та її резервними копіями**. Підготуйте приватний каталог:
+API й Worker потребують RSA-сертифіката з приватним ключем **поза БД та її резервними копіями**. Підготуйте приватний каталог:
 
 ```sh
 sh deploy/create-key-certificate.sh /private/path/to/data-protection
 ```
 
-Для Docker задайте `DATA_PROTECTION_CERTIFICATE_DIR` абсолютним шляхом. Каталог монтується лише API, read-only; його `current.crt` і `current.key` повинні читатися UID 1654 контейнера. На Linux налаштуйте власника/ACL під цей UID, не відкривайте приватний ключ усім користувачам. Скрипт створює файли з правами 600 і не перезаписує наявні. Для локального `dotnet run` у Development типовий каталог — `~/.local/share/polivalko/data-protection`; інший шлях задається `DataProtection__CertificateDirectory`. Worker не використовує key ring і не отримує сертифікат.
+Для Docker задайте `DATA_PROTECTION_CERTIFICATE_DIR` абсолютним шляхом. Каталог монтується в контейнери API й Worker, read-only; його `current.crt` і `current.key` повинні читатися UID 1654 контейнера. На Linux налаштуйте власника/ACL під цей UID, не відкривайте приватний ключ усім користувачам. Скрипт створює файли з правами 600 і не перезаписує наявні. Для локального `dotnet run` у Development типовий каталог — `~/.local/share/polivalko/data-protection`; інший шлях задається `DataProtection__CertificateDirectory`. Worker підключає той самий key ring: ним він розшифровує ключ API Navkolo, збережений у консолі, тож без сертифіката теж не стартує.
 
 Перед оновленням зупиніть старі API-репліки: вони не налаштовані читати зашифровані ключі. Застосуйте міграції, потім запустіть нові API. На старті перевіряється розшифрування всіх збережених ключів, а незашифровані записи перетворюються в транзакції зі збереженням key ID, дат і матеріалу ключів. Перепакування key ring зберігає захищені дані, але перехід 2026-11-08 окремо змінює криптографічну версію всіх сесійних cookie: покупці та працівники повинні ввійти повторно. Старі сесії відхиляються одразу, без автоматичного перенесення; нові сесії зберігаються після звичайних перезапусків. Версія сесій фіксована в SessionCookieProtection і має залишатися однаковою на всіх репліках, зокрема при відкаті. Перед переходом зупиніть усі старі API-репліки: старий код ще приймає старі cookie. CSRF не є сесією входу; після повторного входу клієнт отримує свіжий request token. Відсутній або неправильний сертифікат блокує запуск; генерація OpenAPI та EF design-time не запускають цей процес. Повернення до старого коду без налаштування certificate decryption не підтримується.
 

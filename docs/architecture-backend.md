@@ -137,7 +137,7 @@ tests/                               теки дзеркальні до моду
 | Delivery | `IDeliveryDirectory` (населені пункти й відділення), `Settlement`, `Warehouse`, `WarehouseType`, `PickupPoint`; `IDeliveryAvailability` + `DeliveryAvailability` (які способи доставки й чи є післяплата зараз увімкнені, точка самовивозу — лише коли самовивіз увімкнений і є активна точка); `DeliveryJobs.NovaPoshtaDirectory` |
 | Navkolo | `NavkoloJobs`; `ImportRunDto` (+ `ImportRunDto.From(SyncRun)`); `INavkoloSettings` (режим інтеграції) |
 | Customers | `CustomerClaims` (тип claim, `CustomerId(ClaimsPrincipal)` → `Guid?`), `CustomerPolicies.Customer`, `CustomerEndpointExtensions.RequireCustomer()` (політика + CSRF + 401 у документі); порт `ICustomerDirectory` (Ordering: id покупця з підтвердженим email); гачки `ICustomerEmailConfirmedHandler` (реалізує Ordering), `ICustomerOrderHistory` + `CustomerOrderRecord` (Ordering: кількість і останні замовлення покупця для консолі, статус — рядок у camelCase, як у JSON) і `ICustomerFavoritesCounter` (Catalog: кількість обраного) |
-| Notifications | `IManagerNotifier`, `ManagerNotification` (+ `ManagerEvent` — подія, за якою працює перемикач у налаштуваннях сповіщень); `ICustomerMailer` (листи покупцю: підтвердження email, відновлення пароля) |
+| Notifications | `IManagerNotifier`, `ManagerNotification` (+ `ManagerEvent` — подія, за якою працює перемикач у налаштуваннях сповіщень); `ICustomerMailer` (листи покупцю: підтвердження email, відновлення пароля, посилання на замовлення) |
 | Ordering | повідомлення `OrderPlaced`, `PaymentSucceeded`, `OrderPaidAfterCancel`, `OrderExportRequested`, `OrderCancellationRequested`, `PaymentCancellationRequested` + `PaymentCancellationReason`, `FiscalReceiptRequested` + `FiscalTrigger`, `RefundRequested`; перелічення `OrderStatus`, `PaymentStatus`, `PaymentMethod`, `DeliveryMethod`, `RefundMethod`, `RefundStatus`; `DeliveryCodes`, `PaymentCodes`, `OrderProblems`; `OrderStatusCountDto` + `OrderStatusCounts`; порти `IOrderPayments` (Payments; `FindPayableForCustomerAsync` — для оплати з кабінету; `LockPayableAsync` — блокування рядка замовлення на час відкриття рахунку; `RecordOutsideRefundAsync` — повернення, зроблене провайдером поза сайтом), `IOrderReceiptSource` (Fiscal; `BelongsToCustomerAsync` — чеки в кабінеті), `IOrderExportSource` (Navkolo), `IOrderReporting` (Console), гачок `IRefundReceiptStatuses` (реалізує Fiscal: стан останнього чека повернення за id повернення) і їхні записи-знімки (`PayableOrder`, `OrderPaymentTarget`, `PaidOrderResult`, `RefundToProcess`, `SubmittedRefund`, `OrderForReceipt`, `OrderForExport`, `OrderPeriodRow`, `ProductSalesRow`, `OrderedProductSnapshot`, `OrderSearchHit`, `CustomerSearchHit`); `SellerOptions` — у `Configuration` |
 | Payments | `PaymentJobs.Reconcile`; `IPaymentSettings` (провайдер і режим для консолі) |
 | Fiscal | `IFiscalSettings` (провайдер ПРРО, режим і коли видається чек для кожного способу оплати) |
@@ -1118,3 +1118,85 @@ DNTrade не надає версії статусу в документі; фа�
 має пріоритет для складського обліку. Конфлікт скасування/відвантаження видно в історії та картці; фінансові
 статуси не змінюються й повернення коштів автоматично не виконується. API не гарантує атомарного знімка
 між сторінками замовлень і товарів; дубльовані UUID відхиляються, подальші зміни ERP підхоплює наступний цикл.
+
+## Обов'язковий email і лист із посиланням на замовлення (12.11.2026)
+
+- **Валідація.** `OrderValidator` вимагає `customer.email`: порожнє поле дає «Вкажіть email.», неправильне — «Перевірте
+  email, наприклад name@example.com.» (правило `EmailAddress.IsValid`, див. розділ про виправлення 18.11). `ValidatedOrder.Email` тепер не
+  `null`, тож прив'язка до кабінету за підтвердженим email (`FindConfirmedIdByEmailAsync`) виконується завжди.
+- **Лист.** У замовленні лежить лише хеш токена посилання (`AccessTokenHash`); відкритий токен є в `OrderWriter` і ще
+  72 години у відповіді ідемпотентності (`integration.idempotency_keys.response_body`), щоб повтор запиту повернув той
+  самий результат. Тому лист формується під час створення: `OrderWriter` кладе його в чергу
+  `Features/Notifications/OrderMail.Queue`, а ендпоінт надсилає (`SendQueuedAsync`) уже після `CommitAsync`. Так лист не
+  піде про замовлення, яке відкотилося, і SMTP не тримає транзакцію з блокуванням залишків. Обидва шляхи створення
+  (`CreateOrder` і оформлення із серверного кошика в `CartEndpoints`) роблять це однаково; повтор запиту лист не
+  дублює. Помилка листа лише пишеться в журнал.
+- **Доставка.** Зараз є лише `Email:Mode=Log` (`LogCustomerMailer`): у розробці посилання видно в журналі, в інших
+  середовищах лист не доставляється й посилання приховане, як і для підтвердження email та скидання пароля. Щоб листи
+  доходили, потрібна справжня реалізація `ICustomerMailer` (SMTP чи поштовий сервіс) і її режим у `NotificationsModule`.
+- **DTO.** `OrderCustomerDto` має `Email` у вигляді `t***@domain` (`OrderMapping.MaskEmail`) або `null` для старих
+  замовлень без email.
+- **Тести.** `CheckoutApiTests.Order_requires_email_and_mails_the_order_link`: без email 400 з `customer.email`, з email —
+  один лист `MailKind.OrderPlaced` з тим самим токеном, що повернуло API, і маскований email у DTO. Допоміжні замовлення в
+  тестах тепер мають унікальний email (`Accounts.UniqueEmail("guest")`).
+- **Сідер банерів.** Дати сезонного банера «Новий рік» переводяться в UTC (`ToUniversalTime()`): Npgsql пише в
+  `timestamptz` лише зсув 0, і на порожній базі сідер падав. `SiteHomeApiTests` очікує нові назви банерів.
+
+## Виправлення за аудитом 18.11.2026
+
+Повний перелік знахідок і статусів: звіт аудиту 18.11 (локально в `.local/audit-2026-11-18/`, у репозиторій не входить). Тут лише те, що змінило устрій бекенду.
+
+- **Email.** Одне правило для всіх місць: `SharedKernel/EmailAddress.IsValid` (рядок має дорівнювати розібраній адресі,
+  домен містить крапку, до 200 символів). Ним користуються оформлення замовлення, реєстрація, сповіщення й реквізити
+  магазину. Раніше оформлення приймало «Ім'я <адреса>», адресу з пробілом і дві адреси через кому. Тести:
+  `EmailAddressTests`, `CheckoutApiTests.Order_requires_email_and_mails_the_order_link`.
+- **Чи доставляється пошта.** `ICustomerMailer.Delivers` (`LogCustomerMailer` повертає `false`) і публічний
+  `GET /api/v1/customer-mail` → `{ delivers }` (`Notifications/Features/Mail`). Вітрина за цим прапорцем вирішує, чи писати
+  «ми надіслали лист». Справжній мейлер має повертати `true`.
+- **Картка лише з платіжним провайдером.** Контракт `Ordering.Contracts.ICardPayments` реалізує модуль платежів
+  (`Payments/Features/Settings/CardPayments`: доступно, коли режим не `Disabled`). `CheckoutCalculator.DeliveryOptions`,
+  `IsOffered`, `IsAllowed` приймають прапорець `card`: без провайдера «Онлайн карткою» немає ні в списку способів, ні у
+  валідації замовлення; спосіб отримання без жодної оплати не показується.
+- **Автоскасування неоплачених карткових замовлень.** `Ordering/Jobs/UnpaidOrderExpiryJob` (Worker, кожні 15 хв, ім'я
+  завдання `ordering.expire-unpaid`, у консолі «Скасування неоплачених замовлень») скасовує замовлення, які стоять у
+  «Чекає оплати» довше за `Ordering:UnpaidCardOrderHours` (типово 24; `0` вимикає). Скасування йде тим самим шляхом, що й
+  у консолі: `Features/Cancellation/OrderCancellationEffects` ставить у чергу скасування в Навколо й відкритих рахунків
+  і звільняє резерв, якщо замовлення ще не вивантажене. Автор у історії — «Автоматично». Замовлення з післяплатою
+  автоматично не скасовуються: це рішення менеджера.
+- **Межі публічного пошуку товарів.** `SearchProducts`: до 20 характеристик у фільтрі, до 50 значень на характеристику,
+  до 50 брендів, інакше 400. `PageRequest.MaxPage = 100 000`, щоб `OFFSET` не переповнювався. Проміжний обробник у
+  `ApiPipeline` відповідає 400 `http.bad_query` на `%00` у рядку запиту (PostgreSQL такого не приймає). Тест:
+  `CatalogApiTests.Filter_count_is_capped_and_odd_paging_or_bytes_do_not_fail`.
+- **Пошук за назвою з консолі.** `ProductSearchText.Matching` шукає ще й у `DisplayName`; під це доданий триграмний індекс
+  `ix_products_display_name_trgm` (міграція `ProductDisplayNameSearch`, лише створення індексу).
+- **Платежі.** `PaymentProcessor.ApplyAsync` бере рядок платежу з `FOR UPDATE`: одночасні вебхуки однієї спроби
+  обробляються по черзі, запізнілий `processing` не перезапише `succeeded`. `ReceiveWebhook` читає не більше 256 КБ
+  (інакше 413). `MonoPaymentProvider` після хибного підпису перечитує відкритий ключ не частіше ніж раз на 5 хв.
+  `POST /orders/{number}/payments` і `POST /checkout/quote` отримали ліміт «cart».
+- **«Хіт продажів»** рахує лише замовлення в статусах «Підтверджене», «Оплачене», «Відправлене», «Готове до видачі»,
+  «Виконане» (`ProductSalesSource`), тож нові непідтверджені замовлення рейтинг не накручують.
+- **Навколо.** Порожній каталог від DNTrade зупиняє синхронізацію до кроку приховування товарів
+  (`NavkoloInventorySync`). Помилка синхронізації тепер містить перші п'ять проблемних записів, а не лише їх кількість.
+  Час замовлення для ERP рахується через `KyivTime` (працює й на Windows).
+- **Персонал.** Тимчасове блокування після п'яти невдалих входів більше не забирає права в уже відкритої сесії:
+  `StaffAccessResolver` відмовляє лише вимкненим обліковим записам (`LockoutEnd` далеко в майбутньому). Імена
+  працівників унікальні без урахування регістру (`StaffValidation.ValidateNameIsFreeAsync`), бо журнал дій зберігає
+  саме ім'я.
+- **Вхід покупця.** Рядок покупця береться з `FOR UPDATE` у транзакції, тому пачка одночасних спроб рахується
+  по одній і не обходить блокування після п'яти помилок.
+- **Дрібниці.** Назва відділення обрізається до 300 символів колонки; товар із ціною 0 не можна замовити; ім'я покупця
+  з керівними символами не приймається; CSV не в UTF-8 відхиляється з поясненням, а не псує назви; період банера
+  зберігається в UTC; кеш вітрини після імпорту скидається після фіксації транзакції, коли транзакція належить імпорту.
+- **Свідомо не змінено.** Резерв відправленого замовлення не повертається в продаж зміною статусу: це навмисна
+  поведінка (`NavkoloCancellationTests.Shipped_reservation_is_not_returned_to_sale_by_status_cancellation`), резерв знімає
+  підтвердження з Навколо.
+
+
+**Доповнення після повторної перевірки 18.11.** Автоскасування неоплачених карткових замовлень пропускає замовлення, у
+яких є активна чи успішна спроба оплати або спроба, що оновлювалась за останні `Ordering:UnpaidCardOrderHours` годин:
+це дає контракт `Ordering.Contracts.IPaymentActivity`, реалізований у `Payments/Features/Processing/PaymentActivity`.
+Відлік ведеться від переходу в «Чекає оплати» (`From != AwaitingPayment`), тож нотатки менеджера його не зсувають.
+Ключ monobank перечитується не частіше ніж раз на 5 хв навіть при збоях monobank (мітка ставиться атомарно до запиту),
+а збій отримання ключа дає відмову вебхука, не 500. Адреса доставки не приймає керівні символи, коментар — лише
+перенос рядка й табуляцію. Імена працівників не можуть збігатися з системними («Автоматично», «Покупець», «Навколо»,
+«Платіжна система», «Розклад», «Запит з консолі», «Система»).
