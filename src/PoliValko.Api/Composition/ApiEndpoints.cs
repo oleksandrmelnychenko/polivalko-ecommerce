@@ -33,6 +33,7 @@ public static class ApiEndpoints
         api.MapPaymentEndpoints();
         api.MapReceiptEndpoints();
         api.MapSiteEndpoints();
+        api.MapCustomerMailEndpoints();
 
         var console = api.MapGroup("/console");
         console.MapConsoleAuthEndpoints();

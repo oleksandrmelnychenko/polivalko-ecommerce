@@ -29,9 +29,14 @@ internal sealed class NavkoloInventorySync(PoliValkoDbContext db, INavkoloSettin
         var states = ids.Count == 0 ? [] : (await client.GetOrderStatesAsync(ct)).Where(s => ids.Contains(s.OrderId)).ToArray();
         // Observe shipment BEFORE fetching balances: never release its reserve against an older balance.
         var catalog = mode == NavkoloModes.DnTrade ? await client.GetCatalogAsync(ct) : null;
+        if (catalog is { Count: 0 })
+        {
+            throw new NavkoloUnavailableException("DNTrade повернув порожній каталог. Синхронізацію зупинено, товари не приховано.");
+        }
+
         var records = catalog is null ? await client.GetPriceStockAsync(ct) : [];
         var result = catalog is not null ? await importer.ImportProductsAsync(catalog, ct) : await importer.ApplyPriceStockAsync(records, ct);
-        if (result.Errors.Count > 0) throw new NavkoloUnavailableException($"Синхронізацію не застосовано: {result.Errors.Count} помилок даних каталогу.");
+        if (result.Errors.Count > 0) throw new NavkoloUnavailableException($"Синхронізацію не застосовано, помилок даних каталогу: {result.Errors.Count}. {string.Join("; ", result.Errors.Take(5).Select(e => $"{e.Item}: {e.Message}"))}");
         if (catalog is not null) await importer.DisableMissingAsync(catalog.Select(p => p.NavkoloId!).ToArray(), ct);
         var stockIds = catalog is not null ? catalog.Select(p => p.NavkoloId!).ToHashSet(StringComparer.OrdinalIgnoreCase)
             : records.Select(p => p.NavkoloId).ToHashSet(StringComparer.OrdinalIgnoreCase);

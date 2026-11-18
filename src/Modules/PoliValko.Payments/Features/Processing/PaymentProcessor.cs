@@ -23,7 +23,9 @@ internal sealed class PaymentProcessor(PoliValkoDbContext db, IOrderPayments ord
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
         var now = time.GetUtcNow();
 
-        var payment = await db.Set<Payment>().FirstOrDefaultAsync(p => p.Provider == provider && p.ProviderPaymentId == status.ProviderPaymentId, ct);
+        var payment = await db.Set<Payment>()
+            .FromSql($"SELECT * FROM payments.payments WHERE provider = {provider} AND provider_payment_id = {status.ProviderPaymentId} FOR UPDATE")
+            .FirstOrDefaultAsync(ct);
         var inserted = await db.Database.ExecuteSqlAsync(
             $"""
             INSERT INTO payments.payment_events (id, provider, event_key, payment_id, source, state, received_at, payload)

@@ -494,6 +494,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/customer-mail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Чи доставляються листи покупцям: від цього залежать тексти про лист із посиланням, підтвердження email і відновлення пароля */
+        get: operations["GetCustomerMailStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/site/home": {
         parameters: {
             query?: never;
@@ -3042,6 +3059,9 @@ export interface components {
             email: null | string;
             password: null | string;
         };
+        CustomerMailStatusDto: {
+            delivers: boolean;
+        };
         CustomerMeDto: {
             /** Format: uuid */
             id: string;
@@ -3330,6 +3350,7 @@ export interface components {
         OrderCustomerDto: {
             name: string;
             phone: string;
+            email: null | string;
         };
         OrderDeliveryDto: {
             settlementName: null | string;
@@ -5059,6 +5080,26 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetCustomerMailStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerMailStatusDto"];
                 };
             };
         };

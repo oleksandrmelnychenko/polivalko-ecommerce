@@ -74,6 +74,39 @@ public sealed class CheckoutApiTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Order_requires_email_and_mails_the_order_link()
+    {
+        var product = await api.AddProductAsync("ruchnyi-instrument", "Рукавиці для листа", 150m, stock: 5);
+        var phone = UniquePhone();
+
+        var withoutEmail = Order(product.Id, 1, "150.00", phone) with { Customer = new CustomerRequest("Олена Тестова", phone, " ") };
+        var rejected = await PostOrderAsync(withoutEmail, Guid.NewGuid().ToString());
+        rejected.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await rejected.Content.ReadAsStringAsync(Ct)).ShouldContain("customer.email");
+
+        foreach (var notAnAddress in new[] { "Олена <olena@example.com>", "olena tester@example.com", "a@example.com, b@example.com", "olena@localhost" })
+        {
+            var odd = Order(product.Id, 1, "150.00", phone) with { Customer = new CustomerRequest("Олена Тестова", phone, notAnAddress) };
+            var refused = await PostOrderAsync(odd, Guid.NewGuid().ToString());
+            refused.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+            (await refused.Content.ReadAsStringAsync(Ct)).ShouldContain("customer.email");
+        }
+
+        var email = Accounts.UniqueEmail("guest");
+        var body = Order(product.Id, 1, "150.00", phone) with { Customer = new CustomerRequest("Олена Тестова", phone, email) };
+        var created = await (await PostOrderAsync(body, Guid.NewGuid().ToString())).ReadAsync<OrderCreatedDto>(HttpStatusCode.Created);
+
+        api.Mailer.To(email, MailKind.OrderPlaced).ShouldHaveSingleItem().Link.ShouldContain($"/order/{created.Number}?token=");
+        api.Mailer.LastToken(email, MailKind.OrderPlaced).ShouldBe(created.AccessToken);
+
+        var view = await _client.GetFromJsonAsync<OrderDto>(
+            $"/api/v1/orders/{created.Number}?token={Uri.EscapeDataString(created.AccessToken)}",
+            TestJson.Options,
+            Ct);
+        view!.Customer.Email.ShouldBe($"g***{email[email.IndexOf('@')..]}");
+    }
+
+    [Fact]
     public async Task Changed_total_is_reported_before_the_order_is_created()
     {
         var product = await api.AddProductAsync("vse-dlia-roslyn", "Ґрунт зі зміненою ціною", 189m, stock: 20);
@@ -254,7 +287,7 @@ public sealed class CheckoutApiTests(ApiFactory api)
     internal static CreateOrderRequest Order(Guid productId, int quantity, string expectedTotal, string phone) => new(
         [new CartLineRequest(productId, quantity)],
         expectedTotal,
-        new CustomerRequest("Олена Тестова", phone, null),
+        new CustomerRequest("Олена Тестова", phone, Accounts.UniqueEmail("guest")),
         new DeliveryRequest(DeliveryCodes.NovaPoshta, "demo-bucha", "demo-bucha-b1"),
         new PaymentRequest(PaymentCodes.CashOnDelivery),
         null,

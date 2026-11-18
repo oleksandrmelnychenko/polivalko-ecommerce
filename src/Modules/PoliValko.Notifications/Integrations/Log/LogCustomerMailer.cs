@@ -6,6 +6,8 @@ namespace PoliValko.Notifications.Integrations.Log;
 
 internal sealed class LogCustomerMailer(ILogger<LogCustomerMailer> logger, IHostEnvironment environment) : ICustomerMailer
 {
+    public bool Delivers => false;
+
     public Task SendEmailConfirmationAsync(string to, string name, string link, CancellationToken cancellationToken)
     {
         Log(to, link, "підтвердження email");
@@ -15,6 +17,12 @@ internal sealed class LogCustomerMailer(ILogger<LogCustomerMailer> logger, IHost
     public Task SendPasswordResetAsync(string to, string name, string link, CancellationToken cancellationToken)
     {
         Log(to, link, "відновлення пароля");
+        return Task.CompletedTask;
+    }
+
+    public Task SendOrderPlacedAsync(string to, string name, string orderNumber, string link, CancellationToken cancellationToken)
+    {
+        Log(to, link, $"замовлення {orderNumber}");
         return Task.CompletedTask;
     }
 

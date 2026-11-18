@@ -14,6 +14,7 @@ internal static class CheckoutEndpoints
         var group = api.MapGroup(string.Empty).WithTags("Checkout");
 
         group.MapPost("/checkout/quote", QuoteCheckout.HandleAsync)
+            .RequireRateLimiting(RateLimitPolicies.Cart)
             .WithName("QuoteCheckout")
             .WithSummary("Перерахунок кошика на сервері: ціни, наявність, способи отримання й оплати");
 

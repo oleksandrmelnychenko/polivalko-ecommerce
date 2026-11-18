@@ -10,6 +10,10 @@ namespace PoliValko.Catalog.Features.Storefront;
 
 internal static class SearchProducts
 {
+    private const int MaxAttributeFilters = 20;
+    private const int MaxFilterValues = 50;
+    private const int MaxBrands = 50;
+
     public static async Task<Results<Ok<ProductSearchResponse>, ValidationProblem, ProblemHttpResult>> HandleAsync(
         [AsParameters] ProductSearchQuery query,
         PoliValkoDbContext db,
@@ -32,6 +36,25 @@ internal static class SearchProducts
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
                 ["f"] = ["Фільтр характеристики має формат Назва:Значення."],
+            });
+        }
+
+        if (attributeFilters.Count > MaxAttributeFilters || attributeFilters.Values.Any(values => values.Count > MaxFilterValues))
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["f"] = [$"Не більше {MaxAttributeFilters} характеристик і {MaxFilterValues} значень для кожної."],
+            });
+        }
+
+        var brands = (query.Brand ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+        if (brands.Count > MaxBrands)
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["brand"] = [$"Не більше {MaxBrands} брендів у фільтрі."],
             });
         }
 
@@ -71,9 +94,6 @@ internal static class SearchProducts
         var facets = await ProductFacetBuilder.BuildFacetsAsync(scope, filterNames, ct);
 
         var products = scope;
-        var brands = (query.Brand ?? string.Empty)
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .ToList();
         if (brands.Count > 0)
         {
             products = products.Where(p => p.Brand != null && brands.Contains(p.Brand));

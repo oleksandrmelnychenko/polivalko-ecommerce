@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using PoliValko.Customers.Contracts;
 using PoliValko.Infrastructure.Idempotency;
+using PoliValko.Infrastructure.Web;
 
 namespace PoliValko.Payments.Features.Checkout;
 
@@ -14,6 +15,7 @@ internal static class PaymentEndpoints
 
         group.MapPost("/orders/{number}/payments", StartPayment.HandleAsync)
             .RequireIdempotency<StartPaymentRequest>()
+            .RequireRateLimiting(RateLimitPolicies.Cart)
             .WithName("StartPayment")
             .WithSummary("Відкрити оплату карткою: посилання на сторінку провайдера. Повторно — та сама активна спроба або нова після відмови.")
             .ProducesProblem(StatusCodes.Status404NotFound)

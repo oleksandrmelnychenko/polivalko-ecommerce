@@ -1,4 +1,3 @@
-using System.Net.Mail;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -8,6 +7,7 @@ using PoliValko.Infrastructure.Security;
 using PoliValko.Infrastructure.Settings;
 using PoliValko.Infrastructure.Storefront;
 using PoliValko.Ordering.Configuration;
+using PoliValko.SharedKernel;
 
 namespace PoliValko.Ordering.Features.Shop;
 
@@ -73,7 +73,7 @@ internal static partial class SaveShopSettings
         }
 
         var email = Clean(request?.Email);
-        if (email is not null && (email.Length > EmailLength || !MailAddress.TryCreate(email, out _)))
+        if (email is not null && (email.Length > EmailLength || !EmailAddress.IsValid(email)))
         {
             errors["seller.email"] = ["Перевірте email."];
         }

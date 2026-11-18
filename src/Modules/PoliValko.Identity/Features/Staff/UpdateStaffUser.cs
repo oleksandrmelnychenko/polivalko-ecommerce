@@ -34,6 +34,10 @@ internal static class UpdateStaffUser
 
         var errors = new Dictionary<string, string[]>();
         var name = StaffValidation.ValidateName(request.DisplayName, errors);
+        if (!string.Equals(name, user.DisplayName, StringComparison.Ordinal))
+        {
+            await StaffValidation.ValidateNameIsFreeAsync(name, user.Id, db, errors, ct);
+        }
         var role = await StaffValidation.ValidateRoleAsync(request.RoleId, db, errors, ct);
         if (errors.Count > 0)
         {

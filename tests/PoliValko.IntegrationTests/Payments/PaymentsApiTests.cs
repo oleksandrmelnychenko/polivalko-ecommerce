@@ -114,7 +114,7 @@ public sealed class PaymentsApiTests(ApiFactory api)
         var body = new CreateOrderRequest(
             [new CartLineRequest(first.Id, 2), new CartLineRequest(second.Id, 1)],
             "1150.00",
-            new CustomerRequest("Повернення Тестове", CheckoutApiTests.UniquePhone(), null),
+            new CustomerRequest("Повернення Тестове", CheckoutApiTests.UniquePhone(), Accounts.UniqueEmail("guest")),
             new DeliveryRequest(DeliveryCodes.Pickup, null, null),
             new PaymentRequest(PaymentCodes.Card),
             null,

@@ -60,10 +60,12 @@ internal static class ProductSearchText
             products = IsLatin(word)
                 ? products.Where(p => p.Sku == term
                     || EF.Functions.ILike(p.Name, pattern, Escape)
+                    || (p.DisplayName != null && EF.Functions.ILike(p.DisplayName, pattern, Escape))
                     || (p.Brand != null && EF.Functions.ILike(p.Brand, pattern, Escape))
                     || EF.Functions.ILike(p.Slug, pattern, Escape))
                 : products.Where(p => p.Sku == term
                     || EF.Functions.ILike(p.Name, pattern, Escape)
+                    || (p.DisplayName != null && EF.Functions.ILike(p.DisplayName, pattern, Escape))
                     || (p.Brand != null && EF.Functions.ILike(p.Brand, pattern, Escape)));
         }
 

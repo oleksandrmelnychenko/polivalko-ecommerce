@@ -49,6 +49,8 @@ public static class PaymentsModule
             .AddModelConfigurator<PaymentsModelConfigurator>()
             .AddScoped<IPaymentProviders, PaymentProviders>()
             .AddSingleton<IPaymentSettings, PaymentSettings>()
+            .AddSingleton<ICardPayments, CardPayments>()
+            .AddScoped<IPaymentActivity, PaymentActivity>()
             .AddScoped<PaymentProcessor>()
             .AddScoped<RefundSettlement>()
             .AddOutboxHandler<RefundRequested, ProcessRefundRequested>()

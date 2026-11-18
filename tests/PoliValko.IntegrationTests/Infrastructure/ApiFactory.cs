@@ -52,6 +52,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             _postgres = new PostgreSqlBuilder("postgres:18").Build();
             await _postgres.StartAsync();
         }
+        else if (new Npgsql.NpgsqlConnectionStringBuilder(_testConnection).Database?.Contains("test", StringComparison.OrdinalIgnoreCase) != true)
+        {
+            throw new InvalidOperationException("POLIVALKO_TEST_DATABASE має вказувати на базу з «test» у назві: тести мігрують її та створюють користувачів із відомим паролем.");
+        }
         await using var scope = Services.CreateAsyncScope();
         await scope.ServiceProvider.GetRequiredService<PoliValkoDbContext>().Database.MigrateAsync();
         await CatalogModule.SyncDictionariesAsync(scope.ServiceProvider);

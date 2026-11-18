@@ -7,6 +7,7 @@ public enum MailKind
 {
     EmailConfirmation,
     PasswordReset,
+    OrderPlaced,
 }
 
 public sealed record SentMail(MailKind Kind, string To, string Name, string Link);
@@ -14,6 +15,8 @@ public sealed record SentMail(MailKind Kind, string To, string Name, string Link
 public sealed class RecordingMailer : ICustomerMailer
 {
     public ConcurrentQueue<SentMail> Sent { get; } = new();
+
+    public bool Delivers => true;
 
     public Task SendEmailConfirmationAsync(string to, string name, string link, CancellationToken cancellationToken)
     {
@@ -24,6 +27,12 @@ public sealed class RecordingMailer : ICustomerMailer
     public Task SendPasswordResetAsync(string to, string name, string link, CancellationToken cancellationToken)
     {
         Sent.Enqueue(new SentMail(MailKind.PasswordReset, to, name, link));
+        return Task.CompletedTask;
+    }
+
+    public Task SendOrderPlacedAsync(string to, string name, string orderNumber, string link, CancellationToken cancellationToken)
+    {
+        Sent.Enqueue(new SentMail(MailKind.OrderPlaced, to, name, link));
         return Task.CompletedTask;
     }
 

@@ -14,8 +14,16 @@ internal static class CatalogFileParser
 
     public static async Task<List<NavkoloProductRecord>> ParseCsvAsync(Stream stream, CancellationToken ct)
     {
-        using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
-        var text = await reader.ReadToEndAsync(ct);
+        using var reader = new StreamReader(stream, new UTF8Encoding(false, throwOnInvalidBytes: true), detectEncodingFromByteOrderMarks: true);
+        string text;
+        try
+        {
+            text = await reader.ReadToEndAsync(ct);
+        }
+        catch (DecoderFallbackException)
+        {
+            throw new FormatException("Файл CSV має бути в кодуванні UTF-8. Збережіть його як «CSV UTF-8» і завантажте знову.");
+        }
         var rows = ParseCsv(text);
         if (rows.Count == 0)
         {

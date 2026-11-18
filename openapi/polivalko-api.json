@@ -1286,6 +1286,27 @@
         }
       }
     },
+    "/api/v1/customer-mail": {
+      "get": {
+        "tags": [
+          "Site"
+        ],
+        "summary": "Чи доставляються листи покупцям: від цього залежать тексти про лист із посиланням, підтвердження email і відновлення пароля",
+        "operationId": "GetCustomerMailStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerMailStatusDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/site/home": {
       "get": {
         "tags": [
@@ -12326,6 +12347,17 @@
           }
         }
       },
+      "CustomerMailStatusDto": {
+        "required": [
+          "delivers"
+        ],
+        "type": "object",
+        "properties": {
+          "delivers": {
+            "type": "boolean"
+          }
+        }
+      },
       "CustomerMeDto": {
         "required": [
           "id",
@@ -13466,7 +13498,8 @@
       "OrderCustomerDto": {
         "required": [
           "name",
-          "phone"
+          "phone",
+          "email"
         ],
         "type": "object",
         "properties": {
@@ -13475,6 +13508,12 @@
           },
           "phone": {
             "type": "string"
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -16861,6 +16900,9 @@
     },
     {
       "name": "Payments"
+    },
+    {
+      "name": "Site"
     },
     {
       "name": "Console"

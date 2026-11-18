@@ -1,5 +1,6 @@
 using PoliValko.Delivery.Contracts;
 using PoliValko.Navkolo.Contracts;
+using PoliValko.Ordering.Contracts;
 using PoliValko.Payments.Contracts;
 
 namespace PoliValko.Console.Features.Integration;
@@ -13,5 +14,6 @@ internal static class SyncJobTitles
         [NavkoloJobs.Import] = "Імпорт каталогу з файлу",
         [DeliveryJobs.NovaPoshtaDirectory] = "Нова пошта: довідник",
         [PaymentJobs.Reconcile] = "Звірка оплат",
+        [OrderingJobs.ExpireUnpaid] = "Скасування неоплачених замовлень",
     };
 }

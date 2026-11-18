@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Net.Mail;
 using PoliValko.Delivery.Contracts;
 using PoliValko.Ordering.Contracts;
 using PoliValko.SharedKernel;
@@ -12,6 +11,7 @@ internal static class OrderValidator
         CreateOrderRequest request,
         IDeliveryDirectory directory,
         DeliveryAvailability availability,
+        bool card,
         CancellationToken ct)
     {
         var errors = new Dictionary<string, string[]>();
@@ -23,7 +23,7 @@ internal static class OrderValidator
         }
 
         var name = request.Customer?.Name?.Trim();
-        if (string.IsNullOrEmpty(name) || name.Length is < 2 or > 100)
+        if (string.IsNullOrEmpty(name) || name.Length is < 2 or > 100 || name.Any(char.IsControl))
         {
             errors["customer.name"] = ["Вкажіть ім'я та прізвище (від 2 до 100 символів)."];
         }
@@ -33,10 +33,14 @@ internal static class OrderValidator
             errors["customer.phone"] = ["Вкажіть український номер телефону, наприклад +380 67 123 45 67."];
         }
 
-        var email = string.IsNullOrWhiteSpace(request.Customer?.Email) ? null : request.Customer.Email.Trim();
-        if (email is not null && (email.Length > 200 || !MailAddress.TryCreate(email, out _)))
+        var email = request.Customer?.Email?.Trim() ?? string.Empty;
+        if (email.Length == 0)
         {
-            errors["customer.email"] = ["Перевірте email або залиште поле порожнім."];
+            errors["customer.email"] = ["Вкажіть email."];
+        }
+        else if (!EmailAddress.IsValid(email))
+        {
+            errors["customer.email"] = ["Перевірте email, наприклад name@example.com."];
         }
 
         var delivery = DeliveryCodes.Parse(request.Delivery?.Method);
@@ -47,7 +51,7 @@ internal static class OrderValidator
         {
             errors["delivery.method"] = ["Оберіть спосіб отримання."];
         }
-        else if (!CheckoutCalculator.IsOffered(availability, delivery.Value))
+        else if (!CheckoutCalculator.IsOffered(availability, card, delivery.Value))
         {
             errors["delivery.method"] = ["Цей спосіб отримання зараз недоступний. Оберіть інший."];
         }
@@ -81,7 +85,7 @@ internal static class OrderValidator
         {
             errors["payment.method"] = ["Оберіть спосіб оплати."];
         }
-        else if (delivery is { } d && CheckoutCalculator.IsOffered(availability, d) && !CheckoutCalculator.IsAllowed(availability, d, payment.Value))
+        else if (delivery is { } d && CheckoutCalculator.IsOffered(availability, card, d) && !CheckoutCalculator.IsAllowed(availability, card, d, payment.Value))
         {
             errors["payment.method"] = ["Цей спосіб оплати недоступний для обраного способу отримання."];
         }
@@ -90,6 +94,10 @@ internal static class OrderValidator
         if (comment is { Length: > 1000 })
         {
             errors["comment"] = ["Коментар має бути не довшим за 1000 символів."];
+        }
+        else if (HasControl(comment, multiline: true))
+        {
+            errors["comment"] = ["Коментар містить недопустимі символи."];
         }
 
         if (!request.AcceptOffer)
@@ -105,22 +113,25 @@ internal static class OrderValidator
         return (errors, new ValidatedOrder(name!, phone, email, delivery!.Value, settlement, warehouse, address, payment!.Value, decimal.Round(expectedTotal, 2), comment));
     }
 
+    private static bool HasControl(string? value, bool multiline = false) =>
+        value is not null && value.Any(c => char.IsControl(c) && !(multiline && c is '\n' or '\r' or '\t'));
+
     private static string? ValidateAddress(DeliveryAddressRequest? address, Dictionary<string, string[]> errors)
     {
         var street = address?.Street?.Trim();
         var house = address?.House?.Trim();
         var apartment = address?.Apartment?.Trim();
-        if (string.IsNullOrEmpty(street) || street.Length is < 2 or > 150)
+        if (string.IsNullOrEmpty(street) || street.Length is < 2 or > 150 || HasControl(street))
         {
             errors["delivery.address.street"] = ["Вкажіть вулицю."];
         }
 
-        if (string.IsNullOrEmpty(house) || house.Length > 20)
+        if (string.IsNullOrEmpty(house) || house.Length > 20 || HasControl(house))
         {
             errors["delivery.address.house"] = ["Вкажіть номер будинку."];
         }
 
-        if (apartment is { Length: > 20 })
+        if (apartment is { Length: > 20 } || HasControl(apartment))
         {
             errors["delivery.address.apartment"] = ["Номер квартири має бути не довшим за 20 символів."];
         }
@@ -136,7 +147,7 @@ internal static class OrderValidator
     internal sealed record ValidatedOrder(
         string Name,
         string Phone,
-        string? Email,
+        string Email,
         DeliveryMethod Delivery,
         Settlement? Settlement,
         Warehouse? Warehouse,

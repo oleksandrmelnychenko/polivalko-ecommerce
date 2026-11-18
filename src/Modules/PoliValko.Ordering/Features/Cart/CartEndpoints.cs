@@ -6,6 +6,7 @@ using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Security;
 using PoliValko.Infrastructure.Web;
 using PoliValko.Ordering.Features.Checkout;
+using PoliValko.Ordering.Features.Notifications;
 
 namespace PoliValko.Ordering.Features.Cart;
 
@@ -50,7 +51,7 @@ internal static class CartEndpoints
     }
 
     private static async Task<Results<Created<OrderCreatedDto>, ValidationProblem, ProblemHttpResult>> CheckoutAsync(
-        CartCheckoutRequest request, HttpContext http, PoliValkoDbContext db, ServerCartStore store, OrderWriter writer, CancellationToken ct)
+        CartCheckoutRequest request, HttpContext http, PoliValkoDbContext db, ServerCartStore store, OrderWriter writer, OrderMail mail, CancellationToken ct)
     {
         http.Response.Headers.CacheControl = "no-store";
         await using var tx = await db.Database.BeginTransactionAsync(ct);
@@ -72,6 +73,7 @@ internal static class CartEndpoints
             store.Complete(cart, created);
             await db.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
+            await mail.SendQueuedAsync();
         }
         return result;
     }

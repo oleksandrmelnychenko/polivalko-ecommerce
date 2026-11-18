@@ -10,20 +10,20 @@ internal sealed class CheckoutCalculator(ICatalogPricing pricing)
     public const int MaxLines = 50;
     public const int MaxQuantity = 999;
 
-    public static IReadOnlyList<DeliveryMethodOptionDto> DeliveryOptions(DeliveryAvailability availability)
+    public static IReadOnlyList<DeliveryMethodOptionDto> DeliveryOptions(DeliveryAvailability availability, bool card)
     {
         var options = new List<DeliveryMethodOptionDto>(3);
-        if (availability.NovaPoshta)
+        if (availability.NovaPoshta && Payments(availability, card, "Післяплата у відділенні") is { Count: > 0 } branch)
         {
-            options.Add(new(DeliveryCodes.NovaPoshta, "Нова пошта: відділення або поштомат", Payments(availability, "Післяплата у відділенні")));
+            options.Add(new(DeliveryCodes.NovaPoshta, "Нова пошта: відділення або поштомат", branch));
         }
 
-        if (availability.Courier)
+        if (availability.Courier && Payments(availability, card, "Післяплата кур'єру") is { Count: > 0 } courier)
         {
             options.Add(new(
                 DeliveryCodes.NovaPoshtaCourier,
                 "Кур'єр Нової пошти",
-                Payments(availability, "Післяплата кур'єру"),
+                courier,
                 availability.CourierArea,
                 availability.CourierPriceNote));
         }
@@ -33,10 +33,9 @@ internal sealed class CheckoutCalculator(ICatalogPricing pricing)
             options.Add(new(
                 DeliveryCodes.Pickup,
                 "Самовивіз",
-                [
-                    new(PaymentCodes.Card, "Онлайн карткою"),
-                    new(PaymentCodes.PayOnPickup, "Під час самовивозу"),
-                ]));
+                card
+                    ? [new(PaymentCodes.Card, "Онлайн карткою"), new(PaymentCodes.PayOnPickup, "Під час самовивозу")]
+                    : [new(PaymentCodes.PayOnPickup, "Під час самовивозу")]));
         }
 
         return options;
@@ -50,7 +49,7 @@ internal sealed class CheckoutCalculator(ICatalogPricing pricing)
         foreach (var item in items)
         {
             products.TryGetValue(item.ProductId, out var product);
-            var available = product is { IsVisible: true } ? (int)Math.Max(Math.Floor(product.Stock), 0) : 0;
+            var available = product is { IsVisible: true, Price: > 0 } ? (int)Math.Max(Math.Floor(product.Stock), 0) : 0;
             var issue = available <= 0
                 ? QuoteIssues.Unavailable
                 : available < item.Quantity ? QuoteIssues.InsufficientStock : null;
@@ -62,11 +61,11 @@ internal sealed class CheckoutCalculator(ICatalogPricing pricing)
         return (lines, lines.Sum(l => l.LineTotal));
     }
 
-    public static bool IsOffered(DeliveryAvailability availability, DeliveryMethod delivery) =>
-        DeliveryOptions(availability).Any(o => o.Code == DeliveryCodes.From(delivery));
+    public static bool IsOffered(DeliveryAvailability availability, bool card, DeliveryMethod delivery) =>
+        DeliveryOptions(availability, card).Any(o => o.Code == DeliveryCodes.From(delivery));
 
-    public static bool IsAllowed(DeliveryAvailability availability, DeliveryMethod delivery, PaymentMethod payment) =>
-        DeliveryOptions(availability)
+    public static bool IsAllowed(DeliveryAvailability availability, bool card, DeliveryMethod delivery, PaymentMethod payment) =>
+        DeliveryOptions(availability, card)
             .Where(o => o.Code == DeliveryCodes.From(delivery))
             .SelectMany(o => o.PaymentMethods)
             .Any(p => p.Code == PaymentCodes.From(payment));
@@ -103,10 +102,21 @@ internal sealed class CheckoutCalculator(ICatalogPricing pricing)
         MoneyDto.Hryvnia(line.LineTotal),
         line.Issue);
 
-    private static List<PaymentMethodOptionDto> Payments(DeliveryAvailability availability, string cashOnDelivery) =>
-        availability.CashOnDelivery
-            ? [new(PaymentCodes.Card, "Онлайн карткою"), new(PaymentCodes.CashOnDelivery, cashOnDelivery)]
-            : [new(PaymentCodes.Card, "Онлайн карткою")];
+    private static List<PaymentMethodOptionDto> Payments(DeliveryAvailability availability, bool card, string cashOnDelivery)
+    {
+        var methods = new List<PaymentMethodOptionDto>(2);
+        if (card)
+        {
+            methods.Add(new(PaymentCodes.Card, "Онлайн карткою"));
+        }
+
+        if (availability.CashOnDelivery)
+        {
+            methods.Add(new(PaymentCodes.CashOnDelivery, cashOnDelivery));
+        }
+
+        return methods;
+    }
 
     internal sealed record PricedLine(
         Guid ProductId,

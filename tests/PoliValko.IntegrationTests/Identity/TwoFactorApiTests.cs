@@ -111,7 +111,7 @@ public sealed class TwoFactorApiTests(ApiFactory api)
     }
 
     private static CreateStaffUserRequest NewUser(string roleId, string? code = null) =>
-        new($"staff-{Guid.NewGuid():N}@tests.polivalko.local", "Новий працівник", roleId, ApiFactory.TestPassword, code);
+        new($"staff-{Guid.NewGuid():N}@tests.polivalko.local", $"Новий працівник {Guid.NewGuid():N}", roleId, ApiFactory.TestPassword, code);
 
     private static async Task<string> EnableAsync(HttpClient client)
     {

@@ -35,6 +35,7 @@ internal static class CreateStaffUser
         }
 
         var name = StaffValidation.ValidateName(request.DisplayName, errors);
+        await StaffValidation.ValidateNameIsFreeAsync(name, null, db, errors, ct);
         var role = await StaffValidation.ValidateRoleAsync(request.RoleId, db, errors, ct);
         if (string.IsNullOrEmpty(request.Password))
         {

@@ -92,6 +92,26 @@ public sealed class CatalogApiTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Filter_count_is_capped_and_odd_paging_or_bytes_do_not_fail()
+    {
+        var names = string.Concat(Enumerable.Range(1, 21).Select(i => $"&f=N{i}:V"));
+        var tooMany = await _client.GetAsync($"/api/v1/products?pageSize=1{names}", Ct);
+        tooMany.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await tooMany.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Errors!.ShouldContainKey("f");
+
+        var brands = string.Join(",", Enumerable.Range(1, 51).Select(i => $"B{i}"));
+        var tooManyBrands = await _client.GetAsync($"/api/v1/products?brand={brands}", Ct);
+        tooManyBrands.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await tooManyBrands.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Errors!.ShouldContainKey("brand");
+
+        (await _client.GetAsync("/api/v1/products?page=21474838&pageSize=100", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var nul = await _client.GetAsync("/api/v1/products?q=%00abc", Ct);
+        nul.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await nul.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Code.ShouldBe("http.bad_query");
+    }
+
+    [Fact]
     public async Task Invalid_sort_returns_validation_problem()
     {
         var response = await _client.GetAsync("/api/v1/products?sort=random", Ct);

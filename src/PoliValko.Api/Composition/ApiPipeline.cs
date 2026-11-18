@@ -1,4 +1,5 @@
 using PoliValko.Infrastructure.Media;
+using PoliValko.Infrastructure.Web;
 
 namespace PoliValko.Api.Composition;
 
@@ -8,6 +9,17 @@ public static class ApiPipeline
     {
         app.UseExceptionHandler();
         app.UseStatusCodePages();
+        app.Use(async (context, next) =>
+        {
+            if (context.Request.QueryString.Value is { } query && query.Contains("%00", StringComparison.Ordinal))
+            {
+                await Problems.Create(StatusCodes.Status400BadRequest, "http.bad_query", "Некоректний запит", "Параметри містять недопустимий символ.")
+                    .ExecuteAsync(context);
+                return;
+            }
+
+            await next(context);
+        });
         app.UseCors();
         app.UseMediaFiles();
         app.UseAuthentication();

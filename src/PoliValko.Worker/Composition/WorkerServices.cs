@@ -25,6 +25,7 @@ public static class WorkerServices
             .AddNotificationsModule(configuration)
             .AddPlatformJobs()
             .AddDeliveryJobs()
+            .AddOrderingJobs()
             .AddPaymentsJobs()
             .AddNavkoloJobs();
 }

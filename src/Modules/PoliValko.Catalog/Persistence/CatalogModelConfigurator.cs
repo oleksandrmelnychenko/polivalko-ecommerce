@@ -169,6 +169,7 @@ internal sealed class CatalogModelConfigurator : IModelConfigurator
         builder.HasIndex(p => p.Brand);
 
         builder.HasIndex(p => p.Name).HasMethod("gin").HasOperators("gin_trgm_ops");
+        builder.HasIndex(p => p.DisplayName, "DisplayNameTrigrams").HasDatabaseName("ix_products_display_name_trgm").HasMethod("gin").HasOperators("gin_trgm_ops");
         builder.HasIndex(p => p.Slug, "SlugTrigrams").HasDatabaseName("ix_products_slug_trgm").HasMethod("gin").HasOperators("gin_trgm_ops");
         builder.HasIndex(p => p.Brand, "BrandTrigrams").HasDatabaseName("ix_products_brand_trgm").HasMethod("gin").HasOperators("gin_trgm_ops");
 

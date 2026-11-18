@@ -22,7 +22,7 @@ internal static class TestRoles
                 Ct))
             .ReadAsync<RolePermissionsDto>();
         var email = $"role-{Guid.NewGuid():N}@tests.polivalko.local";
-        await (await admin.PostAsJsonAsync("/api/v1/console/users", new CreateStaffUserRequest(email, "Працівник з роллю", role.Id, ApiFactory.TestPassword), Ct))
+        await (await admin.PostAsJsonAsync("/api/v1/console/users", new CreateStaffUserRequest(email, $"Працівник з роллю {Guid.NewGuid():N}", role.Id, ApiFactory.TestPassword), Ct))
             .ReadAsync<StaffUserDto>(HttpStatusCode.Created);
         return await Staff.LoginAsync(api, email);
     }

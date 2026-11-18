@@ -79,7 +79,7 @@ public sealed record OrderItemDto(
 
 public sealed record OrderDeliveryDto(string? SettlementName, string? WarehouseName, string? PickupAddress, string? Address);
 
-public sealed record OrderCustomerDto(string Name, string Phone);
+public sealed record OrderCustomerDto(string Name, string Phone, string? Email);
 
 public sealed record OrderHistoryEntryDto(OrderStatus Status, DateTimeOffset At);
 

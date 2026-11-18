@@ -12,6 +12,9 @@ namespace PoliValko.Identity.Features.Staff;
 
 internal static class StaffValidation
 {
+    private static readonly string[] SystemActors =
+        ["автоматично", "платіжна система", "покупець", "навколо", "розклад", "запит з консолі", "система"];
+
     public static string? ValidateName(string? value, Dictionary<string, string[]> errors)
     {
         var name = value?.Trim();
@@ -21,6 +24,27 @@ internal static class StaffValidation
         }
 
         return name;
+    }
+
+    public static async Task ValidateNameIsFreeAsync(
+        string? name, string? exceptUserId, PoliValkoDbContext db, Dictionary<string, string[]> errors, CancellationToken ct)
+    {
+        if (name is null || errors.ContainsKey("displayName"))
+        {
+            return;
+        }
+
+        var lowered = name.ToLower();
+        if (SystemActors.Contains(lowered))
+        {
+            errors["displayName"] = ["Це ім'я використовує система в історії замовлень. Оберіть інше."];
+            return;
+        }
+
+        if (await db.Users.AnyAsync(u => u.Id != exceptUserId && u.DisplayName.ToLower() == lowered, ct))
+        {
+            errors["displayName"] = ["Таке ім'я вже має інший працівник. У журналі дій їх не можна буде розрізнити."];
+        }
     }
 
     public static async Task<StaffRole?> ValidateRoleAsync(string? roleId, PoliValkoDbContext db, Dictionary<string, string[]> errors, CancellationToken ct)

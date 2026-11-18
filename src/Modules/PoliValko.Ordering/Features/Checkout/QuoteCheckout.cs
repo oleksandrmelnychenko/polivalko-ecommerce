@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using PoliValko.Catalog.Contracts;
 using PoliValko.Delivery.Contracts;
+using PoliValko.Ordering.Contracts;
 using PoliValko.SharedKernel;
 
 namespace PoliValko.Ordering.Features.Checkout;
@@ -13,6 +14,7 @@ internal static class QuoteCheckout
         CheckoutCalculator calculator,
         ICatalogFreshness freshness,
         IDeliveryAvailability delivery,
+        ICardPayments cards,
         CancellationToken ct)
     {
         var errors = new Dictionary<string, string[]>();
@@ -28,7 +30,7 @@ internal static class QuoteCheckout
             MoneyDto.Hryvnia(subtotal),
             MoneyDto.Hryvnia(subtotal),
             "Доставку оплачуєте за тарифами перевізника",
-            CheckoutCalculator.DeliveryOptions(await delivery.GetAsync(ct)),
+            CheckoutCalculator.DeliveryOptions(await delivery.GetAsync(ct), cards.Available),
             await freshness.IsFreshAsync(ct)));
     }
 }

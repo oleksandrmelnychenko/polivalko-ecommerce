@@ -16,6 +16,13 @@ public sealed class StaffApiTests(ApiFactory api)
         var email = $"new-{Guid.NewGuid():N}@tests.polivalko.local";
         var managerRole = await Staff.RoleIdAsync(admin, "Менеджер");
 
+        var taken = await admin.PostAsJsonAsync(
+            "/api/v1/console/users",
+            new CreateStaffUserRequest($"twin-{Guid.NewGuid():N}@tests.polivalko.local", "адмін тестовий", managerRole, ApiFactory.TestPassword),
+            Ct);
+        taken.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await taken.Content.ReadAsStringAsync(Ct)).ShouldContain("displayName");
+
         var weak = await admin.PostAsJsonAsync("/api/v1/console/users", new CreateStaffUserRequest(email, "Новий Менеджер", managerRole, "short"), Ct);
         weak.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 

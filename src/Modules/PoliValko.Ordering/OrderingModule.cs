@@ -26,6 +26,7 @@ public static class OrderingModule
     public static IServiceCollection AddOrderingModule(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<SellerOptions>(configuration.GetSection("Seller"));
+        services.Configure<OrderingOptions>(configuration.GetSection("Ordering"));
         return services
             .AddModelConfigurator<OrderingModelConfigurator>()
             .AddScoped<CheckoutCalculator>()
@@ -42,8 +43,12 @@ public static class OrderingModule
             .AddOutboxHandler<OrderPaidAfterCancel, NotifyManagerOnOrderPaidAfterCancel>();
     }
 
+    public static IServiceCollection AddOrderingJobs(this IServiceCollection services) =>
+        services.AddHostedService<Jobs.UnpaidOrderExpiryJob>();
+
     public static IServiceCollection AddOrderingHttp(this IServiceCollection services) => services
         .AddScoped<OrderWriter>()
+        .AddScoped<OrderMail>()
         .AddScoped<Features.Cart.ServerCartStore>();
 
     public static IEndpointRouteBuilder MapCheckoutEndpoints(this IEndpointRouteBuilder api) =>

@@ -20,7 +20,12 @@ internal static class Login
     {
         var now = time.GetUtcNow();
         var normalized = string.IsNullOrWhiteSpace(request.Email) ? null : CustomerEmail.Normalize(request.Email);
-        var customer = normalized is null ? null : await db.Set<Customer>().FirstOrDefaultAsync(c => c.NormalizedEmail == normalized, ct);
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        var customer = normalized is null
+            ? null
+            : await db.Set<Customer>()
+                .FromSql($"SELECT * FROM customers.customers WHERE normalized_email = {normalized} FOR UPDATE")
+                .FirstOrDefaultAsync(ct);
         if (customer is null
             || string.IsNullOrEmpty(request.Password)
             || request.Password.Length > CustomerValidation.MaxPasswordLength
@@ -35,6 +40,7 @@ internal static class Login
         {
             customer.RecordFailedLogin(now);
             await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
             return InvalidCredentials();
         }
 
@@ -54,6 +60,7 @@ internal static class Login
 
         customer.ClearLockout();
         await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         await CustomerSession.SignInAsync(http, customer);
         return TypedResults.Ok(CustomerMapping.ToMe(customer));
     }

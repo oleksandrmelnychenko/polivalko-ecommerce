@@ -34,10 +34,10 @@ internal sealed class StaffAccessResolver(
 
     private async Task<StaffAccess?> LoadAsync(string userId, CancellationToken ct)
     {
-        var now = time.GetUtcNow();
+        var disabledFrom = time.GetUtcNow().AddYears(50);
         var role = await (
                 from user in db.Users
-                where user.Id == userId && (user.LockoutEnd == null || user.LockoutEnd <= now)
+                where user.Id == userId && (user.LockoutEnd == null || user.LockoutEnd < disabledFrom)
                 join link in db.UserRoles on user.Id equals link.UserId
                 join r in db.Roles on link.RoleId equals r.Id
                 orderby r.IsSuperuser descending

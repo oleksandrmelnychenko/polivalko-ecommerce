@@ -48,6 +48,9 @@ public static class NotificationsModule
         return services;
     }
 
+    public static IEndpointRouteBuilder MapCustomerMailEndpoints(this IEndpointRouteBuilder api) =>
+        Features.Mail.CustomerMailEndpoints.Map(api);
+
     public static RouteGroupBuilder MapConsoleNotificationSettingsEndpoints(this RouteGroupBuilder console) =>
         NotificationSettingsEndpoints.Map(console);
 }

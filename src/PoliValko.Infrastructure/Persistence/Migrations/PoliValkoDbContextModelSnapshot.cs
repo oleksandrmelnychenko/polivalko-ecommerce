@@ -618,6 +618,12 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Brand" }, "BrandTrigrams"), "gin");
                     NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Brand" }, "BrandTrigrams"), new[] { "gin_trgm_ops" });
 
+                    b.HasIndex(new[] { "DisplayName" }, "DisplayNameTrigrams")
+                        .HasDatabaseName("ix_products_display_name_trgm");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "DisplayName" }, "DisplayNameTrigrams"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "DisplayName" }, "DisplayNameTrigrams"), new[] { "gin_trgm_ops" });
+
                     b.HasIndex(new[] { "Slug" }, "SlugTrigrams")
                         .HasDatabaseName("ix_products_slug_trgm");
 

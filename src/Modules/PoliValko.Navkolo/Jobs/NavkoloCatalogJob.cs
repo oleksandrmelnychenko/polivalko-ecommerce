@@ -30,7 +30,7 @@ internal sealed class NavkoloCatalogJob(IServiceScopeFactory scopes, TimeProvide
         if (!await IsEnabledAsync(services, ct)) return new SyncResult("Синхронізацію вимкнено.", []);
         var records = await services.GetRequiredService<INavkoloClient>().GetCatalogAsync(ct);
         var result = await services.GetRequiredService<ICatalogImporter>().ImportProductsAsync(records, ct);
-        if (result.Errors.Count > 0) throw new NavkoloUnavailableException($"Синхронізацію не застосовано: {result.Errors.Count} помилок даних каталогу.");
+        if (result.Errors.Count > 0) throw new NavkoloUnavailableException($"Синхронізацію не застосовано, помилок даних каталогу: {result.Errors.Count}. {string.Join("; ", result.Errors.Take(5).Select(e => $"{e.Item}: {e.Message}"))}");
         await tx.CommitAsync(ct);
         return new SyncResult(result.Summary, result.Errors);
     }

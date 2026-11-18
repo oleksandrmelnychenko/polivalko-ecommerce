@@ -10,6 +10,7 @@ using PoliValko.Infrastructure.Security;
 using PoliValko.Infrastructure.Web;
 using PoliValko.Ordering.Contracts;
 using PoliValko.Ordering.Domain;
+using PoliValko.Ordering.Features.Cancellation;
 using PoliValko.Ordering.Persistence;
 
 namespace PoliValko.Ordering.Features.Console.Orders;
@@ -64,11 +65,7 @@ internal static class ChangeOrderStatus
 
         if (target == OrderStatus.Cancelled)
         {
-            outbox.Enqueue(new OrderCancellationRequested(order.Id));
-            if (order.PaymentMethod == PaymentMethod.Card) outbox.Enqueue(new PaymentCancellationRequested(order.Id));
-            // An attempted export may have reached ERP even when its response was lost.
-            if (order.NavkoloExportAttemptedAt is null && order.NavkoloOrderRef is null)
-                await reservations.ReleaseAsync(order.Id, ct);
+            await OrderCancellationEffects.ApplyAsync(order, outbox, reservations, ct);
         }
         if (target is OrderStatus.Shipped or OrderStatus.Completed) await reservations.ConsumeAsync(order.Id, ct);
 

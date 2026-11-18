@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
@@ -20,7 +21,11 @@ internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOpti
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
+    private static readonly TimeSpan KeyRefreshInterval = TimeSpan.FromMinutes(5);
+
     private static string? cachedKey;
+
+    private static long keyFetchedAt;
 
     internal sealed record BasketItem(string Name, int Qty, long Sum, string Code, long Total);
 
@@ -89,9 +94,24 @@ internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOpti
             throw new PaymentWebhookRejectedException("Немає заголовка X-Sign.");
         }
 
-        if (!Verify(body, signature, cachedKey ??= await FetchKeyAsync(ct)))
+        if (cachedKey is null || !Verify(body, signature, cachedKey))
         {
-            cachedKey = await FetchKeyAsync(ct);
+            var last = Interlocked.Read(ref keyFetchedAt);
+            if ((last != 0 && Stopwatch.GetElapsedTime(last) < KeyRefreshInterval)
+                || Interlocked.CompareExchange(ref keyFetchedAt, Stopwatch.GetTimestamp(), last) != last)
+            {
+                throw new PaymentWebhookRejectedException("Підпис X-Sign не збігається.");
+            }
+
+            try
+            {
+                cachedKey = await FetchKeyAsync(ct);
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException && !ct.IsCancellationRequested)
+            {
+                throw new PaymentWebhookRejectedException($"Не вдалося отримати ключ monobank: {ex.Message}");
+            }
+
             if (!Verify(body, signature, cachedKey))
             {
                 throw new PaymentWebhookRejectedException("Підпис X-Sign не збігається.");

@@ -1,4 +1,3 @@
-using System.Net.Mail;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -7,6 +6,7 @@ using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Security;
 using PoliValko.Infrastructure.Settings;
 using PoliValko.Notifications.Integrations.Channels;
+using PoliValko.SharedKernel;
 
 namespace PoliValko.Notifications.Features.Settings;
 
@@ -35,7 +35,7 @@ internal static partial class SaveNotificationSettings
             errors["telegramChatIds"] = [$"Не більше {MaxRecipients} чатів."];
         }
 
-        var badEmails = emails.Where(e => e.Length > 200 || !MailAddress.TryCreate(e, out _)).ToList();
+        var badEmails = emails.Where(e => !EmailAddress.IsValid(e)).ToList();
         if (badEmails.Count > 0)
         {
             errors["emails"] = [$"Перевірте адреси: {string.Join(", ", badEmails)}."];

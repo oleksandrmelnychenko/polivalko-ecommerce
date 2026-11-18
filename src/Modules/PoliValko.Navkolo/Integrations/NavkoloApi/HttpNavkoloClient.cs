@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using PoliValko.Catalog.Contracts;
 using PoliValko.Ordering.Contracts;
 using PoliValko.Navkolo.Configuration;
+using PoliValko.SharedKernel;
 
 namespace PoliValko.Navkolo.Integrations.NavkoloApi;
 
@@ -143,7 +144,7 @@ internal sealed class HttpNavkoloClient(HttpClient http, IOptions<NavkoloOptions
         if (order.Id is not { } id || order.Lines.Any(l => !Guid.TryParse(l.NavkoloId, out _)))
             throw new NavkoloUnavailableException("Замовлення містить товари без UUID Navkolo. Спочатку синхронізуйте каталог.");
         var store = await StoreAsync(ct);
-        var date = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(order.CreatedAt, "Europe/Kyiv").ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+        var date = KyivTime.ToLocal(order.CreatedAt).ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
         var body = new Dictionary<string, object?>
         {
             ["id"] = id, ["private_id"] = order.Number, ["date"] = date, ["channel"] = _options.Channel,

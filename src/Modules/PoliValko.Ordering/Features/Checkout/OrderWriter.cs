@@ -12,6 +12,7 @@ using PoliValko.Infrastructure.Web;
 using PoliValko.Ordering.Configuration;
 using PoliValko.Ordering.Contracts;
 using PoliValko.Ordering.Domain;
+using PoliValko.Ordering.Features.Notifications;
 using PoliValko.Ordering.Features.Shop;
 using PoliValko.SharedKernel;
 
@@ -28,8 +29,12 @@ internal sealed class OrderWriter(
     IOutbox outbox,
     TimeProvider time,
     ICustomerDirectory customers,
-    ICatalogReservations reservations)
+    ICatalogReservations reservations,
+    ICardPayments cards,
+    OrderMail mail)
 {
+    private static string Clip(string value, int max) => value.Length > max ? value[..max] : value;
+
     public async Task<Results<Created<OrderCreatedDto>, ValidationProblem, ProblemHttpResult>> WriteAsync(
         CreateOrderRequest request, HttpRequest http, string idempotencyKey, CancellationToken ct)
     {
@@ -42,7 +47,7 @@ internal sealed class OrderWriter(
         }
 
         var availability = await delivery.GetAsync(ct);
-        var (errors, valid) = await OrderValidator.ValidateAsync(request, directory, availability, ct);
+        var (errors, valid) = await OrderValidator.ValidateAsync(request, directory, availability, cards.Available, ct);
         if (valid is null)
         {
             return TypedResults.ValidationProblem(errors);
@@ -98,7 +103,7 @@ internal sealed class OrderWriter(
             SettlementRef = valid.Settlement?.Ref,
             SettlementName = valid.Settlement?.Name,
             WarehouseRef = valid.Warehouse?.Ref,
-            WarehouseName = valid.Warehouse is { } w ? $"{w.Name}, {w.Address}" : null,
+            WarehouseName = valid.Warehouse is { } w ? Clip($"{w.Name}, {w.Address}", 300) : null,
             DeliveryAddress = valid.Address,
             PickupAddress = pickup is null ? null : $"{pickup.Name}, {pickup.Address}",
             Comment = valid.Comment,
@@ -123,7 +128,7 @@ internal sealed class OrderWriter(
         };
         order.InitPaymentStatus();
         var customerId = http.HttpContext.User.CustomerId()
-            ?? (valid.Email is null ? null : await customers.FindConfirmedIdByEmailAsync(valid.Email, ct));
+            ?? await customers.FindConfirmedIdByEmailAsync(valid.Email, ct);
         if (customerId is { } owner)
         {
             order.LinkCustomer(owner);
@@ -144,6 +149,7 @@ internal sealed class OrderWriter(
         outbox.Enqueue(new OrderPlaced(order.Id));
         outbox.Enqueue(new OrderExportRequested(order.Id));
         await db.SaveChangesAsync(ct);
+        mail.Queue(order, token);
 
         return TypedResults.Created(
             $"/api/v1/orders/{order.Number}",

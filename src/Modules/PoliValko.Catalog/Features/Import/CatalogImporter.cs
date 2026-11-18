@@ -116,10 +116,14 @@ internal sealed class CatalogImporter(
         {
             await CatalogDictionarySync.SyncAttributesAsync(db, ct);
             await CatalogDictionarySync.SyncBrandsAsync(db, ct);
-            await storefront.InvalidateAsync([StorefrontTags.Catalog, StorefrontTags.Products, StorefrontTags.Collections], ct);
         }
 
         if (transaction is not null) await transaction.CommitAsync(ct);
+        if (created + updated > 0)
+        {
+            await storefront.InvalidateAsync([StorefrontTags.Catalog, StorefrontTags.Products, StorefrontTags.Collections], ct);
+        }
+
         return new CatalogImportResult(created, updated, unchanged, errors);
     }
 
@@ -163,12 +167,12 @@ internal sealed class CatalogImporter(
         }
 
         await db.SaveChangesAsync(ct);
+        if (transaction is not null) await transaction.CommitAsync(ct);
         if (updated > 0)
         {
             await storefront.InvalidateAsync([StorefrontTags.Products, StorefrontTags.Collections], ct);
         }
 
-        if (transaction is not null) await transaction.CommitAsync(ct);
         return new CatalogImportResult(0, updated, unchanged, errors);
     }
 

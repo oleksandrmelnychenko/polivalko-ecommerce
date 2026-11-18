@@ -31,7 +31,7 @@ internal static class OrderMapping
         order.PaymentStatus,
         DeliveryCodes.From(order.DeliveryMethod),
         new OrderDeliveryDto(order.SettlementName, order.WarehouseName, order.PickupAddress, order.DeliveryAddress),
-        new OrderCustomerDto(order.CustomerName, MaskPhone(order.CustomerPhone)),
+        new OrderCustomerDto(order.CustomerName, MaskPhone(order.CustomerPhone), MaskEmail(order.CustomerEmail)),
         order.Items.Select(ToDto).ToList(),
         MoneyDto.Hryvnia(order.Subtotal),
         MoneyDto.Hryvnia(order.Total),
@@ -39,6 +39,12 @@ internal static class OrderMapping
         CanPay(order),
         MoneyDto.Hryvnia(order.RefundedAmount),
         order.SellerName);
+
+    public static string? MaskEmail(string? email)
+    {
+        var at = email?.IndexOf('@') ?? -1;
+        return at < 1 ? null : $"{email![0]}***{email[at..]}";
+    }
 
     public static string MaskPhone(string phone) =>
         phone.Length == 13 && phone.StartsWith("+380", StringComparison.Ordinal)

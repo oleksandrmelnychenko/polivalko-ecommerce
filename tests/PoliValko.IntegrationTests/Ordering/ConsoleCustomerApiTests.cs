@@ -18,7 +18,7 @@ public sealed class ConsoleCustomerApiTests(ApiFactory api)
         var email = $"taras.{phone[^7..]}@example.com";
         var product = await api.AddProductAsync("vse-dlia-roslyn", "Горщик для покупців", 150m, stock: 10);
         await TestOrders.PlaceAsync(api, product.Id, 2, 150m, phone, new CustomerRequest("Тарас Покупець", phone, email));
-        var last = await TestOrders.PlaceAsync(api, product.Id, 3, 150m, phone);
+        var last = await TestOrders.PlaceAsync(api, product.Id, 3, 150m, phone, new CustomerRequest("Олена Тестова", phone, email));
         var manager = await Staff.ManagerAsync(api);
 
         var page = await manager.ReadAsync<PagedResponse<ConsoleCustomerDto>>($"/api/v1/console/customers?q={Uri.EscapeDataString(phone)}");

@@ -1,4 +1,3 @@
-using System.Net.Mail;
 using PoliValko.SharedKernel;
 
 namespace PoliValko.Customers.Features.Auth;
@@ -11,7 +10,7 @@ internal static class CustomerValidation
     public static string? Email(string? value, Dictionary<string, string[]> errors)
     {
         var email = value?.Trim();
-        if (string.IsNullOrEmpty(email) || email.Length > 200 || !MailAddress.TryCreate(email, out var parsed) || parsed.Address != email)
+        if (!EmailAddress.IsValid(email))
         {
             errors["email"] = ["Вкажіть email у форматі name@example.com."];
             return null;
