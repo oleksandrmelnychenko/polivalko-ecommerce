@@ -20,7 +20,7 @@ type JobRunsCardProps = {
 }
 
 export function JobRunsCard({ job, refreshKey, onExpand, onOpenRuns }: JobRunsCardProps) {
-  const runs = useApiQuery(`integration-job-runs:${job.job}:${refreshKey}`, () => getRuns(job.job))
+  const runs = useApiQuery(`integration-job-runs:${job.job}:${refreshKey}`, () => getRuns(job.job), { keepPrevious: true })
   const items = runs.data ?? []
   const failed = runs.status === 'error' || runs.status === 'forbidden'
 

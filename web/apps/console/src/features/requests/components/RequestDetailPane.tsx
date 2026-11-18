@@ -3,6 +3,7 @@ import { IconArrowRight, IconPhone } from '@tabler/icons-react'
 import { Link } from 'react-router-dom'
 import { plural } from '@polivalko/shared/lib/format'
 import { serviceRequestStatusLabel } from '@polivalko/shared/lib/labels'
+import { problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { moment } from '@/shared/lib/when'
 import { findOrders, ordersSearchHref } from '@/shared/sales/salesLookups'
@@ -29,8 +30,10 @@ export function RequestDetailPane({ request, canChange, canViewOrders, pendingSt
   if (!request) return <section className="app-split-detail app-split-detail-empty">Оберіть заявку зліва.</section>
 
   const received = moment(request.createdAt)
-  const orderItems = orders.isFetching ? [] : (orders.data?.items ?? [])
-  const orderCount = orders.isFetching ? 0 : (orders.data?.totalItems ?? 0)
+  const ordersFailed = !orders.isFetching && (orders.status === 'error' || orders.status === 'forbidden')
+  const ordersReady = !orders.isFetching && !ordersFailed
+  const orderItems = ordersReady ? (orders.data?.items ?? []) : []
+  const orderCount = ordersReady ? (orders.data?.totalItems ?? 0) : 0
 
   return (
     <section key={request.id} className="app-split-detail" aria-labelledby="request-detail-title">
@@ -79,6 +82,8 @@ export function RequestDetailPane({ request, canChange, canViewOrders, pendingSt
                 request.phone
               ) : orders.isFetching ? (
                 '…'
+              ) : ordersFailed ? (
+                <span className="app-split-value-empty">не завантажено</span>
               ) : orderCount ? (
                 <>
                   {orderCount}
@@ -127,6 +132,15 @@ export function RequestDetailPane({ request, canChange, canViewOrders, pendingSt
           </header>
           {orders.isFetching ? (
             <Skeleton height={88} radius={8} />
+          ) : ordersFailed ? (
+            <>
+              <p className="app-split-blank">{problemMessage(orders.problem, 'Не вдалося завантажити замовлення з цього номера.')}</p>
+              {orders.status === 'error' ? (
+                <Button size="xs" variant="default" onClick={orders.reload}>
+                  Спробувати ще раз
+                </Button>
+              ) : null}
+            </>
           ) : orderItems.length ? (
             <OrdersList orders={orderItems} canOpen label="Замовлення з цього номера" />
           ) : (

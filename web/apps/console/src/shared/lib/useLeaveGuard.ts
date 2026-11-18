@@ -1,7 +1,18 @@
 import { useEffect, useEffectEvent } from 'react'
 
+type LeaveAttempt = (to: string) => void
+
+const guards: LeaveAttempt[] = []
+
 function currentPath(): string {
   return `${window.location.pathname}${window.location.search}${window.location.hash}`
+}
+
+export function interceptLeave(to: string): boolean {
+  const guard = guards.at(-1)
+  if (!guard || to === currentPath()) return false
+  guard(to)
+  return true
 }
 
 export function useLeaveGuard(active: boolean, onLeaveAttempt: (to: string) => void): void {
@@ -30,9 +41,13 @@ export function useLeaveGuard(active: boolean, onLeaveAttempt: (to: string) => v
       attempt(to)
     }
 
+    const guard: LeaveAttempt = (to) => attempt(to)
+    guards.push(guard)
     window.addEventListener('beforeunload', onBeforeUnload)
     document.addEventListener('click', onClick, true)
     return () => {
+      const index = guards.lastIndexOf(guard)
+      if (index >= 0) guards.splice(index, 1)
       window.removeEventListener('beforeunload', onBeforeUnload)
       document.removeEventListener('click', onClick, true)
     }

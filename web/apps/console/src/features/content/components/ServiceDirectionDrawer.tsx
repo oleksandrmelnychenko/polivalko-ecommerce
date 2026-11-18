@@ -1,12 +1,14 @@
 import { Button, Checkbox, Group, NumberInput, Stack, Text, Textarea } from '@mantine/core'
 import { IconDeviceFloppy } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
+import { useReportDirty } from '@/shared/lib/useReportDirty'
 import { AppDrawer } from '@/shared/ui/AppDrawer'
 import { TableChip } from '@/shared/ui/TableChip'
 import { saveService, type ServiceDirection } from '../api/contentApi'
 import { useSaveForm } from '../lib/useSaveForm'
 import { FormAlert } from './FormAlert'
 import { ImageField } from './ImageField'
+import { DrawerCancelButton } from '@/shared/ui/DrawerCancelButton'
 
 const FORM_ID = 'content-direction-form'
 
@@ -19,25 +21,25 @@ type ServiceDirectionDrawerProps = {
 
 export function ServiceDirectionDrawer({ direction, opened, onClose, onSaved }: ServiceDirectionDrawerProps) {
   const [busy, setBusy] = useState(false)
+  const [dirty, setDirty] = useState(false)
 
   return (
     <AppDrawer
       opened={opened}
       onClose={busy ? () => undefined : onClose}
+      dirty={dirty && !busy}
       title={direction?.name ?? 'Напрямок послуг'}
       size="compact"
       footer={
         <Group justify="flex-end" gap="sm">
-          <Button variant="default" disabled={busy} onClick={onClose}>
-            Скасувати
-          </Button>
+          <DrawerCancelButton disabled={busy} onCancel={onClose} />
           <Button type="submit" form={FORM_ID} loading={busy} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
             Зберегти напрямок
           </Button>
         </Group>
       }
     >
-      {direction ? <DirectionForm key={direction.code} initial={direction} onBusy={setBusy} onSaved={onSaved} /> : null}
+      {direction ? <DirectionForm key={direction.code} initial={direction} onBusy={setBusy} onSaved={onSaved} onDirty={setDirty} /> : null}
     </AppDrawer>
   )
 }
@@ -46,14 +48,18 @@ type DirectionFormProps = {
   initial: ServiceDirection
   onBusy: (busy: boolean) => void
   onSaved: (direction: ServiceDirection) => void
+  onDirty: (dirty: boolean) => void
 }
 
-function DirectionForm({ initial, onBusy, onSaved }: DirectionFormProps) {
+function DirectionForm({ initial, onBusy, onSaved, onDirty }: DirectionFormProps) {
   const form = useSaveForm()
   const [description, setDescription] = useState(initial.description ?? '')
   const [sortOrder, setSortOrder] = useState<string | number>(initial.sortOrder)
   const [visible, setVisible] = useState(initial.isVisible)
   const [imageUrl, setImageUrl] = useState(initial.imageUrl ?? '')
+  const snapshot = JSON.stringify([description, String(sortOrder), visible, imageUrl])
+  const [pristine] = useState(snapshot)
+  useReportDirty(snapshot !== pristine, onDirty)
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()

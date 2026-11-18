@@ -15,10 +15,14 @@ import { OrderRefundForm } from './OrderRefundForm'
 export function OrderRefundsCard({ order, onChange }: { order: ConsoleOrder; onChange: (order: ConsoleOrder) => void }) {
   const { can } = usePermissions()
   const [open, setOpen] = useState(false)
-  const refund = useRefund(order, (next) => {
-    onChange(next)
-    setOpen(false)
-  })
+  const refund = useRefund(
+    order,
+    (next) => {
+      onChange(next)
+      setOpen(false)
+    },
+    onChange,
+  )
   const canRefund = can(PermissionKeys.Orders.CreateRefund)
   const formAvailable = canRefund && Boolean(order.refundMethod) && order.refundable.length > 0
   const hasRefunds = order.refunds.length > 0

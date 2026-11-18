@@ -11,21 +11,16 @@ import { rememberReturnPath } from './lib/authReturnPath'
 import { loginErrorMessage } from './lib/loginErrors'
 
 const FOCUS_REFRESH_INTERVAL_MS = 30_000
+const RETRY_DELAYS_MS = [2_000, 5_000, 10_000, 30_000]
+const UNAUTHORIZED = 401
 
-type Session = { status: AuthStatus; me: StaffMe | null; permissions: MyPermissions | null }
+type Session = { status: AuthStatus; me: StaffMe | null; permissions: MyPermissions | null; reconnecting: boolean }
 
-const LOADING: Session = { status: 'loading', me: null, permissions: null }
-const ANONYMOUS: Session = { status: 'anonymous', me: null, permissions: null }
+const LOADING: Session = { status: 'loading', me: null, permissions: null, reconnecting: false }
+const RECONNECTING: Session = { status: 'loading', me: null, permissions: null, reconnecting: true }
+const ANONYMOUS: Session = { status: 'anonymous', me: null, permissions: null, reconnecting: false }
 
-async function fetchSession(): Promise<Session> {
-  try {
-    const me = await getMe()
-    if (!me.data) return ANONYMOUS
-    return { status: 'authenticated', me: me.data, permissions: await loadPermissions() }
-  } catch {
-    return ANONYMOUS
-  }
-}
+type Fetched = { kind: 'session'; me: StaffMe; permissions: MyPermissions } | { kind: 'anonymous' } | { kind: 'unavailable' }
 
 async function loadPermissions(): Promise<MyPermissions | null> {
   try {
@@ -36,33 +31,57 @@ async function loadPermissions(): Promise<MyPermissions | null> {
   }
 }
 
+async function fetchSession(): Promise<Fetched> {
+  try {
+    const me = await getMe()
+    if (!me.data) return me.response.status === UNAUTHORIZED ? { kind: 'anonymous' } : { kind: 'unavailable' }
+    const permissions = await loadPermissions()
+    return permissions ? { kind: 'session', me: me.data, permissions } : { kind: 'unavailable' }
+  } catch {
+    return { kind: 'unavailable' }
+  }
+}
+
 export function AuthProvider({ children }: PropsWithChildren) {
   const location = useLocation()
   const [session, setSession] = useState<Session>(LOADING)
+  const [attempt, setAttempt] = useState<number | null>(0)
   const lastRefresh = useRef(0)
+  const generation = useRef(0)
 
   const loadSession = useCallback(async () => {
+    generation.current += 1
+    const run = generation.current
     const next = await fetchSession()
+    if (run !== generation.current) return
+    if (next.kind === 'unavailable') {
+      setSession((current) => (current.status === 'authenticated' ? current : RECONNECTING))
+      setAttempt((current) => (current ?? 0) + 1)
+      return
+    }
     lastRefresh.current = Date.now()
-    setSession(next)
+    setAttempt(null)
+    if (next.kind === 'anonymous') {
+      forgetCsrf()
+      setSession(ANONYMOUS)
+      return
+    }
+    setSession({ status: 'authenticated', me: next.me, permissions: next.permissions, reconnecting: false })
   }, [])
 
   useEffect(() => {
-    let cancelled = false
-    fetchSession().then((next) => {
-      if (cancelled) return
-      lastRefresh.current = Date.now()
-      setSession(next)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [])
+    if (attempt === null) return undefined
+    const delay = attempt === 0 ? 0 : RETRY_DELAYS_MS[Math.min(attempt, RETRY_DELAYS_MS.length) - 1]
+    const timer = window.setTimeout(() => void loadSession(), delay)
+    return () => window.clearTimeout(timer)
+  }, [attempt, loadSession])
 
   const onUnauthorized = useEffectEvent(() => {
     if (session.status !== 'authenticated') return
+    generation.current += 1
     rememberReturnPath(location)
     forgetCsrf()
+    setAttempt(null)
     setSession(ANONYMOUS)
   })
 
@@ -93,9 +112,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
         return { ok: false, message: loginErrorMessage(response.status, problem), twoFactor }
       }
       forgetCsrf()
+      generation.current += 1
+      const run = generation.current
       const permissions = await loadPermissions()
-      lastRefresh.current = Date.now()
-      setSession({ status: 'authenticated', me: data, permissions })
+      if (run !== generation.current) return { ok: true }
+      if (permissions) {
+        lastRefresh.current = Date.now()
+        setAttempt(null)
+        setSession({ status: 'authenticated', me: data, permissions, reconnecting: false })
+      } else {
+        setSession(RECONNECTING)
+        setAttempt((current) => (current ?? 0) + 1)
+      }
       return { ok: true }
     } catch {
       return { ok: false, message: "Немає зв'язку з сервером. Спробуйте ще раз." }
@@ -104,12 +132,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const logout = useCallback(async () => {
     try {
-      await withCsrf((headers) => logoutRequest(headers))
+      const result = await withCsrf((headers) => logoutRequest(headers))
+      if (!result.response.ok && result.response.status !== UNAUTHORIZED) return false
     } catch {
-      forgetCsrf()
+      return false
     }
+    generation.current += 1
     forgetCsrf()
+    setAttempt(null)
     setSession(ANONYMOUS)
+    return true
   }, [])
 
   const permissions = session.permissions
@@ -120,6 +152,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       status: session.status,
       isAuthenticated: session.status === 'authenticated',
       isLoading: session.status === 'loading',
+      reconnecting: session.reconnecting,
       me: session.me,
       permissions,
       hasPermission,
@@ -127,7 +160,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       logout,
       refresh: loadSession,
     }),
-    [hasPermission, loadSession, login, logout, permissions, session.me, session.status],
+    [hasPermission, loadSession, login, logout, permissions, session.me, session.reconnecting, session.status],
   )
 
   return <AuthContext value={value}>{children}</AuthContext>

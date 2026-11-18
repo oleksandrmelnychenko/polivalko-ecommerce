@@ -19,6 +19,7 @@ import { useListParams } from '../lib/useListParams'
 import '../components/catalog.css'
 import '@/shared/ui/split/split.css'
 import '../components/catalog-detail.css'
+import { DrawerCancelButton } from '@/shared/ui/DrawerCancelButton'
 
 const FORM_ID = 'catalog-collection-form'
 const getRowId = (row: ConsoleCollection) => row.id
@@ -70,9 +71,11 @@ export function CollectionsPage() {
   const [busy, setBusy] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [formDirty, setFormDirty] = useState(false)
 
   const open = useCallback((collection: ConsoleCollection | null) => {
     setDeleteError(null)
+    setFormDirty(false)
     setEditing({ collection, key: Date.now() })
     setOpened(true)
   }, [])
@@ -182,6 +185,7 @@ export function CollectionsPage() {
       <AppDrawer
         opened={opened}
         onClose={close}
+        dirty={formDirty && !busy}
         title={current ? `Добірка «${current.title}»` : 'Нова добірка'}
         size="compact"
         closeOnEscape={!busy}
@@ -195,9 +199,7 @@ export function CollectionsPage() {
               <span />
             )}
             <Group gap="xs">
-              <Button variant="default" disabled={busy} onClick={close}>
-                Скасувати
-              </Button>
+              <DrawerCancelButton disabled={busy} onCancel={close} />
               <Button type="submit" form={FORM_ID} loading={busy}>
                 Зберегти добірку
               </Button>
@@ -205,7 +207,7 @@ export function CollectionsPage() {
           </Group>
         }
       >
-        {editing ? <CollectionForm key={editing.key} formId={FORM_ID} collection={editing.collection} error={deleteError} onBusy={setBusy} onSaved={saved} /> : null}
+        {editing ? <CollectionForm key={editing.key} formId={FORM_ID} collection={editing.collection} error={deleteError} onBusy={setBusy} onSaved={saved} onDirty={setFormDirty} /> : null}
       </AppDrawer>
 
       <ConfirmDialog

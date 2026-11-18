@@ -21,7 +21,7 @@ const countFormat = new Intl.NumberFormat('uk-UA')
 export function ReturnsPage() {
   const { state, update, reset } = useReturnsState()
   const query = useMemo(() => toRefundsQuery(state), [state])
-  const refunds = useApiQuery(`refunds:${JSON.stringify(query)}`, () => getRefunds(query))
+  const refunds = useApiQuery(`refunds:${JSON.stringify(query)}`, () => getRefunds(query), { keepPrevious: true })
   const filtered = hasActiveFilters(state)
   const [params, setParams] = useSearchParams()
   const pickedId = params.get('id')

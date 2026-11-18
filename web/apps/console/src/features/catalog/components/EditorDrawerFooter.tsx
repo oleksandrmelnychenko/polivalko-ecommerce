@@ -1,6 +1,7 @@
 import { Button, Group } from '@mantine/core'
 import { IconTrash } from '@tabler/icons-react'
 import type { ReactNode } from 'react'
+import { DrawerCancelButton } from '@/shared/ui/DrawerCancelButton'
 
 type EditorDrawerFooterProps = {
   formId: string
@@ -22,9 +23,7 @@ export function EditorDrawerFooter({ formId, busy, onCancel, onDelete, extra }: 
         {extra}
       </Group>
       <Group gap="xs">
-        <Button variant="default" disabled={busy} onClick={onCancel}>
-          Скасувати
-        </Button>
+        <DrawerCancelButton disabled={busy} onCancel={onCancel} />
         <Button type="submit" form={formId} loading={busy}>
           Зберегти
         </Button>

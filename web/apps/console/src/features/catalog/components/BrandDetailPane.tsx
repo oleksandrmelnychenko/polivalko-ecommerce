@@ -35,7 +35,12 @@ function BrandDetail({ brand, totalProducts, onEdit, onMerge }: BrandDetailPaneP
     enabled: hasProducts,
   })
   const productsLink = `/catalog/products?brand=${encodeURIComponent(brand.name)}`
-  const count = (query: typeof inStock) => (!hasProducts ? '0' : query.data ? countFormat.format(query.data.totalItems) : '·')
+  const count = (query: typeof inStock) => {
+    if (!hasProducts) return '0'
+    if (query.status === 'forbidden') return <span className="app-split-value-empty">немає доступу</span>
+    if (query.status === 'error') return <span className="app-split-value-empty">не завантажено</span>
+    return query.data ? countFormat.format(query.data.totalItems) : '·'
+  }
 
   return (
     <section className="app-split-detail" aria-labelledby="brand-detail-title">

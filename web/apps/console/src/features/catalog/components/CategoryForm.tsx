@@ -7,6 +7,7 @@ import { withCsrf } from '@/shared/api/csrf'
 import { fieldErrors, NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
+import { useReportDirty } from '@/shared/lib/useReportDirty'
 import { getAttributeNames, saveCategory, type ConsoleCategory } from '../api/catalogApi'
 import type { AttributeDefinition } from '../api/dictionariesApi'
 import { descendantIds, orderCategories } from '../lib/categoryTree'
@@ -20,6 +21,7 @@ type CategoryFormProps = {
   error: string | null
   onBusy: (busy: boolean) => void
   onSaved: () => void
+  onDirty?: (dirty: boolean) => void
 }
 
 type Fields = {
@@ -41,7 +43,7 @@ const MAX_DESCRIPTION = 2000
 
 const orNull = (value: string) => value.trim() || null
 
-export function CategoryForm({ formId, category, all, attributes, error, onBusy, onSaved }: CategoryFormProps) {
+export function CategoryForm({ formId, category, all, attributes, error, onBusy, onSaved, onDirty }: CategoryFormProps) {
   const { can } = usePermissions()
   const isTop = category !== null && !category.parentId
   const [fields, setFields] = useState<Fields>(() => ({
@@ -57,6 +59,8 @@ export function CategoryForm({ formId, category, all, attributes, error, onBusy,
     seoTitle: category?.seoTitle ?? '',
     seoDescription: category?.seoDescription ?? '',
   }))
+  const [pristine] = useState(() => JSON.stringify(fields))
+  useReportDirty(JSON.stringify(fields) !== pristine, onDirty)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -85,13 +89,18 @@ export function CategoryForm({ formId, category, all, attributes, error, onBusy,
   const unknownFilters = attributes ? fields.filterAttributes.filter((name) => !attributes.some((attribute) => attribute.name === name)) : []
 
   const usedNames = (names.data ?? []).filter((entry) => entry.productCount > 0)
+  const inheritHelp = 'Якщо поле порожнє, діють фільтри батьківської категорії.'
   const namesHelp =
-    usedNames.length > 0
-      ? `У товарах категорії: ${usedNames
-          .slice(0, 12)
-          .map((n) => `${n.name} (${n.productCount})`)
-          .join(', ')}.`
-      : 'Якщо поле порожнє, діють фільтри батьківської категорії.'
+    names.status === 'forbidden'
+      ? `${inheritHelp} Характеристики з товарів категорії видно лише з правом перегляду товарів.`
+      : names.status === 'error'
+        ? `${inheritHelp} Характеристики з товарів категорії не завантажилися.`
+        : usedNames.length > 0
+          ? `У товарах категорії: ${usedNames
+              .slice(0, 12)
+              .map((n) => `${n.name} (${n.productCount})`)
+              .join(', ')}.`
+          : inheritHelp
 
   function set<K extends keyof Fields>(name: K, value: Fields[K]) {
     setFields((current) => ({ ...current, [name]: value }))

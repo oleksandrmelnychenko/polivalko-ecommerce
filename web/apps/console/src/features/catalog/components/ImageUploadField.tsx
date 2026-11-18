@@ -17,6 +17,9 @@ type ImageUploadFieldProps = {
 }
 
 const ACCEPT = 'image/jpeg,image/png,image/webp'
+const MAX_BYTES = 10 * 1024 * 1024
+const WRONG_TYPE = 'Підходять фото JPEG, PNG або WebP.'
+const TOO_LARGE = 'Фото завелике: до 10 МБ.'
 
 export function ImageUploadField({ label, value, onChange, description, error, disabled = false, shape = 'wide', alt = '' }: ImageUploadFieldProps) {
   const id = useId()
@@ -25,11 +28,24 @@ export function ImageUploadField({ label, value, onChange, description, error, d
 
   async function upload(file: File | null) {
     if (!file) return
+    if (!ACCEPT.split(',').includes(file.type)) {
+      setUploadError(WRONG_TYPE)
+      return
+    }
+    if (file.size === 0) {
+      setUploadError('Файл порожній.')
+      return
+    }
+    if (file.size > MAX_BYTES) {
+      setUploadError(TOO_LARGE)
+      return
+    }
     setBusy(true)
     setUploadError(null)
     try {
       const result = await uploadMediaImage(file)
       if (result.data?.url) onChange(result.data.url)
+      else if (result.response.status === 413) setUploadError(TOO_LARGE)
       else setUploadError(result.problem?.errors?.file?.[0] ?? problemMessage(result.problem, 'Фото не завантажено.'))
     } catch {
       setUploadError(NETWORK_ERROR)
@@ -64,7 +80,7 @@ export function ImageUploadField({ label, value, onChange, description, error, d
             ) : null}
           </Group>
           <Text size="xs" c="dimmed">
-            {description ?? 'JPEG, PNG або WebP.'}
+            {description ?? 'JPEG, PNG або WebP.'} До 10 МБ.
           </Text>
           {shownError ? (
             <Text size="xs" c="red" role="alert">

@@ -1,6 +1,7 @@
 import { Button, Group, SimpleGrid, Stack, Switch, Textarea, TextInput } from '@mantine/core'
 import { IconDeviceFloppy } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
+import { useReportDirty } from '@/shared/lib/useReportDirty'
 import { AppDateInput } from '@/shared/ui/AppDateInput'
 import { AppDrawer } from '@/shared/ui/AppDrawer'
 import { saveBanner, type Banner, type SaveBannerRequest } from '../api/siteApi'
@@ -9,6 +10,7 @@ import { invalidPeriod, periodDay, periodEnd, periodStart } from '../lib/period'
 import { fieldError, useSaveForm } from '../lib/useSaveForm'
 import { FormAlert } from './FormAlert'
 import { ImageField } from './ImageField'
+import { DrawerCancelButton } from '@/shared/ui/DrawerCancelButton'
 
 const FORM_ID = 'site-banner-form'
 
@@ -22,26 +24,26 @@ type BannerDrawerProps = {
 
 export function BannerDrawer({ editing, onClose, onSaved }: BannerDrawerProps) {
   const [busy, setBusy] = useState(false)
+  const [dirty, setDirty] = useState(false)
   const banner = editing.banner
 
   return (
     <AppDrawer
       opened={editing.opened}
       onClose={busy ? () => undefined : onClose}
+      dirty={dirty && !busy}
       title={banner ? `Банер «${banner.title}»` : 'Новий банер'}
       size="compact"
       footer={
         <Group justify="flex-end" gap="sm">
-          <Button variant="default" disabled={busy} onClick={onClose}>
-            Скасувати
-          </Button>
+          <DrawerCancelButton disabled={busy} onCancel={onClose} />
           <Button type="submit" form={FORM_ID} loading={busy} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
             {banner ? 'Зберегти банер' : 'Додати банер'}
           </Button>
         </Group>
       }
     >
-      <BannerForm key={`${banner?.id ?? 'new'}:${editing.seq}`} initial={banner} onBusy={setBusy} onSaved={onSaved} />
+      <BannerForm key={`${banner?.id ?? 'new'}:${editing.seq}`} initial={banner} onBusy={setBusy} onSaved={onSaved} onDirty={setDirty} />
     </AppDrawer>
   )
 }
@@ -104,11 +106,14 @@ type BannerFormProps = {
   initial: Banner | null
   onBusy: (busy: boolean) => void
   onSaved: (banner: Banner, created: boolean) => void
+  onDirty: (dirty: boolean) => void
 }
 
-function BannerForm({ initial, onBusy, onSaved }: BannerFormProps) {
+function BannerForm({ initial, onBusy, onSaved, onDirty }: BannerFormProps) {
   const form = useSaveForm()
   const [values, setValues] = useState(() => toValues(initial))
+  const [pristine] = useState(() => JSON.stringify(values))
+  useReportDirty(JSON.stringify(values) !== pristine, onDirty)
 
   function set<K extends keyof Values>(field: K, value: Values[K], errorField: string = field) {
     setValues((current) => ({ ...current, [field]: value }))

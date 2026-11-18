@@ -3,23 +3,47 @@ import type { OrderStatus } from '@polivalko/shared/api/types'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { notifySummaryStale } from '@/shared/lib/events'
-import type { ConsoleOrder } from '../api/orderDetailApi'
+import { getOrder, type ConsoleOrder } from '../api/orderDetailApi'
 import { changeOrderStatus } from '../api/ordersApi'
+import { statusProblemText } from './statusProblem'
+
+const CONFLICT_STATUS = 409
 
 export function useOrderStatusChange(number: string, onChanged: (order: ConsoleOrder) => void) {
-  const [reason, setReason] = useState('')
+  const [comment, setComment] = useState('')
   const [busy, setBusy] = useState<OrderStatus | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  async function change(status: OrderStatus) {
+  async function refresh(): Promise<boolean> {
+    try {
+      const fresh = await getOrder(number)
+      if (!fresh.data) return false
+      onChanged(fresh.data)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  async function change(status: OrderStatus, reason: string): Promise<boolean> {
     setBusy(status)
     setError(null)
     try {
       const result = await withCsrf((headers) => changeOrderStatus(headers, number, { status, reason: reason.trim() || null }))
       if (result.data) {
         onChanged(result.data)
-        setReason('')
+        setComment('')
         notifySummaryStale()
+        return true
+      }
+      if (result.response.status === CONFLICT_STATUS) {
+        const refreshed = await refresh()
+        notifySummaryStale()
+        setError(
+          `${statusProblemText(result.error, 'Статус не змінено.')} ${
+            refreshed ? 'Картку оновлено: перевірте поточний статус і доступні дії.' : 'Оновіть сторінку, щоб побачити поточний статус.'
+          }`,
+        )
       } else {
         setError(problemMessage(result.error, 'Статус не змінено.'))
       }
@@ -28,9 +52,14 @@ export function useOrderStatusChange(number: string, onChanged: (order: ConsoleO
     } finally {
       setBusy(null)
     }
+    return false
   }
 
-  return { reason, setReason, busy, error, change }
+  function clearError() {
+    setError(null)
+  }
+
+  return { comment, setComment, busy, error, clearError, change }
 }
 
 export type OrderStatusChange = ReturnType<typeof useOrderStatusChange>

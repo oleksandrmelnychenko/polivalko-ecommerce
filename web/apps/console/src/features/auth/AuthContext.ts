@@ -9,11 +9,12 @@ export type AuthContextValue = {
   status: AuthStatus
   isAuthenticated: boolean
   isLoading: boolean
+  reconnecting: boolean
   me: StaffMe | null
   permissions: MyPermissions | null
   hasPermission: (permissionKey: string) => boolean
   login: (email: string, password: string, twoFactorCode?: string) => Promise<LoginResult>
-  logout: () => Promise<void>
+  logout: () => Promise<boolean>
   refresh: () => Promise<void>
 }
 

@@ -29,7 +29,7 @@ export function RequestsPage() {
   const canViewOrders = can(PermissionKeys.Orders.View)
   const { state, update } = useRequestsState()
   const query = useMemo(() => ({ status: state.status || undefined, page: state.page, pageSize: state.pageSize }), [state])
-  const requests = useApiQuery(`requests:${JSON.stringify(query)}`, () => getServiceRequests(query))
+  const requests = useApiQuery(`requests:${JSON.stringify(query)}`, () => getServiceRequests(query), { keepPrevious: true })
   const counts = useApiQuery('requests-counts', getServiceRequestCounts)
   const [pending, setPending] = useState<{ id: string; status: RequestStatus } | null>(null)
   const [changed, setChanged] = useState<ServiceRequest | null>(null)

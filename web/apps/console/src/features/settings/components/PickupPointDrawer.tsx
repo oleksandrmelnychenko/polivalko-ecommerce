@@ -1,11 +1,13 @@
 import { Button, Checkbox, Group, Stack, Text, Textarea, TextInput } from '@mantine/core'
 import { IconDeviceFloppy } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
+import { useReportDirty } from '@/shared/lib/useReportDirty'
 import { AppDrawer } from '@/shared/ui/AppDrawer'
 import { TableChip } from '@/shared/ui/TableChip'
 import { savePickupPoint, type PickupPoint } from '../api/settingsApi'
 import { fieldError, useSaveForm } from '../lib/useSaveForm'
 import { FormAlert } from './FormAlert'
+import { DrawerCancelButton } from '@/shared/ui/DrawerCancelButton'
 
 const FORM_ID = 'settings-pickup-form'
 
@@ -18,25 +20,25 @@ type PickupPointDrawerProps = {
 
 export function PickupPointDrawer({ point, opened, onClose, onSaved }: PickupPointDrawerProps) {
   const [busy, setBusy] = useState(false)
+  const [dirty, setDirty] = useState(false)
 
   return (
     <AppDrawer
       opened={opened}
       onClose={busy ? () => undefined : onClose}
+      dirty={dirty && !busy}
       title={point?.name ?? 'Точка самовивозу'}
       size="compact"
       footer={
         <Group justify="flex-end" gap="sm">
-          <Button variant="default" disabled={busy} onClick={onClose}>
-            Скасувати
-          </Button>
+          <DrawerCancelButton disabled={busy} onCancel={onClose} />
           <Button type="submit" form={FORM_ID} loading={busy} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
             Зберегти точку
           </Button>
         </Group>
       }
     >
-      {point ? <PickupForm key={point.code} initial={point} onBusy={setBusy} onSaved={onSaved} /> : null}
+      {point ? <PickupForm key={point.code} initial={point} onBusy={setBusy} onSaved={onSaved} onDirty={setDirty} /> : null}
     </AppDrawer>
   )
 }
@@ -52,11 +54,14 @@ type PickupFormProps = {
   initial: PickupPoint
   onBusy: (busy: boolean) => void
   onSaved: (point: PickupPoint) => void
+  onDirty: (dirty: boolean) => void
 }
 
-function PickupForm({ initial, onBusy, onSaved }: PickupFormProps) {
+function PickupForm({ initial, onBusy, onSaved, onDirty }: PickupFormProps) {
   const form = useSaveForm()
   const [values, setValues] = useState(() => toValues(initial))
+  const [pristine] = useState(() => JSON.stringify(values))
+  useReportDirty(JSON.stringify(values) !== pristine, onDirty)
 
   function set(field: TextField, value: string) {
     setValues((current) => ({ ...current, [field]: value }))

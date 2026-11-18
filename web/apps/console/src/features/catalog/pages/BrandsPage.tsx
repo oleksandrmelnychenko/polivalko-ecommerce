@@ -1,9 +1,11 @@
 import { ActionIcon, Button, Select, Tooltip } from '@mantine/core'
 import { IconArrowMerge, IconFilterOff, IconPlus, IconRefresh } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
+import { usePermissions } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemCode, problemMessage, type Problem } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
+import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { AppDrawer } from '@/shared/ui/AppDrawer'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
@@ -51,6 +53,7 @@ function deleteProblemText(error: unknown): string {
 }
 
 export function BrandsPage() {
+  const { can } = usePermissions()
   const brands = useApiQuery('catalog-brands', () => getBrands())
   const { values, set, reset } = useListParams(PARAM_KEYS)
   const drawer = useEditorDrawer<Brand>()
@@ -73,7 +76,7 @@ export function BrandsPage() {
   const { values: picked, set: pick } = useListParams(SELECT_KEYS)
   const selected = rows.find((row) => row.id === picked.id) ?? rows[0] ?? null
   const selectedId = selected?.id ?? null
-  const productCounts = useApiQuery('catalog-products-counts', () => getProductCounts())
+  const productCounts = useApiQuery('catalog-products-counts', () => getProductCounts(), { enabled: can(PermissionKeys.Catalog.ViewProducts) })
   const selectBrand = useCallback((row: Brand) => pick({ id: row.id }), [pick])
   const rowClassName = useCallback((row: Brand) => (row.id === selectedId ? 'app-split-row-active' : undefined), [selectedId])
 
@@ -215,6 +218,7 @@ export function BrandsPage() {
       <AppDrawer
         opened={drawer.opened}
         onClose={drawer.close}
+        dirty={drawer.dirty}
         title={current ? `Бренд «${current.name}»` : 'Новий бренд'}
         size="compact"
         closeOnEscape={!drawer.busy}
@@ -235,7 +239,7 @@ export function BrandsPage() {
         }
       >
         {drawer.editing ? (
-          <BrandForm key={drawer.editing.key} formId={FORM_ID} brand={drawer.editing.item} error={drawer.actionError} onBusy={drawer.setBusy} onSaved={saved} />
+          <BrandForm key={drawer.editing.key} formId={FORM_ID} brand={drawer.editing.item} error={drawer.actionError} onBusy={drawer.setBusy} onSaved={saved} onDirty={drawer.setDirty} />
         ) : null}
       </AppDrawer>
 

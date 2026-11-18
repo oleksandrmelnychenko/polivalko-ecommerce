@@ -25,7 +25,7 @@ export function OrderCustomersTab({ onOpenAccount }: { onOpenAccount: (account: 
   const canViewOrders = can(PermissionKeys.Orders.View)
   const { state, update } = useCustomersState()
   const query = useMemo(() => toCustomersQuery(state), [state])
-  const customers = useApiQuery(`customers:${JSON.stringify(query)}`, () => getCustomers(query))
+  const customers = useApiQuery(`customers:${JSON.stringify(query)}`, () => getCustomers(query), { keepPrevious: true })
   const [params, setParams] = useSearchParams()
   const pickedPhone = params.get('id')
 

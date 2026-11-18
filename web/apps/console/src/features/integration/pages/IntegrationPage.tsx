@@ -44,7 +44,7 @@ export function IntegrationPage() {
   const detail = useDetailModal()
 
   const status = useApiQuery('integration-status', () => getIntegrationStatus())
-  const runs = useApiQuery(`integration-runs:${job}`, () => getRuns(job || undefined), { enabled: tab === 'runs' })
+  const runs = useApiQuery(`integration-runs:${job}`, () => getRuns(job || undefined), { enabled: tab === 'runs', keepPrevious: true })
   const outbox = useApiQuery('integration-outbox', () => getOutbox(), { enabled: canManageOutbox })
   const np = useApiQuery('integration-novaposhta', () => getNovaPoshta())
   const reloadStatus = status.reload

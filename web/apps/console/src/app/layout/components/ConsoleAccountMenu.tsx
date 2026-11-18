@@ -2,6 +2,7 @@ import { Menu, Text } from '@mantine/core'
 import { IconChevronDown, IconKey, IconLogout, IconShieldLock, IconUserCircle } from '@tabler/icons-react'
 import { useState } from 'react'
 import { ChangePasswordModal, TwoFactorModal, useAuth } from '@/features/auth'
+import { notifyError } from '@/shared/ui/notify'
 import { TableChip } from '@/shared/ui/TableChip'
 
 export function ConsoleAccountMenu() {
@@ -9,6 +10,10 @@ export function ConsoleAccountMenu() {
   const [passwordOpened, setPasswordOpened] = useState(false)
   const [twoFactorOpened, setTwoFactorOpened] = useState(false)
   const displayName = me?.displayName?.trim() || me?.email || 'Обліковий запис'
+
+  async function signOut() {
+    if (!(await logout())) notifyError('Вийти не вдалося. Ви досі в консолі: спробуйте ще раз.')
+  }
 
   return (
     <>
@@ -40,7 +45,7 @@ export function ConsoleAccountMenu() {
           <Menu.Item leftSection={<IconShieldLock size={16} />} onClick={() => setTwoFactorOpened(true)}>
             Двофакторна перевірка
           </Menu.Item>
-          <Menu.Item leftSection={<IconLogout size={16} />} onClick={() => void logout()}>
+          <Menu.Item leftSection={<IconLogout size={16} />} onClick={() => void signOut()}>
             Вийти
           </Menu.Item>
         </Menu.Dropdown>

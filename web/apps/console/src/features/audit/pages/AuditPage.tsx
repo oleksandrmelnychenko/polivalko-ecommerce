@@ -25,7 +25,7 @@ export function AuditPage() {
   const { can } = usePermissions()
   const { state, update, reset } = useAuditState()
   const query = useMemo(() => toAuditQuery(state), [state])
-  const audit = useApiQuery(`audit:${JSON.stringify(query)}`, () => getAudit(query))
+  const audit = useApiQuery(`audit:${JSON.stringify(query)}`, () => getAudit(query), { keepPrevious: true })
   const catalog = useApiQuery('permission-catalog', () => getPermissionCatalog())
   const [params, setParams] = useSearchParams()
   const pickedId = params.get('id')

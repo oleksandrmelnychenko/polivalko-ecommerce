@@ -1,8 +1,9 @@
 import { Button, Stack, Switch, TagsInput } from '@mantine/core'
 import { IconBell, IconBrandTelegram, IconDeviceFloppy, IconMail, IconSend } from '@tabler/icons-react'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
+import { LeaveGuard } from '@/shared/ui/LeaveGuard'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { notifyError, notifySuccess } from '@/shared/ui/notify'
@@ -82,13 +83,6 @@ export function NotificationSettingsForm({ initial, onSaved }: NotificationSetti
   const [active, select] = useSettingsSection(SECTION_KEYS)
   const invalid = useErrorSections(form.errors, sectionOfField)
   useJumpToErrors(SECTION_KEYS, invalid, active, select)
-
-  useEffect(() => {
-    if (!dirty) return undefined
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault()
-    window.addEventListener('beforeunload', warn)
-    return () => window.removeEventListener('beforeunload', warn)
-  }, [dirty])
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -273,6 +267,7 @@ export function NotificationSettingsForm({ initial, onSaved }: NotificationSetti
           </section>
         </form>
       </ListPageBody>
+      <LeaveGuard when={dirty} />
     </ListPage>
   )
 }

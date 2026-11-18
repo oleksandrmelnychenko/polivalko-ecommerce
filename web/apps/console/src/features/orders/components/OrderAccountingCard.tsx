@@ -19,7 +19,7 @@ export function OrderAccountingCard({ order }: { order: ConsoleOrder }) {
             </dd>
           </div>
           <div>
-            <dt>Navkolo</dt>
+            <dt>Навколо</dt>
             <dd>
               {order.status === 'cancelled' ? (
                 <span>{order.navkoloCancellationSynchronizedAt

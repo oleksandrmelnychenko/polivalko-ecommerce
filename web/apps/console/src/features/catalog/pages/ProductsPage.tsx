@@ -8,6 +8,7 @@ import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
+import { usePageSelection } from '@/shared/ui/data-table/usePageSelection'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { notifyError, notifyInfo, notifySuccess } from '@/shared/ui/notify'
 import { PageHeader } from '@/shared/ui/PageHeader'
@@ -31,7 +32,6 @@ import '../components/catalog.css'
 
 const getRowId = (row: ProductRow) => row.id
 const countFormat = new Intl.NumberFormat('uk-UA')
-const EMPTY_SELECTION: ReadonlySet<string> = new Set()
 
 const BULK_DONE: Record<BulkAction, string> = {
   category: 'Категорію змінено',
@@ -57,7 +57,7 @@ export function ProductsPage() {
   const { state, params, update, reset } = useProductsState()
   const [view, setView] = useProductsView()
   const query = useMemo(() => toProductsQuery(state), [state])
-  const products = useApiQuery(`catalog-products:${JSON.stringify(query)}`, () => getProducts(query))
+  const products = useApiQuery(`catalog-products:${JSON.stringify(query)}`, () => getProducts(query), { keepPrevious: true })
   const counts = useApiQuery('catalog-products-counts', () => getProductCounts())
   const categoriesQuery = useApiQuery('catalog-categories', () => getCategories())
   const brandsQuery = useApiQuery('catalog-brands', () => getBrands())
@@ -82,34 +82,29 @@ export function ProductsPage() {
   const canEdit = can(PermissionKeys.Catalog.EditProducts)
   const tab = activeTab(state)
 
-  const selectionKey = params.toString()
-  const [selection, setSelection] = useState<{ key: string; ids: ReadonlySet<string> }>({ key: selectionKey, ids: new Set() })
-  const selected = selection.key === selectionKey ? selection.ids : EMPTY_SELECTION
+  const page = products.data
+  const failed = products.status === 'error' || products.status === 'forbidden'
+  const rows = useMemo(() => (failed ? [] : (page?.items ?? [])), [failed, page])
+  const rowIds = useMemo(() => rows.map(getRowId), [rows])
+  const { selected, select, clear: clearSelection } = usePageSelection(params.toString(), rowIds)
   const [pending, setPending] = useState<boolean | null>(null)
   const [bulkAction, setBulkAction] = useState<BulkAction | null>(null)
   const [bulkBusy, setBulkBusy] = useState(false)
   const [bulkError, setBulkError] = useState<string | null>(null)
 
   const onRowClick = useCallback((row: ProductRow) => navigate(productHref(row.id)), [navigate])
-  const rowLabels = useMemo(() => new Map((products.data?.items ?? []).map((row) => [row.id, row.displayName ?? row.name])), [products.data])
+  const rowLabels = useMemo(() => new Map(rows.map((row) => [row.id, row.displayName ?? row.name])), [rows])
   const tableSelection = useMemo(
     () =>
       canEdit
         ? {
             selected,
-            onChange: (ids: ReadonlySet<string>) => setSelection({ key: selectionKey, ids }),
+            onChange: select,
             rowLabel: (id: string) => `Вибрати «${rowLabels.get(id) ?? id}»`,
           }
         : undefined,
-    [canEdit, rowLabels, selected, selectionKey],
+    [canEdit, rowLabels, selected, select],
   )
-
-  const page = products.data
-  const rows = products.status === 'error' || products.status === 'forbidden' ? [] : (page?.items ?? [])
-
-  function clearSelection() {
-    setSelection({ key: selectionKey, ids: new Set() })
-  }
 
   function reloadAll() {
     products.reload()
@@ -248,7 +243,7 @@ export function ProductsPage() {
       ) : null}
 
       <ProductsBulkDialog
-        action={bulkAction}
+        action={selected.size > 0 ? bulkAction : null}
         count={selected.size}
         categories={categories}
         brands={brandOptions ? [{ value: NO_BRAND, label: 'Без бренду (прибрати бренд)' }, ...brandOptions] : []}

@@ -34,17 +34,32 @@ function orderRoute(order: ConsoleOrder): OrderStatus[] {
 }
 
 export function OrderStatusPanel({ order, status }: { order: ConsoleOrder; status: OrderStatusChange }) {
-  const { reason, setReason, busy, error, change } = status
+  const { comment, setComment, busy, error, clearError, change } = status
   const [cancelOpen, setCancelOpen] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
   const route = orderRoute(order)
   const current = route.indexOf(order.status)
   const cancelled = order.status === 'cancelled'
   const nextSteps = order.allowedTransitions.filter((next) => next !== 'cancelled')
   const canCancel = order.allowedTransitions.includes('cancelled')
+  const cancelShown = cancelOpen && canCancel
+
+  function openCancel() {
+    clearError()
+    setCancelReason('')
+    setCancelOpen(true)
+  }
+
+  function closeCancel() {
+    setCancelOpen(false)
+    setCancelReason('')
+    clearError()
+  }
 
   async function confirmCancel() {
-    await change('cancelled')
+    if (!(await change('cancelled', cancelReason))) return
     setCancelOpen(false)
+    setCancelReason('')
   }
 
   return (
@@ -89,17 +104,17 @@ export function OrderStatusPanel({ order, status }: { order: ConsoleOrder; statu
             <Textarea
               label="Коментар до зміни"
               placeholder="Необов'язково, видно в історії замовлення"
-              value={reason}
+              value={comment}
               maxLength={300}
               autosize
               minRows={1}
               maxRows={4}
               disabled={busy !== null}
-              onChange={(event) => setReason(event.currentTarget.value)}
+              onChange={(event) => setComment(event.currentTarget.value)}
             />
             {nextSteps.map((next) => (
               <div key={next} className="order-status-action">
-                <Button fullWidth loading={busy === next} disabled={busy !== null && busy !== next} onClick={() => void change(next)}>
+                <Button fullWidth loading={busy === next} disabled={busy !== null && busy !== next} onClick={() => void change(next, comment)}>
                   {ACTION_LABEL[next] ?? `Перевести в «${orderStatusLabel[next] ?? next}»`}
                 </Button>
                 {ACTION_HINT[next] ? (
@@ -120,10 +135,7 @@ export function OrderStatusPanel({ order, status }: { order: ConsoleOrder; statu
             size="xs"
             leftSection={<IconX size={14} stroke={2} />}
             disabled={busy !== null}
-            onClick={() => {
-              setReason('')
-              setCancelOpen(true)
-            }}
+            onClick={openCancel}
           >
             Скасувати замовлення
           </Button>
@@ -133,7 +145,7 @@ export function OrderStatusPanel({ order, status }: { order: ConsoleOrder; statu
           Статус оплати змінює лише підтвердження платіжного провайдера.
         </Text>
 
-        {error && !cancelOpen ? (
+        {error && !cancelShown ? (
           <Alert mt="sm" color="red" variant="light" icon={<IconAlertTriangle size={16} />} role="alert">
             {error}
           </Alert>
@@ -141,13 +153,13 @@ export function OrderStatusPanel({ order, status }: { order: ConsoleOrder; statu
       </OrderCardBody>
 
       <AppModal
-        opened={cancelOpen}
+        opened={cancelShown}
         title={`Скасувати замовлення ${order.number}?`}
         size={460}
         closeOnClickOutside={busy === null}
         closeOnEscape={busy === null}
         withCloseButton={busy === null}
-        onClose={() => setCancelOpen(false)}
+        onClose={closeCancel}
       >
         <Text size="sm" mb="sm">
           Покупець побачить статус «Скасоване». Змінити статус після цього вже не можна.
@@ -156,13 +168,13 @@ export function OrderStatusPanel({ order, status }: { order: ConsoleOrder; statu
           label="Причина скасування"
           placeholder="Наприклад: покупець відмовився, товару немає"
           required
-          value={reason}
+          value={cancelReason}
           maxLength={300}
           autosize
           minRows={2}
           maxRows={5}
           disabled={busy !== null}
-          onChange={(event) => setReason(event.currentTarget.value)}
+          onChange={(event) => setCancelReason(event.currentTarget.value)}
           data-autofocus
         />
         {error ? (
@@ -171,10 +183,10 @@ export function OrderStatusPanel({ order, status }: { order: ConsoleOrder; statu
           </Alert>
         ) : null}
         <AppModalFooter>
-          <Button variant="default" disabled={busy !== null} onClick={() => setCancelOpen(false)}>
+          <Button variant="default" disabled={busy !== null} onClick={closeCancel}>
             Не скасовувати
           </Button>
-          <Button color="red" loading={busy === 'cancelled'} disabled={!reason.trim()} onClick={() => void confirmCancel()}>
+          <Button color="red" loading={busy === 'cancelled'} disabled={!cancelReason.trim()} onClick={() => void confirmCancel()}>
             Скасувати замовлення
           </Button>
         </AppModalFooter>

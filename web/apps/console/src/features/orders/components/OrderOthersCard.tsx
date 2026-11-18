@@ -5,12 +5,13 @@ import { orderStatusLabel } from '@polivalko/shared/lib/labels'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { getOrders } from '../api/ordersApi'
 import { orderHref } from '../lib/orderFilters'
-import { OrderCard, OrderCardBody, OrderCardNote } from './OrderCard'
+import { OrderCard, OrderCardBody, OrderLoadState } from './OrderCard'
 
 export function OrderOthersCard({ phone, current }: { phone: string; current: string }) {
   const others = useApiQuery(`order-others:${phone}`, () => getOrders({ q: phone, page: 1, pageSize: 6 }))
-  const rows = others.data?.items.filter((row) => row.number !== current) ?? []
-  const total = Math.max((others.data?.totalItems ?? 1) - 1, 0)
+  const loaded = others.status === 'ready' ? others.data : undefined
+  const rows = loaded?.items.filter((row) => row.number !== current) ?? []
+  const total = loaded ? Math.max(loaded.totalItems - 1, 0) : 0
 
   return (
     <OrderCard
@@ -24,11 +25,7 @@ export function OrderOthersCard({ phone, current }: { phone: string; current: st
         ) : null
       }
     >
-      {others.status === 'loading' ? (
-        <OrderCardNote>Завантажуємо…</OrderCardNote>
-      ) : rows.length === 0 ? (
-        <OrderCardNote>Це перше замовлення покупця.</OrderCardNote>
-      ) : (
+      <OrderLoadState state={others} empty={loaded && rows.length === 0 ? 'Це перше замовлення покупця.' : undefined}>
         <OrderCardBody className="order-others-body">
           <ul className="order-others">
             {rows.map((row) => (
@@ -47,7 +44,7 @@ export function OrderOthersCard({ phone, current }: { phone: string; current: st
             ))}
           </ul>
         </OrderCardBody>
-      )}
+      </OrderLoadState>
     </OrderCard>
   )
 }

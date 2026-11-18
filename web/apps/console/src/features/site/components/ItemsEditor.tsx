@@ -21,7 +21,7 @@ export function ItemsEditor({ name, noun, items, max, errors, onChange, onClearF
 
   return (
     <div className="site-items">
-      {items.length === 0 ? <p className="site-muted">Пунктів немає: блок на сайті буде порожнім. Додайте пункт або вимкніть блок вище.</p> : null}
+      {items.length === 0 ? <p className="site-muted">Пунктів немає: вітрина покаже типові тексти цього блоку. Додайте свої пункти або вимкніть блок вище.</p> : null}
       <ol className="site-item-list">
         {items.map((item, index) => {
           const label = item.title.trim() || `${noun} ${index + 1}`

@@ -1,7 +1,8 @@
 import { Alert, Button, SimpleGrid, Textarea, TextInput } from '@mantine/core'
 import { useHotkeys } from '@mantine/hooks'
 import { IconAlertTriangle, IconCalendarEvent, IconDeviceFloppy, IconFileCertificate, IconMapPin, IconPhone, IconShare } from '@tabler/icons-react'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
+import { LeaveGuard } from '@/shared/ui/LeaveGuard'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { TableChip } from '@/shared/ui/TableChip'
@@ -106,13 +107,6 @@ export function ShopSettingsForm({ contacts, shop, onSaved }: ShopSettingsFormPr
   const [active, select] = useSettingsSection(SECTION_KEYS)
   const invalid = useErrorSections(form.errors, sectionOfField)
   useJumpToErrors(SECTION_KEYS, invalid, active, select)
-
-  useEffect(() => {
-    if (!dirty) return undefined
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault()
-    window.addEventListener('beforeunload', warn)
-    return () => window.removeEventListener('beforeunload', warn)
-  }, [dirty])
 
   useHotkeys([['mod+S', () => formRef.current?.requestSubmit()]], [])
 
@@ -296,6 +290,7 @@ export function ShopSettingsForm({ contacts, shop, onSaved }: ShopSettingsFormPr
           </section>
         </form>
       </ListPageBody>
+      <LeaveGuard when={dirty} />
     </ListPage>
   )
 }

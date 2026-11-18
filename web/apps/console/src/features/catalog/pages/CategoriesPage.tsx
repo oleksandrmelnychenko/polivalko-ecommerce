@@ -23,6 +23,7 @@ import { useListParams } from '../lib/useListParams'
 import '../components/catalog.css'
 import '@/shared/ui/split/split.css'
 import '../components/catalog-detail.css'
+import { DrawerCancelButton } from '@/shared/ui/DrawerCancelButton'
 
 const FORM_ID = 'catalog-category-form'
 const getRowId = (row: OrderedCategory) => row.id
@@ -40,6 +41,7 @@ export function CategoriesPage() {
   const [busy, setBusy] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [formDirty, setFormDirty] = useState(false)
 
   const all = useMemo(() => categories.data ?? [], [categories.data])
   const ordered = useMemo(() => orderCategories(all), [all])
@@ -51,6 +53,7 @@ export function CategoriesPage() {
 
   const open = useCallback((category: ConsoleCategory | null) => {
     setDeleteError(null)
+    setFormDirty(false)
     setEditing({ category, key: Date.now() })
     setOpened(true)
   }, [])
@@ -238,6 +241,7 @@ export function CategoriesPage() {
       <AppDrawer
         opened={opened}
         onClose={close}
+        dirty={formDirty && !busy}
         title={current ? `Категорія «${current.name}»` : 'Нова підкатегорія'}
         size="compact"
         closeOnEscape={!busy}
@@ -251,9 +255,7 @@ export function CategoriesPage() {
               <span />
             )}
             <Group gap="xs">
-              <Button variant="default" disabled={busy} onClick={close}>
-                Скасувати
-              </Button>
+              <DrawerCancelButton disabled={busy} onCancel={close} />
               <Button type="submit" form={FORM_ID} loading={busy}>
                 Зберегти категорію
               </Button>
@@ -270,6 +272,7 @@ export function CategoriesPage() {
             error={deleteError}
             onBusy={setBusy}
             onSaved={saved}
+            onDirty={setFormDirty}
           /> : null}
       </AppDrawer>
 

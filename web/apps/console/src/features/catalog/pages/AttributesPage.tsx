@@ -1,9 +1,11 @@
 import { ActionIcon, Button, Select, Tooltip } from '@mantine/core'
 import { IconFilterOff, IconPlus, IconRefresh } from '@tabler/icons-react'
 import { useCallback, useMemo } from 'react'
+import { usePermissions } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemCode, problemMessage, type Problem } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
+import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { AppDrawer } from '@/shared/ui/AppDrawer'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { FilterBar } from '@/shared/ui/FilterBar'
@@ -46,6 +48,7 @@ function deleteProblemText(error: unknown): string {
 }
 
 export function AttributesPage() {
+  const { can } = usePermissions()
   const attributes = useApiQuery('catalog-attributes', () => getAttributes())
   const { values, set, reset } = useListParams(PARAM_KEYS)
   const drawer = useEditorDrawer<AttributeDefinition>()
@@ -70,7 +73,7 @@ export function AttributesPage() {
   const selected = rows.find((row) => row.id === picked.id) ?? rows[0] ?? null
   const selectedId = selected?.id ?? null
   const selectAttribute = useCallback((id: string) => pick({ id }), [pick])
-  const productCounts = useApiQuery('catalog-products-counts', () => getProductCounts())
+  const productCounts = useApiQuery('catalog-products-counts', () => getProductCounts(), { enabled: can(PermissionKeys.Catalog.ViewProducts) })
   const details = useApiQuery(`catalog-attribute-details:${selectedId}`, () => getAttributeDetails(selectedId ?? ''), { enabled: Boolean(selectedId) })
 
   function saved(next: AttributeDefinition | undefined) {
@@ -161,6 +164,7 @@ export function AttributesPage() {
       <AppDrawer
         opened={drawer.opened}
         onClose={drawer.close}
+        dirty={drawer.dirty}
         title={current ? `Характеристика «${current.name}»` : 'Нова характеристика'}
         size="compact"
         closeOnEscape={!drawer.busy}
@@ -175,6 +179,7 @@ export function AttributesPage() {
             error={drawer.actionError}
             onBusy={drawer.setBusy}
             onSaved={saved}
+            onDirty={drawer.setDirty}
           />
         ) : null}
       </AppDrawer>

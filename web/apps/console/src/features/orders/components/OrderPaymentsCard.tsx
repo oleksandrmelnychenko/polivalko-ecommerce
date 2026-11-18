@@ -7,7 +7,7 @@ import { attemptLabel, outcomeTone } from '../lib/orderDetail'
 import { OrderCard, OrderLoadState } from './OrderCard'
 
 export function OrderPaymentsCard({ number, version }: { number: string; version: string }) {
-  const payments = useApiQuery(`order-payments:${number}:${version}`, () => getOrderPayments(number))
+  const payments = useApiQuery(`order-payments:${number}:${version}`, () => getOrderPayments(number), { keepPrevious: true })
   const rows = payments.data ?? []
 
   return (

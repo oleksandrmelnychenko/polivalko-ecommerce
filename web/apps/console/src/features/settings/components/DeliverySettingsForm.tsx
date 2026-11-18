@@ -1,8 +1,9 @@
 import { Alert, Button, SimpleGrid, Stack, Switch, TextInput } from '@mantine/core'
 import { IconAlertTriangle, IconBuildingStore, IconDeviceFloppy, IconMailbox, IconTruckDelivery } from '@tabler/icons-react'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import type { ApiQuery } from '@/shared/api/useApiQuery'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
+import { LeaveGuard } from '@/shared/ui/LeaveGuard'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { TableChip } from '@/shared/ui/TableChip'
@@ -76,13 +77,6 @@ export function DeliverySettingsForm({ initial, points, onSaved, onEditPoint }: 
   const [active, select] = useSettingsSection(SECTION_KEYS)
   const invalid = useErrorSections(form.errors, sectionOfField)
   useJumpToErrors(SECTION_KEYS, invalid, active, select)
-
-  useEffect(() => {
-    if (!dirty) return undefined
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault()
-    window.addEventListener('beforeunload', warn)
-    return () => window.removeEventListener('beforeunload', warn)
-  }, [dirty])
 
   function set<G extends keyof Values>(group: G, patch: Partial<Values[G]>, field: string) {
     setValues((current) => ({ ...current, [group]: { ...current[group], ...patch } }))
@@ -267,6 +261,7 @@ export function DeliverySettingsForm({ initial, points, onSaved, onEditPoint }: 
           </section>
         </form>
       </ListPageBody>
+      <LeaveGuard when={dirty} />
     </ListPage>
   )
 }

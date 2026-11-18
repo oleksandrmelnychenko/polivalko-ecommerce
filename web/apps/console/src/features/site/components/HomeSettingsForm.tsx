@@ -1,11 +1,12 @@
 import { Button } from '@mantine/core'
 import { useHotkeys } from '@mantine/hooks'
 import { IconDeviceFloppy } from '@tabler/icons-react'
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
+import { LeaveGuard } from '@/shared/ui/LeaveGuard'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { TableChip } from '@/shared/ui/TableChip'
@@ -96,13 +97,6 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
     [setParams],
   )
 
-  useEffect(() => {
-    if (!dirty) return undefined
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault()
-    window.addEventListener('beforeunload', warn)
-    return () => window.removeEventListener('beforeunload', warn)
-  }, [dirty])
-
   useHotkeys([['mod+S', () => formRef.current?.requestSubmit()]], [])
 
   function patch(next: Partial<HomeForm>) {
@@ -188,6 +182,7 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
           <HomeSectionPane section={section} values={values} errors={form.errors} banners={banners.data ?? null} patch={patch} onClearField={form.clearField} />
         </form>
       </ListPageBody>
+      <LeaveGuard when={dirty} />
     </ListPage>
   )
 }

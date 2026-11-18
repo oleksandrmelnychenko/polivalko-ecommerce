@@ -3,6 +3,7 @@ import { IconAlertCircle, IconAlertTriangle } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
 import { fieldErrors, NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
+import { useReportDirty } from '@/shared/lib/useReportDirty'
 import { saveBrand, type Brand } from '../api/dictionariesApi'
 import { ImageUploadField } from './ImageUploadField'
 
@@ -12,19 +13,22 @@ type BrandFormProps = {
   error: string | null
   onBusy: (busy: boolean) => void
   onSaved: (brand: Brand | undefined) => void
+  onDirty?: (dirty: boolean) => void
 }
 
 type Fields = { name: string; slug: string; description: string; logoUrl: string | null }
 
 const MAX_DESCRIPTION = 2000
 
-export function BrandForm({ formId, brand, error, onBusy, onSaved }: BrandFormProps) {
+export function BrandForm({ formId, brand, error, onBusy, onSaved, onDirty }: BrandFormProps) {
   const [fields, setFields] = useState<Fields>(() => ({
     name: brand?.name ?? '',
     slug: brand?.slug ?? '',
     description: brand?.description ?? '',
     logoUrl: brand?.logoUrl ?? null,
   }))
+  const [pristine] = useState(() => JSON.stringify(fields))
+  useReportDirty(JSON.stringify(fields) !== pristine, onDirty)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)

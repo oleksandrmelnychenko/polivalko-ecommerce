@@ -2,13 +2,17 @@ import { ActionIcon, Alert, Button, Group, NumberInput, SimpleGrid, Stack, Switc
 import { IconAlertCircle, IconArrowDown, IconArrowUp, IconPlus, IconSearch, IconX } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { formatMoney } from '@polivalko/shared/lib/format'
+import { usePermissions } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
 import { fieldErrors, NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
+import { PermissionKeys } from '@/shared/auth/permissionKeys'
+import { useReportDirty } from '@/shared/lib/useReportDirty'
 import { getProducts, saveCollection, type ConsoleCollection, type ProductRow } from '../api/catalogApi'
 import { productName } from '../lib/productFilters'
 import { ProductThumb } from './ProductThumb'
 
 const MAX_ITEMS = 24
+const SEARCH_FORBIDDEN = 'Щоб додавати товари в добірку, потрібне право перегляду товарів.'
 
 type CollectionFormProps = {
   formId: string
@@ -16,11 +20,13 @@ type CollectionFormProps = {
   error: string | null
   onBusy: (busy: boolean) => void
   onSaved: () => void
+  onDirty?: (dirty: boolean) => void
 }
 
 type Fields = { title: string; code: string; sortOrder: number | string; isVisible: boolean }
 
-export function CollectionForm({ formId, collection, error, onBusy, onSaved }: CollectionFormProps) {
+export function CollectionForm({ formId, collection, error, onBusy, onSaved, onDirty }: CollectionFormProps) {
+  const { can } = usePermissions()
   const [fields, setFields] = useState<Fields>(() => ({
     title: collection?.title ?? 'Рекомендовані товари',
     code: collection?.code ?? 'recommended',
@@ -28,9 +34,14 @@ export function CollectionForm({ formId, collection, error, onBusy, onSaved }: C
     isVisible: collection?.isVisible ?? true,
   }))
   const [items, setItems] = useState<ProductRow[]>(collection?.products ?? [])
+  const snapshot = JSON.stringify({ fields, items: items.map((item) => item.id) })
+  const [pristine] = useState(snapshot)
+  useReportDirty(snapshot !== pristine, onDirty)
   const [query, setQuery] = useState('')
   const [found, setFound] = useState<ProductRow[] | null>(null)
   const [searching, setSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
+  const canSearch = can(PermissionKeys.Catalog.ViewProducts)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -51,12 +62,20 @@ export function CollectionForm({ formId, collection, error, onBusy, onSaved }: C
 
   async function search(event: FormEvent) {
     event.preventDefault()
+    if (!canSearch) return
     setSearching(true)
+    setSearchError(null)
     try {
-      const { data } = await getProducts({ q: query.trim() || undefined, visible: true, pageSize: 20 })
-      setFound(data?.items ?? [])
+      const { data, error, response } = await getProducts({ q: query.trim() || undefined, visible: true, pageSize: 20 })
+      if (data) {
+        setFound(data.items)
+      } else {
+        setFound(null)
+        setSearchError(response.status === 403 ? SEARCH_FORBIDDEN : problemMessage(error, 'Не вдалося знайти товари. Спробуйте ще раз.'))
+      }
     } catch {
-      setFound([])
+      setFound(null)
+      setSearchError(NETWORK_ERROR)
     }
     setSearching(false)
   }
@@ -183,13 +202,19 @@ export function CollectionForm({ formId, collection, error, onBusy, onSaved }: C
               leftSection={<IconSearch size={16} stroke={1.7} />}
               value={query}
               autoComplete="off"
+              disabled={!canSearch}
               onChange={(event) => setQuery(event.currentTarget.value)}
             />
-            <Button type="submit" variant="default" loading={searching}>
+            <Button type="submit" variant="default" loading={searching} disabled={!canSearch}>
               Знайти
             </Button>
           </Group>
         </form>
+        {!canSearch || searchError ? (
+          <Text size="sm" c={canSearch ? 'red' : 'dimmed'} mt="xs" role={canSearch ? 'alert' : undefined}>
+            {canSearch ? searchError : SEARCH_FORBIDDEN}
+          </Text>
+        ) : null}
         {found && found.length === 0 ? (
           <Text size="sm" c="dimmed" mt="xs">
             Товарів за цими умовами немає.

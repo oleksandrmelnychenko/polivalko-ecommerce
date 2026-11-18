@@ -3,7 +3,6 @@ import { IconDownload } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { OrderStatus } from '@polivalko/shared/api/types'
-import { plural } from '@polivalko/shared/lib/format'
 import { orderStatusLabel } from '@polivalko/shared/lib/labels'
 import { Can, usePermissions } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
@@ -11,24 +10,27 @@ import { problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { notifySummaryStale } from '@/shared/lib/events'
-import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableSortingState } from '@/shared/ui/data-table/types'
+import { usePageSelection } from '@/shared/ui/data-table/usePageSelection'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { notifyError, notifySuccess } from '@/shared/ui/notify'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { changeOrderStatus, exportOrders, getOrderCounts, getOrders, type OrderRow } from '../api/ordersApi'
 import { OrdersBulkBar } from '../components/OrdersBulkBar'
+import { OrdersBulkConfirm } from '../components/OrdersBulkConfirm'
 import { ordersColumns } from '../components/ordersColumns'
 import { OrdersFilters } from '../components/OrdersFilters'
 import { OrdersStatusTabs } from '../components/OrdersStatusTabs'
 import { hasActiveFilters, orderHref, sortingToSort, sortToSorting, toApiFilters, toListQuery } from '../lib/orderFilters'
+import { statusProblemText } from '../lib/statusProblem'
 import { useOrdersState } from '../lib/useOrdersState'
 import './orders.css'
 
 const getRowId = (row: OrderRow) => row.number
 const countFormat = new Intl.NumberFormat('uk-UA')
+const BULK_COMMENT = 'Масова зміна статусу'
 
 export function OrdersPage() {
   const navigate = useNavigate()
@@ -36,14 +38,16 @@ export function OrdersPage() {
   const { state, params, update, reset } = useOrdersState()
   const listQuery = useMemo(() => toListQuery(state), [state])
   const countsQuery = useMemo(() => toApiFilters(state), [state])
-  const orders = useApiQuery(`orders:${JSON.stringify(listQuery)}`, () => getOrders(listQuery))
-  const counts = useApiQuery(`orders-counts:${JSON.stringify(countsQuery)}`, () => getOrderCounts(countsQuery))
+  const orders = useApiQuery(`orders:${JSON.stringify(listQuery)}`, () => getOrders(listQuery), { keepPrevious: true })
+  const counts = useApiQuery(`orders-counts:${JSON.stringify(countsQuery)}`, () => getOrderCounts(countsQuery), { keepPrevious: true })
   const filtered = hasActiveFilters(state)
   const canChangeStatus = can(PermissionKeys.Orders.ChangeStatus)
 
-  const selectionKey = params.toString()
-  const [selection, setSelection] = useState<{ key: string; ids: ReadonlySet<string> }>({ key: selectionKey, ids: new Set() })
-  const selected = selection.key === selectionKey ? selection.ids : EMPTY_SELECTION
+  const page = orders.data
+  const failed = orders.status === 'error' || orders.status === 'forbidden'
+  const rows = useMemo(() => (failed ? [] : (page?.items ?? [])), [failed, page])
+  const rowIds = useMemo(() => rows.map(getRowId), [rows])
+  const { selected, select, clear: clearSelection } = usePageSelection(params.toString(), rowIds)
   const [bulkStatus, setBulkStatus] = useState<OrderStatus | null>(null)
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -57,15 +61,12 @@ export function OrdersPage() {
       canChangeStatus
         ? {
             selected,
-            onChange: (ids: ReadonlySet<string>) => setSelection({ key: selectionKey, ids }),
+            onChange: select,
             rowLabel: (id: string) => `Вибрати замовлення ${id}`,
           }
         : undefined,
-    [canChangeStatus, selected, selectionKey],
+    [canChangeStatus, selected, select],
   )
-
-  const page = orders.data
-  const rows = orders.status === 'error' || orders.status === 'forbidden' ? [] : (page?.items ?? [])
 
   function reloadAll() {
     orders.reload()
@@ -73,28 +74,31 @@ export function OrdersPage() {
     notifySummaryStale()
   }
 
-  async function applyBulk() {
+  async function applyBulk(cancelReason: string) {
     if (!bulkStatus) return
     const numbers = [...selected]
+    if (numbers.length === 0) return
+    const reason = bulkStatus === 'cancelled' ? cancelReason.trim() : BULK_COMMENT
+    if (!reason) return
     setBusy(true)
     let done = 0
-    const failed: string[] = []
+    const skipped: string[] = []
     for (const number of numbers) {
       try {
-        const result = await withCsrf((headers) => changeOrderStatus(headers, number, { status: bulkStatus, reason: 'Масова зміна статусу' }))
+        const result = await withCsrf((headers) => changeOrderStatus(headers, number, { status: bulkStatus, reason }))
         if (result.data) done += 1
-        else failed.push(`${number}: ${problemMessage(result.error, 'не змінено')}`)
+        else skipped.push(`${number}: ${statusProblemText(result.error, 'не змінено').replace(/\.$/, '')}`)
       } catch {
-        failed.push(`${number}: немає зв'язку з сервером`)
+        skipped.push(`${number}: немає зв'язку з сервером`)
       }
     }
     setBusy(false)
     setConfirming(false)
-    setSelection({ key: selectionKey, ids: new Set() })
+    clearSelection()
     setBulkStatus(null)
     const label = orderStatusLabel[bulkStatus]
-    if (failed.length === 0) notifySuccess(`Статус «${label}» встановлено для ${done} з ${numbers.length}.`)
-    else notifyError(`Статус «${label}» встановлено для ${done} з ${numbers.length}. Пропущено: ${failed.join('; ')}.`)
+    if (skipped.length === 0) notifySuccess(`Статус «${label}» встановлено для ${done} з ${numbers.length}.`)
+    else notifyError(`Статус «${label}» встановлено для ${done} з ${numbers.length}. Пропущено: ${skipped.join('; ')}.`)
     reloadAll()
   }
 
@@ -109,19 +113,20 @@ export function OrdersPage() {
     if (!ok) notifyError('Не вдалося вивантажити CSV. Спробуйте ще раз.')
   }
 
-  const emptyText =
-    orders.status === 'error' ? (
-      <Stack align="center" gap={8}>
-        <Text size="sm">{problemMessage(orders.problem, 'Не вдалося завантажити замовлення.')}</Text>
+  const emptyText = failed ? (
+    <Stack align="center" gap={8}>
+      <Text size="sm">{problemMessage(orders.problem, orders.status === 'forbidden' ? 'Недостатньо прав, щоб переглядати замовлення.' : 'Не вдалося завантажити замовлення.')}</Text>
+      {orders.status === 'error' ? (
         <Button size="xs" variant="default" onClick={orders.reload}>
           Спробувати ще раз
         </Button>
-      </Stack>
-    ) : filtered || state.status ? (
-      'За цими умовами замовлень немає.'
-    ) : (
-      'Замовлень ще немає.'
-    )
+      ) : null}
+    </Stack>
+  ) : filtered || state.status ? (
+    'За цими умовами замовлень немає.'
+  ) : (
+    'Замовлень ще немає.'
+  )
 
   return (
     <ListPage>
@@ -185,21 +190,18 @@ export function OrdersPage() {
           busy={busy}
           onStatus={setBulkStatus}
           onApply={() => setConfirming(true)}
-          onClear={() => setSelection({ key: selectionKey, ids: new Set() })}
+          onClear={clearSelection}
         />
       ) : null}
 
-      <ConfirmDialog
-        opened={confirming}
-        title="Змінити статус"
-        message={bulkStatus ? `Встановити статус «${orderStatusLabel[bulkStatus]}» для ${selected.size} ${plural(selected.size, 'замовлення', 'замовлення', 'замовлень')}?` : ''}
-        confirmLabel="Змінити статус"
+      <OrdersBulkConfirm
+        opened={confirming && selected.size > 0}
+        status={bulkStatus}
+        count={selected.size}
         busy={busy}
-        onConfirm={() => void applyBulk()}
+        onConfirm={(reason) => void applyBulk(reason)}
         onClose={() => setConfirming(false)}
       />
     </ListPage>
   )
 }
-
-const EMPTY_SELECTION: ReadonlySet<string> = new Set()

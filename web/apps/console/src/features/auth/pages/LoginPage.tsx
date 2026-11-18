@@ -11,7 +11,7 @@ import './login.css'
 type LoginLocationState = { from?: ReturnLocation } | null
 
 export function LoginPage() {
-  const { status, login } = useAuth()
+  const { status, reconnecting, login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [email, setEmail] = useState('')
@@ -146,8 +146,19 @@ export function LoginPage() {
                 <Alert className="login-alert" color="red" variant="light" icon={<IconAlertCircle size={18} />} role="alert">
                   {error}
                 </Alert>
+              ) : reconnecting ? (
+                <Alert className="login-alert" color="yellow" variant="light" icon={<IconAlertCircle size={18} />} role="status">
+                  Сервер не відповідає. Пробуємо з&apos;єднатися ще раз…
+                </Alert>
               ) : null}
-              <Button className="login-submit" type="submit" fullWidth loading={busy} disabled={status === 'loading'} rightSection={<IconArrowRight size={18} stroke={1.8} />}>
+              <Button
+                className="login-submit"
+                type="submit"
+                fullWidth
+                loading={busy}
+                disabled={status === 'loading' && !reconnecting}
+                rightSection={<IconArrowRight size={18} stroke={1.8} />}
+              >
                 {codeStep ? 'Підтвердити' : 'Увійти'}
               </Button>
               {codeStep ? (

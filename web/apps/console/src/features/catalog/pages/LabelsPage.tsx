@@ -1,9 +1,11 @@
 import { ActionIcon, Button, Tooltip } from '@mantine/core'
 import { IconPlus, IconRefresh } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
+import { usePermissions } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
+import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { AppDrawer } from '@/shared/ui/AppDrawer'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
@@ -33,6 +35,7 @@ const SELECT_KEYS = ['id'] as const
 const countFormat = new Intl.NumberFormat('uk-UA')
 
 export function LabelsPage() {
+  const { can } = usePermissions()
   const labels = useApiQuery('catalog-labels', () => getLabels())
   const drawer = useEditorDrawer<ProductLabel>()
   const { open, current } = drawer
@@ -45,7 +48,7 @@ export function LabelsPage() {
   const { values: picked, set: pick } = useListParams(SELECT_KEYS)
   const selected = rows.find((row) => row.id === picked.id) ?? rows[0] ?? null
   const selectedId = selected?.id ?? null
-  const productCounts = useApiQuery('catalog-products-counts', () => getProductCounts())
+  const productCounts = useApiQuery('catalog-products-counts', () => getProductCounts(), { enabled: can(PermissionKeys.Catalog.ViewProducts) })
   const selectRow = useCallback((row: ProductLabel) => pick({ id: row.id }), [pick])
   const rowClassName = useCallback((row: ProductLabel) => (row.id === selectedId ? 'app-split-row-active' : undefined), [selectedId])
 
@@ -188,6 +191,7 @@ export function LabelsPage() {
       <AppDrawer
         opened={drawer.opened}
         onClose={drawer.close}
+        dirty={drawer.dirty}
         title={current ? `Мітка «${current.name}»` : 'Нова мітка'}
         size="compact"
         closeOnEscape={!drawer.busy}
@@ -202,6 +206,7 @@ export function LabelsPage() {
             error={drawer.actionError}
             onBusy={drawer.setBusy}
             onSaved={saved}
+            onDirty={drawer.setDirty}
           />
         ) : null}
       </AppDrawer>

@@ -2,6 +2,7 @@ import { Button, CloseButton, Group, InputBase, Popover, TextInput } from '@mant
 import { DatePicker, type DatePickerPreset } from '@mantine/dates'
 import { IconCalendar } from '@tabler/icons-react'
 import { useState } from 'react'
+import { kyivDay, shiftDay } from '../lib/kyivTime'
 import './date-range-filter.css'
 
 export type DateRange = { from: string; to: string }
@@ -124,23 +125,17 @@ function displayDate(value: string) {
   return value ? value.split('-').reverse().join('.') : '…'
 }
 
-function isoDate(value: Date) {
-  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`
-}
-
 function buildPresets(): DatePickerPreset<'range'>[] {
-  const today = new Date()
-  const shifted = (days: number) => isoDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() - days))
-  const end = isoDate(today)
+  const end = kyivDay(new Date())
+  const shifted = (days: number) => shiftDay(end, -days)
+  const monthStart = `${end.slice(0, 8)}01`
+  const previousMonthEnd = shiftDay(monthStart, -1)
   return [
     { label: 'Сьогодні', value: [end, end] },
     { label: 'Вчора', value: [shifted(1), shifted(1)] },
     { label: '7 днів', value: [shifted(6), end] },
     { label: '30 днів', value: [shifted(29), end] },
-    { label: 'Цей місяць', value: [isoDate(new Date(today.getFullYear(), today.getMonth(), 1)), end] },
-    {
-      label: 'Минулий місяць',
-      value: [isoDate(new Date(today.getFullYear(), today.getMonth() - 1, 1)), isoDate(new Date(today.getFullYear(), today.getMonth(), 0))],
-    },
+    { label: 'Цей місяць', value: [monthStart, end] },
+    { label: 'Минулий місяць', value: [`${previousMonthEnd.slice(0, 8)}01`, previousMonthEnd] },
   ]
 }

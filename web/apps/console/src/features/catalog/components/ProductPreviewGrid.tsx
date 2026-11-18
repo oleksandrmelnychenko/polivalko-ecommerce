@@ -1,8 +1,9 @@
-import { Skeleton } from '@mantine/core'
+import { Button, Skeleton } from '@mantine/core'
 import { IconArrowRight, IconPhoto } from '@tabler/icons-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { thumb } from '@polivalko/shared/lib/images'
+import { problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { Money } from '@/shared/ui/Money'
 import { getProducts, type ProductRow, type ProductsQuery } from '../api/catalogApi'
@@ -11,6 +12,8 @@ import { LabelChip } from './LabelChip'
 
 const PREVIEW_SIZE = 12
 const countFormat = new Intl.NumberFormat('uk-UA')
+
+export const PRODUCTS_FORBIDDEN = 'Щоб бачити товари, потрібне право перегляду товарів.'
 
 export function ProductTilesGrid({ items }: { items: readonly ProductRow[] }) {
   return (
@@ -66,8 +69,9 @@ type ProductPreviewGridProps = {
 
 export function ProductPreviewGrid({ title, cacheKey, filter, listHref, enabled, emptyText }: ProductPreviewGridProps) {
   const preview = useApiQuery(cacheKey, () => getProducts({ ...filter, page: 1, pageSize: PREVIEW_SIZE }), { enabled })
-  const total = preview.data?.totalItems ?? 0
-  const items = preview.data?.items ?? []
+  const failed = preview.status === 'error' || preview.status === 'forbidden'
+  const total = failed ? 0 : (preview.data?.totalItems ?? 0)
+  const items = failed ? [] : (preview.data?.items ?? [])
 
   return (
     <PreviewCard
@@ -89,6 +93,15 @@ export function ProductPreviewGrid({ title, cacheKey, filter, listHref, enabled,
             <Skeleton key={index} height={190} radius={10} />
           ))}
         </div>
+      ) : preview.status === 'forbidden' ? (
+        <p className="app-split-blank">{PRODUCTS_FORBIDDEN}</p>
+      ) : preview.status === 'error' ? (
+        <>
+          <p className="app-split-blank">{problemMessage(preview.problem, 'Не вдалося завантажити товари.')}</p>
+          <Button size="xs" variant="default" onClick={preview.reload}>
+            Спробувати ще раз
+          </Button>
+        </>
       ) : items.length === 0 ? (
         <p className="app-split-blank">{emptyText}</p>
       ) : (

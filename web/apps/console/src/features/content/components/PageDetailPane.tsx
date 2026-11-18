@@ -25,7 +25,7 @@ export function PageDetailPane({ item }: { item: PageListItem | null }) {
 }
 
 function PageDetail({ item }: { item: PageListItem }) {
-  const page = useApiQuery(`content-page:${item.slug}:${item.updatedAt}`, () => getPage(item.slug))
+  const page = useApiQuery(`content-page:${item.slug}:${item.updatedAt}`, () => getPage(item.slug), { keepPrevious: true })
   const data = page.data
   const updated = moment(item.updatedAt)
   const words = wordCount(data?.bodyHtml)

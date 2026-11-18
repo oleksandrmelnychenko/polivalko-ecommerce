@@ -6,6 +6,7 @@ import { usePermissions } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
 import { fieldErrors, NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
+import { LeaveGuard } from '@/shared/ui/LeaveGuard'
 import { notifyError, notifySuccess } from '@/shared/ui/notify'
 import { updateProduct, type Product, type UpdateProductRequest } from '../api/catalogApi'
 import type { Brand, ProductLabel } from '../api/dictionariesApi'
@@ -59,15 +60,31 @@ function initialLabelIds(product: Product): string[] {
   return [...product.labelIds]
 }
 
+function filledAttributes(attributes: AttributeRow[]) {
+  return attributes.filter((a) => a.name.trim() || a.value.trim()).map(({ name, value }) => ({ name, value }))
+}
+
+function editorSnapshot(fields: Fields, description: string, attributes: AttributeRow[], labelIds: string[]): string {
+  return JSON.stringify({ fields, description, attributes: filledAttributes(attributes), labelIds })
+}
+
 export function ProductEditorForm({ formId, product, categories, brands, labels, readOnly, onBusy, onSaved }: ProductEditorFormProps) {
   const { can } = usePermissions()
-  const [fields, setFields] = useState<Fields>(() => initialFields(product, brands))
-  const [description, setDescription] = useState(product.descriptionHtml ?? '')
-  const [attributes, setAttributes] = useState<AttributeRow[]>(() => attributeRows(product.attributes))
-  const [labelIds, setLabelIds] = useState<string[]>(() => initialLabelIds(product))
+  const [start] = useState(() => ({
+    fields: initialFields(product, brands),
+    description: product.descriptionHtml ?? '',
+    attributes: attributeRows(product.attributes),
+    labelIds: initialLabelIds(product),
+  }))
+  const [fields, setFields] = useState<Fields>(start.fields)
+  const [description, setDescription] = useState(start.description)
+  const [attributes, setAttributes] = useState<AttributeRow[]>(start.attributes)
+  const [labelIds, setLabelIds] = useState<string[]>(start.labelIds)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const pristine = useMemo(() => editorSnapshot(start.fields, start.description, start.attributes, start.labelIds), [start])
+  const dirty = !readOnly && editorSnapshot(fields, description, attributes, labelIds) !== pristine
 
   const categoryData = categories.some((option) => option.value === product.categoryId)
     ? categories
@@ -99,7 +116,7 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
         isVisible: fields.isVisible,
         seoTitle: orNull(fields.seoTitle),
         seoDescription: orNull(fields.seoDescription),
-        attributes: attributes.filter((a) => a.name.trim() || a.value.trim()).map(({ name, value }) => ({ name, value })),
+        attributes: filledAttributes(attributes),
         labelIds: labels === null ? undefined : labelIds,
       }
       const result = await withCsrf((headers) => updateProduct(headers, product.id, body))
@@ -265,6 +282,7 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
           </div>
         )}
       </fieldset>
+      <LeaveGuard when={dirty} message="Зміни в товарі не збережено. Піти зі сторінки без збереження?" />
     </form>
   )
 }

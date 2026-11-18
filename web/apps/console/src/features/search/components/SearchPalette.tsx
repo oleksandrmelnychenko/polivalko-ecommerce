@@ -4,6 +4,7 @@ import { useEffect, useEffectEvent, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useNavigation } from '@/features/navigation'
 import { onConsoleEvent } from '@/shared/lib/events'
+import { interceptLeave } from '@/shared/lib/useLeaveGuard'
 import { searchConsole } from '../api/searchApi'
 import { MIN_TERM_LENGTH, paletteGroups, type PaletteItem, type SearchResult } from '../lib/paletteItems'
 import './search.css'
@@ -71,6 +72,7 @@ export function SearchPalette() {
   function go(item: PaletteItem | undefined) {
     if (!item) return
     setOpened(false)
+    if (interceptLeave(item.href)) return
     navigate(item.href)
   }
 

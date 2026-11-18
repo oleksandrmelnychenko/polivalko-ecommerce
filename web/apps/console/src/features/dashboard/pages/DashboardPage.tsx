@@ -34,7 +34,7 @@ export function DashboardPage() {
   const canCatalog = can(PermissionKeys.Catalog.ViewProducts)
   const canIntegration = can(PermissionKeys.Integration.ViewStatus)
 
-  const dashboard = useApiQuery(`dashboard:${days}`, () => getDashboard(days))
+  const dashboard = useApiQuery(`dashboard:${days}`, () => getDashboard(days), { keepPrevious: true })
   const summary = useApiQuery('dashboard-summary', () => getDashboardSummary())
   const latest = useApiQuery('dashboard-latest', () => getLatestOrders(), { enabled: canOrders })
   const productCounts = useApiQuery('dashboard-product-counts', () => getProductCounts(), { enabled: canCatalog })

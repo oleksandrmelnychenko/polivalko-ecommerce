@@ -153,7 +153,7 @@ export function JobDetailPane(props: JobDetailPaneProps) {
 
       {job.job === NOVA_POSHTA_JOB ? <NovaPoshtaCard np={np} /> : null}
 
-      <JobRunsCard job={job} refreshKey={refreshKey} onExpand={onExpand} onOpenRuns={onOpenRuns} />
+      <JobRunsCard key={job.job} job={job} refreshKey={refreshKey} onExpand={onExpand} onOpenRuns={onOpenRuns} />
     </section>
   )
 }

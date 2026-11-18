@@ -8,9 +8,11 @@ export function useEditorDrawer<T>() {
   const [busy, setBusy] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [dirty, setDirty] = useState(false)
 
   const open = useCallback((item: T | null) => {
     setActionError(null)
+    setDirty(false)
     setEditing({ item, key: Date.now() })
     setOpened(true)
   }, [])
@@ -30,6 +32,8 @@ export function useEditorDrawer<T>() {
     setConfirming,
     actionError,
     setActionError,
+    dirty: dirty && !busy,
+    setDirty,
     open,
     close,
   }

@@ -29,7 +29,7 @@ export function AccountDetailPane({ id, canManage, canViewOrders, onChanged }: A
 
   if (!id) return <section className="app-split-detail app-split-detail-empty">Оберіть кабінет зліва.</section>
 
-  const data = account.isFetching && account.data?.id !== id ? undefined : account.data
+  const data = account.data?.id === id ? account.data : undefined
 
   if (!data) {
     if (account.isFetching) {

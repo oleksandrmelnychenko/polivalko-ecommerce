@@ -23,7 +23,7 @@ export function AccountsTab() {
   const canViewOrders = can(PermissionKeys.Orders.View)
   const { state, update } = useAccountsState()
   const query = useMemo(() => toAccountsQuery(state), [state])
-  const accounts = useApiQuery(`accounts:${JSON.stringify(query)}`, () => getAccounts(query))
+  const accounts = useApiQuery(`accounts:${JSON.stringify(query)}`, () => getAccounts(query), { keepPrevious: true })
   const [params, setParams] = useSearchParams()
   const pickedId = params.get('id')
 
@@ -97,7 +97,7 @@ export function AccountsTab() {
               emptyText={emptyText}
             />
           </div>
-          <AccountDetailPane id={selectedId} canManage={canManage} canViewOrders={canViewOrders} onChanged={accounts.reload} />
+          <AccountDetailPane key={selectedId ?? ''} id={selectedId} canManage={canManage} canViewOrders={canViewOrders} onChanged={accounts.reload} />
         </div>
       </ListPageBody>
     </>

@@ -4,9 +4,9 @@ import type { OrderStatus } from '@polivalko/shared/api/types'
 import { orderStatusLabel } from '@polivalko/shared/lib/labels'
 import { ListPageFooter } from '@/shared/ui/ListPage'
 
-const TARGET_STATUSES = (Object.keys(orderStatusLabel) as OrderStatus[])
-  .filter((status) => status !== 'new')
-  .map((status) => ({ value: status, label: orderStatusLabel[status] }))
+const MANUAL_TARGETS: OrderStatus[] = ['confirmed', 'awaitingPayment', 'shipped', 'readyForPickup', 'completed', 'cancelled']
+
+const TARGET_STATUSES = MANUAL_TARGETS.map((status) => ({ value: status, label: orderStatusLabel[status] }))
 
 type OrdersBulkBarProps = {
   count: number

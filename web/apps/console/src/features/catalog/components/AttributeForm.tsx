@@ -3,6 +3,7 @@ import { IconAlertCircle, IconAlertTriangle } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
 import { fieldErrors, NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
+import { useReportDirty } from '@/shared/lib/useReportDirty'
 import { saveAttribute, type AttributeDefinition, type AttributeFilterView, type AttributeKind } from '../api/dictionariesApi'
 import { ATTRIBUTE_KIND_OPTIONS, FILTER_VIEW_OPTIONS } from '../lib/attributes'
 
@@ -13,6 +14,7 @@ type AttributeFormProps = {
   error: string | null
   onBusy: (busy: boolean) => void
   onSaved: (attribute: AttributeDefinition | undefined) => void
+  onDirty?: (dirty: boolean) => void
 }
 
 type Fields = {
@@ -24,7 +26,7 @@ type Fields = {
   aliases: string[]
 }
 
-export function AttributeForm({ formId, attribute, nextSortOrder, error, onBusy, onSaved }: AttributeFormProps) {
+export function AttributeForm({ formId, attribute, nextSortOrder, error, onBusy, onSaved, onDirty }: AttributeFormProps) {
   const [fields, setFields] = useState<Fields>(() => ({
     name: attribute?.name ?? '',
     unit: attribute?.unit ?? '',
@@ -33,6 +35,8 @@ export function AttributeForm({ formId, attribute, nextSortOrder, error, onBusy,
     sortOrder: attribute?.sortOrder ?? nextSortOrder,
     aliases: attribute?.aliases ?? [],
   }))
+  const [pristine] = useState(() => JSON.stringify(fields))
+  useReportDirty(JSON.stringify(fields) !== pristine, onDirty)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)

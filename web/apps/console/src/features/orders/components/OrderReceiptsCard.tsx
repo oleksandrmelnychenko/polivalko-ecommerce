@@ -8,7 +8,7 @@ import { receiptStateLabel, receiptTone } from '../lib/orderDetail'
 import { OrderCard, OrderLoadState } from './OrderCard'
 
 export function OrderReceiptsCard({ number, version }: { number: string; version: string }) {
-  const receipts = useApiQuery(`order-receipts:${number}:${version}`, () => getOrderReceipts(number))
+  const receipts = useApiQuery(`order-receipts:${number}:${version}`, () => getOrderReceipts(number), { keepPrevious: true })
   const rows = receipts.data ?? []
 
   return (

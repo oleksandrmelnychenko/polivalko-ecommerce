@@ -7,12 +7,19 @@
 	root * /srv
 	encode zstd gzip
 
-	@assets path /_next/static/*
+	@assets {
+		path /_next/static/*
+		file
+	}
 	header @assets Cache-Control "public, max-age=31536000, immutable"
 
 	@pages not path /_next/static/*
 	header @pages Cache-Control "no-cache"
 
-	try_files {path} /index.html
+	@spa {
+		not path /_next/static/*
+		not file
+	}
+	rewrite @spa /index.html
 	file_server
 }

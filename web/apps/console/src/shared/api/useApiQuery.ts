@@ -6,6 +6,7 @@ export type ApiResult<T> = { data?: T; error?: unknown; response: Response }
 export type ApiQueryStatus = 'loading' | 'ready' | 'error' | 'forbidden'
 
 type Settled<T> = {
+  attempt: string | null
   key: string | null
   status: Exclude<ApiQueryStatus, 'loading'>
   data?: T
@@ -22,10 +23,13 @@ export type ApiQuery<T> = {
   setData: (data: T) => void
 }
 
-export function useApiQuery<T>(key: string, load: () => Promise<ApiResult<T>>, options: { enabled?: boolean } = {}): ApiQuery<T> {
+export type ApiQueryOptions = { enabled?: boolean; keepPrevious?: boolean }
+
+export function useApiQuery<T>(key: string, load: () => Promise<ApiResult<T>>, options: ApiQueryOptions = {}): ApiQuery<T> {
   const enabled = options.enabled ?? true
+  const keepPrevious = options.keepPrevious ?? false
   const [nonce, setNonce] = useState(0)
-  const [state, setState] = useState<Settled<T>>({ key: null, status: 'ready' })
+  const [state, setState] = useState<Settled<T>>({ attempt: null, key: null, status: 'ready' })
   const current = `${key}#${nonce}`
   const fetchData = useEffectEvent(load)
 
@@ -36,32 +40,35 @@ export function useApiQuery<T>(key: string, load: () => Promise<ApiResult<T>>, o
       .then(({ data, error, response }) => {
         if (cancelled) return
         if (response.ok) {
-          setState({ key: current, status: 'ready', data })
+          setState({ attempt: current, key, status: 'ready', data })
           return
         }
         setState((previous) => ({
-          key: current,
+          attempt: current,
+          key,
           status: response.status === 403 ? 'forbidden' : 'error',
-          data: previous.data,
+          data: previous.key === key ? previous.data : undefined,
           problem: error as Problem | undefined,
         }))
       })
       .catch(() => {
-        if (!cancelled) setState((previous) => ({ key: current, status: 'error', data: previous.data }))
+        if (!cancelled) setState((previous) => ({ attempt: current, key, status: 'error', data: previous.key === key ? previous.data : undefined }))
       })
     return () => {
       cancelled = true
     }
-  }, [current, enabled])
+  }, [current, enabled, key])
 
-  const settled = state.key === current
-  const status: ApiQueryStatus = settled ? state.status : state.data !== undefined ? 'ready' : 'loading'
+  const settled = state.attempt === current
+  const placeholder = keepPrevious && enabled && !settled
+  const data = state.key === key || placeholder ? state.data : undefined
+  const status: ApiQueryStatus = settled ? state.status : data !== undefined ? 'ready' : 'loading'
   const reload = useCallback(() => setNonce((value) => value + 1), [])
-  const setData = useCallback((data: T) => setState((previous) => ({ ...previous, status: 'ready', data })), [])
+  const setData = useCallback((next: T) => setState((previous) => (previous.key === key ? { ...previous, status: 'ready', data: next } : previous)), [key])
 
   return {
     status,
-    data: state.data,
+    data,
     problem: settled ? state.problem : undefined,
     isLoading: status === 'loading',
     isFetching: enabled && !settled,

@@ -1,10 +1,11 @@
 import { Button, Stack, Text, Textarea, TextInput } from '@mantine/core'
 import { useHotkeys } from '@mantine/hooks'
 import { IconDeviceFloppy, IconExternalLink } from '@tabler/icons-react'
-import { useDeferredValue, useEffect, useRef, useState, type FormEvent } from 'react'
+import { useDeferredValue, useRef, useState, type FormEvent } from 'react'
 import { formatDateTime } from '@polivalko/shared/lib/format'
 import { useAuth } from '@/features/auth'
 import { siteUrl } from '@/shared/lib/siteUrl'
+import { LeaveGuard } from '@/shared/ui/LeaveGuard'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { TableChip } from '@/shared/ui/TableChip'
 import { savePage, type ContentPage } from '../api/contentApi'
@@ -42,13 +43,6 @@ export function PageEditor({ initial, onSaved }: PageEditorProps) {
     seoDescription !== (saved.seoDescription ?? '')
   const draftShown = draft !== (saved.bodyHtml ?? '')
   const who = savedBy ?? saved.updatedBy
-
-  useEffect(() => {
-    if (!dirty) return undefined
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault()
-    window.addEventListener('beforeunload', warn)
-    return () => window.removeEventListener('beforeunload', warn)
-  }, [dirty])
 
   useHotkeys([['mod+S', () => formRef.current?.requestSubmit()]], [])
 
@@ -188,6 +182,7 @@ export function PageEditor({ initial, onSaved }: PageEditorProps) {
           </div>
         </section>
       </form>
+      <LeaveGuard when={dirty} />
     </div>
   )
 }

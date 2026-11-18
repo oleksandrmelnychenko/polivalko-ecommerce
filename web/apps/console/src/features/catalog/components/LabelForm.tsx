@@ -3,6 +3,7 @@ import { IconAlertCircle, IconInfoCircle } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
 import { fieldErrors, NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
+import { useReportDirty } from '@/shared/lib/useReportDirty'
 import { saveLabel, type LabelTone, type ProductLabel } from '../api/dictionariesApi'
 import { DEFAULT_NEW_DAYS, isAutoLabel, LABEL_TONES } from '../lib/labels'
 import { LabelChip } from './LabelChip'
@@ -14,6 +15,7 @@ type LabelFormProps = {
   error: string | null
   onBusy: (busy: boolean) => void
   onSaved: () => void
+  onDirty?: (dirty: boolean) => void
 }
 
 type Fields = { name: string; tone: LabelTone; newDays: number | string; sortOrder: number | string; isActive: boolean }
@@ -23,7 +25,7 @@ const AUTO_HELP = {
   new: 'Ставиться сама на вказану кількість днів від першої появи товару в каталозі. Вручну її не призначають.',
 } as const
 
-export function LabelForm({ formId, label, nextSortOrder, error, onBusy, onSaved }: LabelFormProps) {
+export function LabelForm({ formId, label, nextSortOrder, error, onBusy, onSaved, onDirty }: LabelFormProps) {
   const auto = label !== null && isAutoLabel(label)
   const [fields, setFields] = useState<Fields>(() => ({
     name: label?.name ?? '',
@@ -32,6 +34,8 @@ export function LabelForm({ formId, label, nextSortOrder, error, onBusy, onSaved
     sortOrder: label?.sortOrder ?? nextSortOrder,
     isActive: label?.isActive ?? true,
   }))
+  const [pristine] = useState(() => JSON.stringify(fields))
+  useReportDirty(JSON.stringify(fields) !== pristine, onDirty)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)

@@ -12,6 +12,9 @@ import { getImportRuns, importCatalog, type ImportRun } from '../api/catalogApi'
 import { ImportRunReport } from '../components/ImportRunReport'
 import '../components/catalog.css'
 
+const MAX_FILE_BYTES = 20 * 1024 * 1024
+const TOO_LARGE = 'Файл завеликий: до 20 МБ.'
+
 export function ImportPage() {
   const { can } = usePermissions()
   const canViewRuns = can(PermissionKeys.Integration.ViewStatus)
@@ -26,7 +29,11 @@ export function ImportPage() {
     event.preventDefault()
     if (busy) return
     if (!file || file.size === 0) {
-      setError('Оберіть файл JSON або CSV.')
+      setError(file ? 'Файл порожній. Оберіть файл JSON або CSV з товарами.' : 'Оберіть файл JSON або CSV.')
+      return
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      setError(TOO_LARGE)
       return
     }
     setBusy(true)
@@ -39,6 +46,8 @@ export function ImportPage() {
       if (response.data) {
         setResult(response.data)
         if (canViewRuns) runs.reload()
+      } else if (response.response.status === 413) {
+        setError(TOO_LARGE)
       } else {
         setError(response.problem?.errors?.file?.[0] ?? (response.problem ? problemMessage(response.problem, 'Імпорт не виконано.') : 'Імпорт не виконано.'))
       }
