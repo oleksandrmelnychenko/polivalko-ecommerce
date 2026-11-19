@@ -1,6 +1,6 @@
 import type { Contacts } from "@polivalko/shared/api/types";
 
-export type SocialLink = { name: string; url: string };
+export type SocialLink = { name: string; url: string; placeholder?: boolean };
 
 export function socialLinks(contacts: Contacts | null | undefined): SocialLink[] {
   return [
@@ -9,5 +9,5 @@ export function socialLinks(contacts: Contacts | null | undefined): SocialLink[]
     { name: "Telegram", url: contacts?.telegram },
     { name: "Viber", url: contacts?.viber },
     { name: "YouTube", url: contacts?.youTube },
-  ].filter((s): s is SocialLink => Boolean(s.url?.trim()));
+  ].filter((s): s is SocialLink => Boolean(s.url?.trim())).map(s => ({ ...s, placeholder: /^https?:\/\/example\.com(?:\/|$)/i.test(s.url) }));
 }

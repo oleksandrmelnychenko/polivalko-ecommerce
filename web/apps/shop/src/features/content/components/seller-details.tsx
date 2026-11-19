@@ -13,6 +13,7 @@ export async function SellerDetails() {
     { label: "Email", value: seller.email },
     { label: "Телефон", value: seller.phone },
   ].filter((row): row is { label: string; value: string } => Boolean(row.value?.trim()));
+  if (rows.length === 0) return null;
 
   return (
     <section className="doc__section doc__seller" aria-labelledby="seller-title">

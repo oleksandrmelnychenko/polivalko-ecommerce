@@ -7,6 +7,7 @@ export function organizationSource(contacts: Contacts | null, seller: Organizati
     contacts,
     seller,
     sameAs: socialLinks(contacts)
+      .filter((link) => !link.placeholder)
       .map((link) => link.url.trim())
       .filter((url) => /^https?:\/\//i.test(url)),
   };

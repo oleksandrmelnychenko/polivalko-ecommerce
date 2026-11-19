@@ -1,23 +1,5 @@
-"use client";
-
-import type { MouseEvent } from "react";
-import { DIRECTION_EVENT } from "../lib/direction-event";
+import Link from "next/link";
 
 export function DirectionRequestLink({ code }: { code: string }) {
-  const href = `/services?direction=${encodeURIComponent(code)}#request`;
-
-  function onClick(event: MouseEvent<HTMLAnchorElement>) {
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
-    event.preventDefault();
-    window.dispatchEvent(new CustomEvent<string>(DIRECTION_EVENT, { detail: code }));
-    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    document.getElementById("request")?.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
-    window.setTimeout(() => document.getElementById("name")?.focus({ preventScroll: true }), smooth ? 600 : 0);
-  }
-
-  return (
-    <a className="services-link" href={href} onClick={onClick}>
-      Залишити заявку
-    </a>
-  );
+  return <Link className="services-link" href={`/contacts?direction=${encodeURIComponent(code)}#request`}>Залишити заявку</Link>;
 }

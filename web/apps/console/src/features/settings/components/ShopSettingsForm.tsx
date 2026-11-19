@@ -273,7 +273,7 @@ export function ShopSettingsForm({ contacts, shop, onSaved }: ShopSettingsFormPr
 
             {active === 'social' ? (
               <>
-                <SettingsHero section={section} kicker="Магазин" description="Сайт показує лише заповнені посилання." />
+                <SettingsHero section={section} kicker="Магазин" description="Посилання example.com — заглушки: іконки видно на сайті, але перехід вимкнено. Замініть їх адресами своїх сторінок. Порожнє поле приховує соцмережу." />
                 <SettingsCard title="Посилання">{textFields('contacts', SOCIAL.map((field) => ({ ...field, type: 'url' as const })), 1)}</SettingsCard>
               </>
             ) : null}

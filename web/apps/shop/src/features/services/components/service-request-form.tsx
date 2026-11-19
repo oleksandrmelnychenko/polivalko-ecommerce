@@ -19,6 +19,11 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
   const [syncedPreset, setSyncedPreset] = useState(preset);
   const [direction, setDirection] = useState(preset);
   const [state, setState] = useState<State>({ status: "idle" });
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (state.status === "error") formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }, [state]);
 
   useEffect(() => {
     const pick = (event: Event) => {
@@ -70,7 +75,7 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
   const err = (key: string) => errors[key]?.[0];
 
   return (
-    <form onSubmit={onSubmit} noValidate className={className} aria-labelledby="request-form-title">
+    <form ref={formRef} onSubmit={onSubmit} noValidate className={className} aria-labelledby="request-form-title">
       <h2 id="request-form-title">Ваші контакти</h2>
 
       <div className="field">
@@ -86,13 +91,13 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
       </div>
 
       <div className="field">
-        <label htmlFor="direction">Напрямок</label>
+        <label htmlFor="direction">Послуга</label>
         <DropdownSelect
           id="direction"
           name="direction"
           variant="field"
           value={direction}
-          placeholder="Оберіть напрямок"
+          placeholder="Оберіть послугу"
           options={directions.map((d) => ({ value: d.code, label: d.name }))}
           onChange={setDirection}
           aria-invalid={Boolean(err("direction"))}
@@ -102,17 +107,18 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
       </div>
 
       <div className="field">
-        <label htmlFor="comment">Коментар, якщо є</label>
-        <textarea id="comment" name="comment" autoComplete="off" maxLength={1000} aria-invalid={Boolean(err("comment"))} />
+        <label htmlFor="comment">Коментар (необов’язково)</label>
+        <textarea id="comment" name="comment" autoComplete="off" maxLength={1000} aria-invalid={Boolean(err("comment"))} aria-describedby={err("comment") ? "comment-error" : undefined} />
+        {err("comment") && <p id="comment-error" className="field__error">{err("comment")}</p>}
       </div>
 
       <button type="submit" className="btn btn--wide" disabled={state.status === "sending"} aria-busy={state.status === "sending"}>
-        {state.status === "sending" ? "Надсилаємо…" : "Замовити дзвінок"}
+        {state.status === "sending" ? "Надсилаємо…" : "Надіслати заявку"}
       </button>
 
       <div role="status" aria-live="polite">
         {state.status === "sent" && (
-          <p className="notice notice--ok">Заявку отримано. Менеджер передзвонить, щоб домовитися про деталі.</p>
+          <p className="notice notice--ok">Заявку надіслано. Менеджер зателефонує, щоб уточнити деталі.</p>
         )}
         {state.status === "error" && <p className="notice notice--error">{state.message}</p>}
       </div>
