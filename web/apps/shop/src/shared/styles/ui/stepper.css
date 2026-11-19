@@ -1,10 +1,10 @@
-.stepper { border-radius: var(--radius); display: inline-grid; grid-template-columns: 40px 46px 40px; overflow: hidden; border: var(--rule-hair) solid var(--color-rule); }
-.stepper button { min-height: 44px; border: 0; background: var(--color-paper); color: var(--color-ink); cursor: pointer; font-size: var(--text-lg); transition: background-color var(--dur-micro) var(--ease-out); }
+.stepper { border-radius: var(--radius-pill); display: inline-grid; grid-template-columns: 44px 44px 44px; overflow: hidden; border: 1px solid var(--color-control); background: #fff; }
+.stepper button { min-height: 46px; border: 0; background: #fff; color: var(--color-ink); cursor: pointer; font-size: var(--text-lg); transition: background-color var(--dur-micro) var(--ease-out); }
 .stepper button:hover { background: var(--color-paper-2); }
 .stepper button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
 .stepper button:disabled { color: var(--color-field); cursor: not-allowed; background: var(--color-paper); }
-.stepper input { width: 100%; min-height: 44px; border: 0; border-inline: var(--rule-hair) solid var(--color-rule); text-align: center; font-variant-numeric: tabular-nums; background: var(--color-paper); color: var(--color-ink); outline: 2px solid transparent; outline-offset: -2px; -moz-appearance: textfield; }
+.stepper input { width: 100%; min-height: 46px; border: 0; text-align: center; font-weight: 500; font-variant-numeric: tabular-nums; background: var(--color-paper); color: var(--color-ink); outline: 2px solid transparent; outline-offset: -2px; -moz-appearance: textfield; }
 .stepper input:focus-visible { outline-color: var(--color-focus); }
 .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; }
-.stepper--small { grid-template-columns: 32px 38px 32px; }
+.stepper--small { grid-template-columns: 34px 38px 34px; }
 .stepper--small button, .stepper--small input { min-height: 34px; font-size: var(--text-md); }

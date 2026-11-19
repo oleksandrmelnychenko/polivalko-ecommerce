@@ -1,20 +1,28 @@
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: 44px; padding-inline: var(--space-xl); border: 2px solid var(--color-brand); border-radius: var(--radius); background: var(--color-brand); color: #fff; font: 600 var(--text-md)/1 var(--font-body); white-space: nowrap; text-decoration: none; cursor: pointer; transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out), scale var(--dur-micro) var(--ease-out); }
-.btn:active:not(:disabled) { scale: 0.97; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: 48px; padding-inline: 28px; border: 1px solid var(--color-brand); border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font: 500 1rem/1 var(--font-body); white-space: nowrap; text-decoration: none; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out), scale var(--dur-micro) var(--ease-out); }
+.btn:active:not(:disabled) { scale: 0.98; }
 .btn:hover { background: var(--color-brand-strong); border-color: var(--color-brand-strong); color: #fff; }
 .btn:disabled, .btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
 .btn:disabled:hover { background: var(--color-brand); border-color: var(--color-brand); color: #fff; }
 .btn[aria-busy="true"] { cursor: progress; }
 .btn svg { width: 18px; height: 18px; flex: none; }
 .btn--light { background: #fff; border-color: #fff; color: var(--color-ink); }
-.btn--light:hover { background: var(--color-brand); border-color: var(--color-brand); color: #fff; }
+.btn--light:hover { background: var(--color-paper-2); border-color: var(--color-paper-2); color: var(--color-ink); }
 .btn--dark { background: var(--color-ink); border-color: var(--color-ink); color: #fff; }
-.btn--outline, .btn--quiet { background: transparent; border-color: var(--color-ink); color: var(--color-ink); }
-.btn--outline:hover, .btn--quiet:hover { background: transparent; border-color: var(--color-brand); color: var(--color-brand-strong); }
-.btn--quiet:disabled:hover { background: transparent; border-color: var(--color-ink); color: var(--color-ink); }
+.btn--dark:hover { background: #2b2b2b; border-color: #2b2b2b; }
+.btn--outline, .btn--quiet { background: #fff; border-color: var(--color-control); color: var(--color-ink); }
+.btn--outline:hover, .btn--quiet:hover { background: #fff; border-color: var(--color-ink); color: var(--color-ink); }
+.btn--quiet:disabled:hover { background: #fff; border-color: var(--color-control); color: var(--color-ink); }
 .btn--soft { background: var(--color-accent-soft); border-color: var(--color-accent-soft); color: var(--color-ink); }
 .btn--soft:hover { background: var(--color-brand); border-color: var(--color-brand); color: #fff; }
 .btn--wide { width: 100%; }
-.btn--small { min-height: 38px; padding-inline: var(--space-md); font-size: var(--text-sm); }
+.btn--small { min-height: 40px; padding-inline: var(--space-md); font-size: var(--text-sm); }
 .btn--lg { min-height: 52px; }
-.link { color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-brand); text-underline-offset: 0.2em; }
-.link:hover { color: var(--color-ink); text-decoration-thickness: 2px; }
+.btn--text { min-height: 0; padding: 0; border: 0; background: none; color: var(--color-ink); font-weight: 500; }
+.btn--text:hover { background: none; color: var(--color-ink); text-decoration: underline; text-underline-offset: 4px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 12px; border: 1px solid var(--color-control); border-radius: var(--radius-pill); background: #fff; color: #2b2b2b; font: 500 0.9375rem/1.4 var(--font-body); text-decoration: none; white-space: nowrap; cursor: pointer; transition: border-color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
+.chip:hover { border-color: var(--color-ink); color: var(--color-ink); }
+.chip[aria-pressed="true"], .chip[aria-current="true"], .chip--on { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
+.chip small { color: inherit; opacity: 0.6; font-size: 0.75rem; }
+.chip--small { min-height: 34px; padding: 4px 12px; border-color: var(--color-rule); color: var(--color-ink-2); font-size: 0.875rem; }
+.link { color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-control); text-underline-offset: 0.2em; }
+.link:hover { color: var(--color-ink); text-decoration-color: currentColor; }

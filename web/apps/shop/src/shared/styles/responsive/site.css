@@ -1,8 +1,6 @@
 @media (max-width: 75rem) {
   .nav-link { padding: 0 12px; font-size: 0.875rem; }
   .site-header__actions { gap: var(--space-xs); }
-  .footer__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .footer__about { grid-column: 1 / -1; }
 }
 
 @media (max-width: 70rem) {
@@ -19,7 +17,6 @@
   .site-header__brand .brand-logo__tagline { font-size: 0.5625rem; letter-spacing: 0.08em; }
   .logo { height: 40px; font-size: 1.5rem; }
   .search-panel { top: var(--space-sm); padding: var(--space-md); }
-  .footer__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-block: var(--space-2xl) var(--space-xl); }
 }
 
 @media (max-width: 30rem) {
@@ -42,5 +39,4 @@
   .shop-tools--purchase .assistant-launcher span { display: inline; }
   .search .btn { display: none; }
   .search input { border-right: var(--rule-hair) solid var(--color-field); }
-  .footer__grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); }
 }

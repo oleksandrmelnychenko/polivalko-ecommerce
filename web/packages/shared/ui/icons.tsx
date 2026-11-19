@@ -246,3 +246,10 @@ export const CheckIcon = ({ className }: IconProps) => (
     <path d="M5 12.5l4.5 4.5L19 7.5" />
   </svg>
 );
+
+export const CircleCheckIcon = ({ className }: IconProps) => (
+  <svg {...base} aria-hidden="true" className={className}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M8.5 12.2l2.4 2.4 4.6-4.9" />
+  </svg>
+);
