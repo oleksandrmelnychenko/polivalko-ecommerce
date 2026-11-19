@@ -23,10 +23,14 @@ export function orderRequest(
     items,
     expectedTotal: quote.total.value,
     customer: {
-      name: String(form.get("name") ?? ""),
-      phone: String(form.get("phone") ?? ""),
+      name: String(form.get("name") ?? "").trim(),
+      phone: String(form.get("phone") ?? "").trim(),
       email: String(form.get("email") ?? "").trim(),
     },
+    recipient: form.get("otherRecipient") === "on" ? {
+      name: String(form.get("recipientName") ?? "").trim(),
+      phone: String(form.get("recipientPhone") ?? "").trim(),
+    } : null,
     delivery: {
       method: delivery,
       settlementRef: novaPoshta ? (settlement?.ref ?? null) : null,
@@ -41,7 +45,7 @@ export function orderRequest(
           : null,
     },
     payment: { method: payment },
-    comment: String(form.get("comment") ?? "") || null,
+    comment: String(form.get("comment") ?? "").trim() || null,
     acceptOffer: form.get("acceptOffer") === "on",
   };
 }

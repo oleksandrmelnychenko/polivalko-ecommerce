@@ -4,7 +4,7 @@ import { CheckoutStep } from "./checkout-step";
 
 export function CheckoutComment({ field, fieldError }: FieldProps) {
   return (
-    <CheckoutStep id="comment-title" icon={<ClipboardIcon />} title="Коментар" hint="Необов'язково">
+    <CheckoutStep id="comment-title" icon={<ClipboardIcon />} title="Коментар до замовлення" hint="Необов'язково · до 1000 символів">
       <div className="field">
         <label htmlFor="comment" className="visually-hidden">
           Коментар до замовлення

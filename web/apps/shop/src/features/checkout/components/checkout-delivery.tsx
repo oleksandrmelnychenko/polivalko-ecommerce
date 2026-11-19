@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import type { Quote, Settlement, Warehouse } from "@polivalko/shared/api/types";
+import type { PickupPoint, Quote, Settlement, Warehouse } from "@polivalko/shared/api/types";
 import { PinIcon, StoreIcon, TruckIcon } from "@polivalko/shared/ui/icons";
 import { deliveryHint, deliveryTitle } from "../lib/delivery";
 import type { FieldProps } from "../lib/field-props";
@@ -37,6 +37,7 @@ export function CheckoutDelivery({
   saved,
   save,
   phone,
+  pickupPoint,
 }: FieldProps & {
   quote: Quote | null;
   delivery: string;
@@ -51,6 +52,7 @@ export function CheckoutDelivery({
   saved?: ReactNode;
   save?: ReactNode;
   phone: string | null;
+  pickupPoint: PickupPoint | null;
 }) {
   const methods = quote?.deliveryMethods ?? [];
   const options = methods.map((d) => ({
@@ -70,7 +72,7 @@ export function CheckoutDelivery({
         <p className="notice">
           <strong>Зараз немає доступних способів отримання</strong>
           {phone ? (
-            `Зателефонуйте нам: ${phone}, і менеджер допоможе оформити замовлення.`
+            `Телефон: ${phone}, і менеджер допоможе оформити замовлення.`
           ) : (
             <>
               Зверніться в магазин, і менеджер допоможе оформити замовлення. Контакти на сторінці{" "}
@@ -106,10 +108,15 @@ export function CheckoutDelivery({
       ) : (
         <div className="co-info">
           <StoreIcon />
-          <p>
-            <strong>Самовивіз з магазину</strong>
-            Адресу й графік менеджер підтвердить, коли замовлення буде готове.
-          </p>
+          <div className="co-pickup-details">
+            <strong>{pickupPoint?.name || "Самовивіз з магазину"}</strong>
+            {pickupPoint ? <>
+              <p>{pickupPoint.address}</p>
+              <p>{pickupPoint.schedule}</p>
+              <p>{pickupPoint.instructions}</p>
+              {pickupPoint.mapUrl && <a className="link" href={pickupPoint.mapUrl} target="_blank" rel="noopener noreferrer">Прокласти маршрут ↗</a>}
+            </> : <Link className="link" href="/contacts">Адреса й графік магазину</Link>}
+          </div>
         </div>
       )}
       {save}

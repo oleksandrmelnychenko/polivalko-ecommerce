@@ -21,6 +21,9 @@ export function OrderFacts({ order, where }: { order: Order; where: string }) {
     },
     { label: "Покупець", icon: <UserIcon />, value: order.customer.name, sub: [order.customer.phone, order.customer.email].filter(Boolean).join(" · ") },
   ];
+  if (order.delivery.recipientName) {
+    rows.push({ label: "Отримувач", icon: <UserIcon />, value: order.delivery.recipientName, sub: order.delivery.recipientPhone ?? undefined });
+  }
   if (order.sellerName && !PENDING_SELLER.test(order.sellerName)) {
     rows.push({ label: "Продавець", icon: <StoreIcon />, value: order.sellerName });
   }

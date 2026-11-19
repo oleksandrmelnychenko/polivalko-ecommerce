@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef } from "react";
+import type { PickupPoint } from "@polivalko/shared/api/types";
 import { useCustomer } from "@/features/customer";
 import { useCheckout } from "../hooks/use-checkout";
 import { fieldProps } from "../lib/field-props";
@@ -14,14 +15,14 @@ import { CheckoutPayment } from "./checkout-payment";
 import { CheckoutSavedAddresses } from "./checkout-saved-addresses";
 import { CheckoutSummary } from "./checkout-summary";
 
-type CheckoutFormProps = { mailDelivers: boolean; phone: string | null };
+type CheckoutFormProps = { mailDelivers: boolean; phone: string | null; pickupPoint: PickupPoint | null };
 
 export function CheckoutForm(props: CheckoutFormProps) {
   const customer = useCustomer();
   return <CheckoutFields key={customer.me?.id ?? "guest"} {...props} />;
 }
 
-function CheckoutFields({ mailDelivers, phone }: CheckoutFormProps) {
+function CheckoutFields({ mailDelivers, phone, pickupPoint }: CheckoutFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const checkout = useCheckout(formRef, phone);
 
@@ -37,6 +38,7 @@ function CheckoutFields({ mailDelivers, phone }: CheckoutFormProps) {
         {checkout.cartError && <p role="alert" className="notice notice--error">{checkout.cartError}</p>}
         {checkout.notice && <CheckoutNotice notice={checkout.notice} />}
         <CheckoutContacts field={field} fieldError={fieldError} mailDelivers={mailDelivers} />
+        <CheckoutComment field={field} fieldError={fieldError} />
         <CheckoutDelivery
           quote={checkout.quote}
           delivery={checkout.delivery}
@@ -51,6 +53,7 @@ function CheckoutFields({ mailDelivers, phone }: CheckoutFormProps) {
           fieldError={fieldError}
           courier={checkout.courier}
           phone={phone}
+          pickupPoint={pickupPoint}
           saved={account.addresses.length > 0 && <CheckoutSavedAddresses addresses={account.addresses} chosen={account.chosen} choose={account.choose} />}
           save={
             account.canSave &&
@@ -68,7 +71,6 @@ function CheckoutFields({ mailDelivers, phone }: CheckoutFormProps) {
           setPayment={checkout.setPayment}
           fieldError={fieldError}
         />
-        <CheckoutComment field={field} fieldError={fieldError} />
       </div>
 
       <CheckoutSummary

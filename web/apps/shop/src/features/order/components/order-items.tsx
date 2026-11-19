@@ -49,7 +49,7 @@ export function OrderItems({ order }: { order: Order }) {
             </dd>
           </>
         )}
-        <dt className="grand">Разом</dt>
+        <dt className="grand">Разом за товари</dt>
         <dd className="grand">
           <span className="money">{formatMoney(order.total)}</span>
         </dd>

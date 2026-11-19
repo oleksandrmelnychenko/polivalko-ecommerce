@@ -32,7 +32,7 @@ export function CheckoutCourierFields({
           {fieldError("delivery.address.house")}
         </div>
         <div className="field">
-          <label htmlFor="apartment">Квартира, якщо є</label>
+          <label htmlFor="apartment">Квартира (необов’язково)</label>
           <input id="apartment" name="apartment" autoComplete="address-line2" maxLength={20} defaultValue={defaults?.apartment ?? undefined} {...field("delivery.address.apartment")} />
           {fieldError("delivery.address.apartment")}
         </div>

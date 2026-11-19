@@ -8,6 +8,7 @@ import { withActiveSession, type CustomerAddress } from "@/features/customer";
 import { checkoutCart } from "@/features/cart";
 import type { Problem } from "@polivalko/shared/api/problem";
 import { orderRequest } from "../lib/order-request";
+import { validateOrder } from "../lib/validate-order";
 import type { CourierPrefill, Errors, Notice } from "../lib/types";
 import { useCheckoutAccount } from "./use-checkout-account";
 import { useDeliveryPoint } from "./use-delivery-point";
@@ -78,20 +79,23 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
       return;
     }
     const form = new FormData(event.currentTarget);
+    const request = orderRequest(form, {
+      items, quote, delivery, settlement: point.settlement, warehouseRef: point.warehouseRef, payment: effectivePayment,
+    });
+    const validation = validateOrder(request);
+    if (Object.keys(validation).length) {
+      focusInvalid.current = true;
+      setErrors(validation);
+      setNotice({ kind: "error", title: "Перевірте дані замовлення", items: Object.values(validation) });
+      return;
+    }
+    setErrors({});
     submitting.current = true;
     setSending(true);
     setNotice(null);
 
     try {
       const serverCart = await cartState.settled();
-      const request = orderRequest(form, {
-        items,
-        quote,
-        delivery,
-        settlement: point.settlement,
-        warehouseRef: point.warehouseRef,
-        payment: effectivePayment,
-      });
       const { data, error, response } = await withActiveSession(async (assertActive) => {
         const result = await checkoutCart(serverCart, request);
         if (result.data) {
@@ -151,6 +155,10 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
     delivery,
     deliveryOption,
     setDelivery: (code: string) => {
+      if (delivery === "nova_poshta_courier" && formRef.current) {
+        const data = new FormData(formRef.current);
+        setCourier(current => ({ key: current.key + 1, values: { street: String(data.get("street") ?? ""), house: String(data.get("house") ?? ""), apartment: String(data.get("apartment") ?? "") || null } }));
+      }
       setDelivery(code);
       account.release();
     },

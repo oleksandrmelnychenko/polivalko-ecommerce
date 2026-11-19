@@ -82,7 +82,7 @@ export function CheckoutSummary({
           <dd><span className="money">{formatMoney(quote.subtotal)}</span></dd>
           <dt>Доставка</dt>
           <dd>{delivery === "pickup" ? "Безкоштовно" : priceNote || "За тарифами перевізника"}</dd>
-          <dt className="grand">До сплати</dt>
+          <dt className="grand">{delivery === "pickup" ? "До сплати" : "Разом за товари"}</dt>
           <dd className="grand"><span className="money">{formatMoney(quote.total)}</span></dd>
         </dl>
       )}

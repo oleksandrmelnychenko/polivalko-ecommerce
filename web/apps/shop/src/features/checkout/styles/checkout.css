@@ -8,6 +8,11 @@
 .co-step__head p { margin-top: 4px; color: var(--color-muted); font-size: var(--text-sm); }
 .co-step__body { display: flex; flex-direction: column; gap: var(--space-lg); padding: var(--space-xl); }
 .field__optional { margin-left: 6px; color: var(--color-muted); font-weight: 400; }
+.co-recipient { padding-top: 8px; }
+.co-recipient__toggle { font-weight: 500; color: var(--color-ink); cursor: pointer; }
+.co-recipient__fields { margin: 20px 0 0; padding: 20px; border: 1px solid var(--color-rule); border-radius: 16px; background: #f7f9f6; }
+.co-recipient__fields legend { padding-inline: 6px; font-weight: 500; }
+.co-recipient__fields > p { margin: 0 0 16px; }
 
 .co-options { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-xs); min-width: 0; margin: 0; padding: 0; border: 0; }
 .co-option { position: relative; display: flex; min-width: 0; }
