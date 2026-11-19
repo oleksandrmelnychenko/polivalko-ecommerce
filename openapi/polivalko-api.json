@@ -11482,6 +11482,18 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "recipientName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "recipientPhone": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -12469,6 +12481,16 @@
           },
           "acceptOffer": {
             "type": "boolean"
+          },
+          "recipient": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RecipientRequest"
+              }
+            ]
           }
         }
       },
@@ -14093,6 +14115,18 @@
               "null",
               "string"
             ]
+          },
+          "recipientName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "recipientPhone": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -15429,6 +15463,27 @@
           "issued",
           "failed"
         ]
+      },
+      "RecipientRequest": {
+        "required": [
+          "name",
+          "phone"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "phone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
       },
       "RedirectDto": {
         "required": [

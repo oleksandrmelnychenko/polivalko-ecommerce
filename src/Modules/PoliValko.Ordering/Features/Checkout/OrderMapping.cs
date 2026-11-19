@@ -30,7 +30,7 @@ internal static class OrderMapping
         PaymentCodes.From(order.PaymentMethod),
         order.PaymentStatus,
         DeliveryCodes.From(order.DeliveryMethod),
-        new OrderDeliveryDto(order.SettlementName, order.WarehouseName, order.PickupAddress, order.DeliveryAddress),
+        new OrderDeliveryDto(order.SettlementName, order.WarehouseName, order.PickupAddress, order.DeliveryAddress, order.RecipientName, order.RecipientPhone is { } recipientPhone ? MaskPhone(recipientPhone) : null),
         new OrderCustomerDto(order.CustomerName, MaskPhone(order.CustomerPhone), MaskEmail(order.CustomerEmail)),
         order.Items.Select(ToDto).ToList(),
         MoneyDto.Hryvnia(order.Subtotal),

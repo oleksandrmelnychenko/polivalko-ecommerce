@@ -100,6 +100,8 @@ internal sealed class OrderWriter(
             CustomerName = valid.Name,
             CustomerPhone = valid.Phone,
             CustomerEmail = valid.Email,
+            RecipientName = valid.RecipientName,
+            RecipientPhone = valid.RecipientPhone,
             SettlementRef = valid.Settlement?.Ref,
             SettlementName = valid.Settlement?.Name,
             WarehouseRef = valid.Warehouse?.Ref,

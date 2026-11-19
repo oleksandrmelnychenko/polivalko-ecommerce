@@ -36,6 +36,8 @@ internal sealed class OrderingModelConfigurator : IModelConfigurator
             builder.Property(o => o.CustomerName).HasMaxLength(100);
             builder.Property(o => o.CustomerPhone).HasMaxLength(20);
             builder.Property(o => o.CustomerEmail).HasMaxLength(200);
+            builder.Property(o => o.RecipientName).HasMaxLength(100);
+            builder.Property(o => o.RecipientPhone).HasMaxLength(20);
             builder.Property(o => o.SettlementRef).HasMaxLength(100);
             builder.Property(o => o.SettlementName).HasMaxLength(200);
             builder.Property(o => o.WarehouseRef).HasMaxLength(100);

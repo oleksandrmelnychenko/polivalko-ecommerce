@@ -43,6 +43,7 @@ public sealed record QuoteDto(
     bool DataFresh);
 
 public sealed record CustomerRequest(string? Name, string? Phone, string? Email);
+public sealed record RecipientRequest(string? Name, string? Phone);
 
 public sealed record DeliveryAddressRequest(string? Street, string? House, string? Apartment);
 
@@ -57,7 +58,8 @@ public sealed record CreateOrderRequest(
     DeliveryRequest? Delivery,
     PaymentRequest? Payment,
     string? Comment,
-    bool AcceptOffer);
+    bool AcceptOffer,
+    RecipientRequest? Recipient = null);
 
 public sealed record OrderCreatedDto(
     string Number,
@@ -77,7 +79,7 @@ public sealed record OrderItemDto(
     int Quantity,
     MoneyDto LineTotal);
 
-public sealed record OrderDeliveryDto(string? SettlementName, string? WarehouseName, string? PickupAddress, string? Address);
+public sealed record OrderDeliveryDto(string? SettlementName, string? WarehouseName, string? PickupAddress, string? Address, string? RecipientName = null, string? RecipientPhone = null);
 
 public sealed record OrderCustomerDto(string Name, string Phone, string? Email);
 

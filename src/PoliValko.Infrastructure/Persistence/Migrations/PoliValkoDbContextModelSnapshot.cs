@@ -2373,6 +2373,16 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("pickup_address");
 
+                    b.Property<string>("RecipientName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("recipient_name");
+
+                    b.Property<string>("RecipientPhone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("recipient_phone");
+
                     b.Property<decimal>("RefundedAmount")
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)")

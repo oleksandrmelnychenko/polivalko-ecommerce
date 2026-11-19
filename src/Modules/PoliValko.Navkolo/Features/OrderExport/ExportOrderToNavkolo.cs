@@ -36,6 +36,8 @@ internal sealed class ExportOrderToNavkolo(
             DeliveryMethod.NovaPoshtaCourier => $"Кур'єр НП: {order.SettlementName}, {order.DeliveryAddress}",
             _ => $"НП: {order.SettlementName}, {order.WarehouseName}",
         };
+        if (order.RecipientName is { } recipientName)
+            delivery += $". Отримувач: {recipientName}, {order.RecipientPhone}";
         if (!await orders.BeginExportAsync(order.Id, time.GetUtcNow(), cancellationToken)) return;
         var reference = await client.SendOrderAsync(
             new NavkoloOrder(

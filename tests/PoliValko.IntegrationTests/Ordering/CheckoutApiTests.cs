@@ -19,6 +19,43 @@ public sealed class CheckoutApiTests(ApiFactory api)
     private readonly HttpClient _client = api.CreateClient();
 
     [Fact]
+    public async Task Separate_recipient_and_comment_are_saved_without_replacing_buyer()
+    {
+        var product = await api.AddProductAsync("ruchnyi-instrument", "Товар іншому отримувачу", 125m, stock: 3);
+        var request = Order(product.Id, 1, "125.00", UniquePhone()) with
+        {
+            Recipient = new RecipientRequest("  Іван Отримувач  ", "067 123 45 67"),
+            Comment = "  Передати після 15:00  ",
+        };
+        var response = await PostOrderAsync(request, Guid.NewGuid().ToString());
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var created = (await response.Content.ReadFromJsonAsync<OrderCreatedDto>(TestJson.Options, Ct))!;
+        var stored = await api.WithDbAsync(db => db.Set<Order>().AsNoTracking().SingleAsync(o => o.Number == created.Number, Ct));
+        stored.CustomerName.ShouldBe(request.Customer!.Name);
+        stored.CustomerPhone.ShouldBe(request.Customer.Phone);
+        stored.RecipientName.ShouldBe("Іван Отримувач");
+        stored.RecipientPhone.ShouldBe("+380671234567");
+        stored.Comment.ShouldBe("Передати після 15:00");
+        var view = await _client.GetFromJsonAsync<OrderDto>($"/api/v1/orders/{created.Number}?token={Uri.EscapeDataString(created.AccessToken)}", TestJson.Options, Ct);
+        view!.Delivery.RecipientName.ShouldBe("Іван Отримувач");
+        view.Delivery.RecipientPhone.ShouldBe("+380 67 *** ** 67");
+    }
+
+    [Theory]
+    [InlineData("", "+380671234567", "recipient.name")]
+    [InlineData("Іван Отримувач", "123", "recipient.phone")]
+    public async Task Invalid_recipient_is_rejected_without_creating_order(string name, string phone, string field)
+    {
+        var product = await api.AddProductAsync("ruchnyi-instrument", "Товар для перевірки отримувача", 100m);
+        var key = Guid.NewGuid().ToString();
+        var request = Order(product.Id, 1, "100.00", UniquePhone()) with { Recipient = new RecipientRequest(name, phone) };
+        var response = await PostOrderAsync(request, key);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await response.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Errors!.Keys.ShouldContain(field);
+        (await api.WithDbAsync(db => db.Set<Order>().CountAsync(o => o.IdempotencyKey == key, Ct))).ShouldBe(0);
+    }
+
+    [Fact]
     public async Task Quote_prices_lines_on_server_and_flags_stock_issues()
     {
         var plenty = await api.AddProductAsync("vse-dlia-polyvu", "Шланг для розрахунку", 450m, stock: 10);

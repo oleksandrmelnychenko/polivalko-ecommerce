@@ -27,7 +27,7 @@ internal sealed class OrderExportSource(PoliValkoDbContext db, ICatalogPricing c
             order.Total,
             order.Comment,
             order.NavkoloOrderRef,
-            order.Items.Select(i => new OrderForExportLine(i.Sku, i.Name, i.Quantity, i.UnitPrice, ids.GetValueOrDefault(i.ProductId))).ToList(), order.Status, order.NavkoloExportAttemptedAt, order.NavkoloCancellationSynchronizedAt);
+            order.Items.Select(i => new OrderForExportLine(i.Sku, i.Name, i.Quantity, i.UnitPrice, ids.GetValueOrDefault(i.ProductId))).ToList(), order.Status, order.NavkoloExportAttemptedAt, order.NavkoloCancellationSynchronizedAt, order.RecipientName, order.RecipientPhone);
     }
 
     public async Task<bool> BeginExportAsync(Guid orderId, DateTimeOffset at, CancellationToken ct) =>

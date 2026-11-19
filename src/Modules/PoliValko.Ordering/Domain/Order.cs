@@ -26,6 +26,10 @@ public sealed class Order
 
     public string? CustomerEmail { get; init; }
 
+    public string? RecipientName { get; init; }
+
+    public string? RecipientPhone { get; init; }
+
     public Guid? CustomerId { get; private set; }
 
     public string? SettlementRef { get; init; }

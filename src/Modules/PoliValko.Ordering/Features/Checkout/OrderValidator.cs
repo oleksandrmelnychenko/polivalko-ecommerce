@@ -43,6 +43,18 @@ internal static class OrderValidator
             errors["customer.email"] = ["Перевірте email, наприклад name@example.com."];
         }
 
+        string? recipientName = null;
+        string? recipientPhone = null;
+        if (request.Recipient is { } recipient)
+        {
+            recipientName = recipient.Name?.Trim();
+            if (string.IsNullOrEmpty(recipientName) || recipientName.Length is < 2 or > 100 || HasControl(recipientName))
+                errors["recipient.name"] = ["Вкажіть ім'я та прізвище отримувача (від 2 до 100 символів)."];
+            if (!PhoneNumber.TryNormalizeUa(recipient.Phone, out var normalizedRecipientPhone))
+                errors["recipient.phone"] = ["Вкажіть український номер телефону отримувача."];
+            else recipientPhone = normalizedRecipientPhone;
+        }
+
         var delivery = DeliveryCodes.Parse(request.Delivery?.Method);
         Settlement? settlement = null;
         Warehouse? warehouse = null;
@@ -110,7 +122,7 @@ internal static class OrderValidator
             return (errors, null);
         }
 
-        return (errors, new ValidatedOrder(name!, phone, email, delivery!.Value, settlement, warehouse, address, payment!.Value, decimal.Round(expectedTotal, 2), comment));
+        return (errors, new ValidatedOrder(name!, phone, email, delivery!.Value, settlement, warehouse, address, payment!.Value, decimal.Round(expectedTotal, 2), comment, recipientName, recipientPhone));
     }
 
     private static bool HasControl(string? value, bool multiline = false) =>
@@ -154,5 +166,7 @@ internal static class OrderValidator
         string? Address,
         PaymentMethod Payment,
         decimal ExpectedTotal,
-        string? Comment);
+        string? Comment,
+        string? RecipientName,
+        string? RecipientPhone);
 }

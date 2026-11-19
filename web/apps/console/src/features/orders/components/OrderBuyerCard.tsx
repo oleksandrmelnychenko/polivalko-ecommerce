@@ -45,6 +45,7 @@ export function OrderBuyerCard({ order }: { order: ConsoleOrder }) {
         </div>
 
         <dl className="order-buyer-facts">
+          {order.recipientName && <div><dt>Отримувач</dt><dd><strong>{order.recipientName}</strong><a href={`tel:${order.recipientPhone}`}>{formatPhone(order.recipientPhone ?? '')}</a></dd></div>}
           <div>
             <dt>Доставка</dt>
             <dd>

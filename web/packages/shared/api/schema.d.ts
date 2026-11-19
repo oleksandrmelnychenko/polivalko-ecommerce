@@ -2842,6 +2842,8 @@ export interface components {
             navkoloShippedAt?: null | string;
             /** Format: date-time */
             navkoloCancelledAt?: null | string;
+            recipientName?: null | string;
+            recipientPhone?: null | string;
         };
         ConsoleOrderHistoryDto: {
             from: null | components["schemas"]["OrderStatus"];
@@ -3082,6 +3084,7 @@ export interface components {
             payment: null | components["schemas"]["PaymentRequest"];
             comment: null | string;
             acceptOffer: boolean;
+            recipient?: null | components["schemas"]["RecipientRequest"];
         };
         CreateRedirectRequest: {
             fromPath: null | string;
@@ -3469,6 +3472,8 @@ export interface components {
             warehouseName: null | string;
             pickupAddress: null | string;
             address: null | string;
+            recipientName?: null | string;
+            recipientPhone?: null | string;
         };
         OrderDto: {
             number: string;
@@ -3811,6 +3816,10 @@ export interface components {
         ReceiptKind: "sell" | "return";
         /** @enum {unknown} */
         ReceiptStatus: "pending" | "issued" | "failed";
+        RecipientRequest: {
+            name: null | string;
+            phone: null | string;
+        };
         RedirectDto: {
             from: string;
             to: string;

@@ -18,4 +18,6 @@ public sealed record OrderForExport(
     IReadOnlyList<OrderForExportLine> Lines,
     OrderStatus Status = OrderStatus.New,
     DateTimeOffset? ExportAttemptedAt = null,
-    DateTimeOffset? CancellationSynchronizedAt = null);
+    DateTimeOffset? CancellationSynchronizedAt = null,
+    string? RecipientName = null,
+    string? RecipientPhone = null);
