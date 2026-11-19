@@ -2,8 +2,10 @@ import type { MetadataRoute } from "next";
 import { connection } from "next/server";
 import { getSitemap } from "@/features/catalog/server";
 import { siteUrl } from "@/features/seo";
+import { articles } from "@/features/journal/server";
+import { JOURNAL_ENABLED } from "@/features/journal";
 
-const STATIC_PAGES = ["", "/catalog", "/sale", "/services", "/contacts", "/payment-delivery", "/returns", "/offer", "/privacy"];
+const STATIC_PAGES = ["", "/catalog", "/sale", "/services", "/contacts", "/payment-delivery", "/returns", "/offer", "/privacy", "/about", ...(JOURNAL_ENABLED ? ["/blog", ...articles.map((article) => `/blog/${article.slug}`)] : [])];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   await connection();
