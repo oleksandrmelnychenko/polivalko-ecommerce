@@ -23,14 +23,21 @@ internal sealed class PaymentProcessor(PoliValkoDbContext db, IOrderPayments ord
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
         var now = time.GetUtcNow();
 
-        var payment = await db.Set<Payment>()
-            .FromSql($"SELECT * FROM payments.payments WHERE provider = {provider} AND provider_payment_id = {status.ProviderPaymentId} FOR UPDATE")
+        var match = await db.Set<Payment>()
+            .Where(p => p.Provider == provider && p.ProviderPaymentId == status.ProviderPaymentId)
+            .Select(p => new { p.Id, p.OrderId })
             .FirstOrDefaultAsync(ct);
+        // Take the order lock first. Reversals can update another invoice of the same order.
+        var order = match is null ? null : await orders.LoadForPaymentUpdateAsync(match.OrderId, ct);
+        var payment = match is null ? null : await db.Set<Payment>()
+            .FromSql($"SELECT * FROM payments.payments WHERE id = {match.Id} FOR UPDATE")
+            .SingleAsync(ct);
         var inserted = await db.Database.ExecuteSqlAsync(
             $"""
-            INSERT INTO payments.payment_events (id, provider, event_key, payment_id, source, state, received_at, payload)
+            INSERT INTO payments.payment_events AS saved (id, provider, event_key, payment_id, source, state, received_at, payload)
             VALUES ({Guid.CreateVersion7(now)}, {provider}, {status.EventKey}, {payment?.Id}, {source}, {status.State.ToString()}, {now}, {payload}::jsonb)
-            ON CONFLICT (provider, event_key) DO NOTHING
+            ON CONFLICT (provider, event_key) DO UPDATE SET payment_id = EXCLUDED.payment_id
+            WHERE saved.payment_id IS NULL AND EXCLUDED.payment_id IS NOT NULL
             """,
             ct);
         if (inserted == 0)
@@ -38,7 +45,7 @@ internal sealed class PaymentProcessor(PoliValkoDbContext db, IOrderPayments ord
             return PaymentUpdateResult.Duplicate;
         }
 
-        if (payment is null)
+        if (payment is null || order is null)
         {
             logger.LogWarning("Оплата: повідомлення {Provider} для невідомого рахунку {Invoice}", provider, status.ProviderPaymentId);
             await transaction.CommitAsync(ct);
@@ -51,7 +58,6 @@ internal sealed class PaymentProcessor(PoliValkoDbContext db, IOrderPayments ord
             return PaymentUpdateResult.Stale;
         }
 
-        var order = await orders.LoadForPaymentUpdateAsync(payment.OrderId, ct);
         payment.ProviderModifiedAt = status.ModifiedAt ?? now;
         payment.UpdatedAt = now;
 

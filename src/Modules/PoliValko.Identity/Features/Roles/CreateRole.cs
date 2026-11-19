@@ -16,7 +16,6 @@ internal static class CreateRole
     public static async Task<Results<Created<StaffRoleDto>, ValidationProblem, ProblemHttpResult>> HandleAsync(
         SaveStaffRoleRequest request,
         ClaimsPrincipal me,
-        HttpContext http,
         RoleManager<StaffRole> roles,
         IStaffAccessResolver access,
         PoliValkoDbContext db,
@@ -24,6 +23,7 @@ internal static class CreateRole
         TimeProvider time,
         CancellationToken ct)
     {
+        await using var transaction = await StaffValidation.BeginChangeAsync(db, ct);
         var errors = new Dictionary<string, string[]>();
         var (name, description) = await RoleRules.ValidateAsync(request, null, db, errors, ct);
 
@@ -48,7 +48,7 @@ internal static class CreateRole
             return TypedResults.ValidationProblem(errors);
         }
 
-        if (RoleRules.Escalation(await access.GetStaffAccessAsync(me, http.Items, ct), keys) is { } denied)
+        if (RoleRules.Escalation(await access.GetStaffAccessAsync(me, null, ct), keys) is { } denied)
         {
             return denied;
         }
@@ -68,6 +68,7 @@ internal static class CreateRole
         db.RolePermissions.AddRange(PermissionCatalog.Order(keys).Select(key => new StaffRolePermission { RoleId = role.Id, Key = key }));
         audit.Record("role.created", "StaffRole", role.Id, new { name, description, permissions = keys });
         await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         return TypedResults.Created($"/api/v1/console/roles/{role.Id}", await RoleRules.ToDtoAsync(db, role, ct));
     }
 }

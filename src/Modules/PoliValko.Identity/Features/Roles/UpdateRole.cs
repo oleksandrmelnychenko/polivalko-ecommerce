@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using PoliValko.Identity.Features.Staff;
 using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Security;
@@ -21,6 +22,12 @@ internal static class UpdateRole
         TimeProvider time,
         CancellationToken ct)
     {
+        await using var transaction = await StaffValidation.BeginChangeAsync(db, ct);
+        if (!RoleRules.CanManage(await access.GetStaffAccessAsync(me, null, ct)))
+        {
+            return RoleRules.Forbidden();
+        }
+
         var role = await db.Roles.FirstOrDefaultAsync(r => r.Id == id, ct);
         if (role is null)
         {
@@ -46,6 +53,7 @@ internal static class UpdateRole
         role.UpdatedBy = me.StaffName();
         audit.Record("role.updated", "StaffRole", role.Id, new { before, after = new { name, description } });
         await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         access.Invalidate();
         return TypedResults.Ok(await RoleRules.ToDtoAsync(db, role, ct));
     }

@@ -23,30 +23,47 @@ internal sealed class UnpaidOrderExpiryJob(IServiceScopeFactory scopes, TimeProv
 
     protected override TimeSpan Interval(IServiceProvider services) => TimeSpan.FromMinutes(15);
 
-    protected override bool IsEnabled(IServiceProvider services) =>
-        services.GetRequiredService<IOptions<OrderingOptions>>().Value.UnpaidCardOrderHours > 0;
+    protected override bool IsEnabled(IServiceProvider services)
+    {
+        var options = services.GetRequiredService<IOptions<OrderingOptions>>().Value;
+        return options.UnpaidCardOrderHours > 0 || options.UnconfirmedOrderHours > 0;
+    }
 
-    protected override async Task<SyncResult> RunOnceAsync(IServiceProvider services, CancellationToken ct)
+    protected override Task<SyncResult> RunOnceAsync(IServiceProvider services, CancellationToken ct) => ExpireAsync(services, ct);
+
+    internal static async Task<SyncResult> ExpireAsync(IServiceProvider services, CancellationToken ct)
     {
         var db = services.GetRequiredService<PoliValkoDbContext>();
         var outbox = services.GetRequiredService<IOutbox>();
         var reservations = services.GetRequiredService<ICatalogReservations>();
         var payments = services.GetRequiredService<IPaymentActivity>();
-        var hours = services.GetRequiredService<IOptions<OrderingOptions>>().Value.UnpaidCardOrderHours;
+        var options = services.GetRequiredService<IOptions<OrderingOptions>>().Value;
         var now = services.GetRequiredService<TimeProvider>().GetUtcNow();
-        var threshold = now - TimeSpan.FromHours(hours);
+        var unpaidThreshold = Threshold(now, options.UnpaidCardOrderHours);
+        var unconfirmedThreshold = Threshold(now, options.UnconfirmedOrderHours);
+        var orders = db.Set<Order>().AsNoTracking();
 
-        var candidates = await db.Set<Order>()
-            .AsNoTracking()
+        var unconfirmed = await orders
+            .Where(o => (o.Status == OrderStatus.New || o.Status == OrderStatus.AwaitingConfirmation)
+                        && o.CreatedAt < unconfirmedThreshold)
+            .OrderBy(o => o.CreatedAt)
+            .ThenBy(o => o.Id)
+            .Select(o => o.Number)
+            .Take(BatchSize)
+            .ToListAsync(ct);
+
+        var unpaid = await orders
             .Where(o => o.Status == OrderStatus.AwaitingPayment
                         && o.PaymentMethod == PaymentMethod.Card
-                        && o.History.Where(h => h.To == OrderStatus.AwaitingPayment && h.From != OrderStatus.AwaitingPayment).Max(h => h.At) < threshold)
+                        && (o.PaymentStatus == PaymentStatus.Pending || o.PaymentStatus == PaymentStatus.Failed)
+                        && o.History.Where(h => h.To == OrderStatus.AwaitingPayment && h.From != OrderStatus.AwaitingPayment).Max(h => (DateTimeOffset?)h.At) < unpaidThreshold)
             .OrderBy(o => o.CreatedAt)
+            .ThenBy(o => o.Id)
             .Select(o => new { o.Id, o.Number })
             .Take(BatchSize)
             .ToListAsync(ct);
-        var busy = await payments.BusySinceAsync(candidates.Select(c => c.Id).ToArray(), threshold, ct);
-        var numbers = candidates.Where(c => !busy.Contains(c.Id)).Select(c => c.Number).ToList();
+        var busy = await payments.BusySinceAsync(unpaid.Select(c => c.Id).ToArray(), unpaidThreshold, ct);
+        var numbers = unconfirmed.Concat(unpaid.Where(c => !busy.Contains(c.Id)).Select(c => c.Number));
 
         var errors = new List<SyncError>();
         var cancelled = 0;
@@ -57,11 +74,26 @@ internal sealed class UnpaidOrderExpiryJob(IServiceScopeFactory scopes, TimeProv
                 await using var transaction = await db.Database.BeginTransactionAsync(ct);
                 await db.Database.ExecuteSqlAsync($"SELECT 1 FROM ordering.orders WHERE number = {number} FOR UPDATE", ct);
                 var order = await OrderLoader.LoadAsync(db, number, tracking: true, ct);
-                if (order is { Status: OrderStatus.AwaitingPayment, PaymentStatus: PaymentStatus.Pending or PaymentStatus.Failed }
-                    && order.History.Where(h => h.To == OrderStatus.AwaitingPayment && h.From != OrderStatus.AwaitingPayment).Max(h => h.At) < threshold
-                    && !(await payments.BusySinceAsync([order.Id], threshold, ct)).Contains(order.Id))
+                if (order is null || !OrderTransitions.CanCancel(order))
                 {
-                    order.ChangeStatus(OrderStatus.Cancelled, now, OrderActors.Schedule, $"Не оплачено за {hours} год.");
+                    continue;
+                }
+
+                string? reason = null;
+                if ((order.Status is OrderStatus.New or OrderStatus.AwaitingConfirmation) && order.CreatedAt < unconfirmedThreshold)
+                {
+                    reason = $"Не підтверджено за {options.UnconfirmedOrderHours} год.";
+                }
+                else if (order is { Status: OrderStatus.AwaitingPayment, PaymentMethod: PaymentMethod.Card, PaymentStatus: PaymentStatus.Pending or PaymentStatus.Failed }
+                         && order.History.Where(h => h.To == OrderStatus.AwaitingPayment && h.From != OrderStatus.AwaitingPayment).Max(h => (DateTimeOffset?)h.At) < unpaidThreshold
+                         && !(await payments.BusySinceAsync([order.Id], unpaidThreshold, ct)).Contains(order.Id))
+                {
+                    reason = $"Не оплачено за {options.UnpaidCardOrderHours} год.";
+                }
+
+                if (reason is not null)
+                {
+                    order.ChangeStatus(OrderStatus.Cancelled, now, OrderActors.Schedule, reason);
                     await OrderCancellationEffects.ApplyAsync(order, outbox, reservations, ct);
                     await db.SaveChangesAsync(ct);
                     await transaction.CommitAsync(ct);
@@ -72,10 +104,15 @@ internal sealed class UnpaidOrderExpiryJob(IServiceScopeFactory scopes, TimeProv
             {
                 errors.Add(new SyncError(number, ex.Message));
             }
-
-            db.ChangeTracker.Clear();
+            finally
+            {
+                db.ChangeTracker.Clear();
+            }
         }
 
-        return new SyncResult($"Неоплачених карткових замовлень, старших за {hours} год: {candidates.Count}, без активної оплати: {numbers.Count}, скасовано: {cancelled}", errors);
+        return new SyncResult($"Прострочених непідтверджених замовлень: {unconfirmed.Count}, карткових без активної оплати: {unpaid.Count - busy.Count}, скасовано: {cancelled}", errors);
     }
+
+    private static DateTimeOffset Threshold(DateTimeOffset now, int hours) =>
+        hours > 0 && hours < (now - DateTimeOffset.MinValue).TotalHours ? now.AddHours(-hours) : DateTimeOffset.MinValue;
 }

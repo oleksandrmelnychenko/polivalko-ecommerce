@@ -1,7 +1,7 @@
 import { getMe } from "../api/client";
 import type { CustomerMe, Session } from "./types";
 
-const HINT_KEY = "pv-customer";
+export const SESSION_SIGNAL = "pv-customer";
 const UNKNOWN: Session = { status: "unknown", me: null };
 const UNVERIFIED: Session = { status: "unknown", me: null, failed: true };
 const GUEST: Session = { status: "guest", me: null };
@@ -10,14 +10,14 @@ const RETRY_MAX = 30000;
 
 let session: Session = UNKNOWN;
 let pending: Promise<Session> | null = null;
+let generation = 0;
 let retryDelay = RETRY_FIRST;
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
 const listeners = new Set<() => void>();
 
-function writeHint(on: boolean) {
+function signalSessionChange() {
   try {
-    if (on) window.localStorage.setItem(HINT_KEY, "1");
-    else window.localStorage.removeItem(HINT_KEY);
+    window.localStorage.setItem(SESSION_SIGNAL, crypto.randomUUID());
   } catch {}
 }
 
@@ -43,14 +43,16 @@ export function subscribeSession(listener: () => void) {
 }
 
 export function setSignedIn(me: CustomerMe) {
-  writeHint(true);
+  if (session.me?.id !== me.id) signalSessionChange();
+  generation += 1;
   pending = null;
   stopRetry();
   set({ status: "signedIn", me });
 }
 
 export function setSignedOut() {
-  writeHint(false);
+  signalSessionChange();
+  generation += 1;
   pending = null;
   stopRetry();
   set(GUEST);
@@ -68,30 +70,53 @@ function checkFailed() {
   retryDelay = Math.min(retryDelay * 2, RETRY_MAX);
 }
 
-async function fetchSession(): Promise<Session> {
+async function fetchSession(current: number): Promise<Session> {
   try {
     const { data, response } = await getMe();
-    if (data) setSignedIn(data);
-    else if (response.status === 401) setSignedOut();
-    else checkFailed();
+    if (current !== generation) return session;
+    if (data) {
+      if (session.me?.id !== data.id) generation += 1;
+      pending = null;
+      stopRetry();
+      set({ status: "signedIn", me: data });
+    } else if (response.status === 401) {
+      if (session.status !== "guest") generation += 1;
+      pending = null;
+      stopRetry();
+      set(GUEST);
+    } else {
+      checkFailed();
+    }
   } catch {
-    checkFailed();
+    if (current === generation) checkFailed();
   }
   return session;
 }
 
 export function loadSession(): Promise<Session> {
   if (session.status !== "unknown") return Promise.resolve(session);
-  pending ??= fetchSession();
-  return pending;
+  return refreshSession();
 }
 
 export function refreshSession(): Promise<Session> {
-  pending = fetchSession();
+  pending ??= fetchSession(generation);
   return pending;
 }
 
-export function expireOn401<R extends { response: Response }>(result: R): R {
+export function refreshChangedSession(): Promise<Session> {
+  generation += 1;
+  pending = null;
+  set(UNKNOWN);
+  return refreshSession();
+}
+
+export async function withActiveSession<R extends { response: Response }>(send: (assertActive: () => void) => Promise<R>): Promise<R> {
+  const current = generation;
+  function assertActive() {
+    if (current !== generation) throw new Error("Сеанс змінився. Спробуйте ще раз.");
+  }
+  const result = await send(assertActive);
+  assertActive();
   if (result.response.status === 401 && session.status !== "guest") setSignedOut();
   return result;
 }

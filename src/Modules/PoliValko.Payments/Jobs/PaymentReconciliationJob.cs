@@ -60,8 +60,11 @@ internal sealed class PaymentReconciliationJob(IServiceScopeFactory scopes, Time
             }
             catch (Exception ex) when (!ct.IsCancellationRequested)
             {
-                db.ChangeTracker.Clear();
                 errors.Add(new SyncError(payment.OrderNumber, ex.Message));
+            }
+            finally
+            {
+                db.ChangeTracker.Clear();
             }
         }
 
@@ -80,8 +83,11 @@ internal sealed class PaymentReconciliationJob(IServiceScopeFactory scopes, Time
             }
             catch (Exception ex) when (!ct.IsCancellationRequested)
             {
-                db.ChangeTracker.Clear();
                 errors.Add(new SyncError(refund.OrderNumber, ex.Message));
+            }
+            finally
+            {
+                db.ChangeTracker.Clear();
             }
         }
 

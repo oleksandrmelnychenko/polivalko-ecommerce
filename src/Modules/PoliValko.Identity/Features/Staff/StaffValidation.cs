@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Security;
 using PoliValko.Infrastructure.Security.Permissions;
@@ -14,6 +15,22 @@ internal static class StaffValidation
 {
     private static readonly string[] SystemActors =
         ["автоматично", "платіжна система", "покупець", "навколо", "розклад", "запит з консолі", "система"];
+
+    public static async Task<IDbContextTransaction> BeginChangeAsync(PoliValkoDbContext db, CancellationToken ct)
+    {
+        var transaction = await db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            // Serialize staff and role mutations while checking what the actor can grant or revoke.
+            await db.Database.ExecuteSqlAsync($"SELECT 1 FROM identity.roles WHERE is_superuser FOR UPDATE", ct);
+            return transaction;
+        }
+        catch
+        {
+            await transaction.DisposeAsync();
+            throw;
+        }
+    }
 
     public static string? ValidateName(string? value, Dictionary<string, string[]> errors)
     {
@@ -60,7 +77,7 @@ internal static class StaffValidation
 
     public static async Task<ProblemHttpResult?> CanGrantAsync(StaffAccess? me, StaffRole role, PoliValkoDbContext db, CancellationToken ct)
     {
-        if (me is null)
+        if (me is null || !me.Has(PermissionKeys.StaffUsersManage))
         {
             return Forbidden("Немає доступу до керування працівниками.");
         }
@@ -81,7 +98,7 @@ internal static class StaffValidation
 
     public static async Task<ProblemHttpResult?> CanManageAsync(StaffAccess? me, StaffUser user, PoliValkoDbContext db, CancellationToken ct)
     {
-        if (me is null)
+        if (me is null || !me.Has(PermissionKeys.StaffUsersManage))
         {
             return Forbidden("Немає доступу до керування працівниками.");
         }
@@ -112,6 +129,9 @@ internal static class StaffValidation
 
     public static ProblemHttpResult LastSuperuser() =>
         Problems.Create(StatusCodes.Status409Conflict, "staff.last_superuser", "Це останній активний адміністратор", "Спершу призначте роль адміністратора іншому працівнику.");
+
+    public static ProblemHttpResult UpdateConflict() =>
+        Problems.Create(StatusCodes.Status409Conflict, "staff.concurrent_update", "Не вдалося зберегти зміни працівника", "Оновіть сторінку й повторіть дію.");
 
     public static Dictionary<string, string[]> ToErrors(IdentityResult result, string field = "password")
     {

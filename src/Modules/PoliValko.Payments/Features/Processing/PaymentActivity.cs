@@ -9,6 +9,11 @@ internal sealed class PaymentActivity(PoliValkoDbContext db) : IPaymentActivity
 {
     public async Task<IReadOnlySet<Guid>> BusySinceAsync(IReadOnlyCollection<Guid> orderIds, DateTimeOffset since, CancellationToken ct)
     {
+        if (orderIds.Count == 0)
+        {
+            return new HashSet<Guid>();
+        }
+
         var ids = orderIds.Distinct().ToList();
         var busy = await db.Set<Payment>().AsNoTracking()
             .Where(p => ids.Contains(p.OrderId)

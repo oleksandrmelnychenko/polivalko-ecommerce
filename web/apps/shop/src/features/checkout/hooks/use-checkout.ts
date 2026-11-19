@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type FormEvent, type RefObject } from "react";
 import { track } from "@/features/analytics";
 import { useCart, useCartQuote } from "@/features/cart";
-import type { CustomerAddress } from "@/features/customer";
+import { withActiveSession, type CustomerAddress } from "@/features/customer";
 import { checkoutCart } from "@/features/cart";
 import type { Problem } from "@polivalko/shared/api/problem";
 import { orderRequest } from "../lib/order-request";
@@ -92,11 +92,17 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
         warehouseRef: point.warehouseRef,
         payment: effectivePayment,
       });
-      const { data, error, response } = await checkoutCart(serverCart, request);
+      const { data, error, response } = await withActiveSession(async (assertActive) => {
+        const result = await checkoutCart(serverCart, request);
+        if (result.data) {
+          assertActive();
+          await account.saveAfterOrder(form, request.delivery);
+          await cartState.refresh();
+        }
+        return result;
+      });
 
       if (data) {
-        await account.saveAfterOrder(form, request.delivery);
-        await cartState.refresh();
         router.push(`/order/${data.number}?token=${encodeURIComponent(data.accessToken)}`);
         return;
       }

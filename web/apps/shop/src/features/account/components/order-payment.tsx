@@ -1,7 +1,7 @@
 "use client";
 
 import { PayButton, PaymentPending } from "@/features/payment";
-import { withCsrf } from "@/features/customer";
+import { withAccountCsrf } from "@/features/customer";
 import type { Order, OrderStatus } from "@polivalko/shared/api/types";
 import { formatMoney } from "@polivalko/shared/lib/format";
 import { postOrderPayment } from "../api/client";
@@ -22,7 +22,7 @@ export function OrderPayment({ order, returned, reload }: { order: Order; return
       number={order.number}
       failed={order.paymentStatus === "failed"}
       amount={formatMoney(order.total)}
-      start={() => withCsrf((h) => postOrderPayment(h, order.number))}
+      start={() => withAccountCsrf((h) => postOrderPayment(h, order.number))}
     />
   );
   if (returned && order.paymentStatus === "pending") return <PaymentPending onRefresh={reload}>{payButton}</PaymentPending>;

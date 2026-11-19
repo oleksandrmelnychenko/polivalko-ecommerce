@@ -1,5 +1,6 @@
 import { browserApi } from "@polivalko/shared/api/browser";
 import { problemOf } from "@polivalko/shared/api/problem";
+import { withActiveSession } from "./session-store";
 
 let csrfToken: Promise<string> | null = null;
 
@@ -24,4 +25,11 @@ export async function withCsrf<R extends { error?: unknown }>(send: (headers: Cs
     result = await send(await csrfHeader());
   }
   return result;
+}
+
+export function withAccountCsrf<R extends { error?: unknown; response: Response }>(send: (headers: CsrfHeaders) => Promise<R>): Promise<R> {
+  return withActiveSession((assertActive) => withCsrf((headers) => {
+    assertActive();
+    return send(headers);
+  }));
 }

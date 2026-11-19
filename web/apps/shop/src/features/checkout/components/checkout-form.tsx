@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef } from "react";
+import { useCustomer } from "@/features/customer";
 import { useCheckout } from "../hooks/use-checkout";
 import { fieldProps } from "../lib/field-props";
 import { CheckoutComment } from "./checkout-comment";
@@ -13,7 +14,14 @@ import { CheckoutPayment } from "./checkout-payment";
 import { CheckoutSavedAddresses } from "./checkout-saved-addresses";
 import { CheckoutSummary } from "./checkout-summary";
 
-export function CheckoutForm({ mailDelivers, phone }: { mailDelivers: boolean; phone: string | null }) {
+type CheckoutFormProps = { mailDelivers: boolean; phone: string | null };
+
+export function CheckoutForm(props: CheckoutFormProps) {
+  const customer = useCustomer();
+  return <CheckoutFields key={customer.me?.id ?? "guest"} {...props} />;
+}
+
+function CheckoutFields({ mailDelivers, phone }: CheckoutFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const checkout = useCheckout(formRef, phone);
 

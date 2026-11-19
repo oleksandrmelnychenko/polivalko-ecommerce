@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useEffectEvent, useState, type RefObject } from "react";
-import { getAddresses, postAddress, useCustomer, withCsrf, type CustomerAddress } from "@/features/customer";
+import { useEffect, useEffectEvent, useRef, useState, type RefObject } from "react";
+import { getAddresses, postAddress, useCustomer, withAccountCsrf, withActiveSession, type CustomerAddress } from "@/features/customer";
 import type { CreateOrderRequest } from "@polivalko/shared/api/types";
 
 const ADDRESS_LIMIT = 10;
@@ -15,6 +15,7 @@ export function useCheckoutAccount(formRef: RefObject<HTMLFormElement | null>, h
   const customer = useCustomer();
   const [addresses, setAddresses] = useState<CustomerAddress[] | null>(null);
   const [chosen, setChosen] = useState("new");
+  const interacted = useRef(false);
   const owner = customer.me?.id ?? null;
 
   useEffect(() => {
@@ -27,6 +28,7 @@ export function useCheckoutAccount(formRef: RefObject<HTMLFormElement | null>, h
   }, [formRef, hasForm, customer.me]);
 
   const applyDefault = useEffectEvent((list: CustomerAddress[]) => {
+    if (interacted.current) return;
     const preferred = list.find((a) => a.isDefault);
     if (!preferred) return;
     setChosen(preferred.id);
@@ -36,30 +38,32 @@ export function useCheckoutAccount(formRef: RefObject<HTMLFormElement | null>, h
   useEffect(() => {
     if (!owner) return;
     let cancelled = false;
-    void getAddresses().then(({ data }) => {
+    void withActiveSession(getAddresses).then(({ data }) => {
       if (cancelled || !data) return;
       setAddresses(data);
       applyDefault(data);
-    });
+    }).catch(() => undefined);
     return () => {
       cancelled = true;
     };
   }, [owner]);
 
   function choose(id: string) {
+    interacted.current = true;
     setChosen(id);
     const address = addresses?.find((a) => a.id === id);
     if (address) apply(address);
   }
 
   function release() {
+    interacted.current = true;
     if (chosen !== "new") setChosen("new");
   }
 
   async function saveAfterOrder(form: FormData, delivery: CreateOrderRequest["delivery"]) {
     if (!owner || !delivery || form.get("saveAddress") !== "on" || delivery.method === "pickup") return;
     try {
-      await withCsrf((h) =>
+      await withAccountCsrf((h) =>
         postAddress(h, {
           label: null,
           method: delivery.method,

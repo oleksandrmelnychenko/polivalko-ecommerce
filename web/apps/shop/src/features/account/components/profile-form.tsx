@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, type FormEvent } from "react";
-import { setSignedIn, withCsrf, type CustomerMe } from "@/features/customer";
+import { setSignedIn, withAccountCsrf, type CustomerMe } from "@/features/customer";
 import { putProfile } from "../api/client";
 import { useFormState } from "../hooks/use-form-state";
 import { text } from "../lib/form-status";
@@ -15,7 +15,7 @@ export function ProfileForm({ me }: { me: CustomerMe }) {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const result = await form.submit(() => withCsrf((h) => putProfile(h, { name: text(data, "name"), phone: text(data, "phone") || null })));
+    const result = await form.submit(() => withAccountCsrf((h) => putProfile(h, { name: text(data, "name"), phone: text(data, "phone") || null })));
     if (result?.data) {
       setSignedIn(result.data);
       form.setStatus({ kind: "ok", title: "Дані збережено" });

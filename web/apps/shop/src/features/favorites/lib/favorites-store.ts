@@ -1,4 +1,4 @@
-import { expireOn401, withCsrf } from "@/features/customer";
+import { withAccountCsrf, withActiveSession } from "@/features/customer";
 import { deleteFavorite, getFavoriteIds, putFavorite } from "../api/client";
 
 export type FavoritesState = { owner: string | null; ids: ReadonlySet<string> };
@@ -28,8 +28,7 @@ export function subscribeFavorites(listener: () => void) {
 export function loadFavorites(owner: string): Promise<boolean> {
   if (state.owner === owner) return Promise.resolve(true);
   if (loading?.owner === owner) return loading.promise;
-  const promise = getFavoriteIds()
-    .then(expireOn401)
+  const promise = withActiveSession(getFavoriteIds)
     .then(({ data }) => {
       if (loading?.owner !== owner) return false;
       loading = null;
@@ -67,7 +66,7 @@ export async function toggleFavorite(id: string, owner: string): Promise<boolean
     set({ owner, ids: withId(state.ids, id, on) });
     let ok = false;
     try {
-      const { response } = expireOn401(await withCsrf((h) => (on ? putFavorite(h, id) : deleteFavorite(h, id))));
+      const { response } = await withAccountCsrf((h) => (on ? putFavorite(h, id) : deleteFavorite(h, id)));
       ok = response.ok;
     } catch {}
     if (!ok && state.owner === owner) set({ owner, ids: withId(state.ids, id, !on) });

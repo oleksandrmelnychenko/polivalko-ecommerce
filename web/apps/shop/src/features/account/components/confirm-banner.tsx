@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { withCsrf } from "@/features/customer";
+import { withAccountCsrf } from "@/features/customer";
 import { postResendConfirmation } from "../api/client";
 
 export function ConfirmBanner({ email, mailDelivers }: { email: string; mailDelivers: boolean }) {
@@ -12,7 +12,7 @@ export function ConfirmBanner({ email, mailDelivers }: { email: string; mailDeli
     setBusy(true);
     setMessage("");
     try {
-      const { response } = await withCsrf((h) => postResendConfirmation(h));
+      const { response } = await withAccountCsrf(postResendConfirmation);
       setMessage(
         response.ok
           ? `Лист надіслано на ${email}. Перевірте пошту, зокрема «Спам».`

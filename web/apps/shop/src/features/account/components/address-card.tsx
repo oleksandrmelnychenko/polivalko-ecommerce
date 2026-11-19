@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { addressPlace, addressTitle, expireOn401, withCsrf, type CustomerAddress } from "@/features/customer";
+import { addressPlace, addressTitle, withAccountCsrf, type CustomerAddress } from "@/features/customer";
 import { problemTitle } from "@polivalko/shared/api/problem";
 import { deliveryMethodLabel } from "@polivalko/shared/lib/labels";
 import { deleteAddress, putAddress } from "../api/client";
@@ -26,7 +26,7 @@ export function AddressCard({
     setBusy(true);
     setError("");
     try {
-      const { response, error: problem } = expireOn401(await send());
+      const { response, error: problem } = await send();
       if (response.ok) {
         onChanged(message);
         return;
@@ -34,14 +34,15 @@ export function AddressCard({
       setError(problemTitle(problem, "Не вдалося зберегти зміни. Спробуйте ще раз."));
     } catch {
       setError("Немає зв'язку з сервером. Спробуйте ще раз.");
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   const makeDefault = () =>
     run(
       () =>
-        withCsrf((h) =>
+        withAccountCsrf((h) =>
           putAddress(h, address.id, {
             label: address.label,
             method: address.method,
@@ -54,7 +55,7 @@ export function AddressCard({
       "Основну адресу змінено.",
     );
 
-  const remove = () => run(() => withCsrf((h) => deleteAddress(h, address.id)), "Адресу видалено.");
+  const remove = () => run(() => withAccountCsrf((h) => deleteAddress(h, address.id)), "Адресу видалено.");
 
   return (
     <li className={address.isDefault ? "address-card address-card--default" : "address-card"}>

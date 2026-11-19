@@ -1,8 +1,8 @@
 import { browserApi } from "@polivalko/shared/api/browser";
 import type { CreateOrderRequest } from "@polivalko/shared/api/types";
 
-export function getSettlements(q: string) {
-  return browserApi.GET("/api/v1/delivery/np/settlements", { params: { query: q ? { q } : {} } });
+export function getSettlements(q: string, signal: AbortSignal) {
+  return browserApi.GET("/api/v1/delivery/np/settlements", { params: { query: q ? { q } : {} }, signal });
 }
 
 export function getWarehouses(settlementRef: string) {

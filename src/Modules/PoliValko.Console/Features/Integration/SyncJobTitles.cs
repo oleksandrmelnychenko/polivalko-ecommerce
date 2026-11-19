@@ -14,6 +14,6 @@ internal static class SyncJobTitles
         [NavkoloJobs.Import] = "Імпорт каталогу з файлу",
         [DeliveryJobs.NovaPoshtaDirectory] = "Нова пошта: довідник",
         [PaymentJobs.Reconcile] = "Звірка оплат",
-        [OrderingJobs.ExpireUnpaid] = "Скасування неоплачених замовлень",
+        [OrderingJobs.ExpireUnpaid] = "Скасування прострочених замовлень",
     };
 }

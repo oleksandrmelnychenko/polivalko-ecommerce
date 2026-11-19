@@ -20,7 +20,6 @@ internal static class SearchProducts
         TimeProvider time,
         CancellationToken ct)
     {
-        var visibleProducts = await CatalogVisibility.ProductsAsync(db, ct);
         var sort = query.Sort ?? ProductSort.NameAsc;
         if (!ProductSort.All.Contains(sort))
         {
@@ -58,12 +57,13 @@ internal static class SearchProducts
             });
         }
 
-        var scope = visibleProducts.AsNoTracking().Where(p => p.IsVisible);
+        var categories = await CategoryQueries.LoadVisibleCategoriesAsync(db, ct);
+        var visibleProducts = CatalogVisibility.Products(db, categories.Select(c => c.Id).ToArray());
+        var scope = visibleProducts;
         IReadOnlyList<string> filterNames = [];
 
         if (!string.IsNullOrWhiteSpace(query.Category))
         {
-            var categories = await CategoryQueries.LoadVisibleCategoriesAsync(db, ct);
             var root = categories.FirstOrDefault(c => c.Slug == query.Category);
             if (root is null)
             {

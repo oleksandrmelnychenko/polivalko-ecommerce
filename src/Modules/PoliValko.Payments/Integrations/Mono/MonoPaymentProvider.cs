@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
@@ -12,7 +11,7 @@ using PoliValko.Payments.Integrations.Providers;
 
 namespace PoliValko.Payments.Integrations.Mono;
 
-internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOptions> options) : IPaymentProvider
+internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOptions> options, MonoWebhookKeys webhookKeys) : IPaymentProvider
 {
     private const int Hryvnia = 980;
 
@@ -20,12 +19,6 @@ internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOpti
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
-
-    private static readonly TimeSpan KeyRefreshInterval = TimeSpan.FromMinutes(5);
-
-    private static string? cachedKey;
-
-    private static long keyFetchedAt;
 
     internal sealed record BasketItem(string Name, int Qty, long Sum, string Code, long Total);
 
@@ -94,28 +87,16 @@ internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOpti
             throw new PaymentWebhookRejectedException("Немає заголовка X-Sign.");
         }
 
-        if (cachedKey is null || !Verify(body, signature, cachedKey))
+        if (!IsSignatureEncodingValid(signature))
         {
-            var last = Interlocked.Read(ref keyFetchedAt);
-            if ((last != 0 && Stopwatch.GetElapsedTime(last) < KeyRefreshInterval)
-                || Interlocked.CompareExchange(ref keyFetchedAt, Stopwatch.GetTimestamp(), last) != last)
-            {
-                throw new PaymentWebhookRejectedException("Підпис X-Sign не збігається.");
-            }
+            throw new PaymentWebhookRejectedException("Підпис X-Sign не збігається.");
+        }
 
-            try
-            {
-                cachedKey = await FetchKeyAsync(ct);
-            }
-            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException && !ct.IsCancellationRequested)
-            {
-                throw new PaymentWebhookRejectedException($"Не вдалося отримати ключ monobank: {ex.Message}");
-            }
-
-            if (!Verify(body, signature, cachedKey))
-            {
-                throw new PaymentWebhookRejectedException("Підпис X-Sign не збігається.");
-            }
+        var cachedKey = webhookKeys.Current;
+        if ((cachedKey is null || !Verify(body, signature, cachedKey)) &&
+            (await webhookKeys.RefreshAsync(FetchKeyAsync, ct) is not { } refreshedKey || !Verify(body, signature, refreshedKey)))
+        {
+            throw new PaymentWebhookRejectedException("Підпис X-Sign не збігається.");
         }
 
         var status = JsonSerializer.Deserialize<InvoiceStatus>(body, Json)
@@ -174,12 +155,18 @@ internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOpti
     private static bool IsTransient(HttpStatusCode code) =>
         (int)code >= 500 || code is HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests;
 
+    private static bool IsSignatureEncodingValid(string signature)
+    {
+        Span<byte> buffer = stackalloc byte[160];
+        return signature.Length <= 216 && Convert.TryFromBase64String(signature, buffer, out var length) && length > 0;
+    }
+
     internal static bool Verify(byte[] body, string signatureBase64, string publicKeyBase64)
     {
         try
         {
             using var ecdsa = ECDsa.Create();
-            ecdsa.ImportFromPem(Encoding.ASCII.GetString(Convert.FromBase64String(publicKeyBase64)));
+            ImportKey(ecdsa, publicKeyBase64);
             return ecdsa.VerifyData(body, Convert.FromBase64String(signatureBase64), HashAlgorithmName.SHA256, DSASignatureFormat.Rfc3279DerSequence);
         }
         catch (FormatException)
@@ -187,6 +174,10 @@ internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOpti
             return false;
         }
         catch (CryptographicException)
+        {
+            return false;
+        }
+        catch (ArgumentException)
         {
             return false;
         }
@@ -213,9 +204,15 @@ internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOpti
     private async Task<string> FetchKeyAsync(CancellationToken ct)
     {
         using var response = await SendAsync(HttpMethod.Get, "/api/merchant/pubkey", null, ct);
-        var key = await response.Content.ReadFromJsonAsync<PubKeyResponse>(Json, ct);
-        return key?.Key ?? throw new InvalidOperationException("monobank не повернув публічний ключ.");
+        var responseBody = await response.Content.ReadFromJsonAsync<PubKeyResponse>(Json, ct);
+        var key = responseBody?.Key ?? throw new InvalidOperationException("monobank не повернув публічний ключ.");
+        using var ecdsa = ECDsa.Create();
+        ImportKey(ecdsa, key);
+        return key;
     }
+
+    private static void ImportKey(ECDsa ecdsa, string key) =>
+        ecdsa.ImportFromPem(Encoding.ASCII.GetString(Convert.FromBase64String(key)));
 
     private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, object? body, CancellationToken ct, bool throwOnError = true)
     {

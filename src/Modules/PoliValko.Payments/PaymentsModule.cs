@@ -41,6 +41,7 @@ public static class PaymentsModule
         }
         else if (PaymentProviderNames.Is(provider, PaymentProviderNames.Mono))
         {
+            services.AddSingleton<MonoWebhookKeys>();
             services.AddHttpClient<MonoPaymentProvider>(client => client.Timeout = TimeSpan.FromSeconds(20));
             services.AddScoped<IPaymentProvider>(sp => sp.GetRequiredService<MonoPaymentProvider>());
         }

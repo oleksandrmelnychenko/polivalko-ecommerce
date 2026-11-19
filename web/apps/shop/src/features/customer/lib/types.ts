@@ -4,4 +4,6 @@ type S = components["schemas"];
 export type CustomerMe = S["CustomerMeDto"];
 export type CustomerAddress = S["CustomerAddressDto"];
 export type SaveAddressRequest = S["SaveCustomerAddressRequest"];
-export type Session = { status: "unknown" | "guest" | "signedIn"; me: CustomerMe | null; failed?: boolean };
+export type Session =
+  | { status: "unknown" | "guest"; me: null; failed?: boolean }
+  | { status: "signedIn"; me: CustomerMe; failed?: never };

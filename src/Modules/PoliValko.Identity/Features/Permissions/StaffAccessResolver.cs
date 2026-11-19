@@ -24,11 +24,13 @@ internal sealed class StaffAccessResolver(
     private static readonly TimeSpan Lifetime = TimeSpan.FromSeconds(30);
 
     public Task<StaffAccess?> GetAsync(string userId, CancellationToken ct = default) =>
-        cache.GetOrCreateAsync($"staff-access:{epoch.Value}:{userId}", entry =>
-        {
-            entry.AbsoluteExpirationRelativeToNow = Lifetime;
-            return LoadAsync(userId, ct);
-        });
+        db.Database.CurrentTransaction is not null
+            ? LoadAsync(userId, ct)
+            : cache.GetOrCreateAsync($"staff-access:{epoch.Value}:{userId}", entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = Lifetime;
+                return LoadAsync(userId, ct);
+            });
 
     public void Invalidate() => epoch.Bump();
 

@@ -38,7 +38,7 @@ src/
     PoliValko.Identity/      працівники (ASP.NET Core Identity): вхід, CSRF, ролі з правами за ключами (системні Адміністратор
                              і Менеджер плюс власні), керування працівниками й ролями
     PoliValko.Notifications/ повідомлення менеджеру й алерти збоїв (Telegram або лог; чати й події — з консолі), листи
-                             покупцям (поки лог)
+                             покупцям (SMTP або лог)
 web/                        npm workspaces:
   apps/shop/                Next.js 16: вітрина й особистий кабінет покупця (дизайн за скілом Hallmark), домен магазину
   apps/console/             консоль для працівників: односторінковий застосунок на Next.js 16 (статичний експорт; React 19,
@@ -168,6 +168,6 @@ dotnet ef migrations add <Назва> --project src/PoliValko.Infrastructure --s
 
 Без доступів замовника працюють заглушки з тим самим контрактом, що й справжні інтеграції:
 Navkolo (`Navkolo:Mode=Stub`), оплата (`Payments:Provider=Sandbox`), ПРРО (`Fiscal:Provider=Stub`), Нова пошта (демо-довідник без ключа),
-листи покупцям (`Email:Mode=Log`: листи не надсилаються; посилання для підтвердження пошти й скидання пароля пишуться
-в лог API лише в середовищі Development, в інших середовищах посилання в лог не потрапляють).
+листи покупцям (`Email:Mode=Log` для розробки або `Email:Mode=Smtp` для доставки). У режимі `Log` посилання для підтвердження
+пошти й скидання пароля пишуться в лог API лише в середовищі Development.
 Як увімкнути справжні — [docs/integrations.md](docs/integrations.md). Що лишилося до запуску — [docs/prototype-plan.md](docs/prototype-plan.md).

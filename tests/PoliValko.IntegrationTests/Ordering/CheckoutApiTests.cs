@@ -1,11 +1,13 @@
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
+using PoliValko.Catalog.Domain;
 using PoliValko.Delivery.Features.Storefront;
 using PoliValko.Delivery.Contracts;
 using PoliValko.Ordering.Contracts;
 using PoliValko.Ordering.Domain;
 using PoliValko.Ordering.Features.Checkout;
+using PoliValko.Ordering.Jobs;
 using PoliValko.SharedKernel;
 
 namespace PoliValko.IntegrationTests;
@@ -104,6 +106,36 @@ public sealed class CheckoutApiTests(ApiFactory api)
             TestJson.Options,
             Ct);
         view!.Customer.Email.ShouldBe($"g***{email[email.IndexOf('@')..]}");
+    }
+
+    [Fact]
+    public async Task Expiry_releases_only_reservations_for_old_unconfirmed_orders()
+    {
+        var product = await api.AddProductAsync("ruchnyi-instrument", "Резерв до підтвердження", 150m, stock: 3);
+
+        async Task<string> CreateOrderAsync() => (await (await PostOrderAsync(
+            Order(product.Id, 1, "150.00", UniquePhone()), Guid.NewGuid().ToString()))
+            .ReadAsync<OrderCreatedDto>(HttpStatusCode.Created)).Number;
+
+        var expired = await CreateOrderAsync();
+        var confirmed = await CreateOrderAsync();
+        var recent = await CreateOrderAsync();
+        var past = DateTimeOffset.UtcNow.AddDays(-3);
+        await api.WithDbAsync(db => db.Set<Order>().Where(o => o.Number == expired || o.Number == confirmed)
+            .ExecuteUpdateAsync(s => s.SetProperty(o => o.CreatedAt, past), Ct));
+        await api.WithDbAsync(db => db.Set<Order>().Where(o => o.Number == confirmed)
+            .ExecuteUpdateAsync(s => s.SetProperty(o => o.Status, OrderStatus.Confirmed), Ct));
+
+        await api.WithScopeAsync(services => UnpaidOrderExpiryJob.ExpireAsync(services, Ct));
+
+        var states = await api.WithDbAsync(db => db.Set<Order>()
+            .Where(o => o.Number == expired || o.Number == confirmed || o.Number == recent)
+            .ToDictionaryAsync(o => o.Number, o => o.Status, Ct));
+        states[expired].ShouldBe(OrderStatus.Cancelled);
+        states[confirmed].ShouldBe(OrderStatus.Confirmed);
+        states[recent].ShouldBe(OrderStatus.New);
+        (await api.WithDbAsync(db => db.Set<ProductStock>().Where(s => s.ProductId == product.Id)
+            .Select(s => s.ReservedQuantity).SingleAsync(Ct))).ShouldBe(2m);
     }
 
     [Fact]

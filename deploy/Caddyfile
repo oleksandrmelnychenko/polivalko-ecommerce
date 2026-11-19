@@ -38,6 +38,9 @@
 
 	import indexing-{$SEARCH_INDEXING:index}
 
+	@token_pages path /order/* /account/confirm-email /account/reset-password /pay/sandbox/*
+	header @token_pages >Referrer-Policy "no-referrer"
+
 	route {
 		respond /api/v1/console/* 404
 

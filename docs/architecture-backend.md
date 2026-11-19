@@ -962,7 +962,7 @@ PaymentTypes, Checkbox:*); `Navkolo` (Mode, SyncInterval, CatalogInterval, Fresh
 `Notifications:Telegram` (BotToken; ChatId — запасний чат, коли в консолі чатів не вказано);
 `RateLimiting:{Forms,Orders,Login}:{PermitLimit,WindowSeconds}` (типово 5/60, 10/600, 10/60);
 `Cors:Origins`; `Api:ExposeDocs`; `Database:ApplyMigrationsOnStartup`, `Database:SeedDemoData`; `Seed:Users`;
-`Email:Mode` (`Log` — типово й поки єдине значення, інше зупиняє запуск). `Site:PublicUrl` тепер також база посилань у листах покупцю й адреси повернення з оплати в кабінеті.
+`Email:Mode` (`Log` типово або `Smtp`). `Site:PublicUrl` задає базу посилань у листах покупцю й адресу повернення з оплати в кабінеті.
 
 ### 6.5 HTTP-політики
 
@@ -999,9 +999,8 @@ PaymentTypes, Checkbox:*); `Navkolo` (Mode, SyncInterval, CatalogInterval, Fresh
   (вибір під час створення scoped-сервісу).
 - Повідомлення менеджеру: канал Telegram, якщо задано BotToken (чати — з налаштувань сповіщень, запасний — ChatId),
   інакше лог; перемикачі подій — у налаштуваннях сповіщень (розділ 5.4).
-- Листи покупцю (`ICustomerMailer`): `Email:Mode` = `Log` — заглушка `LogCustomerMailer` пише в лог адресата й
-  посилання з токеном. Для продакшну потрібен справжній провайдер (новий режим і реалізація в
-  `Notifications/Integrations`), бо посилання в лозі — це робочі токени входу в обліковий запис.
+- Листи покупцю (`ICustomerMailer`): `SmtpCustomerMailer` доставляє листи через SMTP з STARTTLS. `LogCustomerMailer`
+  показує посилання з токеном лише в Development.
 
 ## 7. Архітектурні тести
 
@@ -1131,9 +1130,8 @@ DNTrade не надає версії статусу в документі; фа�
   піде про замовлення, яке відкотилося, і SMTP не тримає транзакцію з блокуванням залишків. Обидва шляхи створення
   (`CreateOrder` і оформлення із серверного кошика в `CartEndpoints`) роблять це однаково; повтор запиту лист не
   дублює. Помилка листа лише пишеться в журнал.
-- **Доставка.** Зараз є лише `Email:Mode=Log` (`LogCustomerMailer`): у розробці посилання видно в журналі, в інших
-  середовищах лист не доставляється й посилання приховане, як і для підтвердження email та скидання пароля. Щоб листи
-  доходили, потрібна справжня реалізація `ICustomerMailer` (SMTP чи поштовий сервіс) і її режим у `NotificationsModule`.
+- **Доставка.** Режим `Email:Mode=Smtp` надсилає листи про замовлення, підтвердження пошти й скидання пароля.
+  У режимі `Log` посилання видно в журналі лише під час розробки.
 - **DTO.** `OrderCustomerDto` має `Email` у вигляді `t***@domain` (`OrderMapping.MaskEmail`) або `null` для старих
   замовлень без email.
 - **Тести.** `CheckoutApiTests.Order_requires_email_and_mails_the_order_link`: без email 400 з `customer.email`, з email —
@@ -1157,20 +1155,21 @@ DNTrade не надає версії статусу в документі; фа�
   (`Payments/Features/Settings/CardPayments`: доступно, коли режим не `Disabled`). `CheckoutCalculator.DeliveryOptions`,
   `IsOffered`, `IsAllowed` приймають прапорець `card`: без провайдера «Онлайн карткою» немає ні в списку способів, ні у
   валідації замовлення; спосіб отримання без жодної оплати не показується.
-- **Автоскасування неоплачених карткових замовлень.** `Ordering/Jobs/UnpaidOrderExpiryJob` (Worker, кожні 15 хв, ім'я
-  завдання `ordering.expire-unpaid`, у консолі «Скасування неоплачених замовлень») скасовує замовлення, які стоять у
-  «Чекає оплати» довше за `Ordering:UnpaidCardOrderHours` (типово 24; `0` вимикає). Скасування йде тим самим шляхом, що й
-  у консолі: `Features/Cancellation/OrderCancellationEffects` ставить у чергу скасування в Навколо й відкритих рахунків
-  і звільняє резерв, якщо замовлення ще не вивантажене. Автор у історії — «Автоматично». Замовлення з післяплатою
-  автоматично не скасовуються: це рішення менеджера.
+- **Автоскасування прострочених замовлень.** `Ordering/Jobs/UnpaidOrderExpiryJob` (Worker, кожні 15 хв, ім'я
+  завдання `ordering.expire-unpaid`) скасовує карткові замовлення в статусі «Чекає оплати» після
+  `Ordering:UnpaidCardOrderHours` годин (типово 24) і замовлення у статусах «Нове» та «Чекає підтвердження» після
+  `Ordering:UnconfirmedOrderHours` годин від створення (типово 48). Значення `0` вимикає відповідний строк.
+  `Features/Cancellation/OrderCancellationEffects` ставить у чергу скасування в Навколо й анулювання відкритих рахунків.
+  Товар повертається в продаж одразу до спроби експорту в Навколо або після підтвердження скасування там.
 - **Межі публічного пошуку товарів.** `SearchProducts`: до 20 характеристик у фільтрі, до 50 значень на характеристику,
   до 50 брендів, інакше 400. `PageRequest.MaxPage = 100 000`, щоб `OFFSET` не переповнювався. Проміжний обробник у
   `ApiPipeline` відповідає 400 `http.bad_query` на `%00` у рядку запиту (PostgreSQL такого не приймає). Тест:
   `CatalogApiTests.Filter_count_is_capped_and_odd_paging_or_bytes_do_not_fail`.
 - **Пошук за назвою з консолі.** `ProductSearchText.Matching` шукає ще й у `DisplayName`; під це доданий триграмний індекс
   `ix_products_display_name_trgm` (міграція `ProductDisplayNameSearch`, лише створення індексу).
-- **Платежі.** `PaymentProcessor.ApplyAsync` бере рядок платежу з `FOR UPDATE`: одночасні вебхуки однієї спроби
-  обробляються по черзі, запізнілий `processing` не перезапише `succeeded`. `ReceiveWebhook` читає не більше 256 КБ
+- **Платежі.** `PaymentProcessor.ApplyAsync` блокує спочатку замовлення, потім платіж. Це серіалізує зміни навіть
+  для різних рахунків одного замовлення. Якщо подія випередила збереження рахунку, повторний вебхук або звірка
+  можуть прив'язати її до рахунку й застосувати. `ReceiveWebhook` читає не більше 256 КБ
   (інакше 413). `MonoPaymentProvider` після хибного підпису перечитує відкритий ключ не частіше ніж раз на 5 хв.
   `POST /orders/{number}/payments` і `POST /checkout/quote` отримали ліміт «cart».
 - **«Хіт продажів»** рахує лише замовлення в статусах «Підтверджене», «Оплачене», «Відправлене», «Готове до видачі»,

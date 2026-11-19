@@ -19,6 +19,21 @@ public sealed class ServerCartApiTests(ApiFactory api)
         await (await client.PutJsonAsync("/api/v1/cart/", new SaveCartRequest(cart.Id, cart.Revision, [new(product, quantity)]))).ReadAsync<ServerCartDto>();
 
     [Fact]
+    public async Task Opening_an_empty_cart_keeps_its_identity_without_storing_a_row()
+    {
+        using var guest = await Accounts.AnonymousAsync(api);
+        var empty = await Open(guest);
+        (await Open(guest)).Id.ShouldBe(empty.Id);
+        var response = await guest.PutJsonAsync("/api/v1/cart/", new SaveCartRequest(empty.Id, empty.Revision, []));
+        (await response.ReadAsync<ServerCartDto>()).Revision.ShouldBe(empty.Revision);
+        (await api.WithDbAsync(db => db.Set<ServerCart>().AnyAsync(c => c.Id == empty.Id, Ct))).ShouldBeFalse();
+
+        var product = await api.AddProductAsync("vse-dlia-polyvu", "Перший товар у кошику", 100, 10);
+        (await Save(guest, empty, product.Id, 1)).Id.ShouldBe(empty.Id);
+        (await api.WithDbAsync(db => db.Set<ServerCart>().AnyAsync(c => c.Id == empty.Id, Ct))).ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task Cart_is_server_owned_merges_once_and_survives_a_new_login()
     {
         var p = await api.AddProductAsync("vse-dlia-polyvu", "Серверний кошик", 100, 10);

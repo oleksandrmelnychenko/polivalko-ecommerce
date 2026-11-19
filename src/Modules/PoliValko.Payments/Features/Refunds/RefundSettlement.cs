@@ -49,7 +49,9 @@ internal sealed class RefundSettlement(
                 return;
             }
 
-            result = await provider.FindRefundAsync(payment, submitted, ct);
+            result = await provider.FindRefundAsync(payment, submitted, ct)
+                ?? throw new InvalidOperationException(
+                    $"Повернення за {refund.OrderNumber} з референсом {submitted} ще не видно у провайдера. Звірте його в кабінеті провайдера.");
         }
         else if (!await orders.MarkRefundSubmittedAsync(refund.OrderId, refund.RefundId, Reference(refund.RefundId), ct))
         {
@@ -59,7 +61,7 @@ internal sealed class RefundSettlement(
 
         result ??= await provider.RefundAsync(
             payment,
-            refund.SubmittedAs ?? Reference(refund.RefundId),
+            Reference(refund.RefundId),
             refund.Amount,
             refund.Lines.Select(l => new PaymentBasketItem(l.Name, l.Sku, l.Quantity, l.UnitPrice)).ToList(),
             ct);
@@ -94,8 +96,8 @@ internal sealed class RefundSettlement(
         var payment = await db.Set<Payment>()
             .AsNoTracking()
             .Where(p => p.OrderId == orderId && (p.Status == PaymentAttemptStatus.Succeeded || p.Status == PaymentAttemptStatus.Reversed))
+            .Where(p => p.FailureReason != PaymentProcessor.ExtraPaymentNote && p.FailureReason != PaymentProcessor.ExtraReturnedNote)
             .OrderBy(p => p.Status == PaymentAttemptStatus.Succeeded ? 0 : 1)
-            .ThenBy(p => p.FailureReason == PaymentProcessor.ExtraPaymentNote ? 1 : 0)
             .ThenByDescending(p => p.CreatedAt)
             .FirstOrDefaultAsync(ct);
         return payment?.ProviderPaymentId is null ? (null, null) : (payment.ProviderPaymentId, providers.Find(payment.Provider));

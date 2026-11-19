@@ -63,6 +63,11 @@ internal static class RoleRules
 
     public static ProblemHttpResult? Escalation(StaffAccess? me, IEnumerable<string> granted)
     {
+        if (!CanManage(me))
+        {
+            return Forbidden();
+        }
+
         if (me?.IsSuperuser == true)
         {
             return null;
@@ -78,6 +83,11 @@ internal static class RoleRules
                 string.Join(", ", missing),
                 [new("missingKeys", missing)]);
     }
+
+    public static bool CanManage(StaffAccess? me) => me?.Has(PermissionKeys.StaffRolesManage) == true;
+
+    public static ProblemHttpResult Forbidden() =>
+        Problems.Create(StatusCodes.Status403Forbidden, "auth.forbidden", "Недостатньо прав", "Для цієї дії у вашої ролі немає права.");
 
     public static ProblemHttpResult NotFound() => Problems.NotFound("roles.not_found", "Роль не знайдено");
 

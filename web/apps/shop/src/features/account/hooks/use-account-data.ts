@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useEffectEvent, useState } from "react";
-import { expireOn401 } from "@/features/customer";
+import { withActiveSession } from "@/features/customer";
 
 type Loaded<T> = { key: string; data?: T; status: number };
 
@@ -13,16 +13,14 @@ export function useAccountData<T>(key: string, load: () => Promise<{ data?: T; r
 
   useEffect(() => {
     let cancelled = false;
-    fetchData()
-      .then(expireOn401)
-      .then(
-        ({ data, response }) => {
-          if (!cancelled) setState({ key, data, status: response.status });
-        },
-        () => {
-          if (!cancelled) setState({ key, status: 0 });
-        },
-      );
+    void withActiveSession(fetchData).then(
+      ({ data, response }) => {
+        if (!cancelled) setState({ key, data, status: response.status });
+      },
+      () => {
+        if (!cancelled) setState({ key, status: 0 });
+      },
+    );
     return () => {
       cancelled = true;
     };

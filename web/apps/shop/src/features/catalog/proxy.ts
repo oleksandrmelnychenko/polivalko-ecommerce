@@ -23,8 +23,10 @@ export async function redirectPastLastPage(request: NextRequest) {
   const base = search ? { q } : pathname === "/sale" ? { onSale: true } : { category: safeDecode(pathname.split("/")[2] ?? "") };
 
   const totalPages = await countPages(toQuery(base, parsed));
-  if (!totalPages || parsed.page <= totalPages) return undefined;
-  return NextResponse.redirect(new URL(hrefFor(pathname, search ? { q } : {}, parsed, { page: totalPages }), request.url));
+  if (totalPages === undefined) return undefined;
+  const lastPage = Math.max(totalPages, 1);
+  if (parsed.page <= lastPage) return undefined;
+  return NextResponse.redirect(new URL(hrefFor(pathname, search ? { q } : {}, parsed, { page: lastPage }), request.url));
 }
 
 /** Undefined when the API fails or does not answer in time: the page then renders and decides on its own. */
@@ -38,7 +40,7 @@ async function countPages(query: ReturnType<typeof toQuery>) {
     const response = await fetch(`${apiUrl}/api/v1/products?${qs}`, { cache: "no-store", signal: AbortSignal.timeout(5000) });
     if (!response.ok) return undefined;
     const data = (await response.json()) as { totalPages?: number };
-    return data.totalPages;
+    return typeof data.totalPages === "number" && Number.isInteger(data.totalPages) && data.totalPages >= 0 ? data.totalPages : undefined;
   } catch {
     return undefined;
   }

@@ -69,17 +69,22 @@ public sealed class RefundSafetyTests(ApiFactory api)
     }
 
     [Fact]
-    public async Task Refund_the_provider_never_received_is_sent_again_with_the_same_reference()
+    public async Task Refund_missing_from_provider_status_stays_pending_until_reconciled()
     {
         var (orderId, refundId) = await PaidOrderWithPendingRefundAsync(410m);
         var provider = new ScriptedProvider();
         provider.RefundOutcomes.Enqueue(() => throw new HttpRequestException("Банк недоступний"));
-        provider.RefundOutcomes.Enqueue(() => ProviderRefundResult.Succeeded);
-
         await Should.ThrowAsync<HttpRequestException>(() => SubmitAsync(provider, orderId, refundId));
+        await Should.ThrowAsync<InvalidOperationException>(() => SubmitAsync(provider, orderId, refundId));
+
+        provider.Refunds.ShouldBe([refundId.ToString("N")]);
+        (await RefundAsync(refundId)).Status.ShouldBe(RefundStatus.Pending);
+        (await FiscalRefundRequestsAsync(refundId)).ShouldBe(0);
+
+        provider.Found = ProviderRefundResult.Succeeded;
         await SubmitAsync(provider, orderId, refundId);
 
-        provider.Refunds.ShouldBe([refundId.ToString("N"), refundId.ToString("N")]);
+        provider.Refunds.ShouldBe([refundId.ToString("N")]);
         (await RefundAsync(refundId)).Status.ShouldBe(RefundStatus.Succeeded);
         (await FiscalRefundRequestsAsync(refundId)).ShouldBe(1);
     }

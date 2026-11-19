@@ -3,9 +3,13 @@ using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Fiscal.Domain;
 using PoliValko.Fiscal.Features.Receipts;
+using PoliValko.Infrastructure.Outbox;
 using PoliValko.Ordering.Contracts;
+using PoliValko.Ordering.Domain;
 using PoliValko.Ordering.Features.Console.Orders;
 using PoliValko.Ordering.Features.Checkout;
 using PoliValko.Payments.Features.Checkout;
@@ -188,6 +192,15 @@ public sealed class PaymentsApiTests(ApiFactory api)
         refund.Refunds.ShouldHaveSingleItem().Method.ShouldBe(RefundMethod.Manual);
         refund.Refunds[0].Status.ShouldBe(RefundStatus.Succeeded);
         refund.PaymentStatus.ShouldBe(PaymentStatus.NotRequired);
+
+        var orderId = await api.WithDbAsync(db => db.Set<Order>().Where(o => o.Number == created.Number).Select(o => o.Id).SingleAsync(Ct));
+        await api.WithScopeAsync(async services =>
+        {
+            var handler = services.GetRequiredService<IOutboxHandler<FiscalReceiptRequested>>();
+            await Should.ThrowAsync<InvalidOperationException>(() =>
+                handler.HandleAsync(new FiscalReceiptRequested(orderId, FiscalTrigger.Refund, refund.Refunds[0].Id), Ct));
+            return 0;
+        });
 
         await api.ProcessOutboxAsync();
         var receipts = await admin.GetFromJsonAsync<List<ReceiptDto>>($"/api/v1/console/orders/{created.Number}/receipts", TestJson.Options, Ct);

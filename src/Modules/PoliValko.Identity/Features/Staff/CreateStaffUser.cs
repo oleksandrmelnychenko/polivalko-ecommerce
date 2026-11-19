@@ -15,7 +15,6 @@ internal static class CreateStaffUser
     public static async Task<Results<Created<StaffUserDto>, ValidationProblem, ProblemHttpResult>> HandleAsync(
         CreateStaffUserRequest request,
         ClaimsPrincipal me,
-        HttpContext http,
         UserManager<StaffUser> userManager,
         PoliValkoDbContext db,
         IStaffAccessResolver access,
@@ -23,6 +22,7 @@ internal static class CreateStaffUser
         TimeProvider time,
         CancellationToken ct)
     {
+        await using var transaction = await StaffValidation.BeginChangeAsync(db, ct);
         var errors = new Dictionary<string, string[]>();
         var email = request.Email?.Trim();
         if (string.IsNullOrEmpty(email) || email.Length > 200 || !email.Contains('@', StringComparison.Ordinal))
@@ -47,7 +47,7 @@ internal static class CreateStaffUser
             return TypedResults.ValidationProblem(errors);
         }
 
-        var mine = await access.GetStaffAccessAsync(me, http.Items, ct);
+        var mine = await access.GetStaffAccessAsync(me, null, ct);
         if (await StaffValidation.CanGrantAsync(mine, role!, db, ct) is { } denied)
         {
             return denied;
@@ -55,6 +55,7 @@ internal static class CreateStaffUser
 
         if (role!.IsSuperuser && await SuperuserConfirmation.CheckAsync(me, request.TwoFactorCode, userManager) is { } unconfirmed)
         {
+            await transaction.CommitAsync(ct);
             return unconfirmed;
         }
 
@@ -65,9 +66,14 @@ internal static class CreateStaffUser
             return TypedResults.ValidationProblem(StaffValidation.ToErrors(created));
         }
 
-        await userManager.AddToRoleAsync(user, role!.Name!);
+        if (!(await userManager.AddToRoleAsync(user, role.Name!)).Succeeded)
+        {
+            return StaffValidation.UpdateConflict();
+        }
+
         audit.Record("user.created", "StaffUser", email, new { name, role = role.DisplayName, confirmedByCode = role.IsSuperuser });
         await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         access.Invalidate();
         return TypedResults.Created($"/api/v1/console/users/{user.Id}", await StaffMapping.ToDtoAsync(db, user, time, ct));
     }

@@ -1,9 +1,10 @@
 name: Sync production
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  workflow_call:
+    secrets:
+      POLIVALKO_PUSH_KEY:
+        required: false
 
 permissions:
   contents: read
@@ -25,6 +26,18 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Verify that the tested revision is still on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          status=$(gh api "repos/$GITHUB_REPOSITORY/compare/$GITHUB_SHA...main" --jq .status)
+          if [[ "$status" != identical && "$status" != ahead ]]; then
+            echo "::error::The verified revision no longer belongs to source main."
+            exit 1
+          fi
+
       - name: Transfer main to the Vercel repository
         shell: bash
         env:
@@ -40,14 +53,17 @@ jobs:
           git remote add production git@github.com:oleksandrmelnychenko/polivalko.git
           git fetch --quiet --no-tags production main
           production_tip=$(git rev-parse FETCH_HEAD)
-          git fetch --quiet --no-tags origin main
-          source_tip=$(git rev-parse FETCH_HEAD)
+          source_tip="$GITHUB_SHA"
 
           # The seven earlier commits were transferred manually through this revision.
           previous=$(git log "$production_tip" --first-parent -1 --grep='^Polivalko-Ecommerce-Source: [0-9a-f]\{40\}$' --format='%(trailers:key=Polivalko-Ecommerce-Source,valueonly)')
           previous=${previous:-e0c76f75cacd64467deb1e1c695de8f296d0235a}
           if [[ "$previous" == "$source_tip" ]]; then
             echo "Production already includes $source_tip"
+            exit 0
+          fi
+          if git merge-base --is-ancestor "$source_tip" "$previous"; then
+            echo "Production already includes a later verified revision."
             exit 0
           fi
           if ! git merge-base --is-ancestor "$previous" "$source_tip"; then

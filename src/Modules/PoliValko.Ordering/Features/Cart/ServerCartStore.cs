@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
@@ -35,7 +36,7 @@ internal sealed class ServerCartStore(PoliValkoDbContext db, CheckoutCalculator 
                 Path = "/", MaxAge = TimeSpan.FromDays(90), IsEssential = true,
             });
         }
-        return $"guest:{Convert.ToHexStringLower(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(token)))}";
+        return $"guest:{Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(token)))}";
     }
 
     public async Task LockAsync(string owner, CancellationToken ct) =>
@@ -44,10 +45,13 @@ internal sealed class ServerCartStore(PoliValkoDbContext db, CheckoutCalculator 
     public async Task<ServerCart> LoadAsync(string owner, CancellationToken ct)
     {
         var cart = await db.Set<ServerCart>().SingleOrDefaultAsync(c => c.Owner == owner, ct);
-        if (cart is not null) return cart;
-        cart = new ServerCart { Owner = owner, UpdatedAt = time.GetUtcNow() };
-        db.Add(cart);
-        return cart;
+        // Give unopened carts a stable ID so the first write can check its revision without storing empty visits.
+        return cart ?? new ServerCart
+        {
+            Id = new Guid(SHA256.HashData(Encoding.UTF8.GetBytes($"cart-id:{owner}")).AsSpan(0, 16)),
+            Owner = owner,
+            UpdatedAt = time.GetUtcNow(),
+        };
     }
 
     public async Task<ServerCart> OpenAsync(HttpContext http, CancellationToken ct)
@@ -74,6 +78,12 @@ internal sealed class ServerCartStore(PoliValkoDbContext db, CheckoutCalculator 
 
     public void Replace(ServerCart cart, IReadOnlyList<CartLineRequest> items)
     {
+        if (db.Entry(cart).State == EntityState.Detached)
+        {
+            if (items.Count == 0) return;
+            db.Add(cart);
+        }
+
         cart.ItemsJson = JsonSerializer.Serialize(items);
         cart.Revision++;
         cart.UpdatedAt = time.GetUtcNow();
@@ -91,7 +101,11 @@ internal sealed class ServerCartStore(PoliValkoDbContext db, CheckoutCalculator 
 
     public async Task<ServerCartDto> DtoAsync(ServerCart cart, CancellationToken ct)
     {
-        var (lines, _) = await calculator.PriceAsync(Items(cart), ct);
-        return new(cart.Id, cart.Revision, lines.Select(CheckoutCalculator.ToDto).ToArray(), cart.CheckoutRevision + 1 == cart.Revision ? LastOrder(cart) : null);
+        var items = Items(cart);
+        var lastOrder = cart.CheckoutRevision + 1 == cart.Revision ? LastOrder(cart) : null;
+        if (items.Count == 0) return new(cart.Id, cart.Revision, [], lastOrder);
+
+        var (lines, _) = await calculator.PriceAsync(items, ct);
+        return new(cart.Id, cart.Revision, lines.Select(CheckoutCalculator.ToDto).ToArray(), lastOrder);
     }
 }

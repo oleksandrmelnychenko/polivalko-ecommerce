@@ -34,6 +34,28 @@ public sealed class PaymentSafetyTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Early_payment_event_can_be_reconciled_after_the_invoice_is_recorded()
+    {
+        var created = await CardOrderAsync(515m);
+        var payment = await StartAsync(created);
+        var invoiceId = InvoiceId(payment);
+        await PayAsync(payment, notify: false);
+
+        await api.WithDbAsync(db => db.Set<Payment>().Where(p => p.Id == payment.PaymentId)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.ProviderPaymentId, (string?)null), Ct));
+        await DeliverAsync(payment);
+        (await PaymentAsync(payment.PaymentId)).Status.ShouldBe(PaymentAttemptStatus.Created);
+
+        await api.WithDbAsync(db => db.Set<Payment>().Where(p => p.Id == payment.PaymentId)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.ProviderPaymentId, invoiceId), Ct));
+        await DeliverAsync(payment);
+        await DeliverAsync(payment);
+
+        (await PaymentAsync(payment.PaymentId)).Status.ShouldBe(PaymentAttemptStatus.Succeeded);
+        (await QueuedAsync(PaymentSucceeded.Type, await OrderIdAsync(created.Number))).ShouldBe(1);
+    }
+
+    [Fact]
     public async Task Paying_one_invoice_withdraws_the_other_open_one()
     {
         var (created, first, second) = await TwoOpenInvoicesAsync(520m);

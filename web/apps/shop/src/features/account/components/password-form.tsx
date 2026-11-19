@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, type FormEvent } from "react";
-import { withCsrf } from "@/features/customer";
+import { withAccountCsrf } from "@/features/customer";
 import { postChangePassword } from "../api/client";
 import { useFormState } from "../hooks/use-form-state";
 import { FormStatus } from "./form-status";
@@ -16,7 +16,7 @@ export function PasswordForm({ email }: { email: string }) {
     const target = event.currentTarget;
     const data = new FormData(target);
     const result = await form.submit(() =>
-      withCsrf((h) => postChangePassword(h, { currentPassword: String(data.get("currentPassword") ?? ""), newPassword: String(data.get("newPassword") ?? "") })),
+      withAccountCsrf((h) => postChangePassword(h, { currentPassword: String(data.get("currentPassword") ?? ""), newPassword: String(data.get("newPassword") ?? "") })),
     );
     if (result?.response.ok) {
       target.reset();

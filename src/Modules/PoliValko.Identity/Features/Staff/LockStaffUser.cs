@@ -16,7 +16,6 @@ internal static class LockStaffUser
         string id,
         LockStaffUserRequest request,
         ClaimsPrincipal me,
-        HttpContext http,
         UserManager<StaffUser> userManager,
         PoliValkoDbContext db,
         IStaffAccessResolver access,
@@ -24,6 +23,7 @@ internal static class LockStaffUser
         TimeProvider time,
         CancellationToken ct)
     {
+        await using var transaction = await StaffValidation.BeginChangeAsync(db, ct);
         var user = await userManager.FindByIdAsync(id);
         if (user is null)
         {
@@ -35,7 +35,7 @@ internal static class LockStaffUser
             return Problems.Create(StatusCodes.Status409Conflict, "auth.self_lock", "Не можна заблокувати власний обліковий запис");
         }
 
-        if (await StaffValidation.CanManageAsync(await access.GetStaffAccessAsync(me, http.Items, ct), user, db, ct) is { } denied)
+        if (await StaffValidation.CanManageAsync(await access.GetStaffAccessAsync(me, null, ct), user, db, ct) is { } denied)
         {
             return denied;
         }
@@ -45,11 +45,16 @@ internal static class LockStaffUser
             return StaffValidation.LastSuperuser();
         }
 
-        await userManager.SetLockoutEndDateAsync(user, request.Locked ? DateTimeOffset.MaxValue : null);
-        await userManager.ResetAccessFailedCountAsync(user);
-        await userManager.UpdateSecurityStampAsync(user);
+        if (!(await userManager.SetLockoutEndDateAsync(user, request.Locked ? DateTimeOffset.MaxValue : null)).Succeeded
+            || !(await userManager.ResetAccessFailedCountAsync(user)).Succeeded
+            || !(await userManager.UpdateSecurityStampAsync(user)).Succeeded)
+        {
+            return StaffValidation.UpdateConflict();
+        }
+
         audit.Record(request.Locked ? "user.locked" : "user.unlocked", "StaffUser", user.Email);
         await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         access.Invalidate();
         return TypedResults.Ok(await StaffMapping.ToDtoAsync(db, user, time, ct));
     }

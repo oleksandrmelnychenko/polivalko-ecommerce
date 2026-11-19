@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { expireOn401 } from "@/features/customer";
 import { fieldErrors } from "@polivalko/shared/api/problem";
 import { failureStatus, offline, type Status } from "../lib/form-status";
 
@@ -22,7 +21,7 @@ export function useFormState(formRef: RefObject<HTMLFormElement | null>) {
     setStatus(null);
     setErrors({});
     try {
-      const result = expireOn401(await send());
+      const result = await send();
       if (!result.response.ok) {
         focusInvalid.current = true;
         setErrors(fieldErrors(result.error));

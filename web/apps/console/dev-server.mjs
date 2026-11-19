@@ -1,8 +1,10 @@
-import { createServer, request } from 'node:http'
+import { createServer, request as requestHttp } from 'node:http'
+import { request as requestHttps } from 'node:https'
 import next from 'next'
 
 const port = Number(process.env.PORT ?? 3001)
 const apiTarget = new URL(process.env.API_INTERNAL_URL ?? 'http://127.0.0.1:8080')
+const request = apiTarget.protocol === 'https:' ? requestHttps : requestHttp
 const apiHost = process.env.API_HOST_HEADER ?? (process.env.API_INTERNAL_URL ? apiTarget.host : 'console.localhost:8080')
 
 function proxyApi(req, res) {

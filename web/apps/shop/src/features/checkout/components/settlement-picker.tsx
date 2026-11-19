@@ -27,13 +27,22 @@ export function SettlementPicker({
 
   useEffect(() => {
     if (!open) return;
+    const request = new AbortController();
     const q = text.trim();
     const t = setTimeout(async () => {
-      const { data } = await getSettlements(q);
-      setOptions(data ?? []);
-      setActive(0);
+      try {
+        const { data } = await getSettlements(q, request.signal);
+        if (request.signal.aborted) return;
+        setOptions(data ?? []);
+        setActive(0);
+      } catch {
+        if (!request.signal.aborted) setOptions([]);
+      }
     }, 180);
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t);
+      request.abort();
+    };
   }, [text, open]);
 
   const pick = (s: Settlement) => {
@@ -61,13 +70,14 @@ export function SettlementPicker({
         onBlur={() => setTimeout(() => setOpen(false), 120)}
         onChange={(e) => {
           setText(e.target.value);
+          setOptions([]);
           setOpen(true);
           if (value) onChange(null);
         }}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") {
             e.preventDefault();
-            setActive((a) => Math.min(a + 1, options.length - 1));
+            if (options.length > 0) setActive((a) => Math.min(a + 1, options.length - 1));
           } else if (e.key === "ArrowUp") {
             e.preventDefault();
             setActive((a) => Math.max(a - 1, 0));

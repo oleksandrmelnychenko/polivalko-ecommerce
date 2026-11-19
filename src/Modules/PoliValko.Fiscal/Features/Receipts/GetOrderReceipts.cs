@@ -11,10 +11,12 @@ internal static class GetOrderReceipts
     public static async Task<Results<Ok<List<ReceiptDto>>, ProblemHttpResult>> HandleAsync(
         string number,
         string? token,
+        HttpContext http,
         PoliValkoDbContext db,
         [FromServices] IOrderReceiptSource orders,
         CancellationToken ct)
     {
+        http.Response.Headers.CacheControl = "no-store";
         if (!await orders.IsAccessibleAsync(number, token, ct))
         {
             return OrderProblems.NotFound();

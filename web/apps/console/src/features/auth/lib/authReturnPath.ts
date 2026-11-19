@@ -27,10 +27,10 @@ export function consumeReturnPath(fallback = '/'): string {
 }
 
 export function sanitizeReturnPath(value: string | null | undefined): string | null {
-  if (!value || !value.startsWith('/') || value.startsWith('//') || value.startsWith('/\\')) return null
+  if (!value || !/^\/(?![/\\])/.test(value) || /[\u0000-\u0020\u007f\\]/.test(value)) return null
   try {
     const url = new URL(value, window.location.origin)
-    if (url.origin !== window.location.origin || url.pathname === '/login') return null
+    if (url.origin !== window.location.origin || url.pathname.startsWith('//') || /^\/login(?:\/|$)/i.test(url.pathname)) return null
     return `${url.pathname}${url.search}${url.hash}`
   } catch {
     return null

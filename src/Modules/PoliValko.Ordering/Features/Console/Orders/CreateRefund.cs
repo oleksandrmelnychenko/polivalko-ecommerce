@@ -52,12 +52,14 @@ internal static class CreateRefund
         }
 
         var refundable = ConsoleOrderMapping.Refundable(order).ToDictionary(r => r.ProductId, r => r.Quantity);
-        var lines = (request.Lines ?? []).Where(l => l.Quantity != 0).ToList();
+        var requested = request.Lines ?? [];
+        var lines = requested.Where(l => l is not null && l.Quantity != 0).ToList();
         if (lines.Count == 0)
         {
             errors["lines"] = ["Оберіть товари й кількість для повернення."];
         }
-        else if (lines.Select(l => l.ProductId).Distinct().Count() != lines.Count
+        else if (requested.Any(l => l is null)
+                 || lines.Select(l => l.ProductId).Distinct().Count() != lines.Count
                  || lines.Any(l => l.Quantity < 0 || !refundable.TryGetValue(l.ProductId, out var max) || l.Quantity > max))
         {
             errors["lines"] = ["Кількість для повернення не може перевищувати куплену й ще не повернуту."];

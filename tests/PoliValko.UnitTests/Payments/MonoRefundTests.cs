@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using PoliValko.Payments.Configuration;
 using PoliValko.Payments.Integrations.Mono;
@@ -7,11 +8,12 @@ using PoliValko.Payments.Integrations.Providers;
 
 namespace PoliValko.UnitTests.Payments;
 
-public sealed class MonoRefundTests
+public sealed class MonoRefundTests : IDisposable
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private static readonly IReadOnlyList<PaymentBasketItem> Basket = [new("Секатор", "T-1", 1, 500m)];
+    private readonly MonoWebhookKeys _keys = new(TimeProvider.System, NullLogger<MonoWebhookKeys>.Instance);
 
     [Theory]
     [InlineData("success", ProviderRefundState.Succeeded)]
@@ -83,8 +85,10 @@ public sealed class MonoRefundTests
         handler.Bodies[0].ShouldContain("\"invoiceId\":\"inv-open\"");
     }
 
-    private static MonoPaymentProvider Provider(StubHandler handler) =>
-        new(new HttpClient(handler), Options.Create(new PaymentsOptions { Mono = new MonoOptions { BaseUrl = "https://mono.test", Token = "test-token" } }));
+    private MonoPaymentProvider Provider(StubHandler handler) =>
+        new(new HttpClient(handler), Options.Create(new PaymentsOptions { Mono = new MonoOptions { BaseUrl = "https://mono.test", Token = "test-token" } }), _keys);
+
+    public void Dispose() => _keys.Dispose();
 
     private sealed class StubHandler(params (HttpStatusCode Status, string Body)[] responses) : HttpMessageHandler
     {

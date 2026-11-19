@@ -20,16 +20,17 @@ internal static class ConfirmEmail
         TimeProvider time,
         CancellationToken ct)
     {
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        var customer = await CustomerLoader.LoadAsync(db, http.User, ct, forUpdate: true);
+        if (customer is null) return AccountProblems.SignedOut();
+
         var now = time.GetUtcNow();
         var token = await CustomerTokenQueries.FindUsableAsync(db, request.Token, CustomerTokenPurpose.EmailConfirmation, now, ct);
-        if (token is null)
+        if (token is null || token.CustomerId != customer.Id)
         {
             return AccountProblems.InvalidToken();
         }
 
-        var customer = await CustomerLoader.LoadAsync(db, http.User, ct);
-        if (customer is null) return AccountProblems.SignedOut();
-        if (customer.Id != token.CustomerId) return AccountProblems.InvalidToken();
         token.UsedAt = now;
         if (customer.ConfirmEmail(now))
         {
@@ -40,6 +41,7 @@ internal static class ConfirmEmail
         }
 
         await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         return TypedResults.NoContent();
     }
 }

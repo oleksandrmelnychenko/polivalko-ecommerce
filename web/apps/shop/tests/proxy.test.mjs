@@ -99,8 +99,12 @@ test("a listing page in range, the first page or an unknown total renders as usu
   assert.ok(passes(await proxy(page("/search?page=5"))), "search without a query");
   assert.equal(calls.length, 1, "none of these needs the API");
 
+  answer = json({}, 404);
+  assert.ok(passes(await proxy(page("/catalog/missing?page=2"))), "the page itself answers 404");
   answer = json({ totalPages: 0 });
-  assert.ok(passes(await proxy(page("/catalog/missing?page=2"))), "no products: the page itself answers 404");
+  const empty = await proxy(page("/catalog/hoses?page=2&brand=Gardena"));
+  assert.equal(empty.status, 307);
+  assert.equal(new URL(empty.headers.get("location")).search, "?brand=Gardena");
   answer = json({}, 503);
   assert.ok(passes(await proxy(page("/catalog/hoses?page=9"))));
   globalThis.fetch = async () => { throw new TypeError("fetch failed"); };

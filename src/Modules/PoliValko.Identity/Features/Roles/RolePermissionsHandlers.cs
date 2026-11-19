@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using PoliValko.Identity.Features.Staff;
 using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Security;
@@ -25,13 +26,13 @@ internal static class UpdateRolePermissions
         string id,
         UpdateRolePermissionsRequest request,
         ClaimsPrincipal me,
-        HttpContext http,
         PoliValkoDbContext db,
         IStaffAccessResolver access,
         IAuditLog audit,
         TimeProvider time,
         CancellationToken ct)
     {
+        await using var transaction = await StaffValidation.BeginChangeAsync(db, ct);
         var role = await db.Roles.Include(r => r.Permissions).FirstOrDefaultAsync(r => r.Id == id, ct);
         if (role is null)
         {
@@ -73,7 +74,7 @@ internal static class UpdateRolePermissions
         }
 
         var added = PermissionCatalog.Order(desired.Where(key => !current.Contains(key)));
-        if (RoleRules.Escalation(await access.GetStaffAccessAsync(me, http.Items, ct), added) is { } denied)
+        if (RoleRules.Escalation(await access.GetStaffAccessAsync(me, null, ct), added) is { } denied)
         {
             return denied;
         }
@@ -96,6 +97,7 @@ internal static class UpdateRolePermissions
         try
         {
             await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
         }
         catch (DbUpdateConcurrencyException)
         {

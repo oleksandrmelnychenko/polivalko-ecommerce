@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { CheckoutCourierFields, CheckoutWarehouseSelect, deliveryHint, fieldProps, SettlementPicker, useDeliveryPoint } from "@/features/checkout";
-import { postAddress, withCsrf, type CustomerAddress, type SaveAddressRequest } from "@/features/customer";
+import { postAddress, withAccountCsrf, type CustomerAddress, type SaveAddressRequest } from "@/features/customer";
 import { deliveryMethodLabel } from "@polivalko/shared/lib/labels";
 import { putAddress } from "../api/client";
 import { useFormState } from "../hooks/use-form-state";
@@ -45,9 +45,9 @@ export function AddressForm({
       settlementRef: point.settlement?.ref ?? null,
       warehouseRef: courier ? null : point.warehouseRef || null,
       address: courier ? { street: text(data, "street"), house: text(data, "house"), apartment: text(data, "apartment") || null } : null,
-      isDefault: data.get("isDefault") === "on",
+      isDefault: address?.isDefault === true || data.get("isDefault") === "on",
     };
-    const result = await form.submit(() => withCsrf((h) => (address ? putAddress(h, address.id, body) : postAddress(h, body))));
+    const result = await form.submit(() => withAccountCsrf((h) => (address ? putAddress(h, address.id, body) : postAddress(h, body))));
     if (result?.response.ok) onDone(address ? "Адресу оновлено." : "Адресу збережено.");
   }
 

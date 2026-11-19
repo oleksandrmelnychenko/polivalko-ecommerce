@@ -11,7 +11,8 @@ internal static class CustomerTokenQueries
         string? value,
         CustomerTokenPurpose purpose,
         DateTimeOffset now,
-        CancellationToken ct)
+        CancellationToken ct,
+        bool tracking = true)
     {
         if (string.IsNullOrWhiteSpace(value) || value.Length > 200)
         {
@@ -19,8 +20,8 @@ internal static class CustomerTokenQueries
         }
 
         var hash = CustomerToken.Hash(value.Trim());
-        var token = await db.Set<CustomerToken>().FirstOrDefaultAsync(t => t.TokenHash == hash && t.Purpose == purpose, ct);
-        return token is not null && token.IsUsable(now) ? token : null;
+        var tokens = db.Set<CustomerToken>().Where(t => t.TokenHash == hash && t.Purpose == purpose && t.UsedAt == null && t.ExpiresAt > now);
+        return await (tracking ? tokens : tokens.AsNoTracking()).FirstOrDefaultAsync(ct);
     }
 
     public static async Task RevokeOpenAsync(

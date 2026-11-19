@@ -17,26 +17,35 @@ export function useDeliveryPoint(initial?: SavedPoint) {
 
   async function load(next: Settlement, keep: string) {
     const current = ++request.current;
-    const { data } = await getWarehouses(next.ref);
-    if (current !== request.current) return;
-    setWarehouses(data ?? []);
-    if (keep) setWarehouseRef(keep);
+    try {
+      const { data } = await getWarehouses(next.ref);
+      if (current !== request.current) return;
+      const available = data ?? [];
+      setWarehouses(available);
+      setWarehouseRef(available.some((warehouse) => warehouse.ref === keep) ? keep : "");
+    } catch {
+      if (current === request.current) {
+        setWarehouses([]);
+        setWarehouseRef("");
+      }
+    }
   }
 
   useEffect(() => {
     const point = start.current;
     if (!point) return;
-    const current = ++request.current;
-    void getWarehouses(point.settlementRef).then(({ data }) => {
-      if (current === request.current) setWarehouses(data ?? []);
-    });
+    void load(toSettlement(point), point.warehouseRef ?? "");
+    return () => { request.current += 1; };
   }, []);
 
   async function chooseSettlement(next: Settlement | null) {
     setSettlement(next);
     setWarehouseRef("");
     setWarehouses([]);
-    if (!next) return;
+    if (!next) {
+      request.current += 1;
+      return;
+    }
     await load(next, "");
   }
 

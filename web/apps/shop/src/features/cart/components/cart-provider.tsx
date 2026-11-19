@@ -28,10 +28,11 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const state = useSyncExternalStore(subscribe, getSnapshot, () => INITIAL);
-  const { lines } = state;
+  const snapshot = useSyncExternalStore(subscribe, getSnapshot, () => INITIAL);
   const customer = useCustomer();
   const owner = customer.status === "unknown" ? null : customer.me?.id ?? "guest";
+  const state = snapshot.owner === owner ? snapshot : INITIAL;
+  const { lines } = state;
   const sessionFailed = customer.status === "unknown" && Boolean(customer.failed);
   useEffect(() => { if (owner) connect(owner); }, [owner]);
   useEffect(watchCart, []);

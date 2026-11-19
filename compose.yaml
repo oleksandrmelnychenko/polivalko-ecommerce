@@ -83,6 +83,12 @@ services:
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
       Database__SeedDemoData: ${SEED_DEMO_DATA:-true}
       Api__ExposeDocs: ${EXPOSE_API_DOCS:-true}
+      Email__Mode: ${EMAIL_MODE:-Log}
+      Email__Smtp__Host: ${SMTP_HOST:-}
+      Email__Smtp__Port: ${SMTP_PORT:-587}
+      Email__Smtp__From: ${SMTP_FROM:-}
+      Email__Smtp__Username: ${SMTP_USERNAME:-}
+      Email__Smtp__Password: ${SMTP_PASSWORD:-}
       Media__Root: /data/media
       DataProtection__CertificateDirectory: /run/secrets/data-protection
       Seed__Users__0__Email: ${ADMIN_EMAIL:-}

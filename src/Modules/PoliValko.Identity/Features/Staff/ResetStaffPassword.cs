@@ -15,20 +15,20 @@ internal static class ResetStaffPassword
         string id,
         ResetPasswordRequest request,
         ClaimsPrincipal me,
-        HttpContext http,
         UserManager<StaffUser> userManager,
         PoliValkoDbContext db,
         IStaffAccessResolver access,
         IAuditLog audit,
         CancellationToken ct)
     {
+        await using var transaction = await StaffValidation.BeginChangeAsync(db, ct);
         var user = await userManager.FindByIdAsync(id);
         if (user is null)
         {
             return StaffMapping.UserNotFound();
         }
 
-        if (await StaffValidation.CanManageAsync(await access.GetStaffAccessAsync(me, http.Items, ct), user, db, ct) is { } denied)
+        if (await StaffValidation.CanManageAsync(await access.GetStaffAccessAsync(me, null, ct), user, db, ct) is { } denied)
         {
             return denied;
         }
@@ -38,11 +38,15 @@ internal static class ResetStaffPassword
             return TypedResults.ValidationProblem(invalid);
         }
 
-        await userManager.RemovePasswordAsync(user);
-        await userManager.AddPasswordAsync(user, request.Password!);
-        await userManager.UpdateSecurityStampAsync(user);
+        if (!(await userManager.RemovePasswordAsync(user)).Succeeded
+            || !(await userManager.AddPasswordAsync(user, request.Password!)).Succeeded)
+        {
+            return StaffValidation.UpdateConflict();
+        }
+
         audit.Record("user.password_reset", "StaffUser", user.Email);
         await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         return TypedResults.NoContent();
     }
 

@@ -1,16 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Onest, Oswald } from "next/font/google";
 import { GoogleAnalytics } from "@/features/analytics";
 import { defaultOpenGraph, SITE_NAME, siteUrl } from "@/features/seo";
 import "./globals.css";
-
-const onest = Onest({ variable: "--font-onest", subsets: ["latin", "cyrillic"], display: "swap" });
-const displayFont = Oswald({
-  variable: "--font-oswald",
-  subsets: ["latin", "cyrillic"],
-  weight: ["400", "500", "600"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
@@ -35,7 +26,7 @@ export const viewport: Viewport = { themeColor: "#ffffff" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="uk" data-scroll-behavior="smooth" className={`${onest.variable} ${displayFont.variable}`}>
+    <html lang="uk" data-scroll-behavior="smooth">
       <head>
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="" />
       </head>

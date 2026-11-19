@@ -29,12 +29,7 @@ internal sealed class OrderPayments(PoliValkoDbContext db) : IOrderPayments
 
     public async Task<PayableOrder> LockPayableAsync(Guid orderId, CancellationToken ct)
     {
-        if (db.Database.CurrentTransaction is null)
-        {
-            throw new InvalidOperationException("Блокування замовлення діє лише в транзакції.");
-        }
-
-        await db.Database.ExecuteSqlAsync($"SELECT 1 FROM ordering.orders WHERE id = {orderId} FOR UPDATE", ct);
+        await LockOrderAsync(orderId, ct);
         var order = await db.Set<Order>().Include(o => o.Items).SingleAsync(o => o.Id == orderId, ct);
         return ToPayable(order);
     }
@@ -52,8 +47,19 @@ internal sealed class OrderPayments(PoliValkoDbContext db) : IOrderPayments
 
     public async Task<OrderPaymentTarget> LoadForPaymentUpdateAsync(Guid orderId, CancellationToken ct)
     {
+        await LockOrderAsync(orderId, ct);
         var order = await db.Set<Order>().FirstAsync(o => o.Id == orderId, ct);
         return new OrderPaymentTarget(order.Id, order.Number);
+    }
+
+    private async Task LockOrderAsync(Guid orderId, CancellationToken ct)
+    {
+        if (db.Database.CurrentTransaction is null)
+        {
+            throw new InvalidOperationException("Блокування замовлення діє лише в транзакції.");
+        }
+
+        await db.Database.ExecuteSqlAsync($"SELECT 1 FROM ordering.orders WHERE id = {orderId} FOR UPDATE", ct);
     }
 
     public async Task<PaidOrderResult> MarkPaidAsync(Guid orderId, DateTimeOffset at, CancellationToken ct)

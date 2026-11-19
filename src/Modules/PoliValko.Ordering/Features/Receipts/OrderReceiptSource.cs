@@ -2,16 +2,14 @@ using Microsoft.EntityFrameworkCore;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Ordering.Contracts;
 using PoliValko.Ordering.Domain;
+using PoliValko.Ordering.Persistence;
 
 namespace PoliValko.Ordering.Features.Receipts;
 
 internal sealed class OrderReceiptSource(PoliValkoDbContext db) : IOrderReceiptSource
 {
-    public async Task<bool> IsAccessibleAsync(string number, string? token, CancellationToken ct)
-    {
-        var order = await db.Set<Order>().AsNoTracking().FirstOrDefaultAsync(o => o.Number == number, ct);
-        return order is not null && OrderTokens.Matches(token, order.AccessTokenHash);
-    }
+    public Task<bool> IsAccessibleAsync(string number, string? token, CancellationToken ct) =>
+        OrderLoader.MatchesAccessTokenAsync(db, number, token, ct);
 
     public Task<bool> BelongsToCustomerAsync(string number, Guid customerId, CancellationToken ct) =>
         db.Set<Order>().AsNoTracking().AnyAsync(o => o.Number == number && o.CustomerId == customerId, ct);

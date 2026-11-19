@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   backend:
@@ -100,3 +104,13 @@ jobs:
 
       - name: Збірка образів
         run: docker compose --profile app build
+
+  production:
+    needs: [backend, web, deploy]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && github.repository == 'oleksandrmelnychenko/polivalko-ecommerce'
+    uses: ./.github/workflows/sync-production.yml
+    permissions:
+      contents: read
+      deployments: write
+    secrets:
+      POLIVALKO_PUSH_KEY: ${{ secrets.POLIVALKO_PUSH_KEY }}

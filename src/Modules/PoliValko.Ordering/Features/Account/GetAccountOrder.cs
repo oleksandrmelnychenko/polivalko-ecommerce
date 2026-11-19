@@ -16,9 +16,14 @@ internal static class GetAccountOrder
         PoliValkoDbContext db,
         CancellationToken ct)
     {
-        var customerId = http.User.CustomerId();
-        var order = await OrderLoader.LoadAsync(db, number, tracking: false, ct);
-        if (order is null || customerId is null || order.CustomerId != customerId)
+        http.Response.Headers.CacheControl = "no-store";
+        if (http.User.CustomerId() is not { } customerId)
+        {
+            return OrderProblems.NotFound();
+        }
+
+        var order = await OrderLoader.LoadAsync(db, number, tracking: false, ct, customerId);
+        if (order is null)
         {
             return OrderProblems.NotFound();
         }

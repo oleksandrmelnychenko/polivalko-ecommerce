@@ -17,14 +17,20 @@ internal static class ResetPassword
         TimeProvider time,
         CancellationToken ct)
     {
-        var now = time.GetUtcNow();
-        var token = await CustomerTokenQueries.FindUsableAsync(db, request.Token, CustomerTokenPurpose.PasswordReset, now, ct);
-        if (token is null)
+        var match = await CustomerTokenQueries.FindUsableAsync(db, request.Token, CustomerTokenPurpose.PasswordReset, time.GetUtcNow(), ct, tracking: false);
+        if (match is null)
         {
             return AccountProblems.InvalidToken();
         }
 
-        var customer = await db.Set<Customer>().FirstAsync(c => c.Id == token.CustomerId, ct);
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        var customer = await CustomerLoader.LockByIdAsync(db, match.CustomerId, ct);
+        var now = time.GetUtcNow();
+        if (customer is null || await CustomerTokenQueries.FindUsableAsync(db, request.Token, CustomerTokenPurpose.PasswordReset, now, ct) is null)
+        {
+            return AccountProblems.InvalidToken();
+        }
+
         var errors = new Dictionary<string, string[]>();
         CustomerValidation.Password(request.NewPassword, customer.Email, "newPassword", errors);
         if (errors.Count > 0)
@@ -36,6 +42,7 @@ internal static class ResetPassword
         customer.ClearLockout();
         await CustomerTokenQueries.RevokeOpenAsync(db, customer.Id, CustomerTokenPurpose.PasswordReset, now, ct);
         await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         return TypedResults.NoContent();
     }
 }

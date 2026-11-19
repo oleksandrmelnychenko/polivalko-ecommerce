@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using PoliValko.Customers.Domain;
 using PoliValko.Customers.Features.Auth;
 using PoliValko.Customers.Persistence;
@@ -18,13 +19,15 @@ internal static class ChangePassword
         TimeProvider time,
         CancellationToken ct)
     {
-        var customer = await CustomerLoader.LoadAsync(db, http.User, ct);
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        var customer = await CustomerLoader.LoadAsync(db, http.User, ct, forUpdate: true);
         if (customer is null)
         {
             return AccountProblems.SignedOut();
         }
 
         if (string.IsNullOrEmpty(request.CurrentPassword)
+            || request.CurrentPassword.Length > CustomerValidation.MaxPasswordLength
             || passwords.Verify(customer, request.CurrentPassword) == PasswordVerificationResult.Failed)
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]> { ["currentPassword"] = ["Поточний пароль неправильний."] });
@@ -40,6 +43,7 @@ internal static class ChangePassword
         customer.ChangePassword(passwords.Hash(customer, request.NewPassword!));
         await CustomerTokenQueries.RevokeOpenAsync(db, customer.Id, CustomerTokenPurpose.PasswordReset, time.GetUtcNow(), ct);
         await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         await CustomerSession.SignInAsync(http, customer);
         return TypedResults.NoContent();
     }

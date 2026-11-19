@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using PoliValko.Identity.Features.Staff;
 using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Persistence;
@@ -40,7 +41,11 @@ internal static class OwnTwoFactor
             return AlreadyEnabled();
         }
 
-        await users.ResetAuthenticatorKeyAsync(user);
+        if (!(await users.ResetAuthenticatorKeyAsync(user)).Succeeded)
+        {
+            return StaffValidation.UpdateConflict();
+        }
+
         await signIn.RefreshSignInAsync(user);
         var key = await users.GetAuthenticatorKeyAsync(user) ?? string.Empty;
         return TypedResults.Ok(new TwoFactorSetupDto(TwoFactorCodes.FormatKey(key), TwoFactorCodes.AuthenticatorUri(user.Email ?? string.Empty, key)));
@@ -52,7 +57,8 @@ internal static class OwnTwoFactor
         UserManager<StaffUser> users,
         SignInManager<StaffUser> signIn,
         PoliValkoDbContext db,
-        IAuditLog audit)
+        IAuditLog audit,
+        CancellationToken ct)
     {
         var user = await users.GetUserAsync(me);
         if (user is null)
@@ -75,11 +81,17 @@ internal static class OwnTwoFactor
             return InvalidCode();
         }
 
-        await users.SetTwoFactorEnabledAsync(user, true);
-        var codes = await users.GenerateNewTwoFactorRecoveryCodesAsync(user, TwoFactorCodes.RecoveryCodeCount) ?? [];
-        await signIn.RefreshSignInAsync(user);
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        if (!(await users.SetTwoFactorEnabledAsync(user, true)).Succeeded
+            || await users.GenerateNewTwoFactorRecoveryCodesAsync(user, TwoFactorCodes.RecoveryCodeCount) is not { } codes)
+        {
+            return StaffValidation.UpdateConflict();
+        }
+
         audit.Record("user.two_factor_enabled", "StaffUser", user.Email);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
+        await signIn.RefreshSignInAsync(user);
         return TypedResults.Ok(new TwoFactorRecoveryCodesDto(codes.ToList()));
     }
 
@@ -111,7 +123,11 @@ internal static class OwnTwoFactor
             return InvalidCode();
         }
 
-        var codes = await users.GenerateNewTwoFactorRecoveryCodesAsync(user, TwoFactorCodes.RecoveryCodeCount) ?? [];
+        if (await users.GenerateNewTwoFactorRecoveryCodesAsync(user, TwoFactorCodes.RecoveryCodeCount) is not { } codes)
+        {
+            return StaffValidation.UpdateConflict();
+        }
+
         audit.Record("user.recovery_codes_generated", "StaffUser", user.Email);
         await db.SaveChangesAsync();
         return TypedResults.Ok(new TwoFactorRecoveryCodesDto(codes.ToList()));
@@ -123,7 +139,8 @@ internal static class OwnTwoFactor
         UserManager<StaffUser> users,
         SignInManager<StaffUser> signIn,
         PoliValkoDbContext db,
-        IAuditLog audit)
+        IAuditLog audit,
+        CancellationToken ct)
     {
         var user = await users.GetUserAsync(me);
         if (user is null)
@@ -146,19 +163,23 @@ internal static class OwnTwoFactor
             return InvalidCode();
         }
 
-        await TurnOffAsync(users, user);
-        await signIn.RefreshSignInAsync(user);
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        if (!await TurnOffAsync(users, user))
+        {
+            return StaffValidation.UpdateConflict();
+        }
+
         audit.Record("user.two_factor_disabled", "StaffUser", user.Email);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
+        await signIn.RefreshSignInAsync(user);
         return TypedResults.NoContent();
     }
 
-    public static async Task TurnOffAsync(UserManager<StaffUser> users, StaffUser user)
-    {
-        await users.SetTwoFactorEnabledAsync(user, false);
-        await users.GenerateNewTwoFactorRecoveryCodesAsync(user, 0);
-        await users.ResetAuthenticatorKeyAsync(user);
-    }
+    public static async Task<bool> TurnOffAsync(UserManager<StaffUser> users, StaffUser user) =>
+        (await users.SetTwoFactorEnabledAsync(user, false)).Succeeded
+        && await users.GenerateNewTwoFactorRecoveryCodesAsync(user, 0) is not null
+        && (await users.ResetAuthenticatorKeyAsync(user)).Succeeded;
 
     private static async Task<ProblemHttpResult?> GuardAsync(UserManager<StaffUser> users, StaffUser user)
     {

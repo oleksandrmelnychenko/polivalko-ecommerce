@@ -24,6 +24,9 @@ internal static class CatalogVisibility
     public static async Task<IQueryable<Product>> ProductsAsync(PoliValkoDbContext db, CancellationToken ct)
     {
         var ids = (await CategoriesAsync(db, ct)).Select(c => c.Id).ToArray();
-        return db.Set<Product>().AsNoTracking().Where(p => p.IsVisible && ids.Contains(p.CategoryId));
+        return Products(db, ids);
     }
+
+    public static IQueryable<Product> Products(PoliValkoDbContext db, Guid[] categoryIds) =>
+        db.Set<Product>().AsNoTracking().Where(p => p.IsVisible && categoryIds.Contains(p.CategoryId));
 }

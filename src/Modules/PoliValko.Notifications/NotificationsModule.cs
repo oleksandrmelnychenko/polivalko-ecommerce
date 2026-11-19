@@ -10,6 +10,7 @@ using PoliValko.Notifications.Features.IntegrationAlerts;
 using PoliValko.Notifications.Features.Settings;
 using PoliValko.Notifications.Integrations.Channels;
 using PoliValko.Notifications.Integrations.Log;
+using PoliValko.Notifications.Integrations.Smtp;
 using PoliValko.Notifications.Integrations.Telegram;
 
 namespace PoliValko.Notifications;
@@ -33,15 +34,22 @@ public static class NotificationsModule
         services.AddScoped<IManagerNotifier, ManagerNotifier>();
 
         var email = configuration.GetSection("Email");
-        services.Configure<EmailOptions>(email);
         var mode = email.Get<EmailOptions>()?.Mode;
         if (string.IsNullOrWhiteSpace(mode) || string.Equals(mode, EmailModes.Log, StringComparison.OrdinalIgnoreCase))
         {
             services.AddSingleton<ICustomerMailer, LogCustomerMailer>();
         }
+        else if (string.Equals(mode, EmailModes.Smtp, StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddOptions<SmtpOptions>()
+                .Bind(email.GetSection("Smtp"))
+                .Validate(options => options.IsConfigured, "Для SMTP задайте коректні Email:Smtp:Host, Port, From, Username і Password.")
+                .ValidateOnStart();
+            services.AddSingleton<ICustomerMailer, SmtpCustomerMailer>();
+        }
         else
         {
-            throw new InvalidOperationException($"Email:Mode '{mode}' не підтримується. Доступно: {EmailModes.Log}.");
+            throw new InvalidOperationException($"Email:Mode не підтримується. Доступно: {EmailModes.Log}, {EmailModes.Smtp}.");
         }
 
         services.AddOutboxHandler<IntegrationAlert, NotifyResponsibleOnIntegrationAlert>();

@@ -18,7 +18,6 @@ internal static class UpdateStaffUser
         string id,
         UpdateStaffUserRequest request,
         ClaimsPrincipal me,
-        HttpContext http,
         UserManager<StaffUser> userManager,
         PoliValkoDbContext db,
         IStaffAccessResolver access,
@@ -26,6 +25,7 @@ internal static class UpdateStaffUser
         TimeProvider time,
         CancellationToken ct)
     {
+        await using var transaction = await StaffValidation.BeginChangeAsync(db, ct);
         var user = await userManager.FindByIdAsync(id);
         if (user is null)
         {
@@ -44,6 +44,12 @@ internal static class UpdateStaffUser
             return TypedResults.ValidationProblem(errors);
         }
 
+        var mine = await access.GetStaffAccessAsync(me, null, ct);
+        if (await StaffValidation.CanManageAsync(mine, user, db, ct) is { } cannotManage)
+        {
+            return cannotManage;
+        }
+
         var current = await StaffMapping.StaffRolesOf(db, user.Id).AsNoTracking().FirstOrDefaultAsync(ct);
         var roleChanges = current?.Id != role!.Id;
         if (roleChanges)
@@ -53,12 +59,6 @@ internal static class UpdateStaffUser
                 return Problems.Create(StatusCodes.Status409Conflict, "auth.self_role", "Не можна змінити власну роль", "Попросіть іншого адміністратора.");
             }
 
-            var mine = await access.GetStaffAccessAsync(me, http.Items, ct);
-            if (await StaffValidation.CanManageAsync(mine, user, db, ct) is { } cannotManage)
-            {
-                return cannotManage;
-            }
-
             if (await StaffValidation.CanGrantAsync(mine, role, db, ct) is { } cannotGrant)
             {
                 return cannotGrant;
@@ -66,6 +66,7 @@ internal static class UpdateStaffUser
 
             if (role.IsSuperuser && await SuperuserConfirmation.CheckAsync(me, request.TwoFactorCode, userManager) is { } unconfirmed)
             {
+                await transaction.CommitAsync(ct);
                 return unconfirmed;
             }
 
@@ -77,16 +78,24 @@ internal static class UpdateStaffUser
 
         var before = new { user.DisplayName, role = current?.DisplayName };
         user.DisplayName = name!;
-        await userManager.UpdateAsync(user);
+        if (!(await userManager.UpdateAsync(user)).Succeeded)
+        {
+            return StaffValidation.UpdateConflict();
+        }
+
         if (roleChanges)
         {
-            await userManager.RemoveFromRolesAsync(user, await userManager.GetRolesAsync(user));
-            await userManager.AddToRoleAsync(user, role.Name!);
-            await userManager.UpdateSecurityStampAsync(user);
+            if (!(await userManager.RemoveFromRolesAsync(user, await userManager.GetRolesAsync(user))).Succeeded
+                || !(await userManager.AddToRoleAsync(user, role.Name!)).Succeeded
+                || !(await userManager.UpdateSecurityStampAsync(user)).Succeeded)
+            {
+                return StaffValidation.UpdateConflict();
+            }
         }
 
         audit.Record("user.updated", "StaffUser", user.Email, new { before, after = new { name, role = role.DisplayName } });
         await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         access.Invalidate();
         return TypedResults.Ok(await StaffMapping.ToDtoAsync(db, user, time, ct));
     }

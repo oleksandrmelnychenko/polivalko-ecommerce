@@ -36,7 +36,7 @@ internal sealed class IssueReceiptOnRequest(
         {
             FiscalTrigger.Payment => moment == ReceiptMoment.Payment,
             FiscalTrigger.Completion => moment == ReceiptMoment.Completion,
-            _ => await db.Set<Receipt>().AnyAsync(r => r.OrderId == order.Id && r.Kind == ReceiptKind.Sell && r.Status != ReceiptStatus.Failed, cancellationToken),
+            _ => await SaleIssuedForRefundAsync(order, moment, cancellationToken),
         };
         if (!applies)
         {
@@ -89,6 +89,27 @@ internal sealed class IssueReceiptOnRequest(
             await db.SaveChangesAsync(CancellationToken.None);
             throw;
         }
+    }
+
+    private async Task<bool> SaleIssuedForRefundAsync(OrderForReceipt order, ReceiptMoment moment, CancellationToken ct)
+    {
+        var sell = await db.Set<Receipt>().AsNoTracking()
+            .Where(r => r.OrderId == order.Id && r.Kind == ReceiptKind.Sell)
+            .Select(r => (ReceiptStatus?)r.Status)
+            .SingleOrDefaultAsync(ct);
+        if (sell == ReceiptStatus.Issued)
+        {
+            return true;
+        }
+
+        var expected = order.PaymentMethod == PaymentMethod.Card ? ReceiptMoment.Payment : ReceiptMoment.Completion;
+        if (sell is null && moment != expected)
+        {
+            return false;
+        }
+
+        // The sale can still be pending or its outbox message can be retrying. Keep the return queued.
+        throw new InvalidOperationException($"Чек продажу замовлення {order.Number} ще не видано. Повернення очікує фіскалізації продажу.");
     }
 
     private static List<ReceiptGood> Goods(OrderForReceipt order, Guid? refundId)

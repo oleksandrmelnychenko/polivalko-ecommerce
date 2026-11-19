@@ -12,6 +12,12 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   cacheComponents: true,
   partialPrefetching: true,
+  async headers() {
+    return ["/order/:number", "/account/confirm-email", "/account/reset-password", "/pay/sandbox/:id"].map((source) => ({
+      source,
+      headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+    }));
+  },
   async rewrites() {
     return [{ source: "/api/:path*", destination: `${apiInternalUrl}/api/:path*` }];
   },
