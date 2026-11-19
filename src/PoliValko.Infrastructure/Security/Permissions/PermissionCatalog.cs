@@ -2,7 +2,7 @@ namespace PoliValko.Infrastructure.Security.Permissions;
 
 public static class PermissionCatalog
 {
-    public const string Version = "2026-11-08.1";
+    public const string Version = "2026-11-19.1";
 
     public static readonly IReadOnlyList<PermissionDefinition> Permissions =
     [
@@ -12,6 +12,9 @@ public static class PermissionCatalog
         new(PermissionKeys.OrdersStatusChange, "Зміна статусу замовлення", "Підтвердження, відправлення, видача, скасування, також масово; службова нотатка.", "orders", "Замовлення", PermissionRisk.Medium),
         new(PermissionKeys.OrdersRefundCreate, "Оформлення повернення коштів", "Повне чи часткове повернення за позиціями.", "orders", "Замовлення", PermissionRisk.High),
         new(PermissionKeys.OrdersExport, "Експорт замовлень у CSV", "Вивантаження вибірки з контактами покупців.", "orders", "Замовлення", PermissionRisk.Medium),
+        new(PermissionKeys.DnTradeArchiveView, "Архів Навколо: перегляд", "Перегляд історичних записів DNTrade.", "orders", "Замовлення", PermissionRisk.Medium),
+        new(PermissionKeys.DnTradeArchiveImport, "Архів Навколо: імпорт", "Завантаження історичних записів DNTrade з файлу NDJSON.", "orders", "Замовлення", PermissionRisk.High),
+        new(PermissionKeys.DnTradeArchiveOriginal, "Архів Навколо: завантаження оригіналів", "Завантаження вихідних JSON-записів DNTrade, які можуть містити персональні дані.", "orders", "Замовлення", PermissionRisk.High),
 
         new(PermissionKeys.CustomersView, "Покупці: список і контакти", "Імена, телефони, пошта, кабінети й історія замовлень покупців.", "customers", "Покупці", PermissionRisk.Medium),
         new(PermissionKeys.CustomerAccountsManage, "Кабінети покупців: блокування, скидання пароля", "Блокування й розблокування кабінету, лист для відновлення пароля.", "customers", "Покупці", PermissionRisk.High),

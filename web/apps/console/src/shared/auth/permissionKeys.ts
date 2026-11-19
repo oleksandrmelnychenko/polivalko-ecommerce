@@ -1,4 +1,4 @@
-export const PERMISSION_CATALOG_VERSION = '2026-11-08.1'
+export const PERMISSION_CATALOG_VERSION = '2026-11-19.1'
 
 export const PermissionKeys = {
   Dashboard: {
@@ -47,6 +47,11 @@ export const PermissionKeys = {
     RunJobs: 'integration.jobs.run',
     ManageOutbox: 'integration.outbox.manage',
   },
+  DnTradeArchive: {
+    View: 'dntrade.archive.view',
+    Import: 'dntrade.archive.import',
+    Original: 'dntrade.archive.original',
+  },
   Audit: {
     View: 'audit.page.view',
   },
@@ -89,6 +94,9 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'integration.status.view': 'Стан синхронізацій',
   'integration.jobs.run': 'Запуск синхронізацій вручну',
   'integration.outbox.manage': 'Черга операцій і повтор',
+  'dntrade.archive.view': 'Архів Навколо: перегляд',
+  'dntrade.archive.import': 'Архів Навколо: імпорт',
+  'dntrade.archive.original': 'Архів Навколо: завантаження оригіналів',
   'audit.page.view': 'Журнал змін',
   'staff.users.manage': 'Працівники: створення, ролі, паролі, блокування',
   'staff.roles.manage': 'Ролі та права',

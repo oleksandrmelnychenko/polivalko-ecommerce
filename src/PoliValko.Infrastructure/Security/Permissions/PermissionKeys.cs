@@ -11,6 +11,9 @@ public static class PermissionKeys
     public const string OrdersRefundCreate = "orders.refund.create";
 
     public const string OrdersExport = "orders.export";
+    public const string DnTradeArchiveView = "dntrade.archive.view";
+    public const string DnTradeArchiveImport = "dntrade.archive.import";
+    public const string DnTradeArchiveOriginal = "dntrade.archive.original";
 
     public const string CustomersView = "customers.page.view";
 

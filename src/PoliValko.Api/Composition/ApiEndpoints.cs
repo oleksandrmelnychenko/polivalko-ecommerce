@@ -60,6 +60,7 @@ public static class ApiEndpoints
         console.MapConsolePaymentSettingsEndpoints();
         console.MapConsoleNotificationSettingsEndpoints();
         console.MapConsoleNavkoloSettingsEndpoints();
+        console.MapConsoleDnTradeArchiveEndpoints();
 
         api.MapAccountEndpoints();
         api.MapAccountOrderEndpoints();

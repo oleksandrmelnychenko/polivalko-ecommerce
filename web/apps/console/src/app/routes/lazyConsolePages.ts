@@ -28,6 +28,8 @@ export const NotificationSettingsPage = lazy(() =>
   import('@/features/settings/pages/NotificationSettingsPage').then((m) => ({ default: m.NotificationSettingsPage })),
 )
 export const IntegrationPage = lazy(() => import('@/features/integration/pages/IntegrationPage').then((m) => ({ default: m.IntegrationPage })))
+export const DnTradeArchivePage = lazy(() => import('@/features/dntrade-archive/pages/DnTradeArchivePage').then((m) => ({ default: m.DnTradeArchivePage })))
+export const DnTradeArchiveDetailPage = lazy(() => import('@/features/dntrade-archive/pages/DnTradeArchiveDetailPage').then((m) => ({ default: m.DnTradeArchiveDetailPage })))
 export const AuditPage = lazy(() => import('@/features/audit/pages/AuditPage').then((m) => ({ default: m.AuditPage })))
 export const StaffPage = lazy(() => import('@/features/staff/pages/StaffPage').then((m) => ({ default: m.StaffPage })))
 export const RolesPage = lazy(() => import('@/features/staff/pages/RolesPage').then((m) => ({ default: m.RolesPage })))

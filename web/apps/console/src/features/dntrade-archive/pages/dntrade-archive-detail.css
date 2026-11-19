@@ -1,0 +1,29 @@
+.dntrade-archive-detail {
+  flex: 1 1 auto;
+}
+
+.dntrade-archive-detail .app-split-hero h2,
+.dntrade-archive-detail .app-split-stats dd {
+  overflow-wrap: anywhere;
+}
+
+.dntrade-archive-detail .app-split-stats dd {
+  display: block;
+  font-size: 19px;
+  word-spacing: normal;
+}
+
+@media (max-width: 48em) {
+  .dntrade-archive-detail {
+    padding: 12px;
+  }
+
+  .dntrade-archive-detail .app-split-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dntrade-archive-detail .app-split-stats > div + div {
+    border-left: 0;
+    border-top: 1px solid var(--mantine-color-gray-2);
+  }
+}
