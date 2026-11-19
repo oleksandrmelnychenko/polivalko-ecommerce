@@ -23,7 +23,9 @@ export type HeroData = {
   deals?: HeroDeals;
   sections?: HeroSections;
   featured?: HeroFeatured;
+  storeFeatured?: HeroFeatured;
   categories?: Record<string, HeroSubsections>;
+  categoryFeatured?: Record<string, HeroFeatured>;
 };
 
 export type HeroSlide = {
@@ -154,7 +156,7 @@ export function bestsellerFeature(response: Bestsellers | null): HeroFeatured | 
   };
 }
 
-export function heroSlides({ deals, sections, featured }: HeroData): HeroSlide[] {
+export function heroSlides({ deals, sections, featured, storeFeatured }: HeroData): HeroSlide[] {
   return [
     {
       key: "store",
@@ -163,6 +165,7 @@ export function heroSlides({ deals, sections, featured }: HeroData): HeroSlide[]
       title: "Товари для саду, городу й дому",
       sub: "Відправляємо Новою поштою по всій Україні. Самовивіз з магазину безкоштовний.",
       sections,
+      featured: storeFeatured,
       cta: { href: "/catalog", label: "Перейти до каталогу" },
     },
     featured
@@ -172,6 +175,7 @@ export function heroSlides({ deals, sections, featured }: HeroData): HeroSlide[]
           side: "right",
           kicker: "Хіт продажів",
           title: "Найчастіше купують",
+          sub: "Популярний товар за кількістю замовлень у магазині.",
           featured,
           cta: { href: featured.href, label: "Переглянути товар" },
         }
@@ -181,14 +185,14 @@ export function heroSlides({ deals, sections, featured }: HeroData): HeroSlide[]
           side: "right",
           kicker: "Акції",
           title: "Товари зі знижкою",
-          sub: deals ? dealsLine(deals) : "Усі товари зі зниженою ціною зібрані на одній сторінці.",
+          sub: deals ? dealsLine(deals) : "Акційні пропозиції магазину.",
           deals,
           cta: { href: "/sale", label: "Дивитися акції" },
         },
   ];
 }
 
-export function bannerSlides(banners: Banner[], { deals, sections, featured, categories }: HeroData): HeroSlide[] {
+export function bannerSlides(banners: Banner[], { deals, sections, featured, storeFeatured, categories, categoryFeatured }: HeroData): HeroSlide[] {
   const shown = featured ? banners : banners.filter((banner) => !BESTSELLER_LINK.test(banner.link?.trim() ?? ""));
   return shown.map((banner, i) => {
     const link = banner.link?.trim();
@@ -205,10 +209,10 @@ export function bannerSlides(banners: Banner[], { deals, sections, featured, cat
       side,
       kicker: banner.kicker?.trim() || undefined,
       title: banner.title,
-      sub: bannerDeals ? dealsLine(bannerDeals) : banner.text?.trim() || undefined,
+      sub: bannerDeals ? dealsLine(bannerDeals) : banner.text?.trim() || (bannerFeatured ? "Популярний товар за кількістю замовлень у магазині." : undefined),
       deals: bannerDeals,
       sections: bannerSections,
-      featured: bannerFeatured,
+      featured: bannerFeatured ?? (link && CATALOG_LINK.test(link) ? storeFeatured : categorySlug ? categoryFeatured?.[categorySlug] : undefined),
       subsections: bannerSubsections,
       cta: link ? { href: bannerFeatured?.href ?? link, label: banner.buttonLabel?.trim() || "Переглянути" } : undefined,
     };

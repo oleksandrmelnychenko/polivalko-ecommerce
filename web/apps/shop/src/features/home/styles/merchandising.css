@@ -1,0 +1,80 @@
+/* Four independent merchandising sections with distinct desktop compositions. */
+.home-feature { padding-block: 32px; }
+.home-feature__layout { display: grid; gap: 32px; }
+.home-feature__story { position: relative; min-height: 360px; border-radius: 24px; overflow: hidden; isolation: isolate; background: #3a4938; }
+.home-feature__story > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+.home-feature__story::after { content: ""; position: absolute; inset: 15% 0 0; z-index: -1; background: linear-gradient(transparent, rgb(0 0 0 / .76)); }
+.home-feature__copy { display: flex; height: 100%; flex-direction: column; align-items: flex-start; justify-content: flex-end; padding: 32px; color: #fff; }
+.home-feature__copy h2 { max-width: 11ch; margin: 0; color: #fff; font: 600 clamp(30px, 2.8vw, 44px)/1.08 var(--font-body); letter-spacing: -.035em; }
+.home-feature__copy p { max-width: 32ch; margin: 18px 0 24px; color: #fff; font-size: 15px; line-height: 1.6; }
+.home-feature__copy > a { display: inline-flex; align-items: center; gap: 16px; min-height: 44px; padding: 10px 20px; border-radius: 99px; background: #fff; color: var(--color-ink); font-size: 14px; font-weight: 500; text-decoration: none; }
+.home-feature__copy > a:hover { background: #edf8f1; }
+.home-feature__copy svg { width: 16px; height: 16px; }
+.home-feature__products { min-width: 0; }
+.home-feature__links { display: flex; flex-wrap: wrap; gap: 12px 24px; min-height: 36px; margin-bottom: 24px; align-items: flex-start; }
+.home-feature__links a { display: inline-flex; align-items: center; gap: 8px; color: var(--color-ink-2); font-size: 13px; text-decoration: none; padding-bottom: 6px; border-bottom: 1px solid var(--color-control); }
+.home-feature__links a:hover { color: var(--color-brand-strong); border-color: var(--color-brand); }
+.home-feature__links svg { width: 13px; height: 13px; }
+.home-sale { padding-block: 40px 64px; }
+.home-sale__panel { padding: 32px; border-radius: 28px; background: #f4f5f2; }
+.home-sale__heading { margin-bottom: 28px; }
+.home-sale__heading h2 { margin: 0; font: 600 42px/1.1 var(--font-body); letter-spacing: -.035em; }
+.home-sale__heading p { margin: 20px 0 28px; color: var(--color-ink-2); font-size: 17px; line-height: 1.6; }
+.home-sale__heading a { display: inline-flex; align-items: center; gap: 10px; color: var(--color-ink); font-size: 14px; font-weight: 500; text-decoration: none; }
+.home-sale__heading a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.home-sale__heading svg { width: 16px; height: 16px; }
+@media (min-width: 64rem) {
+  .home-recommendations { padding-block: 48px 40px; }
+  .home-recommendations .home-section__head { align-items: center; margin-bottom: 28px; }
+  .home-recommendations .home-section__titles h2 { font-size: clamp(30px, 2.3vw, 38px); }
+  .home-recommendations .tile__photo { aspect-ratio: 1.12; }
+  .home-feature__layout { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px; }
+  .home-feature--reverse .home-feature__layout { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .home-feature--reverse .home-feature__story { order: 2; }
+  .home-feature--reverse .home-feature__products { order: 1; }
+  .home-feature .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .home-feature .tile__photo { aspect-ratio: 1.05; }
+  .home-feature .tile__name { font-size: 15px; }
+  .home-feature + .home-feature { padding-top: 40px; }
+  .home-sale__panel { padding: 32px; }
+  .home-sale__heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin: 0 0 28px; }
+  .home-sale__heading h2 { font-size: 36px; }
+  .home-sale .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+  .home-sale .tile--shop { padding: 10px; border: 1px solid #e4e7e0; border-radius: 22px; background: #fff; }
+  .home-sale .tile__photo { aspect-ratio: 1.35; border-radius: 14px; }
+  .home-sale .tile__image { border-radius: 11px; }
+  .home-sale .tile__bar { top: 10px; right: 10px; gap: 6px; }
+  .home-sale .tile__bar .round-btn { width: 30px; height: 30px; }
+  .home-sale .tile__bar svg { width: 15px; height: 15px; }
+  .home-sale .tile__flashes { top: 10px; left: 10px; gap: 4px; }
+  .home-sale .flash { min-height: 22px; padding: 2px 8px; font-size: 11px; }
+  .home-sale .tile__body { padding: 14px 4px 4px; gap: 10px; }
+  .home-sale .tile__name { font-size: 15px; line-height: 1.4; min-height: 2.8em; }
+  .home-sale .tile__stock { font-size: 13px; }
+  .home-sale .tile__stock svg { width: 14px; height: 14px; }
+  .home-sale .tile__price { gap: 0 10px; padding-block: 4px; }
+  .home-sale .tile__price strong { font-size: 20px; }
+  .home-sale .tile__price s { font-size: 14px; }
+  .home-sale .tile__buy { min-height: 40px; padding-inline: 12px; font-size: 14px; }
+}
+@media (min-width: 64rem) {
+  .home-sale__showcase { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+  .home-sale__showcase > div { min-width: 0; }
+  .home-sale__featured .tiles { grid-template-columns: minmax(0, 1fr); height: 100%; }
+  .home-sale__supporting .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); height: 100%; }
+  .home-sale__featured .tile { position: relative; min-height: 460px; border: 0; padding: 0; overflow: hidden; border-radius: 22px; }
+  .home-sale__featured .tile__photo { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; border-radius: 22px; }
+  .home-sale__featured .tile__image { border-radius: 19px; }
+  .home-sale__featured .tile__body { position: static; display: grid; flex: 0 0 auto; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 16px; margin: auto 20px 20px; padding: 20px; border-radius: 16px; background: #fff; z-index: 1; }
+  .home-sale__featured .tile__name { grid-column: 1 / -1; font-size: 20px; min-height: 0; max-width: 30ch; }
+  .home-sale__featured .tile__stock { grid-column: 1; }
+  .home-sale__featured .tile__price { grid-column: 1; padding: 0; }
+  .home-sale__featured .tile__price strong { font-size: 23px; }
+  .home-sale__featured .tile__buy { grid-column: 2; grid-row: 2 / span 2; width: 136px; min-height: 44px; align-self: end; }
+  .home-sale__featured .tile__flashes { top: 18px; left: 18px; }
+  .home-sale__featured .flash { min-height: 26px; padding: 3px 10px; font-size: 13px; }
+  .home-sale__featured .tile__bar { top: 18px; right: 18px; }
+  .home-sale__featured .tile__bar .round-btn { width: 36px; height: 36px; }
+  .home-sale__featured .tile__bar svg { width: 18px; height: 18px; }
+  .home-sale__supporting .tile__photo { aspect-ratio: .95; }
+}

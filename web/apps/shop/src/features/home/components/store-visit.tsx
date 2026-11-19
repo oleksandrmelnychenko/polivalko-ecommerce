@@ -1,55 +1,31 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { getContacts, type TextItem } from "@/features/content/server";
-import { sized } from "@polivalko/shared/lib/images";
-import { pagePhotos } from "@polivalko/shared/lib/stand-in-photos";
-import { ArrowRightIcon, ClockIcon, PhoneIcon, PinIcon } from "@polivalko/shared/ui/icons";
-import { Heading } from "./heading";
+import { getContacts, SpecialDays, type TextItem } from "@/features/content/server";
+import { ArrowRightIcon, ClockIcon, PhoneIcon, PinIcon, BagIcon } from "@polivalko/shared/ui/icons";
 
 export async function StoreVisit({ visit }: { visit?: TextItem | null }) {
   await connection();
   const contacts = await getContacts().catch(() => null);
   return (
-    <section className="visit" aria-labelledby="visit-title">
-      <div className="container visit__inner">
-        <div className="visit__copy">
-          <Heading
-            id="visit-title"
-            title={visit?.title?.trim() || "Наш магазин"}
-            sub={visit?.title?.trim() ? (visit.text ?? "") : "Товар можна подивитися перед покупкою, а замовлення забрати безкоштовно."}
-          />
-          <ul className="visit__facts">
-            <li>
-              <PinIcon />
-              <span>{contacts?.address ?? "Буча, Київська область"}</span>
-            </li>
-            {contacts?.schedule && (
-              <li>
-                <ClockIcon />
-                <span>{contacts.schedule}</span>
-              </li>
-            )}
-            {contacts?.storePhone && (
-              <li>
-                <PhoneIcon />
-                <a href={`tel:${contacts.storePhone.replace(/[^\d+]/g, "")}`}>{contacts.storePhone}</a>
-              </li>
-            )}
-          </ul>
-          <p className="visit__actions">
-            <Link href="/contacts" className="btn">
-              Контакти й маршрут
-              <ArrowRightIcon />
-            </Link>
-            <Link href="/payment-delivery" className="btn btn--outline">
-              Доставка й оплата
-            </Link>
-          </p>
-        </div>
-        <figure className="visit__photo">
-          <img {...sized(pagePhotos.store.url, "(max-width: 60rem) 100vw, 600px", 960)} alt={pagePhotos.store.alt} width={960} height={720} loading="lazy" fetchPriority="low" decoding="async" />
-        </figure>
+    <section className="store-visit container" aria-labelledby="visit-title">
+      <div className="store-visit__intro">
+        <span className="store-visit__badge"><PinIcon />Магазин у Бучі</span>
+        <h2 id="visit-title">{visit?.title?.trim() || "Наш магазин"}</h2>
+        <p>{visit?.text?.trim() || "Перегляньте товари в магазині або заберіть онлайн-замовлення без плати за доставку."}</p>
+        <Link href="/catalog" className="store-visit__catalog">Обрати товари онлайн <ArrowRightIcon /></Link>
       </div>
+      <div className="store-visit__details">
+        <div className="store-visit__address"><PinIcon /><div><h3>Адреса</h3><p>{contacts?.address ?? "Буча, Київська область"}</p></div></div>
+        <div className="store-visit__contacts">
+          {contacts?.schedule && <div><ClockIcon /><div><h3>Графік роботи</h3><p>{contacts.schedule}</p><SpecialDays days={contacts.specialDays} limit={3} /></div></div>}
+          {contacts?.storePhone && <div><PhoneIcon /><div><h3>Телефон</h3><a href={"tel:" + contacts.storePhone.replace(/[^\d+]/g, "")}>{contacts.storePhone}</a></div></div>}
+        </div>
+        <div className="store-visit__actions">
+          {contacts?.mapUrl ? <a href={contacts.mapUrl} target="_blank" rel="noopener noreferrer" className="btn">Прокласти маршрут <ArrowRightIcon /></a> : <Link href="/contacts" className="btn">Як нас знайти <ArrowRightIcon /></Link>}
+          <Link href="/contacts" className="store-visit__contact-link">Усі контакти</Link>
+        </div>
+      </div>
+      <div className="store-visit__pickup"><BagIcon /><p><strong>Самовивіз — безкоштовно</strong><span>Оформіть замовлення онлайн та дочекайтеся підтвердження готовності.</span></p><Link href="/payment-delivery">Про доставку й оплату <ArrowRightIcon /></Link></div>
     </section>
   );
 }

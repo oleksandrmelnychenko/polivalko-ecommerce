@@ -22,7 +22,7 @@ function defaultPerks(facts: DeliveryFacts | null): Perk[] {
   if (facts.pickup) perks.push({ title: "Самовивіз", text: "Безкоштовно. Забирайте, коли менеджер повідомить, що замовлення зібране.", icon: StoreIcon });
   if (payments) perks.push({ title: "Оплата", text: `${payments[0].toUpperCase()}${payments.slice(1)}.`, icon: WalletIcon });
   if (perks.length === 0) return [];
-  return [...perks, { title: "Звіряємо зі складом", text: "Ціну й залишок перевіряємо в магазині до того, як підтвердити замовлення.", icon: ShieldIcon }];
+  return [...perks, { title: "Підтвердження замовлення", text: "Перед підтвердженням перевіряємо ціну й наявність товарів.", icon: ShieldIcon }];
 }
 
 export function Perks({ items, facts }: { items?: TextItem[] | null; facts: DeliveryFacts | null }) {

@@ -1,28 +1,44 @@
 import { connection } from "next/server";
+import Link from "next/link";
+import { formatMoney } from "@polivalko/shared/lib/format";
 import { ProductTiles } from "@/features/catalog";
-import { getCollections } from "@/features/catalog/server";
-import { pagePhotos } from "@polivalko/shared/lib/stand-in-photos";
-import { Look } from "./look";
-import { RailTiles } from "./rail-tiles";
-import { Strip } from "./strip";
+import { getBestsellers, getCategoryTree, getCollections, searchProducts } from "@/features/catalog/server";
+import { CategoryFeature } from "./category-feature";
+import { HomeSection } from "./home-section";
+
+const FEATURED_CATEGORIES = ["vse-dlia-vidpochynku", "vse-dlia-polyvu"];
 
 export async function CollectionPairs() {
   await connection();
-  const [first, ...rest] = (await getCollections().catch(() => [])).filter((c) => c.items.length > 0);
-  if (!first) return null;
-  return (
-    <>
-      <Look id="collection-title" title={first.title} ghost="Добірка" photo={pagePhotos.collection} reverse>
-        <ProductTiles products={first.items.slice(0, 6)} columns={3} />
-      </Look>
-      <Strip id="collection-strip-title" title={first.title} side="right">
-        <RailTiles products={first.items} />
-      </Strip>
-      {rest.map((collection, i) => (
-        <Strip key={`${collection.code}-${i}`} id={`collection-${i + 2}-title`} title={collection.title} side={i % 2 === 0 ? "left" : "right"}>
-          <RailTiles products={collection.items} />
-        </Strip>
-      ))}
-    </>
-  );
+  const [collections, bestsellers, categories] = await Promise.all([
+    getCollections().catch(() => []),
+    getBestsellers(5).catch(() => null),
+    getCategoryTree().catch(() => []),
+  ]);
+  const popular = bestsellers?.items.map(item => item.product) ?? [];
+  const recommended = [...new Map([...collections.flatMap(collection => collection.items), ...popular]
+    .filter(product => product.inStock).map(product => [product.id, product])).values()].slice(0, 5);
+  const sections = await Promise.all(categories.filter(category => FEATURED_CATEGORIES.includes(category.slug)).map(async category => {
+    const found = await Promise.all(category.children.slice(0, 3).map(child => searchProducts({ category: child.slug, inStock: true, pageSize: 6 }).catch(() => null)));
+    const usedPhotos = new Set<string>();
+    let items = found.flatMap(result => {
+      const product = result?.items.find(item => !usedPhotos.has(item.imageUrl || item.id)) ?? result?.items[0];
+      if (!product) return [];
+      usedPhotos.add(product.imageUrl || product.id);
+      return [product];
+    });
+    if (items.length < 3) {
+      const fallback = await searchProducts({ category: category.slug, inStock: true, pageSize: 3 }).catch(() => null);
+      items = [...new Map([...items, ...(fallback?.items ?? [])].map(product => [product.id, product])).values()].slice(0, 3);
+    }
+    return { category, items };
+  }));
+
+  return <>
+    {popular.length > 0 && <section className="mobile-bestsellers container" aria-labelledby="mobile-bestsellers-title"><header><h2 id="mobile-bestsellers-title">Топ продажів</h2><Link href="/catalog">Усі ›</Link></header><ul>{popular.slice(0, 5).map((product) => <li key={product.id}><Link href={`/product/${product.slug}`}>{product.imageUrl && <img src={product.imageUrl} alt="" width={150} height={150} loading="lazy" />}<span>{product.name}</span><strong>{formatMoney(product.price)}</strong></Link></li>)}</ul></section>}
+    {recommended.length > 0 && <HomeSection id="collection-title" title="Рекомендовано для вас" className="home-recommendations" more={{ href: "/catalog", label: "Увесь каталог" }}>
+      <ProductTiles products={recommended} />
+    </HomeSection>}
+    {sections.filter(section => section.items.length).map(({ category, items }, i) => <CategoryFeature key={category.id} category={category} products={items} reverse={i % 2 === 1} />)}
+  </>;
 }
