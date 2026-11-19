@@ -27,7 +27,7 @@ async function CategoryListing({ category, searchParams }: CategoryScreenProps) 
       searchParams={await searchParams}
       subcategories={category.children}
       listName={category.name}
-      emptyHint="У цьому розділі поки немає товарів. Загляньте в інші розділи каталогу."
+      emptyHint="У цьому розділі поки немає товарів. Перегляньте інші категорії."
     />
   );
 }

@@ -6,7 +6,7 @@ import { CatalogListing } from "./catalog-listing";
 import { ListingSkeleton } from "./listing-skeleton";
 
 export const SALE_TITLE = "Акції";
-export const SALE_LEAD = "Товари зі зниженою ціною. Стару ціну закреслено, нова стоїть поруч.";
+export const SALE_LEAD = "Акційні пропозиції Полі-Валько для дому, саду й городу.";
 
 export function SaleScreen({ searchParams }: { searchParams: Promise<SearchParams> }) {
   return (
@@ -22,7 +22,6 @@ export function SaleScreen({ searchParams }: { searchParams: Promise<SearchParam
           </ol>
         </nav>
         <h1>{SALE_TITLE}</h1>
-        <p>{SALE_LEAD}</p>
       </header>
       <Suspense fallback={<ListingSkeleton />}>
         <SaleListing searchParams={searchParams} />

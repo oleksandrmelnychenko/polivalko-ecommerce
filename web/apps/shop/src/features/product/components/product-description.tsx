@@ -7,7 +7,7 @@ export function ProductDescription({ product }: { product: ProductDetails }) {
   const about = product.descriptionHtml ? (
     <div className="prose" dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} />
   ) : (
-    <p className="muted">Опис додасть магазин.</p>
+    <p className="muted">Опис товару ще не додано.</p>
   );
 
   const specs = (

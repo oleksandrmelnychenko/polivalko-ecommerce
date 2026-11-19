@@ -11,6 +11,7 @@ export function FiltersPanel({ active, children }: { active: number; children: R
         {open ? "Сховати фільтри" : active > 0 ? `Фільтри: ${active}` : "Фільтри"}
       </button>
       <div id={id} className="filters-panel__body">
+        <p className="filters-panel__head">Фільтри</p>
         {children}
       </div>
     </div>

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { BuyForm } from "@/features/cart";
 import { discountPercent, ProductLabels, withoutSaleLabel } from "@/features/catalog";
 import { FavoriteButton } from "@/features/favorites";
+import { CompareButton } from "@/features/compare";
 import type { ProductDetails } from "@polivalko/shared/api/types";
 import { formatMoney } from "@polivalko/shared/lib/format";
 import type { DeliveryFacts } from "@/shared/lib/delivery-facts";
@@ -58,7 +59,7 @@ export function ProductBuybox({ product, deliveryFacts }: { product: ProductDeta
           <p className={product.inStock ? "stock stock--in" : "stock stock--out"}>{product.inStock ? "В наявності" : "Немає в наявності"}</p>
         </div>
         {product.variants.length > 1 && <ProductVariants variants={product.variants} />}
-        <BuyForm product={cartProduct} inStock={product.inStock} actionsClassName="buybox__actions" aside={<FavoriteButton productId={product.id} variant="box" />} />
+        <BuyForm product={cartProduct} inStock={product.inStock} actionsClassName="buybox__actions" aside={<div className="buybox__tools"><FavoriteButton productId={product.id} variant="box" /><CompareButton product={{ id: product.id, name: product.name, slug: product.slug, sku: product.sku, price: product.price, inStock: product.inStock, brand: product.brand, imageUrl: product.images[0]?.url }} /></div>} />
       </div>
       <Suspense fallback={null}>
         <ProductDeliveryFacts load={deliveryFacts} />

@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { sized, thumb } from "@polivalko/shared/lib/images";
-import { SearchIcon } from "@polivalko/shared/ui/icons";
+import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from "@polivalko/shared/ui/icons";
 import { PhotoViewer } from "./photo-viewer";
 
 type Image = { url: string; alt: string };
 
-const GALLERY_SIZES = "(max-width: 40rem) 250px, (max-width: 60rem) 92vw, 640px";
+const GALLERY_SIZES = "(max-width: 64rem) 100vw, 48vw";
 
 export function Gallery({ images, name }: { images: Image[]; name: string }) {
   const [active, setActive] = useState(0);
@@ -23,12 +23,16 @@ export function Gallery({ images, name }: { images: Image[]; name: string }) {
             <img key={current.url} {...main} alt={current.alt || name} width={960} height={960} fetchPriority="high" decoding="async" />
             <span className="gallery__hint" aria-hidden="true">
               <SearchIcon />
-              Збільшити
+              <span>Збільшити</span>
             </span>
           </button>
         ) : (
-          <span className="tile__photo-empty">Фото додасть магазин</span>
+          <span className="tile__photo-empty">Фото відсутнє</span>
         )}
+        {images.length > 1 && <>
+          <button type="button" className="gallery__arrow gallery__arrow--prev" aria-label="Попереднє фото" onClick={() => setActive((active + images.length - 1) % images.length)}><ChevronLeftIcon /></button>
+          <button type="button" className="gallery__arrow gallery__arrow--next" aria-label="Наступне фото" onClick={() => setActive((active + 1) % images.length)}><ChevronRightIcon /></button>
+        </>}
       </figure>
       {images.length > 1 && (
         <ul className="gallery__thumbs" aria-label="Фото товару">

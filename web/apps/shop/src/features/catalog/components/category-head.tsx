@@ -25,7 +25,10 @@ export function CategoryHead({ category }: { category: Category }) {
           <li aria-current="page">{category.name}</li>
         </ol>
       </nav>
-      <h1>{category.name}</h1>
+      <div className="page-head__title">
+        <p className="page-head__kicker">Каталог</p>
+        <h1>{category.name}</h1>
+      </div>
       <CategoryIntro description={category.description} />
       {category.children.length > 0 && (
         <nav aria-label="Підрозділи" className="page-head__subs">

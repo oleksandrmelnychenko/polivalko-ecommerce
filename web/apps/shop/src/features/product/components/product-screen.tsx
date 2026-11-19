@@ -28,11 +28,12 @@ export function ProductScreen({ product, deliveryFacts }: { product: ProductDeta
       </nav>
 
       <div className="product">
-        <Gallery images={product.images} name={product.name} />
+        <div className="product__main">
+          <Gallery key={product.id} images={product.images} name={product.name} />
+          <ProductDescription product={product} />
+        </div>
         <ProductBuybox product={product} deliveryFacts={deliveryFacts} />
       </div>
-
-      <ProductDescription product={product} />
 
       <Suspense fallback={null}>
         <RelatedProducts category={product.category.slug} exclude={product.id} />

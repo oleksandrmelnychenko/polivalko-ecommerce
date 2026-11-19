@@ -12,4 +12,4 @@
 .tile__labels { position: absolute; top: 64px; right: 10px; left: 10px; flex-direction: column; align-items: flex-end; }
 .tile__labels .label { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .tile__labels--top { top: 10px; }
-.buybox__labels { margin-bottom: calc(var(--space-md) * -1); }
+.buybox__labels { margin: 0; }

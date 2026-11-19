@@ -55,7 +55,7 @@ function FacetGroup({ title, options }: { title: string; options: Option[] }) {
           </li>
         ))}
       </ul>
-      {needle && matching.length === 0 && <p className="fw__empty">Нічого не знайшлося</p>}
+      {needle && matching.length === 0 && <p className="fw__empty">Збігів не знайдено</p>}
       {!needle && (hidden > 0 || expanded) && matching.length > LIST_LIMIT && (
         <button type="button" className="fw__more" aria-expanded={expanded} onClick={() => setExpanded((e) => !e)}>
           {expanded ? "Згорнути" : `Ще ${hidden}`}

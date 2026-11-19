@@ -124,7 +124,7 @@ export async function CatalogListing({
 
         {result.items.length === 0 ? (
           <div className="empty">
-            <h2>Нічого не знайшлося</h2>
+            <h2>Товарів не знайдено</h2>
             <p>{chips.length > 0 ? "Спробуйте прибрати частину фільтрів." : emptyHint}</p>
             {chips.length > 0 && (
               <Link className="btn btn--quiet" href={href(CLEARED)}>
@@ -133,7 +133,7 @@ export async function CatalogListing({
             )}
           </div>
         ) : (
-          <ProductTiles products={result.items} columns={3} priority />
+          <ProductTiles products={result.items} priority />
         )}
 
         <ListingPager result={result} href={(page) => href({ page })} />
