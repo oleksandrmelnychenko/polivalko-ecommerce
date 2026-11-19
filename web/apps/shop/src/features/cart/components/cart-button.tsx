@@ -8,9 +8,9 @@ export function CartButton() {
   return (
     <button type="button" className="icon-btn icon-btn--chrome cart-button" onClick={open} aria-haspopup="dialog" aria-label={count > 0 ? `Кошик, позицій: ${count}` : "Кошик"}>
       <BagIcon />
-      <span key={count} className="cart-button__count" aria-hidden="true">
+      {count > 0 && <span key={count} className="cart-button__count" aria-hidden="true">
         {count}
-      </span>
+      </span>}
     </button>
   );
 }

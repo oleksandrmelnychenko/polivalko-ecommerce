@@ -1,8 +1,11 @@
-.site-header__actions { display: flex; align-items: center; gap: var(--space-lg); }
-.icon-btn { border-radius: 50%; position: relative; display: inline-grid; place-items: center; width: 44px; height: 44px; flex: none; border: 0; background: transparent; color: var(--color-ink); cursor: pointer; transition: color 0.3s, background-color 0.3s; }
-.icon-btn:hover { background: var(--color-paper-2); }
-.icon-btn svg { width: 22px; height: 22px; }
-.icon-btn--chrome { color: var(--color-ink); }
-.icon-btn--chrome:hover { background: transparent; color: var(--color-brand); }
+.site-header__actions { display: flex; align-items: center; gap: 6px; }
+.search-field { display: inline-flex; align-items: center; gap: 8px; width: clamp(200px, 20vw, 330px); height: 40px; margin-right: 6px; padding: 0 12px; border: 1px solid transparent; border-radius: var(--radius); background: #fff; color: var(--color-muted); font: 400 0.9375rem/1 var(--font-body); text-align: left; cursor: text; box-shadow: 0 5px 16px rgb(33 33 33 / 0.07); transition: border-color var(--dur-micro) var(--ease-out); }
+.search-field:hover { border-color: var(--color-control); }
+.search-field svg { width: 16px; height: 16px; flex: none; color: var(--color-ink-2); }
+.icon-btn { position: relative; display: inline-grid; place-items: center; width: 44px; height: 44px; flex: none; border: 0; border-radius: var(--radius); background: transparent; color: var(--color-ink-2); cursor: pointer; transition: color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out); }
+.icon-btn:hover { background: var(--color-paper-2); color: var(--color-ink); }
+.icon-btn svg { width: 20px; height: 20px; }
+.icon-btn--chrome { color: var(--color-ink-2); }
+.icon-btn--chrome:hover { background: var(--color-paper-2); color: var(--color-ink); }
 .icon-btn.site-header__menu { display: none; }
-.cart-button__count { position: absolute; top: 0; right: -2px; min-width: 20px; height: 20px; padding-inline: 5px; border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font: 400 12px/20px var(--font-body); font-variant-numeric: tabular-nums; text-align: center; }
+.cart-button__count { position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding-inline: 5px; border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font: 500 11px/18px var(--font-body); font-variant-numeric: tabular-nums; text-align: center; }

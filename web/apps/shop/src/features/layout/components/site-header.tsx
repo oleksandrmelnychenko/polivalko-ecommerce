@@ -9,6 +9,8 @@ import { HeaderMobileMenu } from "./header-mobile-menu";
 import { HeaderNav } from "./header-nav";
 import { NavFallback } from "./nav-fallback";
 import { HeaderMascot } from "./header-mascot";
+import { HeaderTopbar } from "./header-topbar";
+import { CompareLink } from "@/features/compare";
 
 export function SiteHeader() {
   return (
@@ -17,6 +19,9 @@ export function SiteHeader() {
         <AnnouncementBar />
       </Suspense>
       <header className="site-header">
+        <Suspense fallback={null}>
+          <HeaderTopbar />
+        </Suspense>
         <div className="container site-header__bar">
           <Link href="/" className="brand-logo site-header__brand" aria-label="Poli-Valko — на головну" translate="no">
             <HeaderMascot />
@@ -30,6 +35,7 @@ export function SiteHeader() {
           </Suspense>
           <div className="site-header__actions">
             <SearchButton />
+            <CompareLink />
             <AccountButton />
             <CartButton />
             <button type="button" className="icon-btn icon-btn--chrome site-header__menu" popoverTarget="mobile-menu" aria-label="Меню й каталог">

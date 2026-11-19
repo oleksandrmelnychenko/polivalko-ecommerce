@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { formatPrice } from "@polivalko/shared/lib/format";
 import { thumb } from "@polivalko/shared/lib/images";
 import { CloseIcon } from "@polivalko/shared/ui/icons";
+import { CartEmpty } from "./cart-empty";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper";
 import { useCart } from "./cart-provider";
 
@@ -38,14 +39,8 @@ export function CartDrawer() {
         {(error || !ready) && <p role="status">{error ?? "Завантажуємо кошик…"}</p>}
         <p role="status" className="visually-hidden">{ready && !error && saving ? "Зберігаємо кошик…" : ""}</p>
         {ready && lines.length === 0 ? (
-          <div className="drawer__lines">
-            <div className="empty" style={{ marginTop: "var(--space-lg)" }}>
-              <h2>Кошик порожній</h2>
-              <p>Додайте товари з каталогу, і вони з&apos;являться тут.</p>
-              <Link href="/catalog" className="btn btn--quiet" onClick={close}>
-                Перейти до каталогу
-              </Link>
-            </div>
+          <div className="drawer__lines drawer__lines--empty">
+            <CartEmpty drawer onNavigate={close} />
           </div>
         ) : (
           <ul className="drawer__lines">
