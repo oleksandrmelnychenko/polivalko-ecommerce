@@ -86,6 +86,11 @@
 @import url("../../../../packages/shared/styles/ui/meta-list.css");
 @import url("../shared/styles/ui/motion.css");
 @import url("../shared/styles/print.css");
+@import url("../shared/styles/storefront-theme.css");
+@import url("../features/journal/journal.css");
+@import url("../features/content/styles/page-refresh.css");
+@import url("../features/home/styles/merchandising.css");
+@import url("../features/compare/compare.css");
 
 :root {
   --font-onest: "Onest Variable";

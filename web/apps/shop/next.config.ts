@@ -19,7 +19,25 @@ const nextConfig: NextConfig = {
     }));
   },
   async rewrites() {
-    return [{ source: "/api/:path*", destination: `${apiInternalUrl}/api/:path*` }];
+    return {
+      beforeFiles: [],
+      afterFiles: [{ source: "/api/:path*", destination: `${apiInternalUrl}/api/:path*` }],
+      fallback: [],
+    };
+  },
+  async redirects() {
+    return [
+      { source: "/koshyk", destination: "/cart", permanent: true },
+      { source: "/product-category/:slug", destination: "/catalog/:slug", permanent: true },
+      { source: "/info/dostavka-i-oplata", destination: "/payment-delivery", permanent: true },
+      { source: "/info/dostavka", destination: "/payment-delivery", permanent: true },
+      { source: "/info/oplata", destination: "/payment-delivery", permanent: true },
+      { source: "/info/obmin-ta-povernennia", destination: "/returns", permanent: true },
+      { source: "/info/obmin-ta-povernennya", destination: "/returns", permanent: true },
+      { source: "/info/publichna-oferta", destination: "/offer", permanent: true },
+      { source: "/info/polityka-konfidentsiinosti", destination: "/privacy", permanent: true },
+      { source: "/info/polityka-konfidentsiynosti", destination: "/privacy", permanent: true },
+    ];
   },
 };
 
