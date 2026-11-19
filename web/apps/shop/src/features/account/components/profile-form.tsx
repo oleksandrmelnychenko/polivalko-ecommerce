@@ -44,7 +44,7 @@ export function ProfileForm({ me }: { me: CustomerMe }) {
         placeholder="+380 67 123 45 67"
         defaultValue={me.phone ?? ""}
         errors={form.errors}
-        help="Підставимо його в оформлення замовлення."
+        help="Автоматично заповнюється під час оформлення замовлення."
       />
       <FormStatus status={form.status} />
       <button type="submit" className="btn" disabled={form.busy} aria-busy={form.busy}>

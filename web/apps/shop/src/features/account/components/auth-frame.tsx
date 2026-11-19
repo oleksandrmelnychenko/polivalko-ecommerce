@@ -1,25 +1,17 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
-import { AuthPerks } from "./auth-perks";
+import { UserIcon } from "@polivalko/shared/ui/icons";
 
-export function AuthFrame({ title, crumb, lead, perks = true, children }: { title: string; crumb: string; lead?: ReactNode; perks?: boolean; children: ReactNode }) {
+export function AuthFrame({ title, crumb, lead, children }: { title: string; crumb: string; lead?: ReactNode; perks?: boolean; children: ReactNode }) {
   return (
-    <div className="container">
-      <header className="page-head">
-        <nav className="crumbs" aria-label="Хлібні крихти">
-          <ol>
-            <li>
-              <Link href="/">Головна</Link>
-            </li>
-            <li aria-current="page">{crumb}</li>
-          </ol>
-        </nav>
+    <div className="auth-card">
+      <header>
+        <span className="auth-card__icon"><UserIcon /></span>
+        <p className="auth-card__eyebrow">Особистий кабінет · {crumb}</p>
         <h1>{title}</h1>
         {typeof lead === "string" ? <p className="lead">{lead}</p> : lead}
       </header>
-      <div className={perks ? "auth" : "auth auth--single"}>
+      <div className="auth auth--single">
         <div className="auth__main">{children}</div>
-        {perks && <AuthPerks />}
       </div>
     </div>
   );

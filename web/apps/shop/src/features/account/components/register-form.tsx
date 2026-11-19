@@ -47,13 +47,13 @@ export function RegisterForm({ mailDelivers }: { mailDelivers: boolean }) {
           <TextField name="email" label="Email" type="email" autoComplete="email" spellCheck={false} required errors={form.errors} />
           <TextField
             name="phone"
-            label="Телефон, якщо хочете"
+            label="Телефон (необов’язково)"
             type="tel"
             inputMode="tel"
             autoComplete="tel"
             placeholder="+380 67 123 45 67"
             errors={form.errors}
-            help="Підставимо його в оформлення замовлення."
+            help="Автоматично заповнюється під час оформлення замовлення."
           />
           <TextField name="password" label="Пароль" type="password" autoComplete="new-password" required errors={form.errors} help="Щонайменше 8 символів." />
           <FormStatus status={form.status} />

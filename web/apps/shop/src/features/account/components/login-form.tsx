@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { EyeIcon } from "@polivalko/shared/ui/icons";
 import { safeNext, signIn, useCustomer } from "@/features/customer";
 import { useFormState } from "../hooks/use-form-state";
 import { text } from "../lib/form-status";
@@ -18,6 +19,7 @@ export function LoginForm() {
   const customer = useCustomer();
   const formRef = useRef<HTMLFormElement>(null);
   const form = useFormState(formRef);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (customer.status === "signedIn") router.replace(next);
@@ -30,18 +32,19 @@ export function LoginForm() {
   }
 
   return (
-    <form ref={formRef} className="auth__form" onSubmit={onSubmit} noValidate>
+    <form ref={formRef} className="auth__form" onSubmit={onSubmit}>
       {reason === "favorites" && (
         <p className="notice">
           <strong>Обране доступне в кабінеті</strong>
           Увійдіть або зареєструйтеся, і збережені товари будуть доступні з будь-якого пристрою.
         </p>
       )}
-      <TextField name="email" label="Email" type="email" autoComplete="email" spellCheck={false} required errors={form.errors} />
-      <TextField
+      <TextField name="email" label="Email" type="email" placeholder="name@example.com" autoComplete="email" spellCheck={false} required errors={form.errors} />
+      <div className="password-field"><TextField
         name="password"
         label="Пароль"
-        type="password"
+        type={showPassword ? "text" : "password"}
+        placeholder="Ваш пароль"
         autoComplete="current-password"
         required
         errors={form.errors}
@@ -51,6 +54,7 @@ export function LoginForm() {
           </Link>
         }
       />
+      <button type="button" className="icon-btn password-field__toggle" aria-label={showPassword ? "Приховати пароль" : "Показати пароль"} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}><EyeIcon /></button></div>
       <FormStatus status={form.status} />
       <button type="submit" className="btn btn--wide" disabled={form.busy} aria-busy={form.busy}>
         {form.busy ? "Входимо…" : "Увійти"}

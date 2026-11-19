@@ -23,7 +23,7 @@ export function PaymentPending({ onRefresh, children }: { onRefresh?: () => void
     return (
       <section className="pay" aria-live="polite">
         <h2>Перевіряємо оплату</h2>
-        <p>Чекаємо підтвердження від платіжної системи. Це займає кілька секунд.</p>
+        <p>Очікуємо підтвердження від платіжної системи. Статус оновиться автоматично.</p>
       </section>
     );
 

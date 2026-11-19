@@ -54,7 +54,7 @@ export function AddressForm({
   return (
     <form ref={formRef} className="address-form" onSubmit={onSubmit} noValidate aria-labelledby="address-form-title">
       <h3 id="address-form-title">{address ? "Змінити адресу" : "Нова адреса"}</h3>
-      <TextField name="label" label="Назва, якщо хочете" placeholder="Наприклад, Дім або Робота" maxLength={50} defaultValue={address?.label ?? ""} errors={form.errors} />
+      <TextField name="label" label="Назва адреси (необов’язково)" placeholder="Наприклад, Дім або Робота" maxLength={50} defaultValue={address?.label ?? ""} errors={form.errors} />
       <fieldset className="seg seg--cards">
         <legend className="visually-hidden">Спосіб доставки</legend>
         {METHODS.map((code) => (
@@ -91,7 +91,7 @@ export function AddressForm({
       )}
       <label className="consent">
         <input type="checkbox" name="isDefault" defaultChecked={address?.isDefault || first} disabled={address?.isDefault} />
-        <span>Основна адреса: підставимо її під час оформлення замовлення</span>
+        <span>Використовувати цю адресу за замовчуванням</span>
       </label>
       <FormStatus status={form.status} />
       <div className="address-form__actions">

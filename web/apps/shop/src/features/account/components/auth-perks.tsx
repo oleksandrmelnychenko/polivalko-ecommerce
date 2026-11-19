@@ -2,15 +2,15 @@ import { CheckIcon } from "@polivalko/shared/ui/icons";
 
 const perks = [
   "Історія замовлень зі статусом оплати й чеками",
-  "Обране: товари, які ви відмітили сердечком",
-  "Збережені адреси доставки підставляються в оформлення",
+  "Збережені товари в обраному",
+  "Збережені адреси для наступних замовлень",
   "Попереднє замовлення можна повторити однією кнопкою",
 ];
 
 export function AuthPerks() {
   return (
     <aside className="summary auth__perks" aria-labelledby="perks-title">
-      <h2 id="perks-title">Що дає кабінет</h2>
+      <h2 id="perks-title">Можливості кабінету</h2>
       <ul className="auth__list">
         {perks.map((p) => (
           <li key={p}>
