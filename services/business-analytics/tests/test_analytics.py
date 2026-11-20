@@ -273,7 +273,15 @@ class ConnectionTests(unittest.TestCase):
                    PGUSER="analytics", PGPASSWORD="fixture")
         with patch.dict(os.environ, env, clear=True), patch("analytics.source.socket.getaddrinfo",
                 return_value=[(0, 0, 0, "", ("192.0.2.10", 5432))]):
-            self.assertIn("default_transaction_read_only=on", target()["options"])
+            args = target()
+            self.assertEqual(args["sslmode"], "verify-full")
+            self.assertNotIn("options", args)
+            with patch("analytics.source.psycopg.connect") as connect, patch("analytics.source.set_json_loads"):
+                connection = connect.return_value.__enter__.return_value
+                connection.execute.return_value.fetchone.return_value = {"db": "app", "ro": "on"}
+                with production():
+                    self.assertEqual(connection.execute.call_args_list[0].args,
+                                     ("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY",))
             for override in ({"VERCEL_ENV": "preview"}, {"VERCEL_PROJECT_ID": "other"},
                              {"PGSERVICE": "local"}, {"PGHOST_UNPOOLED": "localhost"}):
                 with patch.dict(os.environ, override), self.assertRaises(ValueError):

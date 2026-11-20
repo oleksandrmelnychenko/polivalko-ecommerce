@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import socket
 from contextlib import contextmanager
@@ -27,7 +28,8 @@ def target():
         if not host.endswith(".neon.tech"):
             raise ValueError("Невідомий сервер виробничої інтеграції")
         config = dict(host=host, dbname=database, user=os.environ["PGUSER"],
-                      password=os.environ["PGPASSWORD"], port="5432", sslmode="verify-full")
+                      password=os.environ["PGPASSWORD"], port="5432", sslmode="verify-full",
+                      sslrootcert="/etc/ssl/certs/ca-certificates.crt")
         platform_vars = {"PGHOST_UNPOOLED", "PGHOST", "PGDATABASE", "PGUSER", "PGPASSWORD", "PGPORT", "PGSSLMODE"}
     else:
         host = os.environ["PRODUCTION_ANALYTICS_HOST"].strip().lower()
@@ -73,21 +75,42 @@ def target():
         ip = getattr(ip, "ipv4_mapped", None) or ip
         if ip.is_loopback or ip.is_unspecified or ip.is_link_local or ip.is_multicast:
             raise ValueError("Локальне підключення заборонено")
-    return dict(
+    connection = dict(
         config,
         host=",".join([host] * len(addresses)),
         hostaddr=",".join(addresses),
-        connect_timeout=8,
+        connect_timeout=12,
         application_name="polivalko-business-analytics",
-        options="-c default_transaction_read_only=on -c statement_timeout=120000 -c lock_timeout=3000",
     )
+    if hosted():
+        connection["gssencmode"] = "disable"
+        connection["sslcertmode"] = "disable"  # The Neon integration uses password authentication.
+    else:
+        connection["options"] = "-c default_transaction_read_only=on -c statement_timeout=120000 -c lock_timeout=3000"
+    return connection
 
 
 @contextmanager
 def production():
-    with psycopg.connect(**target(), row_factory=dict_row) as conn:
+    try:
+        connection = psycopg.connect(**target(), row_factory=dict_row)
+    except psycopg.OperationalError as exc:
+        message = str(exc).lower()
+        categories = ("certificate verify failed", "root certificate", "certificate file", "permission denied",
+                      "unsupported startup parameter", "unsupported", "invalid connection option",
+                      "password authentication failed", "authentication", "timeout", "timed out", "refused",
+                      "network is unreachable", "name resolution", "not allowed", "endpoint id", "no route",
+                      "could not open", "does not exist", "ssl error", "connection reset", "closed the connection",
+                      "local user", "sasl", "connection is insecure", "insecure", "could not translate")
+        reasons = [name for name in categories if name in message]
+        logging.getLogger(__name__).error("Production PostgreSQL handshake failed (%s)", ", ".join(reasons) or "unknown")
+        raise
+    with connection as conn:
         set_json_loads(partial(json.loads, parse_float=Decimal), conn)
         conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
+        if hosted():
+            conn.execute("SET LOCAL statement_timeout = '120s'")
+            conn.execute("SET LOCAL lock_timeout = '3s'")
         check = conn.execute(
             "SELECT current_database() AS db, current_setting('transaction_read_only') AS ro"
         ).fetchone()
