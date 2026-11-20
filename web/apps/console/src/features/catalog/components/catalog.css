@@ -448,8 +448,8 @@
 .catalog-editor .catalog-card-head .catalog-card-title { margin: 0; }
 .catalog-editor .catalog-card .mantine-Button-root { border-radius: 999px; }
 .catalog-editor .catalog-dl { margin-bottom: 10px; }
-.product-related-links { display: flex; flex-wrap: wrap; gap: 6px 12px; }
-.product-related-links .catalog-site-link { margin: 0; }
+.product-related-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.product-related-links > a { flex: 1 1 auto; }
 
 .product-gallery .catalog-card-head { margin-bottom: 4px; }
 .product-gallery .catalog-card-title { display: flex; align-items: center; gap: 8px; }
@@ -1331,8 +1331,6 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
 .product-metric-value s { font-size: .52em; color: var(--mantine-color-gray-6); white-space: nowrap; letter-spacing: normal; }
 .product-metric small { color: var(--mantine-color-gray-7); font-size: 12px; }
 .product-sku input { font-family: var(--font-mono); }
-.product-editor-side .product-related-links a { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; }
-.product-editor-side .product-related-links { padding-inline: 8px; }
 @media (max-width: 50em) {
   .product-editor-columns { grid-template-columns: minmax(0, 1fr); }
 }

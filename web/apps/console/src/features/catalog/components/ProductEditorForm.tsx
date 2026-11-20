@@ -1,6 +1,6 @@
 import { siteUrl } from '@/shared/lib/siteUrl'
 import { ProductSectionTitle } from './ProductSectionTitle'
-import { Anchor, Alert, Select, SimpleGrid, Switch, Textarea, TextInput } from '@mantine/core'
+import { Alert, Button, Select, SimpleGrid, Switch, Textarea, TextInput } from '@mantine/core'
 import { IconAlertCircle, IconBuildingStore, IconAlignLeft, IconSearch, IconBarcode, IconChartHistogram, IconExternalLink } from '@tabler/icons-react'
 import { useMemo, useState, type ReactNode, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
@@ -309,8 +309,16 @@ export function ProductEditorForm({ gallery, formId, product, categories, brands
           <ProductEditorLabels product={product} labels={labels} value={labelIds} onChange={setLabelIds} error={errors.labelIds} />
         </fieldset>
         <div className="product-related-links">
-          {can(PermissionKeys.Analytics.ViewProducts) && <Anchor component={Link} to={'/sales/product-analytics?product=' + product.id}><IconChartHistogram size={15} />Аналітика товару</Anchor>}
-          <Anchor href={siteUrl('/product/' + product.slug)} target="_blank" rel="noopener"><IconExternalLink size={15} />Відкрити на сайті</Anchor>
+          {can(PermissionKeys.Analytics.ViewProducts) && (
+            <Button component={Link} to={'/sales/product-analytics?product=' + product.id}
+              variant="default" radius="xl" size="xs" leftSection={<IconChartHistogram size={15} />}>
+              Аналітика товару
+            </Button>
+          )}
+          <Button component="a" href={siteUrl('/product/' + product.slug)} target="_blank" rel="noopener"
+            variant="default" radius="xl" size="xs" leftSection={<IconExternalLink size={15} />}>
+            Відкрити на сайті
+          </Button>
         </div>
       </aside>
     </div>
