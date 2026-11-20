@@ -113,6 +113,10 @@ export function BusinessAnalyticsPage() {
   function update(changes: Record<string, string>) {
     const p = new URLSearchParams(params)
     if (!('page' in changes)) p.delete('page')
+    if (tab === 'markets' && changes.tab && changes.tab !== tab) {
+      for (const name of ['region', 'source', 'metric']) p.delete(name)
+      if (changes.tab !== 'invoices') p.delete('year')
+    }
     for (const [key, value] of Object.entries(changes)) {
       if (value) p.set(key, value)
       else p.delete(key)

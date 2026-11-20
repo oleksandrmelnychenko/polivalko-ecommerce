@@ -47,6 +47,8 @@ def resolve(region, raw_city, allow_infer):
         prefix = match.group().strip()
         kind = "M" if prefix in ("м.", "місто") else "C" if prefix in ("с.", "село") else "X"
         value = value[match.end():].strip()
+    elif value in ("україна", "украина", "ukraine"):
+        return region, None
     # Carrier names can include a parenthetical district. A name collision
     # inside the region still needs a type or a register code.
     value = re.sub(r"\s+\([^()]+\)$", "", value)

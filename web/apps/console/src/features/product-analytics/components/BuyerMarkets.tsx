@@ -30,6 +30,24 @@ const colors = ['#d7ebe7', '#98d0bf', '#56af93', '#238267', '#10553e']
 
 const paths: Record<string, { path: string; bounds: number[] }> = shapes
 
+function bestCoveredSource(data: Markets | undefined, regionCode: string): Source {
+  const sources: Source[] = ['documents', 'registered', 'online']
+  let best: Source = 'documents'
+  let bestMapped = -1
+  let bestKnown = -1
+  for (const source of sources) {
+    const regions = data?.[source].regions.filter(r => !regionCode || r.code === regionCode) ?? []
+    const known = regions.reduce((sum, r) => sum + r.count, 0)
+    const mapped = regions.reduce((sum, r) => sum + (r.settlements ?? []).reduce((n, p) => n + p.count, 0), 0)
+    if (mapped > bestMapped || (mapped === bestMapped && known > bestKnown)) {
+      best = source
+      bestMapped = mapped
+      bestKnown = known
+    }
+  }
+  return best
+}
+
 function SettlementMap({ region, metric }: { region: Region; metric: Metric }) {
   const [selected, setSelected] = useState('')
   const points = [...(region.settlements ?? [])].sort((a, b) => b[metric] - a[metric] || a.name.localeCompare(b.name, 'uk') || a.code.localeCompare(b.code))
@@ -124,7 +142,7 @@ export function BuyerMarkets() {
   const chosen = Number(params.get('year') ?? latest)
   const year = Number.isInteger(chosen) && chosen >= 1900 && chosen <= latest ? chosen : latest
   const rawSource = params.get('source')
-  const source: Source = rawSource === 'registered' || rawSource === 'online' ? rawSource : 'documents'
+  const regionCode = params.get('region') ?? ''
   const metric: Metric = params.get('metric') === 'amount' ? 'amount' : 'count'
   function changeParam(key: string, value: string) {
     const next = new URLSearchParams(params)
@@ -137,6 +155,8 @@ export function BuyerMarkets() {
   const args = new URLSearchParams({ analysis: 'markets', year: String(year), page: String(page), search })
   const query = useApiQuery('markets-' + args, () => readBusiness<Markets>('documents', args.toString()))
   const data = query.data
+  const source = rawSource === 'documents' || rawSource === 'registered' || rawSource === 'online'
+    ? rawSource : bestCoveredSource(data, regionCode)
   return <>
     <AnalyticsCard title="Географія покупок" actions={<label>Рік <input type="number" min={1900} max={latest}
       defaultValue={year} key={year} onBlur={e => { const v = e.currentTarget.valueAsNumber
@@ -145,7 +165,7 @@ export function BuyerMarkets() {
         {Object.entries(sourceNames).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <SegmentedControl aria-label="Показник карти" value={metric} onChange={v => changeParam('metric', v)}
           data={[{ value: 'count', label: 'Кількість покупок' }, { value: 'amount', label: 'Сума, грн' }]} /></div>
-      {data ? <RegionalMap key={source + year} data={data[source]} source={source} metric={metric} regionCode={params.get('region') ?? ''} onRegion={code => changeParam('region', code)} />
+      {data ? <RegionalMap key={source + year} data={data[source]} source={source} metric={metric} regionCode={regionCode} onRegion={code => changeParam('region', code)} />
         : query.status === 'loading' ? <p role="status">Читаємо реєстр продажів…</p>
           : <p role="alert">{query.problem?.title ?? 'Не вдалося завантажити карту.'} <Button variant="default" onClick={query.reload}>Повторити</Button></p>}
     </AnalyticsCard>

@@ -26,6 +26,7 @@ class MarketsTests(TestCase):
         self.assertEqual(resolve("46", "Ірпінь", False), ("46", None))
         self.assertEqual(resolve("48", "с. Київ", False)[1].region, "48")
         self.assertEqual(resolve(None, "Київ", True), (None, None))
+        self.assertEqual(resolve("32", "Україна", False), ("32", None))
 
     def test_settlements_reconcile_and_returns_do_not_increase_sales(self):
         base = dict(account="archive", entity_type="invoice", status="active", currency="UAH", kind="out",
