@@ -84,6 +84,54 @@ public sealed class DnTradeArchiveApiTests(ApiFactory api)
         (await attachment.Content.ReadAsByteArrayAsync(Ct)).ShouldBe(Encoding.UTF8.GetBytes(original));
     }
 
+    [Fact]
+    public async Task Bookkeeping_records_import_idempotently_and_report_original_requires_permission()
+    {
+        var account = "test-" + Guid.NewGuid().ToString("N");
+        const string report = """
+            {"schemaVersion":1,"source":"dntrade","entityType":"financialReport","sourceId":"report-january","sourceDate":"2026-01-31","documentType":"cashFlow","organizationId":"org-1","storeIds":["store-1"],"currency":"UAH","raw":{"periodFrom":"2026-01-01","periodTo":"2026-01-31","rows":[{"account":"private-test-account","amount":1200.15}]}}
+            """;
+        const string bankAccount = """
+            {"schemaVersion":1,"source":"dntrade","entityType":"bankAccount","sourceId":"bank-1","raw":{"name":"Test bank account"}}
+            """;
+        const string debtAdjustment = """
+            {"schemaVersion":1,"source":"dntrade","entityType":"debtAdjustment","sourceId":"adjustment-1","raw":{"amount":25.4}}
+            """;
+        var batch = string.Join('\n', report, bankAccount, debtAdjustment);
+        using var admin = await Staff.AdminAsync(api);
+        using var staffImporter = await TestRoles.LoginWithPermissionsAsync(api, admin, PermissionKeys.DnTradeArchiveView, PermissionKeys.DnTradeArchiveImport);
+
+        var first = await (await Upload(staffImporter, account, batch, Ct)).ReadAsync<DnTradeArchiveImportDto>();
+        first.ShouldBe(new DnTradeArchiveImportDto(3, 0));
+        var repeated = await (await Upload(staffImporter, account, batch, Ct)).ReadAsync<DnTradeArchiveImportDto>();
+        repeated.ShouldBe(new DnTradeArchiveImportDto(0, 3));
+
+        var filter = $"{Url}?sourceAccount={account}&entityType=financialReport&from=2026-01-31&to=2026-01-31&storeId=store-1";
+        using var list = await staffImporter.GetAsync(filter, Ct);
+        var page = await list.ReadAsync<DnTradeArchivePageDto>();
+        page.Total.ShouldBe(1);
+        var metadata = page.Items.ShouldHaveSingleItem();
+        metadata.EntityType.ShouldBe("financialReport");
+        metadata.SourceId.ShouldBe("report-january");
+        metadata.DocumentType.ShouldBe("cashFlow");
+        metadata.SourceDate.ShouldBe("2026-01-31");
+        metadata.OrganizationId.ShouldBe("org-1");
+        metadata.StoreIds.ShouldBe(["store-1"]);
+        metadata.Currency.ShouldBe("UAH");
+        metadata.Total.ShouldBeNull();
+        var listBody = await list.Content.ReadAsStringAsync(Ct);
+        listBody.ShouldNotContain("\"raw\"");
+        listBody.ShouldNotContain("private-test-account");
+
+        var detail = await staffImporter.GetStringAsync($"{Url}/{metadata.Id}", Ct);
+        detail.ShouldNotContain("\"raw\"");
+        detail.ShouldNotContain("private-test-account");
+        var originalUrl = $"{Url}/{metadata.Id}/original";
+        using var forbidden = await staffImporter.GetAsync(originalUrl, Ct);
+        forbidden.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await admin.GetByteArrayAsync(originalUrl, Ct)).ShouldBe(Encoding.UTF8.GetBytes(report));
+    }
+
     private static Task<HttpResponseMessage> Upload(HttpClient client, string account, string content, CancellationToken ct) =>
         client.PostAsync($"{Url}/import?sourceAccount={account}", new StringContent(content, Encoding.UTF8, DnTradeArchiveInput.ContentType), ct);
 
