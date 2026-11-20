@@ -1214,6 +1214,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/catalog/products/stock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Змінити лише залишки джерела після перевірки поточних залишків і резервів */
+        post: operations["ConsoleAdjustUpstreamStock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/catalog/attribute-names": {
         parameters: {
             query?: never;
@@ -2507,6 +2524,32 @@ export interface components {
             mainItemName: string;
             mainItemImageUrl: null | string;
             canPay: boolean;
+        };
+        AdjustUpstreamStockChange: {
+            /** Format: uuid */
+            productId: string;
+            expectedNavkoloId: string;
+            /** Format: double */
+            expectedQuantity: number;
+            /** Format: date-time */
+            expectedStockUpdatedAt: string;
+            /** Format: double */
+            quantity: number;
+        };
+        AdjustUpstreamStockConflict: {
+            conflicts: components["schemas"]["AdjustUpstreamStockConflictItem"][];
+        };
+        AdjustUpstreamStockConflictItem: {
+            /** Format: uuid */
+            productId: string;
+            reason: string;
+        };
+        AdjustUpstreamStockRequest: {
+            changes: null | components["schemas"]["AdjustUpstreamStockChange"][];
+        };
+        AdjustUpstreamStockResult: {
+            /** Format: int32 */
+            updated: number;
         };
         AttributeDefinitionDto: {
             /** Format: uuid */
@@ -7607,6 +7650,66 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleAdjustUpstreamStock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdjustUpstreamStockRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjustUpstreamStockResult"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjustUpstreamStockConflict"];
                 };
             };
         };

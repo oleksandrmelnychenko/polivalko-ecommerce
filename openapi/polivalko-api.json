@@ -4423,6 +4423,77 @@
         }
       }
     },
+    "/api/v1/console/catalog/products/stock": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Змінити лише залишки джерела після перевірки поточних залишків і резервів",
+        "operationId": "ConsoleAdjustUpstreamStock",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustUpstreamStockRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustUpstreamStockResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustUpstreamStockConflict"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/console/catalog/attribute-names": {
       "get": {
         "tags": [
@@ -10069,6 +10140,96 @@
           },
           "canPay": {
             "type": "boolean"
+          }
+        }
+      },
+      "AdjustUpstreamStockChange": {
+        "required": [
+          "productId",
+          "expectedNavkoloId",
+          "expectedQuantity",
+          "expectedStockUpdatedAt",
+          "quantity"
+        ],
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expectedNavkoloId": {
+            "type": "string"
+          },
+          "expectedQuantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "expectedStockUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "quantity": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "AdjustUpstreamStockConflict": {
+        "required": [
+          "conflicts"
+        ],
+        "type": "object",
+        "properties": {
+          "conflicts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdjustUpstreamStockConflictItem"
+            }
+          }
+        }
+      },
+      "AdjustUpstreamStockConflictItem": {
+        "required": [
+          "productId",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "AdjustUpstreamStockRequest": {
+        "required": [
+          "changes"
+        ],
+        "type": "object",
+        "properties": {
+          "changes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AdjustUpstreamStockChange"
+            }
+          }
+        }
+      },
+      "AdjustUpstreamStockResult": {
+        "required": [
+          "updated"
+        ],
+        "type": "object",
+        "properties": {
+          "updated": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

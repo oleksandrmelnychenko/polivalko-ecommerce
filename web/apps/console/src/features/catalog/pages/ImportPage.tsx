@@ -10,6 +10,7 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 import { PageState } from '@/shared/ui/PageState'
 import { getImportRuns, importCatalog, type ImportRun } from '../api/catalogApi'
 import { ImportRunReport } from '../components/ImportRunReport'
+import { StockImportForm } from '../components/StockImportForm'
 import '../components/catalog.css'
 
 const MAX_FILE_BYTES = 20 * 1024 * 1024
@@ -19,6 +20,7 @@ export function ImportPage() {
   const { can } = usePermissions()
   const canViewRuns = can(PermissionKeys.Integration.ViewStatus)
   const canManageCategories = can(PermissionKeys.Catalog.ManageCategories)
+  const canImportStock = can(PermissionKeys.Catalog.ViewProducts) && can(PermissionKeys.Catalog.RunImport)
   const runs = useApiQuery('catalog-import-runs', () => getImportRuns(), { enabled: canViewRuns })
   const [file, setFile] = useState<File | null>(null)
   const [result, setResult] = useState<ImportRun | null>(null)
@@ -134,6 +136,8 @@ export function ImportPage() {
             </Text>
           </aside>
         </div>
+
+        {canImportStock ? <StockImportForm /> : null}
 
         {result ? (
           <section className="catalog-import-result" aria-label="Результат імпорту">

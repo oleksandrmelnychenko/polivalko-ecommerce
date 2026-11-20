@@ -50,6 +50,10 @@ internal static class ProductEndpoints
             .RequirePermission(PermissionKeys.ProductsEdit)
             .WithName("ConsoleBulkUpdateProducts")
             .WithSummary("Масова зміна до 200 товарів: розділ, бренд (порожній рядок прибирає бренд), мітки, видимість");
+        products.MapPost("/stock", AdjustUpstreamStock.HandleAsync)
+            .RequirePermission(PermissionKeys.CatalogImportRun)
+            .WithName("ConsoleAdjustUpstreamStock")
+            .WithSummary("Змінити лише залишки джерела після перевірки поточних залишків і резервів");
 
         return catalog;
     }
