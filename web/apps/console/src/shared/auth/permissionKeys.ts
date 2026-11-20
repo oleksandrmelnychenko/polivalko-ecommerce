@@ -65,6 +65,8 @@ type Leaves<T> = T extends string ? T : { [K in keyof T]: Leaves<T[K]> }[keyof T
 
 export type PermissionKey = Leaves<typeof PermissionKeys>
 
+export const DNTRADE_FORM_ADDITIONAL_PERMISSIONS = [PermissionKeys.DnTradeArchive.View, PermissionKeys.DnTradeArchive.Original] as const
+
 export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'dashboard.page.view': 'Огляд: перегляд показників',
   'orders.page.view': 'Замовлення: список і картка',

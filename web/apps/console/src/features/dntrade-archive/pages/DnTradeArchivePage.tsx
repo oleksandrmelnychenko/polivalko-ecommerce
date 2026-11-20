@@ -1,11 +1,12 @@
 import { Anchor, Button } from '@mantine/core'
-import { IconFileImport } from '@tabler/icons-react'
+import { IconFileImport, IconFileText } from '@tabler/icons-react'
 import { useMemo, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
+import { WORK_FORMS_PATH } from '@/features/dntrade-work-forms/lib/workForms'
 import { fieldErrors, problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
-import { PermissionKeys } from '@/shared/auth/permissionKeys'
+import { DNTRADE_FORM_ADDITIONAL_PERMISSIONS, PermissionKeys } from '@/shared/auth/permissionKeys'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
@@ -60,7 +61,9 @@ export function DnTradeArchivePage() {
   const [params, setParams] = useSearchParams()
   const [importing, setImporting] = useState(false)
   const canImport = can(PermissionKeys.DnTradeArchive.Import)
+  const canManageForms = canImport && DNTRADE_FORM_ADDITIONAL_PERMISSIONS.every(can)
   const view = readArchiveView(params)
+  const formSection = view.id === 'directories' ? 'directory' : view.id
   const warehouse = view.id === 'warehouse'
   const filters = useMemo(() => readArchiveFilters(params), [params])
   const columns = useMemo(() => archiveColumns(search, warehouse), [search, warehouse])
@@ -110,9 +113,16 @@ export function DnTradeArchivePage() {
       <PageHeader
         title="Архів DNTrade"
         actions={canImport ? (
-          <Button variant="default" leftSection={<IconFileImport size={16} stroke={1.8} />} onClick={() => setImporting(true)}>
-            Імпорт файлів
-          </Button>
+          <>
+            {canManageForms ? (
+              <Button component={Link} to={formSection === 'all' ? WORK_FORMS_PATH : `${WORK_FORMS_PATH}?section=${formSection}`} leftSection={<IconFileText size={16} stroke={1.8} />}>
+                Робочі форми
+              </Button>
+            ) : null}
+            <Button variant="default" leftSection={<IconFileImport size={16} stroke={1.8} />} onClick={() => setImporting(true)}>
+              Імпорт файлів
+            </Button>
+          </>
         ) : null}
       />
       <ArchiveNavigation params={params} />

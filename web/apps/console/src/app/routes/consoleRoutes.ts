@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import { PermissionKeys, type PermissionKey } from '@/shared/auth/permissionKeys'
+import { DNTRADE_FORM_ADDITIONAL_PERMISSIONS, PermissionKeys, type PermissionKey } from '@/shared/auth/permissionKeys'
 import * as Pages from './lazyConsolePages'
 
 export type ConsoleRoute = {
@@ -7,6 +7,7 @@ export type ConsoleRoute = {
   title: string
   permissionKey: PermissionKey
   alsoAllowedBy?: readonly PermissionKey[]
+  requiredPermissions?: readonly PermissionKey[]
   page: ComponentType
   redirectWhenDenied?: boolean
 }
@@ -52,6 +53,14 @@ export const consoleRoutes: readonly ConsoleRoute[] = [
   { path: '/system/integrations', title: 'Інтеграції', permissionKey: PermissionKeys.Integration.ViewStatus, page: Pages.IntegrationPage },
   { path: '/system/dntrade-archive', title: 'Архів DNTrade', permissionKey: PermissionKeys.DnTradeArchive.View, page: Pages.DnTradeArchivePage },
   { path: '/system/dntrade-archive/:id', title: 'Архів DNTrade', permissionKey: PermissionKeys.DnTradeArchive.View, page: Pages.DnTradeArchiveDetailPage },
+  {
+    path: '/system/dntrade-work-forms', title: 'Робочі форми', permissionKey: PermissionKeys.DnTradeArchive.Import,
+    requiredPermissions: DNTRADE_FORM_ADDITIONAL_PERMISSIONS, page: Pages.DnTradeWorkFormsPage,
+  },
+  {
+    path: '/system/dntrade-work-forms/:id', title: 'Робоча форма', permissionKey: PermissionKeys.DnTradeArchive.Import,
+    requiredPermissions: DNTRADE_FORM_ADDITIONAL_PERMISSIONS, page: Pages.DnTradeWorkFormPage,
+  },
   { path: '/system/staff', title: 'Працівники', permissionKey: PermissionKeys.Staff.ManageUsers, page: Pages.StaffPage },
   { path: '/system/roles', title: 'Ролі і права', permissionKey: PermissionKeys.Staff.ManageRoles, page: Pages.RolesPage },
   { path: '/system/audit', title: 'Журнал', permissionKey: PermissionKeys.Audit.View, page: Pages.AuditPage },

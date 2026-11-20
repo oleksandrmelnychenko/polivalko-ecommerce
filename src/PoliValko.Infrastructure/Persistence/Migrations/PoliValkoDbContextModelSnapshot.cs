@@ -2257,6 +2257,77 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     b.ToTable("dntrade_archive_records", "integration");
                 });
 
+            modelBuilder.Entity("PoliValko.Navkolo.Features.WorkForms.DnTradeWorkForm", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Data")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("data");
+
+                    b.Property<DateOnly?>("DocumentDate")
+                        .HasColumnType("date")
+                        .HasColumnName("document_date");
+
+                    b.Property<string>("Section")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("section");
+
+                    b.Property<Guid?>("SourceRecordId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_record_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)")
+                        .HasColumnName("type");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_dntrade_work_forms");
+
+                    b.HasIndex("SourceRecordId")
+                        .HasDatabaseName("ix_dntrade_work_forms_source_record_id");
+
+                    b.HasIndex("UpdatedAt", "Id")
+                        .HasDatabaseName("ix_dntrade_work_forms_updated_at_id");
+
+                    b.HasIndex("Section", "Status", "UpdatedAt", "Id")
+                        .HasDatabaseName("ix_dntrade_work_forms_section_status_updated_at_id");
+
+                    b.ToTable("dntrade_work_forms", "integration");
+                });
+
             modelBuilder.Entity("PoliValko.Ordering.Domain.Order", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3085,6 +3156,15 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_role_permissions_roles_role_id");
+                });
+
+            modelBuilder.Entity("PoliValko.Navkolo.Features.WorkForms.DnTradeWorkForm", b =>
+                {
+                    b.HasOne("PoliValko.Navkolo.Features.SalesArchive.DnTradeArchiveRecord", null)
+                        .WithMany()
+                        .HasForeignKey("SourceRecordId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_dntrade_work_forms_dntrade_archive_records_source_record_id");
                 });
 
             modelBuilder.Entity("PoliValko.Ordering.Domain.OrderItem", b =>

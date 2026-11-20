@@ -13,9 +13,10 @@ export function ConsoleRouteElement({ route }: { route: ConsoleRoute }) {
 
   if (isLoading) return <PageState kind="loading" />
 
-  if (!can(route.permissionKey) && !route.alsoAllowedBy?.some(can)) {
+  const missingPermission = route.requiredPermissions?.find((permission) => !can(permission))
+  if (missingPermission || (!can(route.permissionKey) && !route.alsoAllowedBy?.some(can))) {
     if (route.redirectWhenDenied && firstAllowedPath && firstAllowedPath !== route.path) return <Navigate to={firstAllowedPath} replace />
-    return <AccessDenied permissionKey={route.permissionKey} homePath={firstAllowedPath ?? '/'} />
+    return <AccessDenied permissionKey={missingPermission ?? route.permissionKey} homePath={firstAllowedPath ?? '/'} />
   }
 
   const Page = route.page
