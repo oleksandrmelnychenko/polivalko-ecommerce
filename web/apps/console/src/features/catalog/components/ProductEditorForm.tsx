@@ -15,7 +15,7 @@ import { updateProduct, type Product, type UpdateProductRequest } from '../api/c
 import type { Brand, ProductLabel } from '../api/dictionariesApi'
 import type { CategoryOption } from '../lib/categoryTree'
 import { attributeRows, type AttributeRow } from '../lib/attributeRows'
-import { cleanProductName } from '../lib/productFilters'
+import { cleanProductName } from '@/shared/lib/cleanProductName'
 import { ProductEditorAttributes } from './ProductEditorAttributes'
 import { ProductEditorLabels } from './ProductEditorLabels'
 

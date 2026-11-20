@@ -1,3 +1,4 @@
+import { useDebouncedCallback } from '@mantine/hooks'
 import { Button, SegmentedControl } from '@mantine/core'
 import { IconChartPie, IconCoins, IconReceiptRefund, IconRefresh, IconReportMoney, IconWallet } from '@tabler/icons-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
@@ -13,7 +14,8 @@ import { AnalyticsCard } from '../components/AnalyticsCard'
 import { AnnualInvoices } from '../components/AnnualInvoices'
 import { TurnoverForecast } from '../components/TurnoverForecast'
 import { BuyerMarkets } from '../components/BuyerMarkets'
-import { ForecastDetail, formatValue as fmt } from '../components/BusinessForecast'
+import { DemandForecastReport } from '../components/DemandForecastReport'
+import { formatValue as fmt } from '../components/BusinessForecast'
 import {
   readBusiness,
   writeBusiness,
@@ -22,10 +24,27 @@ import {
   type Paged,
   type Projection,
   type Run,
-  type Series,
 } from '../api/businessAnalytics'
 import './product-analytics.css'
 import './business-analytics.css'
+
+function ProductSearch({ value, onSearch }: { value: string; onSearch: (value: string) => void }) {
+  const [text, setText] = useState(value)
+  const [previous, setPrevious] = useState(value)
+  const search = useDebouncedCallback(onSearch, 300)
+  if (previous !== value) {
+    setPrevious(value)
+    setText(value)
+  }
+  return (
+    <label>Пошук товару
+      <input value={text} maxLength={120} onChange={(event) => {
+        setText(event.currentTarget.value)
+        search(event.currentTarget.value)
+      }} onKeyDown={(event) => { if (event.key === 'Enter') search.flush() }} />
+    </label>
+  )
+}
 
 function Grid({ headings, children }: { headings: string[]; children: ReactNode }) {
   return (
@@ -58,7 +77,6 @@ function Pager({ total, page, change }: { total: number; page: number; change: (
     </div>
   ) : null
 }
-const seriesKey = (r: Series) => JSON.stringify([r.kind, r.product, r.category, r.store, r.org, r.unit])
 const months = ['Січ', 'Лют', 'Бер', 'Кві', 'Тра', 'Чер', 'Лип', 'Сер', 'Вер', 'Жов', 'Лис', 'Гру']
 const runLabel: Record<string, string> = {
   waiting: 'Очікує звірки',
@@ -79,7 +97,6 @@ const kpiDefinitions = [
 export function BusinessAnalyticsPage() {
   const [params, setParams] = useSearchParams()
   const [message, setMessage] = useState('')
-  const [selected, setSelected] = useState('')
   const [metric, setMetric] = useState<'net' | 'profit'>('net')
   const [seasonMetric, setSeasonMetric] = useState<'months' | 'indices'>('months')
   const [showDocs, setShowDocs] = useState(false)
@@ -123,6 +140,7 @@ export function BusinessAnalyticsPage() {
   const forecastKey = forecastParams.toString()
   const forecast = useApiQuery(forecastKey + updated, () => readBusiness<Projection>('forecast', forecastKey), {
     enabled: tab === 'forecast',
+    keepPrevious: true,
   })
   const docKey = docParams.toString()
   const docs = useApiQuery(docKey + updated, () => readBusiness<Paged<DocumentRow>>('documents', docKey), {
@@ -150,7 +168,6 @@ export function BusinessAnalyticsPage() {
     }
     setParams(p)
     setDocPage(1)
-    setSelected('')
   }
   const r = report.data
   const f = forecast.data
@@ -159,7 +176,6 @@ export function BusinessAnalyticsPage() {
   const label = (key: 'store' | 'org' | 'category', id: string) =>
     view?.options?.[key].find((x) => x.value === id)?.label ?? id
   const changePage = (n: number) => update({ page: String(n) })
-  const active = f?.rows.find((row) => seriesKey(row) === selected) ?? f?.rows.find(row => row.weeks.length) ?? f?.rows[0]
   const title = 'Бізнес-аналітика'
   async function refresh() {
     try {
@@ -287,14 +303,7 @@ export function BusinessAnalyticsPage() {
                   </label>
                 ))}
                 {tab !== 'overview' && (
-                  <label>
-                    Пошук товару
-                    <input
-                      value={params.get('search') ?? ''}
-                      maxLength={120}
-                      onChange={(e) => update({ search: e.target.value })}
-                    />
-                  </label>
+                  <ProductSearch key={tab} value={params.get('search') ?? ''} onSearch={(search) => update({ search })} />
                 )}
                 {params.get('product') && (
                   <Button variant="default" onClick={() => update({ product: '' })}>
@@ -474,78 +483,16 @@ export function BusinessAnalyticsPage() {
                   </AnalyticsCard>
                 </>
               )}
-              {tab === 'forecast' && (
-                <AnalyticsCard
-                  title="Попит і потреба в закупівлі"
-                  description={
-                    'Факт до ' +
-                    view.asOf +
-                    '. Результати перевірено на послідовних історичних періодах. Межі показують історичний розкид помилки.'
-                  }
-                >
-                  <SegmentedControl
-                    aria-label="Горизонт прогнозу"
-                    value={params.get('kind') ?? 'sku'}
-                    onChange={(v) => update({ kind: v, product: '' })}
-                    data={[
-                      { value: 'sku', label: 'Товари · 4 тижні' },
-                      { value: 'category', label: 'Категорії · 13 тижнів' },
-                    ]}
-                  />
-                  {f ? (
-                    <>
-                      {f.coverage && <p>Рядів із прогнозом · {fmt(f.coverage.ready)} з {fmt(f.total)}.
-                        {' '}Навчену регресію обрано для {fmt(f.coverage.regression)}, модель нерегулярного попиту для {fmt(f.coverage.intermittent)}.</p>}
-                      <Grid
-                        headings={['Товар або категорія', 'Організація', 'Склад', 'Одиниця', 'Прогноз', 'До закупівлі', 'Підстава']}
-                      >
-                        {f.rows.map((m) => (
-                          <tr key={seriesKey(m)}>
-                            <td>
-                              <button onClick={() => setSelected(seriesKey(m))}>{m.name}</button>
-                            </td>
-                            <td>{label('org', m.org)}</td>
-                            <td>{label('store', m.store)}</td>
-                            <td>{m.unit || 'од. товару'}</td>
-                            <td>{fmt(m.weeks.length ? m.weeks.reduce((a, w) => a + w.value, 0) : null)}</td>
-                            <td>{fmt(m.purchase?.order)}</td>
-                            <td>{m.reason ?? m.purchase?.reason ?? 'Розраховано'}</td>
-                          </tr>
-                        ))}
-                      </Grid>
-                      {!f.total && <p>Немає рядів для прогнозу за цими фільтрами.</p>}
-                      <Pager {...f} change={changePage} />
-                      {active && (
-                        <ForecastDetail
-                          key={seriesKey(active)}
-                          row={active}
-                          start={f.start}
-                          edit={can(PermissionKeys.Accounting.Edit) && status.data?.policiesWritable === true}
-                          saved={forecast.reload}
-                        />
-                      )}
-                      {active?.kind === 'sku' && active.reason && (
-                        <Button
-                          variant="default"
-                          onClick={() =>
-                            update({
-                              kind: 'category',
-                              category: active.category,
-                              org: active.org,
-                              store: active.store,
-                              product: '',
-                              search: '',
-                            })
-                          }
-                        >
-                          Переглянути прогноз категорії на цьому складі
-                        </Button>
-                      )}
-                    </>
-                  ) : (
-                    <p>{forecast.problem?.title ?? 'Завантаження прогнозу…'}</p>
-                  )}
-                </AnalyticsCard>
+              {tab === 'forecast' && f && (
+                <DemandForecastReport
+                  forecast={f}
+                  kind={params.get('kind') ?? 'sku'}
+                  loading={forecast.isFetching}
+                  error={forecast.status === 'error' || forecast.status === 'forbidden'}
+                  reload={forecast.reload}
+                  edit={can(PermissionKeys.Accounting.Edit) && status.data?.policiesWritable === true}
+                  update={update}
+                />
               )}
               {tab !== 'forecast' && can(PermissionKeys.Accounting.View) && (
                 <AnalyticsCard title="Звірка з документами">

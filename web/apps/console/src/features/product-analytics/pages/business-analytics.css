@@ -185,3 +185,54 @@
   .ba-page[data-report-content] .ba-pair > section { flex-basis: 100%; }
   .ba-page[data-report-content] .ba-table :is(td, th) { white-space: nowrap; }
 }
+.ba-page .ba-demand { display: grid; gap: 12px; min-width: 0; }
+.ba-demand-list .pa-card-header { flex-wrap: wrap; }
+.ba-demand-list .pa-card-header p { margin-inline-start: 40px; }
+.ba-demand-list time, .ba-demand-pager span { font-family: var(--font-mono); }
+.ba-demand-list .ba-demand-table { margin: 0; max-height: min(60vh, 680px); }
+.ba-demand-table table { min-width: 760px; }
+.ba-demand-table thead th { z-index: 1; }
+.ba-page[data-report-content] .ba-demand-table tbody th {
+  position: static;
+  background: white;
+  border-bottom-style: dashed;
+  white-space: normal;
+}
+.ba-demand-table :is(td, th) { vertical-align: middle; }
+.ba-page .ba-demand-table :is(td,th):is(:nth-child(3),:nth-child(4),:nth-child(5)) { white-space: nowrap; text-align: right; }
+.ba-demand-table td:is(:nth-child(3),:nth-child(4),:nth-child(5)) { font-family: var(--font-mono); }
+.ba-demand-table td small { display: block; margin-top: 2px; color: var(--pa-muted); }
+.ba-demand-table th button {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 0; background: transparent; color: var(--brand-ink);
+  font: 550 14px/1.4 var(--font-sans); text-align: start; cursor: pointer; padding: 4px 0;
+}
+.ba-demand-table th button:hover { color: var(--brand-accent-hover); }
+.ba-demand-table th button svg { flex: none; }
+.ba-demand-pager { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 10px 14px; }
+.ba-load-error { padding: 12px 16px; }
+.ba-demand-modal {
+  --pa-border: var(--app-line);
+  --pa-muted: var(--mantine-color-gray-7);
+  --pa-green: var(--brand-accent-hover);
+  --pa-ink: var(--brand-ink);
+}
+.ba-demand-modal .app-sheet-scroll { background: var(--app-ground); padding: 12px; }
+.ba-demand-detail { display: grid; min-width: 0; gap: 8px; }
+.ba-demand-context { margin: 0 6px; font-size: 13px; color: var(--pa-muted); overflow-wrap: anywhere; }
+.ba-demand-detail .ba-detail { background: white; min-width: 0; border: 1px solid var(--app-line); border-radius: var(--app-panel-radius); padding: 14px; }
+.ba-model-facts { display: flex; flex-wrap: wrap; gap: 12px 22px; margin: 0; }
+.ba-model-facts dt { font-size: 12px; color: var(--pa-muted); }
+.ba-model-facts dd { margin: 4px 0 0; }
+.ba-model-facts > div:not(:first-child) dd, .ba-demand-modal .ba-controls input { font-family: var(--font-mono); }
+.ba-demand-modal .mantine-Button-root, .ba-demand-modal .ba-controls input { border-radius: 999px; }
+.ba-demand-modal .ba-controls { max-width: 100%; }
+.ba-demand-modal .ba-controls label, .ba-demand-modal .ba-controls input { min-width: 0; max-width: 100%; }
+.ba-demand-modal summary { font-weight: 550; }
+@media (max-width: 680px) {
+  .ba-demand-list .pa-card-header { align-items: flex-start; }
+  .ba-demand-table td:last-child { max-width: 22em; white-space: normal; }
+  .ba-demand-pager { justify-content: center; }
+  .ba-demand-modal .app-sheet-scroll { padding: 8px; }
+}
+.ba-interval-note { font-size: 12px; color: var(--pa-muted); }

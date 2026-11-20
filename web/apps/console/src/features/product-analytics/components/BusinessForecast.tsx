@@ -14,7 +14,9 @@ const weeklyModelNames: Record<string, string> = {
 const shift = (s: string, days: number) =>
   new Date(Date.parse(s + 'T12:00:00Z') + days * 86400000).toISOString().slice(0, 10)
 
-function PolicyForm({ row, saved }: { row: Series; saved: () => void }) {
+type PolicyEditorProps = { saved: () => void; onDirty: (dirty: boolean) => void; onBusy: (busy: boolean) => void }
+
+function PolicyForm({ row, saved, onDirty, onBusy }: { row: Series } & PolicyEditorProps) {
   const policy = row.policy
   const [deliveries, setDeliveries] = useState(policy?.deliveries ?? [])
   const [message, setMessage] = useState('')
@@ -22,10 +24,12 @@ function PolicyForm({ row, saved }: { row: Series; saved: () => void }) {
   return (
     <form
       className="ba-policy"
+      onChange={() => onDirty(true)}
       onSubmit={async (e) => {
         e.preventDefault()
         const fields = new FormData(e.currentTarget)
         setBusy(true)
+        onBusy(true)
         try {
           await writeBusiness('policy', {
             product: row.product,
@@ -40,11 +44,13 @@ function PolicyForm({ row, saved }: { row: Series; saved: () => void }) {
             deliveries,
           })
           setMessage('Налаштування збережено')
+          onDirty(false)
           saved()
         } catch (err) {
           setMessage(err instanceof Error ? err.message : 'Помилка збереження')
         } finally {
           setBusy(false)
+          onBusy(false)
         }
       }}
     >
@@ -95,7 +101,7 @@ function PolicyForm({ row, saved }: { row: Series; saved: () => void }) {
               }
             />
           </label>
-          <Button type="button" variant="subtle" onClick={() => setDeliveries(deliveries.filter((_, j) => j !== i))}>
+          <Button type="button" variant="subtle" onClick={() => { onDirty(true); setDeliveries(deliveries.filter((_, j) => j !== i)) }}>
             Прибрати
           </Button>
         </div>
@@ -103,7 +109,7 @@ function PolicyForm({ row, saved }: { row: Series; saved: () => void }) {
       <Button
         type="button"
         variant="default"
-        onClick={() => setDeliveries([...deliveries, { day: kyivDay(new Date()), qty: 0 }])}
+        onClick={() => { onDirty(true); setDeliveries([...deliveries, { day: kyivDay(new Date()), qty: 0 }]) }}
       >
         Додати надходження
       </Button>
@@ -123,12 +129,13 @@ export function ForecastDetail({
   start,
   edit,
   saved,
+  onDirty,
+  onBusy,
 }: {
   row: Series
   start: string
   edit: boolean
-  saved: () => void
-}) {
+} & PolicyEditorProps) {
   const points = [
     ...row.history.map((value, i) => ({
       label: 'Факт · ' + shift(start, 7 * (i - row.history.length)),
@@ -143,21 +150,14 @@ export function ForecastDetail({
   ]
   return (
     <section className="ba-detail">
-      <h3>
-        {row.name} · {row.unit || 'од. товару'}
-      </h3>
-      <p>
-        {row.reason ??
-          'Модель ' +
-            (weeklyModelNames[row.model ?? ''] ?? row.model) +
-            ' · контрольних періодів ' +
-            row.folds +
-            ' · WAPE ' +
-            formatValue(row.wape == null ? null : row.wape * 100) +
-            '% · зміщення ' +
-            formatValue(row.bias == null ? null : row.bias * 100) +
-            '%'}
-      </p>
+      {row.reason ? <p>{row.reason}</p> : (
+        <dl className="ba-model-facts">
+          <div><dt>Модель</dt><dd>{weeklyModelNames[row.model ?? ''] ?? row.model ?? '—'}</dd></div>
+          <div><dt>Контрольних періодів</dt><dd>{formatValue(row.folds)}</dd></div>
+          {row.wape != null && <div><dt>Похибка WAPE</dt><dd>{formatValue(row.wape * 100)}%</dd></div>}
+          {row.bias != null && <div><dt>Зміщення</dt><dd>{formatValue(row.bias * 100)}%</dd></div>}
+        </dl>
+      )}
       {row.baselineWape != null && <p>Похибка найкращої простої моделі на тому самому контрольному періоді · {formatValue(row.baselineWape * 100)}%</p>}
       {row.wape != null && row.wape >= 1 && <p>На останній перевірці сума абсолютних помилок сягнула обсягу фактичних продажів або перевищила його. Прогноз цього ряду має низьку точність.</p>}
       <AnalyticsChart
@@ -166,17 +166,21 @@ export function ForecastDetail({
         format={formatValue}
         variant="forecast"
       />
+      {row.weeks.length > 0 && <p className="ba-interval-note">Межі прогнозу показують розкид помилок на історичних даних.</p>}
       {row.purchase && (
         <p>
-          {row.purchase.reason ?? 'До закупівлі ' + formatValue(row.purchase.order)} · доступно{' '}
-          {formatValue(row.purchase.available)} · надходження {formatValue(row.purchase.incoming)} · вичерпання запасу{' '}
-          {row.purchase.stockout ?? '—'}
+          {[
+            row.purchase.reason ?? 'До закупівлі ' + formatValue(row.purchase.order),
+            row.purchase.available != null && 'Доступно ' + formatValue(row.purchase.available),
+            row.purchase.incoming != null && 'Надходження ' + formatValue(row.purchase.incoming),
+            row.purchase.stockout && 'Вичерпання запасу ' + row.purchase.stockout,
+          ].filter(Boolean).join(' · ')}
         </p>
       )}
       {edit && row.kind === 'sku' && row.store !== 'unknown' && (
         <details>
           <summary>Умови закупівлі та надходження</summary>
-          <PolicyForm row={row} saved={saved} />
+          <PolicyForm key={row.policy?.revision ?? 0} row={row} saved={saved} onDirty={onDirty} onBusy={onBusy} />
         </details>
       )}
     </section>

@@ -1,3 +1,4 @@
+import { cleanProductName } from '@/shared/lib/cleanProductName'
 import { DEFAULT_PAGE_SIZE, normalizePageSize } from '@/shared/ui/paginator/pageSize'
 import type { ProductFill, ProductsQuery } from '../api/catalogApi'
 
@@ -110,8 +111,4 @@ export function productHref(id: string): string {
 
 export function productName(product: { displayName: string | null; name: string }): string {
   return cleanProductName(product.displayName ?? '') || cleanProductName(product.name)
-}
-
-export function cleanProductName(name: string): string {
-  return name.trim().replace(/^[\s/]+/, '')
 }
