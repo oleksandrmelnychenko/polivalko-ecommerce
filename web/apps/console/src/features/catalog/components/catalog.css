@@ -1201,21 +1201,21 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
   overflow-wrap: anywhere;
 }
 
-.catalog-products-page .app-screen-tabs {
+:is(.catalog-products-page, .catalog-brands-page) .app-screen-tabs {
   background: transparent;
   border: 0;
   padding: 0;
 }
 
-.catalog-products-page .app-screen-tabs-track {
+:is(.catalog-products-page, .catalog-brands-page) .app-screen-tabs-track {
   display: grid;
   flex: 1;
   gap: clamp(8px, 1vw, 16px);
-  grid-template-columns: repeat(5, minmax(145px, 1fr));
+  grid-template-columns: repeat(var(--catalog-tile-count, 5), minmax(145px, 1fr));
   align-items: stretch;
 }
 
-.catalog-products-page .app-screen-tab {
+:is(.catalog-products-page, .catalog-brands-page) .app-screen-tab {
   align-items: flex-start;
   background: white;
   border: 1px solid rgb(25 25 32 / 4%);
@@ -1230,18 +1230,18 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
   white-space: normal;
 }
 
-.catalog-products-page .app-screen-tab.is-active,
-.catalog-products-page .app-screen-tab:not(.is-active):hover {
+:is(.catalog-products-page, .catalog-brands-page) .app-screen-tab.is-active,
+:is(.catalog-products-page, .catalog-brands-page) .app-screen-tab:not(.is-active):hover {
   background: white;
   border-color: var(--app-line);
 }
 
-.catalog-products-page .app-screen-tab.is-active .metric-label svg {
+:is(.catalog-products-page, .catalog-brands-page) .app-screen-tab.is-active .metric-label svg {
   background: var(--brand-ink);
   color: white;
 }
 
-.catalog-products-page .app-screen-tab[aria-selected] .app-screen-tab-count {
+:is(.catalog-products-page, .catalog-brands-page) .app-screen-tab[aria-selected] .app-screen-tab-count {
   color: var(--brand-ink);
   font: 500 clamp(24px, 2.2vw, 36px)/1.1 var(--font-mono);
   letter-spacing: -.055em;
@@ -1289,11 +1289,11 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
     padding: 12px;
   }
 
-  .catalog-products-page .app-screen-tabs-track {
-    grid-template-columns: repeat(5, 152px);
+  :is(.catalog-products-page, .catalog-brands-page) .app-screen-tabs-track {
+    grid-template-columns: repeat(var(--catalog-tile-count, 5), 152px);
   }
 
-  .catalog-products-page .app-screen-tab {
+  :is(.catalog-products-page, .catalog-brands-page) .app-screen-tab {
     gap: 9px;
   }
 

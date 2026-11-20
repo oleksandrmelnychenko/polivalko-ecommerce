@@ -1,5 +1,8 @@
-import { ActionIcon, Button, Select, Tooltip } from '@mantine/core'
-import { IconCertificate, IconArrowMerge, IconFilterOff, IconPlus, IconRefresh } from '@tabler/icons-react'
+import { ActionIcon, Button, Tooltip } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
+import { MetricLabel, MetricTrack } from '@/shared/ui/MetricCard'
+import { ScreenTabs } from '@/shared/ui/ScreenTabs'
+import { IconPackage, IconPackageOff, IconPhotoOff, IconCertificate, IconArrowMerge, IconFilterOff, IconPlus, IconRefresh } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
 import { usePermissions } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
@@ -36,10 +39,11 @@ const FORM_ID = 'catalog-brand-form'
 const PARAM_KEYS = ['q', 'usage'] as const
 const SELECT_KEYS = ['id'] as const
 const USAGE_OPTIONS = [
-  { value: 'used', label: 'З товарами' },
-  { value: 'unused', label: 'Без товарів' },
-  { value: 'no-logo', label: 'Без логотипа' },
-]
+  { value: '', label: 'Усі бренди', icon: IconCertificate },
+  { value: 'used', icon: IconPackage, label: 'З товарами' },
+  { value: 'unused', icon: IconPackageOff, label: 'Без товарів' },
+  { value: 'no-logo', icon: IconPhotoOff, label: 'Без логотипа' },
+] as const
 const getRowId = (row: Brand) => row.id
 const countFormat = new Intl.NumberFormat('uk-UA')
 
@@ -62,6 +66,11 @@ export function BrandsPage() {
   const [merging, setMerging] = useState<Brand | null>(null)
 
   const all = useMemo(() => [...(brands.data ?? [])].sort((a, b) => a.name.localeCompare(b.name, 'uk')), [brands.data])
+  const compact = useMediaQuery('(max-width: 74em)')
+  const usageCounts = useMemo(() => {
+    const used = all.filter((brand) => brand.productCount > 0).length
+    return { '': all.length, used, unused: all.length - used, 'no-logo': all.filter((brand) => !brand.logoUrl).length }
+  }, [all])
   const rows = useMemo(() => {
     const term = values.q.toLowerCase()
     return all.filter(
@@ -82,50 +91,52 @@ export function BrandsPage() {
   const rowClassName = useCallback((row: Brand) => (row.id === selectedId ? 'app-split-row-active' : undefined), [selectedId])
 
   const columns = useMemo<DataTableColumn<Brand>[]>(
-    () => [
-      {
-        id: 'name',
-        header: 'Бренд',
-        width: 240,
-        minWidth: 180,
-        fill: true,
-        accessor: (row) => row.name,
-        cell: (row) => (
-          <DictionaryLink id={row.id}>
-            <BrandMark name={row.name} logoUrl={row.logoUrl} />
-            <span className="app-split-item-name">{row.name}</span>
-          </DictionaryLink>
-        ),
-      },
-      {
-        id: 'slug',
-        header: 'Адреса',
-        width: 190,
-        accessor: (row) => row.slug,
-        cell: (row) => <span className="app-split-code">{row.slug}</span>,
-      },
-      {
-        id: 'products',
-        header: 'Товарів',
-        width: 110,
-        align: 'right',
-        numeric: true,
-        sortDescFirst: true,
-        accessor: (row) => row.productCount,
-        cell: (row) =>
-          row.productCount ? (
-            <span className="app-split-item-count">{countFormat.format(row.productCount)}</span>
-          ) : (
-            <span className="app-split-item-meta is-off">немає</span>
+    () => {
+      const columns: DataTableColumn<Brand>[] = [
+        {
+          id: 'name',
+          header: 'Бренд',
+          width: compact ? 168 : 210,
+          minWidth: 132,
+          fill: true,
+          accessor: (row) => row.name,
+          cell: (row) => (
+            <DictionaryLink id={row.id}>
+              <BrandMark name={row.name} logoUrl={row.logoUrl} />
+              <span className="brand-row-text">
+                <span className="app-split-item-name">{row.name}</span>
+                {compact && <small>{row.slug}</small>}
+              </span>
+            </DictionaryLink>
           ),
-      },
-    ],
-    [],
+        },
+        {
+          id: 'slug',
+          header: 'Адреса',
+          width: 146,
+          accessor: (row) => row.slug,
+          cell: (row) => <span className="app-split-code">{row.slug}</span>,
+        },
+        {
+          id: 'products',
+          header: 'Товарів',
+          width: 96,
+          align: 'right',
+          numeric: true,
+          sortDescFirst: true,
+          accessor: (row) => row.productCount,
+          cell: (row) => <span className="app-split-item-count">{countFormat.format(row.productCount)}</span>,
+        },
+      ]
+      return compact ? columns.filter((column) => column.id !== 'slug') : columns
+    },
+    [compact],
   )
 
   function saved(next: Brand | undefined) {
     drawer.setOpened(false)
     notifySuccess(next && current && next.name !== current.name && current.productCount > 0 ? `Бренд перейменовано на «${next.name}», товарів: ${current.productCount}.` : 'Бренд збережено.')
+    if (next) pick({ id: next.id })
     brands.reload()
   }
 
@@ -133,6 +144,7 @@ export function BrandsPage() {
     setMerging(null)
     drawer.setOpened(false)
     notifySuccess(`«${source.name}» об'єднано з «${target.name}».`)
+    pick({ id: target.id })
     brands.reload()
   }
 
@@ -157,7 +169,7 @@ export function BrandsPage() {
   }
 
   return (
-    <ListPage className="catalog-dictionary-page">
+    <ListPage className="catalog-dictionary-page catalog-brands-page">
       <PageHeader
         title="Бренди"
         actions={
@@ -167,8 +179,19 @@ export function BrandsPage() {
         }
       />
 
+      <ScreenTabs
+        label="Вибірка брендів"
+        value={values.usage}
+        onChange={(usage) => set({ usage })}
+        tabs={USAGE_OPTIONS.map(({ value, label, icon }) => ({
+          value,
+          label: <MetricLabel icon={icon}>{label}</MetricLabel>,
+          count: brands.data ? usageCounts[value] : null,
+          footer: <MetricTrack value={usageCounts[value]} max={all.length} />,
+        }))}
+      />
+
       <FilterBar
-        activeCount={values.usage ? 1 : 0}
         search={<ListSearch value={values.q} placeholder="Назва або адреса…" onChange={(q) => set({ q })} />}
         actions={
           <>
@@ -179,9 +202,9 @@ export function BrandsPage() {
                 </ActionIcon>
               </Tooltip>
             ) : null}
-            {brands.data ? (
+            {brands.data && filtered ? (
               <span className="app-filter-summary catalog-summary">
-                {filtered ? `Знайдено: ${countFormat.format(rows.length)} з ${countFormat.format(all.length)}` : `Брендів: ${countFormat.format(all.length)}`}
+                Знайдено {countFormat.format(rows.length)} з {countFormat.format(all.length)}
               </span>
             ) : null}
             <Tooltip label="Оновити">
@@ -191,9 +214,7 @@ export function BrandsPage() {
             </Tooltip>
           </>
         }
-      >
-        <Select label="Показати" placeholder="Усі бренди" data={USAGE_OPTIONS} value={values.usage || null} clearable onChange={(usage) => set({ usage })} />
-      </FilterBar>
+      />
 
       <ListPageBody>
         <DictionaryLayout picked={Boolean(selectedId && picked.id === selectedId)} onBack={() => pick({ id: null })}>
@@ -205,7 +226,7 @@ export function BrandsPage() {
               getRowId={getRowId}
               isLoading={brands.isLoading}
               isFetching={brands.isFetching}
-              minWidth={480}
+              minWidth={compact ? 240 : 430}
               height="100%"
               onRowClick={selectBrand}
               rowClassName={rowClassName}
@@ -222,8 +243,10 @@ export function BrandsPage() {
         onClose={drawer.close}
         dirty={drawer.dirty}
         title={current ? `Бренд «${current.name}»` : 'Новий бренд'}
-        size="compact"
-        closeOnEscape={!drawer.busy}
+        size="standard"
+        className="brand-editor-modal"
+        closeOnEscape={!drawer.busy && !drawer.confirming && !merging}
+        closeOnClickOutside={!drawer.busy && !drawer.confirming && !merging}
         footer={
           <EditorDrawerFooter
             formId={FORM_ID}
@@ -232,7 +255,7 @@ export function BrandsPage() {
             onDelete={current ? () => drawer.setConfirming(true) : undefined}
             extra={
               current ? (
-                <Button variant="subtle" color="gray" leftSection={<IconArrowMerge size={16} stroke={1.7} />} disabled={drawer.busy} onClick={() => setMerging(current)}>
+                <Button variant="subtle" color="gray" leftSection={<IconArrowMerge size={16} stroke={1.7} />} disabled={drawer.busy || drawer.dirty} onClick={() => setMerging(current)}>
                   Об&apos;єднати з…
                 </Button>
               ) : null

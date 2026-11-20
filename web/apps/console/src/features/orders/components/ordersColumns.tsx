@@ -33,13 +33,12 @@ export const ordersColumns: DataTableColumn<OrderRow>[] = [
     fill: true,
     width: 200,
     minWidth: 160,
-    cell: (row) => <span className="app-cell-title">{row.customerName}</span>,
-  },
-  {
-    id: 'phone',
-    header: 'Телефон',
-    width: 150,
-    cell: (row) => <span className="app-number">{row.phone}</span>,
+    cell: (row) => (
+      <div className="orders-customer">
+        <span className="app-cell-title">{row.customerName}</span>
+        <span className="app-number">{row.phone}</span>
+      </div>
+    ),
   },
   {
     id: 'itemsCount',

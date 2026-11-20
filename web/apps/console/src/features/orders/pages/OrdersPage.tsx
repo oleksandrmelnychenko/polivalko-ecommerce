@@ -129,19 +129,19 @@ export function OrdersPage() {
   )
 
   return (
-    <ListPage>
+    <ListPage className="orders-list-page">
       <PageHeader
         title="Замовлення"
         actions={
           <Can permission={PermissionKeys.Orders.Export}>
-            <Button variant="default" leftSection={<IconDownload size={16} stroke={1.8} />} loading={exporting} onClick={exportCsv}>
+            <Button variant="default" radius="xl" leftSection={<IconDownload size={16} stroke={1.8} />} loading={exporting} onClick={exportCsv}>
               Експорт CSV
             </Button>
           </Can>
         }
       />
 
-      <OrdersStatusTabs status={state.status} counts={counts.data} onChange={(status) => update({ status })} />
+      <OrdersStatusTabs status={state.status} counts={counts.status === 'ready' ? counts.data : undefined} onChange={(status) => update({ status })} />
 
       <OrdersFilters
         state={state}
@@ -172,7 +172,7 @@ export function OrdersPage() {
           getRowId={getRowId}
           isLoading={orders.isLoading}
           isFetching={orders.isFetching}
-          minWidth={1400}
+          minWidth={1120}
           height="100%"
           manualSorting
           sorting={sorting}

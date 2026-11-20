@@ -36,6 +36,7 @@ export function OrdersFilters({ state, filtered, update, reset, actions }: Order
 
   function resetAll() {
     commitSearch.cancel()
+    setText('')
     reset()
   }
 

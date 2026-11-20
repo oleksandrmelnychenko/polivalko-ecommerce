@@ -1,4 +1,4 @@
-import { Alert, Button, Select, Stack, Text } from '@mantine/core'
+import { Alert, Button, Select, Stack } from '@mantine/core'
 import { IconAlertCircle } from '@tabler/icons-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
@@ -65,7 +65,6 @@ export function BrandMergeDialog({ source, brands, onMerged, onClose }: BrandMer
     >
       <form noValidate onSubmit={submit} aria-label="Об'єднати бренди">
         <Stack gap="sm">
-          <Text size="sm">Об&apos;єднання зводить різні написання одного бренду в один, наприклад «GARDENA» і «Gardena».</Text>
           <Select
             label="Залишити бренд"
             placeholder="Оберіть бренд"
@@ -75,7 +74,6 @@ export function BrandMergeDialog({ source, brands, onMerged, onClose }: BrandMer
             nothingFoundMessage="Нічого не знайдено"
             comboboxProps={{ withinPortal: true }}
             onChange={setTargetId}
-            data-autofocus
           />
           {source && target ? (
             <Alert color="yellow" variant="light">

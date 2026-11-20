@@ -9,6 +9,7 @@ type ImageUploadFieldProps = {
   label: string
   value: string | null
   onChange: (url: string | null) => void
+  onUploadingChange?: (busy: boolean) => void
   description?: string
   error?: string
   disabled?: boolean
@@ -22,7 +23,7 @@ const MAX_BYTES = 10 * 1024 * 1024
 const WRONG_TYPE = 'Підходять фото JPEG, PNG або WebP.'
 const TOO_LARGE = 'Фото завелике: до 10 МБ.'
 
-export function ImageUploadField({ label, value, onChange, description, error, disabled = false, fallback, shape = 'wide', alt = '' }: ImageUploadFieldProps) {
+export function ImageUploadField({ label, value, onChange, onUploadingChange, description, error, disabled = false, fallback, shape = 'wide', alt = '' }: ImageUploadFieldProps) {
   const id = useId()
   const [busy, setBusy] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -42,6 +43,7 @@ export function ImageUploadField({ label, value, onChange, description, error, d
       return
     }
     setBusy(true)
+    onUploadingChange?.(true)
     setUploadError(null)
     try {
       const result = await uploadMediaImage(file)
@@ -52,6 +54,7 @@ export function ImageUploadField({ label, value, onChange, description, error, d
       setUploadError(NETWORK_ERROR)
     }
     setBusy(false)
+    onUploadingChange?.(false)
   }
 
   const shownError = uploadError ?? error

@@ -26,3 +26,36 @@
   background: var(--brand-ink);
   color: var(--mantine-color-white);
 }
+
+.catalog-brands-page { --catalog-tile-count: 4; }
+.brand-row-text { display: grid; gap: 2px; min-width: 0; }
+.brand-row-text small {
+  color: var(--mantine-color-gray-7);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.brand-editor-modal .app-sheet-scroll { background: var(--app-ground); padding: 12px; }
+.brand-editor-form {
+  display: grid;
+  gap: 10px;
+}
+.brand-editor-form .catalog-card { min-width: 0; padding: 16px; }
+.brand-editor-modal .mantine-Modal-content { max-width: 680px; }
+.brand-editor-fields { display: grid; align-items: start; gap: 8px 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.brand-editor-fields :is(.mantine-Textarea-root, .mantine-Alert-root) { grid-column: 1 / -1; }
+.brand-editor-fields .mantine-Alert-root { grid-row: 2; }
+.brand-editor-form .catalog-image-field-preview.is-square { height: 68px; width: 68px; }
+.brand-editor-form .catalog-image-field-preview .catalog-brand-mark { height: 100%; width: 100%; font-size: 22px; }
+.brand-editor-form .catalog-image-field-label { position: absolute; clip-path: inset(50%); }
+.brand-editor-form .catalog-image-field-row { align-items: center; }
+.brand-editor-form .mantine-InputWrapper-description { font-family: var(--font-mono); }
+.brand-editor-modal .mantine-Button-root { border-radius: 999px; }
+
+@media (max-width: 50em) {
+  .catalog-brands-page:has(.app-split-layout[data-picked]) .app-screen-tabs { display: none; }
+}
+@media (max-width: 38em) {
+  .brand-editor-fields { grid-template-columns: minmax(0, 1fr); }
+  .brand-editor-modal .app-sheet-scroll { padding: 8px; }
+}

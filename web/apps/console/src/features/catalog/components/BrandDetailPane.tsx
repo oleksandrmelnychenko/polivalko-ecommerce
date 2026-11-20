@@ -1,4 +1,4 @@
-import { ActionIcon, Button, Tooltip } from '@mantine/core'
+import { Button } from '@mantine/core'
 import { IconPackage, IconBox, IconPhotoOff, IconArrowMerge, IconExternalLink, IconPencil } from '@tabler/icons-react'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { siteUrl } from '@/shared/lib/siteUrl'
@@ -62,20 +62,9 @@ function BrandDetail({ brand, totalProducts, onEdit, onMerge }: BrandDetailPaneP
               Об&apos;єднати з…
             </Button>
             {hasProducts ? (
-              <Tooltip label="Товари бренду на сайті">
-                <ActionIcon
-                  component="a"
-                  href={siteUrl(`/catalog?brand=${encodeURIComponent(brand.name)}`)}
-                  target="_blank"
-                  rel="noopener"
-                  variant="subtle"
-                  color="gray"
-                  size="lg"
-                  aria-label={`Товари «${brand.name}» на сайті`}
-                >
-                  <IconExternalLink size={17} stroke={1.7} />
-                </ActionIcon>
-              </Tooltip>
+              <Button component="a" href={siteUrl(`/catalog?brand=${encodeURIComponent(brand.name)}`)} target="_blank" rel="noopener" variant="default" size="sm" leftSection={<IconExternalLink size={16} stroke={1.7} />}>
+                На сайті
+              </Button>
             ) : null}
           </div>
         </div>
@@ -93,7 +82,7 @@ function BrandDetail({ brand, totalProducts, onEdit, onMerge }: BrandDetailPaneP
         filter={{ brand: brand.name }}
         listHref={productsLink}
         enabled={hasProducts}
-        emptyText="У бренду ще немає товарів. Його можна видалити або об'єднати з іншим."
+        emptyText="У бренду ще немає товарів."
       />
     </section>
   )
