@@ -14,7 +14,7 @@ export function ConsoleMain({ children, dashboard }: PropsWithChildren<{ dashboa
   const siteWorkspace = Boolean(useMatch('/site/*'))
   const pageEditor = useMatch('/site/pages/:slug')
   const shopSettings = useMatch('/settings/shop')
-  const compactHeader = Boolean(shopSettings) || isCatalogList || (siteWorkspace && !pageEditor)
+  const compactHeader = Boolean(shopSettings) || isCatalogList || activeSection?.id === 'partners' || (siteWorkspace && !pageEditor)
   return (
     <AppShell.Main id="main" data-section={activeSection?.id} data-site-workspace={siteWorkspace || Boolean(shopSettings) || undefined}>
       <div className="console-content">

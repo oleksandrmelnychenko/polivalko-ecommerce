@@ -94,12 +94,16 @@ export const NAV_SECTIONS: readonly NavSection[] = [
     prefix: '/accounting',
     items: [
       { id: 'accounting-work', label: 'Робоче місце', path: '/accounting/work', permissionKey: PermissionKeys.Accounting.View, icon: IconLayoutDashboard },
-      { id: 'partners', label: 'Контрагенти', path: '/accounting/partners', permissionKey: PermissionKeys.Accounting.View, icon: IconUsers },
       { id: 'incoming', label: 'Прибуткові накладні', path: '/accounting/incoming', permissionKey: PermissionKeys.Accounting.View, icon: IconClipboardList },
       { id: 'outgoing', label: 'Видаткові накладні', path: '/accounting/outgoing', permissionKey: PermissionKeys.Accounting.View, icon: IconFileText },
       { id: 'warehouse', label: 'Складські залишки', path: '/accounting/warehouse', permissionKey: PermissionKeys.Accounting.View, icon: IconBuildingStore },
       { id: 'balances', label: 'Взаєморозрахунки', path: '/accounting/balances', permissionKey: PermissionKeys.Accounting.View, icon: IconCreditCard },
     ],
+  },
+  {
+    id: 'partners',
+    label: 'Контрагенти',
+    items: [{ id: 'partners', label: 'Контрагенти', path: '/accounting/partners', permissionKey: PermissionKeys.Accounting.View, icon: IconUsers }],
   },
   {
     id: 'catalog',
