@@ -15,6 +15,7 @@ import { ProductEditorForm } from '../components/ProductEditorForm'
 import { ProductEditorImages } from '../components/ProductEditorImages'
 import { ProductEditorNavkolo } from '../components/ProductEditorNavkolo'
 import { consoleCategoryOptions } from '../lib/categoryTree'
+import { productName } from '../lib/productFilters'
 import { withUniqueImages } from '../lib/productImages'
 import '../components/catalog.css'
 
@@ -36,7 +37,7 @@ export function ProductPage() {
   const readOnly = !can(PermissionKeys.Catalog.EditProducts)
 
   const data = useMemo(() => (product.data?.id === id ? withUniqueImages(product.data) : undefined), [id, product.data])
-  const name = data ? (data.displayName ?? data.navkolo.name) : 'Товар'
+  const name = data ? productName({ displayName: data.displayName, name: data.navkolo.name }) : 'Товар'
 
   function saved(next: Product) {
     product.setData(next)

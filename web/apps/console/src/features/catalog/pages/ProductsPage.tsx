@@ -25,7 +25,7 @@ import { ProductsTiles } from '../components/ProductsTiles'
 import { ProductsViewToggle } from '../components/ProductsViewToggle'
 import { consoleCategoryOptions } from '../lib/categoryTree'
 import { manualLabelOptions, sortLabels } from '../lib/labels'
-import { activeTab, hasActiveFilters, productHref, tabPatch, toProductsQuery, type ProductsTab } from '../lib/productFilters'
+import { activeTab, hasActiveFilters, productHref, productName, tabPatch, toProductsQuery, type ProductsTab } from '../lib/productFilters'
 import { useProductsState } from '../lib/useProductsState'
 import { useProductsView } from '../lib/useProductsView'
 import '../components/catalog.css'
@@ -93,7 +93,7 @@ export function ProductsPage() {
   const [bulkError, setBulkError] = useState<string | null>(null)
 
   const onRowClick = useCallback((row: ProductRow) => navigate(productHref(row.id)), [navigate])
-  const rowLabels = useMemo(() => new Map(rows.map((row) => [row.id, row.displayName ?? row.name])), [rows])
+  const rowLabels = useMemo(() => new Map(rows.map((row) => [row.id, productName(row)])), [rows])
   const tableSelection = useMemo(
     () =>
       canEdit

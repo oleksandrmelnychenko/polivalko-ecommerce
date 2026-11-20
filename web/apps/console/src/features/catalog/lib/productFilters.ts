@@ -107,5 +107,9 @@ export function productHref(id: string): string {
 }
 
 export function productName(product: { displayName: string | null; name: string }): string {
-  return product.displayName ?? product.name
+  return cleanProductName(product.displayName ?? '') || cleanProductName(product.name)
+}
+
+export function cleanProductName(name: string): string {
+  return name.trim().replace(/^[\s/]+/, '')
 }

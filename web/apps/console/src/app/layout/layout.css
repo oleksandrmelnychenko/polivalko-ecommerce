@@ -470,6 +470,7 @@
   padding-bottom: 10px;
 }
 .console-page-toolbar:has(> .console-header-page-actions:only-child:empty) { display: none; }
+[data-section='catalog'] .visually-hidden + .console-page-toolbar { padding-top: 8px; }
 @media (width < 64em) {
   .console-burger, .console-search-icon { display: inline-flex; flex-shrink: 0; }
   .console-sidebar, .console-search-button { display: none; }

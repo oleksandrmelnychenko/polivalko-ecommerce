@@ -1219,3 +1219,9 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
     overflow-y: auto;
   }
 }
+
+@media (max-width: 23em) {
+  [data-section='catalog'] .app-paginator-divider + .app-paginator-label {
+    display: none;
+  }
+}

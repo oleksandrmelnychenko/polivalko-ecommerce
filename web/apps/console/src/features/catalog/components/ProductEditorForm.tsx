@@ -12,6 +12,7 @@ import { updateProduct, type Product, type UpdateProductRequest } from '../api/c
 import type { Brand, ProductLabel } from '../api/dictionariesApi'
 import type { CategoryOption } from '../lib/categoryTree'
 import { attributeRows, type AttributeRow } from '../lib/attributeRows'
+import { cleanProductName } from '../lib/productFilters'
 import { ProductEditorAttributes } from './ProductEditorAttributes'
 import { ProductEditorLabels } from './ProductEditorLabels'
 
@@ -158,7 +159,7 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
             <TextInput
               label="Назва на вітрині"
               value={fields.displayName}
-              placeholder={product.navkolo.name}
+              placeholder={cleanProductName(product.navkolo.name)}
               maxLength={500}
               error={errors.displayName}
               onChange={(event) => set('displayName', event.currentTarget.value)}
