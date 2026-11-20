@@ -266,24 +266,6 @@ a.dash-queue-item:focus-visible {
   padding: var(--dash-pad);
 }
 
-.dash-kpi-label {
-  align-items: center;
-  color: var(--brand-ink);
-  display: flex;
-  font-size: 14px;
-  font-weight: 550;
-  gap: 8px;
-}
-
-.dash-kpi-label svg {
-  background: var(--app-ground);
-  border-radius: 50%;
-  box-sizing: content-box;
-  color: var(--brand-ink);
-  flex: none;
-  padding: 8px;
-}
-
 .dash-kpi-value {
   color: var(--brand-ink);
   font-size: clamp(22px, 14cqi, 42px);
@@ -297,8 +279,6 @@ a.dash-queue-item:focus-visible {
 .dash-kpi-amount { align-items: baseline; display: flex; flex-wrap: wrap; gap: 4px 10px; }
 .dash-kpi-prior { color: var(--mantine-color-gray-7); font-size: 12px; margin-top: auto; }
 .dash-kpi-lines { display: grid; gap: 4px; }
-.dash-kpi-lines .dash-barlist-track { background-image: radial-gradient(circle, #e4e4e8 1.3px, transparent 1.8px); }
-.dash-kpi-lines .dash-barlist-track:last-child .dash-barlist-fill { background-image: radial-gradient(circle, #84848b 1.6px, transparent 2px); }
 
 .dash-overview-row {
   display: grid;

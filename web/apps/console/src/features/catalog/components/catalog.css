@@ -1129,36 +1129,42 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
 .catalog-products-page .app-screen-tabs-track {
   display: grid;
   flex: 1;
-  gap: 8px;
-  grid-template-columns: repeat(5, minmax(max-content, 1fr));
+  gap: clamp(8px, 1vw, 16px);
+  grid-template-columns: repeat(5, minmax(145px, 1fr));
+  align-items: stretch;
 }
 
 .catalog-products-page .app-screen-tab {
   align-items: flex-start;
   background: white;
-  border: 1px solid rgb(25 25 32 / 7%);
-  border-radius: 18px;
+  border: 1px solid rgb(25 25 32 / 4%);
+  border-radius: var(--app-panel-radius);
+  box-shadow: var(--app-card-shadow);
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   height: auto;
-  padding: 12px 16px;
+  justify-content: flex-start;
+  padding: clamp(12px, 1.4vw, 22px);
+  text-align: start;
+  white-space: normal;
 }
 
-.catalog-products-page .app-screen-tab.is-active {
+.catalog-products-page .app-screen-tab.is-active,
+.catalog-products-page .app-screen-tab:not(.is-active):hover {
+  background: white;
+  border-color: var(--app-line);
+}
+
+.catalog-products-page .app-screen-tab.is-active .metric-label svg {
   background: var(--brand-ink);
-}
-
-.catalog-products-page .app-screen-tab-count {
-  color: var(--brand-ink);
-  font: 500 22px/1 var(--font-mono);
-}
-
-.catalog-products-page .app-screen-tab-count.is-hot {
-  color: var(--brand-accent-hover);
-}
-
-.catalog-products-page .is-active .app-screen-tab-count {
   color: white;
+}
+
+.catalog-products-page .app-screen-tab .app-screen-tab-count {
+  color: var(--brand-ink);
+  font: 500 clamp(24px, 2.2vw, 36px)/1.1 var(--font-mono);
+  letter-spacing: -.055em;
+  margin-top: auto;
 }
 
 .catalog-products-page .app-filter-fields > .app-filter-toggle {
@@ -1202,16 +1208,16 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
     padding: 12px;
   }
 
-  .catalog-products-page .app-screen-tab {
-    align-items: center;
-    border-radius: 999px;
-    flex-direction: row;
-    gap: 8px;
-    padding: 8px 12px;
+  .catalog-products-page .app-screen-tabs-track {
+    grid-template-columns: repeat(5, 152px);
   }
 
-  .catalog-products-page .app-screen-tab-count {
-    font-size: 13px;
+  .catalog-products-page .app-screen-tab {
+    gap: 9px;
+  }
+
+  .catalog-products-page .metric-label {
+    font-size: 12px;
   }
 
   [data-section='catalog'] .app-filter-bar[data-expanded] {

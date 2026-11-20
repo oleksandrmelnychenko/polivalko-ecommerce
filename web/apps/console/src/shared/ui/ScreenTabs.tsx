@@ -6,6 +6,7 @@ export type ScreenTab<V extends string> = {
   label: ReactNode
   count?: number | null
   hot?: boolean
+  footer?: ReactNode
 }
 
 type ScreenTabsProps<V extends string> = {
@@ -38,6 +39,7 @@ export function ScreenTabs<V extends string>({ tabs, value, label, onChange }: S
                   {tab.count == null ? '·' : countFormat.format(tab.count)}
                 </span>
               ) : null}
+              {tab.footer}
             </button>
           )
         })}
