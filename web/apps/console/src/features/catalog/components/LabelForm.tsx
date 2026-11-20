@@ -21,7 +21,7 @@ type LabelFormProps = {
 type Fields = { name: string; tone: LabelTone; newDays: number | string; sortOrder: number | string; isActive: boolean }
 
 const AUTO_HELP = {
-  sale: 'Ставиться сама, коли стара ціна з Navkolo більша за поточну, і знімається, щойно знижка закінчується. Вручну її не призначають.',
+  sale: 'Мітка діє автоматично, поки поточна ціна нижча за попередню.',
   new: 'Ставиться сама на вказану кількість днів від першої появи товару в каталозі. Вручну її не призначають.',
 } as const
 

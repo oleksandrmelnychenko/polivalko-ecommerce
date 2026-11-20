@@ -22,7 +22,7 @@ export function isAutoLabel(label: { kind: LabelKind }): boolean {
 }
 
 export function labelRule(label: Pick<ProductLabel, 'kind' | 'newDays'>): string {
-  if (label.kind === 'sale') return 'Коли стара ціна з Navkolo більша за поточну'
+  if (label.kind === 'sale') return 'Коли поточна ціна нижча за попередню'
   if (label.kind === 'new') return `Перші ${label.newDays ?? DEFAULT_NEW_DAYS} дн. після появи товару`
   return 'Ставлять у картці товару або масово у списку'
 }

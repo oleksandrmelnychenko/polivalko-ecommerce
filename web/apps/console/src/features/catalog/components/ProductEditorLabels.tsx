@@ -75,7 +75,7 @@ export function ProductEditorLabels({ product, labels, value, onChange, error }:
                     <LabelChip name={label.name} tone={label.tone} muted={!on} />
                     <span className="catalog-auto-label-rule">
                       {label.isActive ? labelRule(label) : 'Мітку вимкнено в довіднику'}
-                      {label.isActive ? <span className="catalog-muted"> · {on ? 'стоїть зараз' : 'зараз не стоїть'}</span> : null}
+                      {label.isActive ? <span className="catalog-muted"> · {on ? 'застосовано' : 'не застосовано'}</span> : null}
                     </span>
                   </li>
                 )
