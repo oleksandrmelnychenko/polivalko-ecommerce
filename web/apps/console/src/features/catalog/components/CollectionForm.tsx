@@ -1,5 +1,5 @@
-import { ActionIcon, Alert, Button, Group, NumberInput, SimpleGrid, Stack, Switch, Text, TextInput, Tooltip } from '@mantine/core'
-import { IconAlertCircle, IconArrowDown, IconArrowUp, IconPlus, IconSearch, IconX } from '@tabler/icons-react'
+import { ActionIcon, Alert, Button, Group, NumberInput, SimpleGrid, Switch, Text, TextInput, Tooltip } from '@mantine/core'
+import { IconAdjustmentsHorizontal, IconAlertCircle, IconArrowDown, IconArrowUp, IconPackages, IconPlus, IconSearch, IconX } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { formatMoney } from '@polivalko/shared/lib/format'
 import { usePermissions } from '@/features/auth'
@@ -9,17 +9,18 @@ import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { useReportDirty } from '@/shared/lib/useReportDirty'
 import { getProducts, saveCollection, type ConsoleCollection, type ProductRow } from '../api/catalogApi'
 import { productName } from '../lib/productFilters'
+import { CatalogSectionTitle } from './CatalogSectionTitle'
 import { ProductThumb } from './ProductThumb'
 
 const MAX_ITEMS = 24
-const SEARCH_FORBIDDEN = 'Щоб додавати товари в колекцію, потрібне право перегляду товарів.'
+const SEARCH_FORBIDDEN = 'Щоб додавати товари в добірку, потрібне право перегляду товарів.'
 
 type CollectionFormProps = {
   formId: string
   collection: ConsoleCollection | null
   error: string | null
   onBusy: (busy: boolean) => void
-  onSaved: () => void
+  onSaved: (collection: ConsoleCollection) => void
   onDirty?: (dirty: boolean) => void
 }
 
@@ -62,7 +63,7 @@ export function CollectionForm({ formId, collection, error, onBusy, onSaved, onD
 
   async function search(event: FormEvent) {
     event.preventDefault()
-    if (!canSearch) return
+    if (!canSearch || searching) return
     setSearching(true)
     setSearchError(null)
     try {
@@ -99,11 +100,11 @@ export function CollectionForm({ formId, collection, error, onBusy, onSaved, onD
       if (result.data) {
         setBusy(false)
         onBusy(false)
-        onSaved()
+        onSaved(result.data)
         return
       }
       setErrors(fieldErrors(result.error))
-      setFormError(problemMessage(result.error, 'Колекцію не збережено.'))
+      setFormError(problemMessage(result.error, 'Добірку не збережено.'))
     } catch {
       setFormError(NETWORK_ERROR)
     }
@@ -114,39 +115,36 @@ export function CollectionForm({ formId, collection, error, onBusy, onSaved, onD
   const shownError = formError ?? error
 
   return (
-    <Stack gap="md">
-      <form id={formId} noValidate onSubmit={submit} aria-label={collection ? `Колекція «${collection.title}»` : 'Нова колекція'}>
-        <Stack gap="sm">
-          <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
-            <TextInput
-              label="Заголовок на головній"
-              required
-              maxLength={200}
-              value={fields.title}
-              error={errors.title || undefined}
-              onChange={(event) => set('title', event.currentTarget.value)}
-              data-autofocus
-            />
-            <TextInput
-              label="Код (латиницею)"
-              required
-              maxLength={50}
-              spellCheck={false}
-              autoComplete="off"
-              value={fields.code}
-              error={errors.code || undefined}
-              onChange={(event) => set('code', event.currentTarget.value)}
-            />
-            <NumberInput label="Порядок на головній" allowDecimal={false} value={fields.sortOrder} onChange={(value) => set('sortOrder', value)} />
-            <Switch label="Показувати на головній" mt={{ base: 0, xs: 30 }} checked={fields.isVisible} onChange={(event) => set('isVisible', event.currentTarget.checked)} />
-          </SimpleGrid>
-        </Stack>
+    <fieldset className="collection-editor" disabled={busy}>
+      <form className="catalog-card collection-setup" id={formId} noValidate onSubmit={submit} aria-label={collection ? `Добірка «${collection.title}»` : 'Нова добірка'}>
+        <CatalogSectionTitle id="collection-settings" icon={IconAdjustmentsHorizontal}>Налаштування добірки</CatalogSectionTitle>
+        <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
+          <TextInput
+            label="Назва добірки"
+            required
+            maxLength={200}
+            value={fields.title}
+            error={errors.title || undefined}
+            onChange={(event) => set('title', event.currentTarget.value)}
+            data-autofocus
+          />
+          <TextInput
+            label="Код (латиницею)"
+            required
+            maxLength={50}
+            spellCheck={false}
+            autoComplete="off"
+            value={fields.code}
+            error={errors.code || undefined}
+            onChange={(event) => set('code', event.currentTarget.value)}
+          />
+          <NumberInput label="Порядок на головній" allowDecimal={false} value={fields.sortOrder} onChange={(value) => set('sortOrder', value)} />
+          <Switch label="Показувати на головній" className="collection-visible" checked={fields.isVisible} onChange={(event) => set('isVisible', event.currentTarget.checked)} />
+        </SimpleGrid>
       </form>
 
-      <section aria-labelledby="collection-items-title">
-        <h3 id="collection-items-title" className="app-section-title catalog-card-title">
-          Товари ({items.length} з {MAX_ITEMS})
-        </h3>
+      <section className="catalog-card collection-items" aria-labelledby="collection-items-title">
+        <CatalogSectionTitle id="collection-items-title" icon={IconPackages} count={`${items.length} / ${MAX_ITEMS}`}>Товари в добірці</CatalogSectionTitle>
         {items.length > 0 ? (
           <ol className="catalog-pick-list">
             {items.map((item, index) => (
@@ -182,7 +180,7 @@ export function CollectionForm({ formId, collection, error, onBusy, onSaved, onD
           </ol>
         ) : (
           <Text size="sm" c="dimmed">
-            Додайте товари пошуком нижче.
+            Товарів ще немає.
           </Text>
         )}
         {errors.productIds ? (
@@ -192,12 +190,13 @@ export function CollectionForm({ formId, collection, error, onBusy, onSaved, onD
         ) : null}
       </section>
 
-      <section aria-label="Знайти товар" className="catalog-pick-search">
+      <section aria-labelledby="collection-search-title" className="catalog-card collection-search">
+        <CatalogSectionTitle id="collection-search-title" icon={IconSearch}>Додати товари</CatalogSectionTitle>
         <form role="search" onSubmit={search}>
           <Group gap="xs" align="flex-end" wrap="nowrap">
             <TextInput
               style={{ flex: 1 }}
-              label="Знайти товар"
+              aria-label="Знайти товар"
               placeholder="Назва або артикул"
               leftSection={<IconSearch size={16} stroke={1.7} />}
               value={query}
@@ -252,6 +251,6 @@ export function CollectionForm({ formId, collection, error, onBusy, onSaved, onD
           {shownError}
         </Alert>
       ) : null}
-    </Stack>
+    </fieldset>
   )
 }

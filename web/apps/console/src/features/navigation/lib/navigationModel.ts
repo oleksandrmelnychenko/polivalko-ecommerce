@@ -111,7 +111,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
       { id: 'attributes', label: 'Характеристики', path: '/catalog/attributes', permissionKey: PermissionKeys.Catalog.ManageAttributes, icon: IconAdjustmentsHorizontal },
       { id: 'brands', label: 'Бренди', path: '/catalog/brands', permissionKey: PermissionKeys.Catalog.ManageBrands, icon: IconCertificate },
       { id: 'labels', label: 'Мітки', path: '/catalog/labels', permissionKey: PermissionKeys.Catalog.ManageLabels, icon: IconTags },
-      { id: 'collections', label: 'Колекції', path: '/catalog/collections', permissionKey: PermissionKeys.Catalog.ManageCollections, icon: IconLayoutGrid },
+      { id: 'collections', label: 'Добірки', path: '/catalog/collections', permissionKey: PermissionKeys.Catalog.ManageCollections, icon: IconLayoutGrid },
     ],
   },
   {

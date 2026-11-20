@@ -1,11 +1,13 @@
 import { Button, SegmentedControl } from '@mantine/core'
-import { useEffect, useState, type ReactNode } from 'react'
+import { IconChartPie, IconCoins, IconReceiptRefund, IconRefresh, IconReportMoney, IconWallet } from '@tabler/icons-react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { kyivDay } from '@/shared/lib/kyivTime'
 import { PageHeader } from '@/shared/ui/PageHeader'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { AnalyticsChart } from '../components/AnalyticsChart'
 import { AnalyticsCard } from '../components/AnalyticsCard'
 import { AnnualInvoices } from '../components/AnnualInvoices'
@@ -66,6 +68,14 @@ const runLabel: Record<string, string> = {
   error: 'Помилка звірки',
 }
 
+const kpiDefinitions = [
+  { key: 'gross', title: 'Продажі', icon: IconWallet },
+  { key: 'returns', title: 'Повернення', icon: IconReceiptRefund },
+  { key: 'net', title: 'Чистий оборот', icon: IconCoins },
+  { key: 'profit', title: 'Валовий прибуток за відомою собівартістю', icon: IconReportMoney },
+  { key: 'coverage', title: 'Частка суми з відомою собівартістю', icon: IconChartPie },
+] as const
+
 export function BusinessAnalyticsPage() {
   const [params, setParams] = useSearchParams()
   const [message, setMessage] = useState('')
@@ -74,8 +84,25 @@ export function BusinessAnalyticsPage() {
   const [seasonMetric, setSeasonMetric] = useState<'months' | 'indices'>('months')
   const [showDocs, setShowDocs] = useState(false)
   const [docPage, setDocPage] = useState(1)
+  const reportTabs = useRef<HTMLDivElement>(null)
   const { can } = usePermissions()
   const tab = params.get('tab') ?? 'overview'
+  useEffect(() => {
+    const nav = reportTabs.current
+    if (!nav) return
+    function revealActive() {
+      const active = nav?.querySelector('label[data-active]')
+      if (!nav || !active) return
+      const strip = nav.getBoundingClientRect()
+      const item = active.getBoundingClientRect()
+      if (item.left < strip.left + 5) nav.scrollLeft += item.left - strip.left - 5
+      else if (item.right > strip.right - 5) nav.scrollLeft += item.right - strip.right + 5
+    }
+    revealActive()
+    const observer = new ResizeObserver(revealActive)
+    observer.observe(nav)
+    return () => observer.disconnect()
+  }, [tab])
   const usesReport = tab !== 'invoices' && tab !== 'turnover-forecast' && tab !== 'markets'
   const period = new URLSearchParams(params)
   for (const name of ['tab', 'kind', 'page', 'year', 'horizon']) period.delete(name)
@@ -134,6 +161,17 @@ export function BusinessAnalyticsPage() {
   const changePage = (n: number) => update({ page: String(n) })
   const active = f?.rows.find((row) => seriesKey(row) === selected) ?? f?.rows.find(row => row.weeks.length) ?? f?.rows[0]
   const title = 'Бізнес-аналітика'
+  async function refresh() {
+    try {
+      await writeBusiness('refresh')
+      setMessage('Запит на звірку прийнято')
+      reloadStatus()
+      if (tab === 'forecast') forecast.reload()
+      else report.reload()
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Помилка оновлення')
+    }
+  }
   const yearValue =
     r &&
     r.start.endsWith('-01-01') &&
@@ -143,10 +181,15 @@ export function BusinessAnalyticsPage() {
       : ''
   return (
     <>
-      <PageHeader title={title} heading={<h1>{title}</h1>} />
-      <div className="pa-page ba-page">
+      <PageHeader title={title} actions={usesReport && (
+        <Button radius="xl" variant="default" leftSection={<IconRefresh size={16} stroke={1.7} />}
+          disabled={status.data?.state === 'running' || status.data?.state === 'queued'} onClick={refresh}>
+          Звірити з виробничою БД
+        </Button>
+      )} />
+      <div className="pa-page ba-page" data-report-content={usesReport || undefined}>
         <div className="pa-report">
-          <div className="ba-controls">
+          <div className="ba-report-tabs" ref={reportTabs}>
             <SegmentedControl
               aria-label="Розділ аналітики"
               value={tab}
@@ -160,30 +203,13 @@ export function BusinessAnalyticsPage() {
                 { value: 'forecast', label: 'Попит і закупівлі' },
               ]}
             />
-            {usesReport && <Button
-              variant="default"
-              disabled={status.data?.state === 'running' || status.data?.state === 'queued'}
-              onClick={async () => {
-                try {
-                  await writeBusiness('refresh')
-                  setMessage('Запит на звірку прийнято')
-                  reloadStatus()
-                  if (tab === 'forecast') forecast.reload()
-                  else report.reload()
-                } catch (e) {
-                  setMessage(e instanceof Error ? e.message : 'Помилка оновлення')
-                }
-              }}
-            >
-              Звірити з виробничою БД
-            </Button>}
           </div>
           {tab === 'invoices' && (can(PermissionKeys.Accounting.View)
             ? <AnnualInvoices /> : <p>Для звірки потрібен доступ до реєстру накладних.</p>)}
           {tab === 'turnover-forecast' && <TurnoverForecast />}
           {tab === 'markets' && (can(PermissionKeys.Accounting.View)
             ? <BuyerMarkets /> : <p>Для перегляду географії та продажів контрагентів потрібен доступ до обліку.</p>)}
-          {usesReport && <p role="status">
+          {usesReport && (status.data || message) && <p role="status" className="ba-run-state" data-state={status.data?.state}>
             {status.data
               ? [
                   runLabel[status.data.state],
@@ -278,22 +304,18 @@ export function BusinessAnalyticsPage() {
               </div>
               {tab === 'overview' && r && (
                 <>
-                  <div className="ba-kpis">
-                    {[
-                      ['Продажі', fmt(r.summary.gross) + ' грн'],
-                      ['Повернення', fmt(r.summary.returns) + ' грн'],
-                      ['Чистий оборот', fmt(r.summary.net) + ' грн'],
-                      ['Валовий прибуток за відомою собівартістю', fmt(r.summary.profit) + ' грн'],
-                      [
-                        'Частка суми з відомою собівартістю',
-                        fmt(r.summary.coverage == null ? null : r.summary.coverage * 100) + '%',
-                      ],
-                    ].map(([h, v]) => (
-                      <div className="pa-card" key={h}>
-                        <span>{h}</span>
-                        <strong>{v}</strong>
-                      </div>
-                    ))}
+                  <div className="ba-kpis ba-overview-metrics">
+                    {kpiDefinitions.map(({ key, title: label, icon }) => {
+                      const value = r.summary[key]
+                      return (
+                        <div className="pa-card" key={key}>
+                          <MetricLabel icon={icon}>{label}</MetricLabel>
+                          <strong>{fmt(key === 'coverage' && value != null ? value * 100 : value)}
+                            {value != null && <small>{key === 'coverage' ? '%' : '₴'}</small>}
+                          </strong>
+                        </div>
+                      )
+                    })}
                   </div>
                   <AnalyticsCard
                     title="Оборот і прибуток за місяцями"

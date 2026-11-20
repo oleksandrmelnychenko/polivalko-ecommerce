@@ -90,7 +90,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'requests.status.change': 'Зміна статусу заявки',
   'catalog.products.view': 'Товари: перегляд',
   'catalog.products.edit': 'Товари: редагування, фото, видимість',
-  'catalog.collections.manage': 'Колекції головної',
+  'catalog.collections.manage': 'Добірки головної',
   'catalog.categories.manage': 'Категорії каталогу',
   'catalog.redirects.manage': 'Перенаправлення адрес (SEO)',
   'catalog.import.run': 'Імпорт товарів з файлу',

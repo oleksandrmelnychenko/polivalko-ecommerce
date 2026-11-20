@@ -1,5 +1,5 @@
-import { ActionIcon, Button, Group, Stack, Text, Tooltip } from '@mantine/core'
-import { IconLayoutGrid, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react'
+import { ActionIcon, Button, Group, Tooltip } from '@mantine/core'
+import { IconEye, IconEyeOff, IconLayoutGrid, IconPackageOff, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
@@ -8,7 +8,9 @@ import { CatalogEditorModal } from '../components/CatalogEditorModal'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
-import { FilterBar } from '@/shared/ui/FilterBar'
+import { MetricLabel, MetricTrack } from '@/shared/ui/MetricCard'
+import { ScreenTabs } from '@/shared/ui/ScreenTabs'
+import { listEmptyText } from '../components/ListEmpty'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { notifySuccess } from '@/shared/ui/notify'
 import { DictionaryLayout, DictionaryLink } from '../components/DictionaryLayout'
@@ -20,36 +22,37 @@ import { useListParams } from '../lib/useListParams'
 import '../components/catalog.css'
 import '@/shared/ui/split/split.css'
 import '../components/catalog-detail.css'
+import '../components/catalog-collections.css'
 import { DrawerCancelButton } from '@/shared/ui/DrawerCancelButton'
 
 const FORM_ID = 'catalog-collection-form'
 const getRowId = (row: ConsoleCollection) => row.id
 const countFormat = new Intl.NumberFormat('uk-UA')
 
-const SELECT_KEYS = ['id'] as const
+const PARAM_KEYS = ['id', 'show'] as const
+const selections = [
+  { value: '', label: 'Усі добірки', icon: IconLayoutGrid, matches: () => true },
+  { value: 'enabled', label: 'Увімкнені', icon: IconEye, matches: (row: ConsoleCollection) => row.isVisible },
+  { value: 'hidden', label: 'Приховані', icon: IconEyeOff, matches: (row: ConsoleCollection) => !row.isVisible },
+  { value: 'empty', label: 'Без товарів', icon: IconPackageOff, matches: (row: ConsoleCollection) => row.products.length === 0 },
+] as const
 
 const columns: DataTableColumn<ConsoleCollection>[] = [
   {
     id: 'title',
-    header: 'Колекція',
-    width: 240,
+    header: 'Добірка',
+    width: 180,
+    minWidth: 144,
     fill: true,
     cell: (row) => (
       <DictionaryLink id={row.id}>
         <span className="app-split-kind-icon"><IconLayoutGrid size={16} aria-hidden="true" /></span>
         <span className="category-row-text">
           <span className="app-split-item-name">{row.title}</span>
-          <small className="app-split-code">{row.code}</small>
+          <small>{row.code} · {row.isVisible ? 'Увімкнена' : 'Прихована'}</small>
         </span>
       </DictionaryLink>
     ),
-  },
-  {
-    id: 'visible',
-    header: 'На головній',
-    width: 130,
-    cell: (row) =>
-      row.isVisible ? <span className="app-split-item-meta">показується</span> : <span className="app-split-item-meta is-off">прихована</span>,
   },
   {
     id: 'products',
@@ -57,12 +60,7 @@ const columns: DataTableColumn<ConsoleCollection>[] = [
     width: 100,
     align: 'right',
     numeric: true,
-    cell: (row) =>
-      row.products.length ? (
-        <span className="app-split-item-count">{countFormat.format(row.products.length)}</span>
-      ) : (
-        <span className="app-split-item-meta is-off">0</span>
-      ),
+    cell: (row) => <span className="app-split-item-count">{countFormat.format(row.products.length)}</span>,
   },
 ]
 
@@ -89,9 +87,10 @@ export function CollectionsPage() {
     setOpened(false)
   }
 
-  function saved() {
+  function saved(savedCollection: ConsoleCollection) {
+    pick({ id: savedCollection.id, show: selection.matches(savedCollection) ? selection.value : null })
     setOpened(false)
-    notifySuccess('Колекцію збережено.')
+    notifySuccess('Добірку збережено.')
     collections.reload()
   }
 
@@ -104,10 +103,10 @@ export function CollectionsPage() {
       setConfirming(false)
       if (result.response.ok) {
         setOpened(false)
-        notifySuccess(`Колекцію «${collection.title}» видалено.`)
+        notifySuccess(`Добірку «${collection.title}» видалено.`)
         collections.reload()
       } else {
-        setDeleteError(problemMessage(result.error, 'Колекцію не видалено.'))
+        setDeleteError(problemMessage(result.error, 'Добірку не видалено.'))
       }
     } catch {
       setConfirming(false)
@@ -117,64 +116,53 @@ export function CollectionsPage() {
   }
 
   const current = editing?.collection ?? null
-  const rows = useMemo(() => (collections.status === 'error' ? [] : (collections.data ?? [])), [collections.data, collections.status])
-  const { values: picked, set: pick } = useListParams(SELECT_KEYS)
+  const all = useMemo(() => collections.status === 'error' || collections.status === 'forbidden' ? [] : collections.data ?? [], [collections.data, collections.status])
+  const { values: picked, set: pick } = useListParams(PARAM_KEYS)
+  const selection = selections.find((item) => item.value === picked.show) ?? selections[0]
+  const rows = useMemo(() => all.filter(selection.matches), [all, selection])
   const selected = rows.find((row) => row.id === picked.id) ?? rows[0] ?? null
   const selectedId = selected?.id ?? null
   const selectRow = useCallback((row: ConsoleCollection) => pick({ id: row.id }), [pick])
   const rowClassName = useCallback((row: ConsoleCollection) => (row.id === selectedId ? 'app-split-row-active' : undefined), [selectedId])
-  const position = useMemo(() => {
-    if (!selected) return 0
-    const shown = [...rows].filter((row) => row.isVisible && row.products.length > 0).sort((a, b) => a.sortOrder - b.sortOrder)
-    return shown.findIndex((row) => row.id === selected.id) + 1
-  }, [rows, selected])
-  const emptyText =
-    collections.status === 'error' ? (
-      <Stack align="center" gap={8}>
-        <Text size="sm">{problemMessage(collections.problem, 'Не вдалося завантажити колекції.')}</Text>
-        <Button size="xs" variant="default" onClick={collections.reload}>
-          Спробувати ще раз
-        </Button>
-      </Stack>
-    ) : (
-      'Колекцій ще немає. Головна покаже лише категорії й знижки.'
-    )
+  const emptyText = listEmptyText(collections, 'Не вдалося завантажити добірки.', selection.value ? 'У цій вибірці немає добірок.' : 'Добірок ще немає.')
 
   return (
-    <ListPage className="catalog-dictionary-page">
+    <ListPage className="catalog-dictionary-page catalog-collections-page">
       <PageHeader
-        title="Колекції"
-        actions={
-          <Button leftSection={<IconPlus size={16} stroke={1.8} />} onClick={() => open(null)}>
-            Нова колекція
-          </Button>
-        }
-      />
-
-      <FilterBar
+        title="Добірки"
         actions={
           <>
-            {collections.data ? <span className="app-filter-summary catalog-summary">Колекцій: {countFormat.format(collections.data.length)}</span> : null}
             <Tooltip label="Оновити">
-              <ActionIcon variant="subtle" color="gray" aria-label="Оновити" loading={collections.isFetching} onClick={collections.reload}>
+              <ActionIcon variant="default" radius="xl" aria-label="Оновити" loading={collections.isFetching} onClick={collections.reload}>
                 <IconRefresh size={16} />
               </ActionIcon>
             </Tooltip>
+            <Button leftSection={<IconPlus size={16} stroke={1.8} />} onClick={() => open(null)}>Нова добірка</Button>
           </>
         }
+      />
+
+      <ScreenTabs
+        label="Вибірка добірок"
+        value={selection.value}
+        onChange={(show) => pick({ show, id: null })}
+        tabs={selections.map(({ value, label, icon, matches }) => {
+          const count = collections.data && collections.status === 'ready' ? all.filter(matches).length : null
+          return { value, label: <MetricLabel icon={icon}>{label}</MetricLabel>, count, footer: <MetricTrack value={count ?? 0} max={all.length} /> }
+        })}
       />
 
       <ListPageBody>
         <DictionaryLayout picked={Boolean(selectedId && picked.id === selectedId)} onBack={() => pick({ id: null })}>
           <div className="app-split-list">
             <DataTable
-              ariaLabel="Колекції"
+              ariaLabel="Добірки"
               columns={columns}
               data={rows}
               getRowId={getRowId}
               isLoading={collections.isLoading}
               isFetching={collections.isFetching}
-              minWidth={420}
+              minWidth={240}
               height="100%"
               manualSorting
               onRowClick={selectRow}
@@ -182,7 +170,7 @@ export function CollectionsPage() {
               emptyText={emptyText}
             />
           </div>
-          <CollectionDetailPane collection={selected} position={position} onEdit={open} />
+          <CollectionDetailPane collection={selected} onEdit={open} />
         </DictionaryLayout>
       </ListPageBody>
 
@@ -191,9 +179,11 @@ export function CollectionsPage() {
         opened={opened}
         onClose={close}
         dirty={formDirty && !busy}
-        title={current ? `Колекція «${current.title}»` : 'Нова колекція'}
-        size="compact"
-        closeOnEscape={!busy}
+        title={current ? `Добірка «${current.title}»` : 'Нова добірка'}
+        size="standard"
+        className="collection-editor-modal"
+        closeOnEscape={!busy && !confirming}
+        closeOnClickOutside={!busy && !confirming}
         footer={
           <Group justify="space-between" w="100%">
             {current ? (
@@ -206,7 +196,7 @@ export function CollectionsPage() {
             <Group gap="xs">
               <DrawerCancelButton disabled={busy} onCancel={close} />
               <Button type="submit" form={FORM_ID} loading={busy}>
-                Зберегти колекцію
+                Зберегти добірку
               </Button>
             </Group>
           </Group>
@@ -217,9 +207,9 @@ export function CollectionsPage() {
 
       <ConfirmDialog
         opened={confirming}
-        title="Видалити колекцію"
-        message={current ? `Колекція «${current.title}» зникне з головної. Скасувати видалення не можна.` : ''}
-        confirmLabel="Видалити колекцію"
+        title="Видалити добірку"
+        message={current ? `Добірка «${current.title}» зникне з головної. Скасувати видалення не можна.` : ''}
+        confirmLabel="Видалити добірку"
         danger
         busy={busy}
         onConfirm={() => void remove()}
