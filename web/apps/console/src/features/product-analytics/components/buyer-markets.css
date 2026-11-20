@@ -5,4 +5,10 @@
 .ba-market-region { display: grid; gap: .35rem; font-variant-numeric: tabular-nums; }
 .ba-map-legend { display: flex; align-items: center; flex-wrap: wrap; gap: .3rem; font-size: .8rem; }
 .ba-map-legend i { display: inline-block; width: 16px; height: 10px; }
+.ba-map-selector { display: flex; gap: .6rem; align-items: center; margin: 1rem 0; }
+.ba-map-selector select { max-width: 100%; padding: .4rem .7rem; border: 1px solid #a8b9b2; border-radius: .35rem; font: inherit; }
+.ba-locality-map svg { max-height: 27rem; }
+.ba-locality-map path { cursor: default; pointer-events: none; }
+.ba-locality-map circle { cursor: pointer; }
+.ba-locality-map circle:focus-visible, .ba-locality-map circle:hover { outline: none; stroke: #183e32; stroke-width: 2.4; }
 @media (max-width: 720px) { .ba-market-map { grid-template-columns: 1fr; } }

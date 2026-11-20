@@ -7,6 +7,7 @@ from time import monotonic
 
 from .invoices import INDEPENDENT_RECEIPTS, currency_valid
 from .register import kind_of
+from .settlements import resolve
 from .source import production
 
 
@@ -24,13 +25,26 @@ NAMES.update({"київ": "30", "севастополь": "40", "крим": "43"
 
 
 def region_code(raw, city=None):
-    city = (city or "").strip().casefold()
-    if city in ("київ", "м. київ", "севастополь", "м. севастополь"):
-        return NAMES[city]
     value = (raw or "").strip().casefold().replace("’", "'")
     if value.startswith("ua-") and value[3:] in REGIONS:
-        return value[3:]
-    return NAMES.get(value.removesuffix(" область").removesuffix(" обл.").removesuffix(" обл").strip())
+        code = value[3:]
+    else:
+        code = NAMES.get(value.removesuffix(" область").removesuffix(" обл.").removesuffix(" обл").strip())
+    return resolve(code, city, not value)[0] if city else code
+
+
+# Extract locality fragments in PostgreSQL. House numbers, street addresses
+# and delivery contact fields are never returned to the report.
+def address_fields(column):
+    city = rf"""coalesce(
+      substring({column} COLLATE "C" from '(?:^|[,;[:space:]])((?:[Мм]\.|[Сс]\.|[Мм]істо |[Сс]ело |[Сс]елище |смт\.? )[[:space:]]*[а-яА-ЯіІїЇєЄґҐ’''ʼ -]{{2,60}})(?:[,;]|$)'),
+      substring({column} COLLATE "C" from '^[[:space:]]*([А-ЯІЇЄҐ][а-яА-ЯіІїЇєЄґҐ’''ʼ -]{{1,48}})(?:[,;]|$)'))"""
+    region = rf"""substring({column} COLLATE "C" from '([а-яА-ЯіІїЇєЄґҐ-]+)[[:space:]]+[Оо]бл(?:асть|\.)?(?:[,;[:space:]]|$)')"""
+    return city, region
+
+
+DELIVERY_CITY, DELIVERY_REGION = address_fields("shipping_address")
+BUYER_CITY, BUYER_REGION = address_fields("buyer_address")
 
 
 DOCUMENTS = """
@@ -47,20 +61,43 @@ WITH sales AS (
         d.details->>'status' AS raw_status,d.details->>'currency_iso' AS raw_currency,
         p.id::text AS partner,p.title AS name,d.total,d.day,
         coalesce(nullif(p.details#>>'{address,region,title}',''),nullif(p.details#>>'{address,region}',''),
-                 nullif(p.details#>>'{region,title}',''),nullif(p.details->>'region',''),p.details->>'oblast') AS buyer_region,
-        coalesce(nullif(d.details#>>'{delivery,region,title}',''),nullif(d.details#>>'{delivery,region}',''),
-                 nullif(d.details->>'delivery_region',''),d.details->>'shipping_region') AS region
+                 nullif(p.details#>>'{region,title}',''),nullif(p.details->>'region',''),p.details->>'oblast') AS partner_region,
+        coalesce(nullif(p.details#>>'{address,katottg}',''),nullif(p.details#>>'{address,city,title}',''),
+                 nullif(p.details#>>'{address,city,name}',''),nullif(p.details#>>'{address,city}',''),
+                 nullif(p.details#>>'{city,title}',''),nullif(p.details#>>'{city,name}',''),p.details->>'city') AS partner_city,
+        CASE WHEN jsonb_typeof(p.details->'address')='string' THEN p.details->>'address' END AS buyer_address,
+        nullif(d.details->>'delivery_region','') AS delivery_region, nullif(d.details->>'shipping_region','') AS shipping_region,
+        nullif(d.details->>'delivery_city','') AS delivery_city, nullif(d.details->>'shipping_city','') AS shipping_city,
+        d.details->>'delivery_address' AS direct_address,
+        coalesce(nullif(nullif(d.details->'delivery','{}'::jsonb),'null'::jsonb),o.details->'delivery') AS delivery
  FROM sales d LEFT JOIN identities i ON i.source_account=d.source_account AND i.ref=lower(d.partner_ref)
  LEFT JOIN accounting.partners p ON p.id=coalesce(d.native_partner_id,i.id)
+ LEFT JOIN accounting.documents o ON o.entity_type='order' AND o.source_account=d.source_account
+     AND o.source_id=d.parent_ref AND lower(d.parent_kind) IN ('order','customerorder','замовлення клієнта')
+), addresses AS (
+ SELECT s.*, coalesce(nullif(delivery->>'delivery_address',''), direct_address) AS shipping_address
+ FROM selected s
+), located AS (
+ SELECT a.*,
+   CASE WHEN lower(coalesce(delivery->>'delivery_type','')) NOT IN ('самовивіз','самовывоз','pickup') THEN
+     coalesce(nullif(delivery#>>'{region,title}',''),nullif(delivery->>'region',''), delivery_region,shipping_region,
+              """ + DELIVERY_REGION + """) END AS region,
+   CASE WHEN lower(coalesce(delivery->>'delivery_type','')) NOT IN ('самовивіз','самовывоз','pickup') THEN
+     coalesce(nullif(delivery->>'katottg',''),nullif(delivery#>>'{city,title}',''),nullif(delivery#>>'{city,name}',''),
+              nullif(delivery->>'city',''),nullif(delivery#>>'{settlement,name}',''),nullif(delivery->>'settlement',''),
+              delivery_city,shipping_city,""" + DELIVERY_CITY + """) END AS city,
+   coalesce(partner_region,""" + BUYER_REGION + """) AS buyer_region,
+   coalesce(nullif(partner_city,''),""" + BUYER_CITY + """) AS buyer_city
+ FROM addresses a
 )
-SELECT account,entity_type,kind,status,currency,raw_kind,raw_status,raw_currency,partner,name,region,buyer_region,
+SELECT account,entity_type,kind,status,currency,raw_kind,raw_status,raw_currency,partner,name,region,buyer_region,city,buyer_city,
        count(*) AS count,sum(abs(total)) FILTER (WHERE abs(total)<=1e15) AS amount,
        max(day) FILTER (WHERE abs(total)<=1e15) AS last_day,
        count(*) FILTER (WHERE total IS NULL OR abs(total)>1e15) AS invalid
-FROM selected GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
+FROM located GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14
 """
 WEB = """
-SELECT s.area AS region,CASE WHEN lower(s.name) IN ('київ','севастополь') THEN s.name END AS city,
+SELECT s.area AS region,s.name AS city,
        count(*) AS count,sum(o.total) AS amount
 FROM ordering.orders o LEFT JOIN delivery.np_settlements s
   ON o.delivery_method IN ('nova_poshta','nova_poshta_courier') AND s.ref=o.settlement_ref
@@ -82,8 +119,31 @@ def add(bucket_, count, amount, refund=False, last=None):
         bucket_["lastPurchase"] = max(bucket_["lastPurchase"] or str(last), str(last))
 
 
+class Geography:
+    def __init__(self):
+        self.regions = defaultdict(bucket)
+        self.places = defaultdict(dict)
+
+    def record(self, region, city, count, amount, refund=False, last=None):
+        code, place = resolve(region_code(region), city, not (region or "").strip())
+        add(self.regions[code], count, amount, refund, last)
+        if place:
+            places = self.places[code]
+            if place.code not in places:
+                prefix = {"M": "м.", "C": "с.", "X": "с-ще"}.get(place.kind, "")
+                places[place.code] = dict(code=place.code, name=f"{prefix} {place.name}".strip(),
+                                          x=place.x, y=place.y, **bucket())
+            add(places[place.code], count, amount, refund, last)
+
+    def report(self):
+        return dict(unknown=self.regions.get(None, bucket()), regions=[
+            dict(code="UA"+code, name=name, settlements=list(self.places[code].values()),
+                 **self.regions.get(code, bucket())) for code, name in REGIONS.items()])
+
+
 def summarize(headers, web):
-    buyers, regions, registered, online = (defaultdict(bucket) for _ in range(4))
+    buyers = defaultdict(bucket)
+    regions, registered, online = Geography(), Geography(), Geography()
     names, invalid = {}, 0
     for row in headers:
         kind = "receipt" if row["entity_type"] == "receipt" else kind_of(row)
@@ -98,19 +158,17 @@ def summarize(headers, web):
             continue
         key = row["partner"]
         names[key] = row["name"]
-        for target in (buyers[key], regions[region_code(row["region"])], registered[region_code(row["buyer_region"])]):
-            add(target, count, row["amount"], kind == "return", row["last_day"])
+        values = count, row["amount"], kind == "return", row["last_day"]
+        add(buyers[key], *values)
+        regions.record(row["region"], row.get("city"), *values)
+        registered.record(row["buyer_region"], row.get("buyer_city"), *values)
     for row in web:
-        add(online[region_code(row["region"], row["city"])], row["count"], row["amount"])
-
-    def geography(data):
-        return dict(unknown=data.get(None, bucket()), regions=[
-            dict(code="UA"+code, name=name, **data.get(code, bucket())) for code, name in REGIONS.items()])
+        online.record(row["region"], row["city"], row["count"], row["amount"])
 
     ordered = sorted((dict(id=k, name=names[k], **v) for k,v in buyers.items() if k),
                      key=lambda r: (-r["amount"], -r["count"], r["id"]))
     return dict(partners=ordered, unlinked=buyers.get(None, bucket()), excluded=invalid,
-                documents=geography(regions), registered=geography(registered), online=geography(online))
+                documents=regions.report(), registered=registered.report(), online=online.report())
 
 
 _lock = Lock()

@@ -3,6 +3,7 @@ from decimal import Decimal
 from unittest import TestCase
 
 from analytics.markets import REGIONS, region_code, summarize
+from analytics.settlements import resolve
 
 
 class MarketsTests(TestCase):
@@ -12,6 +13,35 @@ class MarketsTests(TestCase):
         self.assertEqual(region_code("Київська область", "Київ"), "30")
         self.assertEqual(region_code("UA-43"), "43")
         self.assertIsNone(region_code("Головний Буча"))
+
+    def test_namesakes_are_disambiguated_by_region_type_or_code(self):
+        self.assertEqual(resolve("32", "Буча", False), ("32", None))
+        city = resolve("32", "м. Буча", False)[1]
+        village = resolve("32", "с. Буча", False)[1]
+        self.assertNotEqual(city.code, village.code)
+        self.assertNotEqual((city.x, city.y), (village.x, village.y))
+        self.assertEqual(resolve("32", city.code, False)[1], city)
+        self.assertEqual(resolve(None, "Ірпінь", True)[0], "32")
+        self.assertEqual(resolve(None, "Ірпінь", False), (None, None))
+        self.assertEqual(resolve("46", "Ірпінь", False), ("46", None))
+        self.assertEqual(resolve("48", "с. Київ", False)[1].region, "48")
+        self.assertEqual(resolve(None, "Київ", True), (None, None))
+
+    def test_settlements_reconcile_and_returns_do_not_increase_sales(self):
+        base = dict(account="archive", entity_type="invoice", status="active", currency="UAH", kind="out",
+                    partner="p", name="Покупець", region="Київська", city="м. Буча", buyer_region="Львівська",
+                    buyer_city="Львів", count=1, amount=Decimal(100), invalid=0, last_day=date(2025, 2, 5))
+        result = summarize([base, dict(base, kind="back", amount=Decimal(10)), dict(base, city="Буча")],
+                           [dict(region="Київська", city="Ірпінь", count=2, amount=Decimal(80))])
+        def region(source, code):
+            return next(r for r in result[source]["regions"] if r["code"] == code)
+        kyiv = region("documents", "UA32")
+        self.assertEqual((kyiv["count"], kyiv["amount"]), (2,190))
+        self.assertEqual(len(kyiv["settlements"]), 1)
+        point = kyiv["settlements"][0]
+        self.assertEqual((point["name"],point["count"],point["returns"],point["amount"]), ("м. Буча",1,1,90))
+        self.assertEqual(region("registered","UA46")["settlements"][0]["amount"],190)
+        self.assertEqual(region("online","UA32")["settlements"][0]["name"], "м. Ірпінь")
 
     def test_counterparty_and_geographic_totals_reconcile_with_unknowns(self):
         base = dict(account="archive", entity_type="invoice", status="active", currency="UAH", kind="out",

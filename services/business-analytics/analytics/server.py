@@ -226,6 +226,23 @@ def dispatch(env):
                                                 if m["model"] == "ridge"), None))
         except Exception as exc:
             logger.error("Turnover forecast check unavailable (%s)", type(exc).__name__)
+        try:
+            market = markets(year, now().date())
+            for source in ("documents", "registered", "online"):
+                geography = market[source]
+                regions = geography["regions"]
+                kyiv = next(r for r in regions if r["code"] == "UA32")
+                turnover = geography["unknown"]["amount"] + sum(r["amount"] for r in regions)
+                ledger = "independent" if source == "online" else (
+                    "matched" if turnover == totals["documentNet"] else "differences")
+                logging.getLogger("gunicorn.error").info(
+                    "Buyer geography checked (year=%s, source=%s, ledger=%s, partners=%s, sales=%s, unknown=%s, "
+                    "places=%s, kyivRegionSales=%s, kyivPlaces=%s, kyivMappedSales=%s)",
+                    year, source, ledger, market["partnerCount"], geography["unknown"]["count"] + sum(r["count"] for r in regions),
+                    geography["unknown"]["count"], sum(len(r["settlements"]) for r in regions),
+                    kyiv["count"], len(kyiv["settlements"]), sum(p["count"] for p in kyiv["settlements"]))
+        except Exception as exc:
+            logger.error("Buyer geography check unavailable (%s)", type(exc).__name__)
         return 200, {"year": year, "status": result}
     if route == ("GET", "/status"):
         return 200, dict(service.status, policiesWritable=not hosted())
