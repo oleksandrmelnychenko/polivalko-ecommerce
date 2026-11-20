@@ -4494,6 +4494,77 @@
         }
       }
     },
+    "/api/v1/console/catalog/products/price": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Змінити роздрібні ціни із перевіркою поточної ціни та збереженням стану акції",
+        "operationId": "ConsoleAdjustUpstreamPrice",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdjustUpstreamPriceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustUpstreamPriceResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustUpstreamPriceConflict"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/console/catalog/attribute-names": {
       "get": {
         "tags": [
@@ -10211,6 +10282,104 @@
           },
           "canPay": {
             "type": "boolean"
+          }
+        }
+      },
+      "AdjustUpstreamPriceChange": {
+        "required": [
+          "productId",
+          "expectedSku",
+          "expectedPrice",
+          "expectedOldPrice",
+          "expectedPriceUpdatedAt",
+          "price"
+        ],
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expectedSku": {
+            "type": "string"
+          },
+          "expectedPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "expectedOldPrice": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "expectedPriceUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "AdjustUpstreamPriceConflict": {
+        "required": [
+          "conflicts"
+        ],
+        "type": "object",
+        "properties": {
+          "conflicts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdjustUpstreamPriceConflictItem"
+            }
+          }
+        }
+      },
+      "AdjustUpstreamPriceConflictItem": {
+        "required": [
+          "productId",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "AdjustUpstreamPriceRequest": {
+        "required": [
+          "changes"
+        ],
+        "type": "object",
+        "properties": {
+          "changes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AdjustUpstreamPriceChange"
+            }
+          }
+        }
+      },
+      "AdjustUpstreamPriceResult": {
+        "required": [
+          "updated"
+        ],
+        "type": "object",
+        "properties": {
+          "updated": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

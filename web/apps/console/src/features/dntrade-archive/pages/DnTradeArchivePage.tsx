@@ -15,7 +15,9 @@ import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { getArchive, type ArchiveItem, type ArchiveQuery } from '../api/archiveApi'
 import { ArchiveFilters, archiveFilterKeys, readArchiveFilters, type ArchiveFilterValues } from '../components/ArchiveFilters'
 import { ArchiveImportDialog } from '../components/ArchiveImportDialog'
+import { ArchiveNavigation } from '../components/ArchiveNavigation'
 import { ARCHIVE_PATH, archiveAmount, archiveEntityLabel, archiveSourceDate } from '../lib/archive'
+import { archiveViewEntityType, readArchiveView } from '../lib/archiveViews'
 
 const PAGE_SIZE = 50
 const PAGE_SIZE_OPTIONS = [20, 50, 100] as const
@@ -23,7 +25,7 @@ const EMPTY_ROWS: ArchiveItem[] = []
 const getRowId = (row: ArchiveItem) => row.id
 const countFormat = new Intl.NumberFormat('uk-UA')
 
-function archiveColumns(search: string): DataTableColumn<ArchiveItem>[] {
+function archiveColumns(search: string, warehouse: boolean): DataTableColumn<ArchiveItem>[] {
   return [
     {
       id: 'sourceId',
@@ -41,6 +43,7 @@ function archiveColumns(search: string): DataTableColumn<ArchiveItem>[] {
     { id: 'documentType', header: 'Вид документа', width: 155, cell: (row) => row.documentType ?? '—' },
     { id: 'sourceDate', header: 'Дата запису', width: 115, cell: (row) => archiveSourceDate(row.sourceDate) },
     { id: 'sourceAccount', header: 'Джерело', width: 150, cell: (row) => row.sourceAccount },
+    ...(warehouse ? [{ id: 'storeIds', header: 'Код складу', width: 155, cell: (row: ArchiveItem) => row.storeIds.join(', ') || '—' }] : []),
     { id: 'status', header: 'Статус', width: 130, cell: (row) => row.status ?? '—' },
     { id: 'total', header: 'Сума', width: 140, align: 'right', numeric: true, cell: (row) => archiveAmount(row.total, row.currency) },
   ]
@@ -57,15 +60,17 @@ export function DnTradeArchivePage() {
   const [params, setParams] = useSearchParams()
   const [importing, setImporting] = useState(false)
   const canImport = can(PermissionKeys.DnTradeArchive.Import)
+  const view = readArchiveView(params)
+  const warehouse = view.id === 'warehouse'
   const filters = useMemo(() => readArchiveFilters(params), [params])
-  const columns = useMemo(() => archiveColumns(search), [search])
+  const columns = useMemo(() => archiveColumns(search, warehouse), [search, warehouse])
   const pageSize = readPageNumber(params.get('pageSize'), PAGE_SIZE, 100)
   const page = readPageNumber(params.get('page'), 1, Math.floor(2_147_483_647 / pageSize) + 1)
   const filtered = archiveFilterKeys.some((key) => Boolean(filters[key]))
   const query: ArchiveQuery = {
     q: filters.q || undefined,
     sourceAccount: filters.sourceAccount || undefined,
-    entityType: filters.entityType || undefined,
+    entityType: archiveViewEntityType(view, filters.entityType) || undefined,
     storeId: filters.storeId || undefined,
     from: filters.from || undefined,
     to: filters.to || undefined,
@@ -110,7 +115,9 @@ export function DnTradeArchivePage() {
           </Button>
         ) : null}
       />
+      <ArchiveNavigation params={params} />
       <ArchiveFilters
+        view={view}
         filters={filters}
         onChange={updateFilters}
         actions={
@@ -145,7 +152,7 @@ export function DnTradeArchivePage() {
               description={Object.values(fieldErrors(archive.problem)).join(' ') || problemMessage(archive.problem, 'Не вдалося завантажити архів.')}
               onRetry={archive.status === 'error' ? archive.reload : undefined}
             />
-          ) : filtered ? 'За цими умовами записів немає.' : 'Архів порожній.'}
+          ) : filtered ? 'За цими умовами записів немає.' : view.id === 'all' ? 'Архів порожній.' : 'Записів цього типу немає.'}
         />
       </ListPageBody>
       {canImport && importing ? <ArchiveImportDialog onClose={() => setImporting(false)} onImported={archive.reload} /> : null}

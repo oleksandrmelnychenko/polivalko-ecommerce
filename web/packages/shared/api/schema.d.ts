@@ -1231,6 +1231,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/catalog/products/price": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Змінити роздрібні ціни із перевіркою поточної ціни та збереженням стану акції */
+        post: operations["ConsoleAdjustUpstreamPrice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/catalog/attribute-names": {
         parameters: {
             query?: never;
@@ -2541,6 +2558,34 @@ export interface components {
             mainItemName: string;
             mainItemImageUrl: null | string;
             canPay: boolean;
+        };
+        AdjustUpstreamPriceChange: {
+            /** Format: uuid */
+            productId: string;
+            expectedSku: string;
+            /** Format: double */
+            expectedPrice: number;
+            /** Format: double */
+            expectedOldPrice: null | number;
+            /** Format: date-time */
+            expectedPriceUpdatedAt: string;
+            /** Format: double */
+            price: number;
+        };
+        AdjustUpstreamPriceConflict: {
+            conflicts: components["schemas"]["AdjustUpstreamPriceConflictItem"][];
+        };
+        AdjustUpstreamPriceConflictItem: {
+            /** Format: uuid */
+            productId: string;
+            reason: string;
+        };
+        AdjustUpstreamPriceRequest: {
+            changes: null | components["schemas"]["AdjustUpstreamPriceChange"][];
+        };
+        AdjustUpstreamPriceResult: {
+            /** Format: int32 */
+            updated: number;
         };
         AdjustUpstreamStockChange: {
             /** Format: uuid */
@@ -7742,6 +7787,66 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdjustUpstreamStockConflict"];
+                };
+            };
+        };
+    };
+    ConsoleAdjustUpstreamPrice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdjustUpstreamPriceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjustUpstreamPriceResult"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdjustUpstreamPriceConflict"];
                 };
             };
         };

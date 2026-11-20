@@ -115,7 +115,14 @@ export function ProductPage() {
               />
               <ProductEditorImages product={data} readOnly={readOnly} onChange={product.setData} />
             </div>
-            <ProductEditorNavkolo product={data} />
+            <ProductEditorNavkolo
+              key={data.id}
+              product={data}
+              canUpdatePrice={can(PermissionKeys.Catalog.RunImport)}
+              priceLoading={product.isFetching}
+              onReload={product.reload}
+              onPriceSaved={product.setData}
+            />
           </div>
         </div>
       )}

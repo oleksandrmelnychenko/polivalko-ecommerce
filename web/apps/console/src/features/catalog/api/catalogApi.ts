@@ -43,8 +43,12 @@ export function setProductsVisibility(headers: CsrfHeaders, body: S['SetProducts
   return api.POST('/api/v1/console/catalog/products/visibility', { headers, body })
 }
 
-export function getProduct(id: string) {
-  return api.GET('/api/v1/console/catalog/products/{id}', { params: { path: { id } } })
+export function getProduct(id: string, cache?: RequestCache) {
+  return api.GET('/api/v1/console/catalog/products/{id}', { params: { path: { id } }, cache })
+}
+
+export function adjustProductPrice(headers: CsrfHeaders, change: S['AdjustUpstreamPriceChange']) {
+  return api.POST('/api/v1/console/catalog/products/price', { headers, body: { changes: [change] } })
 }
 
 export function updateProduct(headers: CsrfHeaders, id: string, body: UpdateProductRequest) {

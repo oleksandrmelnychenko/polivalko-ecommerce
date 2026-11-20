@@ -54,6 +54,10 @@ internal static class ProductEndpoints
             .RequirePermission(PermissionKeys.CatalogImportRun)
             .WithName("ConsoleAdjustUpstreamStock")
             .WithSummary("Змінити лише залишки джерела після перевірки поточних залишків і резервів");
+        products.MapPost("/price", AdjustUpstreamPrice.HandleAsync)
+            .RequirePermission(PermissionKeys.CatalogImportRun)
+            .WithName("ConsoleAdjustUpstreamPrice")
+            .WithSummary("Змінити роздрібні ціни із перевіркою поточної ціни та збереженням стану акції");
 
         return catalog;
     }
