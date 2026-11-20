@@ -1,6 +1,10 @@
 import { Button, Stack, Text } from '@mantine/core'
-import { useCallback, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useCallback, useMemo, useState } from 'react'
+import { useMediaQuery } from '@mantine/hooks'
+import { IconUser } from '@tabler/icons-react'
+import { useCustomerSelection } from '../lib/useCustomerSelection'
+import { AppEditorModal } from '@/shared/ui/AppEditorModal'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { usePermissions } from '@/features/auth'
 import { problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
@@ -14,7 +18,7 @@ import { getCustomers, type Customer } from '../api/customersApi'
 import { sortingToSort, sortToSorting, toCustomersQuery } from '../lib/customersState'
 import { useCustomersState } from '../lib/useCustomersState'
 import { CustomerDetailPane } from './CustomerDetailPane'
-import { CUSTOMERS_COLUMNS } from './customersColumns'
+import { customersColumns } from './customersColumns'
 import { CustomersFilters } from './CustomersFilters'
 
 const getRowId = (row: Customer) => row.phone
@@ -26,8 +30,8 @@ export function OrderCustomersTab({ onOpenAccount }: { onOpenAccount: (account: 
   const { state, update } = useCustomersState()
   const query = useMemo(() => toCustomersQuery(state), [state])
   const customers = useApiQuery(`customers:${JSON.stringify(query)}`, () => getCustomers(query), { keepPrevious: true })
-  const [params, setParams] = useSearchParams()
-  const pickedPhone = params.get('id')
+  const { id, setId } = useCustomerSelection()
+  const compact = useMediaQuery('(max-width: 48em)')
 
   const sorting = useMemo(() => sortToSorting(state.sort), [state.sort])
   const onSortingChange = useCallback((next: DataTableSortingState) => update({ sort: sortingToSort(next) }), [update])
@@ -35,22 +39,16 @@ export function OrderCustomersTab({ onOpenAccount }: { onOpenAccount: (account: 
   const page = customers.data
   const failed = customers.status === 'error' || customers.status === 'forbidden'
   const rows = useMemo(() => (failed ? [] : (page?.items ?? [])), [failed, page])
-  const selected = rows.find((row) => row.phone === pickedPhone) ?? rows[0] ?? null
-  const selectedPhone = selected?.phone ?? null
+  const [closing, setClosing] = useState<Customer | null>(null)
+  const selected = rows.find((row) => row.phone === id) ?? null
+  const detail = selected ?? closing
+  const select = useCallback((row: Customer) => setId(row.phone), [setId])
+  const columns = useMemo(() => customersColumns(select, compact === true), [select, compact])
 
-  const select = useCallback(
-    (row: Customer) =>
-      setParams(
-        (current) => {
-          const next = new URLSearchParams(current)
-          next.set('id', row.phone)
-          return next
-        },
-        { replace: true },
-      ),
-    [setParams],
-  )
-  const rowClassName = useCallback((row: Customer) => (row.phone === selectedPhone ? 'app-split-row-active' : undefined), [selectedPhone])
+  function close() {
+    setClosing(selected)
+    setId(null)
+  }
 
   const emptyText = failed ? (
     <Stack align="center" gap={8}>
@@ -87,28 +85,34 @@ export function OrderCustomersTab({ onOpenAccount }: { onOpenAccount: (account: 
       />
 
       <ListPageBody>
-        <div className="app-split-layout">
-          <div className="app-split-list">
-            <DataTable
-              ariaLabel="Покупці за замовленнями"
-              columns={CUSTOMERS_COLUMNS}
-              data={rows}
-              getRowId={getRowId}
-              isLoading={customers.isLoading}
-              isFetching={customers.isFetching}
-              minWidth={600}
-              height="100%"
-              manualSorting
-              sorting={sorting}
-              onSortingChange={onSortingChange}
-              onRowClick={select}
-              rowClassName={rowClassName}
-              emptyText={emptyText}
-            />
-          </div>
-          <CustomerDetailPane customer={selected} canViewOrders={canViewOrders} onOpenAccount={onOpenAccount} />
-        </div>
+        <DataTable
+          ariaLabel="Покупці за замовленнями"
+          columns={columns}
+          data={rows}
+          getRowId={getRowId}
+          isLoading={customers.isLoading}
+          isFetching={customers.isFetching}
+          minWidth={compact ? 245 : 670}
+          height="100%"
+          manualSorting
+          sorting={sorting}
+          onSortingChange={onSortingChange}
+          onRowClick={select}
+          emptyText={emptyText}
+        />
       </ListPageBody>
+      <AppEditorModal
+        opened={Boolean(selected) && !failed}
+        onClose={close}
+        onExitTransitionEnd={() => setClosing(null)}
+        title={<MetricLabel icon={IconUser}>Картка покупця</MetricLabel>}
+        size="standard"
+        className="customer-modal"
+      >
+        {detail && !failed && (
+          <CustomerDetailPane key={detail.phone} customer={detail} canViewOrders={canViewOrders} onOpenAccount={onOpenAccount} />
+        )}
+      </AppEditorModal>
     </>
   )
 }

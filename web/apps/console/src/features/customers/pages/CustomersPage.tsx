@@ -6,6 +6,7 @@ import { ScreenTabs, type ScreenTab } from '@/shared/ui/ScreenTabs'
 import { AccountsTab } from '../components/AccountsTab'
 import { OrderCustomersTab } from '../components/OrderCustomersTab'
 import '@/shared/ui/split/split.css'
+import '@/shared/sales/sales-list.css'
 import './customers.css'
 
 type CustomersTab = 'orders' | 'accounts'
@@ -30,7 +31,7 @@ export function CustomersPage() {
   }
 
   return (
-    <ListPage>
+    <ListPage className="sales-list-page customers-list-page">
       <PageHeader title="Покупці" />
       <ScreenTabs<CustomersTab> label="Покупці" tabs={TABS} value={tab} onChange={(next) => changeTab(next)} />
       {tab === 'accounts' ? <AccountsTab /> : <OrderCustomersTab onOpenAccount={(account: AccountListItem) => changeTab('accounts', account.id)} />}

@@ -8,30 +8,6 @@
   gap: 8px;
 }
 
-.customers-card-link {
-  align-items: center;
-  background: none;
-  border: 0;
-  color: var(--brand-accent-hover);
-  cursor: pointer;
-  display: inline-flex;
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 600;
-  gap: 4px;
-  padding: 0;
-}
-
-.customers-card-link:hover {
-  text-decoration: underline;
-}
-
-.customers-card-link:focus-visible {
-  border-radius: 4px;
-  outline: 2px solid var(--brand-accent);
-  outline-offset: 2px;
-}
-
 .customers-addresses {
   display: flex;
   flex-direction: column;
@@ -73,4 +49,69 @@
 .customers-address-text {
   color: var(--mantine-color-gray-7);
   font-size: 13px;
+}
+
+.customers-list-page .app-screen-tabs {
+  align-self: flex-start;
+  width: auto;
+  max-width: 100%;
+  border: 1px solid var(--app-line);
+  border-radius: 999px;
+  padding: 1px;
+}
+
+.customer-trigger {
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 3px 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+}
+.customer-trigger:hover .app-split-item-name { text-decoration: underline; }
+.customer-trigger:focus-visible { outline: 2px solid var(--brand-accent); border-radius: 6px; }
+.customer-trigger .app-split-avatar, .customer-modal .app-split-avatar {
+  background: var(--app-ground);
+  color: var(--brand-ink);
+  border: 0;
+}
+.customer-modal .app-sheet-scroll { padding: 12px; background: var(--app-ground); }
+.customer-modal .app-split-detail { overflow: visible; background: transparent; gap: 10px; padding: 0; animation: none; }
+.customer-modal :is(.app-split-hero, .app-split-card) { border: 1px solid var(--app-line); box-shadow: var(--app-card-shadow); }
+.customer-modal .app-split-hero-top, .customer-modal .app-split-card { padding: 14px 16px; }
+.customer-modal .app-split-head { align-items: center; }
+.customer-modal .app-split-avatar.is-lg { width: 44px; height: 44px; font-size: 16px; }
+.customer-modal .app-split-card-head { align-items: center; flex-wrap: wrap; }
+.customer-modal .app-split-card-head .metric-label { font-size: 14px; color: var(--brand-ink); }
+.customer-modal .app-split-card-head a.mantine-Button-root { display: inline-block; color: var(--brand-ink); text-decoration: none; }
+.customer-modal .app-split-stats > div { padding: 12px 14px; min-width: 0; }
+.customer-modal .app-split-stats dd { font-family: var(--font-mono); font-size: clamp(16px, 2.2vw, 25px); overflow-wrap: anywhere; }
+.customer-modal .app-split-hero h2 { font-size: clamp(20px, 2.4vw, 28px); overflow-wrap: anywhere; }
+.customer-modal .app-split-hero-aliases { overflow-wrap: anywhere; }
+.customer-modal .mantine-Button-root { border-radius: 999px; }
+.customer-modal a[href^='tel:'], .customers-list-page .app-split-item-meta, .customer-phone { font-family: var(--font-mono); }
+@media (max-width: 42em) {
+  .customer-modal .app-sheet-scroll { padding: 8px; }
+  .customer-modal .app-split-card, .customer-modal .app-split-hero-top { padding: 12px; }
+  .customer-modal .app-split-stats > div { padding: 8px; }
+  .customer-modal .app-split-stats dt { font-size: 11px; }
+  .customer-modal .app-split-stats dd { flex-wrap: wrap; }
+  .customer-modal .app-split-fields > div { grid-template-columns: minmax(0, 1fr); }
+  .customer-modal .app-sales-list li { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+  .customer-modal .app-sales-number { white-space: normal; overflow-wrap: anywhere; }
+  .customer-modal .app-sales-when { text-align: end; }
+  .customer-trigger { gap: 5px; }
+  .customer-trigger .app-split-row-text > span { white-space: normal; overflow-wrap: anywhere; }
+  .customers-list-page .app-table-chip { max-width: 100%; white-space: normal; }
+}
+@media (max-width: 28em) {
+  .customer-modal .app-split-hero-aliases { display: grid; gap: 3px; }
+  .customer-modal .app-split-hero-aliases .app-split-dot::before { content: none; }
+  .customer-modal .app-split-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .customer-modal .app-split-stats > div:last-child { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--app-line); }
 }

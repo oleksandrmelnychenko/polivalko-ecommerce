@@ -1,11 +1,12 @@
 import { Button, Skeleton } from '@mantine/core'
-import { IconArrowRight, IconListDetails } from '@tabler/icons-react'
+import { IconArrowRight, IconId, IconReceiptRefund, IconShoppingBag } from '@tabler/icons-react'
 import { Link } from 'react-router-dom'
 import { formatDateTime, formatPrice, plural } from '@polivalko/shared/lib/format'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { shortWhen } from '@/shared/lib/when'
 import { findAccounts, findOrders, findRefunds, ordersSearchHref, type AccountListItem } from '@/shared/sales/salesLookups'
 import { OrdersList, RefundsList } from '@/shared/sales/SalesLists'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { Money } from '@/shared/ui/Money'
 import { SplitAvatar } from '@/shared/ui/split/SplitAvatar'
 import type { Customer } from '../api/customersApi'
@@ -14,7 +15,7 @@ import { AccountChips } from './AccountChips'
 const ORDERS_SHOWN = 5
 
 type CustomerDetailPaneProps = {
-  customer: Customer | null
+  customer: Customer
   canViewOrders: boolean
   onOpenAccount: (account: AccountListItem) => void
 }
@@ -24,15 +25,13 @@ function digits(value: string | null | undefined): string {
 }
 
 export function CustomerDetailPane({ customer, canViewOrders, onOpenAccount }: CustomerDetailPaneProps) {
-  const phone = customer?.phone ?? ''
-  const email = customer?.email ?? ''
-  const orders = useApiQuery(`customer-orders:${phone}`, () => findOrders(phone, ORDERS_SHOWN), { enabled: Boolean(customer) && canViewOrders })
-  const refunds = useApiQuery(`customer-refunds:${phone}`, () => findRefunds(phone, 20), { enabled: Boolean(customer) && canViewOrders })
-  const byPhone = useApiQuery(`customer-account-phone:${phone}`, () => findAccounts(phone), { enabled: Boolean(customer) })
+  const phone = customer.phone
+  const email = customer.email ?? ''
+  const orders = useApiQuery(`customer-orders:${phone}`, () => findOrders(phone, ORDERS_SHOWN), { enabled: canViewOrders && Boolean(phone) })
+  const refunds = useApiQuery(`customer-refunds:${phone}`, () => findRefunds(phone, 20), { enabled: canViewOrders && Boolean(phone) })
+  const byPhone = useApiQuery(`customer-account-phone:${phone}`, () => findAccounts(phone), { enabled: Boolean(phone) })
   const phoneMatch = (byPhone.isFetching ? [] : (byPhone.data?.items ?? [])).find((account) => digits(account.phone) === digits(phone)) ?? null
-  const byEmail = useApiQuery(`customer-account-email:${email}`, () => findAccounts(email), { enabled: Boolean(customer) && Boolean(email) && !byPhone.isFetching && byPhone.status === 'ready' && !phoneMatch })
-
-  if (!customer) return <section className="app-split-detail app-split-detail-empty">Оберіть покупця зліва.</section>
+  const byEmail = useApiQuery(`customer-account-email:${email}`, () => findAccounts(email), { enabled: Boolean(email) && !byPhone.isFetching && (!phone || byPhone.status === 'ready') && !phoneMatch })
 
   const account = phoneMatch ?? (byEmail.isFetching || !email ? [] : (byEmail.data?.items ?? [])).find((item) => item.email.toLowerCase() === email.toLowerCase()) ?? null
   const accountLoading = byPhone.isFetching || byEmail.isFetching
@@ -61,13 +60,6 @@ export function CustomerDetailPane({ customer, canViewOrders, onOpenAccount }: C
               </p>
             </div>
           </div>
-          {canViewOrders ? (
-            <div className="app-split-actions">
-              <Button component={Link} to={ordersSearchHref(customer.phone)} variant="default" leftSection={<IconListDetails size={16} stroke={1.7} />}>
-                Усі замовлення
-              </Button>
-            </div>
-          ) : null}
         </div>
 
         <dl className="app-split-stats">
@@ -90,12 +82,11 @@ export function CustomerDetailPane({ customer, canViewOrders, onOpenAccount }: C
 
       <section className="app-split-card" aria-labelledby="customer-orders-title">
         <header className="app-split-card-head">
-          <h3 id="customer-orders-title">Замовлення</h3>
+          <h3 id="customer-orders-title"><MetricLabel icon={IconShoppingBag}>Замовлення</MetricLabel></h3>
           {canViewOrders ? (
-            <Link to={ordersSearchHref(customer.phone)}>
-              {customer.orders > ORDERS_SHOWN ? `Усі ${customer.orders}` : 'У замовленнях'}
-              <IconArrowRight size={14} stroke={2} aria-hidden="true" />
-            </Link>
+            <Button component={Link} to={ordersSearchHref(customer.phone)} radius="xl" variant="default" size="xs" rightSection={<IconArrowRight size={14} />}>
+              Усі замовлення
+            </Button>
           ) : null}
         </header>
         {!canViewOrders ? (
@@ -114,6 +105,8 @@ export function CustomerDetailPane({ customer, canViewOrders, onOpenAccount }: C
           </dl>
         ) : orders.isFetching ? (
           <Skeleton height={120} radius={8} />
+        ) : orders.status !== 'ready' ? (
+          <p>Не вдалося завантажити замовлення. <Button size="xs" variant="subtle" onClick={orders.reload}>Повторити</Button></p>
         ) : orderItems.length ? (
           <>
             <OrdersList orders={orderItems} canOpen label="Останні замовлення покупця" />
@@ -126,16 +119,17 @@ export function CustomerDetailPane({ customer, canViewOrders, onOpenAccount }: C
 
       <section className="app-split-card" aria-labelledby="customer-account-title">
         <header className="app-split-card-head">
-          <h3 id="customer-account-title">Кабінет на сайті</h3>
+          <h3 id="customer-account-title"><MetricLabel icon={IconId}>Кабінет на сайті</MetricLabel></h3>
           {account ? (
-            <button type="button" className="customers-card-link" onClick={() => onOpenAccount(account)}>
+            <Button radius="xl" size="xs" variant="default" rightSection={<IconArrowRight size={14} />} onClick={() => onOpenAccount(account)}>
               Відкрити кабінет
-              <IconArrowRight size={14} stroke={2} aria-hidden="true" />
-            </button>
+            </Button>
           ) : null}
         </header>
         {accountLoading ? (
           <Skeleton height={60} radius={8} />
+        ) : byPhone.status === 'error' || byPhone.status === 'forbidden' || (!phoneMatch && email && byEmail.status !== 'ready') ? (
+          <p>Не вдалося завантажити кабінет. <Button size="xs" variant="subtle" onClick={byPhone.status === 'ready' ? byEmail.reload : byPhone.reload}>Повторити</Button></p>
         ) : account ? (
           <dl className="app-split-fields">
             <div>
@@ -166,15 +160,13 @@ export function CustomerDetailPane({ customer, canViewOrders, onOpenAccount }: C
         )}
       </section>
 
-      {canViewOrders && refundItems.length ? (
+      {canViewOrders && (refundItems.length > 0 || refunds.status === 'error' || refunds.status === 'forbidden') ? (
         <section className="app-split-card" aria-labelledby="customer-refunds-title">
           <header className="app-split-card-head">
-            <h3 id="customer-refunds-title">Повернення</h3>
-            <span>
-              {refundItems.length} {plural(refundItems.length, 'повернення', 'повернення', 'повернень')}
-            </span>
+            <h3 id="customer-refunds-title"><MetricLabel icon={IconReceiptRefund}>Повернення</MetricLabel></h3>
+            {refunds.status === 'ready' && refunds.data && <span>{refunds.data.totalItems} {plural(refunds.data.totalItems, 'повернення', 'повернення', 'повернень')}</span>}
           </header>
-          <RefundsList refunds={refundItems} canOpen label="Повернення покупця" />
+          {refunds.status === 'ready' ? <RefundsList refunds={refundItems} canOpen label="Повернення покупця" /> : <p>Не вдалося завантажити повернення. <Button variant="subtle" size="xs" onClick={refunds.reload}>Повторити</Button></p>}
         </section>
       ) : null}
     </section>

@@ -1,5 +1,5 @@
 import { Button, Skeleton } from '@mantine/core'
-import { IconLock, IconLockOpen, IconMailForward } from '@tabler/icons-react'
+import { IconLock, IconLockOpen, IconMailForward, IconMapPin, IconShoppingBag } from '@tabler/icons-react'
 import { useState } from 'react'
 import { formatDateTime } from '@polivalko/shared/lib/format'
 import { deliveryMethodLabel } from '@polivalko/shared/lib/labels'
@@ -7,6 +7,7 @@ import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { OrdersList } from '@/shared/sales/SalesLists'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { notifyError, notifySuccess } from '@/shared/ui/notify'
 import { SplitAvatar } from '@/shared/ui/split/SplitAvatar'
@@ -16,20 +17,18 @@ import { AccountChips } from './AccountChips'
 type PendingAction = 'lock' | 'unlock' | 'reset' | null
 
 type AccountDetailPaneProps = {
-  id: string | null
+  id: string
   canManage: boolean
   canViewOrders: boolean
   onChanged: () => void
 }
 
 export function AccountDetailPane({ id, canManage, canViewOrders, onChanged }: AccountDetailPaneProps) {
-  const account = useApiQuery(`account:${id ?? ''}`, () => getAccount(id ?? ''), { enabled: Boolean(id) })
+  const account = useApiQuery(`account:${id}`, () => getAccount(id))
   const [pending, setPending] = useState<PendingAction>(null)
   const [busy, setBusy] = useState(false)
 
-  if (!id) return <section className="app-split-detail app-split-detail-empty">Оберіть кабінет зліва.</section>
-
-  const data = account.data?.id === id ? account.data : undefined
+  const data = account.status === 'ready' && account.data?.id === id ? account.data : undefined
 
   if (!data) {
     if (account.isFetching) {
@@ -141,7 +140,7 @@ export function AccountDetailPane({ id, canManage, canViewOrders, onChanged }: A
 
       <section className="app-split-card" aria-labelledby="account-orders-title">
         <header className="app-split-card-head">
-          <h3 id="account-orders-title">Замовлення через кабінет</h3>
+          <h3 id="account-orders-title"><MetricLabel icon={IconShoppingBag}>Замовлення через кабінет</MetricLabel></h3>
         </header>
         {data.orders.length ? (
           <OrdersList orders={data.orders} canOpen={canViewOrders} label="Замовлення через кабінет" />
@@ -152,7 +151,7 @@ export function AccountDetailPane({ id, canManage, canViewOrders, onChanged }: A
 
       <section className="app-split-card" aria-labelledby="account-addresses-title">
         <header className="app-split-card-head">
-          <h3 id="account-addresses-title">Збережені адреси</h3>
+          <h3 id="account-addresses-title"><MetricLabel icon={IconMapPin}>Збережені адреси</MetricLabel></h3>
         </header>
         {data.addresses.length ? (
           <ul className="customers-addresses">
