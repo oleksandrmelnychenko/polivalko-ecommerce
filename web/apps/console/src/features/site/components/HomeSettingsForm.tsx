@@ -1,17 +1,13 @@
 import { Button } from '@mantine/core'
 import { useHotkeys } from '@mantine/hooks'
-import { IconDeviceFloppy } from '@tabler/icons-react'
+import { IconArrowLeft, IconChevronRight, IconDeviceFloppy } from '@tabler/icons-react'
 import { useCallback, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useApiQuery } from '@/shared/api/useApiQuery'
-import { DataTable } from '@/shared/ui/data-table/DataTable'
-import type { DataTableColumn } from '@/shared/ui/data-table/types'
 import { LeaveGuard } from '@/shared/ui/LeaveGuard'
-import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { PageHeader } from '@/shared/ui/PageHeader'
-import { TableChip } from '@/shared/ui/TableChip'
 import { getBanners, saveHome, type HomeSettings } from '../api/siteApi'
-import { blockHint, blockName, toHomeBody, toHomeForm, validateHome, type HomeForm } from '../lib/homeSettings'
+import { blockName, toHomeBody, toHomeForm, validateHome, type HomeForm } from '../lib/homeSettings'
 import { periodEnd, periodStart, periodState } from '../lib/period'
 import { useSaveForm } from '../lib/useSaveForm'
 import { FormAlert } from './FormAlert'
@@ -27,42 +23,9 @@ type HomeSettingsFormProps = {
 type SectionRow = {
   key: HomeSectionKey
   name: string
-  hint: string
   visible: boolean
   invalid: boolean
 }
-
-const getSectionId = (row: SectionRow) => row.key
-
-const SECTION_COLUMNS: DataTableColumn<SectionRow>[] = [
-  {
-    id: 'name',
-    header: 'Блок',
-    fill: true,
-    width: 320,
-    minWidth: 240,
-    cell: (row) => {
-      const Icon = SECTION_ICONS[row.key]
-      return (
-        <span className="app-split-name-cell">
-          <span className="app-split-kind-icon">
-            <Icon size={16} stroke={1.6} />
-          </span>
-          <span className="app-split-row-text">
-            <span className="app-split-item-name">{row.name}</span>
-            <span className={`app-split-row-sub${row.invalid ? ' site-home-invalid' : ''}`}>{row.invalid ? 'Є помилки в полях' : row.hint}</span>
-          </span>
-        </span>
-      )
-    },
-  },
-  {
-    id: 'visible',
-    header: 'На сайті',
-    width: 150,
-    cell: (row) => (row.visible ? <TableChip dot tone="success" value="Показується" /> : <TableChip dot tone="neutral" value="Приховано" />),
-  },
-]
 
 function sectionOf(errorKey: string): string {
   return errorKey.split('.')[0]
@@ -85,11 +48,12 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
     .join(',')
 
   const select = useCallback(
-    (next: HomeSectionKey) =>
+    (next: HomeSectionKey | null) =>
       setParams(
         (current) => {
           const query = new URLSearchParams(current)
-          query.set('block', next)
+          if (next) query.set('block', next)
+          else query.delete('block')
           return query
         },
         { replace: true },
@@ -134,21 +98,19 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
       {
         key: 'announcement',
         name: 'Смуга оголошення',
-        hint: 'Рядок над шапкою сайту',
         visible: periodState(announcement.isActive && Boolean(announcement.text.trim()), periodStart(announcement.from), periodEnd(announcement.to)) === 'live',
         invalid: invalid.has('announcement'),
       },
       ...blocks.map((block) => {
         const key = block.key as HomeSectionKey
-        return { key, name: blockName(key), hint: blockHint(key), visible: block.visible, invalid: invalid.has(key) }
+        return { key, name: blockName(key), visible: block.visible, invalid: invalid.has(key) }
       }),
     ]
   }, [announcement, blocks, errorKeys])
 
-  const rowClassName = useCallback((row: SectionRow) => (row.key === section ? 'app-split-row-active' : undefined), [section])
 
   return (
-    <ListPage>
+    <>
       <PageHeader
         title="Головна"
         actions={
@@ -160,29 +122,43 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
           </>
         }
       />
-      <ListPageBody>
-        <form id={FORM_ID} ref={formRef} className="app-split-layout site-form" onSubmit={onSubmit} noValidate aria-label="Налаштування головної сторінки">
-          <div className="app-split-list">
-            {form.error ? (
-              <div className="site-home-alert">
-                <FormAlert error={form.error} />
-              </div>
-            ) : null}
-            <DataTable
-              ariaLabel="Блоки головної за порядком"
-              columns={SECTION_COLUMNS}
-              data={rows}
-              getRowId={getSectionId}
-              minWidth={480}
-              height="100%"
-              onRowClick={(row) => select(row.key)}
-              rowClassName={rowClassName}
-            />
-          </div>
+      <form id={FORM_ID} ref={formRef} className="home-workspace site-form" data-editing={Boolean(raw && sections.includes(raw)) || undefined}
+        onSubmit={onSubmit} noValidate aria-label="Налаштування головної сторінки">
+        {form.error && <div className="home-form-error"><FormAlert error={form.error} /></div>}
+        <section className="home-block-list" aria-labelledby="home-list-title">
+          <header><h2 id="home-list-title">Блоки головної</h2><span className="home-count">{rows.length}</span></header>
+          <ol>
+            {rows.map(row => {
+              const Icon = SECTION_ICONS[row.key]
+              return (
+                <li key={row.key}>
+                  <button type="button" className="home-block" data-block-key={row.key} aria-current={row.key === section ? 'true' : undefined}
+                    onClick={() => { select(row.key); requestAnimationFrame(() => {
+                      if (window.matchMedia('(max-width: 52em)').matches) document.getElementById('site-home-section-title')?.focus()
+                    }) }}>
+                    <span className="home-block-icon"><Icon size={17} stroke={1.7} /></span>
+                    <span className="home-block-name">{row.name}
+                      <small data-state={row.invalid ? 'error' : row.visible ? 'live' : 'off'}>
+                        {row.invalid ? 'Є помилки в полях' : row.visible ? 'Показується' : 'Приховано'}
+                      </small>
+                    </span>
+                    <IconChevronRight size={14} aria-hidden="true" />
+                  </button>
+                </li>
+              )
+            })}
+          </ol>
+        </section>
+        <div className="home-block-editor">
+          <Button type="button" className="home-back" variant="subtle" color="gray" size="xs"
+            leftSection={<IconArrowLeft size={15} />} onClick={() => {
+              select(null)
+              requestAnimationFrame(() => formRef.current?.querySelector<HTMLButtonElement>(`[data-block-key="${section}"]`)?.focus())
+            }}>Усі блоки</Button>
           <HomeSectionPane section={section} values={values} errors={form.errors} banners={banners.data ?? null} patch={patch} onClearField={form.clearField} />
-        </form>
-      </ListPageBody>
+        </div>
+      </form>
       <LeaveGuard when={dirty} />
-    </ListPage>
+    </>
   )
 }

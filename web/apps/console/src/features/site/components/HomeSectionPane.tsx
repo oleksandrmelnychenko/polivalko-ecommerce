@@ -37,6 +37,13 @@ export const SECTION_ICONS: Record<HomeSectionKey, typeof IconSlideshow> = {
   visit: IconBuildingStore,
 }
 
+const ANNOUNCEMENT_STATUS = {
+  off: { tone: 'neutral', label: 'Приховано' },
+  scheduled: { tone: 'warning', label: 'Заплановано' },
+  ended: { tone: 'neutral', label: 'Період минув' },
+  live: { tone: 'success', label: 'Показується зараз' },
+} as const
+
 const ABOUT: Partial<Record<HomeBlockKey, { text: string; link: { to: string; label: string } }>> = {
   offers: {
     text: 'Сайт сам добирає товари в наявності зі справжньою знижкою: стара ціна вища за поточну. Якщо таких товарів немає, блок не показується.',
@@ -85,24 +92,25 @@ export function HomeSectionPane({ section, values, errors, banners, patch, onCle
   }
 
   const title = section === 'announcement' ? 'Смуга оголошення' : blockName(section)
-  const visible = section === 'announcement' ? announcementState === 'live' : Boolean(block?.visible)
+  const status = section === 'announcement' ? ANNOUNCEMENT_STATUS[announcementState]
+    : block?.visible ? { tone: 'success', label: 'Показується' } as const : { tone: 'neutral', label: 'Приховано' } as const
 
   return (
     <section key={section} className="app-split-detail" aria-labelledby="site-home-section-title">
       <header className="app-split-hero">
         <div className="app-split-hero-top">
           <div className="app-split-head">
-            <span className={`site-home-icon${visible ? ' is-on' : ''}`} aria-hidden="true">
-              <Icon size={28} stroke={1.5} />
+            <span className="site-home-icon" aria-hidden="true">
+              <Icon size={19} stroke={1.7} />
             </span>
             <div className="app-split-hero-main">
-              <p className="app-split-hero-kicker">{section === 'announcement' ? 'Над шапкою кожної сторінки' : `Блок ${blockIndex + 1} з ${values.blocks.length}`}</p>
-              <h2 id="site-home-section-title">
+              {block && <p className="app-split-hero-kicker">Позиція <span className="home-position">{blockIndex + 1} / {values.blocks.length}</span></p>}
+              <h2 id="site-home-section-title" tabIndex={-1}>
                 {title}
-                {visible ? <TableChip dot tone="success" value="Показується" /> : <TableChip dot tone="neutral" value="Приховано" />}
+                <TableChip dot tone={status.tone} value={status.label} />
               </h2>
               <p className="app-split-description">
-                {section === 'announcement' ? 'Короткий рядок над шапкою сайту, наприклад про початок сезону чи вихідні дні.' : blockHint(section)}
+                {section === 'announcement' ? 'Над шапкою на всіх сторінках магазину.' : blockHint(section)}
               </p>
             </div>
           </div>

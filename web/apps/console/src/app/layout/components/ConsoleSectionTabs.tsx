@@ -10,7 +10,7 @@ export function ConsoleSectionTabs() {
   const activeLink = useRef<HTMLAnchorElement>(null)
 
   useEffect(() => {
-    if (activeSection?.id !== 'catalog') return
+    if (activeSection?.id !== 'catalog' && activeSection?.id !== 'site') return
     const link = activeLink.current
     const nav = link?.parentElement
     if (!link || !nav) return
