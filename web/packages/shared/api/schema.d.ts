@@ -113,7 +113,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Редакційні добірки головної з видимими товарами в погодженому порядку */
+        /** Редакційні колекції головної з видимими товарами в погодженому порядку */
         get: operations["GetCollections"];
         put?: never;
         post?: never;
@@ -1918,10 +1918,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Добірки головної */
+        /** Колекції головної */
         get: operations["ConsoleListCollections"];
         put?: never;
-        /** Нова добірка */
+        /** Нова колекція */
         post: operations["ConsoleCreateCollection"];
         delete?: never;
         options?: never;
@@ -1937,10 +1937,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Назва, порядок, видимість і товари добірки */
+        /** Назва, порядок, видимість і товари колекції */
         put: operations["ConsoleUpdateCollection"];
         post?: never;
-        /** Видалення добірки */
+        /** Видалення колекції */
         delete: operations["ConsoleDeleteCollection"];
         options?: never;
         head?: never;

@@ -39,7 +39,7 @@ internal static class CatalogEndpoints
 
         group.MapGet("/collections", GetCollections.HandleAsync)
             .WithName("GetCollections")
-            .WithSummary("Редакційні добірки головної з видимими товарами в погодженому порядку");
+            .WithSummary("Редакційні колекції головної з видимими товарами в погодженому порядку");
 
         group.MapGet("/catalog/sitemap", GetSitemap.HandleAsync)
             .WithName("GetSitemap")

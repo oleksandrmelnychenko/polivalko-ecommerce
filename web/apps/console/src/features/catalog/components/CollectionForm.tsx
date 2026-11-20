@@ -12,7 +12,7 @@ import { productName } from '../lib/productFilters'
 import { ProductThumb } from './ProductThumb'
 
 const MAX_ITEMS = 24
-const SEARCH_FORBIDDEN = 'Щоб додавати товари в добірку, потрібне право перегляду товарів.'
+const SEARCH_FORBIDDEN = 'Щоб додавати товари в колекцію, потрібне право перегляду товарів.'
 
 type CollectionFormProps = {
   formId: string
@@ -103,7 +103,7 @@ export function CollectionForm({ formId, collection, error, onBusy, onSaved, onD
         return
       }
       setErrors(fieldErrors(result.error))
-      setFormError(problemMessage(result.error, 'Добірку не збережено.'))
+      setFormError(problemMessage(result.error, 'Колекцію не збережено.'))
     } catch {
       setFormError(NETWORK_ERROR)
     }
@@ -115,7 +115,7 @@ export function CollectionForm({ formId, collection, error, onBusy, onSaved, onD
 
   return (
     <Stack gap="md">
-      <form id={formId} noValidate onSubmit={submit} aria-label={collection ? `Добірка «${collection.title}»` : 'Нова добірка'}>
+      <form id={formId} noValidate onSubmit={submit} aria-label={collection ? `Колекція «${collection.title}»` : 'Нова колекція'}>
         <Stack gap="sm">
           <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
             <TextInput

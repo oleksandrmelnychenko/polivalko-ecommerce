@@ -315,7 +315,7 @@
         "tags": [
           "Catalog"
         ],
-        "summary": "Редакційні добірки головної з видимими товарами в погодженому порядку",
+        "summary": "Редакційні колекції головної з видимими товарами в погодженому порядку",
         "operationId": "GetCollections",
         "responses": {
           "200": {
@@ -7146,7 +7146,7 @@
         "tags": [
           "Console"
         ],
-        "summary": "Добірки головної",
+        "summary": "Колекції головної",
         "operationId": "ConsoleListCollections",
         "responses": {
           "200": {
@@ -7188,7 +7188,7 @@
         "tags": [
           "Console"
         ],
-        "summary": "Нова добірка",
+        "summary": "Нова колекція",
         "operationId": "ConsoleCreateCollection",
         "requestBody": {
           "content": {
@@ -7249,7 +7249,7 @@
         "tags": [
           "Console"
         ],
-        "summary": "Назва, порядок, видимість і товари добірки",
+        "summary": "Назва, порядок, видимість і товари колекції",
         "operationId": "ConsoleUpdateCollection",
         "parameters": [
           {
@@ -7329,7 +7329,7 @@
         "tags": [
           "Console"
         ],
-        "summary": "Видалення добірки",
+        "summary": "Видалення колекції",
         "operationId": "ConsoleDeleteCollection",
         "parameters": [
           {

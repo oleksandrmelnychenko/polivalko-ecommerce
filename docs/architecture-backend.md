@@ -189,7 +189,7 @@ PoliValko.<M>/
   фасети пошуку будує `ProductFacetBuilder`, бо `ProductFacets` — схема OpenAPI.
 - Велика область консолі ділиться на підобласті з власним `<Підобласть>Endpoints.Map(group)`. Батьківський
   `ConsoleCatalogEndpoints.Map` створює спільну групу `/catalog` і викликає підобласті в порядку документа OpenAPI:
-  товари, назви характеристик, розділи, добірки, перенаправлення.
+  товари, назви характеристик, розділи, колекції, перенаправлення.
 - Службові записи, які бачить лише один клас, вкладаються в нього (`CheckoutCalculator.PricedLine`,
   `OrderValidator.ValidatedOrder`, `ProductListing.ListItemRow`, `OrderCsv.Row`), щоб у файлі лишався один тип
   верхнього рівня. DTO-схеми OpenAPI, які потрібні одному зрізу, лежать в окремому файлі (`AttributeNameDto.cs`,

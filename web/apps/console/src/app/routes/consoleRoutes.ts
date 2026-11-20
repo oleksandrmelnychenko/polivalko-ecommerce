@@ -40,7 +40,7 @@ export const consoleRoutes: readonly ConsoleRoute[] = [
   { path: '/catalog/attributes', title: 'Характеристики', permissionKey: PermissionKeys.Catalog.ManageAttributes, page: Pages.AttributesPage },
   { path: '/catalog/brands', title: 'Бренди', permissionKey: PermissionKeys.Catalog.ManageBrands, page: Pages.BrandsPage },
   { path: '/catalog/labels', title: 'Мітки', permissionKey: PermissionKeys.Catalog.ManageLabels, page: Pages.LabelsPage },
-  { path: '/catalog/collections', title: 'Добірки', permissionKey: PermissionKeys.Catalog.ManageCollections, page: Pages.CollectionsPage },
+  { path: '/catalog/collections', title: 'Колекції', permissionKey: PermissionKeys.Catalog.ManageCollections, page: Pages.CollectionsPage },
   { path: '/catalog/import', title: 'Імпорт', permissionKey: PermissionKeys.Catalog.RunImport, page: Pages.ImportPage },
   { path: '/site/home', title: 'Головна', permissionKey: PermissionKeys.Site.ManageHome, page: Pages.HomeSettingsPage },
   { path: '/site/banners', title: 'Банери', permissionKey: PermissionKeys.Site.ManageHome, page: Pages.BannersPage },

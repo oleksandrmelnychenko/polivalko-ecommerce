@@ -13,17 +13,17 @@ internal static class CollectionEndpoints
         var collections = catalog.MapGroup("/collections").RequireStaff(PermissionKeys.CollectionsManage);
         collections.MapGet(string.Empty, ListCollections.HandleAsync)
             .WithName("ConsoleListCollections")
-            .WithSummary("Добірки головної");
+            .WithSummary("Колекції головної");
         collections.MapPost(string.Empty, CreateCollection.HandleAsync)
             .WithName("ConsoleCreateCollection")
-            .WithSummary("Нова добірка");
+            .WithSummary("Нова колекція");
         collections.MapPut("/{id:guid}", UpdateCollection.HandleAsync)
             .WithName("ConsoleUpdateCollection")
-            .WithSummary("Назва, порядок, видимість і товари добірки")
+            .WithSummary("Назва, порядок, видимість і товари колекції")
             .ProducesProblem(StatusCodes.Status404NotFound);
         collections.MapDelete("/{id:guid}", DeleteCollection.HandleAsync)
             .WithName("ConsoleDeleteCollection")
-            .WithSummary("Видалення добірки")
+            .WithSummary("Видалення колекції")
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         return catalog;

@@ -122,7 +122,7 @@ web/
 │  │     │  ├─ product/     ProductScreen: галерея, блок покупки, варіанти, опис і характеристики, схожі товари, JSON-LD
 │  │     │  ├─ seo/         seoMetadata (canonical, Open Graph, Twitter, noindex), JsonLd і генератори schema.org,
 │  │     │  │               графік з консолі → OpeningHoursSpecification; стратегія — docs/SEO.md
-│  │     │  ├─ home/        HomeScreen: блоки в порядку з консолі — слайдер із банерів, знижки, добірки, розділи,
+│  │     │  ├─ home/        HomeScreen: блоки в порядку з консолі — слайдер із банерів, знижки, колекції, розділи,
 │  │     │  │               переваги, послуги, кроки, магазин у Бучі
 │  │     │  ├─ layout/      хром вітрини: ShopShell, SiteHeader (смуга оголошення, липка шапка, меню, мобільне меню),
 │  │     │  │               SiteFooter (контакти, соцмережі, особливі дні, реквізити продавця), BackToTop.
@@ -615,7 +615,7 @@ export default defineConfig([
 | `lib/format.ts`, `images.ts`, `labels.ts`, `stand-in-photos.ts` | `shared/lib/*` |
 | `lib/analytics.tsx` | `features/shop/analytics` |
 | `lib/cart.tsx`, `lib/quote.ts` | `features/shop/cart` (`lib/cart-store.ts`, `components/cart-provider.tsx`, `hooks/use-cart-quote.ts`, `api/client.ts`) |
-| `lib/catalog.ts` | `catalog/api/server.ts` (розділи, товари, добірки, sitemap, redirect), `product/api/server.ts` (getProduct), `services/api/server.ts`, `content/api/server.ts` (сторінки, контакти, самовивіз, продавець, автори фото) |
+| `lib/catalog.ts` | `catalog/api/server.ts` (розділи, товари, колекції, sitemap, redirect), `product/api/server.ts` (getProduct), `services/api/server.ts`, `content/api/server.ts` (сторінки, контакти, самовивіз, продавець, автори фото) |
 | `lib/admin.tsx` | `shared/admin/csrf.ts`, `shared/admin/use-admin-data.ts`, `features/admin/auth` (StaffGate, useStaff) |
 | `components/icons.tsx`, `quantity-stepper.tsx` | `shared/ui/*` |
 | `components/add-to-cart.tsx`, `cart-button.tsx`, `cart-drawer.tsx` | `features/shop/cart/components/*` |
@@ -1193,7 +1193,7 @@ web/apps/console/
    │  ├─ customers/      покупці: вкладки «За замовленнями» й «Кабінети» зі списком і карткою (AccountPage лише перенаправляє)
    │  ├─ requests/       заявки на послуги
    │  ├─ catalog/        товари (вкладки наповнення, масові дії) і редактор товару, категорії, довідники
-   │  │                  характеристик, брендів і міток (AttributesPage, BrandsPage, LabelsPage), добірки, імпорт
+   │  │                  характеристик, брендів і міток (AttributesPage, BrandsPage, LabelsPage), колекції, імпорт
    │  ├─ content/        текстові сторінки й редактор (з SEO), напрямки послуг (з фото)
    │  ├─ site/           головна (HomeSettingsPage), банери (BannersPage), SEO: перенаправлення й мета-шаблони (SeoPage)
    │  ├─ settings/       магазин (контакти, особливі дні, реквізити), доставка й точки самовивозу, оплата й чеки,
@@ -1233,7 +1233,7 @@ web/apps/console/
 | `/catalog/attributes` | Характеристики | `catalog/AttributesPage` | `catalog.attributes.manage` |
 | `/catalog/brands` | Бренди | `catalog/BrandsPage` | `catalog.brands.manage` |
 | `/catalog/labels` | Мітки | `catalog/LabelsPage` | `catalog.labels.manage` |
-| `/catalog/collections` | Добірки | `catalog/CollectionsPage` | `catalog.collections.manage` |
+| `/catalog/collections` | Колекції | `catalog/CollectionsPage` | `catalog.collections.manage` |
 | `/catalog/import` | Імпорт (без пункту меню) | `catalog/ImportPage` | `catalog.import.run` |
 | `/site/home` | Головна | `site/HomeSettingsPage` | `site.home.manage` |
 | `/site/banners` | Банери | `site/BannersPage` | `site.home.manage` |
@@ -1304,7 +1304,7 @@ web/apps/console/
 | --- | --- | --- |
 | Дашборд | Дашборд (`/`) | — |
 | Продажі (`/sales`) | Замовлення, Заявки, Повернення, Покупці | Замовлення — нові й ті, що чекають підтвердження; Заявки — нові |
-| Каталог (`/catalog`) | Товари, Категорії, Характеристики, Бренди, Мітки, Добірки | — |
+| Каталог (`/catalog`) | Товари, Категорії, Характеристики, Бренди, Мітки, Колекції | — |
 | Сайт (`/site`) | Головна, Банери, Сторінки, Послуги, SEO | — |
 | Налаштування (`/settings`) | Магазин, Доставка, Оплата й чеки, Сповіщення | — |
 | Система (`/system`) | Інтеграції, Працівники, Ролі і права, Журнал | Інтеграції — невиконані операції черги (червоний) |
@@ -1452,7 +1452,7 @@ web/apps/console/
   будь-якою зміною фільтра чи сторінки.
 - **Вікна.** `AppModal` + `AppModalFooter` — форми (працівник, роль, пароль); `ConfirmDialog` — видалення й масові
   дії; `AppDrawer` — права шухляда (`compact`, `standard`, `wide`) з прокручуваним тілом і закріпленим футером для
-  редагування без втрати списку з очей (категорія, характеристика, бренд, мітка, добірка, банер, точка самовивозу,
+  редагування без втрати списку з очей (категорія, характеристика, бренд, мітка, колекція, банер, точка самовивозу,
   напрямок послуг, запис журналу);
   `AppDateInput` — дата `YYYY-MM-DD` з уводом `дд.мм.рррр`.
 - **Стани й комірки.** `PageState kind="loading|error|forbidden|empty"` з `onRetry`; `CellStack`, `Money`,
@@ -1471,13 +1471,13 @@ Mantine) імпортує кореневий `app/layout.tsx`, тож він і�
 
 - Бічну панель замінила шапка у два ряди: розділи вгорі, вкладки розділу під ними.
 - Дзвоника зі сповіщеннями немає: нові замовлення, заявки й невиконані операції видно в бейджах меню і на «Огляді».
-- Форми розділів, добірок, точок самовивозу й напрямків послуг, а також запис журналу відкриваються в шухляді праворуч.
+- Форми розділів, колекцій, точок самовивозу й напрямків послуг, а також запис журналу відкриваються в шухляді праворуч.
 - Свій пароль змінюють у меню облікового запису (або кнопкою «Змінити мій пароль» на сторінці «Працівники»).
 - Дві фіксовані ролі замінено ролями з правами за ключами; нова сторінка «Ролі і права» (`docs/console-guide.md`).
 - Після нового релізу вкладка, що просить уже видалений файл сторінки, один раз перезавантажується сама
   (`ChunkLoadError` у `AppErrorBoundary` → `reloadOnStaleChunk` з `@/shared/lib/staleChunk`, не частіше ніж раз на 30 с).
 - Після розширення (розділ 15.11): нове меню й адреси (старі закладки перенаправляються), «Огляд» став «Дашбордом»,
-  «Розділи» — «Категоріями», «Добірки головної» — «Добірками»; контакти переїхали в «Налаштування → Магазин»,
+  «Розділи» — «Категоріями», «Колекції головної» — «Колекціями»; контакти переїхали в «Налаштування → Магазин»,
   самовивіз — у «Налаштування → Доставка», перенаправлення — у «Сайт → SEO»; імпорт відкривається кнопкою з
   «Товарів» чи «Інтеграцій».
 
@@ -1540,7 +1540,7 @@ Mantine) імпортує кореневий `app/layout.tsx`, тож він і�
 | `customers` | `CustomersPage` з вкладками «За замовленнями» (колишній список) і «Кабінети», картка кабінету `AccountDetailPane` з блокуванням і листом для скидання пароля (див. 15.23) | `GET customers`, `GET accounts`, `GET accounts/{id}`, `POST accounts/{id}/lock`, `POST accounts/{id}/password-reset` |
 | `orders` | `OrderNoteCard` («Нотатка для працівників»), рядок «Кабінет» у `OrderBuyerCard` (`customerAccountId`) | `PUT orders/{number}/note` |
 | `dashboard` | `CatalogAttention` («Потребує уваги»: наповнення, нові, приховані з залишком) | `GET catalog/products/counts` |
-| `catalog` | `ProductsTabs` (вибірки), фільтри «Бренд», «Мітка», «Наповнення», `ProductsBulkBar` + `ProductsBulkDialog` (категорія, бренд, ручні мітки), `ProductEditorLabels`, бренд у товарі зі списку; `CategoryForm` з фото, описом і фільтрами з довідника (`MultiSelect`, до 10); `AttributesPage`, `BrandsPage` (+ `BrandMergeDialog`), `LabelsPage`; «Добірки головної» → «Добірки» | `GET catalog/products` (+ `brand`, `labelId`, `fill`, `newDays`, `hiddenWithStock`), `GET catalog/products/counts`, `POST catalog/products/bulk`, `catalog/attributes`, `catalog/brands` (+ `{id}/merge`), `catalog/labels`, `POST media/images` |
+| `catalog` | `ProductsTabs` (вибірки), фільтри «Бренд», «Мітка», «Наповнення», `ProductsBulkBar` + `ProductsBulkDialog` (категорія, бренд, ручні мітки), `ProductEditorLabels`, бренд у товарі зі списку; `CategoryForm` з фото, описом і фільтрами з довідника (`MultiSelect`, до 10); `AttributesPage`, `BrandsPage` (+ `BrandMergeDialog`), `LabelsPage`; «Колекції головної» → «Колекції» | `GET catalog/products` (+ `brand`, `labelId`, `fill`, `newDays`, `hiddenWithStock`), `GET catalog/products/counts`, `POST catalog/products/bulk`, `catalog/attributes`, `catalog/brands` (+ `{id}/merge`), `catalog/labels`, `POST media/images` |
 | `content` | `PageSeoFields` у редакторі сторінки, фото в `ServiceDirectionDrawer` | `content/pages`, `content/services`, `POST media/images` |
 | `site` (нова) | `HomeSettingsPage` (блоки, смуга оголошення, переваги, кроки, блок магазину), `BannersPage` + `BannerDrawer` (з `kicker` — «Напис над заголовком»), `SeoPage` з `RedirectsPanel` (перенесено з `catalog`) і `SeoTemplatesPanel` | `site/home`, `site/banners` (+ `PUT site/banners/order`), `site/seo-templates`, `catalog/redirects`, `POST media/images` |
 | `settings` (нова) | `ShopSettingsPage` (форма контактів з колишньої `ContactsPage` + особливі дні, соцмережі з Viber, реквізити), `DeliverySettingsPage` (перемикачі способів + точки самовивозу з колишньої `PickupPage`), `PaymentSettingsPage` (лише читання), `NotificationSettingsPage` (з тестовим повідомленням) | `content/contacts`, `settings/shop`, `settings/delivery`, `delivery/pickup-points`, `settings/payments`, `settings/notifications` (+ `POST …/test`) |
@@ -1722,7 +1722,7 @@ API приймає одне фото на запит (`POST /console/catalog/pro
   «Товари категорії» (`ProductPreviewGrid` з `categoryId`; API фільтрує лише пряму категорію, тож для розділу без
   власних товарів блок не показується).
 
-### 15.19. Мітки й добірки на розкладці «таблиця + картка» (2026-11-11)
+### 15.19. Мітки й колекції на розкладці «таблиця + картка» (2026-11-11)
 
 - **`ProductPreviewGrid.tsx`** тепер експортує ще `ProductTilesGrid` (плитки з готового списку `ProductRow`) і
   `PreviewCard` (картка з заголовком). На фото плиток стоять мітки товару (`LabelChip`, `.catalog-preview-labels`),
@@ -1732,11 +1732,11 @@ API приймає одне фото на запит (`POST /console/catalog/pro
   автоматично», `labelRule`, перемикач «На сайті» (той самий `saveLabel`, що й раніше в рядку) і «Змінити»; числа —
   товарів (частка `counts.all`, лише якщо не більше за каталог), «На вітрині», порядок; далі `ProductPreviewGrid` з
   `labelId`.
-- **Добірки** (`CollectionsPage`, `CollectionDetailPane`): таблиця «Добірка» (назва й код), «На головній»,
-  «Товарів». Картка: код, назва з чипом, опис місця на головній — позиція серед видимих добірок з товарами за
+- **Колекції** (`CollectionsPage`, `CollectionDetailPane`): таблиця «Колекція» (назва й код), «На головній»,
+  «Товарів». Картка: код, назва з чипом, опис місця на головній — позиція серед видимих колекцій з товарами за
   `sortOrder` (1 — лукбук-секція, далі стрічки, 0 — без товарів не показується), «Змінити», посилання на головну;
   числа рахуються з `collection.products` (усього, у наявності `stock > 0`, приховані `!isVisible`); товари —
-  `ProductTilesGrid` у порядку добірки, без окремого запиту.
+  `ProductTilesGrid` у порядку колекції, без окремого запиту.
 
 ### 15.20. Інтеграції на розкладці «список + картка» (2026-11-11)
 
@@ -1827,7 +1827,7 @@ API приймає одне фото на запит (`POST /console/catalog/pro
   а після невдалого збереження відкривається перша така секція. Справа картка секції: іконка (`SECTION_ICONS`),
   «Блок N з 8», назва з чипом, перемикач «На головній» і `MoveButtons`; далі
   `AnnouncementFields`, `ItemsEditor` для переваг і кроків, поля «Наш магазин», для слайдера — плитки банерів з
-  `getBanners` (посилання на `/site/banners?id=`), для знижок, добірок, розділів і послуг — опис джерела даних
+  `getBanners` (посилання на `/site/banners?id=`), для знижок, колекцій, розділів і послуг — опис джерела даних
   (звірено з `apps/shop/src/features/home`) і посилання. `HomeBlocksList` видалено; `SectionCard` лишився для
   мета-шаблонів. Збереження й валідація (`toHomeBody`, `validateHome`) не змінювалися.
 - **Банери** (`BannersPage`, `BannerDetailPane`): таблиця «Банер (мініатюра, заголовок, напис або текст) · Стан» (`BANNER_COLUMNS`),
@@ -1946,7 +1946,7 @@ API приймає одне фото на запит (`POST /console/catalog/pro
 | Склад і порядок головної | `site/home` → `blocks`: невідомі й повторені ключі відкидаються, вимкнені пропускаються; без даних — усі вісім у типовому порядку. Без слайдера на сторінці лишається прихований `h1` | `home/lib/home-blocks.ts`, `home/components/home-screen.tsx` |
 | Переваги, кроки, блок «Магазин у Бучі» | `site/home` → `perks`, `steps`, `visit`; порожньо — типові тексти з коду; адреса, графік і телефон блоку — з контактів | `perks.tsx`, `steps.tsx`, `store-visit.tsx` |
 | Смуга оголошення | `site/home` → `announcement` (сервер віддає лише увімкнене в межах дат), посилання — `next/link` | `layout/components/announcement-bar.tsx` у `SiteHeader` |
-| Добірки | усі видимі добірки з товарами за порядком: перша — лукбук-секція й стрічка, решта — стрічки (раніше лише перша) | `home/components/collection-pair.tsx` (`CollectionPairs`) |
+| Колекції | усі видимі колекції з товарами за порядком: перша — лукбук-секція й стрічка, решта — стрічки (раніше лише перша) | `home/components/collection-pair.tsx` (`CollectionPairs`) |
 | Знижки | лише товари в наявності зі справжньою знижкою (`discountPercent` не `null`); якщо таких немає, блок не рендериться (раніше підставлялися будь-які товари в наявності) | `home/components/offers-pair.tsx` |
 | Мітки товарів | `labels` (`ProductLabelBadgeDto { name, tone }`) у плитці й на сторінці товару. На плитці перша мітка до 10 символів — стрічка в правому куті фото (`splitRibbon`), решта — чипи; у блоці покупки — чипи над назвою | `catalog/components/tile-flashes.tsx`, `product-labels.tsx`, `catalog/lib/labels.ts`, `product/components/product-buybox.tsx` |
 | Фото й опис категорії | `imageUrl` і `description` у `CategoryNodeDto` / `CategoryDto`: фото — плитка, мобільне меню, `openGraph`; опис — абзаци за рядками під заголовком | `categoryPhotoUrl`, `catalog/components/category-intro.tsx`, `category-head.tsx` |
@@ -2065,7 +2065,7 @@ Checkout передає UUID і ревізію кошика. Результат 
   градієнті;
 - поруч зі словом кругла кнопка зі стрілкою (`more` у `Look`): «Акції» веде на `/sale`, «Каталог» на `/catalog`,
   «Послуги» на `/services`. Її `::after` розтягнуто на все фото, тож клікабельне все фото; при наведенні фото
-  повільно наближається. У добірки окремої сторінки немає, тож там лише слово.
+  повільно наближається. У колекції окремої сторінки немає, тож там лише слово.
 
 **Слайдер першого екрана** (`home/lib/hero-slides.ts`, `hero-slider.tsx`, `home/styles/hero.css`). Слайди йдуть з
 банерів консолі. Колишній перший слайд (заголовок на зеленій плашці, дуга з зірками `HeroArc`, білий текст просто на
@@ -2215,7 +2215,7 @@ Checkout передає UUID і ревізію кошика. Результат 
   409 перезавантажує картку, а текст помилки без англійських назв статусів (`orders/lib/statusProblem.ts`); причина
   скасування й коментар до статусу — окремі стани; ключ ідемпотентності повернення змінюється разом зі змістом.
 - **Київський час** для періодів банерів, оголошень і фільтра дат: `shared/lib/kyivTime.ts`.
-- Без права перегляду товарів добірки й довідники показують пояснення; фото перевіряється на тип і 10 МБ до
+- Без права перегляду товарів колекції й довідники показують пояснення; фото перевіряється на тип і 10 МБ до
   завантаження, файл імпорту — на 20 МБ.
 
 **Доповнення після повторної перевірки 18.11.** Вітрина: у кабінеті під номером замовлення стоїть його стан
@@ -2229,7 +2229,7 @@ Checkout передає UUID і ревізію кошика. Результат 
 
 Вітрина використовує React-компоненти Next.js і ASP.NET Core API. Оновлено спільні токени, типографіку Onest, зелені акценти #00A046, шапку, футер, головну, каталог, картку товару та сторінки магазину.
 
-- На головній добірки залишені окремими секціями; блок акцій прибрано. Слайдер має симетричні стрілки й товарну картку на фото.
+- На головній колекції залишені окремими секціями; блок акцій прибрано. Слайдер має симетричні стрілки й товарну картку на фото.
 - Порівняння групує товари за категорією та заповненим типом. Ціна й наявність розташовані в таблиці; кнопки купівлі в ній немає. Круглі кнопки мають зелені рамку й іконку після додавання. Компактний тост справа вгорі показується 2 секунди з анімаціями появи та зникнення.
 - Оформлення підтримує окремого отримувача й коментар. Контакти отримувача передаються в API, зберігаються, показуються в консолі й потрапляють в експорт.
 - Послуги ведуть на форму контактів із вибраним напрямком. Адреса, графік, телефони й соцмережі беруться з налаштувань консолі.

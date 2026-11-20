@@ -31,7 +31,7 @@ public static class PermissionCatalog
 
         new(PermissionKeys.ProductsView, "Товари: перегляд", "Список товарів, залишки й картка товару.", "catalog", "Каталог", PermissionRisk.Low),
         new(PermissionKeys.ProductsEdit, "Товари: редагування, фото, видимість", "Назва для вітрини, опис, характеристики, бренд, мітки, SEO, фото, показ на сайті, також масово.", "catalog", "Каталог", PermissionRisk.Medium),
-        new(PermissionKeys.CollectionsManage, "Добірки головної", "Склад і порядок добірок на головній сторінці.", "catalog", "Каталог", PermissionRisk.Low),
+        new(PermissionKeys.CollectionsManage, "Колекції головної", "Склад і порядок колекцій на головній сторінці.", "catalog", "Каталог", PermissionRisk.Low),
         new(PermissionKeys.CategoriesManage, "Категорії каталогу", "Створення, зміна й видалення категорій і підкатегорій, фото, опис, фільтри, групи Navkolo.", "catalog", "Каталог", PermissionRisk.Medium),
         new(PermissionKeys.AttributesManage, "Характеристики: довідник і фільтри", "Назви, одиниці, вигляд фільтра; перейменування змінює характеристики всіх товарів.", "catalog", "Каталог", PermissionRisk.Medium),
         new(PermissionKeys.BrandsManage, "Бренди", "Довідник брендів: назва, опис, логотип, перейменування й об'єднання.", "catalog", "Каталог", PermissionRisk.Low),

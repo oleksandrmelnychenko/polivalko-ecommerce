@@ -50,8 +50,8 @@ const ABOUT: Partial<Record<HomeBlockKey, { text: string; link: { to: string; la
     link: { to: '/catalog/products', label: 'Товари в каталозі' },
   },
   collections: {
-    text: 'Видимі добірки з товарами, у їхньому порядку. Перша показується великою секцією з фото й стрічкою товарів, решта стрічками.',
-    link: { to: '/catalog/collections', label: 'Каталог → Добірки' },
+    text: 'Видимі колекції з товарами, у їхньому порядку. Перша показується великою секцією з фото й стрічкою товарів, решта стрічками.',
+    link: { to: '/catalog/collections', label: 'Каталог → Колекції' },
   },
   categories: {
     text: 'Перші шість категорій верхнього рівня плитками з фото, нижче стрічка з усіма. Фото й порядок задаються в категоріях.',
@@ -147,7 +147,7 @@ export function HomeSectionPane({ section, values, errors, banners, patch, onCle
               Повернути типові тексти
             </Button>
           }
-          note={section === 'perks' ? 'Стоять в один ряд під добірками, найкраще виглядають 4 пункти.' : 'Номери кроків сайт ставить сам.'}
+          note={section === 'perks' ? 'Стоять в один ряд під колекціями, найкраще виглядають 4 пункти.' : 'Номери кроків сайт ставить сам.'}
         >
           <ItemsEditor
             name={section}

@@ -54,7 +54,7 @@ export async function getCollections() {
   "use cache";
   cacheLife("minutes");
   cacheTag("catalog", "collections");
-  return loaded(await api.GET("/api/v1/collections"), "добірки") ?? [];
+  return loaded(await api.GET("/api/v1/collections"), "колекції") ?? [];
 }
 
 export async function getSitemap() {

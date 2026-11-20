@@ -4,7 +4,7 @@ import { invalidPeriod, periodDay, periodEnd, periodStart } from './period'
 export const HOME_BLOCKS: Record<HomeBlockKey, { name: string; hint: string }> = {
   hero: { name: 'Слайдер першого екрана', hint: 'Банери з вкладки «Банери»' },
   offers: { name: 'Знижки', hint: 'Товари, у яких стара ціна вища за поточну' },
-  collections: { name: 'Добірки', hint: 'Видимі добірки з «Каталог → Добірки», у їхньому порядку' },
+  collections: { name: 'Колекції', hint: 'Видимі колекції з «Каталог → Колекції», у їхньому порядку' },
   categories: { name: 'Розділи каталогу', hint: 'Плитки категорій верхнього рівня' },
   perks: { name: 'Переваги', hint: 'Пункти про доставку, самовивіз і оплату' },
   services: { name: 'Послуги для саду', hint: 'Напрямки з вкладки «Послуги»' },

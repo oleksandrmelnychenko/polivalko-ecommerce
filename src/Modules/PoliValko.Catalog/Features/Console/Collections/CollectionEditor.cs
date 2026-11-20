@@ -21,7 +21,7 @@ internal static class CollectionEditor
         }
         else if (await db.Set<HomeCollection>().AnyAsync(c => c.Code == code && c.Id != collection.Id, ct))
         {
-            errors["code"] = ["Добірка з таким кодом уже є."];
+            errors["code"] = ["Колекція з таким кодом уже є."];
         }
 
         var title = request.Title?.Trim();
@@ -33,7 +33,7 @@ internal static class CollectionEditor
         var ids = (request.ProductIds ?? []).Distinct().ToList();
         if (ids.Count > 24)
         {
-            errors["productIds"] = ["Не більше 24 товарів у добірці."];
+            errors["productIds"] = ["Не більше 24 товарів у колекції."];
         }
         else if (ids.Count > 0 && await db.Set<Product>().CountAsync(p => ids.Contains(p.Id), ct) != ids.Count)
         {

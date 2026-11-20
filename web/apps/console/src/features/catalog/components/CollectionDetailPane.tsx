@@ -16,7 +16,7 @@ type CollectionDetailPaneProps = {
 }
 
 export function CollectionDetailPane({ collection, position, onEdit }: CollectionDetailPaneProps) {
-  if (!collection) return <section className="app-split-detail app-split-detail-empty">Оберіть добірку зліва.</section>
+  if (!collection) return <section className="app-split-detail app-split-detail-empty">Оберіть колекцію зліва.</section>
 
   const products = collection.products
   const inStock = products.filter((product) => product.stock > 0).length
@@ -39,7 +39,7 @@ export function CollectionDetailPane({ collection, position, onEdit }: Collectio
                 {!collection.isVisible
                   ? 'На головній не показується.'
                   : position === 0
-                    ? 'Поки в добірці немає товарів, на головній її не видно.'
+                    ? 'Поки в колекції немає товарів, на головній її не видно.'
                     : position === 1
                       ? 'Перша на головній: велика секція з фото й стрічка товарів.'
                       : `На головній стрічкою товарів, позиція ${position}.`}
@@ -62,19 +62,19 @@ export function CollectionDetailPane({ collection, position, onEdit }: Collectio
       </header>
 
       <dl className="catalog-metrics">
-        <DictionaryMetric icon={IconPackage} label="Товарів у добірці" value={countFormat.format(products.length)} />
+        <DictionaryMetric icon={IconPackage} label="Товарів у колекції" value={countFormat.format(products.length)} />
         <DictionaryMetric icon={IconBox} label="У наявності" value={countFormat.format(inStock)} part={inStock} total={products.length} />
         <DictionaryMetric icon={IconEyeOff} label="Приховані на сайті" value={countFormat.format(hidden)} part={hidden} total={products.length} />
       </dl>
 
       <PreviewCard
-        title="Товари добірки"
+        title="Товари колекції"
         aside={products.length ? <span>у порядку показу, {products.length} {plural(products.length, 'товар', 'товари', 'товарів')}</span> : null}
       >
         {products.length ? (
           <ProductTilesGrid items={products} />
         ) : (
-          <p className="app-split-blank">У добірці ще немає товарів. Додати їх можна кнопкою «Змінити».</p>
+          <p className="app-split-blank">У колекції ще немає товарів. Додати їх можна кнопкою «Змінити».</p>
         )}
       </PreviewCard>
     </section>

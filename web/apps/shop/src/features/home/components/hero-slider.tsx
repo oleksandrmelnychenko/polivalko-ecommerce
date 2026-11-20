@@ -46,7 +46,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
       onBlurCapture={() => setPaused(false)}
     >
       <div className="hero-mobile">
-        <ul ref={mobileRail} aria-label="Добірки" className="hero-mobile__slides" onScroll={(event) => setMobileIndex(Math.round(event.currentTarget.scrollLeft / (event.currentTarget.clientWidth + 12)))}>
+        <ul ref={mobileRail} aria-label="Колекції" className="hero-mobile__slides" onScroll={(event) => setMobileIndex(Math.round(event.currentTarget.scrollLeft / (event.currentTarget.clientWidth + 12)))}>
           {slides.map((slide, i) => <li key={slide.key} className="hero-mobile__slide">
             <div className="hero-mobile__content">
               {i === 0 ? <h1>{slide.title}</h1> : <h2>{slide.title}</h2>}
@@ -89,7 +89,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
                   <ExternalIcon />
                 </Link>
               </div>
-              {slide.subsections ? <nav className="hero-shortcuts" aria-label="Категорії добірки">
+              {slide.subsections ? <nav className="hero-shortcuts" aria-label="Категорії колекції">
                 {slide.subsections.items.slice(0, 3).map(item => <Link key={item.id} href={item.href}>
                   {item.image && <img src={item.image} alt="" width={48} height={48} />}
                   <span>{item.name}</span><ArrowRightIcon />

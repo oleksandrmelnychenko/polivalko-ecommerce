@@ -31,7 +31,7 @@ const SELECT_KEYS = ['id'] as const
 const columns: DataTableColumn<ConsoleCollection>[] = [
   {
     id: 'title',
-    header: 'Добірка',
+    header: 'Колекція',
     width: 240,
     fill: true,
     cell: (row) => (
@@ -91,7 +91,7 @@ export function CollectionsPage() {
 
   function saved() {
     setOpened(false)
-    notifySuccess('Добірку збережено.')
+    notifySuccess('Колекцію збережено.')
     collections.reload()
   }
 
@@ -104,10 +104,10 @@ export function CollectionsPage() {
       setConfirming(false)
       if (result.response.ok) {
         setOpened(false)
-        notifySuccess(`Добірку «${collection.title}» видалено.`)
+        notifySuccess(`Колекцію «${collection.title}» видалено.`)
         collections.reload()
       } else {
-        setDeleteError(problemMessage(result.error, 'Добірку не видалено.'))
+        setDeleteError(problemMessage(result.error, 'Колекцію не видалено.'))
       }
     } catch {
       setConfirming(false)
@@ -131,22 +131,22 @@ export function CollectionsPage() {
   const emptyText =
     collections.status === 'error' ? (
       <Stack align="center" gap={8}>
-        <Text size="sm">{problemMessage(collections.problem, 'Не вдалося завантажити добірки.')}</Text>
+        <Text size="sm">{problemMessage(collections.problem, 'Не вдалося завантажити колекції.')}</Text>
         <Button size="xs" variant="default" onClick={collections.reload}>
           Спробувати ще раз
         </Button>
       </Stack>
     ) : (
-      'Добірок ще немає. Головна покаже лише категорії й знижки.'
+      'Колекцій ще немає. Головна покаже лише категорії й знижки.'
     )
 
   return (
     <ListPage className="catalog-dictionary-page">
       <PageHeader
-        title="Добірки"
+        title="Колекції"
         actions={
           <Button leftSection={<IconPlus size={16} stroke={1.8} />} onClick={() => open(null)}>
-            Нова добірка
+            Нова колекція
           </Button>
         }
       />
@@ -154,7 +154,7 @@ export function CollectionsPage() {
       <FilterBar
         actions={
           <>
-            {collections.data ? <span className="app-filter-summary catalog-summary">Добірок: {countFormat.format(collections.data.length)}</span> : null}
+            {collections.data ? <span className="app-filter-summary catalog-summary">Колекцій: {countFormat.format(collections.data.length)}</span> : null}
             <Tooltip label="Оновити">
               <ActionIcon variant="subtle" color="gray" aria-label="Оновити" loading={collections.isFetching} onClick={collections.reload}>
                 <IconRefresh size={16} />
@@ -168,7 +168,7 @@ export function CollectionsPage() {
         <DictionaryLayout picked={Boolean(selectedId && picked.id === selectedId)} onBack={() => pick({ id: null })}>
           <div className="app-split-list">
             <DataTable
-              ariaLabel="Добірки"
+              ariaLabel="Колекції"
               columns={columns}
               data={rows}
               getRowId={getRowId}
@@ -191,7 +191,7 @@ export function CollectionsPage() {
         opened={opened}
         onClose={close}
         dirty={formDirty && !busy}
-        title={current ? `Добірка «${current.title}»` : 'Нова добірка'}
+        title={current ? `Колекція «${current.title}»` : 'Нова колекція'}
         size="compact"
         closeOnEscape={!busy}
         footer={
@@ -206,7 +206,7 @@ export function CollectionsPage() {
             <Group gap="xs">
               <DrawerCancelButton disabled={busy} onCancel={close} />
               <Button type="submit" form={FORM_ID} loading={busy}>
-                Зберегти добірку
+                Зберегти колекцію
               </Button>
             </Group>
           </Group>
@@ -217,9 +217,9 @@ export function CollectionsPage() {
 
       <ConfirmDialog
         opened={confirming}
-        title="Видалити добірку"
-        message={current ? `Добірка «${current.title}» зникне з головної. Скасувати видалення не можна.` : ''}
-        confirmLabel="Видалити добірку"
+        title="Видалити колекцію"
+        message={current ? `Колекція «${current.title}» зникне з головної. Скасувати видалення не можна.` : ''}
+        confirmLabel="Видалити колекцію"
         danger
         busy={busy}
         onConfirm={() => void remove()}

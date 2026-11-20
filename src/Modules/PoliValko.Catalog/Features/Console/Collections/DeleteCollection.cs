@@ -21,7 +21,7 @@ internal static class DeleteCollection
         var collection = await db.Set<HomeCollection>().FirstOrDefaultAsync(c => c.Id == id, ct);
         if (collection is null)
         {
-            return Problems.NotFound("catalog.collection_not_found", "Добірку не знайдено");
+            return Problems.NotFound("catalog.collection_not_found", "Колекцію не знайдено");
         }
 
         db.Remove(collection);

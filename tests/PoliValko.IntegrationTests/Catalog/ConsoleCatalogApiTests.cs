@@ -142,9 +142,9 @@ public sealed class ConsoleCatalogApiTests(ApiFactory api)
     [Fact]
     public async Task Collections_show_visible_products_in_order()
     {
-        var first = await api.AddProductAsync("novyi-rik", "Куля для добірки", 50m);
+        var first = await api.AddProductAsync("novyi-rik", "Куля для колекції", 50m);
         var hidden = await api.AddProductAsync("novyi-rik", "Прихована куля", 60m, visible: false);
-        var second = await api.AddProductAsync("novyi-rik", "Мішура для добірки", 70m);
+        var second = await api.AddProductAsync("novyi-rik", "Мішура для колекції", 70m);
         var manager = await Staff.ManagerAsync(api);
         var code = $"ny-{Guid.NewGuid().ToString("N")[..6]}";
 
