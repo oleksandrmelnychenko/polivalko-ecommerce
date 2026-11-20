@@ -1,4 +1,5 @@
 import { Button } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
 import { IconFileImport } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -18,7 +19,7 @@ import { getBrands, getLabels } from '../api/dictionariesApi'
 import { listEmptyText } from '../components/ListEmpty'
 import { ProductsBulkBar } from '../components/ProductsBulkBar'
 import { NO_BRAND, ProductsBulkDialog, type BulkAction } from '../components/ProductsBulkDialog'
-import { productsColumns } from '../components/productsColumns'
+import { mobileProductsColumns, productsColumns } from '../components/productsColumns'
 import { ProductsFilters } from '../components/ProductsFilters'
 import { ProductsTabs } from '../components/ProductsTabs'
 import { ProductsTiles } from '../components/ProductsTiles'
@@ -56,6 +57,7 @@ export function ProductsPage() {
   const { can } = usePermissions()
   const { state, params, update, reset } = useProductsState()
   const [view, setView] = useProductsView()
+  const compactList = useMediaQuery('(max-width: 44em)')
   const query = useMemo(() => toProductsQuery(state), [state])
   const products = useApiQuery(`catalog-products:${JSON.stringify(query)}`, () => getProducts(query), { keepPrevious: true })
   const counts = useApiQuery('catalog-products-counts', () => getProductCounts())
@@ -215,12 +217,12 @@ export function ProductsPage() {
         ) : (
           <DataTable
             ariaLabel="Товари"
-            columns={productsColumns}
+            columns={compactList ? mobileProductsColumns : productsColumns}
             data={rows}
             getRowId={getRowId}
             isLoading={products.isLoading}
             isFetching={products.isFetching}
-            minWidth={1470}
+            minWidth={0}
             height="100%"
             manualSorting
             onRowClick={onRowClick}
