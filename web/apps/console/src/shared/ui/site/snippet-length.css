@@ -1,0 +1,12 @@
+.snippet-length {
+  align-items: center;
+  color: var(--mantine-color-gray-7);
+  display: flex;
+  flex-wrap: wrap;
+  font: 400 11px/1.4 var(--font-mono);
+  gap: 3px 8px;
+  margin-top: 4px;
+}
+.snippet-length .metric-track { width: 64px; }
+.snippet-length[data-over] { color: var(--mantine-color-orange-9); }
+.snippet-length[data-over] .metric-track > span { --brand-accent: var(--mantine-color-orange-8); }

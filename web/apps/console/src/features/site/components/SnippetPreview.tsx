@@ -17,16 +17,6 @@ export function SnippetPreview({ title, description, url }: SnippetPreviewProps)
   )
 }
 
-export function LengthCounter({ length, limit }: { length: number; limit: number }) {
-  const over = length > limit
-  return (
-    <span className={`site-length${over ? ' is-over' : ''}`}>
-      {length} / {limit}
-      {over ? ' · Google обріже' : ''}
-    </span>
-  )
-}
-
 function clip(text: string, limit: number): string {
   return text.length > limit ? `${text.slice(0, limit - 1).trimEnd()}…` : text
 }

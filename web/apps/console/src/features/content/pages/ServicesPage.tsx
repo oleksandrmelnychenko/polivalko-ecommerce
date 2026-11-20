@@ -1,5 +1,6 @@
-import { IconTools } from '@tabler/icons-react'
+import { IconEye, IconPhoto, IconTools } from '@tabler/icons-react'
 import { useMemo, useState } from 'react'
+import { SiteMetrics } from '@/shared/ui/site/SiteMetrics'
 import { SiteRecordWorkspace } from '@/shared/ui/site/SiteRecordWorkspace'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PageHeader } from '@/shared/ui/PageHeader'
@@ -20,6 +21,11 @@ export function ServicesPage() {
   return (
     <>
       <PageHeader title="Послуги" />
+      {services.status === 'ready' && <SiteMetrics label="Наповнення послуг" metrics={[
+        { label: 'Напрями послуг', icon: IconTools, count: rows.length },
+        { label: 'Видимі на сайті', icon: IconEye, count: visible.length, total: rows.length },
+        { label: 'З фотографією', icon: IconPhoto, count: rows.filter(row => row.imageUrl).length, total: rows.length },
+      ]} />}
       <SiteRecordWorkspace
         title="Напрями послуг" parameter="code" refresh={services.reload} refreshing={services.isFetching} loading={services.isLoading}
         empty={failed ? <ListError problem={services.problem} onRetry={services.reload} /> : 'Послуг ще немає.'}

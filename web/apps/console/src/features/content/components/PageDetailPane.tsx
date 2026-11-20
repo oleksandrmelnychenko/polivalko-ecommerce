@@ -1,8 +1,9 @@
 import { ActionIcon, Button, Skeleton, Tooltip } from '@mantine/core'
-import { IconExternalLink, IconFileText, IconPencil } from '@tabler/icons-react'
+import { IconExternalLink, IconFileText, IconSearch, IconPencil } from '@tabler/icons-react'
 import { Link } from 'react-router-dom'
 import { formatDateTime, plural } from '@polivalko/shared/lib/format'
 import { useApiQuery } from '@/shared/api/useApiQuery'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { siteUrl } from '@/shared/lib/siteUrl'
 import { moment } from '@/shared/lib/when'
 import { getPage, type PageListItem } from '../api/contentApi'
@@ -77,7 +78,7 @@ function PageDetail({ item }: { item: PageListItem }) {
 
       <section className="app-split-card" aria-labelledby="content-page-seo">
         <header className="app-split-card-head">
-          <h3 id="content-page-seo">Як виглядає в пошуку</h3>
+          <h3 id="content-page-seo"><MetricLabel icon={IconSearch}>Вигляд у пошуку</MetricLabel></h3>
           <span>{item.seoDescription?.trim() ? 'власні SEO-поля' : item.seoTitle?.trim() ? 'власний SEO-заголовок' : 'з заголовка й підзаголовка'}</span>
         </header>
         <figure className="content-snippet" aria-label="Приблизний вигляд у пошуку Google">
@@ -90,8 +91,7 @@ function PageDetail({ item }: { item: PageListItem }) {
 
       <section className="app-split-card" aria-labelledby="content-page-text">
         <header className="app-split-card-head">
-          <h3 id="content-page-text">Текст на сайті</h3>
-          <span>збережена версія</span>
+          <h3 id="content-page-text"><MetricLabel icon={IconFileText}>Текст на сайті</MetricLabel></h3>
         </header>
         {page.isLoading ? (
           <Skeleton height={320} radius={10} />

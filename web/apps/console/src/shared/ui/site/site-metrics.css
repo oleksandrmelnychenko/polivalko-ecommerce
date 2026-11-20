@@ -1,0 +1,34 @@
+.site-metrics {
+  display: grid;
+  flex: none;
+  gap: clamp(8px, 1.15vw, 18px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 2px 2px 12px;
+}
+.site-metric {
+  background: white;
+  border: 1px solid rgb(24 24 40 / 4%);
+  border-radius: var(--app-panel-radius);
+  box-shadow: var(--app-card-shadow);
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: clamp(14px, 1.5vw, 22px);
+}
+.site-metric dd {
+  color: var(--brand-ink);
+  font: 500 clamp(24px, 2.5vw, 38px)/1.1 var(--font-mono);
+  letter-spacing: -.06em;
+  margin: 0;
+}
+.site-metric small { color: var(--mantine-color-gray-7); font-size: 12px; letter-spacing: 0; }
+.site-seo-workspace .site-metrics { margin: 0; }
+@media (max-width: 40em) {
+  .site-metrics { gap: 6px; }
+  .site-metric { align-content: stretch; gap: 6px; padding: 10px; }
+  .site-metric .metric-label { align-items: flex-start; flex-direction: column; font-size: 12px; }
+  .site-metric .metric-label svg { padding: 5px; }
+  .site-metric dd { align-self: end; font-size: 21px; }
+  .site-metric .metric-track { align-self: end; }
+  .site-metric small { font-size: 10px; }
+}

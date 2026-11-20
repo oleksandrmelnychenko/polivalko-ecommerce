@@ -1,5 +1,5 @@
 import { Button, Group, Stack, Text, TextInput } from '@mantine/core'
-import { IconArrowsRightLeft, IconExternalLink, IconPlus, IconTrash } from '@tabler/icons-react'
+import { IconArrowsRightLeft, IconExternalLink, IconPencil, IconBolt, IconPlus, IconTrash } from '@tabler/icons-react'
 import { useCallback, useMemo, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { formatDateTime } from '@polivalko/shared/lib/format'
@@ -9,9 +9,11 @@ import { useApiQuery } from '@/shared/api/useApiQuery'
 import { siteUrl } from '@/shared/lib/siteUrl'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { DrawerCancelButton } from '@/shared/ui/DrawerCancelButton'
+import { SiteMetrics } from '@/shared/ui/site/SiteMetrics'
 import { SiteRecordWorkspace } from '@/shared/ui/site/SiteRecordWorkspace'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { notifyError, notifySuccess } from '@/shared/ui/notify'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { createRedirect, deleteRedirect, getRedirects, type ConsoleRedirect } from '../api/siteApi'
 import '@/shared/ui/split/split.css'
@@ -106,6 +108,11 @@ export function RedirectsPanel() {
           setOpened(true)
         }}>Нове перенаправлення</Button>
       } />
+      {redirects.status === 'ready' && <SiteMetrics label="Перенаправлення адрес" metrics={[
+        { label: 'Усього перенаправлень', icon: IconArrowsRightLeft, count: rows.length },
+        { label: 'Автоматичні', icon: IconBolt, count: rows.filter(row => row.isAutomatic).length, total: rows.length },
+        { label: 'Створені вручну', icon: IconPencil, count: rows.filter(row => !row.isAutomatic).length, total: rows.length },
+      ]} />}
       <SiteRecordWorkspace
         title="Адреси" parameter="id" loading={redirects.isLoading} refreshing={redirects.isFetching} refresh={redirects.reload} empty={emptyText}
         rows={rows.map(row => ({
@@ -118,7 +125,7 @@ export function RedirectsPanel() {
             <div className="app-split-detail">
               <section key={selected.id} className="app-split-card" aria-labelledby="site-redirect-detail">
                 <header className="app-split-card-head">
-                  <h3 id="site-redirect-detail">Обране перенаправлення</h3>
+                  <h3 id="site-redirect-detail"><MetricLabel icon={IconArrowsRightLeft}>Обране перенаправлення</MetricLabel></h3>
                   <Button size="xs" variant="subtle" color="red" leftSection={<IconTrash size={14} stroke={1.7} />} onClick={() => setRemoving(selected)}>
                     Видалити
                   </Button>
@@ -156,7 +163,7 @@ export function RedirectsPanel() {
           )
         }}
       </SiteRecordWorkspace>
-      <AppEditorModal opened={opened} title="Нове перенаправлення" className="site-record-modal"
+      <AppEditorModal opened={opened} title={<MetricLabel icon={IconArrowsRightLeft}>Нове перенаправлення</MetricLabel>} className="site-record-modal"
         onClose={() => { if (!creating) setOpened(false) }} dirty={!creating && Boolean(fromPath || toPath)}
         closeOnEscape={!creating} closeOnClickOutside={!creating}
         footer={<Group gap="sm"><DrawerCancelButton disabled={creating} onCancel={() => setOpened(false)} />

@@ -1,6 +1,7 @@
 import { ActionIcon, Button, Tooltip } from '@mantine/core'
-import { IconExternalLink, IconPencil, IconPhoto } from '@tabler/icons-react'
+import { IconExternalLink, IconPencil, IconPhoto, IconTools } from '@tabler/icons-react'
 import { plural } from '@polivalko/shared/lib/format'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { siteUrl } from '@/shared/lib/siteUrl'
 import { TableChip } from '@/shared/ui/TableChip'
 import type { ServiceDirection } from '../api/contentApi'
@@ -29,7 +30,6 @@ export function ServiceDetailPane({ direction, position, visibleCount, onEdit }:
                 {direction.name}
                 {direction.isVisible ? <TableChip dot tone="success" value="Показується" /> : <TableChip dot tone="neutral" value="Прихований" />}
               </h2>
-              {direction.description ? <p className="app-split-description">{direction.description}</p> : null}
             </div>
           </div>
           <div className="app-split-actions">
@@ -48,7 +48,7 @@ export function ServiceDetailPane({ direction, position, visibleCount, onEdit }:
             <dt>Місце на сторінці</dt>
             <dd>
               {direction.isVisible ? `${position} з ${visibleCount}` : 'не показується'}
-              <small>поле «Порядок»: {direction.sortOrder}</small>
+              <small>Порядок · {direction.sortOrder}</small>
             </dd>
           </div>
           <div>
@@ -64,11 +64,10 @@ export function ServiceDetailPane({ direction, position, visibleCount, onEdit }:
 
       <section className="app-split-card" aria-labelledby="content-service-preview">
         <header className="app-split-card-head">
-          <h3 id="content-service-preview">На сторінці послуг</h3>
-          {direction.isVisible ? null : <span>прихований напрямок відвідувачі не бачать</span>}
+          <h3 id="content-service-preview"><MetricLabel icon={IconTools}>На сторінці послуг</MetricLabel></h3>
         </header>
         <div className={`content-service-preview${direction.isVisible ? '' : ' is-hidden'}`}>
-          <span className="content-service-preview-photo">
+          <span className="content-service-preview-photo" data-photo={Boolean(direction.imageUrl) || undefined}>
             {direction.imageUrl ? <img src={direction.imageUrl} alt="" /> : <IconPhoto size={22} stroke={1.4} aria-hidden="true" />}
           </span>
           <span className="content-service-preview-text">

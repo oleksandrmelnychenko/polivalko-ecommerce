@@ -4,6 +4,7 @@ import { useRef, useState, type FormEvent } from 'react'
 import { problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { siteUrl } from '@/shared/lib/siteUrl'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { PageState } from '@/shared/ui/PageState'
 import { getSeoTemplates, saveSeoTemplates, type SeoTemplate, type SeoTemplates } from '../api/siteApi'
@@ -135,8 +136,7 @@ function EntityCard({ entity, value, errors, onChange }: EntityCardProps) {
   return (
     <section className="site-card" aria-label={entity.title}>
       <header className="seo-entity-heading">
-        <span aria-hidden="true">{entity.key === 'product' ? <IconBox size={18} /> : <IconCategory size={18} />}</span>
-        <h2>{entity.title}</h2>
+        <h2><MetricLabel icon={entity.key === 'product' ? IconBox : IconCategory}>{entity.title}</MetricLabel></h2>
       </header>
       <p className="site-card-description">{entity.description}</p>
       <div className="site-template-grid">

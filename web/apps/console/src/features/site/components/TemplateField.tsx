@@ -1,7 +1,7 @@
 import { Textarea, TextInput } from '@mantine/core'
 import { useRef } from 'react'
 import { SEO_LIMITS, TOKEN_LABELS, type TemplateToken } from '../lib/seoTemplates'
-import { LengthCounter } from './SnippetPreview'
+import { SnippetLength } from '@/shared/ui/site/SnippetLength'
 
 type TemplateFieldProps = {
   label: string
@@ -32,11 +32,7 @@ export function TemplateField({ label, value, example, limit, tokens, multiline 
     })
   }
 
-  const description = (
-    <>
-      <LengthCounter length={example.length} limit={limit} /> · приклад: {example || 'порожньо'}
-    </>
-  )
+  const description = <SnippetLength length={example.length} target={limit} />
 
   return (
     <div className="site-template-field">

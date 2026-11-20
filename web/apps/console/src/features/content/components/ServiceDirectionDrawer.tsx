@@ -1,7 +1,8 @@
 import { Button, Switch, Group, NumberInput, Textarea } from '@mantine/core'
-import { IconDeviceFloppy } from '@tabler/icons-react'
+import { IconDeviceFloppy, IconTools } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { useReportDirty } from '@/shared/lib/useReportDirty'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { saveService, uploadImage, type ServiceDirection } from '../api/contentApi'
 import { useSaveForm } from '../lib/useSaveForm'
@@ -33,7 +34,7 @@ export function ServiceDirectionDrawer({ direction, opened, onClose, onSaved }: 
       closeOnEscape={!locked}
       closeOnClickOutside={!locked}
       className="site-record-modal service-editor-modal"
-      title={direction?.name ?? 'Напрямок послуг'}
+      title={<MetricLabel icon={IconTools}>{direction?.name ?? 'Напрямок послуг'}</MetricLabel>}
       size="standard"
       footer={
         <Group justify="flex-end" gap="sm">

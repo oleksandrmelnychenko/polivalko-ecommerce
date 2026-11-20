@@ -1,10 +1,11 @@
 import { Button, Stack, Text, Textarea, TextInput } from '@mantine/core'
 import { useHotkeys } from '@mantine/hooks'
-import { IconDeviceFloppy, IconExternalLink } from '@tabler/icons-react'
+import { IconEye, IconDeviceFloppy, IconExternalLink } from '@tabler/icons-react'
 import { useDeferredValue, useRef, useState, type FormEvent } from 'react'
 import { formatDateTime } from '@polivalko/shared/lib/format'
 import { useAuth } from '@/features/auth'
 import { siteUrl } from '@/shared/lib/siteUrl'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { LeaveGuard } from '@/shared/ui/LeaveGuard'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { TableChip } from '@/shared/ui/TableChip'
@@ -160,8 +161,8 @@ export function PageEditor({ initial, onSaved }: PageEditorProps) {
 
         <section className="content-editor-pane content-preview" aria-labelledby="content-preview-title">
           <div className="content-preview-head">
-            <h2 id="content-preview-title" className="app-section-title">
-              Перегляд
+            <h2 id="content-preview-title">
+              <MetricLabel icon={IconEye}>Перегляд</MetricLabel>
             </h2>
             {dirty ? <TableChip dot tone="warning" value="чернетка, не збережена" /> : <TableChip tone="neutral" value="збережена версія" />}
           </div>

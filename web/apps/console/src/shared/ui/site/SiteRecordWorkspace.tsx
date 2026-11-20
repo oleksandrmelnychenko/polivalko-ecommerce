@@ -63,7 +63,7 @@ export function SiteRecordWorkspace({ title, parameter, rows, empty, loading, re
     <div className="home-workspace site-records" data-editing={editing || undefined}>
       <section className="home-block-list" aria-label={title}>
         <header>
-          <h2>{title} <span className="home-count">{loading ? '' : rows.length}</span></h2>
+          <h2>{title}</h2>
           <div className="site-record-actions">
             {sortOptions && <Menu position="bottom-end">
               <Menu.Target><ActionIcon variant="subtle" color="gray" aria-label="Сортувати список"><IconArrowsSort size={16} /></ActionIcon></Menu.Target>
