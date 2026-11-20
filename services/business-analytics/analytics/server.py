@@ -17,6 +17,7 @@ from .source import hosted, read_register
 from .invoices import read_year
 from .turnover import forecast_months, history_for
 from .markets import markets
+from .shipments import check_shipment_sources
 
 logger = logging.getLogger(__name__)
 
@@ -195,6 +196,10 @@ def dispatch(env):
         return 200, {"status": "ok"}
     if route == ("GET", "/checks/last-closed-year"):
         year = now().year - 1
+        try:
+            check_shipment_sources(year)
+        except Exception as exc:
+            logger.error("Shipment source check unavailable (%s)", type(exc).__name__)
         market = None
         try:
             market = markets(year, now().date())
