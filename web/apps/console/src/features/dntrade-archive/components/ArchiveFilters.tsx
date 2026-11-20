@@ -11,6 +11,34 @@ export type ArchiveFilterValues = Record<(typeof archiveFilterKeys)[number], str
 
 const EMPTY_FILTERS: ArchiveFilterValues = { q: '', entityType: '', sourceAccount: '', storeId: '', from: '', to: '' }
 
+const FINANCE_ARCHIVE_GROUPS = [
+  {
+    group: 'Каса й банк',
+    items: [
+      { value: 'Рух коштів', label: 'Рух коштів', entityType: 'financialReport' },
+      { value: 'Звіт по рахунках', label: 'Звіт по рахунках', entityType: 'financialReport' },
+      { value: 'Звіт по касі', label: 'Звіт по касі', entityType: 'financialReport' },
+      { value: 'Банківський рахунок DNTrade', label: 'Банківські рахунки DNTrade', entityType: 'bankAccount' },
+    ],
+  },
+  {
+    group: 'Заборгованість',
+    items: [
+      { value: 'Взаєморозрахунки з контрагентами', label: 'Взаєморозрахунки з контрагентами', entityType: 'financialReport' },
+      { value: 'Журнал коригувань заборгованості', label: 'Журнал коригувань заборгованості', entityType: 'financialReport' },
+    ],
+  },
+  {
+    group: 'Облікові звіти й налаштування',
+    items: [
+      { value: 'Облікові параметри організацій', label: 'Облікові параметри організацій', entityType: 'financialReport' },
+      { value: 'Прибутки та витрати (P&L)', label: 'Прибутки та витрати (P&L)', entityType: 'financialReport' },
+    ],
+  },
+]
+
+const financeArchiveOptions = FINANCE_ARCHIVE_GROUPS.flatMap(({ items }) => items)
+
 export function readArchiveFilters(params: URLSearchParams): ArchiveFilterValues {
   return {
     q: params.get('q') ?? '',
@@ -60,25 +88,41 @@ export function ArchiveFilters({ filters, actions, onChange }: ArchiveFiltersPro
     onChange(EMPTY_FILTERS)
   }
 
+  const selectedFinanceRecord = financeArchiveOptions.find(({ value, entityType }) => value === draft.q && entityType === draft.entityType)
   const activeCount = [draft.entityType, draft.sourceAccount, draft.storeId, draft.from || draft.to].filter(Boolean).length
   return (
     <FilterBar
       label="Пошук в архіві Навколо"
       activeCount={activeCount}
       search={
-        <TextInput
-          className="app-filter-wide"
-          label="Пошук"
-          placeholder="Код або тип документа"
-          value={draft.q}
-          maxLength={128}
-          autoComplete="off"
-          spellCheck={false}
-          leftSection={<IconSearch size={16} stroke={1.7} />}
-          rightSection={draft.q ? <CloseButton size="sm" aria-label="Очистити пошук" onClick={() => update({ q: '' }, true)} /> : null}
-          onChange={(event) => update({ q: event.currentTarget.value })}
-          onKeyDown={(event) => { if (event.key === 'Enter') commit.flush() }}
-        />
+        <>
+          <TextInput
+            className="app-filter-wide"
+            label="Пошук"
+            placeholder="Код або тип документа"
+            value={draft.q}
+            maxLength={128}
+            autoComplete="off"
+            spellCheck={false}
+            leftSection={<IconSearch size={16} stroke={1.7} />}
+            rightSection={draft.q ? <CloseButton size="sm" aria-label="Очистити пошук" onClick={() => update({ q: '' }, true)} /> : null}
+            onChange={(event) => update({ q: event.currentTarget.value })}
+            onKeyDown={(event) => { if (event.key === 'Enter') commit.flush() }}
+          />
+          <Select
+            className="app-filter-wide"
+            label="Фінансовий архів"
+            placeholder="Оберіть звіт або довідник"
+            data={FINANCE_ARCHIVE_GROUPS}
+            value={selectedFinanceRecord?.value ?? null}
+            clearable
+            clearButtonProps={{ 'aria-label': 'Очистити вибір фінансового запису' }}
+            onChange={(value) => {
+              const record = financeArchiveOptions.find((option) => option.value === value)
+              update({ q: record?.value ?? '', entityType: record?.entityType ?? '' }, true)
+            }}
+          />
+        </>
       }
       actions={
         <>

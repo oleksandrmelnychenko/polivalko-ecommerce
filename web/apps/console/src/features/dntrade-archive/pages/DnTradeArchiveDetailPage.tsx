@@ -9,6 +9,7 @@ import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { PageState } from '@/shared/ui/PageState'
 import { archiveOriginalHref, getArchiveDetail } from '../api/archiveApi'
+import { ArchivedFinancialReport } from '../components/ArchivedFinancialReport'
 import { ARCHIVE_PATH, archiveAmount, archiveEntityLabel, archiveSourceDate } from '../lib/archive'
 import '@/shared/ui/split/split.css'
 import './dntrade-archive-detail.css'
@@ -22,6 +23,7 @@ export function DnTradeArchiveDetailPage() {
   const document = useApiQuery(`dntrade-archive-detail:${id}`, () => getArchiveDetail(id))
   const item = document.status === 'ready' ? document.data : undefined
   const notFound = document.problem?.code === 'dntrade.archive_not_found'
+  const canReadOriginal = can(PermissionKeys.DnTradeArchive.Original)
 
   return (
     <ListPage>
@@ -32,7 +34,7 @@ export function DnTradeArchiveDetailPage() {
             <Button component={Link} to={{ pathname: ARCHIVE_PATH, search }} variant="default" leftSection={<IconChevronLeft size={16} stroke={1.8} />}>
               До архіву
             </Button>
-            {item && can(PermissionKeys.DnTradeArchive.Original) ? (
+            {item && canReadOriginal ? (
               <Button component="a" href={archiveOriginalHref(item.id)} download variant="default" leftSection={<IconDownload size={16} stroke={1.8} />}>
                 Завантажити оригінал
               </Button>
@@ -96,6 +98,9 @@ export function DnTradeArchiveDetailPage() {
                 </div>
               </dl>
             </section>
+            {canReadOriginal && (item.entityType === 'financialReport' || item.entityType === 'bankAccount') ? (
+              <ArchivedFinancialReport key={item.id} id={item.id} entityType={item.entityType} />
+            ) : null}
           </article>
         ) : document.status === 'loading' ? (
           <PageState kind="loading" />
