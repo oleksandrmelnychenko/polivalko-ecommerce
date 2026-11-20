@@ -41,6 +41,7 @@ public static class ApiEndpoints
         console.MapConsoleSummaryEndpoints();
         console.MapConsoleDashboardEndpoints();
         console.MapConsoleAccountingEndpoints();
+        console.MapConsoleProductAnalyticsEndpoints();
         console.MapConsoleSearchEndpoints();
         console.MapConsoleOrderEndpoints();
         console.MapConsoleCustomerEndpoints();

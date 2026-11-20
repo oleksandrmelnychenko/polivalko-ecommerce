@@ -25,7 +25,17 @@ jobs:
       - name: Контракт OpenAPI закомічено
         run: git diff --exit-code -- openapi/
 
+      - name: Тести та запуск сервісу товарної аналітики
+        run: |
+          docker build -t polivalko-product-analytics:ci services/product-analytics
+          docker run --rm --network none -v "$PWD/services/product-analytics/tests:/app/tests:ro" \
+            polivalko-product-analytics:ci python -m unittest discover -s tests -v
+          docker run -d --name polivalko-product-analytics -p 127.0.0.1:18082:8080 polivalko-product-analytics:ci
+          curl -fsS --retry 20 --retry-all-errors --retry-delay 1 --max-time 2 http://127.0.0.1:18082/health/live
+
       - run: dotnet test --solution PoliValko.slnx --no-build -c Release
+        env:
+          ProductAnalytics__BaseUrl: http://127.0.0.1:18082
 
   web:
     name: Вітрина й консоль (Next.js)

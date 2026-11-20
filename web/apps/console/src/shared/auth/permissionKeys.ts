@@ -1,9 +1,12 @@
-export const PERMISSION_CATALOG_VERSION = '2026-11-20.3'
+export const PERMISSION_CATALOG_VERSION = '2026-11-20.4'
 
 export const PermissionKeys = {
   Accounting: { View: 'accounting.registers.view', Edit: 'accounting.registers.edit', Post: 'accounting.invoices.post', Pay: 'accounting.payments.record', Opening: 'accounting.stock.open', BalanceOpening: 'accounting.settlements.open' },
   Dashboard: {
     View: 'dashboard.page.view',
+  },
+  Analytics: {
+    ViewProducts: 'analytics.products.view',
   },
   Orders: {
     View: 'orders.page.view',
@@ -76,6 +79,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'accounting.stock.open': 'Введення початкових залишків',
   'accounting.settlements.open': 'Підтвердження початкових боргів',
   'dashboard.page.view': 'Огляд: перегляд показників',
+  'analytics.products.view': 'Аналітика товарів: перегляд',
   'orders.page.view': 'Замовлення: список і картка',
   'orders.status.change': 'Зміна статусу замовлення',
   'orders.refund.create': 'Оформлення повернення коштів',

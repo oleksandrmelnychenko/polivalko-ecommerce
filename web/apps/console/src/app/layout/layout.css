@@ -12,14 +12,14 @@
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
-  padding: 8px 8px 8px;
+  padding: 0 clamp(12px, 1.5vw, 24px) 16px;
 }
 
 .console-frame {
   background: var(--mantine-color-white);
   border: 1px solid var(--mantine-color-gray-2);
-  border-radius: 14px;
-  box-shadow: 0 1px 3px rgba(26, 26, 26, 0.04);
+  border-radius: var(--app-panel-radius);
+  box-shadow: var(--app-card-shadow);
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -32,43 +32,40 @@
   min-width: 0;
 }
 
+.console-content:has(.dash-page) {
+  padding: 0;
+}
+
+.console-frame:has(> .dash-page) {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.mantine-AppShell-main:has(.dash-page) {
+  background: radial-gradient(ellipse at 100% 100%, color-mix(in srgb, var(--brand-accent) 4%, transparent), transparent 42%), #fafafc;
+}
+
 .console-header {
-  background: var(--mantine-color-white);
-  border-bottom: 1px solid var(--mantine-color-gray-2);
+  border-radius: 0 0 22px 22px;
+  border-bottom: 1px solid var(--app-line);
+  background: white;
 }
 
 .console-header-main {
   align-items: center;
-  box-sizing: border-box;
-  column-gap: 16px;
-  display: grid;
-  grid-template-areas:
-    'brand nav tools'
-    'lead tabs actions';
-  grid-template-columns: minmax(max-content, 1fr) minmax(0, max-content) minmax(max-content, 1fr);
-  grid-template-rows: 60px 48px;
-  height: 108px;
-  padding: 0 20px;
-  position: relative;
+  display: flex;
+  gap: clamp(10px, 2vw, 32px);
+  height: 100%;
+  padding-inline: clamp(14px, 2vw, 32px);
 }
 
-.console-header-main::before {
-  background: var(--mantine-color-gray-2);
-  content: '';
-  height: 1px;
-  left: 0;
-  pointer-events: none;
-  position: absolute;
-  right: 0;
-  top: 60px;
-}
 
 .console-header-brand {
   align-items: center;
   display: flex;
-  gap: 8px;
-  grid-area: brand;
-  justify-self: start;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -81,7 +78,7 @@
   border-radius: 8px;
   color: var(--brand-ink);
   display: inline-flex;
-  gap: 8px;
+  gap: 9px;
   min-width: 0;
   padding: 4px 2px;
   text-decoration: none;
@@ -95,63 +92,35 @@
 .console-brand-word {
   font-size: 20px;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.055em;
   line-height: 1;
 }
 
-.console-brand-tag {
-  background: var(--brand-accent-soft);
-  border: 1px solid rgba(var(--brand-accent-rgb), 0.28);
-  border-radius: 999px;
-  color: #006f30;
-  font-size: 11.5px;
-  font-weight: 600;
-  line-height: 18px;
-  padding: 0 8px;
-}
 
-.console-brand-inline {
-  align-items: center;
-  display: inline-flex;
-  font-size: 18px;
-  font-weight: 700;
-  gap: 8px;
-}
 
-.console-header-top-nav {
-  align-self: stretch;
-  display: flex;
-  grid-area: nav;
-  justify-self: center;
-  min-width: 0;
-}
 
 .console-section-nav {
-  align-items: stretch;
-  display: flex;
-  gap: 4px;
+  display: grid;
+  gap: 5px;
+  align-content: start;
 }
 
 .console-section-pill {
-  --pill-inline: 12px;
   align-items: center;
-  background: transparent;
-  border: 0;
-  color: var(--mantine-color-gray-7);
-  cursor: pointer;
-  display: inline-flex;
-  font: inherit;
-  font-size: 14.5px;
+  border-radius: 999px;
+  color: #505057;
+  display: flex;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 14px;
+  font-size: 14px;
   font-weight: 500;
-  gap: 6px;
-  height: 100%;
-  padding: 0 var(--pill-inline);
-  position: relative;
   text-decoration: none;
-  white-space: nowrap;
+  transition: background-color 140ms ease, color 140ms ease;
 }
 
 .console-section-pill:hover {
+  background: var(--app-ground);
   color: var(--brand-ink);
 }
 
@@ -162,35 +131,25 @@
 }
 
 .console-section-pill.is-active {
-  color: var(--brand-ink);
-  font-weight: 600;
+  background: var(--brand-ink);
+  color: white;
 }
 
-.console-section-pill.is-active::after {
-  background: var(--brand-accent);
-  border-radius: 2px;
-  bottom: 0;
-  content: '';
-  height: 3px;
-  left: var(--pill-inline);
-  position: absolute;
-  right: var(--pill-inline);
-}
 
 .console-header-tools {
   align-items: center;
   display: flex;
   gap: 6px;
-  grid-area: tools;
-  justify-self: end;
+  flex: none;
   min-width: 0;
+  margin-inline-start: auto;
 }
 
 .console-search-button {
   align-items: center;
   background: var(--mantine-color-gray-0);
   border: 1px solid var(--mantine-color-gray-2);
-  border-radius: 10px;
+  border-radius: 999px;
   color: var(--mantine-color-gray-7);
   display: inline-flex;
   gap: 8px;
@@ -217,14 +176,14 @@
 }
 
 .console-search-icon {
-  display: none;
+  display: inline-flex;
 }
 
 .console-account-trigger {
   align-items: center;
   background: transparent;
   border: 0;
-  border-radius: 10px;
+  border-radius: 999px;
   color: var(--mantine-color-gray-8);
   cursor: pointer;
   display: inline-flex;
@@ -304,11 +263,6 @@
 }
 
 .console-header-page-title {
-  align-items: center;
-  align-self: stretch;
-  display: flex;
-  grid-area: tabs;
-  justify-content: center;
   min-width: 0;
   overflow: hidden;
 }
@@ -317,38 +271,25 @@
   display: none;
 }
 
-.console-header-page-title:not(:empty) ~ .console-header-tabs {
+.console-header-page-title:not(:empty) + .console-heading-fallback {
   display: none;
 }
 
 .console-page-heading {
   align-items: center;
   display: flex;
-  font-size: 15px;
-  font-weight: 600;
   gap: 8px;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.console-header-tabs {
-  align-self: stretch;
-  display: flex;
-  grid-area: tabs;
-  justify-self: center;
-  max-width: 100%;
-  min-width: 0;
-}
 
 .console-section-tabs {
-  align-items: stretch;
+  align-items: center;
   display: flex;
-  gap: 2px;
-  max-width: 100%;
+  gap: 3px;
+  min-width: 0;
   overflow-x: auto;
-  scrollbar-width: none;
+  scrollbar-width: thin;
 }
 
 .console-section-tabs::-webkit-scrollbar {
@@ -364,7 +305,9 @@
   font-size: 13.5px;
   font-weight: 500;
   gap: 6px;
-  padding: 0 var(--tab-inline);
+  border-radius: 999px;
+  min-height: 34px;
+  padding: 4px var(--tab-inline);
   position: relative;
   text-decoration: none;
   white-space: nowrap;
@@ -381,27 +324,18 @@
 }
 
 .console-section-tab.is-active {
+  background: white;
+  box-shadow: inset 0 0 0 1px var(--app-line);
   color: var(--brand-ink);
-  font-weight: 600;
 }
 
-.console-section-tab.is-active::after {
-  background: var(--brand-accent);
-  border-radius: 2px;
-  bottom: 0;
-  content: '';
-  height: 2px;
-  left: var(--tab-inline);
-  position: absolute;
-  right: var(--tab-inline);
-}
 
 .console-header-page-actions {
   align-items: center;
   display: flex;
   gap: 6px;
-  grid-area: actions;
-  justify-self: end;
+  flex: none;
+  margin-inline-start: auto;
   min-width: 0;
 }
 
@@ -477,8 +411,8 @@
 }
 
 .console-mobile-link.is-active {
-  background: var(--brand-accent-soft);
-  color: var(--brand-ink);
+  background: var(--brand-ink);
+  color: white;
   font-weight: 600;
 }
 
@@ -486,67 +420,69 @@
   color: var(--brand-accent);
 }
 
-@media (max-width: 80em) {
-  .console-header-main {
-    column-gap: 12px;
-    padding: 0 14px;
-  }
-
-  .console-search-button {
-    min-width: 0;
-  }
-
-  .console-search-button-kbd {
-    display: none;
-  }
-
-  .console-section-pill {
-    --pill-inline: 9px;
-    font-size: 14px;
-  }
+.console-sidebar {
+  border-radius: 0 22px 22px 0;
+  margin-block: 6px;
+  height: calc(100dvh - var(--app-shell-header-offset) - 12px);
+  background: #fcfcfd;
+  border-inline-end: 1px solid var(--app-line);
+  gap: 16px;
+  overflow-y: auto;
+  padding: 18px 16px;
 }
-
-@media (max-width: 64em) {
-  .console-header-main {
-    column-gap: 8px;
-    grid-template-areas:
-      'brand tools'
-      'tabs actions';
-    grid-template-columns: minmax(0, 1fr) auto;
-    padding: 0 10px;
-  }
-
-  .console-burger {
-    display: inline-flex;
-  }
-
-  .console-header-top-nav {
-    display: none;
-  }
-
-  .console-header-tabs,
-  .console-header-page-title {
-    justify-self: stretch;
-  }
-
-  .console-header-page-title {
-    justify-content: flex-start;
-  }
-
-  .console-search-button {
-    display: none;
-  }
-
-  .console-search-icon {
-    display: inline-flex;
-  }
-
-  .console-content {
-    padding: 6px 4px 4px;
-  }
+.console-workspace-name {
+  color: var(--brand-ink);
+  font-size: 34px;
+  font-weight: 500;
+  letter-spacing: -.06em;
+  line-height: 1.04;
+  margin: 24px 10px 2px;
 }
-
+.console-mobile-nav { border-radius: 0 22px 22px 0; }
+.console-page-title-row { padding: 14px 0 10px; }
+.console-heading-fallback { margin: 0; }
+.console-clock { align-items: center; display: flex; gap: 14px; }
+.console-clock-date { color: var(--mantine-color-gray-7); display: grid; font-size: 12px; line-height: 1.25; }
+.console-clock-date b { color: var(--brand-ink); font-weight: 550; text-transform: capitalize; }
+.console-clock strong { color: var(--brand-ink); font-size: clamp(24px, 2.5vw, 36px); font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: -.055em; }
+.console-header-main > .console-account-trigger::before { background: var(--brand-accent); border-radius: 50%; content: ''; flex: none; height: 7px; width: 7px; }
+.console-header-main > .console-account-trigger .console-account-icon { display: none; }
+.console-page-toolbar:empty { display: none; }
+.console-section-pill .console-nav-badge { margin-inline-start: auto; }
+.console-section-pill.is-active > svg { color: color-mix(in srgb, var(--brand-accent), white 40%); }
+.console-page-heading, .console-heading-fallback {
+  color: var(--brand-ink);
+  font-size: clamp(20px, 2vw, 30px);
+  font-weight: 500;
+  letter-spacing: -.045em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.console-page-heading h1 { font: inherit; letter-spacing: inherit; margin: 0; }
+.console-page-toolbar {
+  align-items: center;
+  display: flex;
+  flex: none;
+  gap: 8px;
+  padding-bottom: 10px;
+}
+.console-page-toolbar:has(> .console-header-page-actions:only-child:empty) { display: none; }
+@media (width < 64em) {
+  .console-burger, .console-search-icon { display: inline-flex; flex-shrink: 0; }
+  .console-sidebar, .console-search-button { display: none; }
+  .console-content { padding: 0 8px 8px; }
+}
+@media (width < 48em) {
+  .console-header-main { flex-wrap: wrap; align-content: center; gap: 0 8px; padding-inline: 10px; }
+  .console-clock-date, .console-header-brand .console-brand-word { display: none; }
+  .console-header-brand .console-brand img { height: 36px; width: auto; }
+  .console-period-slot { flex-basis: 100%; order: 1; }
+  .console-period-slot .dash-toolbar-actions { justify-content: center; }
+}
 @media (max-width: 36em) {
+  .console-header-main > .console-account-trigger::before, .console-account-chevron { display: none; }
+  .console-header-main > .console-account-trigger .console-account-icon { display: block; }
   .console-brand-word {
     font-size: 18px;
   }

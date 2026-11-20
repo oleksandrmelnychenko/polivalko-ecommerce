@@ -7,35 +7,40 @@ import { useCart } from "../components/cart-provider";
 
 export function useCartQuote() {
   const { lines } = useCart();
-  const [quote, setQuote] = useState<Quote | null>(null);
-  const [failed, setFailed] = useState(false);
-  const latest = useRef(0);
+  const [result, setResult] = useState<{ key: string; quote: Quote | null } | null>(null);
+  const latest = useRef<AbortController | null>(null);
 
   const items = useMemo(() => lines.map((l) => ({ productId: l.productId, quantity: l.quantity })), [lines]);
+  const key = JSON.stringify(items);
 
   const refresh = useCallback(async () => {
-    const request = ++latest.current;
+    latest.current?.abort();
     if (items.length === 0) {
-      setQuote(null);
-      setFailed(false);
+      setResult(null);
       return null;
     }
+    const controller = new AbortController();
+    latest.current = controller;
+    setResult((previous) => previous && { ...previous, key: "" });
     let data: Quote | undefined;
     try {
-      data = (await quoteCart(items)).data;
+      data = (await quoteCart(items, AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]))).data;
     } catch {
       data = undefined;
     }
-    if (request !== latest.current) return data ?? null;
-    setFailed(!data);
-    setQuote(data ?? null);
+    if (controller.signal.aborted) return null;
+    setResult({ key, quote: data ?? null });
     return data ?? null;
-  }, [items]);
+  }, [items, key]);
 
   useEffect(() => {
     const t = setTimeout(() => void refresh(), 200);
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t);
+      latest.current?.abort();
+    };
   }, [refresh]);
 
-  return { items, quote, failed, refresh };
+  const current = result?.key === key;
+  return { items, quote: items.length ? result?.quote ?? null : null, current, failed: current && !result?.quote, refresh };
 }

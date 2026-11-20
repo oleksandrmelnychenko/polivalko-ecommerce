@@ -7,11 +7,13 @@ import { deliveryMethodLabel } from "@polivalko/shared/lib/labels";
 import { deleteAddress, putAddress } from "../api/client";
 
 export function AddressCard({
+  owner,
   address,
   onEdit,
   onChanged,
   locked,
 }: {
+  owner: string;
   address: CustomerAddress;
   onEdit: () => void;
   onChanged: (message: string) => void;
@@ -42,8 +44,8 @@ export function AddressCard({
   const makeDefault = () =>
     run(
       () =>
-        withAccountCsrf((h) =>
-          putAddress(h, address.id, {
+        withAccountCsrf(
+          (h) => putAddress(h, address.id, {
             label: address.label,
             method: address.method,
             settlementRef: address.settlementRef,
@@ -51,11 +53,12 @@ export function AddressCard({
             address: address.address,
             isDefault: true,
           }),
+          owner,
         ),
       "Основну адресу змінено.",
     );
 
-  const remove = () => run(() => withAccountCsrf((h) => deleteAddress(h, address.id)), "Адресу видалено.");
+  const remove = () => run(() => withAccountCsrf((h) => deleteAddress(h, address.id), owner), "Адресу видалено.");
 
   return (
     <li className={address.isDefault ? "address-card address-card--default" : "address-card"}>

@@ -39,7 +39,7 @@ export function connect(nextOwner: string) {
   const current = ++generation;
   dropPending();
   publish({ ...INITIAL, owner: nextOwner });
-  queue = openCart().then((cart) => {
+  queue = openCart(nextOwner === "guest" ? null : nextOwner).then((cart) => {
     if (current === generation) accept(cart);
   }).catch(() => {
     if (current === generation) publish({ ...snapshot, error: "Не вдалося завантажити кошик. Спробуйте ще раз." });
@@ -51,14 +51,21 @@ export function connect(nextOwner: string) {
 export function refreshCart() {
   const current = generation;
   queue = queue.then(async () => {
-    if (current !== generation) return;
-    try { const cart = await openCart(); if (current === generation) accept(cart); }
+    if (current !== generation || !snapshot.owner) return;
+    try { const cart = await openCart(snapshot.owner === "guest" ? null : snapshot.owner); if (current === generation) accept(cart); }
     catch { if (current === generation) publish({ ...snapshot, error: "Не вдалося оновити кошик. Перевірте з’єднання." }); }
   });
   return queue;
 }
 export async function settledCart() {
-  do { flushQuantities(); await queue; } while (desired.size > 0);
+  const current = generation;
+  let pending: Promise<void>;
+  do {
+    flushQuantities();
+    pending = queue;
+    await pending;
+    if (current !== generation) throw new Error("Сеанс змінився. Перевірте кошик ще раз.");
+  } while (desired.size > 0 || pending !== queue);
   if (!snapshot.ready || snapshot.error || !snapshot.cart) throw new Error("Кошик ще не збережено на сервері.");
   return snapshot.cart;
 }
@@ -66,12 +73,13 @@ export function watchCart() {
   const syncSession = async (load: typeof refreshSession) => {
     const session = await load();
     if (session.status === "unknown") return;
-    connect(session.me?.id ?? "guest");
-    await refreshCart();
+    const owner = session.me?.id ?? "guest";
+    if (owner === snapshot.owner) await refreshCart();
+    else connect(owner);
   };
   const focus = () => void syncSession(refreshSession);
   const storage = (event: StorageEvent) => {
-    if (event.key === SIGNAL) void refreshCart();
+    if (event.key === SIGNAL) void syncSession(refreshSession);
     if (event.key === SESSION_SIGNAL) void syncSession(refreshChangedSession);
   };
   window.addEventListener("storage", storage);
@@ -80,11 +88,12 @@ export function watchCart() {
 }
 function run(change: Change | null) {
   const current = generation;
+  const owner = snapshot.owner === "guest" ? null : snapshot.owner;
   queue = queue.then(async () => {
     if (current !== generation) return;
     if (!change && desired.size === 0) return;
     if (!snapshot.cart) {
-      const opened = await openCart();
+      const opened = await openCart(owner);
       if (current !== generation) return;
       accept(opened);
     }
@@ -93,7 +102,7 @@ function run(change: Change | null) {
     const sent = new Map(desired);
     const items = (change ? change(snapshot.lines) : snapshot.lines).map(({ productId, quantity }) => ({ productId, quantity }));
     publish({ ...snapshot, saving: true, error: null });
-    const saved = await saveCart(cart, items);
+    const saved = await saveCart(cart, items, owner);
     if (current !== generation) return;
     sent.forEach((quantity, id) => { if (desired.get(id) === quantity) desired.delete(id); });
     accept(saved);
@@ -102,7 +111,7 @@ function run(change: Change | null) {
   }).catch(async (error: unknown) => {
     if (current !== generation) return;
     dropPending();
-    try { const fresh = await openCart(); if (current === generation) accept(fresh); } catch {}
+    try { const fresh = await openCart(owner); if (current === generation) accept(fresh); } catch {}
     if (current === generation) publish({ ...snapshot, saving: false, error: error instanceof Error ? error.message : "Не вдалося зберегти кошик." });
   });
 }

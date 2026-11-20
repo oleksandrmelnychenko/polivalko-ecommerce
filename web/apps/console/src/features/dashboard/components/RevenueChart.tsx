@@ -45,7 +45,7 @@ export function RevenueChart({ days, metric }: { days: DashboardDay[]; metric: M
 
   return (
     <div className="dash-chart" ref={setBox}>
-      {width > 0 ? (
+      {width > 0 && peak > 0 ? (
         <svg
           width={width}
           height={HEIGHT}
@@ -95,7 +95,7 @@ export function RevenueChart({ days, metric }: { days: DashboardDay[]; metric: M
           </g>
         </svg>
       ) : null}
-      {current && active !== null ? (
+      {current && active !== null && peak > 0 ? (
         <div
           className="dash-chart-tip"
           style={{ left: Math.min(Math.max(PAD.left + active * band + band / 2, 90), width - 90), top: y(values[active]) }}
@@ -108,7 +108,11 @@ export function RevenueChart({ days, metric }: { days: DashboardDay[]; metric: M
           </span>
         </div>
       ) : null}
-      {peak === 0 ? <p className="dash-chart-empty">За цей період замовлень немає.</p> : null}
+      {peak === 0 ? (
+        <p className="dash-chart-empty">
+          {metric === 'revenue' ? 'За цей період немає виручки.' : 'За цей період замовлень немає.'}
+        </p>
+      ) : null}
       <details className="dash-chart-table">
         <summary>Таблиця по днях</summary>
         <div className="dash-chart-table-scroll">

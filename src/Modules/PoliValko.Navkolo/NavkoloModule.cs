@@ -32,6 +32,7 @@ public static class NavkoloModule
         services.AddSingleton<DnTradeRequestGate>();
         services.AddModelConfigurator<DnTradeArchiveModel>();
         services.AddModelConfigurator<DnTradeWorkFormModel>();
+        services.AddScoped<IDnTradeProductSales, DnTradeProductSales>();
         services.AddHttpClient("DNTrade", client =>
         {
             client.BaseAddress = new Uri("https://api.dntrade.com.ua/");

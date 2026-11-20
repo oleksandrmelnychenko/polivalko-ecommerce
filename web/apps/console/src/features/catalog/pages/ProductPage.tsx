@@ -1,5 +1,5 @@
 import { Alert, Button } from '@mantine/core'
-import { IconDeviceFloppy, IconExternalLink, IconLock } from '@tabler/icons-react'
+import { IconChartHistogram, IconDeviceFloppy, IconExternalLink, IconLock } from '@tabler/icons-react'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Can, usePermissions } from '@/features/auth'
@@ -57,6 +57,16 @@ export function ProductPage() {
         actions={
           data ? (
             <>
+              <Can permission={PermissionKeys.Analytics.ViewProducts}>
+                <Button
+                  component={Link}
+                  to={{ pathname: '/sales/product-analytics', search: new URLSearchParams({ product: data.id }).toString() }}
+                  variant="default"
+                  leftSection={<IconChartHistogram size={16} stroke={1.8} />}
+                >
+                  Аналітика товару
+                </Button>
+              </Can>
               <Button
                 component="a"
                 href={siteUrl(`/product/${data.slug}`)}

@@ -25,11 +25,16 @@ public sealed class AccountApiTests(ApiFactory api)
         created.Name.ShouldBe("Олена Покупчиня");
         created.Phone.ShouldBeNull();
         api.Mailer.To(email, MailKind.EmailConfirmation).ShouldHaveSingleItem().Link.ShouldContain("/account/confirm-email?token=");
-        (await client.ReadAsync<CustomerMeDto>("/api/v1/account/me")).Id.ShouldBe(created.Id);
+        using var signedIn = await client.GetAsync("/api/v1/account/me", Ct);
+        (await signedIn.ReadAsync<CustomerMeDto>()).Id.ShouldBe(created.Id);
+        var cacheControl = signedIn.Headers.CacheControl.ShouldNotBeNull();
+        cacheControl.NoStore.ShouldBeTrue();
+        cacheControl.Private.ShouldBeTrue();
 
         (await client.PostAsync("/api/v1/account/logout", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
         var signedOut = await client.GetAsync("/api/v1/account/me", Ct);
         signedOut.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        signedOut.Headers.CacheControl!.NoStore.ShouldBeTrue();
         (await signedOut.ProblemCodeAsync()).ShouldBe("auth.unauthorized");
 
         await Accounts.RefreshCsrfAsync(client);

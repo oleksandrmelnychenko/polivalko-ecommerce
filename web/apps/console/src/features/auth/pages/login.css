@@ -1,128 +1,283 @@
 .login-page {
-  background:
-    radial-gradient(1200px 520px at 50% -10%, rgba(var(--brand-accent-rgb), 0.1), transparent 70%),
-    var(--app-ground);
-  box-sizing: border-box;
-  color: var(--brand-ink);
+  --login-ink: #19191b;
+  --login-muted: #626267;
+  --login-error: #963d3a;
+  --login-error-bg: #fbf5f4;
+  background: #f7f7f8;
+  color: var(--login-ink);
   display: flex;
   height: 100%;
   min-height: 100dvh;
   overflow: auto;
-  padding: 40px 16px;
+  padding: clamp(18px, 5vw, 64px);
 }
 
 .login-content {
+  background: white;
+  border: 1px solid #e8e8ea;
+  border-radius: 32px;
+  box-shadow: 0 22px 64px -38px rgb(24 24 30 / 23%);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   margin: auto;
-  max-width: 440px;
+  max-width: 1016px;
+  padding: 10px;
   width: 100%;
+}
+
+.login-brand-panel {
+  background: #f4f4f4;
+  border-radius: 23px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 528px;
+  overflow: hidden;
+  padding: clamp(24px, 3vw, 40px);
+  position: relative;
+}
+
+.login-brand, .login-panel-title {
+  position: relative;
+  z-index: 1;
 }
 
 .login-brand {
   align-items: center;
   display: flex;
   gap: 10px;
-  justify-content: center;
-  margin-bottom: 24px;
 }
 
-.login-wordmark {
-  color: var(--brand-ink);
+.login-brand-mascot {
+  width: 44px;
+  height: 58px;
+  object-fit: contain;
+}
+
+.login-wordmark { display: grid; gap: 5px; }
+.login-wordmark strong {
   font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -.04em;
+  line-height: 1.1;
+}
+.login-wordmark > span {
+  color: color-mix(in srgb, var(--brand-accent), black 26%);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .12em;
+  line-height: 1.3;
+  text-transform: uppercase;
 }
 
-.login-badge {
-  background: var(--brand-accent-soft);
-  border: 1px solid rgba(var(--brand-accent-rgb), 0.3);
-  border-radius: 999px;
-  color: #006f30;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 20px;
-  padding: 0 10px;
-}
-
-.login-card {
-  background: var(--mantine-color-white);
-  border: 1px solid var(--mantine-color-gray-2);
-  border-radius: 20px;
-  box-shadow: 0 18px 40px rgba(20, 28, 38, 0.06);
-  padding: 32px 32px 24px;
-}
-
-.login-heading {
-  margin-bottom: 22px;
-}
-
-.login-heading h1 {
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
+.login-panel-title, .login-heading h1 {
+  color: var(--login-ink);
+  font-weight: 500;
+  letter-spacing: -.065em;
+  line-height: 1.03;
   margin: 0;
 }
 
-.login-heading p {
-  color: var(--mantine-color-gray-7);
+.login-panel-title {
+  font-size: clamp(38px, 4.5vw, 64px);
+}
+
+.login-panel-title span { color: var(--brand-accent); }
+
+/* Rotating dotted ellipses form the twisted surface of the Dots illustration. */
+.login-orbit {
+  aspect-ratio: 1;
+  left: 56%;
+  pointer-events: none;
+  position: absolute;
+  top: 43%;
+  transform: translate(-50%, -50%);
+  width: 71%;
+}
+
+.login-orbit i {
+  border: 2.5px dotted #4e4e52;
+  border-radius: 50%;
+  inset: 22% 0;
+  position: absolute;
+}
+
+.login-orbit i:nth-last-child(-n+7) { border-top-color: var(--brand-accent); }
+
+.login-card {
+  align-self: center;
+  margin: 0 auto;
+  padding: 42px clamp(20px, 3.6vw, 54px);
+  width: 100%;
+}
+
+.login-heading { margin-bottom: 28px; }
+.login-heading h1 { font-size: clamp(36px, 4.3vw, 58px); }
+.login-heading p, .login-help {
+  color: var(--login-muted);
   font-size: 14px;
   line-height: 1.5;
-  margin: 8px 0 0;
+}
+
+.login-heading p { margin: 12px 0 0; overflow-wrap: anywhere; }
+
+.login-card [data-error-space] {
+  display: grid;
+  grid-template-areas: "label" "description" "input" "error";
+}
+
+.login-card [data-error-space] > .mantine-InputWrapper-label { grid-area: label; }
+.login-card [data-error-space] > .mantine-InputWrapper-description { grid-area: description; }
+.login-card [data-error-space] > .mantine-Input-wrapper { grid-area: input; margin-bottom: 0; }
+
+/* Measure the message at the actual field width, including wrapped lines. */
+.login-card [data-error-space]::after,
+.login-card .mantine-InputWrapper-error {
+  grid-area: error;
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 5px 0 0;
+}
+
+.login-card [data-error-space]::after {
+  content: attr(data-error-space);
+  padding-inline-start: 12px;
+  visibility: hidden;
 }
 
 .login-card .mantine-InputWrapper-label {
+  color: var(--login-ink);
   font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 6px;
+  font-weight: 550;
+  margin-bottom: 7px;
 }
 
 .login-card .mantine-Input-input {
-  border-color: var(--mantine-color-gray-3);
-  border-radius: 10px;
-  font-size: 15px;
-  height: 44px;
-  min-height: 44px;
+  background: #fcfcfc;
+  border: 1px solid #c6c6ca;
+  border-radius: 12px;
+  color: var(--login-ink);
+  font-size: 16px;
+  height: 48px;
+  min-height: 48px;
 }
 
-.login-card .mantine-PasswordInput-innerInput {
-  height: 42px;
-}
-
+.login-card .mantine-PasswordInput-innerInput { height: 100%; }
 .login-card .mantine-Input-input:focus-within {
-  border-color: var(--brand-accent);
-  box-shadow: var(--app-focus-ring);
+  border-color: var(--login-ink);
+  box-shadow: 0 0 0 2px rgb(25 25 27 / 12%);
 }
+
+.login-card .mantine-Input-input[data-error] {
+  background: var(--login-error-bg);
+  border-color: #bd807d;
+}
+
+.login-card .mantine-InputWrapper-error {
+  align-items: baseline;
+  color: var(--login-error);
+  display: flex;
+  gap: 7px;
+}
+
+.login-card .mantine-InputWrapper-error::before {
+  align-self: flex-start;
+  background: currentColor;
+  border-radius: 50%;
+  content: '';
+  flex: 0 0 5px;
+  height: 5px;
+  margin-top: 7px;
+}
+
+.login-feedback-slot {
+  display: grid;
+  align-items: start;
+  margin-top: 16px;
+}
+
+.login-feedback-slot > * { grid-area: 1 / 1; }
+
+.login-feedback, .login-feedback-measure {
+  align-items: flex-start;
+  background: #f5f5f6;
+  border: 1px solid #dedee0;
+  border-radius: 12px;
+  color: var(--login-muted);
+  display: flex;
+  font-size: 13px;
+  gap: 9px;
+  line-height: 1.5;
+  margin: 0;
+  padding: 11px 13px;
+}
+
+.login-feedback-measure {
+  visibility: hidden;
+  padding-inline-start: 39px; /* icon, gap and inline padding */
+}
+
+.login-feedback[role='alert'] {
+  background: var(--login-error-bg);
+  border-color: #e8d6d4;
+  color: var(--login-error);
+}
+
+.login-feedback svg { flex: none; margin-top: 1px; }
 
 .login-card .login-submit {
-  border-radius: 10px;
+  background: var(--login-ink);
+  border-radius: 999px;
+  color: white;
   font-size: 15px;
-  font-weight: 600;
-  height: 46px;
-  margin-top: 4px;
+  font-weight: 550;
+  height: 50px;
+  margin-top: 8px;
+  padding-inline: 20px 9px;
 }
 
-.login-card .login-alert {
-  width: 100%;
+.login-card .login-submit:hover { background: #343436; }
+.login-card .login-submit:disabled { background: #e5e5e7; color: #68686b; }
+.login-submit .mantine-Button-inner { justify-content: space-between; }
+.login-submit .mantine-Button-section {
+  background: #373739;
+  border-radius: 50%;
+  color: color-mix(in srgb, var(--brand-accent), white 38%);
+  height: 32px;
+  justify-content: center;
+  width: 32px;
 }
 
 .login-card .login-switch {
   align-self: flex-start;
-  margin-top: -6px;
-  padding-inline: 4px;
+  color: var(--login-ink);
+  padding-inline: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .login-help {
-  border-top: 1px solid var(--mantine-color-gray-2);
-  color: var(--mantine-color-gray-7);
-  font-size: 13px;
-  margin: 22px 0 0;
-  padding-top: 16px;
-  text-align: center;
+  align-items: flex-start;
+  border-top: 1px solid #e7e7e8;
+  display: flex;
+  font-size: 12px;
+  gap: 8px;
+  margin: 0;
+  padding-top: 18px;
 }
 
-@media (max-width: 30em) {
-  .login-card {
-    border-radius: 16px;
-    padding: 24px 18px 18px;
-  }
+.login-help svg { flex: none; }
+
+@media (max-width: 45em) {
+  .login-content { grid-template-columns: 1fr; max-width: 460px; border-radius: 24px; padding: 7px; }
+  .login-brand-panel { border-radius: 17px; min-height: 144px; padding: 18px 22px; }
+  .login-brand { gap: 6px; }
+  .login-brand-mascot { height: 40px; width: 30px; }
+  .login-wordmark { gap: 2px; }
+  .login-wordmark strong { font-size: 20px; }
+  .login-wordmark > span { font-size: 9px; }
+  .login-panel-title { font-size: 31px; }
+  .login-orbit { left: 78%; top: 50%; width: 36%; }
+  .login-orbit i { border-width: 1.5px; }
+  .login-card { padding: 28px 16px 18px; }
+  .login-heading { margin-bottom: 20px; }
 }

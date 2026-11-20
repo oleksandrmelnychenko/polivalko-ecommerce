@@ -1,6 +1,6 @@
 .content-toolbar {
   align-items: center;
-  background: #fafbfa;
+  background: var(--app-ground);
   border-bottom: 1px solid var(--mantine-color-gray-2);
   box-sizing: border-box;
   display: flex;
@@ -190,7 +190,7 @@ a.content-code {
 }
 
 .content-preview {
-  background: #fafbfa;
+  background: var(--app-ground);
   border-left: 1px solid var(--mantine-color-gray-2);
   display: flex;
   flex-direction: column;
@@ -212,8 +212,8 @@ a.content-code {
 .content-preview-sheet {
   background: var(--mantine-color-white);
   border: 1px solid var(--mantine-color-gray-2);
-  border-radius: 12px;
-  border-top: 3px solid var(--brand-accent);
+  border-radius: var(--app-panel-radius);
+  box-shadow: var(--app-card-shadow);
   display: flex;
   flex: 1 0 auto;
   flex-direction: column;

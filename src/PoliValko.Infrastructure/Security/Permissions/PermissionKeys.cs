@@ -10,6 +10,8 @@ public static class PermissionKeys
     public const string AccountingOpening = "accounting.stock.open";
     public const string AccountingBalanceOpening = "accounting.settlements.open";
 
+    public const string ProductAnalyticsView = "analytics.products.view";
+
     public const string OrdersView = "orders.page.view";
 
     public const string OrdersStatusChange = "orders.status.change";

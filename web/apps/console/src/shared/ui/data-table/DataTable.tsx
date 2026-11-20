@@ -1,8 +1,9 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import { Checkbox, Table } from '@mantine/core'
-import { getCoreRowModel, getSortedRowModel, useReactTable, type ColumnDef, type OnChangeFn, type SortingState } from '@tanstack/react-table'
+import { useTable, type ColumnDef, type OnChangeFn, type RowData, type SortingState } from '@tanstack/react-table'
 import { DataTableBody } from './DataTableBody'
 import { DataTableHeaderCell } from './DataTableHeaderCell'
+import { dataTableFeatures, type DataTableFeatures } from './dataTableFeatures'
 import { createRenderedColumnWidths, getFillColumnId } from './dataTableSizing'
 import { useElementClientWidth } from './useElementClientWidth'
 import type { DataTableColumn, DataTableColumnMeta, DataTableLabels, DataTableProps, DataTableSelection } from './types'
@@ -23,7 +24,7 @@ const DEFAULT_LABELS: DataTableLabels = {
   selectRow: 'Вибрати рядок',
 }
 
-export function DataTable<TData>({
+export function DataTable<TData extends RowData>({
   columns,
   data,
   getRowId,
@@ -52,8 +53,8 @@ export function DataTable<TData>({
   const viewportWidth = useElementClientWidth(scrollNode)
   const pageRowIds = useMemo(() => data.map((row, index) => getRowId(row, index)), [data, getRowId])
 
-  const tableColumns = useMemo<ColumnDef<TData, unknown>[]>(() => {
-    const regular = columns.map((column): ColumnDef<TData, unknown> => toColumnDef(column, labels))
+  const tableColumns = useMemo<ColumnDef<DataTableFeatures, TData, unknown>[]>(() => {
+    const regular = columns.map((column) => toColumnDef(column, labels))
     return selection ? [createSelectColumn<TData>(selection, pageRowIds, labels), ...regular] : regular
   }, [columns, labels, pageRowIds, selection])
 
@@ -63,12 +64,11 @@ export function DataTable<TData>({
     onSortingChange?.(next)
   }
 
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     columns: tableColumns,
     data,
     defaultColumn: { minSize: 56, maxSize: 4096, size: 160 },
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: manualSorting ? undefined : getSortedRowModel(),
     getRowId,
     manualSorting,
     enableSortingRemoval: false,
@@ -148,7 +148,7 @@ export function DataTable<TData>({
   )
 }
 
-function toColumnDef<TData>(column: DataTableColumn<TData>, labels: DataTableLabels): ColumnDef<TData, unknown> {
+function toColumnDef<TData extends RowData>(column: DataTableColumn<TData>, labels: DataTableLabels): ColumnDef<DataTableFeatures, TData, unknown> {
   const meta: DataTableColumnMeta = {
     align: column.align ?? 'left',
     className: column.className,
@@ -169,7 +169,7 @@ function toColumnDef<TData>(column: DataTableColumn<TData>, labels: DataTableLab
   }
 }
 
-function createSelectColumn<TData>(selection: DataTableSelection, pageRowIds: string[], labels: DataTableLabels): ColumnDef<TData, unknown> {
+function createSelectColumn<TData extends RowData>(selection: DataTableSelection, pageRowIds: string[], labels: DataTableLabels): ColumnDef<DataTableFeatures, TData, unknown> {
   const selectedOnPage = pageRowIds.filter((id) => selection.selected.has(id)).length
   const allSelected = pageRowIds.length > 0 && selectedOnPage === pageRowIds.length
 

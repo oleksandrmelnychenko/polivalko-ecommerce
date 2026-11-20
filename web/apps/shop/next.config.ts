@@ -1,8 +1,13 @@
 import path from "node:path";
+import { apiInternalUrl } from "@polivalko/shared/api/origin";
 import type { NextConfig } from "next";
 
-const apiInternalUrl = process.env.API_INTERNAL_URL ?? "http://localhost:5080";
 const workspaceRoot = path.join(__dirname, "../..");
+const storefrontAreas = [
+  "account", "bestsellers", "cart", "catalog", "categories", "checkout", "collections", "contacts",
+  "customer-mail", "delivery", "orders", "pages", "payments", "products", "redirects", "seller",
+  "service-directions", "service-requests", "site",
+];
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -13,15 +18,24 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   async headers() {
-    return ["/order/:number", "/account/confirm-email", "/account/reset-password", "/pay/sandbox/:id"].map((source) => ({
+    return ["/order/:number", "/account/:path*", "/pay/sandbox/:id"].map((source) => ({
       source,
-      headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+      headers: [
+        { key: "Referrer-Policy", value: "no-referrer" },
+        { key: "Cache-Control", value: "private, no-store" },
+      ],
     }));
   },
   async rewrites() {
     return {
       beforeFiles: [],
-      afterFiles: [{ source: "/api/:path*", destination: `${apiInternalUrl}/api/:path*` }],
+      afterFiles: [
+        {
+          source: `/api/v1/:area(${storefrontAreas.join("|")})/:path*`,
+          destination: `${apiInternalUrl}/api/v1/:area/:path*`,
+        },
+        { source: "/api/media/:path*", destination: `${apiInternalUrl}/api/media/:path*` },
+      ],
       fallback: [],
     };
   },

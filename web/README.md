@@ -13,7 +13,7 @@ npm workspace із двох застосунків і спільного пак�
 
 ```bash
 npm install                 # один package-lock.json на весь workspace
-npm run dev -w shop         # вітрина: http://localhost:3000, API очікується на http://localhost:5080
+npm run dev -w shop         # вітрина: http://localhost:3000, API через Caddy на http://127.0.0.1:8080
 npm run dev -w console      # консоль: http://localhost:3001, /api — через Caddy Docker-стека (http://127.0.0.1:8080)
 npm run api:types           # перегенерувати packages/shared/api/schema.d.ts з ../openapi/polivalko-api.json
 npm run lint                # ESLint у кожному workspace
@@ -23,7 +23,7 @@ npm run build               # вітрина: next build; консоль: next b
 
 | Змінна | Застосунок | Призначення |
 |---|---|---|
-| `API_INTERNAL_URL` | shop, console | Вітрина: адреса API для серверного рендерингу й `/api` у `next dev` (за замовчуванням `http://localhost:5080`). Консоль: ціль проксі `/api` у `npm run dev` (за замовчуванням `http://127.0.0.1:8080`, Caddy з Docker; для `dotnet run` — `http://localhost:5080`) |
+| `API_INTERNAL_URL` | shop, console | Спільна адреса API для вітрини й проксі консолі в режимі розробки. Типово `http://127.0.0.1:8080` (Caddy у Docker). Для API з `dotnet run` задайте обом `http://localhost:5080` |
 | `API_HOST_HEADER` | console | Заголовок `Host` для проксі `/api`. Без `API_INTERNAL_URL` — `console.localhost:8080` (сайт консолі в Caddy); якщо задано лише `API_INTERNAL_URL`, `Host` не підмінюється |
 | `SITE_URL` | shop, console | Публічна адреса вітрини: canonical, JSON-LD, sitemap; у консолі — посилання «На сайті» (вбудовується під час збірки) |
 | `REVALIDATE_SECRET` | shop | Секрет для `POST /internal/revalidate` (скидання кешу за тегами) |

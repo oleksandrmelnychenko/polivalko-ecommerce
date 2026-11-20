@@ -39,12 +39,15 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
     setDirection(preset);
   }
   const idempotencyKey = useRef<string | null>(null);
+  const sending = useRef(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (sending.current) return;
     const form = event.currentTarget;
     const data = new FormData(form);
     idempotencyKey.current ??= newIdempotencyKey();
+    sending.current = true;
     setState({ status: "sending" });
 
     try {
@@ -68,6 +71,8 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
       setState({ status: "error", message: problem.title ?? "Не вдалося надіслати заявку. Спробуйте ще раз.", errors: problem.errors });
     } catch {
       setState({ status: "error", message: "Немає зв'язку з сервером. Перевірте інтернет і спробуйте ще раз." });
+    } finally {
+      sending.current = false;
     }
   }
 

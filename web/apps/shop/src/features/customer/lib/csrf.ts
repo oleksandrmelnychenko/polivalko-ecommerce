@@ -6,12 +6,17 @@ let csrfToken: Promise<string> | null = null;
 
 export type CsrfHeaders = { "X-CSRF-TOKEN": string };
 
-export async function csrfHeader(): Promise<CsrfHeaders> {
-  csrfToken ??= browserApi.GET("/api/v1/account/csrf").then(
-    ({ data }) => data?.token ?? "",
-    () => "",
-  );
-  return { "X-CSRF-TOKEN": await csrfToken };
+function getCsrfToken(): Promise<string> {
+  if (csrfToken) return csrfToken;
+  const request = browserApi.GET("/api/v1/account/csrf", { cache: "no-store" }).then(({ data, response }) => {
+    if (!response.ok || !data?.token) throw new Error("Не вдалося отримати захисний токен.");
+    return data.token;
+  });
+  csrfToken = request;
+  void request.catch(() => {
+    if (csrfToken === request) forgetCsrf();
+  });
+  return request;
 }
 
 export function forgetCsrf() {
@@ -19,17 +24,18 @@ export function forgetCsrf() {
 }
 
 export async function withCsrf<R extends { error?: unknown }>(send: (headers: CsrfHeaders) => Promise<R>): Promise<R> {
-  let result = await send(await csrfHeader());
+  const request = getCsrfToken();
+  let result = await send({ "X-CSRF-TOKEN": await request });
   if (problemOf(result)?.code === "auth.csrf_invalid") {
-    forgetCsrf();
-    result = await send(await csrfHeader());
+    if (csrfToken === request) forgetCsrf();
+    result = await send({ "X-CSRF-TOKEN": await getCsrfToken() });
   }
   return result;
 }
 
-export function withAccountCsrf<R extends { error?: unknown; response: Response }>(send: (headers: CsrfHeaders) => Promise<R>): Promise<R> {
+export function withAccountCsrf<R extends { error?: unknown; response: Response }>(send: (headers: CsrfHeaders) => Promise<R>, owner?: string | null): Promise<R> {
   return withActiveSession((assertActive) => withCsrf((headers) => {
     assertActive();
     return send(headers);
-  }));
+  }), owner);
 }

@@ -2,7 +2,7 @@ import nextVitals from 'eslint-config-next/core-web-vitals'
 import nextTs from 'eslint-config-next/typescript'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
-const features = ['auth', 'navigation', 'search', 'dashboard', 'orders', 'customers', 'requests', 'catalog', 'content', 'integration', 'audit', 'staff', 'returns', 'site', 'settings']
+const features = ['auth', 'navigation', 'search', 'dashboard', 'product-analytics', 'orders', 'customers', 'requests', 'catalog', 'content', 'integration', 'audit', 'staff', 'returns', 'site', 'settings']
 
 const edges = Object.fromEntries(features.map((feature) => [feature, feature === 'auth' ? [] : ['auth']]))
 edges.navigation = ['auth']

@@ -25,3 +25,11 @@ export function getLatestOrders() {
 export function getProductCounts() {
   return api.GET('/api/v1/console/catalog/products/counts')
 }
+
+export function getDashboardCustomers() {
+  return api.GET('/api/v1/console/customers', { params: { query: { page: 1, pageSize: 1 } } })
+}
+
+export function getDashboardRequests() {
+  return api.GET('/api/v1/console/service-requests', { params: { query: { page: 1, pageSize: 1 } } })
+}

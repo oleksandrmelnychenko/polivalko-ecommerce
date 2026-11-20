@@ -79,6 +79,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("RateLimiting:Forms:PermitLimit", "1000");
         builder.UseSetting("RateLimiting:Orders:PermitLimit", "1000");
         builder.UseSetting("RateLimiting:Login:PermitLimit", "1000");
+        builder.UseSetting("RateLimiting:DnTradeArchiveImport:BurstLimit", "1000");
         builder.UseSetting("Payments:Provider", "Sandbox");
         builder.UseSetting("Payments:AllowSandbox", "true");
         builder.UseSetting("Payments:Sandbox:Secret", SandboxSecret);

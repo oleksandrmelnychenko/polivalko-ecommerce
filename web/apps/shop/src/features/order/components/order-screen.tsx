@@ -28,7 +28,7 @@ export async function OrderScreen({ params, searchParams, mailDelivers }: OrderS
   const token = typeof sp.token === "string" ? sp.token : "";
   if (!token) notFound();
 
-  const [[{ data: order, response }, { data: receipts }], mail] = await Promise.all([getOrderAndReceipts(number, token), mailDelivers()]);
+  const [[{ data: order, response }, receipts], mail] = await Promise.all([getOrderAndReceipts(number, token), mailDelivers()]);
   if (!order) {
     if (NOT_FOUND_STATUSES.includes(response.status)) notFound();
     throw new Error(`API: не вдалося завантажити замовлення, статус ${response.status}`);

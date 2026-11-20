@@ -2,6 +2,7 @@ import { lazy } from 'react'
 export const AccountingPage = lazy(() => import('@/features/accounting/AccountingPage'))
 
 export const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
+export const ProductAnalyticsPage = lazy(() => import('@/features/product-analytics/pages/ProductAnalyticsPage').then((m) => ({ default: m.ProductAnalyticsPage })))
 export const OrdersPage = lazy(() => import('@/features/orders/pages/OrdersPage').then((m) => ({ default: m.OrdersPage })))
 export const OrderPage = lazy(() => import('@/features/orders/pages/OrderPage').then((m) => ({ default: m.OrderPage })))
 export const RequestsPage = lazy(() => import('@/features/requests/pages/RequestsPage').then((m) => ({ default: m.RequestsPage })))

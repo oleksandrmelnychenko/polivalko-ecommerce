@@ -1,6 +1,7 @@
 import { ActionIcon, Tooltip } from '@mantine/core'
 import {
   IconChevronRight,
+  IconChartHistogram,
   IconClipboardList,
   IconFileText,
   IconFolder,
@@ -21,6 +22,7 @@ import { SelectionMark } from './SelectionMark'
 
 const SECTION_ICONS: Record<string, Icon> = {
   dashboard: IconLayoutDashboard,
+  analytics: IconChartHistogram,
   orders: IconShoppingBag,
   customers: IconUsers,
   requests: IconClipboardList,

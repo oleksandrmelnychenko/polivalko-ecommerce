@@ -8,6 +8,31 @@ namespace PoliValko.Catalog.Features.Reporting;
 
 internal sealed class CatalogReporting(PoliValkoDbContext db) : ICatalogReporting
 {
+    public async Task<IReadOnlyList<AnalyticsCatalogProduct>> GetAnalyticsProductsAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct) =>
+        ids.Count == 0 ? [] : await db.Set<Product>().AsNoTracking()
+            .Where(p => ids.Contains(p.Id))
+            .Select(p => new AnalyticsCatalogProduct(p.Id, p.DisplayName ?? p.Name, p.Sku,
+                Math.Max(0m, p.Stock.Quantity - p.Stock.ReservedQuantity)))
+            .ToListAsync(ct);
+
+    public async Task<AnalyticsCatalogInventory> GetAnalyticsInventoryAsync(CancellationToken ct)
+    {
+        const decimal threshold = ProductStockFilters.LowStockThreshold;
+        var counts = await db.Set<Product>().AsNoTracking().Where(p => p.IsVisible)
+            .Select(p => p.Stock.Quantity - p.Stock.ReservedQuantity)
+            .GroupBy(available => available <= 0 ? 0 : available <= threshold ? 1 : 2)
+            .Select(group => new { Band = group.Key, Products = group.Count() })
+            .ToDictionaryAsync(group => group.Band, group => group.Products, ct);
+        return new AnalyticsCatalogInventory(counts.GetValueOrDefault(2), counts.GetValueOrDefault(1), counts.GetValueOrDefault(0), threshold);
+    }
+
+    public async Task<IReadOnlyList<AnalyticsCatalogMatch>> FindAnalyticsProductsAsync(IReadOnlyCollection<string> externalIds,
+        IReadOnlyCollection<string> skus, CancellationToken ct) =>
+        externalIds.Count == 0 && skus.Count == 0 ? [] : await db.Set<Product>().AsNoTracking()
+            .Where(p => externalIds.Contains(p.NavkoloId) || skus.Contains(p.Sku))
+            .Select(p => new AnalyticsCatalogMatch(p.Id, p.NavkoloId, p.DisplayName ?? p.Name, p.Sku))
+            .ToListAsync(ct);
+
     public async Task<IReadOnlyList<ProductCard>> GetProductCardsAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct) =>
         await db.Set<Product>().AsNoTracking()
             .Where(p => ids.Contains(p.Id))

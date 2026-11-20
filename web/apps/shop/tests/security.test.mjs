@@ -32,3 +32,21 @@ test("analytics does not load scripts or queue private order events", () => {
   assert.equal(globalThis.window.dataLayer, undefined);
   delete globalThis.window;
 });
+
+test("payment navigation stays on the supported provider or the relevant shop route", () => {
+  const { paymentPageUrl, sandboxReturnUrl } = load("../src/features/payment/lib/payment-url.ts");
+  const origin = "http://localhost:8081";
+  const sandbox = `${origin}/pay/sandbox/sbx_${"0".repeat(32)}`;
+  const vendor = "https://pay.mbnk.biz/p2_example";
+  const guest = `${origin}/order/PV-42?token=test&payment=return`;
+  const account = `${origin}/account/orders/PV-42?payment=return`;
+
+  assert.equal(paymentPageUrl(sandbox, origin), sandbox);
+  assert.equal(paymentPageUrl(vendor, origin), vendor);
+  assert.equal(paymentPageUrl("https://example.test/checkout", origin), null);
+  assert.equal(paymentPageUrl(guest, origin), null);
+  assert.equal(sandboxReturnUrl(guest, origin, "PV-42"), guest);
+  assert.equal(sandboxReturnUrl(account, origin, "PV-42"), account);
+  assert.equal(sandboxReturnUrl(account, origin, "PV-43"), null);
+  assert.equal(sandboxReturnUrl(vendor, origin, "PV-42"), null);
+});

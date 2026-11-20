@@ -19,10 +19,10 @@ async function loadOrder(number: string) {
 export function OrderDetail() {
   const { number } = useParams<{ number: string }>();
   const returned = useSearchParams().get("payment") === "return";
-  const { data, loading, notFound, reload } = useAccountData(`order-${number}`, () => loadOrder(number));
+  const { owner, data, loading, notFound, reload } = useAccountData(`order-${number}`, () => loadOrder(number));
 
   if (loading) return <RowsSkeleton />;
-  if (!data)
+  if (!data || !owner)
     return (
       <StateBox
         title={notFound ? "Замовлення не знайдено" : "Не вдалося завантажити замовлення"}
@@ -46,13 +46,13 @@ export function OrderDetail() {
           </h2>
           <p className={order.status === "cancelled" ? "account-order-head__state account-order-head__state--alert" : "account-order-head__state"}>{orderHeading(order)}</p>
           <p className="muted">Оформлено {formatDateTime(order.createdAt)}</p>
-          <RepeatOrder order={order} />
+          <RepeatOrder owner={owner} order={order} />
         </div>
         <OrderProgress order={order} />
       </div>
       <div className="order-body account-order">
         <div className="order-body__main">
-          <OrderPayment order={order} returned={returned} reload={reload} />
+          <OrderPayment owner={owner} order={order} returned={returned} reload={reload} />
           <OrderItems order={order} />
           {receipts.length > 0 && <OrderReceipts receipts={receipts} />}
         </div>

@@ -12,19 +12,21 @@ export function useDeliveryPoint(initial?: SavedPoint) {
   const [settlement, setSettlement] = useState<Settlement | null>(initial ? toSettlement(initial) : null);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [warehouseRef, setWarehouseRef] = useState(initial?.warehouseRef ?? "");
-  const request = useRef(0);
+  const request = useRef<AbortController | null>(null);
   const start = useRef(initial);
 
   async function load(next: Settlement, keep: string) {
-    const current = ++request.current;
+    request.current?.abort();
+    const controller = new AbortController();
+    request.current = controller;
     try {
-      const { data } = await getWarehouses(next.ref);
-      if (current !== request.current) return;
+      const { data } = await getWarehouses(next.ref, controller.signal);
+      if (controller.signal.aborted) return;
       const available = data ?? [];
       setWarehouses(available);
       setWarehouseRef(available.some((warehouse) => warehouse.ref === keep) ? keep : "");
     } catch {
-      if (current === request.current) {
+      if (!controller.signal.aborted) {
         setWarehouses([]);
         setWarehouseRef("");
       }
@@ -33,9 +35,8 @@ export function useDeliveryPoint(initial?: SavedPoint) {
 
   useEffect(() => {
     const point = start.current;
-    if (!point) return;
-    void load(toSettlement(point), point.warehouseRef ?? "");
-    return () => { request.current += 1; };
+    if (point) void load(toSettlement(point), point.warehouseRef ?? "");
+    return () => request.current?.abort();
   }, []);
 
   async function chooseSettlement(next: Settlement | null) {
@@ -43,7 +44,7 @@ export function useDeliveryPoint(initial?: SavedPoint) {
     setWarehouseRef("");
     setWarehouses([]);
     if (!next) {
-      request.current += 1;
+      request.current?.abort();
       return;
     }
     await load(next, "");

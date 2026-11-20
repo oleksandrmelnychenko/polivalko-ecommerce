@@ -17,7 +17,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
   const router = useRouter();
   const cartState = useCart();
   const { lines, setQuantity, remove } = cartState;
-  const { items, quote, failed: quoteError, refresh: refreshQuote } = useCartQuote();
+  const { items, quote, current: quoteCurrent, failed: quoteError, refresh: refreshQuote } = useCartQuote();
   const [chosenDelivery, setDelivery] = useState("nova_poshta");
   const [payment, setPayment] = useState("");
   const point = useDeliveryPoint();
@@ -73,7 +73,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
       void refreshQuote();
       return;
     }
-    if (!quote || submitting.current || !cartState.ready || cartState.saving) return;
+    if (!quote || !quoteCurrent || submitting.current || !cartState.ready || !cartState.owner || cartState.saving) return;
     if (blocking) {
       setNotice({ kind: "error", title: "Частини товарів не вистачає", text: "Змініть кількість або приберіть позиції, позначені в замовленні." });
       return;
@@ -95,16 +95,26 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
     setNotice(null);
 
     try {
-      const serverCart = await cartState.settled();
+      const request = orderRequest(form, {
+        items,
+        quote,
+        delivery,
+        settlement: point.settlement,
+        warehouseRef: point.warehouseRef,
+        payment: effectivePayment,
+      });
       const { data, error, response } = await withActiveSession(async (assertActive) => {
+        const serverCart = await cartState.settled();
+        assertActive();
         const result = await checkoutCart(serverCart, request);
         if (result.data) {
           assertActive();
           await account.saveAfterOrder(form, request.delivery);
+          assertActive();
           await cartState.refresh();
         }
         return result;
-      });
+      }, cartState.owner === "guest" ? null : cartState.owner);
 
       if (data) {
         router.push(`/order/${data.number}?token=${encodeURIComponent(data.accessToken)}`);
@@ -181,6 +191,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
     errors,
     notice,
     sending: sending || cartState.saving || !cartState.ready,
+    canConfirm: quoteCurrent && !!quote,
     onSubmit,
   };
 }

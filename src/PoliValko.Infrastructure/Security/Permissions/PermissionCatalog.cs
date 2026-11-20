@@ -2,7 +2,7 @@ namespace PoliValko.Infrastructure.Security.Permissions;
 
 public static class PermissionCatalog
 {
-    public const string Version = "2026-11-20.3";
+    public const string Version = "2026-11-20.4";
 
     public static readonly IReadOnlyList<PermissionDefinition> Permissions =
     [
@@ -13,6 +13,7 @@ public static class PermissionCatalog
         new(PermissionKeys.AccountingOpening, "Введення початкових залишків", "Звірена кількість товару за організацією і складом до першого проведення.", "accounting", "Облік", PermissionRisk.High),
         new(PermissionKeys.AccountingBalanceOpening, "Підтвердження початкових боргів", "Вибір звіту переходу й зарахування звіреного боргу контрагенту.", "accounting", "Облік", PermissionRisk.High),
         new(PermissionKeys.DashboardView, "Огляд: перегляд показників", "Виручка, замовлення, статуси й топ товарів за період.", "dashboard", "Огляд", PermissionRisk.Low),
+        new(PermissionKeys.ProductAnalyticsView, "Аналітика товарів: перегляд", "Попит, виручка, повернення, прогнози й залишки за товарами з сайту й архіву продажів.", "analytics", "Аналітика", PermissionRisk.Medium),
 
         new(PermissionKeys.OrdersView, "Замовлення: список і картка", "Список, пошук, картка, оплати, чеки, повернення й історія замовлення.", "orders", "Замовлення", PermissionRisk.Low),
         new(PermissionKeys.OrdersStatusChange, "Зміна статусу замовлення", "Підтвердження, відправлення, видача, скасування, також масово; службова нотатка.", "orders", "Замовлення", PermissionRisk.Medium),

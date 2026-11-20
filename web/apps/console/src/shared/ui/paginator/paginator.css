@@ -2,7 +2,7 @@
   align-items: center;
   background: var(--mantine-color-gray-0);
   border: 1px solid var(--mantine-color-gray-2);
-  border-radius: 8px;
+  border-radius: 999px;
   box-sizing: border-box;
   display: flex;
   flex: 0 0 auto;
@@ -14,7 +14,7 @@
 
 .app-paginator .mantine-Input-input {
   border-color: var(--mantine-color-gray-3);
-  border-radius: 6px;
+  border-radius: 999px;
   font-variant-numeric: tabular-nums;
   height: 28px;
   min-height: 28px;
@@ -25,7 +25,7 @@
   align-items: center;
   background: transparent;
   border: 0;
-  border-radius: 6px;
+  border-radius: 999px;
   color: var(--mantine-color-gray-7);
   cursor: pointer;
   display: inline-flex;

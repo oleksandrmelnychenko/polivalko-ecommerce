@@ -92,6 +92,7 @@ services:
       Email__Smtp__Password: ${SMTP_PASSWORD:-}
       Media__Root: /data/media
       DataProtection__CertificateDirectory: /run/secrets/data-protection
+      ProductAnalytics__BaseUrl: ${PRODUCT_ANALYTICS_URL:-http://product-analytics:8080}
       Seed__Users__0__Email: ${ADMIN_EMAIL:-}
       Seed__Users__0__Password: ${ADMIN_PASSWORD:-}
       Seed__Users__0__DisplayName: Адміністратор
@@ -107,6 +108,16 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+    networks: [default, analytics]
+    logging: *logging
+
+  product-analytics:
+    profiles: [app]
+    image: polivalko-product-analytics:${APP_VERSION:-latest}
+    build:
+      context: services/product-analytics
+    restart: unless-stopped
+    networks: [analytics]
     logging: *logging
 
   worker:
@@ -142,6 +153,7 @@ services:
       args:
         APP: shop
         SITE_URL: ${SITE_URL:-http://localhost:8080}
+        API_INTERNAL_URL: http://api:8080
         NEXT_PUBLIC_GA_MEASUREMENT_ID: ${GA_MEASUREMENT_ID:-}
         NEXT_PUBLIC_GSC_VERIFICATION: ${GSC_VERIFICATION:-}
     restart: unless-stopped
@@ -271,6 +283,10 @@ services:
       start_period: 10m
       start_interval: 30s
     logging: *logging
+
+networks:
+  analytics:
+    internal: true
 
 volumes:
   pgdata:

@@ -1,7 +1,8 @@
-import type { Column } from '@tanstack/react-table'
+import type { Column, RowData } from '@tanstack/react-table'
+import type { DataTableFeatures } from './dataTableFeatures'
 import type { DataTableColumnMeta } from './types'
 
-export function getFillColumnId<TData>(columns: Column<TData, unknown>[], tableWidth: number, baseTableWidth: number): string | undefined {
+export function getFillColumnId<TData extends RowData>(columns: Column<DataTableFeatures, TData, unknown>[], tableWidth: number, baseTableWidth: number): string | undefined {
   if (tableWidth <= baseTableWidth) return undefined
   const preferred = columns.find((column) => (column.columnDef.meta as DataTableColumnMeta | undefined)?.fill)
   if (preferred) return preferred.id
@@ -12,8 +13,8 @@ export function getFillColumnId<TData>(columns: Column<TData, unknown>[], tableW
   return candidates.reduce((widest, column) => (column.getSize() > widest.getSize() ? column : widest)).id
 }
 
-export function createRenderedColumnWidths<TData>(
-  columns: Column<TData, unknown>[],
+export function createRenderedColumnWidths<TData extends RowData>(
+  columns: Column<DataTableFeatures, TData, unknown>[],
   fillColumnId: string | undefined,
   extraWidth: number,
 ): ReadonlyMap<string, number> {

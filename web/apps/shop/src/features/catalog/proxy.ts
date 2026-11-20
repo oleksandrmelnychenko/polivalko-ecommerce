@@ -1,8 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { apiInternalUrl } from "@polivalko/shared/api/origin";
 import { first } from "@polivalko/shared/lib/format";
 import { hrefFor, parseListingParams, toQuery, type SearchParams } from "./lib/listing-params";
-
-const apiUrl = process.env.API_INTERNAL_URL ?? "http://localhost:5080";
 
 /**
  * A listing page past the last one (an old link, fewer products now) answers a 307 to the last page,
@@ -11,8 +10,7 @@ const apiUrl = process.env.API_INTERNAL_URL ?? "http://localhost:5080";
  */
 export async function redirectPastLastPage(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
-  const sp: SearchParams = {};
-  for (const key of new Set(searchParams.keys())) sp[key] = searchParams.getAll(key);
+  const sp: SearchParams = Object.fromEntries(Array.from(new Set(searchParams.keys()), (key) => [key, searchParams.getAll(key)]));
   const parsed = parseListingParams(sp);
   if (parsed.page <= 1) return undefined;
 
@@ -38,8 +36,11 @@ async function countPages(query: ReturnType<typeof toQuery>) {
     for (const v of Array.isArray(value) ? value : [value]) qs.append(key, String(v));
   }
   try {
-    const response = await fetch(`${apiUrl}/api/v1/products?${qs}`, { cache: "no-store", signal: AbortSignal.timeout(5000) });
-    if (!response.ok) return undefined;
+    const response = await fetch(`${apiInternalUrl}/api/v1/products?${qs}`, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(5000) });
+    if (!response.ok) {
+      await response.body?.cancel();
+      return undefined;
+    }
     const data = (await response.json()) as { totalPages?: number };
     return typeof data.totalPages === "number" && Number.isInteger(data.totalPages) && data.totalPages >= 0 ? data.totalPages : undefined;
   } catch {

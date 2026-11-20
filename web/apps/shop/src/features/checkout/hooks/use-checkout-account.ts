@@ -38,7 +38,7 @@ export function useCheckoutAccount(formRef: RefObject<HTMLFormElement | null>, h
   useEffect(() => {
     if (!owner) return;
     let cancelled = false;
-    void withActiveSession(getAddresses).then(({ data }) => {
+    void withActiveSession(getAddresses, owner).then(({ data }) => {
       if (cancelled || !data) return;
       setAddresses(data);
       applyDefault(data);
@@ -63,8 +63,8 @@ export function useCheckoutAccount(formRef: RefObject<HTMLFormElement | null>, h
   async function saveAfterOrder(form: FormData, delivery: CreateOrderRequest["delivery"]) {
     if (!owner || !delivery || form.get("saveAddress") !== "on" || delivery.method === "pickup") return;
     try {
-      await withAccountCsrf((h) =>
-        postAddress(h, {
+      await withAccountCsrf(
+        (h) => postAddress(h, {
           label: null,
           method: delivery.method,
           settlementRef: delivery.settlementRef,
@@ -72,6 +72,7 @@ export function useCheckoutAccount(formRef: RefObject<HTMLFormElement | null>, h
           address: delivery.address ?? null,
           isDefault: !addresses?.length,
         }),
+        owner,
       );
     } catch {}
   }

@@ -5,5 +5,6 @@ export function createServiceRequest(idempotencyKey: string, body: CreateService
   return browserApi.POST("/api/v1/service-requests", {
     params: { header: { "Idempotency-Key": idempotencyKey } },
     body,
+    signal: AbortSignal.timeout(12000),
   });
 }

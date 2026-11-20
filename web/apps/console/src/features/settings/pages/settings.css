@@ -80,7 +80,7 @@
 .settings-drawer-form .mantine-Input-input {
   background: var(--mantine-color-white);
   border-color: var(--mantine-color-gray-3);
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 .settings-form .mantine-Input-input:focus,

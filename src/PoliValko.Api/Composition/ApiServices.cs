@@ -46,14 +46,18 @@ public static class ApiServices
             options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
             options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
         });
-        services.AddOpenApi("v1", options => options.AddDocumentTransformer((document, _, _) =>
+        services.AddOpenApi("v1", options =>
         {
-            document.Info ??= new();
-            document.Info.Title = "Poli Valko API";
-            document.Info.Version = "v1";
-            document.Info.Description = "Спільний API інтернет-магазину Poli Valko для вебу та майбутніх мобільних застосунків.";
-            return Task.CompletedTask;
-        }));
+            options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_1;
+            options.AddDocumentTransformer((document, _, _) =>
+            {
+                document.Info ??= new();
+                document.Info.Title = "Poli Valko API";
+                document.Info.Version = "v1";
+                document.Info.Description = "Спільний API інтернет-магазину Poli Valko для вебу та майбутніх мобільних застосунків.";
+                return Task.CompletedTask;
+            });
+        });
         services.AddHealthChecks().AddDbContextCheck<PoliValkoDbContext>("database", tags: ["ready"]);
         return services;
     }

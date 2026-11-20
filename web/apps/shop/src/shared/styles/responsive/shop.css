@@ -79,7 +79,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .drawer, .mega, .tile--look .tile__body, .ptabs__glide { transition: none; }
+  .drawer, .mega, .tile--look .tile__body { transition: none; }
 }
 @media (max-width: 60rem) {
   .split-hero__grid { grid-template-columns: minmax(0, 1fr); min-height: 0; }
