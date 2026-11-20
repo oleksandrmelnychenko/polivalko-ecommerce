@@ -23,6 +23,38 @@ FROM accounting.documents WHERE native_partner_id IS NOT NULL AND kind='out' AND
 ARCHIVE_LINES = ARCHIVE_SQL.replace("DAY_FILTER", """r.source_day BETWEEN %s AND %s
   AND r.entity_type IN ('invoice','customerReturn')""")
 
+# Sum the cash register in PostgreSQL so annual charts do not need to transfer
+# every receipt or wait for the assortment and forecast models to finish.
+CASH_MONTHS = """
+SELECT extract(month FROM d.day)::int AS month, count(*) AS documents,
+       sum(abs(d.total)) AS amount, sum(s.amount) AS lines,
+       count(*) FILTER (WHERE d.total IS NULL OR s.amount IS NULL OR abs(d.total) <> s.amount
+                           OR a.status IS DISTINCT FROM d.status OR a.source_day IS DISTINCT FROM d.day
+                           OR s.invalid > 0) AS discrepancies
+FROM accounting.documents d LEFT JOIN integration.dntrade_archive_records a ON a.id=d.id
+LEFT JOIN LATERAL (
+    SELECT sum(abs(CASE WHEN p->>'total' ~ '^[+-]?[0-9]+([.][0-9]+)?$'
+                        THEN (p->>'total')::numeric END)) AS amount,
+           count(*) FILTER (WHERE p->>'total' IS NULL OR p->>'total' !~ '^[+]?[0-9]+([.][0-9]+)?$'
+                            OR CASE WHEN p->>'quantity' ~ '^[+]?[0-9]+([.][0-9]+)?$'
+                                    THEN (p->>'quantity')::numeric <= 0 ELSE true END
+                            OR coalesce(nullif(p#>>'{product,id}',''),nullif(p#>>'{product,code}',''),
+                                        nullif(p#>>'{product,sku}','')) IS NULL) AS invalid
+    FROM jsonb_array_elements(CASE WHEN jsonb_typeof(a.payload::jsonb#>'{raw,products}')='array'
+                                   THEN a.payload::jsonb#>'{raw,products}' ELSE '[]'::jsonb END) p
+) s ON true
+WHERE d.entity_type='receipt' AND lower(d.kind) IN ('cash','6','receipt','salereceipt','salebyreceipt')
+  AND lower(d.status) IN ('active','активна','активний','posted') AND lower(d.currency) IN ('uah','980')
+  AND d.day >= %s AND d.day < %s
+  AND NOT EXISTS (
+      SELECT 1 FROM accounting.documents i
+      WHERE i.source_account=d.source_account AND lower(i.source_id)=lower(d.parent_ref)
+        AND i.entity_type='invoice' AND lower(i.kind) IN ('out','3','sale','salesinvoice','outgoinginvoice')
+        AND lower(i.status) IN ('active','активна','активний','posted')
+  )
+GROUP BY 1
+"""
+
 
 def currency_valid(doc):
     values = {identifier(doc.get(key)) for key in ("currency", "raw_currency")} - {""}
@@ -94,6 +126,23 @@ def compare(year, headers, documents):
     return dict(year=year, total=total, months=months, issues=issues)
 
 
+def add_cash(report, cash):
+    by_month = {r["month"]: r for r in cash}
+    for index, period in enumerate(report["months"], 1):
+        row = by_month.get(index, {})
+        period.update(cash=row.get("amount"), cashLines=row.get("lines"),
+                      cashDocuments=row.get("documents", 0), cashDiscrepancies=row.get("discrepancies", 0))
+    total = report["total"]
+    for key in ("cash", "cashLines", "cashDocuments", "cashDiscrepancies"):
+        values = [m[key] for m in report["months"] if m[key] is not None]
+        total[key] = sum(values) if values else None
+    for period in [*report["months"], total]:
+        for field, parts in (("documentNet", ("net", "cash")), ("documentLineNet", ("lineNet", "cashLines"))):
+            values = [period[key] for key in parts if period[key] is not None]
+            period[field] = sum(values) if values else None
+    return report
+
+
 def read_year(year):
     start, end = date(year, 1, 1), date(year + 1, 1, 1)
     with production() as conn, conn.cursor("annual_invoice_lines") as archive:
@@ -101,4 +150,5 @@ def read_year(year):
         native = conn.execute(NATIVE_LINES, (start, end)).fetchall()
         archive.itersize = 100
         archive.execute(ARCHIVE_LINES, (start - timedelta(days=1), end))
-        return compare(year, headers, chain(archive, native))
+        report = compare(year, headers, chain(archive, native))
+        return add_cash(report, conn.execute(CASH_MONTHS, (start, end)))

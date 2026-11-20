@@ -199,7 +199,11 @@ def dispatch(env):
             logger.error("Annual invoice check failed (%s, SQLSTATE %s)", type(exc).__name__,
                          getattr(exc, "sqlstate", None))
             return 503, {"status": "unavailable"}
-        result = "differences" if totals["discrepancies"] else "matched" if totals["documents"] else "empty"
+        result = "empty"
+        if totals["discrepancies"] or totals["cashDiscrepancies"]:
+            result = "differences"
+        elif totals["documents"] or totals["cashDocuments"]:
+            result = "matched"
         logging.getLogger("gunicorn.error").info("Annual invoice check completed (year=%s, result=%s)", year, result)
         return 200, {"year": year, "status": result}
     if route == ("GET", "/status"):

@@ -1,4 +1,5 @@
-import { Button } from '@mantine/core'
+import { Button, SegmentedControl } from '@mantine/core'
+import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { kyivDay } from '@/shared/lib/kyivTime'
@@ -16,6 +17,11 @@ type Period = {
   net: number | null
   lineNet: number | null
   difference: number | null
+  cash: number | null
+  cashDocuments: number
+  cashDiscrepancies: number
+  documentNet: number | null
+  documentLineNet: number | null
 }
 type Annual = {
   year: number
@@ -27,13 +33,14 @@ const months = ['Січ', 'Лют', 'Бер', 'Кві', 'Тра', 'Чер', 'Л�
 
 export function AnnualInvoices() {
   const [params, setParams] = useSearchParams()
+  const [series, setSeries] = useState('all')
   const last = Number(kyivDay(new Date()).slice(0, 4)) - 1
   const year = params.get('year') ?? String(last)
   const result = useApiQuery('invoices-' + year, () => readBusiness<Annual>('documents', 'year=' + encodeURIComponent(year)))
   const report = result.data
   return (
-    <AnalyticsCard title="Оборот за видатковими накладними й поверненнями"
-      description="Звірка охоплює видаткові накладні та всі повернення покупців у гривні. Касові продажі входять до загального огляду обороту.">
+    <AnalyticsCard title="Оборот за документами продажу"
+      description="Суми у гривні звіряються з товарними рядками. Чек, пов’язаний із проведеною видатковою накладною, враховується один раз. Повернення покупців зменшують оборот.">
       <div className="ba-controls">
         <label>Рік <input type="number" min={1900} max={last} defaultValue={year} key={year}
           onBlur={e => {
@@ -43,26 +50,31 @@ export function AnnualInvoices() {
             }
           }} /></label>
         <Button variant="default" onClick={result.reload} disabled={result.status === 'loading'}>Звірити ще раз</Button>
-        <Link to={'?tab=overview&from=' + year + '-01-01&to=' + year + '-12-31'}>Оборот з урахуванням чеків</Link>
+        <Link to={'?tab=overview&from=' + year + '-01-01&to=' + year + '-12-31'}>Перейти до аналізу товарів</Link>
       </div>
       {result.status === 'error' || result.status === 'forbidden'
         ? <p role="alert">{result.problem?.title ?? 'Не вдалося прочитати накладні.'}</p>
         : !report && <p role="status">Читаємо накладні за {year} рік…</p>}
       {report && <>
-        <p role="status">{!report.total.documents && !report.total.lineDocuments
-          ? 'За цей рік проведених видаткових накладних і повернень не знайдено.'
-          : report.total.discrepancies
-            ? 'Потребують перевірки ' + formatValue(report.total.discrepancies) + ' документів. Нижче наведено відомі суми.'
+        <p role="status">{!report.total.documents && !report.total.lineDocuments && !report.total.cashDocuments
+          ? 'За цей рік проведених документів продажу не знайдено.'
+          : report.total.discrepancies + report.total.cashDiscrepancies
+            ? 'Потребують перевірки ' + formatValue(report.total.discrepancies + report.total.cashDiscrepancies) + ' документів. Нижче наведено відомі суми.'
             : 'Суми всіх відібраних документів збігаються з товарними рядками.'}</p>
-        <AnalyticsChart label="Чистий оборот за накладними, грн" variant="bars" format={formatValue}
-          points={report.months.map((m, i) => ({ axisLabel: months[i], label: months[i] + ' ' + year, value: m.net }))} />
+        <SegmentedControl aria-label="Показник графіка" value={series} onChange={setSeries}
+          data={[{ value: 'all', label: 'Чистий оборот' }, { value: 'sales', label: 'Видаткові накладні' },
+            { value: 'cash', label: 'Касові продажі' }, { value: 'returns', label: 'Повернення' }]} />
+        <AnalyticsChart label="Оборот за документами, грн" variant="bars" format={formatValue}
+          points={report.months.map((m, i) => ({ axisLabel: months[i], label: months[i] + ' ' + year,
+            value: series === 'sales' ? m.sales : series === 'cash' ? m.cash : series === 'returns' ? m.returns : m.documentNet }))} />
         <div className="ba-table"><table>
-          <thead><tr>{['Період', 'Документів', 'Продажі, грн', 'Повернення, грн', 'Чистий оборот, грн', 'За рядками, грн', 'Різниця, грн', 'Документів із розбіжністю'].map(h => <th key={h}>{h}</th>)}</tr></thead>
+          <thead><tr>{['Період', 'Документів', 'Видаткові, грн', 'Чеки, грн', 'Повернення, грн', 'Чистий оборот, грн', 'За рядками, грн', 'Різниця, грн', 'Документів із розбіжністю'].map(h => <th key={h}>{h}</th>)}</tr></thead>
           <tbody>{[...report.months, report.total].map((m, i) => <tr key={i}>
-            <th>{months[i] ?? 'За рік'}</th><td>{formatValue(m.documents)}</td>
-            <td>{formatValue(m.documents ? m.sales : null)}</td><td>{formatValue(m.documents ? m.returns : null)}</td>
-            <td>{formatValue(m.net)}</td><td>{formatValue(m.lineNet)}</td>
-            <td>{formatValue(m.difference)}</td><td>{formatValue(m.discrepancies)}</td>
+            <th>{months[i] ?? 'За рік'}</th><td>{formatValue(m.documents + m.cashDocuments)}</td>
+            <td>{formatValue(m.sales)}</td><td>{formatValue(m.cash)}</td><td>{formatValue(m.returns)}</td>
+            <td>{formatValue(m.documentNet)}</td><td>{formatValue(m.documentLineNet)}</td>
+            <td>{formatValue(m.documentNet == null || m.documentLineNet == null ? null : m.documentLineNet - m.documentNet)}</td>
+            <td>{formatValue(m.discrepancies + m.cashDiscrepancies)}</td>
           </tr>)}</tbody>
         </table></div>
         {report.issues.length > 0 && <><h3>Документи для перевірки · перші {report.issues.length}</h3>

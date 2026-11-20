@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from analytics.forecast import build_models, fit, replenishment
-from analytics.invoices import compare
+from analytics.invoices import add_cash, compare
 from analytics.register import apply_inventory_cost, reconcile
 from analytics.reports import documents, forecasts, report
 from analytics.server import PolicyConflict, Service, app, load, now, save, service
@@ -55,6 +55,16 @@ def snapshot(rows, web=()):
 
 
 class RegisterTests(unittest.TestCase):
+    def test_cash_turnover_combines_receipts_invoices_and_returns_with_empty_months(self):
+        sale, returned = doc(), doc("r", kind="7", amount="-25")
+        annual = compare(DAY.year, [sale, returned], [sale, returned])
+        add_cash(annual, [{"month": 1, "amount": D("10.50"), "lines": D("10.50"), "documents": 2,
+                           "discrepancies": 0}])
+        self.assertEqual(annual["months"][0]["documentNet"], D("10.50"))
+        self.assertIsNone(annual["months"][1]["documentNet"])
+        self.assertEqual(annual["total"]["documentNet"], D("85.50"))
+        self.assertEqual(annual["total"]["documentLineNet"], D("85.50"))
+
     def test_register_uses_dntrade_native_invoice_and_return_codes_without_envelope(self):
         sale, refund = doc("a"), doc("b", kind="7", amount="-25")
         headers = [dict(sale, kind="out", code=None), dict(refund, kind="back", code=None)]
