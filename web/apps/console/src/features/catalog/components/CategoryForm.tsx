@@ -185,11 +185,11 @@ export function CategoryForm({ formId, category, focusFilters, all, attributes, 
             </SimpleGrid>
           </Stack>
         </section>
-        <section className="catalog-card" aria-labelledby="category-filter-title">
+        <section className="catalog-card" aria-labelledby="category-filter-title"
+          tabIndex={focusFilters ? -1 : undefined} data-autofocus={focusFilters || undefined}>
           <CatalogSectionTitle id="category-filter-title" icon={IconAdjustmentsHorizontal}>Фільтри на сайті</CatalogSectionTitle>
           {attributes ? (
             <MultiSelect
-              data-autofocus={focusFilters || undefined}
               label="Фільтри категорії"
               maxDropdownHeight={176}
               placeholder={fields.filterAttributes.length ? undefined : fields.parentId ? 'Як у батьківської категорії' : 'Оберіть характеристики'}
@@ -206,7 +206,6 @@ export function CategoryForm({ formId, category, focusFilters, all, attributes, 
             />
           ) : (
             <TagsInput
-              data-autofocus={focusFilters || undefined}
               label="Характеристики для фільтрів, через кому"
               maxDropdownHeight={176}
               placeholder={fields.parentId ? 'Як у батьківської категорії' : 'Додайте характеристику'}
