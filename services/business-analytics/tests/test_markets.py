@@ -4,9 +4,39 @@ from unittest import TestCase
 
 from analytics.markets import REGIONS, region_code, summarize
 from analytics.settlements import resolve
+from analytics.shipments import ShipmentIndex
 
 
 class MarketsTests(TestCase):
+    def test_shipment_keys_are_scoped_and_conflicting_destinations_are_excluded(self):
+        first = dict(account="a", id="one", number="0012", ttn="20400000000001", started="1",
+                     city="Ірпінь", region="Київська")
+        second = dict(first, id="two", ttn="20400000000002", city="Одеса", region="Одеська")
+        index = ShipmentIndex([first, second, dict(first, account="b", number="12")])
+        self.assertEqual(index.match(dict(account="a",order_number="0012")).status,"ambiguous")
+        exact = index.match(dict(account="a",order_number="0012",waybill="2040 0000 0000 01"))
+        self.assertEqual((exact.status, exact.city), ("ttn","Ірпінь"))
+        self.assertEqual(index.match(dict(account="a",order_ref="two",waybill=first["ttn"])).status,"ambiguous")
+        self.assertEqual(index.match(dict(account="a",order_number="12")).status,"unmatched")
+        self.assertEqual(index.match(dict(account="b",order_number="12",waybill=second["ttn"])).status,"ambiguous")
+        self.assertEqual(index.match(dict(account="a",order_ref="one")).status,"ref")
+        self.assertEqual(ShipmentIndex([dict(first,started="0")]).match(dict(account="a",order_ref="one")).status,"unmatched")
+
+    def test_shipment_enrichment_counts_each_purchase_once_with_buyer_fallback(self):
+        base = dict(account="a", entity_type="invoice", status="active", currency="UAH", kind="out",
+                    partner="p",name="A",region=None,buyer_region="Київська",buyer_city="м. Буча",
+                    count=1,amount=Decimal(100),invalid=0,last_day=date(2025,1,2))
+        web = dict(id="web-id",number="PV-102005",region="Київська",city="Ірпінь")
+        order = dict(account="a",id="erp-id",external="web-id",number="003",ttn=None,region=None,city=None)
+        index = ShipmentIndex([order],[web])
+        result = summarize([dict(base,order_number="PV-102005",order_ref="erp-id"),
+                            dict(base,order_number="003",kind="back",amount=Decimal(30)),base],[],index)
+        links = result["shipmentLinks"]
+        self.assertEqual((links["number"],links["mapped"],links["mappedByRegion"]), (1,1,{"UA32":1}))
+        combined = next(r for r in result["combined"]["regions"] if r["code"]=="UA32")
+        self.assertEqual((combined["count"],combined["returns"],combined["amount"]),(2,1,170))
+        self.assertEqual({p["name"]:p["amount"] for p in combined["settlements"]},{"м. Ірпінь":70,"м. Буча":100})
+
     def test_locations_are_explicit_and_kyiv_city_is_separate(self):
         self.assertEqual(len(REGIONS), 27)
         self.assertEqual(region_code("Київська обл."), "32")

@@ -237,7 +237,7 @@ def dispatch(env):
         except Exception as exc:
             logger.error("Turnover forecast check unavailable (%s)", type(exc).__name__)
         if market:
-            for source in ("documents", "registered"):
+            for source in ("documents", "registered", "combined"):
                 geography = market[source]
                 turnover = geography["unknown"]["amount"] + sum(r["amount"] for r in geography["regions"])
                 logging.getLogger("gunicorn.error").info(

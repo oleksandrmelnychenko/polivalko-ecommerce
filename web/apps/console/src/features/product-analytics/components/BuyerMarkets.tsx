@@ -13,15 +13,17 @@ type Period = { count: number; returns: number; amount: number; lastPurchase: st
 type Settlement = Period & { code: string; name: string; x: number; y: number }
 type Region = Period & { code: string; name: string; settlements: Settlement[] }
 type Geography = { unknown: Period; regions: Region[]; withAddress: number }
-type Source = 'documents' | 'registered' | 'online'
+type Source = 'combined' | 'documents' | 'registered' | 'online'
 type Metric = 'count' | 'amount'
 type Markets = Record<Source, Geography> & {
   year: number; partnerCount: number; matches: number; excluded: number; unlinked: Period
   partners: (Period & { id: string; name: string })[]
+  shipmentLinks?: { ttn: number; number: number; ref: number; ambiguous: number; mapped: number; mappedByRegion: Record<string, number> }
 }
-const sourceNames: Record<Source, string> = { documents: 'Доставка за документами', registered: 'Адреса контрагента', online: 'Доставка вебзамовлень' }
+const sourceNames: Record<Source, string> = { combined: 'Доставка або адреса покупця', documents: 'Доставка за документами', registered: 'Адреса контрагента', online: 'Доставка вебзамовлень' }
 const descriptions: Record<Source, string> = {
-  documents: 'Місце доставки з документа продажу або пов’язаного замовлення. Повернення зменшують оборот.',
+  combined: 'Для кожної покупки спочатку враховано місце доставки. Якщо регіон доставки невідомий, використано адресу контрагента. Кожна покупка входить до підсумку один раз.',
+  documents: 'Місце доставки з відправлення, накладної або пов’язаного замовлення. Повернення зменшують оборот.',
   registered: 'Продажі за областю з картки контрагента. Ця адреса може відрізнятися від місця доставки.',
   online: 'Оплачені, відвантажені, готові до видачі та завершені вебзамовлення. Місце доставки визначає довідник Нової пошти. Сума відображає вартість замовлень до вирахування повернень.',
 }
@@ -31,12 +33,13 @@ const colors = ['#d7ebe7', '#98d0bf', '#56af93', '#238267', '#10553e']
 const paths: Record<string, { path: string; bounds: number[] }> = shapes
 
 function bestCoveredSource(data: Markets | undefined, regionCode: string): Source {
-  const sources: Source[] = ['documents', 'registered', 'online']
+  const sources: Source[] = ['combined', 'documents', 'registered', 'online']
   let best: Source = 'documents'
   let bestMapped = -1
   let bestKnown = -1
   for (const source of sources) {
-    const regions = data?.[source].regions.filter(r => !regionCode || r.code === regionCode) ?? []
+    if (!data?.[source]) continue
+    const regions = data[source].regions.filter(r => !regionCode || r.code === regionCode)
     const known = regions.reduce((sum, r) => sum + r.count, 0)
     const mapped = regions.reduce((sum, r) => sum + (r.settlements ?? []).reduce((n, p) => n + p.count, 0), 0)
     if (mapped > bestMapped || (mapped === bestMapped && known > bestKnown)) {
@@ -155,7 +158,7 @@ export function BuyerMarkets() {
   const args = new URLSearchParams({ analysis: 'markets', year: String(year), page: String(page), search })
   const query = useApiQuery('markets-' + args, () => readBusiness<Markets>('documents', args.toString()))
   const data = query.data
-  const source = rawSource === 'documents' || rawSource === 'registered' || rawSource === 'online'
+  const source = (rawSource === 'combined' && data?.combined) || rawSource === 'documents' || rawSource === 'registered' || rawSource === 'online'
     ? rawSource : bestCoveredSource(data, regionCode)
   return <>
     <AnalyticsCard title="Географія покупок" actions={<label>Рік <input type="number" min={1900} max={latest}
@@ -168,6 +171,13 @@ export function BuyerMarkets() {
       {data ? <RegionalMap key={source + year} data={data[source]} source={source} metric={metric} regionCode={regionCode} onRegion={code => changeParam('region', code)} />
         : query.status === 'loading' ? <p role="status">Читаємо реєстр продажів…</p>
           : <p role="alert">{query.problem?.title ?? 'Не вдалося завантажити карту.'} <Button variant="default" onClick={query.reload}>Повторити</Button></p>}
+      {data?.shipmentLinks && (source === 'combined' || source === 'documents') && <p>
+        За відправленнями на карті {regionCode && paths[regionCode] ? 'вибраного регіону' : 'України'} · {
+          formatValue(regionCode && paths[regionCode] ? data.shipmentLinks.mappedByRegion[regionCode] ?? 0 : data.shipmentLinks.mapped)
+        } покупок. За рік у всій Україні пов’язано за ТТН · {formatValue(data.shipmentLinks.ttn)},
+        за номером замовлення · {formatValue(data.shipmentLinks.number)}, за ідентифікатором замовлення · {formatValue(data.shipmentLinks.ref)}.
+        {data.shipmentLinks.ambiguous > 0 && <> Неоднозначних збігів · {formatValue(data.shipmentLinks.ambiguous)}.</>}
+      </p>}
     </AnalyticsCard>
     <AnalyticsCard title="Покупки контрагентів" description="Рейтинг за чистим оборотом проведених документів у гривні. Картка відкривається у реєстрі обліку.">
       <label>Пошук контрагента <input type="search" value={search} maxLength={120} onChange={e => { setSearch(e.target.value); setPage(1) }} /></label>

@@ -17,6 +17,22 @@ class Place(NamedTuple):
     y: float | None
 
 
+# Extract locality fragments in PostgreSQL. House numbers, street addresses
+# and delivery contact fields are never returned to the report.
+def address_fields(column):
+    name = r"[а-яА-ЯіІїЇєЄґҐ’''ʼ -]{2,60}"
+    # Street separators and a leading postal code occur in legacy text addresses.
+    # Only the locality capture group is projected out of PostgreSQL.
+    street = r"(?:[Вв]ул\.|[Вв]улиця|[Пп]ров\.|[Пп]ровулок|[Пп]росп\.|[Пп]роспект|[Бб]ул\.)"
+    end = rf"(?:[,;]|[[:space:]]+{street}|$)"
+    city = rf"""coalesce(
+      substring({column} COLLATE "C" from '(?:^|[,;[:space:]])((?:[Мм]\.|[Сс]\.|[Мм]істо |[Сс]ело |[Сс]елище |смт\.? )[[:space:]]*{name}){end}'),
+      substring({column} COLLATE "C" from '(?:^|[,;])[[:space:]]*([А-ЯІЇЄҐ]{name})[,;][[:space:]]*{street}'),
+      substring({column} COLLATE "C" from '^[[:space:]]*(?:[0-9]{{5}}[,;[:space:]]+)?([А-ЯІЇЄҐ][а-яА-ЯіІїЇєЄґҐ’''ʼ -]{{1,48}}){end}'))"""
+    region = rf"""substring({column} COLLATE "C" from '([а-яА-ЯіІїЇєЄґҐ-]+)[[:space:]]+[Оо]бл(?:асть|\.)?(?:[,;[:space:]]|$)')"""
+    return city, region
+
+
 def normalize(value):
     return " ".join((value or "").casefold().replace("’", "'").replace("ʼ", "'").split())
 
