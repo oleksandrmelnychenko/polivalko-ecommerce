@@ -1,0 +1,86 @@
+.ba-page .pa-report {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+.ba-controls,
+.ba-kpis,
+.ba-pair {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+.ba-kpis,
+.ba-pair {
+  align-items: stretch;
+}
+.ba-kpis > div,
+.ba-pair > section {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.ba-kpis strong {
+  display: block;
+  font-size: 1.45rem;
+  font-variant-numeric: tabular-nums;
+}
+.ba-controls label,
+.ba-policy {
+  display: grid;
+  gap: 5px;
+  font-size: 0.85rem;
+}
+.ba-controls input,
+.ba-controls select {
+  max-width: 240px;
+  min-height: 34px;
+  padding: 3px 8px;
+  border: 1px solid var(--app-line);
+  border-radius: 5px;
+  background: white;
+  color: inherit;
+}
+.ba-table {
+  max-height: 410px;
+  overflow: auto;
+  margin-block: 10px;
+}
+.ba-page table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+}
+.ba-page td,
+.ba-page th {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--app-line);
+  text-align: start;
+}
+.ba-page th {
+  position: sticky;
+  top: 0;
+  background: white;
+}
+.ba-page td button {
+  border: 0;
+  padding: 2px 0;
+  background: none;
+  color: var(--pa-green);
+  cursor: pointer;
+  text-align: start;
+  text-decoration: underline;
+}
+.ba-detail,
+.ba-policy {
+  padding-block: 14px;
+}
+.ba-detail summary {
+  cursor: pointer;
+  padding-block: 8px;
+}
+.ba-policy {
+  justify-items: start;
+  gap: 12px;
+}

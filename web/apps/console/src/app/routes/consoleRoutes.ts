@@ -29,6 +29,7 @@ export const consoleRoutes: readonly ConsoleRoute[] = [
   { path: '/sales/orders', title: 'Замовлення', permissionKey: PermissionKeys.Orders.View, page: Pages.OrdersPage },
   { path: '/sales/orders/:number', title: 'Замовлення', permissionKey: PermissionKeys.Orders.View, page: Pages.OrderPage },
   { path: '/sales/product-analytics', title: 'Аналітика товарів', permissionKey: PermissionKeys.Analytics.ViewProducts, page: Pages.ProductAnalyticsPage },
+  { path: '/sales/business-analytics', title: 'Бізнес-аналітика', permissionKey: PermissionKeys.Analytics.ViewProducts, page: Pages.BusinessAnalyticsPage },
   { path: '/sales/requests', title: 'Заявки', permissionKey: PermissionKeys.Requests.View, page: Pages.RequestsPage },
   { path: '/sales/returns', title: 'Повернення', permissionKey: PermissionKeys.Orders.View, page: Pages.ReturnsPage },
   { path: '/sales/customers', title: 'Покупці', permissionKey: PermissionKeys.Customers.View, page: Pages.CustomersPage },

@@ -74,6 +74,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
         badgeTone: 'hot',
       },
       { id: 'product-analytics', label: 'Аналітика товарів', path: '/sales/product-analytics', permissionKey: PermissionKeys.Analytics.ViewProducts, icon: IconChartHistogram },
+      { id: 'business-analytics', label: 'Бізнес-аналітика', path: '/sales/business-analytics', permissionKey: PermissionKeys.Analytics.ViewProducts, icon: IconChartHistogram },
       {
         id: 'requests',
         label: 'Заявки',

@@ -24,6 +24,17 @@ public static class ConsoleModule
     public static IServiceCollection AddConsoleModule(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddMemoryCache().AddSingleton<ProductAnalyticsSourceCache>();
+        services.AddHttpClient<BusinessAnalyticsClient>(http =>
+        {
+            if (Uri.TryCreate(configuration["BusinessAnalytics:BaseUrl"], UriKind.Absolute, out var uri) &&
+                (uri.Scheme == "https" || uri.Scheme == "http"))
+                http.BaseAddress = uri;
+            http.Timeout = TimeSpan.FromSeconds(180);
+            http.MaxResponseContentBufferSize = 8 * 1024 * 1024;
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false, UseCookies = false, UseProxy = false,
+        });
         services.AddHttpClient<ProductAnalyticsClient>(http =>
         {
             http.Timeout = TimeSpan.FromSeconds(20);
@@ -57,6 +68,7 @@ public static class ConsoleModule
 
     public static RouteGroupBuilder MapConsoleProductAnalyticsEndpoints(this RouteGroupBuilder console)
     {
+        BusinessAnalyticsClient.Map(console);
         console.MapGroup("/product-analytics").WithTags("Console").RequireStaff(PermissionKeys.ProductAnalyticsView)
             .MapGet(string.Empty, GetProductAnalytics.HandleAsync)
             .WithName("ConsoleProductAnalytics")

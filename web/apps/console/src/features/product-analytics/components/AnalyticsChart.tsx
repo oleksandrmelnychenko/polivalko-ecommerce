@@ -7,6 +7,7 @@ export type ChartPoint = {
   value: number | null
   low?: number
   high?: number
+  previous?: number | null
 }
 
 type Props = {
@@ -28,7 +29,8 @@ export function AnalyticsChart({ label, points, format, variant, baseline }: Pro
   const plotWidth = Math.max(0, width - PAD.left - PAD.right)
   const bottom = HEIGHT - PAD.bottom
   const band = plotWidth / Math.max(1, points.length)
-  const values = points.flatMap((point) => [point.low, point.value, point.high].filter((value): value is number => value != null))
+  const paired = variant === 'bars' && points.some(point => point.previous !== undefined)
+  const values = points.flatMap((point) => [point.low, point.value, point.high, point.previous].filter((value): value is number => value != null))
   const dataMin = Math.min(0, ...values)
   const dataMax = Math.max(0, baseline ?? 0, ...values)
   const tickSize = tickStep(dataMax - dataMin)
@@ -72,6 +74,7 @@ export function AnalyticsChart({ label, points, format, variant, baseline }: Pro
       <div className="pa-chart-readout" aria-live="polite">
         {point ? (
           <><span>{point.label}</span><strong>{point.value === null ? 'Даних немає' : format(point.value)}</strong>
+            {paired && <span>Рік тому · {point.previous == null ? '—' : format(point.previous)}</span>}
             {point.low !== undefined && point.high !== undefined ? <span>{format(point.low)} – {format(point.high)}</span> : null}</>
         ) : null}
       </div>
@@ -104,12 +107,13 @@ export function AnalyticsChart({ label, points, format, variant, baseline }: Pro
             {points.map((item, i) => {
               const position = x(i)
               const height = item.value === null ? 0 : Math.abs(zero - y(item.value))
-              const barWidth = Math.max(1, Math.min(22, band * 0.62))
+              const barWidth = Math.max(1, Math.min(22, band * (paired ? 0.34 : 0.62)))
               return (
                 <g key={item.label}>
                   {variant === 'bars' && item.value !== null && height > 0 ? (
-                    <rect className="pa-chart-bar" data-active={i === active || undefined} x={position - barWidth / 2} y={Math.min(zero, y(item.value))} width={barWidth} height={height} rx={Math.min(3, barWidth / 2)} />
+                    <rect className="pa-chart-bar" data-active={i === active || undefined} x={position - barWidth * (paired ? 1 : 0.5)} y={Math.min(zero, y(item.value))} width={barWidth} height={height} rx={Math.min(3, barWidth / 2)} />
                   ) : null}
+                  {paired && item.previous != null && <rect fill="#8291a6" x={position} y={Math.min(zero,y(item.previous))} width={barWidth} height={Math.abs(zero-y(item.previous))} rx={2}/>}
                   {i === active ? (
                     <>
                       <line className="pa-chart-cursor" x1={position} x2={position} y1={PAD.top} y2={bottom} />
@@ -130,12 +134,13 @@ export function AnalyticsChart({ label, points, format, variant, baseline }: Pro
         <summary>Значення в таблиці</summary>
         <div className="pa-table-scroll">
           <table className="pa-table">
-            <thead><tr><th scope="col">Період</th><th scope="col">Значення</th>{variant === 'forecast' ? <th scope="col">Діапазон</th> : null}</tr></thead>
+            <thead><tr><th scope="col">Період</th><th scope="col">Значення</th>{paired && <th scope="col">Рік тому</th>}{variant === 'forecast' ? <th scope="col">Діапазон</th> : null}</tr></thead>
             <tbody>
               {points.map((item) => (
                 <tr key={item.label}>
                   <td>{item.label}</td>
                   <td>{item.value === null ? '—' : format(item.value)}</td>
+                  {paired && <td>{item.previous == null ? '—' : format(item.previous)}</td>}
                   {variant === 'forecast' ? <td>{item.low === undefined || item.high === undefined ? '—' : `${format(item.low)} – ${format(item.high)}`}</td> : null}
                 </tr>
               ))}

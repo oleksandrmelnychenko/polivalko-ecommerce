@@ -1,0 +1,43 @@
+# Production add-on. This file is explicitly selected on the production host.
+services:
+  postgres:
+    networks:
+      default: {}
+      business-postgres:
+        aliases: [production-analytics-postgres]
+
+  api:
+    environment:
+      BusinessAnalytics__BaseUrl: http://business-analytics:8080/
+    networks:
+      business-console:
+
+  business-analytics:
+    profiles: [app]
+    build:
+      context: services/business-analytics
+    image: polivalko-business-analytics:${APP_VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      PRODUCTION_ANALYTICS_HOST: ${PRODUCTION_ANALYTICS_HOST:?Вкажіть хост виробничої БД}
+      PRODUCTION_ANALYTICS_DATABASE: ${PRODUCTION_ANALYTICS_DATABASE:?Вкажіть назву виробничої БД}
+      PRODUCTION_ANALYTICS_CLUSTER_ID: ${PRODUCTION_ANALYTICS_CLUSTER_ID:-}
+      PRODUCTION_ANALYTICS_DSN_FILE: /run/secrets/business_analytics_dsn
+    secrets: [business_analytics_dsn]
+    volumes:
+      - business-analytics-data:/var/lib/business-analytics
+    networks: [business-console, business-database, business-postgres]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+
+networks:
+  business-console:
+    internal: true
+  business-database: {}
+  business-postgres:
+    internal: true
+volumes:
+  business-analytics-data: {}
+secrets:
+  business_analytics_dsn:
+    file: ${PRODUCTION_ANALYTICS_DSN_FILE:?Вкажіть файл секрету виробничого підключення}

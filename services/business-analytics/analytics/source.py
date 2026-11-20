@@ -1,0 +1,226 @@
+import json
+import os
+import socket
+from contextlib import contextmanager
+from decimal import Decimal
+from functools import partial
+from ipaddress import ip_address
+from pathlib import Path
+
+import psycopg
+from psycopg.conninfo import conninfo_to_dict
+from psycopg.rows import dict_row
+from psycopg.types.json import set_json_loads
+
+
+def hosted():
+    return bool(os.environ.get("ANALYTICS_PRODUCTION_PROJECT"))
+
+
+def target():
+    if hosted():
+        if (os.environ.get("VERCEL_ENV") != "production"
+                or os.environ.get("VERCEL_PROJECT_ID") != os.environ["ANALYTICS_PRODUCTION_PROJECT"]):
+            raise ValueError("Підключення дозволено лише у виробничому проєкті")
+        host = os.environ["PGHOST_UNPOOLED"].strip().lower()
+        database = os.environ["PGDATABASE"].strip()
+        if not host.endswith(".neon.tech"):
+            raise ValueError("Невідомий сервер виробничої інтеграції")
+        config = dict(host=host, dbname=database, user=os.environ["PGUSER"],
+                      password=os.environ["PGPASSWORD"], port="5432", sslmode="verify-full")
+        platform_vars = {"PGHOST_UNPOOLED", "PGHOST", "PGDATABASE", "PGUSER", "PGPASSWORD", "PGPORT", "PGSSLMODE"}
+    else:
+        host = os.environ["PRODUCTION_ANALYTICS_HOST"].strip().lower()
+        database = os.environ["PRODUCTION_ANALYTICS_DATABASE"].strip()
+        dsn = Path(os.environ["PRODUCTION_ANALYTICS_DSN_FILE"]).read_text().strip()
+        config = conninfo_to_dict(dsn)
+        platform_vars = set()
+    # Pin both identities separately from the secret. Never inherit a service,
+    # socket, alternate endpoint, or libpq environment override.
+    allowed = {"host", "port", "dbname", "user", "password", "sslmode", "sslrootcert", "sslcert", "sslkey"}
+    if (
+        not host
+        or not database
+        or not config.get("user")
+        or set(config) - allowed
+        or config.get("host", "").lower() != host
+        or config.get("dbname") != database
+        or any(c in host for c in ",/\\")
+        or host == "localhost"
+        or host.endswith(".localhost")
+        or host in {"host.docker.internal", "gateway.docker.internal"}
+        or any(key.startswith("PG") and key not in platform_vars for key in os.environ)
+    ):
+        raise ValueError("Некоректне виробниче підключення")
+    config.setdefault("sslmode", "verify-full")
+    cluster = os.environ.get("PRODUCTION_ANALYTICS_CLUSTER_ID", "").strip()
+    internal = host == "production-analytics-postgres"
+    if internal and not (cluster.isascii() and cluster.isdigit() and len(cluster) <= 20):
+        raise ValueError("Вкажіть ідентифікатор виробничого кластера PostgreSQL")
+    if config["sslmode"] not in {"verify-full", "verify-ca", "require"} and not (
+        internal and config["sslmode"] == "disable"
+    ):
+        raise ValueError("Виробниче підключення потребує TLS")
+    if config["sslmode"] == "verify-full":
+        config.setdefault("sslrootcert", "system")
+    addresses = list(
+        dict.fromkeys(
+            a[4][0] for a in socket.getaddrinfo(host, config.get("port", 5432), type=socket.SOCK_STREAM)
+        )
+    )
+    for value in addresses:
+        ip = ip_address(value)
+        ip = getattr(ip, "ipv4_mapped", None) or ip
+        if ip.is_loopback or ip.is_unspecified or ip.is_link_local or ip.is_multicast:
+            raise ValueError("Локальне підключення заборонено")
+    return dict(
+        config,
+        host=",".join([host] * len(addresses)),
+        hostaddr=",".join(addresses),
+        connect_timeout=8,
+        application_name="polivalko-business-analytics",
+        options="-c default_transaction_read_only=on -c statement_timeout=120000 -c lock_timeout=3000",
+    )
+
+
+@contextmanager
+def production():
+    with psycopg.connect(**target(), row_factory=dict_row) as conn:
+        set_json_loads(partial(json.loads, parse_float=Decimal), conn)
+        conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
+        check = conn.execute(
+            "SELECT current_database() AS db, current_setting('transaction_read_only') AS ro"
+        ).fetchone()
+        database = os.environ["PGDATABASE" if hosted() else "PRODUCTION_ANALYTICS_DATABASE"]
+        if check["db"] != database or check["ro"] != "on":
+            raise RuntimeError("Не вдалося підтвердити виробниче підключення")
+        cluster = os.environ.get("PRODUCTION_ANALYTICS_CLUSTER_ID", "").strip()
+        if cluster:
+            identity = conn.execute(
+                "SELECT system_identifier::text AS id FROM pg_catalog.pg_control_system()"
+            ).fetchone()
+            if identity["id"] != cluster:
+                raise RuntimeError("Ідентифікатор виробничого кластера не збігається")
+        yield conn
+
+
+CATALOG = """
+SELECT p.id::text AS id, p.navkolo_id, p.sku, coalesce(nullif(p.display_name,''),p.name) AS name,
+       p.category_id::text AS category, c.name AS category_name, u.unit
+FROM catalog.products p LEFT JOIN catalog.categories c ON c.id=p.category_id
+LEFT JOIN (
+    SELECT 'dntrade-code:' || l.code AS navkolo_id, min(lower(trim(l.unit))) AS unit
+    FROM accounting.inventory_lines l JOIN accounting.inventory_reports r ON r.id=l.report_id
+    WHERE r.source_account='valko-dntrade' AND nullif(trim(l.unit),'') IS NOT NULL
+    GROUP BY l.code HAVING count(DISTINCT lower(trim(l.unit)))=1
+) u ON u.navkolo_id=p.navkolo_id
+"""
+REFERENCES = (
+    "SELECT id::text, source_account AS account, kind, source_id AS ref, title FROM accounting.references"
+)
+# Use the live archive for imports. Its accounting projection is insert-triggered
+# and may still contain the old body after a source correction or deletion.
+ARCHIVE_SQL = """
+WITH records AS (
+ SELECT r.*, r.payload::jsonb AS envelope FROM integration.dntrade_archive_records r
+ WHERE r.entity_type IN ('invoice','receipt','customerReturn','order') AND DAY_FILTER
+)
+SELECT id::text, source_account AS account, source_id AS ref, entity_type AS entity,
+       source_day AS day, source_date, document_type AS kind, status, currency, total, store_ids, organization_id AS org,
+       parent_source_id AS parent, envelope->>'providerTypeCode' AS code, envelope->>'requestedStatus' AS requested,
+       envelope#>>'{raw,status}' AS raw_status, envelope#>>'{raw,type}' AS raw_kind,
+       envelope#>>'{raw,external_id}' AS external, envelope#>>'{raw,client_external_id}' AS client,
+       envelope#>>'{raw,currency_iso}' AS raw_currency, envelope#>>'{raw,number}' AS number,
+       envelope#>'{raw,parent_document}' AS parent_document,
+       CASE WHEN entity_type <> 'order' THEN envelope#>'{raw,products}' END AS products
+FROM records
+"""
+ARCHIVE = ARCHIVE_SQL.replace("DAY_FILTER", "r.source_day <= %s::date + 1")
+NATIVE = """
+SELECT id::text, source_account AS account,source_id AS ref,entity_type AS entity,day,kind,status,currency,total,
+       native_org_id::text AS org, ARRAY[native_store_id::text] AS store_ids, number, details->'products' AS products
+FROM accounting.documents WHERE native_partner_id IS NOT NULL AND kind='out' AND day <= %s
+"""
+WEB = """
+SELECT o.id::text AS order_id, o.number AS number, o.navkolo_order_ref AS upstream,
+       (o.created_at AT TIME ZONE 'Europe/Kyiv')::date AS day, i.product_id::text AS product,
+       i.name, i.sku, i.quantity, i.line_total AS total, sh.org_id::text AS org, sh.store_id::text AS store,
+       o.id::text AS id, false AS refund
+FROM ordering.orders o JOIN ordering.order_items i ON i.order_id=o.id
+LEFT JOIN accounting.order_shipments sh ON sh.order_id=o.id AND sh.product_id=i.product_id
+WHERE (o.status IN ('Confirmed','Paid','Shipped','ReadyForPickup','Completed')
+    OR (o.status='Cancelled' AND EXISTS (SELECT 1 FROM ordering.order_status_changes h WHERE h.order_id=o.id AND h."to"='Paid')
+        AND EXISTS (SELECT 1 FROM ordering.order_refunds r JOIN ordering.order_refund_lines l ON r.id=l.refund_id
+                    WHERE r.order_id=o.id AND r.status='Succeeded')))
+  AND o.created_at < ((%s::date + 1)::timestamp AT TIME ZONE 'Europe/Kyiv')
+UNION ALL
+SELECT o.id::text, o.number, o.navkolo_order_ref,(r.completed_at AT TIME ZONE 'Europe/Kyiv')::date,
+       i.product_id::text,i.name,i.sku,l.quantity,l.amount,sh.org_id::text,sh.store_id::text,r.id::text,true
+FROM ordering.order_refunds r JOIN ordering.orders o ON o.id=r.order_id
+JOIN ordering.order_refund_lines l ON l.refund_id=r.id JOIN ordering.order_items i ON i.id=l.order_item_id
+LEFT JOIN accounting.order_shipments sh ON sh.order_id=o.id AND sh.product_id=i.product_id
+WHERE r.status='Succeeded' AND r.completed_at < ((%s::date + 1)::timestamp AT TIME ZONE 'Europe/Kyiv')
+"""
+COST_EVENTS = """
+SELECT d.native_org_id::text AS org,d.native_store_id::text AS store,m.product_id::text AS product,
+       d.day,d.id::text AS doc,m.delta,m.resulting_quantity AS balance,
+       CASE WHEN d.kind='in' AND d.currency='UAH' THEN
+        (SELECT sum((x->>'total')::numeric) FROM jsonb_array_elements(d.details->'products') x
+         WHERE x#>>'{product,id}'=m.product_id::text) END AS purchase
+FROM accounting.stock_movements m JOIN accounting.documents d ON d.id=m.document_id
+WHERE d.status='posted' AND d.day<=%s
+UNION ALL
+SELECT org_id::text,store_id::text,product_id::text,(posted_at AT TIME ZONE 'Europe/Kyiv')::date,
+       order_id::text,-quantity,balance,NULL::numeric FROM accounting.order_shipments
+WHERE (posted_at AT TIME ZONE 'Europe/Kyiv')::date<=%s
+ORDER BY org,store,product,day
+"""
+STOCK = """
+SELECT w.org_id::text AS org, w.store_id::text AS store, w.product_id::text AS product,
+       w.quantity, coalesce(s.reserved_quantity,0) AS reserved
+FROM accounting.warehouse_stock w LEFT JOIN catalog.product_stock s
+  ON (s.warehouse_org_id,s.warehouse_store_id,s.product_id)=(w.org_id,w.store_id,w.product_id)
+"""
+OUTAGES = """
+WITH movements AS (
+ SELECT d.native_org_id AS org,d.native_store_id AS store,m.product_id AS product,d.day,m.resulting_quantity AS balance
+ FROM accounting.stock_movements m JOIN accounting.documents d ON d.id=m.document_id
+ UNION ALL SELECT org_id,store_id,product_id,(posted_at AT TIME ZONE 'Europe/Kyiv')::date,balance FROM accounting.order_shipments
+ UNION ALL SELECT org_id,store_id,product_id,day,quantity FROM accounting.stock_openings
+), daily AS (
+ SELECT org,store,product,day,min(balance) AS minimum,max(balance) AS maximum
+ FROM movements WHERE day<=%s GROUP BY org,store,product,day
+), spans AS (
+ SELECT *,lead(day,1,%s::date+1) OVER(PARTITION BY org,store,product ORDER BY day) AS next_day FROM daily
+)
+SELECT org::text,store::text,product::text,greatest(day,%s::date-1092) AS day,
+       CASE WHEN maximum=0 THEN next_day-1 ELSE day END AS through
+FROM spans WHERE minimum=0 AND (CASE WHEN maximum=0 THEN next_day-1 ELSE day END)>=%s::date-1092
+"""
+
+
+def read_register(as_of):
+    from .register import reconcile
+
+    with production() as conn:
+        catalog = conn.execute(CATALOG).fetchall()
+        refs = conn.execute(REFERENCES).fetchall()
+        with conn.cursor("business_documents") as documents:
+            documents.execute(ARCHIVE, (as_of,))
+            native = conn.execute(NATIVE, (as_of,)).fetchall()
+            from itertools import chain
+
+            source = reconcile(
+                chain(documents, native), conn.execute(WEB, (as_of, as_of)), catalog, refs, as_of
+            )
+        source["stocks"] = conn.execute(STOCK).fetchall()
+        stocked = {s["product"] for s in source["stocks"]}
+        source["stockMeta"] = {p["id"]: p for p in catalog if p["id"] in stocked}
+        source["outages"] = [
+            dict(row, day=str(row["day"]), through=str(row["through"]))
+            for row in conn.execute(OUTAGES, (as_of,) * 4)
+        ]
+        from .register import apply_inventory_cost
+
+        apply_inventory_cost(source["facts"], conn.execute(COST_EVENTS, (as_of, as_of)))
+        return source
