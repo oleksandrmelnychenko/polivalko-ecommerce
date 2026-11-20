@@ -118,10 +118,28 @@ def production():
 
 
 def archived_rows(conn, query, params):
-    # One fixed, server-side cursor per read-only snapshot limits the size of each fetch.
-    conn.execute("DECLARE business_documents NO SCROLL CURSOR FOR " + query, params)
-    while batch := conn.execute("FETCH FORWARD 256 FROM business_documents").fetchall():
-        yield from batch
+    # Page on the (source_day, id) index inside the caller's repeatable-read
+    # transaction. Each statement releases its execution memory before the next.
+    after = ()
+    limit = 128
+    while True:
+        seek = " AND (r.source_day, r.id) > (%s::date, %s::uuid)" if after else ""
+        batch = conn.execute(query + seek + " ORDER BY r.source_day, r.id LIMIT %s",
+                             (*params, *after, limit)).fetchall()
+        for row in batch:
+            envelope = json.loads(row.pop("payload"), parse_float=Decimal)
+            envelope = envelope if isinstance(envelope, dict) else {}
+            raw = envelope.get("raw")
+            raw = raw if isinstance(raw, dict) else {}
+            yield dict(row, code=envelope.get("providerTypeCode"), requested=envelope.get("requestedStatus"),
+                       raw_status=raw.get("status"), raw_kind=raw.get("type"), external=raw.get("external_id"),
+                       client=raw.get("client_external_id"), raw_currency=raw.get("currency_iso"),
+                       number=str(raw["number"]) if raw.get("number") is not None else None,
+                       parent_document=raw.get("parent_document"),
+                       products=None if row["entity"] == "order" else raw.get("products"))
+        if len(batch) < limit:
+            return
+        after = (batch[-1]["day"], batch[-1]["id"])
 
 
 CATALOG = """
@@ -141,19 +159,11 @@ REFERENCES = (
 # Use the live archive for imports. Its accounting projection is insert-triggered
 # and may still contain the old body after a source correction or deletion.
 ARCHIVE_SQL = """
-WITH records AS (
- SELECT r.*, r.payload::jsonb AS envelope FROM integration.dntrade_archive_records r
- WHERE r.entity_type IN ('invoice','receipt','customerReturn','order') AND DAY_FILTER
-)
 SELECT id::text, source_account AS account, source_id AS ref, entity_type AS entity,
        source_day AS day, source_date, document_type AS kind, status, currency, total, store_ids, organization_id AS org,
-       parent_source_id AS parent, envelope->>'providerTypeCode' AS code, envelope->>'requestedStatus' AS requested,
-       envelope#>>'{raw,status}' AS raw_status, envelope#>>'{raw,type}' AS raw_kind,
-       envelope#>>'{raw,external_id}' AS external, envelope#>>'{raw,client_external_id}' AS client,
-       envelope#>>'{raw,currency_iso}' AS raw_currency, envelope#>>'{raw,number}' AS number,
-       envelope#>'{raw,parent_document}' AS parent_document,
-       CASE WHEN entity_type <> 'order' THEN envelope#>'{raw,products}' END AS products
-FROM records
+       parent_source_id AS parent, payload
+FROM integration.dntrade_archive_records r
+WHERE r.entity_type IN ('invoice','receipt','customerReturn','order') AND DAY_FILTER
 """
 ARCHIVE = ARCHIVE_SQL.replace("DAY_FILTER", "r.source_day <= %s::date + 1")
 NATIVE = """

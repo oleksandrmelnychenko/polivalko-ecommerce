@@ -1,5 +1,5 @@
 import { useDebouncedCallback } from '@mantine/hooks'
-import { Button, SegmentedControl } from '@mantine/core'
+import { Button, Loader, SegmentedControl } from '@mantine/core'
 import { IconAdjustmentsHorizontal, IconChartPie, IconCoins, IconFileInvoice, IconReceiptRefund, IconRefresh, IconReportMoney, IconWallet } from '@tabler/icons-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -236,13 +236,16 @@ export function BusinessAnalyticsPage() {
           {tab === 'turnover-forecast' && <TurnoverForecast />}
           {tab === 'markets' && (can(PermissionKeys.Accounting.View)
             ? <BuyerMarkets /> : <p>Для перегляду географії та продажів контрагентів потрібен доступ до обліку.</p>)}
-          {usesReport && (!assortment || !view) && runStatus}
+          {usesReport && !assortment && runStatus}
           {!view && usesReport && (
-            <p role="status">
-              {query.status === 'loading'
-                ? (tab === 'forecast' ? 'Навчаємо моделі за виробничими документами…' : 'Завантаження аналітики…')
-                : (query.problem?.title ?? 'Не вдалося завантажити виробничий звіт')}
-            </p>
+            <section className="pa-card ba-report-feedback">
+              <div role={query.isFetching ? 'status' : 'alert'}>
+                {query.isFetching ? <><Loader size={16} />{tab === 'forecast' ? 'Навчаємо моделі за виробничими документами…' : 'Завантаження аналітики…'}</>
+                  : <MetricLabel icon={IconFileInvoice}>{query.problem?.title ?? 'Не вдалося завантажити виробничий звіт'}</MetricLabel>}
+              </div>
+              {!query.isFetching && <Button variant="default" size="xs" leftSection={<IconRefresh size={15} />}
+                onClick={() => { query.reload(); reloadStatus() }}>Повторити завантаження</Button>}
+            </section>
           )}
           {view && usesReport && (
             <>
@@ -469,17 +472,6 @@ export function BusinessAnalyticsPage() {
                 </AnalyticsCard>
               )}
             </>
-          )}
-          {!view && usesReport && query.status !== 'loading' && (
-            <Button
-              variant="default"
-              onClick={() => {
-                query.reload()
-                reloadStatus()
-              }}
-            >
-              Повторити завантаження
-            </Button>
           )}
         </div>
       </div>

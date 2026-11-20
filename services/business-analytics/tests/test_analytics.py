@@ -13,7 +13,7 @@ from analytics.neon import FrameStream
 from analytics.register import apply_inventory_cost, reconcile
 from analytics.reports import documents, forecasts, report
 from analytics.server import PolicyConflict, Service, app, load, now, save, service
-from analytics.source import production, target
+from analytics.source import ARCHIVE, archived_rows, production, target
 
 DAY = date(2026, 11, 19)
 PRODUCT = {
@@ -56,6 +56,22 @@ def snapshot(rows, web=()):
 
 
 class RegisterTests(unittest.TestCase):
+    def test_archive_pages_continue_after_the_last_document_on_the_same_day(self):
+        conn = MagicMock()
+        payload = '{"providerTypeCode":3,"raw":{"number":42,"products":[{"total":10.123456789123456789}]}}'
+        ids = [f"00000000-0000-0000-0000-{i:012d}" for i in range(129)]
+        rows = [dict(id=key, day=DAY, entity="invoice", payload=payload) for key in ids]
+        rows[-1]["entity"] = "order"
+        conn.execute.return_value.fetchall.side_effect = [rows[:128], rows[128:]]
+        result = list(archived_rows(conn, ARCHIVE, (DAY,)))
+        self.assertEqual([row["id"] for row in result], ids)
+        self.assertEqual(result[0]["products"][0]["total"], D("10.123456789123456789"))
+        self.assertEqual(result[0]["number"], "42")
+        self.assertIsNone(result[-1]["products"])
+        second_query, second_params = conn.execute.call_args.args
+        self.assertIn("(r.source_day, r.id) >", second_query)
+        self.assertEqual(second_params, (DAY, DAY, ids[127], 128))
+
     def test_cash_turnover_combines_receipts_invoices_and_returns_with_empty_months(self):
         sale, returned = doc(), doc("r", kind="7", amount="-25")
         annual = compare(DAY.year, [sale, returned], [sale, returned])

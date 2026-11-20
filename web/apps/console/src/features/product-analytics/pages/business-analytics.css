@@ -131,6 +131,9 @@
   margin: 0 4px;
 }
 .ba-run-state::before { content: ''; width: 7px; height: 7px; flex: none; background: var(--mantine-color-gray-6); border-radius: 50%; }
+.ba-report-feedback, .ba-report-feedback > div { display: flex; align-items: center; gap: 10px; }
+.ba-report-feedback { flex-wrap: wrap; justify-content: space-between; padding: 14px 16px; }
+.ba-page[data-report-content] .ba-report-feedback > .mantine-Button-root { margin: 0; }
 .ba-run-state[data-state='ready']::before { background: var(--brand-accent); }
 .ba-run-state[data-state='error']::before { background: var(--mantine-color-red-7); }
 .ba-page[data-report-content] .pa-card, .ba-page[data-report-content] .pa-filters {
