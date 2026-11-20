@@ -32,6 +32,8 @@ export const productsColumns: DataTableColumn<ProductRow>[] = [
       </Link>
     ),
   },
+  { id: 'price', header: 'Ціна', width: 120, align: 'right', numeric: true, className: 'catalog-cell-strong', cell: (row) => <Money value={row.price} /> },
+  { id: 'stock', header: 'Залишок', width: 120, align: 'right', numeric: true, className: 'catalog-cell-strong', cell: (row) => <StockText stock={row.stock} /> },
   { id: 'sku', header: 'Артикул', width: 130, cell: (row) => <span className="catalog-code">{row.sku}</span> },
   { id: 'category', header: 'Категорія', width: 190, cell: (row) => <span className="catalog-ellipsis">{row.categoryName}</span> },
   {
@@ -49,8 +51,6 @@ export const productsColumns: DataTableColumn<ProductRow>[] = [
         <span className="catalog-muted">немає</span>
       ),
   },
-  { id: 'price', header: 'Ціна', width: 120, align: 'right', numeric: true, className: 'catalog-cell-strong', cell: (row) => <Money value={row.price} /> },
-  { id: 'stock', header: 'Залишок', width: 120, align: 'right', numeric: true, className: 'catalog-cell-strong', cell: (row) => <StockText stock={row.stock} /> },
   {
     id: 'visible',
     header: 'На сайті',

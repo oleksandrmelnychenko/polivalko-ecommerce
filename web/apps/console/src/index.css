@@ -7,9 +7,42 @@
 @import '@mantine/dates/styles.css';
 @import '@mantine/notifications/styles.css';
 
+/* Use JetBrains Mono for digits embedded in ordinary Ukrainian interface text. */
+@font-face {
+  font-family: 'Console Digits';
+  src: url('@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+0030-0039;
+}
+
+@font-face {
+  font-family: 'Console Digits';
+  src: url('@fontsource/jetbrains-mono/files/jetbrains-mono-latin-500-normal.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+  unicode-range: U+0030-0039;
+}
+
+@font-face {
+  font-family: 'Console Digits';
+  src: url('@fontsource/jetbrains-mono/files/jetbrains-mono-latin-600-normal.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+  unicode-range: U+0030-0039;
+}
+
+@font-face {
+  font-family: 'Console Digits';
+  src: url('@fontsource/jetbrains-mono/files/jetbrains-mono-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+  unicode-range: U+0030-0039;
+}
+
 :root {
-  --font-sans: Onest, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: var(--font-sans);
+  --font-sans: 'Console Digits', Onest, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: var(--font-money);
   --brand-accent: #00a046;
   --brand-accent-hover: #008a3c;
   --brand-accent-rgb: 0, 160, 70;
@@ -76,6 +109,7 @@ select {
 
 .app-money,
 .app-number {
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
