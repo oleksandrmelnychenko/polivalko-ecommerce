@@ -346,7 +346,7 @@
 }
 
 .console-header-page-actions .mantine-Button-root {
-  border-radius: 8px;
+  border-radius: 999px;
   font-size: 13px;
   height: 32px;
   min-height: 32px;

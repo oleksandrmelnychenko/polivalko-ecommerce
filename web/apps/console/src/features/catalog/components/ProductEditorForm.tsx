@@ -181,8 +181,6 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
             />
             <Select
               label="Категорія на сайті"
-              description="Приховані категорії позначено. Товар у такій категорії на сайті не видно."
-              inputWrapperOrder={['label', 'input', 'description', 'error']}
               data={categoryData}
               value={fields.categoryId}
               allowDeselect={false}
@@ -232,8 +230,6 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
           </h2>
           <Textarea
             label="Опис (HTML: абзаци, списки, заголовки, таблиці, посилання)"
-            description="Скрипти, стилі й вбудовані фото сервер прибирає під час збереження."
-            inputWrapperOrder={['label', 'input', 'description', 'error']}
             classNames={{ input: 'catalog-code-area' }}
             autosize
             minRows={3}

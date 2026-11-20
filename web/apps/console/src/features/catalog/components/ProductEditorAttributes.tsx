@@ -29,9 +29,6 @@ export function ProductEditorAttributes({ attributes, setAttributes, categoryId,
       <h2 id="attributes-title" className="app-section-title catalog-card-title">
         Характеристики
       </h2>
-      <Text size="xs" c="dimmed" mb="sm">
-        Фільтри категорії працюють за назвами, які задано в налаштуваннях категорії.
-      </Text>
       {attributes.length > 0 ? (
         <div className="catalog-attr-list" role="list">
           <div className="catalog-attr-head" aria-hidden="true">
