@@ -191,6 +191,17 @@ def dispatch(env):
     route = (env["REQUEST_METHOD"], env["PATH_INFO"])
     if route == ("GET", "/health/live"):
         return 200, {"status": "ok"}
+    if route == ("GET", "/checks/last-closed-year"):
+        year = now().year - 1
+        try:
+            totals = read_year(year)["total"]
+        except Exception as exc:
+            logger.error("Annual invoice check failed (%s, SQLSTATE %s)", type(exc).__name__,
+                         getattr(exc, "sqlstate", None))
+            return 503, {"status": "unavailable"}
+        result = "differences" if totals["discrepancies"] else "matched" if totals["documents"] else "empty"
+        logging.getLogger("gunicorn.error").info("Annual invoice check completed (year=%s, result=%s)", year, result)
+        return 200, {"year": year, "status": result}
     if route == ("GET", "/status"):
         return 200, dict(service.status, policiesWritable=not hosted())
     if route == ("POST", "/refresh"):

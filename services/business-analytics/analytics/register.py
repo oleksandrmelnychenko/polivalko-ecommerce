@@ -21,9 +21,9 @@ INACTIVE = {
     "чернетка",
 }
 KINDS = {
-    "sale": {"3", "sale", "salesinvoice", "outgoinginvoice", "видаткованакладна"},
-    "receipt": {"6", "receipt", "salereceipt", "salebyreceipt", "продажпочеку", "продажапочеку"},
-    "return": {"7", "return", "customerreturn", "поверненнятовару"},
+    "sale": {"3", "out", "sale", "salesinvoice", "outgoinginvoice", "видаткованакладна"},
+    "receipt": {"6", "cash", "receipt", "salereceipt", "salebyreceipt", "продажпочеку", "продажапочеку"},
+    "return": {"7", "back", "return", "customerreturn", "поверненнятовару"},
 }
 
 

@@ -33,7 +33,7 @@ export function AnnualInvoices() {
   const report = result.data
   return (
     <AnalyticsCard title="Оборот за видатковими накладними й поверненнями"
-      description="Суми в реєстрі обліку порівнюються з товарними рядками проведених гривневих документів. Кожну накладну звірено окремо.">
+      description="Звірка охоплює видаткові накладні та всі повернення покупців у гривні. Касові продажі входять до загального огляду обороту.">
       <div className="ba-controls">
         <label>Рік <input type="number" min={1900} max={last} defaultValue={year} key={year}
           onBlur={e => {
@@ -43,6 +43,7 @@ export function AnnualInvoices() {
             }
           }} /></label>
         <Button variant="default" onClick={result.reload} disabled={result.status === 'loading'}>Звірити ще раз</Button>
+        <Link to={'?tab=overview&from=' + year + '-01-01&to=' + year + '-12-31'}>Оборот з урахуванням чеків</Link>
       </div>
       {result.status === 'error' || result.status === 'forbidden'
         ? <p role="alert">{result.problem?.title ?? 'Не вдалося прочитати накладні.'}</p>

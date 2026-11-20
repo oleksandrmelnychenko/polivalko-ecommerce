@@ -55,6 +55,12 @@ def snapshot(rows, web=()):
 
 
 class RegisterTests(unittest.TestCase):
+    def test_register_uses_dntrade_native_invoice_and_return_codes_without_envelope(self):
+        sale, refund = doc("a"), doc("b", kind="7", amount="-25")
+        headers = [dict(sale, kind="out", code=None), dict(refund, kind="back", code=None)]
+        result = compare(DAY.year, headers, [sale, refund])["total"]
+        self.assertEqual((result["documents"], result["net"], result["discrepancies"]), (2, 75, 0))
+
     def test_annual_invoice_control_detects_offsetting_errors_and_missing_source(self):
         first, returned = doc("1"), doc("2", kind="7", amount="-25")
         headers = [dict(first, total=D(110)), dict(returned, total=D(35))]
