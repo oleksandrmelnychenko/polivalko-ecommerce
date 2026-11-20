@@ -1,10 +1,11 @@
-import { Button, SegmentedControl } from '@mantine/core'
+import { Button, Loader, SegmentedControl } from '@mantine/core'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { kyivDay } from '@/shared/lib/kyivTime'
 import { readBusiness } from '../api/businessAnalytics'
-import { AnalyticsCard } from './AnalyticsCard'
+import { IconMap2, IconSearch, IconUsers } from '@tabler/icons-react'
+import { MetricLabel, MetricTrack } from '@/shared/ui/MetricCard'
 import { formatValue } from './BusinessForecast'
 import shapes from './ukraineRegions.json'
 import './buyer-markets.css'
@@ -61,7 +62,7 @@ function SettlementMap({ region, metric }: { region: Region; metric: Metric }) {
   const { path, bounds } = paths[region.code]
   const maxRadius = Math.min(bounds[2], bounds[3]) * .045
   return <>
-    <div className="ba-kpis"><div>Покупок у регіоні<strong>{formatValue(region.count)}</strong></div>
+    <div className="market-stats"><div>Покупок у регіоні<strong>{formatValue(region.count)}</strong></div>
       <div>Сума у регіоні<strong>{formatValue(region.amount)} грн</strong></div>
       <div>Покупок із визначеним населеним пунктом<strong>{formatValue(known.count)} із {formatValue(region.count)}</strong></div></div>
     <div className="ba-market-map ba-locality-map">
@@ -90,24 +91,22 @@ function SettlementMap({ region, metric }: { region: Region; metric: Metric }) {
   </>
 }
 
-function RegionalMap({ data, source, metric, regionCode, onRegion }: {
-  data: Geography; source: Source; metric: Metric; regionCode: string; onRegion: (code: string) => void
+function RegionalMap({ data, metric, regionCode, onRegion }: {
+  data: Geography; metric: Metric; regionCode: string; onRegion: (code: string) => void
 }) {
   const recorded = data.regions.filter(r => r.count || r.returns)
   const ranking = recorded.filter(r => r[metric] > 0).sort((a, b) => b[metric] - a[metric] || a.name.localeCompare(b.name, 'uk'))
   const peak = ranking[0]?.[metric] ?? 0
   const selected = data.regions.find(r => r.code === regionCode)
-  const active = ranking[0]
   const known = recorded.reduce((sum, r) => sum + r.count, 0)
   const total = known + data.unknown.count
   const leaders = ranking.filter(r => r[metric] === peak)
   return <>
-    <p>{descriptions[source]}</p>
-    <label className="ba-map-selector">Регіон <select aria-label="Регіон карти" value={selected?.code ?? ''} onChange={e => onRegion(e.target.value)}>
-      <option value="">Уся Україна</option>{data.regions.map(r => <option key={r.code} value={r.code}>{r.name}</option>)}</select></label>
     {selected ? <SettlementMap key={selected.code} region={selected} metric={metric} /> : <>
-    <div className="ba-kpis"><div>Продажів із відомою областю<strong>{formatValue(known)} із {formatValue(total)}</strong></div>
-      <div>{metric === 'count' ? 'Найбільше покупок' : 'Найбільша сума'}<strong>{leaders.length ? leaders.map(r => r.name).join(', ') : 'Бракує даних'}</strong></div></div>
+    <div className="market-stats"><div>Покупок за рік<strong>{formatValue(total)}</strong></div>
+      <div>З відомою областю<strong>{formatValue(known)}</strong><MetricTrack value={known} max={total} /></div>
+      <div>{metric === 'count' ? 'Найбільше покупок' : 'Найбільша сума'}<strong className="market-leaders">{leaders.length ? leaders.map(r => r.name).join(', ') : '—'}</strong></div></div>
+    <div className="market-geography"><div className="market-figure">
     <div className="ba-market-map">
       <svg viewBox="-12 42 1035 706" aria-label="Карта покупок за областями України" role="group">
         {data.regions.map(r => {
@@ -119,19 +118,18 @@ function RegionalMap({ data, source, metric, regionCode, onRegion }: {
             <title>{r.name} · {metricLabel(r[metric], metric)}</title></path>
         })}
       </svg>
-      <div aria-live="polite" className="ba-market-region">
-        {active ? <><strong>{active.name}</strong><span>{formatValue(active.count)} покупок</span>
-          <span>{formatValue(active.amount)} грн</span></> : <strong>Область покупки невідома</strong>}
-      </div>
     </div>
     <p className="ba-map-legend"><span>Менше</span>{colors.map(c => <i style={{ background: c }} key={c} />)}<span>Більше</span>
       <i style={{ background: '#e9edef' }} /><span>Без додатного значення</span>
       {metric === 'amount' && <><i style={{ background: '#a26154' }} /><span>Від’ємний оборот</span></>}</p>
-    {!known && <p role="status">{total ? 'У вибраних продажах немає підтвердженої області. Лідера визначити неможливо.' : 'За цей рік у вибраному джерелі немає покупок.'}</p>}
-    <p>Регіон невідомий · {formatValue(data.unknown.count)} покупок · {formatValue(data.unknown.amount)} грн.</p>
+    </div>
     {recorded.length > 0 && <div className="ba-table"><table><thead><tr><th>Область</th><th>Покупок</th><th>Сума, грн</th></tr></thead>
       <tbody>{[...recorded].sort((a,b) => b[metric]-a[metric]).map(r => <tr key={r.code}>
-        <th><button onClick={() => onRegion(r.code)}>{r.name}</button></th><td>{formatValue(r.count)}</td><td>{formatValue(r.amount)}</td></tr>)}</tbody></table></div>}</>}
+        <th><button onClick={() => onRegion(r.code)}>{r.name}</button></th><td>{formatValue(r.count)}</td><td>{formatValue(r.amount)}</td></tr>)}</tbody></table></div>}
+    </div>
+    {!known && <p role="status">{total ? 'У вибраних продажах немає підтвердженої області. Лідера визначити неможливо.' : 'За цей рік у вибраному джерелі немає покупок.'}</p>}
+    <p>Регіон невідомий · {formatValue(data.unknown.count)} покупок · {formatValue(data.unknown.amount)} грн.</p>
+    </>}
     {selected && data.unknown.count > 0 && <p>Ще {formatValue(data.unknown.count)} покупок у цьому джерелі за рік мають невідому область.</p>}
     {total > 0 && data.withAddress === 0 && <p>За вибраний рік у джерелі немає адреси чи населеного пункту для жодної покупки.</p>}
     <small>Геодані · <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a>
@@ -156,39 +154,75 @@ export function BuyerMarkets() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const args = new URLSearchParams({ analysis: 'markets', year: String(year), page: String(page), search })
-  const query = useApiQuery('markets-' + args, () => readBusiness<Markets>('documents', args.toString()))
-  const data = query.data
+  const query = useApiQuery('markets-' + args, () => readBusiness<Markets>('documents', args.toString()), { keepPrevious: true })
+  const failed = query.status === 'error' || query.status === 'forbidden'
+  const data = !failed && query.data?.year === year ? query.data : undefined
   const source = (rawSource === 'combined' && data?.combined) || rawSource === 'documents' || rawSource === 'registered' || rawSource === 'online'
     ? rawSource : bestCoveredSource(data, regionCode)
-  return <>
-    <AnalyticsCard title="Географія покупок" actions={<label>Рік <input type="number" min={1900} max={latest}
-      defaultValue={year} key={year} onBlur={e => { const v = e.currentTarget.valueAsNumber
-        if (Number.isInteger(v) && v >= 1900 && v <= latest) { setPage(1); changeParam('year', String(v)) } }} /></label>}>
-      <div className="ba-controls"><label>Джерело адреси<select value={source} onChange={e => changeParam('source', e.target.value)}>
-        {Object.entries(sourceNames).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-        <SegmentedControl aria-label="Показник карти" value={metric} onChange={v => changeParam('metric', v)}
-          data={[{ value: 'count', label: 'Кількість покупок' }, { value: 'amount', label: 'Сума, грн' }]} /></div>
-      {data ? <RegionalMap key={source + year} data={data[source]} source={source} metric={metric} regionCode={regionCode} onRegion={code => changeParam('region', code)} />
-        : query.status === 'loading' ? <p role="status">Читаємо реєстр продажів…</p>
-          : <p role="alert">{query.problem?.title ?? 'Не вдалося завантажити карту.'} <Button variant="default" onClick={query.reload}>Повторити</Button></p>}
-      {data?.shipmentLinks && (source === 'combined' || source === 'documents') && <p>
-        За відправленнями на карті {regionCode && paths[regionCode] ? 'вибраного регіону' : 'України'} · {
-          formatValue(regionCode && paths[regionCode] ? data.shipmentLinks.mappedByRegion[regionCode] ?? 0 : data.shipmentLinks.mapped)
-        } покупок. За рік у всій Україні пов’язано за ТТН · {formatValue(data.shipmentLinks.ttn)},
-        за номером замовлення · {formatValue(data.shipmentLinks.number)}, за ідентифікатором замовлення · {formatValue(data.shipmentLinks.ref)}.
-        {data.shipmentLinks.ambiguous > 0 && <> Неоднозначних збігів · {formatValue(data.shipmentLinks.ambiguous)}.</>}
-      </p>}
-    </AnalyticsCard>
-    <AnalyticsCard title="Покупки контрагентів" description="Рейтинг за чистим оборотом проведених документів у гривні. Картка відкривається у реєстрі обліку.">
-      <label>Пошук контрагента <input type="search" value={search} maxLength={120} onChange={e => { setSearch(e.target.value); setPage(1) }} /></label>
-      {data && <><p>Контрагентів із документами · {formatValue(data.partnerCount)}. Без прив’язки до картки · {formatValue(data.unlinked.count)} покупок на {formatValue(data.unlinked.amount)} грн чистого обороту.</p>
-        {data.excluded > 0 && <p>Документи з непідтвердженою сумою, валютою або статусом · {formatValue(data.excluded)}.</p>}
-        <div className="ba-table"><table><thead><tr><th>Контрагент</th><th>Покупок</th><th>Повернень</th><th>Чистий оборот, грн</th><th>Остання покупка</th></tr></thead>
-          <tbody>{data.partners.map(p => <tr key={p.id}><th><Link to={'/accounting/partners/' + p.id}>{p.name}</Link></th><td>{formatValue(p.count)}</td>
-            <td>{formatValue(p.returns)}</td><td>{formatValue(p.amount)}</td><td>{p.lastPurchase ?? '—'}</td></tr>)}</tbody></table></div>
-        {!data.matches && <p>За цим пошуком контрагентів із продажами не знайдено.</p>}
-        {data.matches > 25 && <div className="ba-controls"><Button variant="default" disabled={page <= 1} onClick={() => setPage(page-1)}>Назад</Button>
-          <span>{page} / {Math.ceil(data.matches/25)}</span><Button variant="default" disabled={page*25 >= data.matches} onClick={() => setPage(page+1)}>Далі</Button></div>}</>}
-    </AnalyticsCard>
-  </>
+  const geography = data?.[source]
+  return <div className="buyer-markets">
+    <section className="pa-card" aria-labelledby="market-map-title">
+      <header className="market-header">
+        <h2 id="market-map-title"><MetricLabel icon={IconMap2}>Географія покупок</MetricLabel></h2>
+        <label className="market-year">Рік <select aria-label="Рік" value={year} onChange={e => { setPage(1); changeParam('year', e.target.value) }}>
+          {Array.from({ length: latest - 1899 }, (_, i) => latest - i).map(value => <option key={value}>{value}</option>)}
+        </select></label>
+      </header>
+      <div className="market-body">
+        <div className="market-controls">
+          <label>Джерело адреси<select value={source} onChange={e => changeParam('source', e.target.value)}>
+            {Object.entries(sourceNames).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select></label>
+          <label>Регіон<select aria-label="Регіон карти" value={geography?.regions.some(r => r.code === regionCode) ? regionCode : ''}
+            disabled={!geography} onChange={e => changeParam('region', e.target.value)}>
+            <option value="">Уся Україна</option>{geography?.regions.map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
+          </select></label>
+          <SegmentedControl aria-label="Показник карти" value={metric} onChange={v => changeParam('metric', v)}
+            data={[{ value: 'count', label: 'Кількість покупок' }, { value: 'amount', label: 'Сума, грн' }]} />
+        </div>
+        {failed ? <div role="alert" className="market-status">{query.problem?.title ?? 'Не вдалося завантажити звіт.'}
+          <Button size="xs" variant="default" onClick={query.reload}>Повторити</Button></div>
+          : geography ? <RegionalMap key={source + year} data={geography} metric={metric} regionCode={regionCode} onRegion={code => changeParam('region', code)} />
+            : <div role="status" className="market-status"><Loader size={16} />Читаємо реєстр продажів…</div>}
+        {geography && <details className="market-method"><summary>Як визначено адресу</summary><p>{descriptions[source]}</p>
+          {data?.shipmentLinks && (source === 'combined' || source === 'documents') && <p>
+            Покупок, нанесених на карту за відправленнями · {formatValue(regionCode && paths[regionCode] ? data.shipmentLinks.mappedByRegion[regionCode] ?? 0 : data.shipmentLinks.mapped)}.
+            За рік по Україні пов’язано за ТТН · {formatValue(data.shipmentLinks.ttn)}, за номером замовлення · {formatValue(data.shipmentLinks.number)},
+            за ідентифікатором · {formatValue(data.shipmentLinks.ref)}.
+            {data.shipmentLinks.ambiguous > 0 && <> Неоднозначних збігів · {formatValue(data.shipmentLinks.ambiguous)}.</>}
+          </p>}
+        </details>}
+      </div>
+    </section>
+    <section className="pa-card" aria-labelledby="market-partners-title">
+      <header className="market-header">
+        <h2 id="market-partners-title"><MetricLabel icon={IconUsers}>Покупки контрагентів</MetricLabel></h2>
+        <label className="market-search"><IconSearch size={16} aria-hidden="true" />
+          <input type="search" aria-label="Пошук контрагента" placeholder="Знайти контрагента…" value={search} maxLength={120}
+            onChange={e => { setSearch(e.target.value); setPage(1) }} /></label>
+      </header>
+      <div className="market-body">
+        {failed ? <p>Рейтинг контрагентів недоступний.</p>
+          : query.isFetching || !data ? <div role="status" className="market-status"><Loader size={16} />Завантажуємо покупки…</div>
+          : <>
+            <div className="market-stats">
+              <div>Контрагентів із документами<strong>{formatValue(data.partnerCount)}</strong></div>
+              <div>Покупок без контрагента<strong>{formatValue(data.unlinked.count)}</strong></div>
+              <div>Їхній чистий оборот<strong>{formatValue(data.unlinked.amount)} ₴</strong></div>
+            </div>
+            {data.excluded > 0 && <p>Документи з непідтвердженою сумою, валютою або статусом · {formatValue(data.excluded)}.</p>}
+            {data.partners.length > 0 ? <div className="ba-table"><table aria-label="Рейтинг контрагентів за чистим оборотом"><thead><tr>
+              <th>Контрагент</th><th>Покупок</th><th>Повернень</th><th>Чистий оборот, грн</th><th>Остання покупка</th></tr></thead>
+              <tbody>{data.partners.map(p => <tr key={p.id}><th scope="row"><Link to={'/accounting/partners/' + p.id}>{p.name}</Link></th>
+                <td>{formatValue(p.count)}</td><td>{formatValue(p.returns)}</td><td>{formatValue(p.amount)}</td><td>{p.lastPurchase ?? '—'}</td></tr>)}</tbody>
+            </table></div> : <p role="status">{search ? 'За цим пошуком контрагентів не знайдено.' : 'За цей рік немає покупок із прив’язкою до контрагента.'}</p>}
+            {data.matches > 25 && <nav className="market-pages" aria-label="Сторінки контрагентів">
+              <Button size="xs" variant="default" disabled={page <= 1} onClick={() => setPage(page - 1)}>Назад</Button>
+              <span>{page} / {Math.ceil(data.matches / 25)}</span>
+              <Button size="xs" variant="default" disabled={page * 25 >= data.matches} onClick={() => setPage(page + 1)}>Далі</Button>
+            </nav>}
+          </>}
+      </div>
+    </section>
+  </div>
 }

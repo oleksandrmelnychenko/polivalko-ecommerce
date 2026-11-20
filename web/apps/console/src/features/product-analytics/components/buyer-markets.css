@@ -1,14 +1,61 @@
-.ba-market-map { display: grid; grid-template-columns: minmax(0, 620px) minmax(135px, 1fr); gap: 1rem; align-items: center; }
-.ba-market-map svg { display: block; width: 100%; height: auto; }
-.ba-market-map path { cursor: pointer; }
-.ba-market-map path:focus-visible, .ba-market-map path:hover { outline: none; stroke: #123e32; stroke-width: 2.8; }
-.ba-market-region { display: grid; gap: .35rem; font-variant-numeric: tabular-nums; }
-.ba-map-legend { display: flex; align-items: center; flex-wrap: wrap; gap: .3rem; font-size: .8rem; }
-.ba-map-legend i { display: inline-block; width: 16px; height: 10px; }
-.ba-map-selector { display: flex; gap: .6rem; align-items: center; margin: 1rem 0; }
-.ba-map-selector select { max-width: 100%; padding: .4rem .7rem; border: 1px solid #a8b9b2; border-radius: .35rem; font: inherit; }
-.ba-locality-map svg { max-height: 27rem; }
-.ba-locality-map path { cursor: default; pointer-events: none; }
-.ba-locality-map circle { cursor: pointer; }
-.ba-locality-map circle:focus-visible, .ba-locality-map circle:hover { outline: none; stroke: #183e32; stroke-width: 2.4; }
-@media (max-width: 720px) { .ba-market-map { grid-template-columns: 1fr; } }
+.buyer-markets, .market-body, .market-figure, .ba-market-region { display: grid; gap: 12px; min-width: 0; }
+.buyer-markets .pa-card { min-width: 0; box-shadow: var(--app-card-shadow); }
+.buyer-markets :is(h2, p) { margin: 0; }
+.market-header, .market-controls, .market-pages, .market-status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.market-header { padding: 12px 16px; justify-content: space-between; border-bottom: 1px dashed var(--app-line); }
+.market-body { padding: 14px 16px; }
+.market-controls { align-items: flex-end; }
+.market-controls label, .market-year { display: grid; gap: 5px; font-size: 13px; font-weight: 550; }
+.market-year { display: flex; align-items: center; gap: 8px; }
+.buyer-markets select, .market-search { max-width: 100%; min-width: 0; min-height: 36px; border: 1px solid var(--app-line); border-radius: 999px; background: white; color: var(--brand-ink); padding: 5px 12px; font: inherit; font-weight: 400; }
+.market-year select, .market-pages span, .market-stats strong, .buyer-markets td { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.buyer-markets .mantine-Button-root, .buyer-markets .mantine-SegmentedControl-root, .buyer-markets .mantine-SegmentedControl-indicator { border-radius: 999px; }
+.buyer-markets .mantine-SegmentedControl-indicator { background: var(--brand-ink); }
+.buyer-markets .mantine-SegmentedControl-label[data-active] { color: white; }
+.buyer-markets .mantine-SegmentedControl-control::before { display: none; }
+.market-search { display: flex; align-items: center; gap: 8px; color: var(--pa-muted); font-size: 13px; }
+.market-search input { min-width: 0; width: 100%; border: 0; background: transparent; color: var(--brand-ink); font: inherit; }
+.market-search:focus-within { outline: 2px solid var(--brand-accent); }
+.market-search input:focus { outline: 0; }
+.market-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(165px, 100%), 1fr)); gap: 8px; }
+.market-stats > div { display: grid; align-content: start; gap: 6px; background: var(--app-ground); border-radius: 16px; padding: 12px 14px; font-size: 12px; color: var(--pa-muted); }
+.market-stats strong { color: var(--brand-ink); font-size: clamp(19px, 1.6vw, 26px); font-weight: 550; line-height: 1.25; overflow-wrap: anywhere; }
+.market-stats .market-leaders { font-family: inherit; font-size: 18px; }
+.market-status, .market-body > p, .market-method, .market-body > small, .ba-map-legend { color: var(--pa-muted); font-size: 13px; line-height: 1.45; }
+.market-status { padding-block: 9px; }
+.market-status[role='alert'] { color: var(--mantine-color-red-8); }
+.market-geography { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.market-figure:only-child { grid-column: 1 / -1; }
+.ba-market-map { background: var(--app-ground); border-radius: 18px; padding: 12px; }
+.ba-market-map svg { display: block; width: 100%; height: clamp(180px, 24vw, 335px); }
+.ba-market-map [role='button'], .market-method summary { cursor: pointer; }
+.ba-market-map [role='button']:is(:hover, :focus-visible) { stroke: #123e32; stroke-width: 2.8; }
+.ba-locality-map { display: grid; grid-template-columns: minmax(0, 2fr) minmax(150px, 1fr); gap: 12px; align-items: center; }
+.ba-market-region { gap: 5px; color: var(--pa-muted); font-size: 13px; }
+.ba-market-region strong { color: var(--brand-ink); font-size: 17px; }
+.ba-map-legend { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; font-size: 11px; }
+.ba-map-legend i { width: 12px; height: 7px; border-radius: 6px; }
+.buyer-markets .ba-table { min-width: 0; max-height: 365px; margin: 0; overscroll-behavior: contain; }
+.buyer-markets th, .buyer-markets td { padding: 9px 10px; }
+.buyer-markets thead th { background: var(--app-ground); z-index: 1; font-size: 12px; }
+.buyer-markets tbody th { position: static; }
+.buyer-markets tbody :is(td,th) { border-bottom-style: dashed; }
+.buyer-markets .ba-table :is(th,td):not(:first-child) { text-align: end; white-space: nowrap; }
+.buyer-markets tbody :is(a,button) { font: inherit; color: var(--brand-ink); background: transparent; border: 0; padding: 0; cursor: pointer; text-align: start; text-decoration: none; }
+.buyer-markets tbody :is(a,button):is(:hover,:focus-visible,[aria-pressed='true']) { text-decoration: underline; color: var(--pa-green); }
+.market-method { border-top: 1px dashed var(--app-line); padding-top: 10px; }
+.market-method p { margin-top: 6px; }
+.market-body > small { font-size: 11px; }
+.market-body > small a { color: inherit; }
+.market-pages { justify-content: flex-end; font-size: 12px; }
+@media (max-width: 56em) {
+  .market-geography { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 40em) {
+  .market-body, .market-header { padding: 12px; }
+  .market-controls label, .market-search { width: 100%; }
+  .market-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .market-stats > div:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .ba-locality-map { grid-template-columns: minmax(0, 1fr); }
+  .buyer-markets .mantine-SegmentedControl-root { max-width: 100%; }
+}
