@@ -1,5 +1,6 @@
 import { Button, Stack, Text } from '@mantine/core'
-import { useCallback, useMemo } from 'react'
+import { useMediaQuery } from '@mantine/hooks'
+import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
@@ -10,9 +11,9 @@ import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { getRefunds, type RefundRow } from '../api/returnsApi'
 import { ReturnDetailPane } from '../components/ReturnDetailPane'
 import { ReturnsFilters } from '../components/ReturnsFilters'
-import { RETURNS_COLUMNS } from '../components/returnsColumns'
+import { returnsColumns } from '../components/returnsColumns'
 import { hasActiveFilters, toRefundsQuery, useReturnsState } from '../lib/returnsState'
-import '@/shared/ui/split/split.css'
+import '@/shared/sales/sales-list.css'
 import './returns.css'
 
 const getRowId = (row: RefundRow) => row.id
@@ -29,22 +30,27 @@ export function ReturnsPage() {
   const page = refunds.data
   const failed = refunds.status === 'error' || refunds.status === 'forbidden'
   const rows = useMemo(() => (failed ? [] : (page?.items ?? [])), [failed, page])
-  const selected = rows.find((row) => row.id === pickedId) ?? rows[0] ?? null
-  const selectedId = selected?.id ?? null
+  const [snapshot, setSnapshot] = useState<RefundRow | null>(null)
+  const selected = rows.find((row) => row.id === pickedId)
+  const detail = selected ?? snapshot
+  const compact = useMediaQuery('(max-width: 48em)')
 
-  const select = useCallback(
-    (row: RefundRow) =>
-      setParams(
-        (current) => {
-          const next = new URLSearchParams(current)
-          next.set('id', row.id)
-          return next
-        },
-        { replace: true },
-      ),
-    [setParams],
-  )
-  const rowClassName = useCallback((row: RefundRow) => (row.id === selectedId ? 'app-split-row-active' : undefined), [selectedId])
+  const setId = useCallback((id: string | null) => {
+    const next = new URLSearchParams(window.location.search)
+    if (id) next.set('id', id)
+    else next.delete('id')
+    setParams(next, { replace: true })
+  }, [setParams])
+  const select = useCallback((row: RefundRow) => {
+    setSnapshot(row)
+    setId(row.id)
+  }, [setId])
+  const columns = useMemo(() => returnsColumns(select, compact === true), [select, compact])
+
+  function close() {
+    if (selected) setSnapshot(selected)
+    setId(null)
+  }
 
   const emptyText = failed ? (
     <Stack align="center" gap={8}>
@@ -60,7 +66,7 @@ export function ReturnsPage() {
   )
 
   return (
-    <ListPage>
+    <ListPage className="sales-list-page returns-list-page">
       <PageHeader title="Повернення" />
 
       <ReturnsFilters
@@ -70,7 +76,7 @@ export function ReturnsPage() {
         reset={reset}
         actions={
           <>
-            {page ? <span className="app-filter-summary">Знайдено: {countFormat.format(page.totalItems)}</span> : null}
+            {page && !failed ? <span className="app-filter-summary">Знайдено: {countFormat.format(page.totalItems)}</span> : null}
             <Paginator
               page={state.page}
               pageSize={state.pageSize}
@@ -85,25 +91,20 @@ export function ReturnsPage() {
       />
 
       <ListPageBody>
-        <div className="app-split-layout">
-          <div className="app-split-list">
-            <DataTable
-              ariaLabel="Повернення"
-              columns={RETURNS_COLUMNS}
-              data={rows}
-              getRowId={getRowId}
-              isLoading={refunds.isLoading}
-              isFetching={refunds.isFetching}
-              minWidth={520}
-              height="100%"
-              onRowClick={select}
-              rowClassName={rowClassName}
-              emptyText={emptyText}
-            />
-          </div>
-          <ReturnDetailPane refund={selected} />
-        </div>
+        <DataTable
+          ariaLabel="Повернення"
+          columns={columns}
+          data={rows}
+          getRowId={getRowId}
+          isLoading={refunds.isLoading}
+          isFetching={refunds.isFetching}
+          minWidth={compact ? 250 : 650}
+          height="100%"
+          onRowClick={select}
+          emptyText={emptyText}
+        />
       </ListPageBody>
+      {detail && !failed && <ReturnDetailPane refund={detail} opened={Boolean(selected)} onClose={close} />}
     </ListPage>
   )
 }
