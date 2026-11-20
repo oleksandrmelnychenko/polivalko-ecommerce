@@ -28,7 +28,7 @@ export function DnTradeArchiveDetailPage() {
   return (
     <ListPage>
       <PageHeader
-        title={item ? `Архів Навколо · ${item.sourceId}` : 'Архів Навколо'}
+        title={item ? `Архів DNTrade · ${item.sourceId}` : 'Архів DNTrade'}
         actions={
           <>
             <Button component={Link} to={{ pathname: ARCHIVE_PATH, search }} variant="default" leftSection={<IconChevronLeft size={16} stroke={1.8} />}>

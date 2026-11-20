@@ -142,7 +142,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
         badge: (summary) => summary.failedOperations,
         badgeTone: 'bad',
       },
-      { id: 'dntrade-archive', label: 'Архів Навколо', path: '/system/dntrade-archive', permissionKey: PermissionKeys.DnTradeArchive.View, icon: IconArchive },
+      { id: 'dntrade-archive', label: 'Архів DNTrade', path: '/system/dntrade-archive', permissionKey: PermissionKeys.DnTradeArchive.View, icon: IconArchive },
       { id: 'staff', label: 'Працівники', path: '/system/staff', permissionKey: PermissionKeys.Staff.ManageUsers, icon: IconUserCog },
       { id: 'roles', label: 'Ролі і права', path: '/system/roles', permissionKey: PermissionKeys.Staff.ManageRoles, icon: IconShieldLock },
       { id: 'audit', label: 'Журнал', path: '/system/audit', permissionKey: PermissionKeys.Audit.View, icon: IconHistory },

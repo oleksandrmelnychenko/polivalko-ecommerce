@@ -96,7 +96,7 @@ export function ArchiveImportDialog({ onClose, onImported }: ArchiveImportDialog
   }
 
   return (
-    <AppModal opened title="Імпорт записів Навколо" closeOnClickOutside={!busy} closeOnEscape={!busy} withCloseButton={!busy} onClose={onClose}>
+    <AppModal opened title="Імпорт записів DNTrade" closeOnClickOutside={!busy} closeOnEscape={!busy} withCloseButton={!busy} onClose={onClose}>
       <form onSubmit={submit} aria-busy={busy}>
         <Stack gap="md">
           <Text size="sm" c="dimmed">

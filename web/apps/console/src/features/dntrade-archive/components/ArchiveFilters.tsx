@@ -75,7 +75,7 @@ export function ArchiveFilters({ view, filters, actions, onChange }: ArchiveFilt
   const activeCount = [draft.sourceAccount, draft.storeId, draft.from || draft.to].filter(Boolean).length
   return (
     <FilterBar
-      label="Пошук в архіві Навколо"
+      label="Пошук в архіві DNTrade"
       activeCount={activeCount}
       search={
         <>

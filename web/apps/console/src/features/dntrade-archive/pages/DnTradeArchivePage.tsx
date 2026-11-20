@@ -108,7 +108,7 @@ export function DnTradeArchivePage() {
   return (
     <ListPage>
       <PageHeader
-        title="Архів Навколо"
+        title="Архів DNTrade"
         actions={canImport ? (
           <Button variant="default" leftSection={<IconFileImport size={16} stroke={1.8} />} onClick={() => setImporting(true)}>
             Імпорт файлів
@@ -138,7 +138,7 @@ export function DnTradeArchivePage() {
       />
       <ListPageBody>
         <DataTable
-          ariaLabel="Записи архіву Навколо"
+          ariaLabel="Записи архіву DNTrade"
           columns={columns}
           data={archivePage?.items ?? EMPTY_ROWS}
           getRowId={getRowId}
