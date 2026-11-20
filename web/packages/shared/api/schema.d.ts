@@ -3509,6 +3509,8 @@ export interface components {
             /** Format: int32 */
             cancellationStatusId?: null | number;
             cancellationStatusName?: null | string;
+            /** @default true */
+            orderSyncEnabled: boolean;
         };
         NavkoloProductFieldsDto: {
             navkoloId: string;

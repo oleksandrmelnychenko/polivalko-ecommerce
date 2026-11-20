@@ -1,6 +1,8 @@
 namespace PoliValko.Navkolo.Features.Settings;
 
-public sealed record NavkoloConnectionDto(Guid? Revision, string Mode, bool HasKey, string? StoreId, string? StoreName, DateTimeOffset? VerifiedAt, string Source, int? CancellationStatusId = null, string? CancellationStatusName = null);
+public sealed record NavkoloConnectionDto(
+    Guid? Revision, string Mode, bool HasKey, string? StoreId, string? StoreName, DateTimeOffset? VerifiedAt, string Source,
+    int? CancellationStatusId = null, string? CancellationStatusName = null, bool OrderSyncEnabled = true);
 public sealed record NavkoloStoreDto(string Id, string Name);
 public sealed record CheckNavkoloRequest(string? ApiKey);
 public sealed record NavkoloStatusDto(int Id, string Name);

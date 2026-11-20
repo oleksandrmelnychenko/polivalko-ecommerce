@@ -35,6 +35,7 @@ export function NavkoloSettingsPage() {
 }
 
 function ConnectionForm({ initial, onSaved }: { initial: NavkoloConnection; onSaved: (value: NavkoloConnection) => void }) {
+  const orderSyncEnabled = initial.orderSyncEnabled ?? true
   const [key, setKey] = useState('')
   const [enabled, setEnabled] = useState(initial.mode === 'DNTrade')
   const [clearKey, setClearKey] = useState(false)
@@ -63,14 +64,17 @@ function ConnectionForm({ initial, onSaved }: { initial: NavkoloConnection; onSa
         }
         const found = result.data.stores ?? []
         setStores(found)
-        const statusList = result.data.statuses ?? []
-        setStatuses(statusList)
-        setCancellationStatusId((current) => (statusList.some((s) => String(s.id) === current) ? current : null))
+        if (orderSyncEnabled) {
+          const statusList = result.data.statuses ?? []
+          setStatuses(statusList)
+          setCancellationStatusId((current) => (statusList.some((s) => String(s.id) === current) ? current : null))
+        }
         setStoreId((current) => (found.some((s) => s.id === current) ? current : found.length === 1 ? found[0].id : null))
+        const nextStep = orderSyncEnabled ? 'Оберіть склад і статус скасування' : 'Оберіть склад'
         setMessage({
           error: found.length === 0,
           text: found.length
-            ? `Підключення успішне. Доступно складів: ${found.length}. Оберіть склад і статус скасування, потім збережіть налаштування.`
+            ? `Підключення успішне. Доступно складів: ${found.length}. ${nextStep}, потім збережіть налаштування.`
             : 'Ключ прийнято, але доступних складів немає. Перевірте доступи в Навколо.',
         })
         if (found.length) select('store')
@@ -136,15 +140,15 @@ function ConnectionForm({ initial, onSaved }: { initial: NavkoloConnection; onSa
     },
     {
       key: 'store',
-      name: 'Склад і скасування',
+      name: orderSyncEnabled ? 'Склад і скасування' : 'Склад',
       hint: storeName ? `Склад: ${storeName}` : 'Звідки беруться товари, ціни й залишки',
       icon: IconBuildingWarehouse,
-      state: storeId && cancellationStatusId ? <TableChip dot tone="success" value="Вибрано" /> : <TableChip dot tone="warning" value="Не вибрано" />,
+      state: storeId && (!orderSyncEnabled || cancellationStatusId) ? <TableChip dot tone="success" value="Вибрано" /> : <TableChip dot tone="warning" value="Не вибрано" />,
     },
     {
       key: 'sync',
       name: 'Синхронізація',
-      hint: 'Каталог, ціни, залишки й замовлення',
+      hint: orderSyncEnabled ? 'Каталог, ціни, залишки й замовлення' : 'Каталог, ціни й залишки',
       icon: IconRefresh,
       state: enabled ? (
         <TableChip dot tone="success" value="Увімкнено" />
@@ -183,7 +187,9 @@ function ConnectionForm({ initial, onSaved }: { initial: NavkoloConnection; onSa
                 <SettingsHero
                   section={section}
                   kicker="Навколо"
-                  description="Підключіть Навколо.Торгівля, щоб оновлювати каталог, ціни й залишки та передавати замовлення. Ключ можна отримати в Навколо: Опції → Інтеграції → API DNTrade."
+                  description={orderSyncEnabled
+                    ? 'Підключіть Навколо.Торгівля, щоб оновлювати каталог, ціни й залишки та передавати замовлення. Ключ можна отримати в Навколо: Опції → Інтеграції → API DNTrade.'
+                    : 'Підключіть Навколо.Торгівля, щоб оновлювати каталог, ціни й залишки. Ключ можна отримати в Навколо: Опції → Інтеграції → API DNTrade.'}
                 />
                 <SettingsCard title="Ключ API">
                   <Stack gap="md">
@@ -212,7 +218,9 @@ function ConnectionForm({ initial, onSaved }: { initial: NavkoloConnection; onSa
                         Перевірити підключення
                       </Button>
                     </div>
-                    <p className="settings-muted">Перевірка лише читає список складів і статусів, нічого не змінює.</p>
+                    <p className="settings-muted">
+                      {orderSyncEnabled ? 'Перевірка завантажує список складів і статусів.' : 'Перевірка завантажує список складів.'}
+                    </p>
                     {initial.hasKey ? (
                       <Checkbox
                         label="Видалити збережений ключ"
@@ -237,8 +245,12 @@ function ConnectionForm({ initial, onSaved }: { initial: NavkoloConnection; onSa
 
             {active === 'store' ? (
               <>
-                <SettingsHero section={section} kicker="Навколо" description="Склад і статус скасування стають доступні після перевірки підключення." />
-                <SettingsCard title="Склад і статус">
+                <SettingsHero
+                  section={section}
+                  kicker="Навколо"
+                  description={orderSyncEnabled ? 'Склад і статус скасування стають доступні після перевірки підключення.' : 'Список складів доступний після перевірки підключення.'}
+                />
+                <SettingsCard title={orderSyncEnabled ? 'Склад і статус' : 'Склад'}>
                   <Stack gap="md">
                     <Select
                       label="Склад"
@@ -250,16 +262,18 @@ function ConnectionForm({ initial, onSaved }: { initial: NavkoloConnection; onSa
                       onChange={setStoreId}
                       description="Каталог, ціни й залишки надходитимуть із вибраного складу."
                     />
-                    <Select
-                      label="Статус скасування в Навколо"
-                      placeholder="Оберіть після перевірки підключення"
-                      searchable
-                      value={cancellationStatusId}
-                      data={statuses.map((s) => ({ value: String(s.id), label: s.name }))}
-                      disabled={!!busy || !statuses.length || clearKey}
-                      onChange={setCancellationStatusId}
-                      description="Цей статус буде встановлено в Навколо, коли замовлення скасують у консолі."
-                    />
+                    {orderSyncEnabled ? (
+                      <Select
+                        label="Статус скасування в Навколо"
+                        placeholder="Оберіть після перевірки підключення"
+                        searchable
+                        value={cancellationStatusId}
+                        data={statuses.map((s) => ({ value: String(s.id), label: s.name }))}
+                        disabled={!!busy || !statuses.length || clearKey}
+                        onChange={setCancellationStatusId}
+                        description="Цей статус буде встановлено в Навколо, коли замовлення скасують у консолі."
+                      />
+                    ) : null}
                     {!stores.length && !clearKey ? (
                       <Button variant="subtle" size="xs" color="gray" w="fit-content" onClick={() => select('connection')}>
                         Перейти до перевірки підключення
@@ -267,17 +281,19 @@ function ConnectionForm({ initial, onSaved }: { initial: NavkoloConnection; onSa
                     ) : null}
                   </Stack>
                 </SettingsCard>
-                {statusName || storeName ? (
+                {storeName || (orderSyncEnabled && statusName) ? (
                   <SettingsCard title="Вибрано зараз">
                     <dl className="app-split-fields">
                       <div>
                         <dt>Склад</dt>
                         <dd>{storeName ?? <span className="app-split-value-empty">не вибрано</span>}</dd>
                       </div>
-                      <div>
-                        <dt>Статус скасування</dt>
-                        <dd>{statusName ?? <span className="app-split-value-empty">не вибрано</span>}</dd>
-                      </div>
+                      {orderSyncEnabled ? (
+                        <div>
+                          <dt>Статус скасування</dt>
+                          <dd>{statusName ?? <span className="app-split-value-empty">не вибрано</span>}</dd>
+                        </div>
+                      ) : null}
                     </dl>
                   </SettingsCard>
                 ) : null}
@@ -297,8 +313,9 @@ function ConnectionForm({ initial, onSaved }: { initial: NavkoloConnection; onSa
                   <Stack gap="md">
                     <Switch label="Увімкнути синхронізацію" checked={enabled} disabled={!!busy || clearKey} onChange={(e) => setEnabled(e.currentTarget.checked)} />
                     <p className="settings-muted">
-                      Після збереження синхронізація працює без перезапуску сервера. Скасування переданого замовлення підтверджується через Навколо; до підтвердження резерв
-                      зберігається. Стан синхронізації видно в розділі <Link to="/system/integrations">Система → Інтеграції</Link>.
+                      Після збереження синхронізація працює без перезапуску сервера.{' '}
+                      {orderSyncEnabled ? 'Скасування переданого замовлення підтверджується через Навколо. До підтвердження резерв зберігається. ' : ''}
+                      Стан синхронізації видно в розділі <Link to="/system/integrations">Система → Інтеграції</Link>.
                     </p>
                   </Stack>
                 </SettingsCard>

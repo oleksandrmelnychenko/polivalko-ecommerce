@@ -14,6 +14,7 @@ x-app-env: &app-env
   Web__RevalidateUrl: http://web:3000/internal/revalidate
   Web__RevalidateSecret: ${REVALIDATE_SECRET:-local-revalidate-secret}
   Navkolo__Mode: ${NAVKOLO_MODE:-Stub}
+  Navkolo__OrderSyncEnabled: ${NAVKOLO_ORDER_SYNC_ENABLED:-true}
   Navkolo__ApiKey: ${NAVKOLO_API_KEY:-}
   Navkolo__StoreId: ${NAVKOLO_STORE_ID:-}
   Navkolo__Channel: ${NAVKOLO_CHANNEL:-Poli-Valko}

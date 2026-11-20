@@ -14242,6 +14242,10 @@
               "null",
               "string"
             ]
+          },
+          "orderSyncEnabled": {
+            "type": "boolean",
+            "default": true
           }
         }
       },

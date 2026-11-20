@@ -51,11 +51,14 @@ public sealed class NavkoloSettingsApiTests(ApiFactory api)
         {
             var original = await admin.ReadAsync<NavkoloConnectionDto>(Path);
             original.Revision.ShouldBeNull(); original.HasKey.ShouldBeTrue();
+            original.OrderSyncEnabled.ShouldBeTrue();
             var checkedResponse = await admin.PostAsJsonAsync(Path + "/check", new CheckNavkoloRequest(Key), Ct);
             var check = await checkedResponse.ReadAsync<CheckNavkoloDto>();
             check.Stores.ShouldContain(s => s.Id == Store && s.Name == "Буча");
+            check.Statuses.ShouldContain(s => s.Id == 9);
             (await admin.ReadAsync<NavkoloConnectionDto>(Path)).Revision.ShouldBeNull();
             var save = new SaveNavkoloConnectionRequest(null, true, Key, false, Store, 9);
+            (await admin.PutAsJsonAsync(Path, save with { CancellationStatusId = null }, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
             var response = await admin.PutAsJsonAsync(Path, save, Ct);
             (await response.Content.ReadAsStringAsync(Ct)).ShouldNotContain(Key);
             var saved = await response.ReadAsync<NavkoloConnectionDto>();
@@ -94,13 +97,66 @@ public sealed class NavkoloSettingsApiTests(ApiFactory api)
         finally { await api.WithDbAsync(db => db.Set<PlatformSetting>().Where(s => s.Key == NavkoloSettings.Key).ExecuteDeleteAsync(Ct)); }
     }
 
-    private sealed class Provider : HttpMessageHandler
+    [Fact]
+    public async Task Product_only_connection_checks_and_saves_without_order_permission()
+    {
+        var fake = new Provider(rejectOrders: true);
+        await using var host = api.WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("Navkolo:Mode", "Disabled");
+            builder.UseSetting("Navkolo:OrderSyncEnabled", "false");
+            builder.ConfigureServices(services => services.AddHttpClient("DNTrade").ConfigurePrimaryHttpMessageHandler(() => fake));
+        });
+        using var admin = host.CreateClient();
+        (await admin.PostAsJsonAsync("/api/v1/console/auth/login", new { email = ApiFactory.AdminEmail, password = ApiFactory.TestPassword }, Ct)).EnsureSuccessStatusCode();
+        var csrf = await admin.GetFromJsonAsync<PoliValko.Infrastructure.Security.CsrfTokenDto>("/api/v1/console/auth/csrf", Ct);
+        admin.DefaultRequestHeaders.Add(PoliValko.Infrastructure.Security.CsrfHeaders.Token, csrf!.Token);
+        try
+        {
+            var initial = await admin.ReadAsync<NavkoloConnectionDto>(Path);
+            initial.Source.ShouldBe("environment");
+            initial.OrderSyncEnabled.ShouldBeFalse();
+
+            var check = await (await admin.PostAsJsonAsync(Path + "/check", new CheckNavkoloRequest(Key), Ct)).ReadAsync<CheckNavkoloDto>();
+            check.Stores.ShouldContain(s => s.Id == Store);
+            check.Statuses.ShouldBeEmpty();
+            (await admin.ReadAsync<NavkoloConnectionDto>(Path)).Revision.ShouldBeNull();
+
+            var request = new SaveNavkoloConnectionRequest(initial.Revision, true, Key, false, Store);
+            var saved = await (await admin.PutAsJsonAsync(Path, request, Ct)).ReadAsync<NavkoloConnectionDto>();
+            saved.Source.ShouldBe("console");
+            saved.Mode.ShouldBe("DNTrade");
+            saved.StoreId.ShouldBe(Store);
+            saved.CancellationStatusId.ShouldBeNull();
+            saved.OrderSyncEnabled.ShouldBeFalse();
+
+            var storedKeyCheck = await (await admin.PostAsJsonAsync(Path + "/check", new CheckNavkoloRequest(null), Ct)).ReadAsync<CheckNavkoloDto>();
+            storedKeyCheck.Stores.ShouldContain(s => s.Id == Store);
+            storedKeyCheck.Statuses.ShouldBeEmpty();
+            fake.LastKey.ShouldBe(Key);
+            fake.OrderRequests.ShouldBe(0);
+
+            await using var scope = host.Services.CreateAsyncScope();
+            var runtime = await scope.ServiceProvider.GetRequiredService<NavkoloSettings>().LoadAsync(Ct);
+            runtime.OrderSyncEnabled.ShouldBeFalse();
+        }
+        finally { await api.WithDbAsync(db => db.Set<PlatformSetting>().Where(s => s.Key == NavkoloSettings.Key).ExecuteDeleteAsync(Ct)); }
+    }
+
+    private sealed class Provider(bool rejectOrders = false) : HttpMessageHandler
     {
         public string? LastKey { get; private set; }
+        public int OrderRequests { get; private set; }
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             request.RequestUri!.Host.ShouldBe("api.dntrade.com.ua");
             LastKey = request.Headers.GetValues("ApiKey").Single();
+            if (request.RequestUri.AbsolutePath.StartsWith("/orders/", StringComparison.Ordinal))
+            {
+                OrderRequests++;
+                if (rejectOrders) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.Forbidden));
+            }
             if (LastKey == "rejected-key") return Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized) { Content = new StringContent("rejected-key must never be returned") });
             if (request.RequestUri.AbsolutePath == "/orders/statuslist") return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"status\":1,\"data\":[{\"id\":9,\"title\":\"Скасоване\"}]}", Encoding.UTF8, "application/json") });
             var body = request.RequestUri.AbsolutePath == "/products/stores"
