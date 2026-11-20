@@ -1,5 +1,5 @@
 import { ActionIcon, Button, CloseButton, Group, Stack, Text, TextInput, Tooltip } from '@mantine/core'
-import { IconChevronLeft, IconFileImport, IconFolder, IconPlus, IconRefresh, IconSearch, IconTrash } from '@tabler/icons-react'
+import { IconChevronLeft, IconFileImport, IconPlus, IconRefresh, IconSearch, IconTrash } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
 import { usePermissions } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
@@ -20,7 +20,8 @@ import { getAttributes } from '../api/dictionariesApi'
 import { CategoryDetailPane } from '../components/CategoryDetailPane'
 import { CategoryForm } from '../components/CategoryForm'
 import { CategoryImportDialog } from '../components/CategoryImportDialog'
-import { ProductThumb } from '../components/ProductThumb'
+import { CategoryMark } from '../components/CategoryMark'
+import { categoryIcon } from '../lib/categoryIcons'
 import { isHidden, orderCategories, type OrderedCategory } from '../lib/categoryTree'
 import { useListParams } from '../lib/useListParams'
 import '../components/catalog.css'
@@ -131,7 +132,7 @@ export function CategoriesPage() {
         cell: (row) => (
           <button type="button" className="catalog-tree-cell category-pick" style={{ paddingInlineStart: Math.min(row.depth, 4) * 10 }} onClick={() => selectRow(row)}>
             {row.depth > 0 ? <span className="catalog-tree-branch" aria-hidden="true" /> : null}
-            {row.imageUrl ? <ProductThumb url={row.imageUrl} size={32} /> : <span className="category-folder"><IconFolder size={16} stroke={1.7} aria-hidden="true" /></span>}
+            <CategoryMark category={row} />
             <span className="category-row-text">
               <span className="app-split-item-name">{row.name}</span>
               <small>{isHidden(row) && (row.isVisible ? 'Прихована батьківська · ' : 'Прихована · ')}
@@ -250,7 +251,7 @@ export function CategoriesPage() {
       {canImport && importOpened ? <CategoryImportDialog onClose={() => setImportOpened(false)} onImported={categories.reload} /> : null}
 
       <CatalogEditorModal
-        icon={IconFolder}
+        icon={categoryIcon(current?.name ?? '', Boolean(current?.parentId) || !current)}
         opened={opened}
         onClose={close}
         dirty={formDirty && !busy}

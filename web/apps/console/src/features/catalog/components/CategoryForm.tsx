@@ -11,6 +11,7 @@ import { useReportDirty } from '@/shared/lib/useReportDirty'
 import { getAttributeNames, saveCategory, type ConsoleCategory } from '../api/catalogApi'
 import type { AttributeDefinition } from '../api/dictionariesApi'
 import { descendantIds, MAX_CATEGORY_FILTERS, orderCategories } from '../lib/categoryTree'
+import { categoryIcon } from '../lib/categoryIcons'
 import { ImageUploadField } from './ImageUploadField'
 
 type CategoryFormProps = {
@@ -144,6 +145,7 @@ export function CategoryForm({ formId, category, focusFilters, all, attributes, 
     onBusy(false)
   }
 
+  const PreviewIcon = categoryIcon(fields.name, Boolean(fields.parentId) || !isTop)
   const shownError = formError ?? error
 
   return (
@@ -191,10 +193,11 @@ export function CategoryForm({ formId, category, focusFilters, all, attributes, 
           onChange={(event) => set('navkoloRef', event.currentTarget.value)}
         />
         <ImageUploadField
-          label="Фото плитки"
+          label="Зображення категорії"
+          fallback={<PreviewIcon size={26} stroke={1.6} aria-hidden="true" />}
           value={fields.imageUrl}
           alt={fields.name}
-          description="Показується на головній і в меню каталогу. JPEG, PNG або WebP."
+          description="Ваше зображення замінить іконку в дереві й з’явиться на плитці вітрини. JPEG, PNG або WebP."
           error={errors.imageUrl || undefined}
           onChange={(url) => set('imageUrl', url)}
         />

@@ -1,5 +1,5 @@
 import { ActionIcon, Button, Tooltip } from '@mantine/core'
-import { IconAdjustmentsHorizontal, IconChevronRight, IconExternalLink, IconFolder, IconFolders, IconPackage, IconPencil } from '@tabler/icons-react'
+import { IconAdjustmentsHorizontal, IconChevronRight, IconExternalLink, IconFolders, IconPackage, IconPencil } from '@tabler/icons-react'
 import { Fragment, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { siteUrl } from '@/shared/lib/siteUrl'
@@ -8,6 +8,7 @@ import { MetricLabel, MetricTrack } from '@/shared/ui/MetricCard'
 import type { ConsoleCategory } from '../api/catalogApi'
 import type { AttributeDefinition } from '../api/dictionariesApi'
 import { descendantIds, isHidden, MAX_CATEGORY_FILTERS, type OrderedCategory } from '../lib/categoryTree'
+import { CategoryMark } from './CategoryMark'
 import { ProductPreviewGrid } from './ProductPreviewGrid'
 
 const countFormat = new Intl.NumberFormat('uk-UA')
@@ -50,9 +51,7 @@ function CategoryDetail({ category, all, attributes, onEdit, onSelect }: Categor
       <header className="app-split-hero">
         <div className="app-split-hero-top">
           <div className="app-split-head">
-            <span className="category-folder" aria-hidden="true">
-              {category.imageUrl ? <img src={category.imageUrl} alt="" loading="lazy" /> : <IconFolder size={16} stroke={1.7} />}
-            </span>
+            <CategoryMark category={category} />
             <div className="app-split-hero-main">
               {ancestors.length > 0 && (
                 <p className="app-split-hero-kicker catalog-category-path">

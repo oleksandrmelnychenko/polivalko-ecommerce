@@ -1,6 +1,6 @@
 import { Button, FileButton, Group, Loader, Text } from '@mantine/core'
 import { IconPhoto, IconPhotoUp, IconTrash } from '@tabler/icons-react'
-import { useId, useState } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { uploadMediaImage } from '../api/dictionariesApi'
 import './catalog-dictionaries.css'
@@ -12,6 +12,7 @@ type ImageUploadFieldProps = {
   description?: string
   error?: string
   disabled?: boolean
+  fallback?: ReactNode
   shape?: 'square' | 'wide'
   alt?: string
 }
@@ -21,7 +22,7 @@ const MAX_BYTES = 10 * 1024 * 1024
 const WRONG_TYPE = 'Підходять фото JPEG, PNG або WebP.'
 const TOO_LARGE = 'Фото завелике: до 10 МБ.'
 
-export function ImageUploadField({ label, value, onChange, description, error, disabled = false, shape = 'wide', alt = '' }: ImageUploadFieldProps) {
+export function ImageUploadField({ label, value, onChange, description, error, disabled = false, fallback, shape = 'wide', alt = '' }: ImageUploadFieldProps) {
   const id = useId()
   const [busy, setBusy] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -62,7 +63,7 @@ export function ImageUploadField({ label, value, onChange, description, error, d
       </span>
       <div className="catalog-image-field-row">
         <div className={`catalog-image-field-preview is-${shape}`} aria-busy={busy || undefined}>
-          {busy ? <Loader size="sm" color="gray" /> : value ? <img src={value} alt={alt} /> : <IconPhoto size={26} stroke={1.4} aria-hidden="true" />}
+          {busy ? <Loader size="sm" color="gray" /> : value ? <img src={value} alt={alt} /> : fallback ?? <IconPhoto size={26} stroke={1.4} aria-hidden="true" />}
         </div>
         <div className="catalog-image-field-side">
           <Group gap={6}>
