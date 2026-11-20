@@ -1,4 +1,4 @@
-import { ActionIcon, Button, Checkbox, TextInput, Tooltip } from '@mantine/core'
+import { ActionIcon, Button, Switch, TextInput, Tooltip } from '@mantine/core'
 import { IconPlus, IconTrash } from '@tabler/icons-react'
 import { AppDateInput } from '@/shared/ui/AppDateInput'
 import { TableChip } from '@/shared/ui/TableChip'
@@ -20,7 +20,7 @@ export function SpecialDaysEditor({ days, errors, onChange, onClearField }: Spec
 
   return (
     <div className="settings-days">
-      {days.length === 0 ? <p className="settings-muted">Особливих днів немає: сайт показує звичайний графік.</p> : null}
+      {days.length === 0 ? <p className="settings-muted">Наразі діє звичайний графік.</p> : null}
       {days.length > 0 ? (
         <ul className="settings-day-list">
           {days.map((day, index) => {
@@ -45,6 +45,7 @@ export function SpecialDaysEditor({ days, errors, onChange, onClearField }: Spec
                 />
                 <TextInput
                   label="Години роботи"
+                  className="settings-day-hours"
                   placeholder="10:00-15:00"
                   value={day.closed ? '' : day.hours}
                   disabled={day.closed}
@@ -52,7 +53,7 @@ export function SpecialDaysEditor({ days, errors, onChange, onClearField }: Spec
                   error={fieldError(errors, 'specialDays', index, 'hours')}
                   onChange={(event) => update(index, { hours: event.currentTarget.value }, 'hours')}
                 />
-                <Checkbox
+                <Switch
                   className="settings-day-closed"
                   label="Зачинено"
                   checked={day.closed}

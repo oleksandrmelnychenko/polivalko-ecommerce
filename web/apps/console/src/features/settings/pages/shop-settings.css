@@ -1,0 +1,42 @@
+.shop-section-select { display: none; }
+.shop-section-nav .home-block-name { justify-items: start; gap: 4px; }
+.shop-section-nav .app-table-chip { font-size: 11px; }
+.shop-section {
+  container-type: inline-size;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.shop-section-heading {
+  align-items: center;
+  border-bottom: 1px dashed var(--app-line);
+  display: flex;
+  gap: 12px;
+  padding-bottom: 14px;
+}
+.shop-section-heading h2 { color: var(--brand-ink); font-size: 20px; font-weight: 600; line-height: 1.2; margin: 0; }
+.shop-section-heading p { color: var(--mantine-color-gray-7); font-size: 13px; line-height: 1.45; margin: 4px 0 0; }
+.shop-section-fields { border: 0; margin: 0; min-width: 0; padding: 0; }
+.shop-field-grid { display: grid; gap: 12px 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.shop-field-grid > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+.shop-section :is(input[data-numeric], .app-date-input input, .settings-day-hours input),
+.shop-section textarea[name='schedule'] { font-family: var(--font-mono); }
+.shop-section .settings-day {
+  align-items: end;
+  border-radius: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 12px;
+}
+.shop-section .settings-day-closed, .shop-section .settings-day-actions { margin-top: 0; }
+.shop-section .settings-day-actions { grid-column: -2 / -1; }
+.shop-section .settings-muted { margin: 0; }
+@container (max-width: 480px) {
+  .shop-field-grid { grid-template-columns: minmax(0, 1fr); }
+  .shop-section .settings-day { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .shop-section .settings-day > :nth-child(-n+3) { grid-column: 1 / -1; }
+}
+@media (max-width: 52em) {
+  .shop-section-nav { display: none; }
+  .shop-section-select { display: block; }
+  .shop-workspace .shop-section-select select { border-radius: 999px; }
+}

@@ -4,7 +4,9 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 import { PageState } from '@/shared/ui/PageState'
 import { getContacts, getShopSettings } from '../api/settingsApi'
 import { ShopSettingsForm } from '../components/ShopSettingsForm'
+import '@/shared/ui/site/site-home.css'
 import './settings.css'
+import './shop-settings.css'
 
 export function ShopSettingsPage() {
   const contacts = useApiQuery('settings-contacts', () => getContacts())
