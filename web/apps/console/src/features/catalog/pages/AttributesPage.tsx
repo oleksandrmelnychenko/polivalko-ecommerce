@@ -11,6 +11,7 @@ import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { notifySuccess } from '@/shared/ui/notify'
+import { DictionaryLayout } from '../components/DictionaryLayout'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { getProductCounts } from '../api/catalogApi'
 import { deleteAttribute, getAttributeDetails, getAttributes, type AttributeDefinition } from '../api/dictionariesApi'
@@ -104,7 +105,7 @@ export function AttributesPage() {
   }
 
   return (
-    <ListPage>
+    <ListPage className="catalog-dictionary-page">
       <PageHeader
         title="Характеристики"
         actions={
@@ -144,7 +145,7 @@ export function AttributesPage() {
       </FilterBar>
 
       <ListPageBody>
-        <div className="app-split-layout">
+        <DictionaryLayout picked={Boolean(selectedId && picked.id === selectedId)} onBack={() => pick({ id: null })}>
           <AttributeListPane
             rows={attributes.status === 'error' || attributes.status === 'forbidden' ? [] : rows}
             selectedId={selectedId}
@@ -158,7 +159,7 @@ export function AttributesPage() {
             onSelect={selectAttribute}
           />
           <AttributeDetailPane attribute={selected} details={details} totalProducts={productCounts.data?.all ?? null} onEdit={open} />
-        </div>
+        </DictionaryLayout>
       </ListPageBody>
 
       <AppDrawer

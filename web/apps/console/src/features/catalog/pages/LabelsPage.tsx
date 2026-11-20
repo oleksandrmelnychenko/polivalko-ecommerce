@@ -13,6 +13,7 @@ import type { DataTableColumn } from '@/shared/ui/data-table/types'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { notifyError, notifySuccess } from '@/shared/ui/notify'
+import { DictionaryLayout, DictionaryLink } from '../components/DictionaryLayout'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { getProductCounts } from '../api/catalogApi'
 import { deleteLabel, getLabels, saveLabel, type ProductLabel } from '../api/dictionariesApi'
@@ -77,7 +78,7 @@ export function LabelsPage() {
         header: 'Мітка',
         width: 200,
         fill: true,
-        cell: (row) => <LabelChip name={row.name} tone={row.tone} muted={!row.isActive} />,
+        cell: (row) => <DictionaryLink id={row.id}><LabelChip name={row.name} tone={row.tone} muted={!row.isActive} /></DictionaryLink>,
       },
       {
         id: 'kind',
@@ -137,7 +138,7 @@ export function LabelsPage() {
   const deletable = current !== null && canDeleteLabel(current)
 
   return (
-    <ListPage>
+    <ListPage className="catalog-dictionary-page">
       <PageHeader
         title="Мітки"
         actions={
@@ -161,7 +162,7 @@ export function LabelsPage() {
       />
 
       <ListPageBody>
-        <div className="app-split-layout">
+        <DictionaryLayout picked={Boolean(selectedId && picked.id === selectedId)} onBack={() => pick({ id: null })}>
           <div className="app-split-list">
             <DataTable
               ariaLabel="Мітки товарів"
@@ -185,7 +186,7 @@ export function LabelsPage() {
             onEdit={open}
             onToggle={(label, isActive) => void toggle(label, isActive)}
           />
-        </div>
+        </DictionaryLayout>
       </ListPageBody>
 
       <AppDrawer

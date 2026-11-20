@@ -3,6 +3,7 @@ import { plural } from '@polivalko/shared/lib/format'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
 import type { AttributeDefinition } from '../api/dictionariesApi'
+import { DictionaryLink } from './DictionaryLayout'
 import { AttributeKindIcon } from './AttributeKindIcon'
 
 const countFormat = new Intl.NumberFormat('uk-UA')
@@ -17,10 +18,10 @@ const COLUMNS: DataTableColumn<AttributeDefinition>[] = [
     fill: true,
     accessor: (row) => row.name,
     cell: (row) => (
-      <span className="app-split-name-cell">
+      <DictionaryLink id={row.id}>
         <AttributeKindIcon kind={row.kind} size={15} />
         <span className="app-split-item-name">{row.name}</span>
-      </span>
+      </DictionaryLink>
     ),
   },
   {

@@ -13,6 +13,7 @@ import type { DataTableColumn } from '@/shared/ui/data-table/types'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { notifySuccess } from '@/shared/ui/notify'
+import { DictionaryLayout, DictionaryLink } from '../components/DictionaryLayout'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { getProductCounts } from '../api/catalogApi'
 import { deleteBrand, getBrands, type Brand } from '../api/dictionariesApi'
@@ -90,10 +91,10 @@ export function BrandsPage() {
         fill: true,
         accessor: (row) => row.name,
         cell: (row) => (
-          <span className="app-split-name-cell">
+          <DictionaryLink id={row.id}>
             <BrandMark name={row.name} logoUrl={row.logoUrl} />
             <span className="app-split-item-name">{row.name}</span>
-          </span>
+          </DictionaryLink>
         ),
       },
       {
@@ -156,7 +157,7 @@ export function BrandsPage() {
   }
 
   return (
-    <ListPage>
+    <ListPage className="catalog-dictionary-page">
       <PageHeader
         title="Бренди"
         actions={
@@ -195,7 +196,7 @@ export function BrandsPage() {
       </FilterBar>
 
       <ListPageBody>
-        <div className="app-split-layout">
+        <DictionaryLayout picked={Boolean(selectedId && picked.id === selectedId)} onBack={() => pick({ id: null })}>
           <div className="app-split-list">
             <DataTable
               ariaLabel="Довідник брендів"
@@ -212,7 +213,7 @@ export function BrandsPage() {
             />
           </div>
           <BrandDetailPane brand={selected} totalProducts={productCounts.data?.all ?? null} onEdit={open} onMerge={setMerging} />
-        </div>
+        </DictionaryLayout>
       </ListPageBody>
 
       <AppDrawer

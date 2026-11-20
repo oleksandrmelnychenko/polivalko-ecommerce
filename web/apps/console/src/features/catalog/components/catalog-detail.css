@@ -248,13 +248,13 @@
   .category-edit .mantine-Button-label { display: none; }
   .category-edit .mantine-Button-section { margin: 0; }
 }
-.category-metrics {
+.catalog-metrics {
   display: grid;
   gap: 8px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin: 0;
 }
-.category-metrics > div {
+.catalog-metrics > div {
   background: white;
   border: 1px solid rgb(25 25 32 / 5%);
   border-radius: var(--app-panel-radius);
@@ -264,9 +264,9 @@
   gap: 14px;
   padding: clamp(12px, 1.3vw, 20px);
 }
-.category-metrics dt { min-height: 32px; }
-.category-metrics .metric-label { flex-wrap: wrap; }
-.category-metrics dd {
+.catalog-metrics dt { min-height: 32px; }
+.catalog-metrics .metric-label { flex-wrap: wrap; }
+.catalog-metrics dd {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -274,9 +274,9 @@
   font: 500 clamp(22px, 2vw, 32px)/1.15 var(--font-mono);
   margin: 0;
 }
-.category-metrics small { color: var(--mantine-color-gray-7); font: 400 12px/1.3 var(--font-sans); }
-.category-metrics dd strong { font-weight: 500; letter-spacing: -.05em; }
-.category-metrics .metric-track { margin-top: auto; }
+.catalog-metrics small { color: var(--mantine-color-gray-7); font: 400 12px/1.3 var(--font-sans); }
+.catalog-metrics dd strong { font-weight: 500; letter-spacing: -.05em; }
+.catalog-metrics .metric-track { margin-top: auto; }
 .category-filter-setup p { color: var(--mantine-color-gray-7); font-size: 14px; margin: 0 0 12px; }
 .category-children { list-style: none; margin: 0; padding: 0; }
 .category-children li + li { border-top: 1px dashed var(--app-line); }
@@ -300,11 +300,11 @@
 .category-back { display: none; }
 
 @media (max-width: 50em) {
-  .catalog-categories-page .app-split-layout:not([data-picked]) .app-split-detail,
-  .catalog-categories-page .app-split-layout[data-picked] .app-split-list { display: none; }
+  :is(.catalog-categories-page, .catalog-dictionary-page) .app-split-layout:not([data-picked]) .app-split-detail,
+  :is(.catalog-categories-page, .catalog-dictionary-page) .app-split-layout[data-picked] .app-split-list { display: none; }
 
-  [data-section='catalog'] .catalog-categories-page .app-split-list { flex: 1; }
-  .catalog-categories-page .app-split-layout[data-picked] .category-back {
+  [data-section='catalog'] :is(.catalog-categories-page, .catalog-dictionary-page) .app-split-list { flex: 1; }
+  :is(.catalog-categories-page, .catalog-dictionary-page) .app-split-layout[data-picked] .category-back {
     align-items: center;
     align-self: flex-start;
     background: white;
@@ -319,10 +319,48 @@
     min-height: 36px;
     padding: 4px 12px;
   }
-  .category-metrics .metric-label { font-size: 13px; }
+  .catalog-metrics .metric-label { font-size: 13px; }
 }
 
 @media (max-width: 32em) {
-  .category-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .category-metrics > div:first-child { grid-column: 1 / -1; }
+  .catalog-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .catalog-metrics > div:first-child { grid-column: 1 / -1; }
+}
+
+.catalog-dictionary-page .app-split-hero-top {
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 16px;
+}
+.catalog-dictionary-page .app-split-head { align-items: center; flex: 1 1 180px; }
+.catalog-dictionary-page .app-split-actions { flex-wrap: wrap; max-width: 100%; }
+.catalog-dictionary-page .app-split-hero h2 {
+  font-size: clamp(19px, 2vw, 26px);
+  font-weight: 550;
+  margin: 0;
+}
+.catalog-dictionary-page .app-split-hero-kicker { margin-bottom: 3px; }
+.catalog-dictionary-page .app-split-hero :is(.mantine-ActionIcon-root, .mantine-Button-root),
+.catalog-dictionary-page .app-filter-bar input { border-radius: 999px; }
+.catalog-dictionary-page .app-split-kind-icon {
+  height: 32px;
+  width: 32px;
+}
+.catalog-dictionary-page .data-table-th { background: white; }
+.catalog-dictionary-page .data-table-cell { border-bottom: 1px dashed var(--app-line); }
+.catalog-dictionary-page .data-table-row:nth-child(even) { --data-table-cell-bg: white; }
+.catalog-dictionary-page .app-split-item-count { font-family: var(--font-mono); }
+.dictionary-link {
+  color: inherit;
+  min-height: 36px;
+  text-decoration: none;
+}
+.dictionary-link:hover .app-split-item-name { color: var(--brand-accent-hover); }
+.dictionary-link:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid var(--brand-accent);
+  outline-offset: -2px;
+}
+@media (max-width: 50em) {
+  .catalog-dictionary-page:has(.app-split-layout[data-picked]) > .app-filter-bar { display: none; }
 }

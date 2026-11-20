@@ -1,11 +1,14 @@
 import { Alert, Button, Skeleton } from '@mantine/core'
-import { IconAlertCircle, IconArrowUpRight, IconEyeOff, IconFolder, IconPencil } from '@tabler/icons-react'
+import { IconPackage, IconList, IconFilter, IconAlertCircle, IconArrowUpRight, IconEyeOff, IconFolder, IconPencil } from '@tabler/icons-react'
 import { Link } from 'react-router-dom'
 import { plural } from '@polivalko/shared/lib/format'
 import type { ApiQuery } from '@/shared/api/useApiQuery'
 import { siteUrl } from '@/shared/lib/siteUrl'
 import type { AttributeDefinition, AttributeDetails } from '../api/dictionariesApi'
 import { ATTRIBUTE_KIND_LABELS, FILTER_VIEW_LABELS } from '../lib/attributes'
+
+import { AttributeKindIcon } from './AttributeKindIcon'
+import { DictionaryMetric } from './DictionaryLayout'
 
 const countFormat = new Intl.NumberFormat('uk-UA')
 const percentFormat = new Intl.NumberFormat('uk-UA', { style: 'percent', maximumFractionDigits: 0 })
@@ -38,69 +41,60 @@ export function AttributeDetailPane({ attribute, details, totalProducts, onEdit 
     <section key={attribute.id} className="app-split-detail" aria-labelledby="attribute-detail-title">
       <header className="app-split-hero">
         <div className="app-split-hero-top">
-          <div className="app-split-hero-main">
-            <p className="app-split-hero-kicker">
-              {kind} · {filter}
-            </p>
-            <h2 id="attribute-detail-title">
-              {attribute.name}
-              {attribute.unit ? <span className="app-split-hero-unit">{attribute.unit}</span> : null}
-            </h2>
-            {attribute.aliases.length ? <p className="app-split-hero-aliases">Також: {attribute.aliases.join(', ')}</p> : null}
+          <div className="app-split-head">
+            <AttributeKindIcon kind={attribute.kind} />
+            <div className="app-split-hero-main">
+              <p className="app-split-hero-kicker">
+                {kind} · {filter}
+              </p>
+              <h2 id="attribute-detail-title">
+                {attribute.name}
+                {attribute.unit ? <span className="app-split-hero-unit">{attribute.unit}</span> : null}
+              </h2>
+              {attribute.aliases.length ? <p className="app-split-hero-aliases">Також: {attribute.aliases.join(', ')}</p> : null}
+            </div>
           </div>
           <Button variant="default" size="sm" leftSection={<IconPencil size={16} stroke={1.7} />} onClick={() => onEdit(attribute)}>
             Змінити
           </Button>
         </div>
-
-        <dl className="app-split-stats">
-          <div>
-            <dt>Товарів</dt>
-            <dd>
-              {countFormat.format(attribute.productCount)}
-              {totalProducts ? <small>{share(attribute.productCount, totalProducts)} каталогу</small> : null}
-            </dd>
-          </div>
-          <div>
-            <dt>Значень</dt>
-            <dd>{data ? countFormat.format(data.valueCount) : '·'}</dd>
-          </div>
-          <div>
-            <dt>Категорій з фільтром</dt>
-            <dd>{countFormat.format(attribute.categoryCount)}</dd>
-          </div>
-        </dl>
-
-        <section className="app-split-hero-values" aria-labelledby="attribute-values-title">
-          <header className="app-split-card-head">
-            <h3 id="attribute-values-title">Значення</h3>
-            {data && data.valueCount > data.values.length ? (
-              <span>
-                {data.values.length} найчастіших з {countFormat.format(data.valueCount)}
-              </span>
-            ) : null}
-          </header>
-
-          {loading ? (
-            <div className="app-split-tags">
-              {Array.from({ length: 8 }, (_, index) => (
-                <Skeleton key={index} height={28} width={90 + (index % 3) * 30} radius="xl" />
-              ))}
-            </div>
-          ) : data && data.values.length > 0 ? (
-            <ul className="app-split-tags">
-              {data.values.map((value) => (
-                <li key={value.value} title={`${value.value}: ${countFormat.format(value.productCount)} ${plural(value.productCount, 'товар', 'товари', 'товарів')}`}>
-                  <span className="app-split-tag-name">{value.value}</span>
-                  <span className="app-split-tag-count">{countFormat.format(value.productCount)}</span>
-                </li>
-              ))}
-            </ul>
-          ) : data ? (
-            <p className="app-split-blank">У жодного товару ще немає цієї характеристики.</p>
-          ) : null}
-        </section>
       </header>
+
+      <dl className="catalog-metrics">
+        <DictionaryMetric icon={IconPackage} label="Товарів" value={countFormat.format(attribute.productCount)} note={totalProducts ? `${share(attribute.productCount, totalProducts)} каталогу` : undefined} part={attribute.productCount} total={totalProducts} />
+        <DictionaryMetric icon={IconList} label="Різних значень" value={data ? countFormat.format(data.valueCount) : '—'} />
+        <DictionaryMetric icon={IconFilter} label="Категорій з фільтром" value={countFormat.format(attribute.categoryCount)} />
+      </dl>
+
+      <section className="app-split-card" aria-labelledby="attribute-values-title">
+        <header className="app-split-card-head">
+          <h3 id="attribute-values-title">Значення</h3>
+          {data && data.valueCount > data.values.length ? (
+            <span>
+              {data.values.length} найчастіших з {countFormat.format(data.valueCount)}
+            </span>
+          ) : null}
+        </header>
+
+        {loading ? (
+          <div className="app-split-tags">
+            {Array.from({ length: 8 }, (_, index) => (
+              <Skeleton key={index} height={28} width={90 + (index % 3) * 30} radius="xl" />
+            ))}
+          </div>
+        ) : data && data.values.length > 0 ? (
+          <ul className="app-split-tags">
+            {data.values.map((value) => (
+              <li key={value.value} title={`${value.value}: ${countFormat.format(value.productCount)} ${plural(value.productCount, 'товар', 'товари', 'товарів')}`}>
+                <span className="app-split-tag-name">{value.value}</span>
+                <span className="app-split-tag-count">{countFormat.format(value.productCount)}</span>
+              </li>
+            ))}
+          </ul>
+        ) : data ? (
+          <p className="app-split-blank">У жодного товару ще немає цієї характеристики.</p>
+        ) : null}
+      </section>
 
       {details.status === 'error' && !data ? (
         <Alert color="red" variant="light" icon={<IconAlertCircle size={18} />} role="alert">

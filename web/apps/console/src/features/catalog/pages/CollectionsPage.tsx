@@ -1,5 +1,5 @@
 import { ActionIcon, Button, Group, Stack, Text, Tooltip } from '@mantine/core'
-import { IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react'
+import { IconLayoutGrid, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
@@ -11,6 +11,7 @@ import type { DataTableColumn } from '@/shared/ui/data-table/types'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { notifySuccess } from '@/shared/ui/notify'
+import { DictionaryLayout, DictionaryLink } from '../components/DictionaryLayout'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { deleteCollection, getCollections, type ConsoleCollection } from '../api/catalogApi'
 import { CollectionDetailPane } from '../components/CollectionDetailPane'
@@ -34,10 +35,13 @@ const columns: DataTableColumn<ConsoleCollection>[] = [
     width: 240,
     fill: true,
     cell: (row) => (
-      <span className="app-split-name-cell">
-        <span className="app-split-item-name">{row.title}</span>
-        <span className="app-split-code">{row.code}</span>
-      </span>
+      <DictionaryLink id={row.id}>
+        <span className="app-split-kind-icon"><IconLayoutGrid size={16} aria-hidden="true" /></span>
+        <span className="category-row-text">
+          <span className="app-split-item-name">{row.title}</span>
+          <small className="app-split-code">{row.code}</small>
+        </span>
+      </DictionaryLink>
     ),
   },
   {
@@ -137,7 +141,7 @@ export function CollectionsPage() {
     )
 
   return (
-    <ListPage>
+    <ListPage className="catalog-dictionary-page">
       <PageHeader
         title="Добірки"
         actions={
@@ -161,7 +165,7 @@ export function CollectionsPage() {
       />
 
       <ListPageBody>
-        <div className="app-split-layout">
+        <DictionaryLayout picked={Boolean(selectedId && picked.id === selectedId)} onBack={() => pick({ id: null })}>
           <div className="app-split-list">
             <DataTable
               ariaLabel="Добірки"
@@ -179,7 +183,7 @@ export function CollectionsPage() {
             />
           </div>
           <CollectionDetailPane collection={selected} position={position} onEdit={open} />
-        </div>
+        </DictionaryLayout>
       </ListPageBody>
 
       <AppDrawer

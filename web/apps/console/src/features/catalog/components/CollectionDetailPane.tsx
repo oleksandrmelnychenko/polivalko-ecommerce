@@ -1,10 +1,11 @@
 import { ActionIcon, Button, Tooltip } from '@mantine/core'
-import { IconExternalLink, IconLayoutGrid, IconPencil } from '@tabler/icons-react'
+import { IconPackage, IconBox, IconEyeOff, IconExternalLink, IconLayoutGrid, IconPencil } from '@tabler/icons-react'
 import { plural } from '@polivalko/shared/lib/format'
 import { siteUrl } from '@/shared/lib/siteUrl'
 import { TableChip } from '@/shared/ui/TableChip'
 import type { ConsoleCollection } from '../api/catalogApi'
 import { PreviewCard, ProductTilesGrid } from './ProductPreviewGrid'
+import { DictionaryMetric } from './DictionaryLayout'
 
 const countFormat = new Intl.NumberFormat('uk-UA')
 
@@ -26,11 +27,10 @@ export function CollectionDetailPane({ collection, position, onEdit }: Collectio
       <header className="app-split-hero">
         <div className="app-split-hero-top">
           <div className="app-split-head">
-            <span className="catalog-category-photo" aria-hidden="true">
-              <IconLayoutGrid size={26} stroke={1.5} />
+            <span className="app-split-kind-icon" aria-hidden="true">
+              <IconLayoutGrid size={17} stroke={1.5} />
             </span>
             <div className="app-split-hero-main">
-              <p className="app-split-hero-kicker app-split-mono">{collection.code}</p>
               <h2 id="collection-detail-title" className="catalog-category-title">
                 {collection.title}
                 {collection.isVisible ? <TableChip tone="success" dot value="На головній" /> : <TableChip value="Прихована" />}
@@ -59,25 +59,13 @@ export function CollectionDetailPane({ collection, position, onEdit }: Collectio
             ) : null}
           </div>
         </div>
-
-        <dl className="app-split-stats">
-          <div>
-            <dt>Товарів</dt>
-            <dd>{countFormat.format(products.length)}</dd>
-          </div>
-          <div>
-            <dt>В наявності</dt>
-            <dd>
-              {countFormat.format(inStock)}
-              {products.length && inStock < products.length ? <small>немає {countFormat.format(products.length - inStock)}</small> : null}
-            </dd>
-          </div>
-          <div>
-            <dt>Приховані з сайту</dt>
-            <dd>{countFormat.format(hidden)}</dd>
-          </div>
-        </dl>
       </header>
+
+      <dl className="catalog-metrics">
+        <DictionaryMetric icon={IconPackage} label="Товарів у добірці" value={countFormat.format(products.length)} />
+        <DictionaryMetric icon={IconBox} label="У наявності" value={countFormat.format(inStock)} part={inStock} total={products.length} />
+        <DictionaryMetric icon={IconEyeOff} label="Приховані на сайті" value={countFormat.format(hidden)} part={hidden} total={products.length} />
+      </dl>
 
       <PreviewCard
         title="Товари добірки"

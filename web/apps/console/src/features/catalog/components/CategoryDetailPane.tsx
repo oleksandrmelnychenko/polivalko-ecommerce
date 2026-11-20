@@ -97,7 +97,7 @@ function CategoryDetail({ category, all, attributes, onEdit, onSelect }: Categor
         </div>
 
       </header>
-      <dl className="category-metrics">
+      <dl className="catalog-metrics">
         <div>
           <dt><MetricLabel icon={IconPackage}>Товарів{children.length > 0 ? ' загалом' : ''}</MetricLabel></dt>
           <dd>

@@ -1,9 +1,9 @@
 import { Button, Switch } from '@mantine/core'
-import { IconPencil } from '@tabler/icons-react'
+import { IconPackage, IconEye, IconListNumbers, IconTag, IconPencil } from '@tabler/icons-react'
 import type { ProductLabel } from '../api/dictionariesApi'
 import { isAutoLabel, labelRule } from '../lib/labels'
-import { LabelChip } from './LabelChip'
 import { ProductPreviewGrid } from './ProductPreviewGrid'
+import { DictionaryMetric } from './DictionaryLayout'
 
 const countFormat = new Intl.NumberFormat('uk-UA')
 const percentFormat = new Intl.NumberFormat('uk-UA', { style: 'percent', maximumFractionDigits: 0 })
@@ -32,9 +32,7 @@ export function LabelDetailPane({ label, totalProducts, toggling, onEdit, onTogg
       <header className="app-split-hero">
         <div className="app-split-hero-top">
           <div className="app-split-head">
-            <span className="catalog-label-hero-chip" aria-hidden="true">
-              <LabelChip name={label.name} tone={label.tone} muted={!label.isActive} />
-            </span>
+            <span className="app-split-kind-icon" aria-hidden="true"><IconTag size={17} /></span>
             <div className="app-split-hero-main">
               <p className="app-split-hero-kicker">{auto ? 'Ставиться автоматично' : 'Ставиться вручну'}</p>
               <h2 id="label-detail-title">{label.name}</h2>
@@ -56,25 +54,13 @@ export function LabelDetailPane({ label, totalProducts, toggling, onEdit, onTogg
             </Button>
           </div>
         </div>
-
-        <dl className="app-split-stats">
-          <div>
-            <dt>Товарів з міткою</dt>
-            <dd>
-              {countFormat.format(label.productCount)}
-              {totalProducts && label.productCount && label.productCount <= totalProducts ? <small>{share(label.productCount, totalProducts)} каталогу</small> : null}
-            </dd>
-          </div>
-          <div>
-            <dt>На вітрині</dt>
-            <dd>{label.isActive ? 'Так' : 'Ні'}</dd>
-          </div>
-          <div>
-            <dt>Порядок показу</dt>
-            <dd>{label.sortOrder}</dd>
-          </div>
-        </dl>
       </header>
+
+      <dl className="catalog-metrics">
+        <DictionaryMetric icon={IconPackage} label="Товарів з міткою" value={countFormat.format(label.productCount)} note={totalProducts && label.productCount <= totalProducts ? `${share(label.productCount, totalProducts)} каталогу` : undefined} part={label.productCount} total={totalProducts} />
+        <DictionaryMetric icon={IconEye} label="На вітрині" value={label.isActive ? 'Так' : 'Ні'} />
+        <DictionaryMetric icon={IconListNumbers} label="Порядок показу" value={countFormat.format(label.sortOrder)} />
+      </dl>
 
       <ProductPreviewGrid
         title="Товари з міткою"

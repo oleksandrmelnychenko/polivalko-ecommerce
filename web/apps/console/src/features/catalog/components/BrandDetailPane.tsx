@@ -1,11 +1,12 @@
 import { ActionIcon, Button, Tooltip } from '@mantine/core'
-import { IconArrowMerge, IconExternalLink, IconPencil } from '@tabler/icons-react'
+import { IconPackage, IconBox, IconPhotoOff, IconArrowMerge, IconExternalLink, IconPencil } from '@tabler/icons-react'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { siteUrl } from '@/shared/lib/siteUrl'
 import { getProducts } from '../api/catalogApi'
 import type { Brand } from '../api/dictionariesApi'
 import { BrandMark } from './BrandMark'
 import { ProductPreviewGrid } from './ProductPreviewGrid'
+import { DictionaryMetric } from './DictionaryLayout'
 
 const countFormat = new Intl.NumberFormat('uk-UA')
 const percentFormat = new Intl.NumberFormat('uk-UA', { style: 'percent', maximumFractionDigits: 0 })
@@ -47,15 +48,10 @@ function BrandDetail({ brand, totalProducts, onEdit, onMerge }: BrandDetailPaneP
       <header className="app-split-hero">
         <div className="app-split-hero-top">
           <div className="app-split-head">
-            <BrandMark name={brand.name} logoUrl={brand.logoUrl} size="lg" />
+            <BrandMark name={brand.name} logoUrl={brand.logoUrl} />
             <div className="app-split-hero-main">
-              <p className="app-split-hero-kicker app-split-mono">/{brand.slug}</p>
               <h2 id="brand-detail-title">{brand.name}</h2>
-              {brand.description ? (
-                <p className="app-split-description">{brand.description}</p>
-              ) : (
-                <p className="app-split-hero-aliases">Опису й логотипа ще немає.</p>
-              )}
+              {brand.description && <p className="app-split-description">{brand.description}</p>}
             </div>
           </div>
           <div className="app-split-actions">
@@ -83,25 +79,13 @@ function BrandDetail({ brand, totalProducts, onEdit, onMerge }: BrandDetailPaneP
             ) : null}
           </div>
         </div>
-
-        <dl className="app-split-stats">
-          <div>
-            <dt>Товарів</dt>
-            <dd>
-              {countFormat.format(brand.productCount)}
-              {totalProducts && hasProducts ? <small>{share(brand.productCount, totalProducts)} каталогу</small> : null}
-            </dd>
-          </div>
-          <div>
-            <dt>В наявності</dt>
-            <dd>{count(inStock)}</dd>
-          </div>
-          <div>
-            <dt>Без фото</dt>
-            <dd>{count(noPhoto)}</dd>
-          </div>
-        </dl>
       </header>
+
+      <dl className="catalog-metrics">
+        <DictionaryMetric icon={IconPackage} label="Товарів" value={countFormat.format(brand.productCount)} note={totalProducts ? `${share(brand.productCount, totalProducts)} каталогу` : undefined} part={brand.productCount} total={totalProducts} />
+        <DictionaryMetric icon={IconBox} label="У наявності" value={count(inStock)} part={inStock.data?.totalItems} total={brand.productCount} />
+        <DictionaryMetric icon={IconPhotoOff} label="Без фото" value={count(noPhoto)} part={noPhoto.data?.totalItems} total={brand.productCount} />
+      </dl>
 
       <ProductPreviewGrid
         title="Товари бренду"

@@ -1,29 +1,18 @@
 .catalog-brand-mark {
   align-items: center;
-  background: var(--brand-accent-soft);
-  border: 1px solid rgb(0 160 70 / 14%);
-  border-radius: 8px;
+  background: var(--app-ground);
+  border-radius: 50%;
   box-sizing: border-box;
-  color: var(--brand-accent-hover);
+  color: var(--brand-ink);
   display: inline-flex;
   flex: 0 0 auto;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
+  height: 32px;
   justify-content: center;
   letter-spacing: 0.02em;
   overflow: hidden;
-}
-
-.catalog-brand-mark.is-sm {
-  font-size: 11px;
-  height: 28px;
-  width: 28px;
-}
-
-.catalog-brand-mark.is-lg {
-  border-radius: 14px;
-  font-size: 22px;
-  height: 64px;
-  width: 64px;
+  width: 32px;
 }
 
 .catalog-brand-mark img {
@@ -34,7 +23,6 @@
 }
 
 .data-table-row.app-split-row-active .catalog-brand-mark {
-  background: var(--brand-accent);
-  border-color: var(--brand-accent);
+  background: var(--brand-ink);
   color: var(--mantine-color-white);
 }

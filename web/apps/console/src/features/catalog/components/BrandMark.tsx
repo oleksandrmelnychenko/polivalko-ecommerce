@@ -4,9 +4,9 @@ function initials(name: string): string {
   return letters.toUpperCase()
 }
 
-export function BrandMark({ name, logoUrl, size = 'sm' }: { name: string; logoUrl: string | null; size?: 'sm' | 'lg' }) {
+export function BrandMark({ name, logoUrl }: { name: string; logoUrl: string | null }) {
   return (
-    <span className={`catalog-brand-mark is-${size}`} aria-hidden="true">
+    <span className="catalog-brand-mark" aria-hidden="true">
       {logoUrl ? <img src={logoUrl} alt="" loading="lazy" /> : initials(name)}
     </span>
   )
