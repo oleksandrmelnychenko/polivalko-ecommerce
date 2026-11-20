@@ -1,11 +1,12 @@
-import { Alert, NumberInput, SimpleGrid, Stack, Switch, Text, TextInput } from '@mantine/core'
-import { IconAlertCircle, IconInfoCircle } from '@tabler/icons-react'
+import { Alert, NumberInput, Stack, Switch, Text, TextInput } from '@mantine/core'
+import { IconAlertCircle, IconEye, IconPalette } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
 import { fieldErrors, NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { useReportDirty } from '@/shared/lib/useReportDirty'
 import { saveLabel, type LabelTone, type ProductLabel } from '../api/dictionariesApi'
 import { DEFAULT_NEW_DAYS, isAutoLabel, LABEL_TONES } from '../lib/labels'
+import { CatalogSectionTitle } from './CatalogSectionTitle'
 import { LabelChip } from './LabelChip'
 
 type LabelFormProps = {
@@ -14,7 +15,7 @@ type LabelFormProps = {
   nextSortOrder: number
   error: string | null
   onBusy: (busy: boolean) => void
-  onSaved: () => void
+  onSaved: (label?: ProductLabel) => void
   onDirty?: (dirty: boolean) => void
 }
 
@@ -22,14 +23,14 @@ type Fields = { name: string; tone: LabelTone; newDays: number | string; sortOrd
 
 const AUTO_HELP = {
   sale: 'Мітка діє автоматично, поки поточна ціна нижча за попередню.',
-  new: 'Ставиться сама на вказану кількість днів від першої появи товару в каталозі. Вручну її не призначають.',
+  new: 'Відлік починається з першої появи товару в каталозі.',
 } as const
 
 export function LabelForm({ formId, label, nextSortOrder, error, onBusy, onSaved, onDirty }: LabelFormProps) {
   const auto = label !== null && isAutoLabel(label)
   const [fields, setFields] = useState<Fields>(() => ({
     name: label?.name ?? '',
-    tone: label?.tone ?? 'orange',
+    tone: label?.tone ?? 'green',
     newDays: label?.newDays ?? DEFAULT_NEW_DAYS,
     sortOrder: label?.sortOrder ?? nextSortOrder,
     isActive: label?.isActive ?? true,
@@ -54,8 +55,8 @@ export function LabelForm({ formId, label, nextSortOrder, error, onBusy, onSaved
       return
     }
     const days = Number(fields.newDays)
-    if (kind === 'new' && (!Number.isInteger(days) || days < 1)) {
-      setErrors({ newDays: 'Вкажіть щонайменше 1 день.' })
+    if (kind === 'new' && (!Number.isInteger(days) || days < 1 || days > 365)) {
+      setErrors({ newDays: 'Вкажіть від 1 до 365 днів.' })
       return
     }
     setBusy(true)
@@ -75,7 +76,7 @@ export function LabelForm({ formId, label, nextSortOrder, error, onBusy, onSaved
       if (result.response.ok) {
         setBusy(false)
         onBusy(false)
-        onSaved()
+        onSaved(result.data)
         return
       }
       setErrors(fieldErrors(result.error))
@@ -90,77 +91,46 @@ export function LabelForm({ formId, label, nextSortOrder, error, onBusy, onSaved
   const shownError = formError ?? error
 
   return (
-    <form id={formId} noValidate onSubmit={submit} aria-label={label ? `Мітка «${label.name}»` : 'Нова мітка'}>
-      <Stack gap="sm">
-        {auto && (kind === 'sale' || kind === 'new') ? (
-          <Alert color="blue" variant="light" icon={<IconInfoCircle size={18} />} title="Автоматична мітка">
-            {AUTO_HELP[kind]} Тут можна змінити текст, колір{kind === 'new' ? ', кількість днів' : ''} і вимкнути її.
-          </Alert>
-        ) : null}
-        <TextInput
-          label="Текст на плитці"
-          required
-          maxLength={30}
-          value={fields.name}
-          error={errors.name || undefined}
-          onChange={(event) => set('name', event.currentTarget.value)}
-          data-autofocus
-        />
-        <div role="radiogroup" aria-labelledby={`${formId}-tone`}>
-          <Text component="span" id={`${formId}-tone`} className="catalog-field-label">
-            Колір
-          </Text>
-          <div className="catalog-tone-picker">
-            {LABEL_TONES.map((tone) => (
-              <label key={tone.value} className="catalog-tone-option">
-                <input type="radio" name={`${formId}-tone`} value={tone.value} checked={fields.tone === tone.value} onChange={() => set('tone', tone.value)} />
-                <LabelChip name={fields.name.trim() || 'Мітка'} tone={tone.value} />
-                <span className="catalog-tone-option-name">{tone.label}</span>
-              </label>
-            ))}
-          </div>
-          {errors.tone ? (
-            <Text size="xs" c="red" mt={4}>
-              {errors.tone}
-            </Text>
-          ) : null}
+    <form className="label-editor-form" id={formId} noValidate onSubmit={submit} aria-label={label ? `Мітка «${label.name}»` : 'Нова мітка'}>
+      <section className="catalog-card" aria-labelledby="label-appearance">
+        <div className="label-preview">
+          <CatalogSectionTitle id="label-appearance" icon={IconPalette}>Вигляд мітки</CatalogSectionTitle>
+          <span aria-label="Попередній перегляд"><LabelChip name={fields.name.trim() || 'Мітка'} tone={fields.tone} /></span>
         </div>
-        <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
-          {kind === 'new' ? (
-            <NumberInput
-              label="Скільки днів товар новий"
-              min={1}
-              max={365}
-              allowDecimal={false}
-              value={fields.newDays}
-              error={errors.newDays || undefined}
-              onChange={(value) => set('newDays', value)}
-            />
-          ) : null}
-          {auto ? null : (
-            <NumberInput
-              label="Порядок на плитці"
-              description="Що менше число, то ближче мітка до початку."
-              inputWrapperOrder={['label', 'input', 'description', 'error']}
-              allowDecimal={false}
-              value={fields.sortOrder}
-              error={errors.sortOrder || undefined}
-              onChange={(value) => set('sortOrder', value)}
-            />
+        <Stack gap="xs">
+          <TextInput label="Текст на плитці" required maxLength={30} value={fields.name} error={errors.name || undefined}
+            onChange={(event) => set('name', event.currentTarget.value)} data-autofocus />
+          <div role="radiogroup" aria-labelledby={`${formId}-tone`}>
+            <Text component="span" id={`${formId}-tone`} className="catalog-field-label">Колір</Text>
+            <div className="catalog-tone-picker">
+              {LABEL_TONES.map((tone) => (
+                <label key={tone.value} className="catalog-tone-option">
+                  <input type="radio" name={`${formId}-tone`} value={tone.value} checked={fields.tone === tone.value} onChange={() => set('tone', tone.value)} />
+                  <span aria-hidden="true" className={`catalog-label-chip is-${tone.value}`} />
+                  <span className="catalog-tone-option-name">{tone.label}</span>
+                </label>
+              ))}
+            </div>
+            {errors.tone && <Text size="xs" c="red" role="alert">{errors.tone}</Text>}
+          </div>
+        </Stack>
+      </section>
+      <section className="catalog-card" aria-labelledby="label-display">
+        <CatalogSectionTitle id="label-display" icon={IconEye}>Показ на вітрині</CatalogSectionTitle>
+        <Stack gap="sm">
+          {kind === 'new' && (
+            <NumberInput label="Скільки днів товар новий" min={1} max={365} allowDecimal={false} value={fields.newDays}
+              error={errors.newDays || undefined} onChange={(value) => set('newDays', value)} />
           )}
-        </SimpleGrid>
-        <Switch
-          label="Показувати на сайті"
-          description={kind === 'manual' ? 'Вимкнена мітка лишається в товарах, але на сайті не видна.' : undefined}
-          checked={fields.isActive}
-          onChange={(event) => set('isActive', event.currentTarget.checked)}
-        />
-        {shownError ? (
-          <Alert color="red" variant="light" icon={<IconAlertCircle size={18} />} role="alert">
-            {shownError}
-          </Alert>
-        ) : null}
-      </Stack>
+          {auto && (kind === 'sale' || kind === 'new') && <Text size="sm" c="dimmed">{AUTO_HELP[kind]}</Text>}
+          {!auto && (
+            <NumberInput label="Порядок на плитці" allowDecimal={false} value={fields.sortOrder} error={errors.sortOrder || undefined}
+              onChange={(value) => set('sortOrder', value)} />
+          )}
+          <Switch label="Показувати на сайті" checked={fields.isActive} onChange={(event) => set('isActive', event.currentTarget.checked)} />
+        </Stack>
+      </section>
+      {shownError && <Alert color="red" variant="light" icon={<IconAlertCircle size={18} />} role="alert">{shownError}</Alert>}
     </form>
   )
 }

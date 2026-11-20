@@ -1,5 +1,5 @@
 import { ActionIcon, Button, Tooltip } from '@mantine/core'
-import { IconTag, IconPlus, IconRefresh } from '@tabler/icons-react'
+import { IconBolt, IconEyeOff, IconHandClick, IconPlus, IconRefresh, IconTag, IconTags } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
 import { usePermissions } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
@@ -10,7 +10,8 @@ import { CatalogEditorModal } from '../components/CatalogEditorModal'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
-import { FilterBar } from '@/shared/ui/FilterBar'
+import { MetricLabel, MetricTrack } from '@/shared/ui/MetricCard'
+import { ScreenTabs } from '@/shared/ui/ScreenTabs'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { notifyError, notifySuccess } from '@/shared/ui/notify'
 import { DictionaryLayout, DictionaryLink } from '../components/DictionaryLayout'
@@ -19,6 +20,7 @@ import { getProductCounts } from '../api/catalogApi'
 import { deleteLabel, getLabels, saveLabel, type ProductLabel } from '../api/dictionariesApi'
 import { EditorDrawerFooter } from '../components/EditorDrawerFooter'
 import { LabelChip } from '../components/LabelChip'
+import { LABEL_ICONS } from '../components/labelIcon'
 import { LabelDetailPane } from '../components/LabelDetailPane'
 import { LabelForm } from '../components/LabelForm'
 import { listEmptyText } from '../components/ListEmpty'
@@ -29,10 +31,17 @@ import '../components/catalog.css'
 import '../components/catalog-dictionaries.css'
 import '@/shared/ui/split/split.css'
 import '../components/catalog-detail.css'
+import '../components/catalog-labels.css'
 
 const FORM_ID = 'catalog-label-form'
 const getRowId = (row: ProductLabel) => row.id
-const SELECT_KEYS = ['id'] as const
+const PARAM_KEYS = ['id', 'show'] as const
+const selections = [
+  { value: '', title: 'Усі мітки', icon: IconTags, matches: () => true },
+  { value: 'manual', title: 'Ручні', icon: IconHandClick, matches: (label: ProductLabel) => !isAutoLabel(label) },
+  { value: 'automatic', title: 'Автоматичні', icon: IconBolt, matches: isAutoLabel },
+  { value: 'inactive', title: 'Вимкнені', icon: IconEyeOff, matches: (label: ProductLabel) => !label.isActive },
+] as const
 const countFormat = new Intl.NumberFormat('uk-UA')
 
 export function LabelsPage() {
@@ -42,15 +51,17 @@ export function LabelsPage() {
   const { open, current } = drawer
   const [toggling, setToggling] = useState<string | null>(null)
 
-  const rows = useMemo(() => sortLabels(labels.data ?? []), [labels.data])
-  const nextSortOrder = rows.length ? Math.max(...rows.map((row) => row.sortOrder)) + 10 : 10
+  const all = useMemo(() => sortLabels(labels.data ?? []), [labels.data])
+  const { values, set } = useListParams(PARAM_KEYS)
+  const selection = selections.find((item) => item.value === values.show) ?? selections[0]
+  const rows = useMemo(() => all.filter(selection.matches), [all, selection])
+  const nextSortOrder = all.length ? Math.max(...all.map((row) => row.sortOrder)) + 10 : 10
   const { reload, setData } = labels
 
-  const { values: picked, set: pick } = useListParams(SELECT_KEYS)
-  const selected = rows.find((row) => row.id === picked.id) ?? rows[0] ?? null
+  const selected = rows.find((row) => row.id === values.id) ?? rows[0] ?? null
   const selectedId = selected?.id ?? null
   const productCounts = useApiQuery('catalog-products-counts', () => getProductCounts(), { enabled: can(PermissionKeys.Catalog.ViewProducts) })
-  const selectRow = useCallback((row: ProductLabel) => pick({ id: row.id }), [pick])
+  const selectRow = useCallback((row: ProductLabel) => set({ id: row.id }), [set])
   const rowClassName = useCallback((row: ProductLabel) => (row.id === selectedId ? 'app-split-row-active' : undefined), [selectedId])
 
   async function toggle(label: ProductLabel, isActive: boolean) {
@@ -78,18 +89,19 @@ export function LabelsPage() {
         header: 'Мітка',
         width: 200,
         fill: true,
-        cell: (row) => <DictionaryLink id={row.id}><LabelChip name={row.name} tone={row.tone} muted={!row.isActive} /></DictionaryLink>,
-      },
-      {
-        id: 'kind',
-        header: 'Як ставиться',
-        width: 150,
-        cell: (row) => (
-          <span className={row.isActive ? 'app-split-item-meta' : 'app-split-item-meta is-off'}>
-            {isAutoLabel(row) ? 'автоматично' : 'вручну'}
-            {row.isActive ? '' : ', вимкнена'}
-          </span>
-        ),
+        minWidth: 150,
+        cell: (row) => {
+          const Glyph = LABEL_ICONS[row.kind]
+          return (
+            <DictionaryLink id={row.id}>
+              <span className="app-split-kind-icon" aria-hidden="true"><Glyph size={16} /></span>
+              <span className="label-row-text">
+                <LabelChip name={row.name} tone={row.tone} muted={!row.isActive} />
+                <small>{isAutoLabel(row) ? 'Автоматична' : 'Ручна'}{row.isActive ? '' : ' · Вимкнена'}</small>
+              </span>
+            </DictionaryLink>
+          )
+        },
       },
       {
         id: 'products',
@@ -97,20 +109,16 @@ export function LabelsPage() {
         width: 100,
         align: 'right',
         numeric: true,
-        cell: (row) =>
-          row.productCount ? (
-            <span className="app-split-item-count">{countFormat.format(row.productCount)}</span>
-          ) : (
-            <span className="app-split-item-meta is-off">0</span>
-          ),
+        cell: (row) => <span className="app-split-item-count">{countFormat.format(row.productCount)}</span>,
       },
     ],
     [],
   )
 
-  function saved() {
+  function saved(label?: ProductLabel) {
     drawer.setOpened(false)
-    notifySuccess('Мітку збережено. Вітрина оновиться протягом хвилини.')
+    if (label) set({ id: label.id, show: selection.matches(label) ? selection.value : null })
+    notifySuccess('Мітку збережено.')
     reload()
   }
 
@@ -123,7 +131,7 @@ export function LabelsPage() {
       if (result.response.ok) {
         drawer.setOpened(false)
         notifySuccess(`Мітку «${current.name}» видалено.`)
-        setData(rows.filter((row) => row.id !== current.id))
+        setData(all.filter((row) => row.id !== current.id))
         reload()
       } else {
         drawer.setActionError(problemMessage(result.error, 'Мітку не видалено.'))
@@ -138,31 +146,35 @@ export function LabelsPage() {
   const deletable = current !== null && canDeleteLabel(current)
 
   return (
-    <ListPage className="catalog-dictionary-page">
+    <ListPage className="catalog-dictionary-page catalog-labels-page">
       <PageHeader
         title="Мітки"
         actions={
-          <Button leftSection={<IconPlus size={16} stroke={1.8} />} onClick={() => open(null)}>
-            Нова мітка
-          </Button>
-        }
-      />
-
-      <FilterBar
-        actions={
           <>
-            {labels.data ? <span className="app-filter-summary catalog-summary">Міток: {countFormat.format(rows.length)}</span> : null}
             <Tooltip label="Оновити">
-              <ActionIcon variant="subtle" color="gray" aria-label="Оновити" loading={labels.isFetching} onClick={reload}>
+              <ActionIcon variant="default" radius="xl" aria-label="Оновити" loading={labels.isFetching} onClick={reload}>
                 <IconRefresh size={16} />
               </ActionIcon>
             </Tooltip>
+            <Button leftSection={<IconPlus size={16} stroke={1.8} />} onClick={() => open(null)}>
+              Нова мітка
+            </Button>
           </>
         }
       />
 
+      <ScreenTabs
+        label="Вибірка міток"
+        value={selection.value}
+        onChange={(show) => set({ show, id: null })}
+        tabs={selections.map(({ value, title, icon, matches }) => {
+          const count = labels.data ? all.filter(matches).length : null
+          return { value, label: <MetricLabel icon={icon}>{title}</MetricLabel>, count, footer: <MetricTrack value={count ?? 0} max={all.length} /> }
+        })}
+      />
+
       <ListPageBody>
-        <DictionaryLayout picked={Boolean(selectedId && picked.id === selectedId)} onBack={() => pick({ id: null })}>
+        <DictionaryLayout picked={Boolean(selectedId && values.id === selectedId)} onBack={() => set({ id: null })}>
           <div className="app-split-list">
             <DataTable
               ariaLabel="Мітки товарів"
@@ -171,12 +183,12 @@ export function LabelsPage() {
               getRowId={getRowId}
               isLoading={labels.isLoading}
               isFetching={labels.isFetching}
-              minWidth={420}
+              minWidth={240}
               height="100%"
               manualSorting
               onRowClick={selectRow}
               rowClassName={rowClassName}
-              emptyText={listEmptyText(labels, 'Не вдалося завантажити мітки.', 'Міток ще немає.')}
+              emptyText={listEmptyText(labels, 'Не вдалося завантажити мітки.', selection.value ? 'У цій вибірці немає міток.' : 'Міток ще немає.')}
             />
           </div>
           <LabelDetailPane
@@ -190,13 +202,15 @@ export function LabelsPage() {
       </ListPageBody>
 
       <CatalogEditorModal
-        icon={IconTag}
+        icon={current ? LABEL_ICONS[current.kind] : IconTag}
         opened={drawer.opened}
         onClose={drawer.close}
         dirty={drawer.dirty}
         title={current ? `Мітка «${current.name}»` : 'Нова мітка'}
         size="compact"
-        closeOnEscape={!drawer.busy}
+        className="label-editor-modal"
+        closeOnEscape={!drawer.busy && !drawer.confirming}
+        closeOnClickOutside={!drawer.busy && !drawer.confirming}
         footer={<EditorDrawerFooter formId={FORM_ID} busy={drawer.busy} onCancel={drawer.close} onDelete={deletable ? () => drawer.setConfirming(true) : undefined} />}
       >
         {drawer.editing ? (

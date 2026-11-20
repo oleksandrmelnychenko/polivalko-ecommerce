@@ -1,6 +1,6 @@
-import { ActionIcon, Button, SegmentedControl, Select, Skeleton, Tooltip } from '@mantine/core'
+import { ActionIcon, Button, SegmentedControl, Skeleton, Tooltip } from '@mantine/core'
 import { DatePickerInput } from '@mantine/dates'
-import { IconArrowRight, IconDatabase, IconRefresh, IconX } from '@tabler/icons-react'
+import { IconDatabase, IconRefresh, IconSearch, IconX } from '@tabler/icons-react'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
@@ -21,7 +21,7 @@ const TITLE = 'Аналітика товарів'
 const MIN_END = '2000-01-01'
 const CATALOG_ID = /^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i
 const PERIODS = [30, 90, 180, 365] as const
-const PERIOD_OPTIONS = PERIODS.map((days) => ({ value: String(days), label: `Останні ${days} днів` }))
+const PERIOD_OPTIONS = PERIODS.map((days) => String(days))
 
 export function ProductAnalyticsPage() {
   const [params, setParams] = useSearchParams()
@@ -73,22 +73,20 @@ export function ProductAnalyticsPage() {
 
   return (
     <>
-      <PageHeader title={TITLE} heading={<h1>{TITLE}</h1>} />
-      <div className="pa-page">
-        <header className="pa-header" id="product-analytics-heading" tabIndex={-1}>
-          <div className="pa-heading-row">
-            <p>Попит, виручка та запаси за товарами</p>
-            <div className="pa-heading-actions">
-              <Button variant="default" disabled={!report || query.status !== 'ready'} rightSection={<IconArrowRight size={16} stroke={1.8} />} onClick={goToProducts}>
-                Знайти товар
-              </Button>
-              <Tooltip label="Оновити звіт">
-                <ActionIcon size={36} variant="default" aria-label="Оновити звіт" loading={query.isFetching} onClick={query.reload}>
-                  <IconRefresh size={17} stroke={1.8} />
-                </ActionIcon>
-              </Tooltip>
-            </div>
-          </div>
+      <PageHeader title={TITLE} actions={
+        <div className="pa-heading-actions">
+          <Button variant="default" radius="xl" disabled={!report || query.status !== 'ready'} leftSection={<IconSearch size={16} stroke={1.8} />} onClick={goToProducts}>
+            Знайти товар
+          </Button>
+          <Tooltip label="Оновити звіт">
+            <ActionIcon size={36} radius="xl" variant="default" aria-label="Оновити звіт" loading={query.isFetching} onClick={query.reload}>
+              <IconRefresh size={17} stroke={1.8} />
+            </ActionIcon>
+          </Tooltip>
+        </div>
+      } />
+      <div className="pa-page pa-product-workspace">
+        <header className="pa-header" id="product-analytics-heading" tabIndex={-1} aria-label="Фільтри звіту">
           <div className="pa-filters">
             <div className="pa-source-field">
               <span className="mantine-InputWrapper-label" id="pa-source-label">Джерело продажів</span>
@@ -99,13 +97,16 @@ export function ProductAnalyticsPage() {
                 onChange={(value) => update({ source: value === 'dntrade' ? value : undefined, product: product && CATALOG_ID.test(product) ? product : undefined, page: undefined }, false)}
               />
             </div>
-            <Select
-              label="Період"
-              data={PERIOD_OPTIONS}
-              value={String(days)}
-              allowDeselect={false}
-              onChange={(value) => update({ days: value ?? undefined, page: undefined })}
-            />
+            <div className="pa-source-field">
+              <span className="mantine-InputWrapper-label" id="pa-period-label">Період у днях</span>
+              <SegmentedControl
+                aria-labelledby="pa-period-label"
+                className="pa-period-options"
+                value={String(days)}
+                data={PERIOD_OPTIONS}
+                onChange={(value) => update({ days: value, page: undefined })}
+              />
+            </div>
             <DatePickerInput
               label="Останній день періоду"
               value={end ?? yesterday}

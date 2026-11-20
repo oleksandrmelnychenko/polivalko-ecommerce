@@ -1,0 +1,36 @@
+.catalog-labels-page { --catalog-tile-count: 4; }
+.label-row-text {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  min-width: 0;
+}
+.label-row-text small { color: var(--mantine-color-gray-7); font-size: 12px; }
+.label-editor-modal .app-sheet-scroll { background: var(--app-ground); padding: 12px; }
+.label-editor-form { display: grid; gap: 10px; }
+.label-editor-form .catalog-card { min-width: 0; padding: 16px; }
+.label-preview {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.label-preview .catalog-section-title { margin: 0; }
+.label-preview > span { min-width: 0; max-width: 100%; }
+.label-editor-form .catalog-tone-option { border-radius: 999px; padding-inline: 10px; }
+.label-editor-form .catalog-tone-option .catalog-label-chip {
+  border-radius: 50%;
+  height: 12px;
+  padding: 0;
+  width: 12px;
+}
+.label-editor-form .catalog-tone-option:has(input:checked) { border-color: var(--brand-ink); box-shadow: inset 0 0 0 1px var(--brand-ink); }
+.label-editor-form .catalog-tone-option:has(input:focus-visible) { outline: 2px solid var(--brand-accent); outline-offset: 2px; }
+@media (max-width: 50em) {
+  .catalog-labels-page:has(.app-split-layout[data-picked]) .app-screen-tabs { display: none; }
+}
+@media (max-width: 32em) {
+  .label-editor-modal .app-sheet-scroll { padding: 8px; }
+}

@@ -1,9 +1,10 @@
 import { Button, Switch } from '@mantine/core'
-import { IconPackage, IconEye, IconListNumbers, IconTag, IconPencil } from '@tabler/icons-react'
+import { IconPackage, IconEye, IconListNumbers, IconPencil } from '@tabler/icons-react'
 import type { ProductLabel } from '../api/dictionariesApi'
 import { isAutoLabel, labelRule } from '../lib/labels'
 import { ProductPreviewGrid } from './ProductPreviewGrid'
 import { DictionaryMetric } from './DictionaryLayout'
+import { LABEL_ICONS } from './labelIcon'
 
 const countFormat = new Intl.NumberFormat('uk-UA')
 const percentFormat = new Intl.NumberFormat('uk-UA', { style: 'percent', maximumFractionDigits: 0 })
@@ -26,13 +27,14 @@ export function LabelDetailPane({ label, totalProducts, toggling, onEdit, onTogg
   if (!label) return <section className="app-split-detail app-split-detail-empty">Оберіть мітку зліва.</section>
 
   const auto = isAutoLabel(label)
+  const Glyph = LABEL_ICONS[label.kind]
 
   return (
     <section key={label.id} className="app-split-detail" aria-labelledby="label-detail-title">
       <header className="app-split-hero">
         <div className="app-split-hero-top">
           <div className="app-split-head">
-            <span className="app-split-kind-icon" aria-hidden="true"><IconTag size={17} /></span>
+            <span className="app-split-kind-icon" aria-hidden="true"><Glyph size={17} /></span>
             <div className="app-split-hero-main">
               <p className="app-split-hero-kicker">{auto ? 'Ставиться автоматично' : 'Ставиться вручну'}</p>
               <h2 id="label-detail-title">{label.name}</h2>

@@ -2,6 +2,7 @@ import { Button, SegmentedControl } from '@mantine/core'
 import { IconArrowUpRight, IconChartLine, IconPackage, IconReceiptRefund, IconWallet } from '@tabler/icons-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import type { ProductAnalytics } from '../api/productAnalyticsApi'
 import { axisDate, axisMonth, dateRange, formatAmount, formatDays, formatPercent, formatPrice, formatUnits, monthLabel } from '../lib/format'
 import { AnalyticsCard } from './AnalyticsCard'
@@ -59,23 +60,23 @@ export function AnalyticsReport({ report, canOpenProduct, onSelectProduct }: Pro
       {report.trend.length ? (
         <div className="pa-metrics">
           <div className="pa-metric">
-            <span><IconWallet size={17} stroke={1.7} />{revenueLabel}</span>
+            <MetricLabel icon={IconWallet}>{revenueLabel}</MetricLabel>
             <strong>{formatPrice(coverage.returnsAvailable ? metrics.netRevenue : metrics.grossRevenue)}</strong>
             {coverage.returnsAvailable ? <small>{formatPrice(metrics.grossRevenue)} до повернень</small> : null}
             <small><DemandChange current={metrics.netRevenue} previous={metrics.previousNetRevenue} /> до попереднього періоду</small>
           </div>
           <div className="pa-metric">
-            <span><IconChartLine size={17} stroke={1.7} />Продано</span>
+            <MetricLabel icon={IconChartLine}>Продано</MetricLabel>
             <strong>{formatUnits(metrics.soldUnits)}</strong>
             <small><DemandChange current={metrics.soldUnits} previous={metrics.previousSoldUnits} /> до попереднього періоду</small>
           </div>
           <div className="pa-metric">
-            <span><IconReceiptRefund size={17} stroke={1.7} />Повернення</span>
+            <MetricLabel icon={IconReceiptRefund}>Повернення</MetricLabel>
             <strong>{coverage.returnsAvailable ? formatUnits(metrics.returnedUnits) : '—'}</strong>
             <small>{coverage.returnsAvailable ? formatPrice(metrics.returnValue) : 'Джерело не надає повних даних'}</small>
           </div>
           <div className="pa-metric">
-            <span><IconPackage size={17} stroke={1.7} />{selectedProduct ? 'Залишок сайту зараз' : 'Товари з продажами'}</span>
+            <MetricLabel icon={IconPackage}>{selectedProduct ? 'Залишок сайту зараз' : 'Товари з продажами'}</MetricLabel>
             <strong>{selectedProduct ? selectedProduct.stock == null ? '—' : formatUnits(selectedProduct.stock) : formatAmount(metrics.activeProducts)}</strong>
             <small>{selectedProduct ? selectedProduct.stockDays == null ? 'Покриття запасу не розраховано' : `Запасу орієнтовно на ${formatDays(selectedProduct.stockDays)}` : 'У вибраному періоді'}</small>
           </div>

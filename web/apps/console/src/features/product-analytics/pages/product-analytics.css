@@ -562,3 +562,77 @@
     flex: 1 1 148px;
   }
 }
+
+.console-content:has(.pa-product-workspace) .console-page-title-row {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.console-content:has(.pa-product-workspace) .console-page-toolbar { padding-top: 8px; }
+.console-frame:has(> .pa-product-workspace) { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+.pa-product-workspace { background: transparent; padding: 2px 1px 8px; }
+.pa-product-workspace :is(.pa-report, .pa-header) { max-width: none; }
+.pa-product-workspace :is(.pa-card, .pa-metric, .pa-filters, .pa-selection, .pa-methods, .pa-coverage) {
+  box-shadow: var(--app-card-shadow);
+  border-color: rgb(25 25 32 / 7%);
+}
+.pa-product-workspace .pa-filters { margin: 0; padding: clamp(12px, 1.4vw, 20px); gap: 10px 20px; }
+.pa-product-workspace .pa-source-field { gap: 4px; }
+.pa-product-workspace .pa-filters .mantine-InputWrapper-label { font-size: 13px; font-weight: 550; }
+.pa-product-workspace :is(.mantine-SegmentedControl-root, .mantine-SegmentedControl-indicator, .mantine-SegmentedControl-label, .mantine-Input-input, .mantine-Button-root) {
+  border-radius: 999px;
+}
+.pa-product-workspace .mantine-SegmentedControl-root { background: var(--app-ground); }
+.pa-product-workspace .mantine-SegmentedControl-control::before { display: none; }
+.pa-product-workspace .mantine-SegmentedControl-indicator { background: var(--brand-ink); }
+.pa-product-workspace .mantine-SegmentedControl-label[data-active] { color: white; }
+.pa-product-workspace .pa-period-options .mantine-SegmentedControl-label { padding-inline: clamp(9px, 1.2vw, 18px); }
+.pa-product-workspace .pa-coverage:not([data-attention]) { background: white; }
+.pa-product-workspace .pa-coverage > svg { background: var(--app-ground); border-radius: 50%; box-sizing: content-box; padding: 7px; }
+.pa-product-workspace .pa-coverage[data-attention] { border-color: #f1e0bd; }
+.pa-product-workspace .pa-metric { display: flex; flex-direction: column; padding: clamp(12px, 1.4vw, 22px); gap: 7px; }
+.pa-product-workspace .pa-metric::after {
+  content: '';
+  display: block;
+  height: 4px;
+  margin-top: auto;
+  background: radial-gradient(circle, var(--app-line) 1.5px, transparent 2px) left center / 8px 4px repeat-x;
+}
+.pa-product-workspace .pa-metric .metric-label,
+.pa-product-workspace .pa-metric .metric-label svg { color: var(--brand-ink); }
+.pa-product-workspace .pa-metric small:last-child { padding-bottom: 6px; }
+.pa-product-workspace .pa-metric strong {
+  margin: 5px 0 1px;
+  font: 500 clamp(20px, 2.2vw, 35px)/1.2 var(--font-mono);
+  letter-spacing: -.055em;
+}
+.pa-product-workspace :is(.pa-change, .pa-inventory strong, .pa-chart-readout strong, .pa-chart-axis, .pa-table td, .pa-product-link small, .pa-period-options, .mantine-DatePickerInput-input) { font-family: var(--font-mono); }
+.pa-product-workspace .pa-card-header { border-bottom: 1px dashed var(--app-line); align-items: center; }
+.pa-product-workspace .pa-card { overflow: hidden; }
+.pa-product-workspace .pa-products-table td { text-align: right; }
+.pa-product-workspace .pa-products-table thead th:not(:first-child) { text-align: right; }
+.pa-product-workspace .pa-table thead th,
+.pa-product-workspace .pa-insights li:not([data-kind='replenish']):not([data-kind='anomaly']) { background: var(--app-ground); }
+.pa-product-workspace .pa-product-link { color: var(--brand-ink); }
+.pa-product-workspace .pa-product-link svg { color: var(--pa-muted); border-radius: 50%; background: var(--app-ground); padding: 6px; box-sizing: content-box; }
+.pa-product-workspace .pa-insights li { border-radius: 14px; }
+.pa-product-workspace .pa-chart-grid { stroke: var(--app-line); stroke-dasharray: 2 6; }
+.pa-product-workspace .pa-chart-bar { fill: color-mix(in srgb, var(--brand-accent) 65%, white); }
+.pa-product-workspace .pa-chart-bar[data-active] { fill: var(--pa-green); }
+
+@media (max-width: 600px) {
+  .pa-product-workspace .pa-filters > * { flex: 1 1 140px; }
+  .pa-product-workspace .pa-filters .mantine-SegmentedControl-root { max-width: 100%; }
+  .pa-product-workspace .pa-metric { gap: 4px; }
+  .pa-product-workspace .pa-metric .metric-label { align-items: flex-start; }
+  .pa-product-workspace .pa-metric .metric-label svg { padding: 5px; }
+  .pa-product-workspace .pa-selection { flex-wrap: wrap; }
+  .pa-product-workspace .pa-card-actions { min-width: 0; }
+}
+
+@media (max-width: 400px) {
+  .pa-product-workspace .pa-filters { display: grid; grid-template-columns: minmax(0, 1fr); }
+}
