@@ -7,6 +7,7 @@ import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { deleteImage, reorderImages, uploadProductImage, type Product, type ProductImage } from '../api/catalogApi'
 import { ProductImageAlt } from './ProductImageAlt'
+import { ProductPhotoViewer } from './ProductPhotoViewer'
 
 const MAX_IMAGES = 20
 const MAX_BYTES = 10 * 1024 * 1024
@@ -25,13 +26,15 @@ type UploadItem = {
 
 type ProductEditorImagesProps = {
   product: Product
+  viewing: boolean
+  onViewingChange: (open: boolean) => void
   readOnly: boolean
   disabled: boolean
   onBusy: (busy: boolean) => void
   onChange: (product: Product) => void
 }
 
-export function ProductEditorImages({ product, readOnly, disabled, onBusy, onChange }: ProductEditorImagesProps) {
+export function ProductEditorImages({ product, viewing, onViewingChange, readOnly, disabled, onBusy, onChange }: ProductEditorImagesProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [removing, setRemoving] = useState<ProductImage | null>(null)
@@ -203,13 +206,18 @@ export function ProductEditorImages({ product, readOnly, disabled, onBusy, onCha
             <li key={image.id}>
               <button type="button" className="catalog-image-frame"
                 aria-label={`Фото ${index + 1}${index === 0 ? ', головне' : ''}`}
-                aria-pressed={selected?.id === image.id} onClick={() => setSelectedId(image.id)}>
+                aria-haspopup="dialog" title="Переглянути фото" aria-pressed={selected?.id === image.id}
+                onClick={() => { setSelectedId(image.id); onViewingChange(true) }}>
                 <img src={image.url} alt={image.alt} loading="lazy" />
                 {index === 0 && <span className="catalog-image-main"><IconStar size={12} fill="currentColor" /></span>}
               </button>
             </li>
           ))}
         </ul>
+      )}
+      {viewing && selected && (
+        <ProductPhotoViewer images={images} index={selectedIndex} productName={product.displayName || product.navkolo.name}
+          onSelect={setSelectedId} onClose={() => onViewingChange(false)} />
       )}
       {selected && !readOnly && (
         <div className="catalog-image-actions">

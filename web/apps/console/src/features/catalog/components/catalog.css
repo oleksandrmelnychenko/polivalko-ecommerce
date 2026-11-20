@@ -486,6 +486,24 @@
   position: relative;
 }
 .catalog-image-frame[aria-pressed="true"] { border: 2px solid var(--brand-ink); padding: 2px; }
+.catalog-image-frame[aria-haspopup="dialog"] { cursor: zoom-in; }
+.product-photo-viewer figure { margin: 0; }
+.product-photo-viewer figure img {
+  display: block;
+  width: 100%;
+  height: min(62dvh, 620px);
+  object-fit: contain;
+  background: var(--app-ground);
+  border-radius: 14px;
+}
+.product-photo-viewer figcaption {
+  margin-top: 8px;
+  color: var(--mantine-color-gray-7);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.product-photo-navigation { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; }
+.product-photo-navigation span { font: 13px var(--font-mono); }
 .catalog-image-frame:focus-visible { outline: 2px solid var(--brand-accent); }
 .catalog-image-frame img { display: block; height: 100%; width: 100%; object-fit: contain; }
 .catalog-image-main {

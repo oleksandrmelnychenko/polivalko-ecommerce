@@ -38,6 +38,7 @@ export function ProductPage() {
   const [formKey, setFormKey] = useState('')
   const [saving, setSaving] = useState(false)
   const [photosBusy, setPhotosBusy] = useState(false)
+  const [viewingPhoto, setViewingPhoto] = useState(false)
   const [opened, setOpened] = useState(true)
   const [confirmArchive, setConfirmArchive] = useState(false)
   const [dirty, setDirty] = useState(false)
@@ -76,7 +77,7 @@ export function ProductPage() {
     <>
       <ProductsPage />
       <CatalogEditorModal icon={IconPackage} title={name} className="product-editor-modal" size="wide" opened={opened} dirty={dirty}
-        closeOnEscape={!busy && !confirmArchive} closeOnClickOutside={!busy && !confirmArchive}
+        closeOnEscape={!busy && !confirmArchive && !viewingPhoto} closeOnClickOutside={!busy && !confirmArchive && !viewingPhoto}
         onClose={() => { if (!busy) setOpened(false) }}
         onExitTransitionEnd={() => {
           if (location.state?.fromProductList) navigate(-1)
@@ -141,7 +142,7 @@ export function ProductPage() {
             onDirty={setDirty}
             onBusy={setSaving}
             onSaved={saved}
-            gallery={<ProductEditorImages product={data} readOnly={readOnly}
+            gallery={<ProductEditorImages product={data} viewing={viewingPhoto} onViewingChange={setViewingPhoto} readOnly={readOnly}
               disabled={saving || moving} onBusy={setPhotosBusy} onChange={product.setData} />}
           />
         </div>
