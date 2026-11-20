@@ -14,7 +14,7 @@ import { ListPageBody } from '@/shared/ui/ListPage'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { getAccounts, type AccountRow } from '../api/accountsApi'
 import { toAccountsQuery, useAccountsState } from '../lib/accountsState'
-import { AccountDetailPane } from './AccountDetailPane'
+import { AccountDetailPane, type PendingAccountAction } from './AccountDetailPane'
 import { accountsColumns } from './accountsColumns'
 import { AccountsFilters } from './AccountsFilters'
 
@@ -35,12 +35,18 @@ export function AccountsTab() {
   const failed = accounts.status === 'error' || accounts.status === 'forbidden'
   const rows = useMemo(() => (failed ? [] : (page?.items ?? [])), [failed, page])
   const [closing, setClosing] = useState<string | null>(null)
+  const [confirmation, setConfirmation] = useState<{ id: string; action: PendingAccountAction } | null>(null)
+  const pending = confirmation && confirmation.id === id ? confirmation.action : null
+  function setPending(action: PendingAccountAction) {
+    setConfirmation(id && action ? { id, action } : null)
+  }
   const selected = id
   const detail = selected ?? closing
   const select = useCallback((row: AccountRow) => setId(row.id), [setId])
   const columns = useMemo(() => accountsColumns(select, compact === true), [select, compact])
 
   function close() {
+    if (pending) return
     setClosing(selected)
     setId(null)
   }
@@ -96,13 +102,18 @@ export function AccountsTab() {
       <AppEditorModal
         opened={Boolean(selected) && !failed}
         onClose={close}
-        onExitTransitionEnd={() => setClosing(null)}
+        closeOnEscape={!pending}
+        closeOnClickOutside={!pending}
+        onExitTransitionEnd={() => {
+          setClosing(null)
+          setConfirmation(null)
+        }}
         title={<MetricLabel icon={IconId}>Кабінет покупця</MetricLabel>}
         size="standard"
         className="customer-modal"
       >
         {detail && !failed && (
-          <AccountDetailPane key={detail} id={detail} canManage={canManage} canViewOrders={canViewOrders} onChanged={accounts.reload} />
+          <AccountDetailPane key={detail} id={detail} canManage={canManage} canViewOrders={canViewOrders} pending={pending} setPending={setPending} onChanged={accounts.reload} />
         )}
       </AppEditorModal>
     </>

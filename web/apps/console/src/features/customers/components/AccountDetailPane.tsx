@@ -14,18 +14,19 @@ import { SplitAvatar } from '@/shared/ui/split/SplitAvatar'
 import { getAccount, lockAccount, sendPasswordReset, type AccountAddress } from '../api/accountsApi'
 import { AccountChips } from './AccountChips'
 
-type PendingAction = 'lock' | 'unlock' | 'reset' | null
+export type PendingAccountAction = 'lock' | 'unlock' | 'reset' | null
 
 type AccountDetailPaneProps = {
   id: string
   canManage: boolean
   canViewOrders: boolean
+  pending: PendingAccountAction
+  setPending: (action: PendingAccountAction) => void
   onChanged: () => void
 }
 
-export function AccountDetailPane({ id, canManage, canViewOrders, onChanged }: AccountDetailPaneProps) {
+export function AccountDetailPane({ id, canManage, canViewOrders, pending, setPending, onChanged }: AccountDetailPaneProps) {
   const account = useApiQuery(`account:${id}`, () => getAccount(id))
-  const [pending, setPending] = useState<PendingAction>(null)
   const [busy, setBusy] = useState(false)
 
   const data = account.status === 'ready' && account.data?.id === id ? account.data : undefined
