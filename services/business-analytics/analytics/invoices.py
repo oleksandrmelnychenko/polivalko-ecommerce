@@ -25,6 +25,17 @@ ARCHIVE_LINES = ARCHIVE_SQL.replace("DAY_FILTER", """r.source_day BETWEEN %s AND
 
 # Sum the cash register in PostgreSQL so annual charts do not need to transfer
 # every receipt or wait for the assortment and forecast models to finish.
+INDEPENDENT_RECEIPTS = """
+WHERE d.entity_type='receipt' AND lower(d.kind) IN ('cash','6','receipt','salereceipt','salebyreceipt')
+  AND lower(d.status) IN ('active','активна','активний','posted') AND lower(d.currency) IN ('uah','980')
+  AND d.day >= %s AND d.day < %s
+  AND NOT EXISTS (
+      SELECT 1 FROM accounting.documents i
+      WHERE i.source_account=d.source_account AND lower(i.source_id)=lower(d.parent_ref)
+        AND i.entity_type='invoice' AND lower(i.kind) IN ('out','3','sale','salesinvoice','outgoinginvoice')
+        AND lower(i.status) IN ('active','активна','активний','posted')
+  )
+"""
 CASH_MONTHS = """
 SELECT extract(month FROM d.day)::int AS month, count(*) AS documents,
        sum(abs(d.total)) AS amount, sum(s.amount) AS lines,
@@ -46,17 +57,7 @@ LEFT JOIN LATERAL (
     FROM jsonb_array_elements(CASE WHEN jsonb_typeof(a.payload::jsonb#>'{raw,products}')='array'
                                    THEN a.payload::jsonb#>'{raw,products}' ELSE '[]'::jsonb END) p
 ) s ON true
-WHERE d.entity_type='receipt' AND lower(d.kind) IN ('cash','6','receipt','salereceipt','salebyreceipt')
-  AND lower(d.status) IN ('active','активна','активний','posted') AND lower(d.currency) IN ('uah','980')
-  AND d.day >= %s AND d.day < %s
-  AND NOT EXISTS (
-      SELECT 1 FROM accounting.documents i
-      WHERE i.source_account=d.source_account AND lower(i.source_id)=lower(d.parent_ref)
-        AND i.entity_type='invoice' AND lower(i.kind) IN ('out','3','sale','salesinvoice','outgoinginvoice')
-        AND lower(i.status) IN ('active','активна','активний','posted')
-  )
-GROUP BY 1
-"""
+""" + INDEPENDENT_RECEIPTS + " GROUP BY 1"
 
 
 def currency_valid(doc):

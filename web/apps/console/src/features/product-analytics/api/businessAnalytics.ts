@@ -51,6 +51,7 @@ export type Series = {
   model: string | null
   reason: string | null
   wape: number | null
+  baselineWape?: number | null
   bias: number | null
   folds: number
   history: (number | null)[]

@@ -6,6 +6,10 @@ import { AnalyticsChart } from './AnalyticsChart'
 
 export const formatValue = (n: number | null | undefined) =>
   n == null ? '—' : n.toLocaleString('uk-UA', { maximumFractionDigits: 2 })
+const weeklyModelNames: Record<string, string> = {
+  ridge: 'регресія за недавнім та торішнім попитом', mean4: 'середнє за 4 тижні',
+  mean8: 'середнє за 8 тижнів', season52: 'відповідні тижні торік', intermittent: 'частота та обсяг нерегулярних продажів',
+}
 const shift = (s: string, days: number) =>
   new Date(Date.parse(s + 'T12:00:00Z') + days * 86400000).toISOString().slice(0, 10)
 
@@ -144,7 +148,7 @@ export function ForecastDetail({
       <p>
         {row.reason ??
           'Модель ' +
-            row.model +
+            (weeklyModelNames[row.model ?? ''] ?? row.model) +
             ' · контрольних періодів ' +
             row.folds +
             ' · WAPE ' +
@@ -153,6 +157,7 @@ export function ForecastDetail({
             formatValue(row.bias == null ? null : row.bias * 100) +
             '%'}
       </p>
+      {row.baselineWape != null && <p>Похибка найкращої простої моделі на тому самому контрольному періоді · {formatValue(row.baselineWape * 100)}%</p>}
       <AnalyticsChart
         label={'Тижневий попит. Прогноз із ' + start}
         points={points}

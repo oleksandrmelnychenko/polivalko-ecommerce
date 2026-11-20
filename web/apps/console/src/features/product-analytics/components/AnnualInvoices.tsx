@@ -51,6 +51,7 @@ export function AnnualInvoices() {
           }} /></label>
         <Button variant="default" onClick={result.reload} disabled={result.status === 'loading'}>Звірити ще раз</Button>
         <Link to={'?tab=overview&from=' + year + '-01-01&to=' + year + '-12-31'}>Перейти до аналізу товарів</Link>
+        <Link to="?tab=turnover-forecast">Відкрити прогноз обороту</Link>
       </div>
       {result.status === 'error' || result.status === 'forbidden'
         ? <p role="alert">{result.problem?.title ?? 'Не вдалося прочитати накладні.'}</p>

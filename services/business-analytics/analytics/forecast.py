@@ -3,8 +3,9 @@ from datetime import date, timedelta
 from hashlib import sha256
 from math import ceil
 from statistics import mean
+from .learning import seasonal_regression
 
-VERSION = "weekly-2"
+VERSION = "weekly-3"
 WEEKS = 156
 
 
@@ -18,6 +19,22 @@ def predict(history, horizon, method):
     if method == "season52":
         season = history[-52:][:horizon]
         return season if len(history) >= 52 and None not in season else None
+    if method == "ridge":
+        return seasonal_regression(history, horizon, 52, nonnegative=True)
+    if method == "intermittent":
+        # Update sale probability every observed week and order size only on sales.
+        # Start again after a stockout or gap where demand could not be observed.
+        start = max((i + 1 for i, value in enumerate(history) if value is None), default=0)
+        observed = history[start:]
+        if len(observed) < 12 or sum(v > 0 for v in observed) < 3:
+            return None
+        probability = float(observed[0] > 0)
+        size = next(v for v in observed if v > 0)
+        for value in observed[1:]:
+            probability += 0.1 * (int(value > 0) - probability)
+            if value:
+                size += 0.1 * (value - size)
+        return [probability * size] * horizon
     tail = [v for v in history[-4:] if v is not None]
     if len(tail) < 3:
         return None
@@ -29,6 +46,7 @@ def fit(values, horizon):
         "model": None,
         "wape": None,
         "bias": None,
+        "baselineWape": None,
         "folds": 0,
         "history": values[-13:],
         "weeks": [],
@@ -40,11 +58,11 @@ def fit(values, horizon):
     origins = [
         i
         for i in range(len(values) - horizon, 7, -horizon)
-        if None not in values[i : i + horizon] and sum(values[i : i + horizon]) > 0
+        if None not in values[i : i + horizon]
     ][:7]
     if len(origins) < 3:
         return dict(result, reason="Недостатньо повних періодів для перевірки прогнозу")
-    methods = ("mean8", "mean4", "season52")
+    methods = ("mean8", "mean4", "season52", "intermittent", "ridge")
     candidates = {m for m in methods if predict(values, horizon, m) is not None}
     folds = []
     for i in origins:
@@ -66,16 +84,19 @@ def fit(values, horizon):
     error = [p - a for p, a in zip(preds[model], actual)]
     # Empirical 80th percentile absolute weekly error, in native series units.
     residuals = sorted(
-        abs(p - a) for observed, predictions in folds for p, a in zip(predictions[model], observed)
+        abs(p - a) for observed, predictions in folds[1:] for p, a in zip(predictions[model], observed)
     )
     radius = residuals[ceil(0.8 * len(residuals)) - 1]
     projected = predict(values, horizon, model)
+    base = min((m for m in scores if m in ("mean8", "mean4", "season52")), key=scores.get)
+    scale = sum(abs(a) for a in actual)
     return dict(
         result,
         model=model,
         folds=len(folds),
-        wape=round(sum(map(abs, error)) / sum(actual), 4),
-        bias=round(sum(error) / sum(actual), 4),
+        wape=round(sum(map(abs, error)) / scale, 4) if scale else None,
+        bias=round(sum(error) / scale, 4) if scale else None,
+        baselineWape=round(sum(abs(p-a) for p, a in zip(preds[base], actual)) / scale, 4) if scale else None,
         weeks=[
             {"value": round(p, 3), "low": round(max(0, p - radius), 3), "high": round(p + radius, 3)}
             for p in projected
@@ -150,7 +171,7 @@ def build_models(snapshot, previous=None):
         signature = sha256(repr(series).encode()).hexdigest()
         old = previous_models.get(key, {})
         if old.get("signature") == signature:
-            model = {k: old[k] for k in ("model", "wape", "bias", "folds", "history", "weeks", "reason")}
+            model = {k: old[k] for k in ("model", "wape", "baselineWape", "bias", "folds", "history", "weeks", "reason")}
         else:
             model = fit(series, 4 if kind == "sku" else 13)
         models.append(dict(meta[key], **model, signature=signature, stockoutWeeks=len(censored)))

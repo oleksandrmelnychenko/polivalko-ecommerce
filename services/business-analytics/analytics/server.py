@@ -15,6 +15,7 @@ from .register import KYIV
 from .reports import documents, forecasts, policy_key, report
 from .source import hosted, read_register
 from .invoices import read_year
+from .turnover import forecast_months, history_for
 
 logger = logging.getLogger(__name__)
 
@@ -194,7 +195,8 @@ def dispatch(env):
     if route == ("GET", "/checks/last-closed-year"):
         year = now().year - 1
         try:
-            totals = read_year(year)["total"]
+            annual = read_year(year)
+            totals = annual["total"]
         except Exception as exc:
             details = exc.args[0] if exc.args and isinstance(exc.args[0], dict) else {}
             logger.error("Annual invoice check failed (%s, SQLSTATE %s)", type(exc).__name__,
@@ -206,6 +208,23 @@ def dispatch(env):
         elif totals["documents"] or totals["cashDocuments"]:
             result = "matched"
         logging.getLogger("gunicorn.error").info("Annual invoice check completed (year=%s, result=%s)", year, result)
+        # Verify the forecast's independent monthly input against the annual check
+        # on rollout. A forecast failure must not change the annual check result.
+        try:
+            today = now().date()
+            history, latest = history_for(today)
+            matched = all(history.get(date(year, i, 1)) == period["documentNet"]
+                          for i, period in enumerate(annual["months"], 1))
+            forecast = forecast_months(history, latest, today, 6)
+            logging.getLogger("gunicorn.error").info(
+                "Turnover forecast checked (year=%d, ledger=%s, months=%d, last=%s, model=%s, points=%d, "
+                "test=%d, wape=%s, baseline=%s, ridge=%s)",
+                year, "matched" if matched else "differences", forecast["trainingMonths"], latest,
+                forecast["model"], len(forecast["projection"]), len(forecast["validation"]), forecast["wape"],
+                forecast["baselineWape"], next((m["holdoutWape"] for m in forecast["comparisons"]
+                                                if m["model"] == "ridge"), None))
+        except Exception as exc:
+            logger.error("Turnover forecast check unavailable (%s)", type(exc).__name__)
         return 200, {"year": year, "status": result}
     if route == ("GET", "/status"):
         return 200, dict(service.status, policiesWritable=not hosted())
@@ -225,6 +244,17 @@ def dispatch(env):
     if route[0] != "GET" or route[1] not in (*handlers, "/forecast"):
         return 404, {"title": "Операцію не знайдено"}
     q = {k: v[-1] for k, v in parse_qs(env.get("QUERY_STRING", ""), max_num_fields=20).items()}
+    if route[1] == "/forecast" and q.get("kind") == "turnover":
+        horizon = int(q.get("horizon", 6))
+        if set(q) - {"kind", "horizon"} or horizon not in (3, 6, 12):
+            raise ValueError("Виберіть горизонт у 3, 6 або 12 місяців")
+        today = now().date()
+        try:
+            history, latest = history_for(today)
+            return 200, forecast_months(history, latest, today, horizon)
+        except Exception as exc:
+            logger.error("Turnover forecast unavailable (%s)", type(exc).__name__)
+            return 503, {"title": "Не вдалося розрахувати прогноз за виробничими документами"}
     if route[1] == "/documents" and "year" in q:
         year = int(q["year"])
         if set(q) != {"year"} or not 1900 <= year < now().year:

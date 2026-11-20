@@ -8,6 +8,7 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 import { AnalyticsChart } from '../components/AnalyticsChart'
 import { AnalyticsCard } from '../components/AnalyticsCard'
 import { AnnualInvoices } from '../components/AnnualInvoices'
+import { TurnoverForecast } from '../components/TurnoverForecast'
 import { ForecastDetail, formatValue as fmt } from '../components/BusinessForecast'
 import {
   readBusiness,
@@ -73,8 +74,9 @@ export function BusinessAnalyticsPage() {
   const [docPage, setDocPage] = useState(1)
   const { can } = usePermissions()
   const tab = params.get('tab') ?? 'overview'
+  const usesReport = tab !== 'invoices' && tab !== 'turnover-forecast'
   const period = new URLSearchParams(params)
-  for (const name of ['tab', 'kind', 'page', 'year']) period.delete(name)
+  for (const name of ['tab', 'kind', 'page', 'year', 'horizon']) period.delete(name)
   const reportParams = new URLSearchParams(period)
   if (tab === 'assortment') reportParams.set('page', params.get('page') ?? '1')
   const forecastParams = new URLSearchParams(params)
@@ -86,7 +88,7 @@ export function BusinessAnalyticsPage() {
   const reportKey = reportParams.toString()
   const report = useApiQuery(reportKey + updated, () => readBusiness<BusinessReport>('report', reportKey), {
     keepPrevious: true,
-    enabled: tab !== 'invoices',
+    enabled: usesReport,
   })
   const forecastKey = forecastParams.toString()
   const forecast = useApiQuery(forecastKey + updated, () => readBusiness<Projection>('forecast', forecastKey), {
@@ -94,7 +96,7 @@ export function BusinessAnalyticsPage() {
   })
   const docKey = docParams.toString()
   const docs = useApiQuery(docKey + updated, () => readBusiness<Paged<DocumentRow>>('documents', docKey), {
-    enabled: showDocs && can(PermissionKeys.Accounting.View) && tab !== 'forecast' && tab !== 'invoices',
+    enabled: showDocs && can(PermissionKeys.Accounting.View) && tab !== 'forecast' && usesReport,
   })
   const reloadStatus = status.reload
   useEffect(() => {
@@ -139,15 +141,16 @@ export function BusinessAnalyticsPage() {
             <SegmentedControl
               aria-label="Розділ аналітики"
               value={tab}
-              onChange={(value) => update({ tab: value })}
+              onChange={(value) => update({ tab: value, horizon: '' })}
               data={[
                 { value: 'overview', label: 'Оборот і прибуток' },
                 ...(can(PermissionKeys.Accounting.View) ? [{ value: 'invoices', label: 'Звірка накладних' }] : []),
                 { value: 'assortment', label: 'Товари й сезонність' },
-                { value: 'forecast', label: 'Прогноз і закупівлі' },
+                { value: 'turnover-forecast', label: 'Прогноз обороту' },
+                { value: 'forecast', label: 'Попит і закупівлі' },
               ]}
             />
-            {tab !== 'invoices' && <Button
+            {usesReport && <Button
               variant="default"
               disabled={status.data?.state === 'running' || status.data?.state === 'queued'}
               onClick={async () => {
@@ -165,7 +168,8 @@ export function BusinessAnalyticsPage() {
           </div>
           {tab === 'invoices' && (can(PermissionKeys.Accounting.View)
             ? <AnnualInvoices /> : <p>Для звірки потрібен доступ до реєстру накладних.</p>)}
-          {tab !== 'invoices' && <p role="status">
+          {tab === 'turnover-forecast' && <TurnoverForecast />}
+          {usesReport && <p role="status">
             {status.data
               ? [
                   runLabel[status.data.state],
@@ -178,14 +182,14 @@ export function BusinessAnalyticsPage() {
               : ''}{' '}
             {message}
           </p>}
-          {!r && tab !== 'invoices' && (
+          {!r && usesReport && (
             <p role="status">
               {report.status === 'loading'
                 ? 'Завантаження аналітики…'
                 : (report.problem?.title ?? 'Не вдалося завантажити виробничий звіт')}
             </p>
           )}
-          {r && tab !== 'invoices' && (
+          {r && usesReport && (
             <>
               <div className="pa-filters ba-controls">
                 {tab !== 'forecast' && (
@@ -546,7 +550,7 @@ export function BusinessAnalyticsPage() {
               )}
             </>
           )}
-          {!r && tab !== 'invoices' && (
+          {!r && usesReport && (
             <Button
               variant="default"
               onClick={() => {
