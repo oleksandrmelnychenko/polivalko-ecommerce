@@ -1,0 +1,8 @@
+.ba-market-map { display: grid; grid-template-columns: minmax(0, 620px) minmax(135px, 1fr); gap: 1rem; align-items: center; }
+.ba-market-map svg { display: block; width: 100%; height: auto; }
+.ba-market-map path { cursor: pointer; }
+.ba-market-map path:focus-visible, .ba-market-map path:hover { outline: none; stroke: #123e32; stroke-width: 2.8; }
+.ba-market-region { display: grid; gap: .35rem; font-variant-numeric: tabular-nums; }
+.ba-map-legend { display: flex; align-items: center; flex-wrap: wrap; gap: .3rem; font-size: .8rem; }
+.ba-map-legend i { display: inline-block; width: 16px; height: 10px; }
+@media (max-width: 720px) { .ba-market-map { grid-template-columns: 1fr; } }

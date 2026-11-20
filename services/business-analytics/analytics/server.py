@@ -16,6 +16,7 @@ from .reports import documents, forecasts, policy_key, report
 from .source import hosted, read_register
 from .invoices import read_year
 from .turnover import forecast_months, history_for
+from .markets import markets
 
 logger = logging.getLogger(__name__)
 
@@ -244,6 +245,17 @@ def dispatch(env):
     if route[0] != "GET" or route[1] not in (*handlers, "/forecast"):
         return 404, {"title": "Операцію не знайдено"}
     q = {k: v[-1] for k, v in parse_qs(env.get("QUERY_STRING", ""), max_num_fields=20).items()}
+    if route[1] == "/documents" and q.get("analysis") == "markets":
+        today = now().date()
+        year, page = int(q.get("year", today.year)), int(q.get("page", 1))
+        if (set(q) - {"analysis", "year", "page", "search"} or not 1900 <= year <= today.year
+                or not 1 <= page <= 1000000 or len(q.get("search", "")) > 120):
+            raise ValueError("Перевірте рік, номер сторінки та пошук")
+        try:
+            return 200, markets(year, today, page, q.get("search", ""))
+        except Exception as exc:
+            logger.error("Buyer geography unavailable (%s)", type(exc).__name__)
+            return 503, {"title": "Не вдалося прочитати продажі за контрагентами та регіонами"}
     if route[1] == "/forecast" and q.get("kind") == "turnover":
         horizon = int(q.get("horizon", 6))
         if set(q) - {"kind", "horizon"} or horizon not in (3, 6, 12):

@@ -10,6 +10,7 @@ import { AnalyticsChart } from '../components/AnalyticsChart'
 import { AnalyticsCard } from '../components/AnalyticsCard'
 import { AnnualInvoices } from '../components/AnnualInvoices'
 import { TurnoverForecast } from '../components/TurnoverForecast'
+import { BuyerMarkets } from '../components/BuyerMarkets'
 import { ForecastDetail, formatValue as fmt } from '../components/BusinessForecast'
 import {
   readBusiness,
@@ -75,7 +76,7 @@ export function BusinessAnalyticsPage() {
   const [docPage, setDocPage] = useState(1)
   const { can } = usePermissions()
   const tab = params.get('tab') ?? 'overview'
-  const usesReport = tab !== 'invoices' && tab !== 'turnover-forecast'
+  const usesReport = tab !== 'invoices' && tab !== 'turnover-forecast' && tab !== 'markets'
   const period = new URLSearchParams(params)
   for (const name of ['tab', 'kind', 'page', 'year', 'horizon']) period.delete(name)
   const reportParams = new URLSearchParams(period)
@@ -149,6 +150,7 @@ export function BusinessAnalyticsPage() {
               data={[
                 { value: 'overview', label: 'Оборот і прибуток' },
                 ...(can(PermissionKeys.Accounting.View) ? [{ value: 'invoices', label: 'Звірка накладних' }] : []),
+                ...(can(PermissionKeys.Accounting.View) ? [{ value: 'markets', label: 'Контрагенти й карта' }] : []),
                 { value: 'assortment', label: 'Товари й сезонність' },
                 { value: 'turnover-forecast', label: 'Прогноз обороту' },
                 { value: 'forecast', label: 'Попит і закупівлі' },
@@ -175,6 +177,8 @@ export function BusinessAnalyticsPage() {
           {tab === 'invoices' && (can(PermissionKeys.Accounting.View)
             ? <AnnualInvoices /> : <p>Для звірки потрібен доступ до реєстру накладних.</p>)}
           {tab === 'turnover-forecast' && <TurnoverForecast />}
+          {tab === 'markets' && (can(PermissionKeys.Accounting.View)
+            ? <BuyerMarkets /> : <p>Для перегляду географії та продажів контрагентів потрібен доступ до обліку.</p>)}
           {usesReport && <p role="status">
             {status.data
               ? [
