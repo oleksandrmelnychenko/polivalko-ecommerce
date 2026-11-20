@@ -305,7 +305,6 @@ export function ProductEditorForm({ gallery, formId, product, categories, brands
                   }} />
               ))}
             </div>
-            <details className="product-system-id"><summary>Системний ідентифікатор</summary><code>{product.navkolo.navkoloId}</code></details>
           </section>
           <ProductEditorLabels product={product} labels={labels} value={labelIds} onChange={setLabelIds} error={errors.labelIds} />
         </fieldset>

@@ -1329,10 +1329,8 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
   margin-bottom: 6px;
 }
 .product-metric-value s { font-size: .52em; color: var(--mantine-color-gray-6); white-space: nowrap; letter-spacing: normal; }
-.product-metric small, .product-system-id { color: var(--mantine-color-gray-7); font-size: 12px; }
-.product-sku input, .product-system-id code { font-family: var(--font-mono); }
-.product-system-id { border-top: 1px dashed var(--app-line); padding-top: 8px; margin-top: 12px; overflow-wrap: anywhere; }
-.product-system-id summary { cursor: pointer; }
+.product-metric small { color: var(--mantine-color-gray-7); font-size: 12px; }
+.product-sku input { font-family: var(--font-mono); }
 .product-editor-side .product-related-links a { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; }
 .product-editor-side .product-related-links { padding-inline: 8px; }
 @media (max-width: 50em) {
