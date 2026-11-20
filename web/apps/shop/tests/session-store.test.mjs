@@ -3,11 +3,11 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import ts from "typescript";
 
-function load(getMe) {
+function load(getMe, window) {
   const source = readFileSync(new URL("../src/features/customer/lib/session-store.ts", import.meta.url), "utf8");
   const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const loaded = { exports: {} };
-  new Function("exports", "module", "require", js)(loaded.exports, loaded, () => ({ getMe }));
+  new Function("exports", "module", "require", "window", js)(loaded.exports, loaded, () => ({ getMe }), window);
   return loaded.exports;
 }
 
@@ -20,6 +20,64 @@ test("a session refresh cannot restore a customer who signed out while it was pe
   previous.resolve({ data: { id: "previous" }, response: new Response() });
   assert.equal((await refreshed).status, "guest");
   assert.equal(store.getSession().me, null);
+});
+
+test("a private request waits for a verified account after another tab changes the session marker", async () => {
+  const signals = new Map();
+  const window = { localStorage: { getItem: (name) => signals.get(name) ?? null, setItem: (name, value) => signals.set(name, value) } };
+  const store = load(async () => ({ data: { id: "incoming" }, response: new Response() }), window);
+  store.setSignedIn({ id: "previous" });
+  signals.set(store.SESSION_SIGNAL, "another-tab");
+  let calls = 0;
+  const send = async () => {
+    calls += 1;
+    return { response: new Response() };
+  };
+  await assert.rejects(store.withActiveSession(send, "previous"), /Сеанс змінився/);
+  assert.equal(calls, 0);
+
+  await store.refreshChangedSession();
+  await assert.rejects(store.withActiveSession(send, "previous"), /Сеанс змінився/);
+  assert.equal(calls, 0);
+  await store.withActiveSession(send, "incoming");
+  assert.equal(calls, 1);
+});
+
+test("a profile update does not invalidate requests for the same verified account", async () => {
+  const pending = Promise.withResolvers();
+  const store = load(() => { throw new Error("Unexpected refresh"); });
+  store.setSignedIn({ id: "current", name: "Old" });
+  const privateRead = store.withActiveSession(() => pending.promise, "current");
+  store.updateCustomerDetails({ id: "current", name: "New" });
+  pending.resolve({ response: new Response() });
+  await privateRead;
+  assert.equal(store.getSession().me.name, "New");
+});
+
+test("a guest action requires the verified guest session", async () => {
+  const store = load(() => { throw new Error("Unexpected refresh"); });
+  let calls = 0;
+  const send = async () => {
+    calls += 1;
+    return { response: new Response() };
+  };
+  await assert.rejects(store.withActiveSession(send, null), /Сеанс змінився/);
+  store.setSignedOut();
+  await store.withActiveSession(send, null);
+  store.setSignedIn({ id: "customer" });
+  await assert.rejects(store.withActiveSession(send, null), /Сеанс змінився/);
+  assert.equal(calls, 1);
+});
+
+test("password recovery notifies other tabs and verifies the actual browser session", async () => {
+  const signals = new Map();
+  const window = { localStorage: { getItem: (name) => signals.get(name) ?? null, setItem: (name, value) => signals.set(name, value) } };
+  const store = load(async () => ({ data: { id: "unrelated" }, response: new Response() }), window);
+  store.setSignedIn({ id: "unrelated" });
+  const previousSignal = signals.get(store.SESSION_SIGNAL);
+  await store.refreshSessionAcrossTabs();
+  assert.notEqual(signals.get(store.SESSION_SIGNAL), previousSignal);
+  assert.equal(store.getSession().me.id, "unrelated");
 });
 
 test("a cross-tab session change supersedes the current refresh and protects the new account from a late 401", async () => {

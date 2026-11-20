@@ -4,6 +4,7 @@ import {
   IconBuildingStore,
   IconCategory,
   IconCertificate,
+  IconChartHistogram,
   IconClipboardList,
   IconCreditCard,
   IconFileText,
@@ -70,6 +71,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
         badge: (summary) => summary.newOrders + summary.awaitingConfirmation,
         badgeTone: 'hot',
       },
+      { id: 'product-analytics', label: 'Аналітика товарів', path: '/sales/product-analytics', permissionKey: PermissionKeys.Analytics.ViewProducts, icon: IconChartHistogram },
       {
         id: 'requests',
         label: 'Заявки',

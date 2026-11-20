@@ -9,6 +9,8 @@
   }
 
   html:has(.order-page) .mantine-AppShell-header,
+  html:has(.order-page) .console-sidebar,
+  html:has(.order-page) .console-page-toolbar,
   html:has(.order-page) .mantine-Notifications-root,
   html:has(.order-page) .order-no-print {
     display: none !important;

@@ -19,7 +19,7 @@ export function ProductTile({ product, priority }: { product: ProductListItem; p
         {image ? (
           <img {...image} alt="" width={300} height={400} loading={priority ? "eager" : "lazy"} fetchPriority={priority ? undefined : "low"} decoding="async" />
         ) : (
-          <span className="tile__photo-empty">Фото додасть магазин</span>
+          <span className="tile__photo-empty">Фото поки немає</span>
         )}
         <TileFlashes product={product} discount={discount} />
         <span className="tile__bar">

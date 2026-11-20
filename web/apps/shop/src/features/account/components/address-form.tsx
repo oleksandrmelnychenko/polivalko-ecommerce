@@ -13,11 +13,13 @@ import { TextField } from "./text-field";
 const METHODS = ["nova_poshta", "nova_poshta_courier"];
 
 export function AddressForm({
+  owner,
   address,
   first,
   onDone,
   onCancel,
 }: {
+  owner: string;
   address?: CustomerAddress;
   first: boolean;
   onDone: (message: string) => void;
@@ -47,7 +49,7 @@ export function AddressForm({
       address: courier ? { street: text(data, "street"), house: text(data, "house"), apartment: text(data, "apartment") || null } : null,
       isDefault: address?.isDefault === true || data.get("isDefault") === "on",
     };
-    const result = await form.submit(() => withAccountCsrf((h) => (address ? putAddress(h, address.id, body) : postAddress(h, body))));
+    const result = await form.submit(() => withAccountCsrf((h) => (address ? putAddress(h, address.id, body) : postAddress(h, body)), owner));
     if (result?.response.ok) onDone(address ? "Адресу оновлено." : "Адресу збережено.");
   }
 

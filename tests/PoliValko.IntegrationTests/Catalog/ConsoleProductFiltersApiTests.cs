@@ -84,6 +84,7 @@ public sealed class ConsoleProductFiltersApiTests(ApiFactory api)
         var first = await api.AddProductAsync("ruchnyi-instrument", "Мітла масова", 120m);
         var second = await api.AddProductAsync("ruchnyi-instrument", "Щітка масова", 60m, visible: false);
 
+        api.Storefront.Tags.Clear();
         var result = await (await manager.PostAsJsonAsync(
                 $"{Products}/bulk",
                 new BulkUpdateProductsRequest([first.Id, second.Id], target.Id, brand.Name.ToLowerInvariant(), [label.Id], null, true),
@@ -91,6 +92,7 @@ public sealed class ConsoleProductFiltersApiTests(ApiFactory api)
                 Ct))
             .ReadAsync<BulkUpdateProductsResult>();
         result.Updated.ShouldBe(2);
+        api.Storefront.Tags.ShouldBe(["catalog", "products", "collections"], ignoreOrder: true);
 
         foreach (var id in new[] { first.Id, second.Id })
         {

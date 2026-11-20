@@ -15,6 +15,8 @@ internal sealed class NavkoloSettings(PoliValkoDbContext db, IDataProtectionProv
     internal const string Purpose = "PoliValko.Navkolo.ApiKey.v1";
     internal sealed record Stored(Guid Revision, string Mode, string? ProtectedKey, string? StoreId, string? StoreName, DateTimeOffset? VerifiedAt, int? CancellationStatusId = null, string? CancellationStatusName = null);
 
+    public bool OrderSyncEnabled => defaults.Value.OrderSyncEnabled;
+
     public async Task<Stored?> ReadAsync(CancellationToken ct)
     {
         // Deliberately bypass the process-local settings cache: API and Worker see committed changes immediately.
@@ -31,7 +33,7 @@ internal sealed class NavkoloSettings(PoliValkoDbContext db, IDataProtectionProv
         {
             Mode = stored.Mode, StoreId = stored.StoreId, CancellationStatusId = stored.CancellationStatusId,
             ApiKey = stored.ProtectedKey is null ? "" : protection.CreateProtector(Purpose).Unprotect(stored.ProtectedKey),
-            Channel = value.Channel, OrderStatusId = value.OrderStatusId, SyncInterval = value.SyncInterval,
+            Channel = value.Channel, OrderStatusId = value.OrderStatusId, OrderSyncEnabled = value.OrderSyncEnabled, SyncInterval = value.SyncInterval,
             CatalogInterval = value.CatalogInterval, FreshnessThreshold = value.FreshnessThreshold, Stub = value.Stub,
         };
     }

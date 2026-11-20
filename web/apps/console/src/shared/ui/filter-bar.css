@@ -6,7 +6,7 @@
 
 .app-filter-bar {
   align-items: flex-end;
-  background: #fafbfa;
+  background: white;
   border-bottom: 1px solid var(--mantine-color-gray-2);
   box-sizing: border-box;
   display: flex;
@@ -14,7 +14,7 @@
   flex-wrap: wrap;
   gap: 8px 12px;
   min-width: 0;
-  padding: 8px 10px 10px;
+  padding: 12px 16px;
 }
 
 .app-filter-fields {
@@ -95,7 +95,7 @@
 .app-filter-bar .mantine-Input-input {
   background: var(--mantine-color-white);
   border-color: var(--mantine-color-gray-3);
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 13px;
   height: var(--app-filter-control-height);
   min-height: var(--app-filter-control-height);
@@ -117,7 +117,7 @@
 }
 
 .app-filter-bar .app-filter-actions > .mantine-Button-root {
-  border-radius: 8px;
+  border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
   height: var(--app-filter-control-height);
@@ -126,7 +126,7 @@
 }
 
 .app-filter-bar .app-filter-actions > .mantine-ActionIcon-root {
-  border-radius: 8px;
+  border-radius: 12px;
   height: var(--app-filter-control-height);
   min-height: var(--app-filter-control-height);
   min-width: var(--app-filter-control-height);
@@ -154,7 +154,7 @@
   }
 
   .app-filter-fields > .app-filter-toggle {
-    border-radius: 8px;
+    border-radius: 12px;
     display: inline-flex;
     flex: 0 0 auto;
     font-size: 13px;

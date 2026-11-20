@@ -1,18 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { apiInternalUrl } from "@polivalko/shared/api/origin";
 import { first } from "@polivalko/shared/lib/format";
 import { hrefFor, parseListingParams, toQuery, type SearchParams } from "./lib/listing-params";
 
-const apiUrl = process.env.API_INTERNAL_URL ?? "http://localhost:5080";
-
 /**
  * A listing page past the last one (an old link, fewer products now) answers a 307 to the last page,
- * before the prebuilt shell can answer 200. src/proxy.ts calls it for document requests to /catalog/<slug>,
+ * before the prebuilt shell can answer 200. src/proxy.ts calls it for document requests to /catalog, /catalog/<slug>,
  * /sale and /search; undefined lets the page render. Only pages after the first pay for the extra API request.
  */
 export async function redirectPastLastPage(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
-  const sp: SearchParams = {};
-  for (const key of new Set(searchParams.keys())) sp[key] = searchParams.getAll(key);
+  const sp: SearchParams = Object.fromEntries(Array.from(new Set(searchParams.keys()), (key) => [key, searchParams.getAll(key)]));
   const parsed = parseListingParams(sp);
   if (parsed.page <= 1) return undefined;
 
@@ -20,7 +18,8 @@ export async function redirectPastLastPage(request: NextRequest) {
   const search = pathname === "/search";
   const q = first(sp.q)?.trim() ?? "";
   if (search && !q) return undefined;
-  const base = search ? { q } : pathname === "/sale" ? { onSale: true } : { category: safeDecode(pathname.split("/")[2] ?? "") };
+  const slug = pathname.split("/")[2];
+  const base = search ? { q } : pathname === "/sale" ? { onSale: true } : { category: slug ? safeDecode(slug) : undefined };
 
   const totalPages = await countPages(toQuery(base, parsed));
   if (totalPages === undefined) return undefined;
@@ -37,8 +36,11 @@ async function countPages(query: ReturnType<typeof toQuery>) {
     for (const v of Array.isArray(value) ? value : [value]) qs.append(key, String(v));
   }
   try {
-    const response = await fetch(`${apiUrl}/api/v1/products?${qs}`, { cache: "no-store", signal: AbortSignal.timeout(5000) });
-    if (!response.ok) return undefined;
+    const response = await fetch(`${apiInternalUrl}/api/v1/products?${qs}`, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(5000) });
+    if (!response.ok) {
+      await response.body?.cancel();
+      return undefined;
+    }
     const data = (await response.json()) as { totalPages?: number };
     return typeof data.totalPages === "number" && Number.isInteger(data.totalPages) && data.totalPages >= 0 ? data.totalPages : undefined;
   } catch {

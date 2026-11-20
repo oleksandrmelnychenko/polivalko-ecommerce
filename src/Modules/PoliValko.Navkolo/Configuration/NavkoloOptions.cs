@@ -3,6 +3,7 @@ namespace PoliValko.Navkolo.Configuration;
 public sealed class NavkoloOptions
 {
     public string Mode { get; set; } = NavkoloModes.Disabled;
+    public bool OrderSyncEnabled { get; set; } = true;
 
     public TimeSpan SyncInterval { get; set; } = TimeSpan.FromMinutes(5);
 

@@ -8,6 +8,7 @@ export function useFormState(formRef: RefObject<HTMLFormElement | null>) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>(null);
   const [busy, setBusy] = useState(false);
+  const submitting = useRef(false);
   const focusInvalid = useRef(false);
 
   useEffect(() => {
@@ -17,6 +18,8 @@ export function useFormState(formRef: RefObject<HTMLFormElement | null>) {
   }, [errors, formRef]);
 
   async function submit<R extends { error?: unknown; response: Response }>(send: () => Promise<R>): Promise<R | null> {
+    if (submitting.current) return null;
+    submitting.current = true;
     setBusy(true);
     setStatus(null);
     setErrors({});
@@ -32,6 +35,7 @@ export function useFormState(formRef: RefObject<HTMLFormElement | null>) {
       setStatus(offline);
       return null;
     } finally {
+      submitting.current = false;
       setBusy(false);
     }
   }

@@ -82,6 +82,13 @@ test("a listing page past the last one redirects to the last page and keeps the 
   assert.equal(calls[0].pathname, "/api/v1/products");
   assert.deepEqual([asked.get("category"), asked.get("brand"), asked.get("f"), asked.get("sort"), asked.get("page")], ["hoses", "Gardena", "Довжина:20 м", "price_desc", "4"]);
 
+  const catalog = await proxy(page("/catalog?brand=Gardena&page=4"));
+  assert.equal(catalog.status, 307);
+  assert.equal(new URL(catalog.headers.get("location")).pathname, "/catalog");
+  assert.deepEqual(Object.fromEntries(new URL(catalog.headers.get("location")).searchParams), { brand: "Gardena", page: "2" });
+  assert.equal(calls[1].searchParams.has("category"), false);
+  assert.equal(calls[1].searchParams.get("brand"), "Gardena");
+
   api(() => json({ totalPages: 1 }));
   const toFirst = await proxy(page("/search?q=%20шланг%20&page=3"));
   assert.equal(toFirst.status, 307);

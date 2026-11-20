@@ -33,10 +33,10 @@ public sealed class NavkoloCancellationTests(ApiFactory api)
         return new(id, product.Id, created.Number);
     }
 
-    private WebApplicationFactory<Program> Host(Provider provider) => api.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
+    private WebApplicationFactory<Program> Host(Provider provider, bool orderSyncEnabled = true) => api.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
     {
         services.RemoveAll<INavkoloClient>(); services.AddSingleton<INavkoloClient>(provider);
-        services.RemoveAll<INavkoloSettings>(); services.AddSingleton<INavkoloSettings>(new EnabledSettings());
+        services.RemoveAll<INavkoloSettings>(); services.AddSingleton<INavkoloSettings>(new TestSettings(orderSyncEnabled));
     }));
     private static async Task Export(WebApplicationFactory<Program> host, TestOrder order)
     {
@@ -98,6 +98,53 @@ public sealed class NavkoloCancellationTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Product_only_sync_skips_export_and_allows_local_cancellation()
+    {
+        var order = await CreateAsync();
+        var provider = new Provider();
+        await using var host = Host(provider, orderSyncEnabled: false);
+
+        await Export(host, order);
+
+        provider.Uploads.ShouldBe(0);
+        var saved = await api.WithDbAsync(db => db.Set<Order>().AsNoTracking().SingleAsync(o => o.Id == order.Id, Ct));
+        saved.NavkoloExportAttemptedAt.ShouldBeNull();
+        (await Reserved(order)).ShouldBe(2);
+
+        await Cancel(order);
+        await SyncCancellation(host, order);
+        provider.Cancellations.ShouldBe(0);
+        (await Reserved(order)).ShouldBe(0);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Product_only_sync_holds_exported_reservations_until_remote_cancellation_is_available(bool loseUploadResponse)
+    {
+        var order = await CreateAsync();
+        var provider = new Provider { LoseUploadResponse = loseUploadResponse };
+        await using var enabledHost = Host(provider);
+        await using var productOnlyHost = Host(provider, orderSyncEnabled: false);
+        if (loseUploadResponse)
+            await Should.ThrowAsync<HttpRequestException>(() => Export(enabledHost, order));
+        else
+            await Export(enabledHost, order);
+
+        await Cancel(order);
+        await Should.ThrowAsync<NavkoloUnavailableException>(() => SyncCancellation(productOnlyHost, order));
+
+        provider.Cancellations.ShouldBe(0);
+        (await Reserved(order)).ShouldBe(2);
+        var saved = await api.WithDbAsync(db => db.Set<Order>().AsNoTracking().SingleAsync(o => o.Id == order.Id, Ct));
+        saved.NavkoloCancellationSynchronizedAt.ShouldBeNull();
+
+        await SyncCancellation(enabledHost, order);
+        provider.Cancellations.ShouldBe(1);
+        (await Reserved(order)).ShouldBe(0);
+    }
+
+    [Fact]
     public async Task Cancellation_during_export_waits_for_the_upload_and_cannot_be_overwritten()
     {
         var order = await CreateAsync(); var provider = new Provider { PauseUpload = true }; await using var host = Host(provider);
@@ -129,7 +176,11 @@ public sealed class NavkoloCancellationTests(ApiFactory api)
         row.Consumed.ShouldBeTrue(); row.Released.ShouldBeFalse();
     }
 
-    private sealed class EnabledSettings : INavkoloSettings { public Task<string> GetModeAsync(CancellationToken ct) => Task.FromResult("Stub"); }
+    private sealed class TestSettings(bool orderSyncEnabled) : INavkoloSettings
+    {
+        public bool OrderSyncEnabled { get; } = orderSyncEnabled;
+        public Task<string> GetModeAsync(CancellationToken ct) => Task.FromResult("Stub");
+    }
     private sealed class Provider : INavkoloClient
     {
         public bool FailCancellation, LoseUploadResponse, PauseUpload, RemoteCancelled;

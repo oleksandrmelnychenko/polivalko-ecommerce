@@ -2,6 +2,7 @@ import { Drawer } from '@mantine/core'
 import { Link } from 'react-router-dom'
 import { useNavigation } from '@/features/navigation'
 import { NavBadge } from './NavBadge'
+import { ConsoleBrand } from './ConsoleBrand'
 
 export function ConsoleMobileNav({ opened, onClose }: { opened: boolean; onClose: () => void }) {
   const { sections, activeItem, badgeOf } = useNavigation()
@@ -12,11 +13,7 @@ export function ConsoleMobileNav({ opened, onClose }: { opened: boolean; onClose
       onClose={onClose}
       position="left"
       size={300}
-      title={
-        <span className="console-brand-inline" translate="no">
-          PoliValko <span className="console-brand-tag">консоль</span>
-        </span>
-      }
+      title={<ConsoleBrand onClick={onClose} />}
       closeButtonProps={{ 'aria-label': 'Закрити меню' }}
       classNames={{ content: 'console-mobile-nav', body: 'console-mobile-nav-body' }}
     >

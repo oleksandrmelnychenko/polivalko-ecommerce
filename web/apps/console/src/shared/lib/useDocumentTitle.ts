@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect } from 'react'
 
-const SUFFIX = 'Консоль PoliValko'
+const SUFFIX = 'Консоль Poli-Valko'
 
 function apply(title: string | null | undefined): void {
   document.title = title ? `${title} · ${SUFFIX}` : SUFFIX

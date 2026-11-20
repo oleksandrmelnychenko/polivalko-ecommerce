@@ -906,6 +906,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/product-analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Попит, оборот, повернення, сезонність, прогноз попиту та покриття запасом за товарами */
+        get: operations["ConsoleProductAnalytics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/search": {
         parameters: {
             query?: never;
@@ -2082,6 +2099,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/dntrade-archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleListDnTradeArchive"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/dntrade-archive/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleGetDnTradeArchiveRecord"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/dntrade-archive/{id}/original": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleDownloadDnTradeArchiveOriginal"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/dntrade-archive/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleImportDnTradeArchive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/account/csrf": {
         parameters: {
             query?: never;
@@ -3138,6 +3219,54 @@ export interface components {
             courier: components["schemas"]["CourierSettingsDto"];
             pickup: components["schemas"]["PickupSettingsDto"];
         };
+        DnTradeArchiveDetailDto: {
+            /** Format: uuid */
+            id: string;
+            sourceAccount: string;
+            entityType: string;
+            sourceId: string;
+            sourceDate: null | string;
+            documentType: null | string;
+            organizationId: null | string;
+            storeIds: string[];
+            status: null | string;
+            currency: null | string;
+            /** Format: double */
+            total: null | number;
+            parentSourceId: null | string;
+            /** Format: date-time */
+            importedAt: string;
+        };
+        DnTradeArchiveImportDto: {
+            /** Format: int32 */
+            inserted: number;
+            /** Format: int32 */
+            unchanged: number;
+        };
+        DnTradeArchiveItemDto: {
+            /** Format: uuid */
+            id: string;
+            sourceAccount: string;
+            entityType: string;
+            sourceId: string;
+            sourceDate: null | string;
+            documentType: null | string;
+            organizationId: null | string;
+            storeIds: string[];
+            status: null | string;
+            currency: null | string;
+            /** Format: double */
+            total: null | number;
+        };
+        DnTradeArchivePageDto: {
+            items: components["schemas"]["DnTradeArchiveItemDto"][];
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+        };
         ForgotPasswordRequest: {
             email: null | string;
         };
@@ -3272,6 +3401,8 @@ export interface components {
             /** Format: int32 */
             cancellationStatusId?: null | number;
             cancellationStatusName?: null | string;
+            /** @default true */
+            orderSyncEnabled: boolean;
         };
         NavkoloProductFieldsDto: {
             navkoloId: string;
@@ -3570,6 +3701,138 @@ export interface components {
             status?: null | number;
             detail?: null | string;
             instance?: null | string;
+        };
+        ProductAnalyticsCoverageDto: {
+            /** Format: date */
+            firstSourceDay: null | string;
+            /** Format: date */
+            lastSourceDay: null | string;
+            /** Format: int32 */
+            ignoredDocuments: number;
+            /** Format: int32 */
+            unmatchedLines: number;
+            returnsAvailable: boolean;
+        };
+        ProductAnalyticsDto: {
+            source: string;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            /** Format: date */
+            previousFrom: string;
+            /** Format: date */
+            previousTo: string;
+            coverage: components["schemas"]["ProductAnalyticsCoverageDto"];
+            inventory: components["schemas"]["ProductAnalyticsInventoryDto"];
+            metrics: components["schemas"]["ProductAnalyticsMetricsDto"];
+            trend: components["schemas"]["ProductAnalyticsTrendDto"][];
+            seasonality: null | components["schemas"]["ProductAnalyticsSeasonDto"][];
+            forecast: null | components["schemas"]["ProductAnalyticsForecastDto"];
+            products: components["schemas"]["ProductAnalyticsPageDto"];
+            selectedProduct: null | components["schemas"]["ProductAnalyticsRowDto"];
+            insights: components["schemas"]["ProductAnalyticsInsightDto"][];
+        };
+        ProductAnalyticsForecastDto: {
+            method: string;
+            /** Format: double */
+            validationWape: number;
+            points: components["schemas"]["ProductAnalyticsForecastPointDto"][];
+        };
+        ProductAnalyticsForecastPointDto: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            /** Format: double */
+            soldUnits: number;
+            /** Format: double */
+            low: number;
+            /** Format: double */
+            high: number;
+        };
+        ProductAnalyticsInsightDto: {
+            kind: string;
+            title: string;
+            detail: string;
+            productKey?: null | string;
+        };
+        ProductAnalyticsInventoryDto: {
+            /** Format: int32 */
+            healthyProducts: number;
+            /** Format: int32 */
+            lowStockProducts: number;
+            /** Format: int32 */
+            outOfStockProducts: number;
+            /** Format: double */
+            lowStockThreshold: number;
+        };
+        ProductAnalyticsMetricsDto: {
+            /** Format: double */
+            soldUnits: number;
+            /** Format: double */
+            returnedUnits: number;
+            /** Format: double */
+            grossRevenue: number;
+            /** Format: double */
+            returnValue: number;
+            /** Format: double */
+            netRevenue: number;
+            /** Format: int32 */
+            activeProducts: number;
+            /** Format: double */
+            previousSoldUnits: null | number;
+            /** Format: double */
+            previousNetRevenue: null | number;
+        };
+        ProductAnalyticsPageDto: {
+            items: components["schemas"]["ProductAnalyticsRowDto"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            total: number;
+        };
+        ProductAnalyticsRowDto: {
+            productKey: string;
+            /** Format: uuid */
+            catalogProductId: null | string;
+            name: string;
+            sku: string;
+            /** Format: double */
+            soldUnits: number;
+            /** Format: double */
+            returnedUnits: number;
+            /** Format: double */
+            netRevenue: number;
+            /** Format: double */
+            previousSoldUnits: null | number;
+            /** Format: double */
+            stock: null | number;
+            /** Format: double */
+            stockDays: null | number;
+            abcClass: null | string;
+            /** Format: date */
+            lastSaleDay: null | string;
+        };
+        ProductAnalyticsSeasonDto: {
+            /** Format: int32 */
+            month: number;
+            /** Format: double */
+            index: number;
+        };
+        ProductAnalyticsTrendDto: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            /** Format: double */
+            soldUnits: number;
+            /** Format: double */
+            returnedUnits: number;
+            /** Format: double */
+            netRevenue: number;
         };
         ProductAttributeDto: {
             name: string;
@@ -6397,6 +6660,69 @@ export interface operations {
             };
         };
     };
+    ConsoleProductAnalytics: {
+        parameters: {
+            query?: {
+                source?: string;
+                days?: number;
+                product?: string;
+                search?: string;
+                page?: number;
+                end?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductAnalyticsDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     ConsoleSearch: {
         parameters: {
             query?: {
@@ -9171,7 +9497,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"] | components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unauthorized */
@@ -10609,7 +10935,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"] | components["schemas"]["ProblemDetails"];
                 };
             };
             /** @description Unauthorized */
@@ -10928,6 +11254,247 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleListDnTradeArchive: {
+        parameters: {
+            query?: {
+                sourceAccount?: string;
+                entityType?: string;
+                storeId?: string;
+                from?: string;
+                to?: string;
+                q?: string;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DnTradeArchivePageDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleGetDnTradeArchiveRecord: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DnTradeArchiveDetailDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleDownloadDnTradeArchiveOriginal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleImportDnTradeArchive: {
+        parameters: {
+            query?: {
+                sourceAccount?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/x-ndjson": string;
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DnTradeArchiveImportDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Payload Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unsupported Media Type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

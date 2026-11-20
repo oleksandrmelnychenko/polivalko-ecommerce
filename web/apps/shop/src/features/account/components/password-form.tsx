@@ -7,7 +7,7 @@ import { useFormState } from "../hooks/use-form-state";
 import { FormStatus } from "./form-status";
 import { TextField } from "./text-field";
 
-export function PasswordForm({ email }: { email: string }) {
+export function PasswordForm({ owner, email }: { owner: string; email: string }) {
   const formRef = useRef<HTMLFormElement>(null);
   const form = useFormState(formRef);
 
@@ -16,7 +16,7 @@ export function PasswordForm({ email }: { email: string }) {
     const target = event.currentTarget;
     const data = new FormData(target);
     const result = await form.submit(() =>
-      withAccountCsrf((h) => postChangePassword(h, { currentPassword: String(data.get("currentPassword") ?? ""), newPassword: String(data.get("newPassword") ?? "") })),
+      withAccountCsrf((h) => postChangePassword(h, { currentPassword: String(data.get("currentPassword") ?? ""), newPassword: String(data.get("newPassword") ?? "") }), owner),
     );
     if (result?.response.ok) {
       target.reset();

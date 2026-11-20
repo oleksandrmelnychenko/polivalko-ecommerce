@@ -25,7 +25,7 @@
   align-items: center;
   background: var(--mantine-color-white);
   border: 1px solid rgb(20 28 38 / 8%);
-  border-radius: 12px;
+  border-radius: var(--app-panel-radius);
   color: inherit;
   display: flex;
   font: inherit;
@@ -113,7 +113,7 @@
   align-items: center;
   background: var(--app-chip-neutral-bg);
   border: 1px solid var(--app-chip-neutral-border);
-  border-radius: 14px;
+  border-radius: var(--app-panel-radius);
   color: var(--app-chip-neutral-text);
   display: inline-flex;
   flex: 0 0 auto;
@@ -186,7 +186,7 @@
 .integration-error-card {
   background: var(--app-chip-danger-bg);
   border: 1px solid var(--app-chip-danger-border);
-  border-radius: 14px;
+  border-radius: var(--app-panel-radius);
   flex: 0 0 auto;
   padding: 14px 18px 16px;
 }
@@ -435,7 +435,7 @@
 }
 
 .integration-pre {
-  background: #fafbfa;
+  background: var(--app-ground);
   border: 1px solid var(--mantine-color-gray-2);
   border-radius: 8px;
   font-family: ui-monospace, 'Cascadia Mono', Consolas, 'Courier New', monospace;

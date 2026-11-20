@@ -25,12 +25,14 @@ type SectionLinkProps = {
 function SectionLink({ section, active, badgeOf }: SectionLinkProps) {
   const first = section.items[0]
   if (!first) return null
+  const Icon = first.icon
 
   const total = section.items.reduce((sum, item) => sum + badgeOf(item), 0)
   const tone = section.items.some((item) => item.badgeTone === 'bad' && badgeOf(item) > 0) ? 'bad' : 'hot'
 
   return (
     <Link to={first.path} className={`console-section-pill${active ? ' is-active' : ''}`} aria-current={active ? 'true' : undefined}>
+      <Icon size={18} stroke={1.7} aria-hidden="true" />
       <span>{section.label}</span>
       <NavBadge count={total} tone={tone} />
     </Link>

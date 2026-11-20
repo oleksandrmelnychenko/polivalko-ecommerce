@@ -11,6 +11,7 @@ type CartContextValue = {
   saving: boolean;
   error: string | null;
   cart: ReturnType<typeof getSnapshot>["cart"];
+  owner: ReturnType<typeof getSnapshot>["owner"];
   refresh: () => Promise<void>;
   settled: typeof settledCart;
   lines: CartLine[];

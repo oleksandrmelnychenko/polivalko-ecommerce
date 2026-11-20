@@ -13,7 +13,7 @@ export function useFavorites() {
 
   useEffect(() => {
     if (owner) void loadFavorites(owner);
-    else if (customer.status === "guest") resetFavorites();
+    else resetFavorites();
   }, [owner, customer.status]);
 
   const ready = owner !== null && favorites.owner === owner;

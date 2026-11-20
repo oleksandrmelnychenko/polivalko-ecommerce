@@ -78,6 +78,7 @@ function CheckoutFields({ mailDelivers, phone }: CheckoutFormProps) {
         delivery={checkout.delivery}
         priceNote={checkout.deliveryOption?.priceNote}
         sending={checkout.sending}
+        canConfirm={checkout.canConfirm}
         quantities={checkout.quantities}
         setQuantity={checkout.setQuantity}
         remove={checkout.remove}

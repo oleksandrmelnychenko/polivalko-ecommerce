@@ -40,6 +40,7 @@ public static class ApiEndpoints
         console.MapConsoleStaffEndpoints();
         console.MapConsoleSummaryEndpoints();
         console.MapConsoleDashboardEndpoints();
+        console.MapConsoleProductAnalyticsEndpoints();
         console.MapConsoleSearchEndpoints();
         console.MapConsoleOrderEndpoints();
         console.MapConsoleCustomerEndpoints();
@@ -60,6 +61,7 @@ public static class ApiEndpoints
         console.MapConsolePaymentSettingsEndpoints();
         console.MapConsoleNotificationSettingsEndpoints();
         console.MapConsoleNavkoloSettingsEndpoints();
+        console.MapConsoleDnTradeArchiveEndpoints();
 
         api.MapAccountEndpoints();
         api.MapAccountOrderEndpoints();

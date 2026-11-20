@@ -13,8 +13,13 @@ internal sealed class NavkoloClientFactory(IHttpClientFactory http, DnTradeReque
 
 internal sealed class ConfiguredNavkoloClient(NavkoloSettings settings, NavkoloClientFactory factory, StubNavkoloClient stub) : INavkoloClient
 {
-    private async Task<INavkoloClient> ClientAsync(CancellationToken ct)
+    private async Task<INavkoloClient> ClientAsync(CancellationToken ct, bool requiresOrderSync = false)
     {
+        if (requiresOrderSync && !settings.OrderSyncEnabled)
+        {
+            throw new NavkoloUnavailableException("Обмін замовленнями з Навколо вимкнено.");
+        }
+
         var options = await settings.LoadAsync(ct);
         return options.Mode switch
         {
@@ -25,7 +30,12 @@ internal sealed class ConfiguredNavkoloClient(NavkoloSettings settings, NavkoloC
     }
     public async Task<IReadOnlyList<NavkoloProductRecord>> GetCatalogAsync(CancellationToken ct) => await (await ClientAsync(ct)).GetCatalogAsync(ct);
     public async Task<IReadOnlyList<PriceStockRecord>> GetPriceStockAsync(CancellationToken ct) => await (await ClientAsync(ct)).GetPriceStockAsync(ct);
-    public async Task CancelOrderAsync(Guid orderId, string? reference, CancellationToken ct) => await (await ClientAsync(ct)).CancelOrderAsync(orderId, reference, ct);
-    public async Task<string> SendOrderAsync(NavkoloOrder order, CancellationToken ct) => await (await ClientAsync(ct)).SendOrderAsync(order, ct);
-    public async Task<IReadOnlyList<ExternalOrderState>> GetOrderStatesAsync(CancellationToken ct) => await (await ClientAsync(ct)).GetOrderStatesAsync(ct);
+    public async Task CancelOrderAsync(Guid orderId, string? reference, CancellationToken ct) =>
+        await (await ClientAsync(ct, requiresOrderSync: true)).CancelOrderAsync(orderId, reference, ct);
+
+    public async Task<string> SendOrderAsync(NavkoloOrder order, CancellationToken ct) =>
+        await (await ClientAsync(ct, requiresOrderSync: true)).SendOrderAsync(order, ct);
+
+    public async Task<IReadOnlyList<ExternalOrderState>> GetOrderStatesAsync(CancellationToken ct) =>
+        await (await ClientAsync(ct, requiresOrderSync: true)).GetOrderStatesAsync(ct);
 }

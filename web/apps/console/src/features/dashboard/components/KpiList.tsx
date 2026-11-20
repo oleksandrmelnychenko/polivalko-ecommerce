@@ -5,53 +5,34 @@ import { numberFormat } from '../lib/insights'
 import { DeltaChip } from './DeltaChip'
 
 export function KpiList({ data }: { data: Dashboard }) {
-  const { current: c, previous: p } = data
+  const { current, previous } = data
   const kpis = [
-    {
-      label: 'Виручка',
-      icon: IconWallet,
-      value: <span className="money">{formatMoney(c.revenue)}</span>,
-      delta: <DeltaChip current={Number(c.revenue.value)} previous={Number(p.revenue.value)} />,
-      foot: <>було <span className="money">{formatMoney(p.revenue)}</span></>,
-    },
-    {
-      label: 'Замовлення',
-      icon: IconShoppingBag,
-      value: numberFormat.format(c.orders),
-      delta: <DeltaChip current={c.orders} previous={p.orders} />,
-      foot: c.cancelled ? `скасовано ${c.cancelled}` : `було ${p.orders}`,
-    },
-    {
-      label: 'Середній чек',
-      icon: IconReceipt2,
-      value: <span className="money">{formatMoney(c.averageOrder)}</span>,
-      delta: <DeltaChip current={Number(c.averageOrder.value)} previous={Number(p.averageOrder.value)} />,
-      foot: <>було <span className="money">{formatMoney(p.averageOrder)}</span></>,
-    },
-    {
-      label: 'Покупці',
-      icon: IconUsers,
-      value: numberFormat.format(c.customers),
-      delta: <DeltaChip current={c.customers} previous={p.customers} />,
-      foot: `було ${p.customers}`,
-    },
+    { label: 'Виручка', icon: IconWallet, now: Number(current.revenue.value), before: Number(previous.revenue.value), value: formatMoney(current.revenue), prior: formatMoney(previous.revenue) },
+    { label: 'Замовлення', icon: IconShoppingBag, now: current.orders, before: previous.orders, value: numberFormat.format(current.orders), prior: numberFormat.format(previous.orders) },
+    { label: 'Середній чек', icon: IconReceipt2, now: Number(current.averageOrder.value), before: Number(previous.averageOrder.value), value: formatMoney(current.averageOrder), prior: formatMoney(previous.averageOrder) },
+    { label: 'Покупці', icon: IconUsers, now: current.customers, before: previous.customers, value: numberFormat.format(current.customers), prior: numberFormat.format(previous.customers) },
   ]
 
   return (
-    <ul className="dash-kpis">
-      {kpis.map(({ label, icon: Icon, value, delta, foot }) => (
-        <li key={label} className="dash-kpi">
-          <span className="dash-kpi-label">
-            <Icon size={16} stroke={1.7} aria-hidden="true" />
-            {label}
-          </span>
-          <span className="dash-kpi-value">{value}</span>
-          <span className="dash-kpi-foot">
-            {delta}
-            <span>{foot}</span>
-          </span>
-        </li>
-      ))}
+    <ul className="dash-kpis" aria-label="Показники за період">
+      {kpis.map(({ label, icon: Icon, now, before, value, prior }) => {
+        const scale = Math.max(now, before, 1)
+        return (
+          <li key={label} className="dash-kpi">
+            <span className="dash-kpi-label"><Icon size={16} stroke={1.7} aria-hidden="true" />{label}</span>
+            <div className="dash-kpi-amount">
+              <strong className="dash-kpi-value">{value}</strong>
+              <DeltaChip current={now} previous={before} />
+            </div>
+            <span className="dash-kpi-prior">Попередній період · {prior}</span>
+            <div className="dash-kpi-lines" aria-hidden="true">
+              {[now, before].map((amount, index) => (
+                <span key={index} className="dash-barlist-track"><span className="dash-barlist-fill" style={{ width: `${100 * Math.max(0, amount) / scale}%` }} /></span>
+              ))}
+            </div>
+          </li>
+        )
+      })}
     </ul>
   )
 }

@@ -37,9 +37,14 @@ internal static class NavkoloSettingsEndpoints
     {
         var stored = await settings.ReadAsync(ct);
         // Do not decrypt the saved secret just to display connection metadata.
-        if (stored is not null) return new(stored.Revision, stored.Mode, stored.ProtectedKey is not null, stored.StoreId, stored.StoreName, stored.VerifiedAt, "console", stored.CancellationStatusId, stored.CancellationStatusName);
+        if (stored is not null)
+        {
+            return new(stored.Revision, stored.Mode, stored.ProtectedKey is not null, stored.StoreId, stored.StoreName, stored.VerifiedAt,
+                "console", stored.CancellationStatusId, stored.CancellationStatusName, settings.OrderSyncEnabled);
+        }
+
         var options = await settings.LoadAsync(ct);
-        return new(null, options.Mode, !string.IsNullOrEmpty(options.ApiKey), options.StoreId, null, null, "environment", options.CancellationStatusId);
+        return new(null, options.Mode, !string.IsNullOrEmpty(options.ApiKey), options.StoreId, null, null, "environment", options.CancellationStatusId, OrderSyncEnabled: options.OrderSyncEnabled);
     }
 
     private static async Task<IResult> GetAsync(NavkoloSettings settings, CancellationToken ct) => Results.Ok(await DtoAsync(settings, ct));
@@ -53,11 +58,13 @@ internal static class NavkoloSettingsEndpoints
         if (!ValidKey(request.ApiKey)) return Invalid("apiKey", "Некоректний формат ключа API.");
         try
         {
-            var options = string.IsNullOrEmpty(request.ApiKey) ? await settings.LoadAsync(ct) : new NavkoloOptions { ApiKey = request.ApiKey };
+            var options = string.IsNullOrEmpty(request.ApiKey)
+                ? await settings.LoadAsync(ct)
+                : new NavkoloOptions { ApiKey = request.ApiKey, OrderSyncEnabled = settings.OrderSyncEnabled };
             if (string.IsNullOrEmpty(options.ApiKey)) return Invalid("apiKey", "Вставте ключ API.");
             var client = factory.Create(options);
             var stores = await client.GetStoresAsync(ct);
-            var statuses = await client.GetStatusesAsync(ct);
+            IReadOnlyList<NavkoloStatusDto> statuses = options.OrderSyncEnabled ? await client.GetStatusesAsync(ct) : [];
             return Results.Ok(new CheckNavkoloDto(stores, statuses));
         }
         catch (Exception ex) when (IsConnectionFailure(ex, ct)) { return ConnectionError(); }
@@ -82,15 +89,19 @@ internal static class NavkoloSettingsEndpoints
             if (request.Enabled)
             {
                 if (string.IsNullOrEmpty(key)) return Invalid("apiKey", "Вставте ключ API.");
-                var client = factory.Create(new NavkoloOptions { ApiKey = key });
+                var options = new NavkoloOptions { ApiKey = key, OrderSyncEnabled = settings.OrderSyncEnabled };
+                var client = factory.Create(options);
                 var stores = await client.GetStoresAsync(ct);
                 if (storeId is null && stores.Count == 1) storeId = stores[0].Id;
                 var store = stores.SingleOrDefault(s => s.Id == storeId);
                 if (store is null) return Invalid("storeId", "Оберіть доступний склад Навколо.");
-                var statuses = await client.GetStatusesAsync(ct);
-                var cancellationStatus = statuses.SingleOrDefault(s => s.Id == cancellationStatusId);
-                if (cancellationStatus is null) return Invalid("cancellationStatusId", "Оберіть статус скасування Навколо.");
-                cancellationStatusName = cancellationStatus.Name;
+                if (options.OrderSyncEnabled)
+                {
+                    var statuses = await client.GetStatusesAsync(ct);
+                    var cancellationStatus = statuses.SingleOrDefault(s => s.Id == cancellationStatusId);
+                    if (cancellationStatus is null) return Invalid("cancellationStatusId", "Оберіть статус скасування Навколо.");
+                    cancellationStatusName = cancellationStatus.Name;
+                }
                 storeName = store.Name;
                 verified = time.GetUtcNow();
             }

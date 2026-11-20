@@ -9,7 +9,7 @@ export function OrderHero({ order, printedAt }: { order: ConsoleOrder; printedAt
   return (
     <>
       <p className="order-print-only order-print-stamp">
-        <strong>PoliValko</strong> · накладна для комплектування · надруковано {formatDateTime(printedAt)}
+        <strong>Poli-Valko</strong> · накладна для комплектування · надруковано {formatDateTime(printedAt)}
       </p>
       <section className="order-hero" aria-label={`Замовлення ${order.number}`}>
         <div className="order-hero-main">

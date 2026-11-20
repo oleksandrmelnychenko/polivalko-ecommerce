@@ -192,14 +192,15 @@
 .catalog-card {
   background: var(--mantine-color-white);
   border: 1px solid var(--mantine-color-gray-2);
-  border-radius: 12px;
+  border-radius: var(--app-panel-radius);
+  box-shadow: var(--app-card-shadow);
   box-sizing: border-box;
   min-width: 0;
   padding: 16px;
 }
 
 .catalog-card-muted {
-  background: #fafbfa;
+  background: var(--app-ground);
 }
 
 .catalog-card-title {
@@ -387,7 +388,7 @@
 
 .catalog-drop {
   align-items: center;
-  background: #fafbfa;
+  background: var(--app-ground);
   border: 1.5px dashed var(--mantine-color-gray-4);
   border-radius: 10px;
   display: flex;
@@ -405,7 +406,7 @@
 }
 
 .catalog-drop[data-disabled][data-dragging] {
-  background: #fafbfa;
+  background: var(--app-ground);
   border-color: var(--mantine-color-gray-4);
 }
 
@@ -441,7 +442,7 @@
 
 .catalog-queue-head {
   align-items: center;
-  background: #fafbfa;
+  background: var(--app-ground);
   border-bottom: 1px solid var(--mantine-color-gray-2);
   color: var(--mantine-color-gray-8);
   display: flex;
@@ -705,7 +706,7 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
 }
 
 .catalog-run-table th {
-  background: #fafbfa;
+  background: var(--app-ground);
   color: var(--mantine-color-gray-7);
   font-size: 12px;
   font-weight: 600;
@@ -827,7 +828,7 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
 }
 
 .catalog-tiles-view {
-  background: var(--mantine-color-gray-0);
+  background: var(--app-ground);
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -838,7 +839,7 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
 
 .catalog-tiles-head {
   align-items: center;
-  background: var(--mantine-color-gray-0);
+  background: var(--mantine-color-white);
   border-bottom: 1px solid var(--mantine-color-gray-2);
   display: flex;
   flex: 0 0 auto;
@@ -859,7 +860,7 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
   align-content: start;
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 175px), 1fr));
   list-style: none;
   margin: 0;
   padding: 12px;
@@ -880,18 +881,18 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
 .catalog-tile {
   background: var(--mantine-color-white);
   border: 1px solid var(--mantine-color-gray-2);
-  border-radius: 10px;
+  border-radius: var(--app-panel-radius);
+  box-shadow: var(--app-card-shadow);
   display: flex;
   flex-direction: column;
   min-width: 0;
   position: relative;
-  transition: border-color 200ms ease, box-shadow 300ms ease, transform 300ms ease;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .catalog-tile:not(.is-skeleton):hover {
   border-color: var(--mantine-color-gray-3);
   box-shadow: 0 12px 28px rgb(20 28 38 / 9%);
-  transform: translateY(-2px);
 }
 
 .catalog-tile[data-selected] {
@@ -912,7 +913,7 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
 .catalog-tile-photo {
   aspect-ratio: 1 / 1;
   background: var(--mantine-color-gray-0);
-  border-radius: 8px;
+  border-radius: calc(var(--app-panel-radius) - 8px);
   height: auto;
   margin: 8px 8px 0;
   overflow: hidden;
@@ -1040,6 +1041,7 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
 .catalog-tile-price {
   align-items: center;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   justify-content: space-between;
   margin-top: auto;
@@ -1065,4 +1067,8 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+@media (hover: none) {
+  .catalog-tile-site { opacity: 1; }
 }

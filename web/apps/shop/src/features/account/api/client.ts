@@ -37,13 +37,13 @@ export function deleteAddress(headers: CsrfHeaders, id: string) {
 }
 
 export function getOrders(page: number) {
-  return browserApi.GET("/api/v1/account/orders", { params: { query: { page, pageSize: 10 } } });
+  return browserApi.GET("/api/v1/account/orders", { cache: "no-store", params: { query: { page, pageSize: 10 } } });
 }
 
 export function getOrder(number: string) {
   return Promise.all([
-    browserApi.GET("/api/v1/account/orders/{number}", { params: { path: { number } } }),
-    browserApi.GET("/api/v1/account/orders/{number}/receipts", { params: { path: { number } } }),
+    browserApi.GET("/api/v1/account/orders/{number}", { cache: "no-store", params: { path: { number } } }),
+    browserApi.GET("/api/v1/account/orders/{number}/receipts", { cache: "no-store", params: { path: { number } } }),
   ]);
 }
 

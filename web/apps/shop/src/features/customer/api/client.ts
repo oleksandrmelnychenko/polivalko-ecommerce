@@ -6,7 +6,7 @@ import type { SaveAddressRequest } from "../lib/types";
 type S = components["schemas"];
 
 export function getMe() {
-  return browserApi.GET("/api/v1/account/me");
+  return browserApi.GET("/api/v1/account/me", { cache: "no-store" });
 }
 
 export function postLogin(headers: CsrfHeaders, body: S["CustomerLoginRequest"]) {
@@ -22,7 +22,7 @@ export function postLogout(headers: CsrfHeaders) {
 }
 
 export function getAddresses() {
-  return browserApi.GET("/api/v1/account/addresses");
+  return browserApi.GET("/api/v1/account/addresses", { cache: "no-store" });
 }
 
 export function postAddress(headers: CsrfHeaders, body: SaveAddressRequest) {

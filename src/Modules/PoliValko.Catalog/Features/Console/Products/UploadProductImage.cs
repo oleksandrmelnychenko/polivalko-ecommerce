@@ -61,7 +61,7 @@ internal static class UploadProductImage
         product.UpdatedAt = now;
         audit.Record("catalog.product_image_added", "Product", product.Sku, new { image.Url });
         await db.SaveChangesAsync(ct);
-        await storefront.InvalidateAsync(ConsoleProductQueries.ProductTags(product.Slug), ct);
+        await storefront.InvalidateAsync(ConsoleProductQueries.ProductTags, ct);
 
         return TypedResults.Ok(await ConsoleProductQueries.ToDtoAsync(db, product, time.GetUtcNow(), ct));
     }

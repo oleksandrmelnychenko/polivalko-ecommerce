@@ -8,13 +8,13 @@ namespace PoliValko.Ordering.Features.Reporting;
 
 internal sealed class ProductSalesSource(PoliValkoDbContext db) : IProductSalesSource
 {
-    private static readonly OrderStatus[] Sold =
+    internal static readonly OrderStatus[] SoldStatuses =
         [OrderStatus.Confirmed, OrderStatus.Paid, OrderStatus.Shipped, OrderStatus.ReadyForPickup, OrderStatus.Completed];
 
     public async Task<IReadOnlyList<ProductSalesCount>> TopSinceAsync(DateTimeOffset from, int take, CancellationToken ct)
     {
         var top = await db.Set<Order>().AsNoTracking()
-            .Where(o => o.CreatedAt >= from && Sold.Contains(o.Status))
+            .Where(o => o.CreatedAt >= from && SoldStatuses.Contains(o.Status))
             .SelectMany(o => o.Items)
             .GroupBy(i => i.ProductId)
             .Select(g => new { ProductId = g.Key, Orders = g.Select(i => i.OrderId).Distinct().Count(), Quantity = g.Sum(i => i.Quantity) })

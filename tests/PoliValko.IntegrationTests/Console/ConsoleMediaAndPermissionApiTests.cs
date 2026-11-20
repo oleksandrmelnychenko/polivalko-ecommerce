@@ -39,7 +39,7 @@ public sealed class ConsoleMediaAndPermissionApiTests(ApiFactory api)
     {
         var admin = await Staff.AdminAsync(api);
         var catalog = await admin.ReadAsync<PermissionCatalogDto>("/api/v1/console/permissions/catalog");
-        catalog.Version.ShouldBe("2026-11-08.1");
+        catalog.Version.ShouldBe(PermissionCatalog.Version);
         var byKey = catalog.Permissions.ToDictionary(p => p.Key);
         foreach (var (key, section) in new[]
                  {

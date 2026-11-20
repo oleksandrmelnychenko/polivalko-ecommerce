@@ -57,7 +57,7 @@ internal static class SetProductsVisibility
 
         audit.Record("catalog.products_visibility_changed", "Product", null, new { visible, skus = changed.Select(p => p.Sku).ToList() });
         await db.SaveChangesAsync(ct);
-        await storefront.InvalidateAsync(ConsoleProductQueries.ProductTags([.. changed.Select(p => p.Slug)]), ct);
+        await storefront.InvalidateAsync(ConsoleProductQueries.ProductTags, ct);
 
         return TypedResults.Ok(new SetProductsVisibilityResult(changed.Count));
     }

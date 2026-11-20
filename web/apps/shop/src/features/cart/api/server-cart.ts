@@ -1,36 +1,32 @@
-import { withAccountCsrf, type CsrfHeaders } from "@/features/customer";
-import type { CreateOrderRequest, Quote } from "@polivalko/shared/api/types";
-import type { Problem } from "@polivalko/shared/api/problem";
-
+import { withAccountCsrf } from "@/features/customer";
+import { browserApi } from "@polivalko/shared/api/browser";
 import type { components } from "@polivalko/shared/api/schema";
-type OrderCreated = components["schemas"]["OrderCreatedDto"];
+import type { CreateOrderRequest } from "@polivalko/shared/api/types";
 
-export type ServerCart = { id: string; revision: number; items: Quote["items"]; lastOrder: OrderCreated | null };
-async function request<T>(path: string, method: string, headers: CsrfHeaders, body?: unknown) {
-  let response: Response;
-  let value: unknown;
-  try {
-    response = await fetch(path, { method, credentials: "same-origin", cache: "no-store", headers: { ...headers, "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
-  } catch {
-    throw new Error("Немає зв'язку з сервером. Перевірте інтернет і спробуйте ще раз.");
-  }
-  try {
-    value = await response.json();
-  } catch {
-    throw new Error("Сервер тимчасово недоступний. Спробуйте ще раз за хвилину.");
-  }
-  return { response, data: response.ok ? value as T : undefined, error: response.ok ? undefined : value as Problem };
-}
-export async function openCart(): Promise<ServerCart> {
-  const result = await withAccountCsrf((headers) => request<ServerCart>("/api/v1/cart/open", "POST", headers));
-  if (!result.data) throw new Error(result.error?.detail ?? "Не вдалося завантажити кошик.");
+export type ServerCart = components["schemas"]["ServerCartDto"];
+
+export async function openCart(owner: string | null): Promise<ServerCart> {
+  const result = await withAccountCsrf((headers) => browserApi.POST("/api/v1/cart/open", { headers, cache: "no-store" }), owner);
+  if (!result.data) throw new Error("Не вдалося завантажити кошик.");
   return result.data;
 }
-export async function saveCart(cart: ServerCart, items: { productId: string; quantity: number }[]): Promise<ServerCart> {
-  const result = await withAccountCsrf((headers) => request<ServerCart>("/api/v1/cart/", "PUT", headers, { cartId: cart.id, revision: cart.revision, items }));
+
+export async function saveCart(cart: ServerCart, items: { productId: string; quantity: number }[], owner: string | null): Promise<ServerCart> {
+  const result = await withAccountCsrf((headers) => browserApi.PUT("/api/v1/cart", {
+    headers,
+    cache: "no-store",
+    body: { cartId: cart.id, revision: cart.revision, items },
+  }).catch(() => {
+    throw new Error("Не вдалося зв’язатися із сервером. Спробуйте ще раз.");
+  }), owner);
   if (!result.data) throw new Error(result.error?.detail ?? "Не вдалося зберегти кошик.");
   return result.data;
 }
+
 export function checkoutCart(cart: ServerCart, order: CreateOrderRequest) {
-  return withAccountCsrf((headers) => request<OrderCreated>("/api/v1/cart/checkout", "POST", headers, { cartId: cart.id, revision: cart.revision, order }));
+  return withAccountCsrf((headers) => browserApi.POST("/api/v1/cart/checkout", {
+    headers,
+    cache: "no-store",
+    body: { cartId: cart.id, revision: cart.revision, order },
+  }));
 }

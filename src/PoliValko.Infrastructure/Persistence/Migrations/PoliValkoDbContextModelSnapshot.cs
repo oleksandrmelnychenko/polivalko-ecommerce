@@ -2156,6 +2156,107 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     b.ToTable("sync_states", "integration");
                 });
 
+            modelBuilder.Entity("PoliValko.Navkolo.Features.SalesArchive.DnTradeArchiveRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Currency")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("currency");
+
+                    b.Property<string>("DocumentType")
+                        .HasMaxLength(96)
+                        .HasColumnType("character varying(96)")
+                        .HasColumnName("document_type");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("entity_type");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("fingerprint");
+
+                    b.Property<DateTimeOffset>("ImportedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("imported_at");
+
+                    b.Property<string>("OrganizationId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("ParentSourceId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("parent_source_id");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("payload");
+
+                    b.Property<string>("SourceAccount")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("source_account");
+
+                    b.Property<string>("SourceDate")
+                        .HasMaxLength(48)
+                        .HasColumnType("character varying(48)")
+                        .HasColumnName("source_date");
+
+                    b.Property<DateOnly?>("SourceDay")
+                        .HasColumnType("date")
+                        .HasColumnName("source_day");
+
+                    b.Property<string>("SourceId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("source_id");
+
+                    b.Property<string>("Status")
+                        .HasMaxLength(96)
+                        .HasColumnType("character varying(96)")
+                        .HasColumnName("status");
+
+                    b.PrimitiveCollection<string[]>("StoreIds")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("store_ids");
+
+                    b.Property<decimal?>("Total")
+                        .HasColumnType("numeric")
+                        .HasColumnName("total");
+
+                    b.HasKey("Id")
+                        .HasName("pk_dntrade_archive_records");
+
+                    b.HasIndex("StoreIds")
+                        .HasDatabaseName("ix_dntrade_archive_records_store_ids");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("StoreIds"), "gin");
+
+                    b.HasIndex("SourceDay", "Id")
+                        .HasDatabaseName("ix_dntrade_archive_records_source_day_id");
+
+                    b.HasIndex("SourceAccount", "SourceId", "EntityType")
+                        .IsUnique()
+                        .HasDatabaseName("ix_dntrade_archive_records_source_account_source_id_entity_type");
+
+                    b.ToTable("dntrade_archive_records", "integration");
+                });
+
             modelBuilder.Entity("PoliValko.Ordering.Domain.Order", b =>
                 {
                     b.Property<Guid>("Id")

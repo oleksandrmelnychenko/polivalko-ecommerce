@@ -180,7 +180,7 @@ Staging і production можуть працювати на одному серв
    docker compose build                # образи polivalko-*:APP_VERSION
    docker compose run --rm migrate     # міграції БД окремим кроком; має завершитися кодом 0
    docker compose up -d
-   docker compose ps                   # postgres, web, console, caddy, backup — healthy; api, worker — running
+   docker compose ps                   # postgres, web, console, product-analytics, caddy, backup — healthy; api, worker — running
    ```
 
 5. **Перевірка.** `curl -fsS https://example.ua/health/ready` повертає `Healthy`; відкрийте вітрину,
@@ -384,11 +384,13 @@ docker compose exec backup bash /opt/backup/restore-test.sh <файл>      # к
   не з того самого сервера: `https://example.ua/health/ready` кожні 1–5 хв (очікувати `Healthy`), головна сторінка `/`
   (перевіряє Next.js разом з API), `https://console.example.ua/login` (консоль; це статичні файли, тож перевіряє лише
   Caddy й контейнер `console`, а API — `/health/ready`), строк дії обох сертифікатів. Сповіщення — відповідальному за email і Telegram.
-- **Стан контейнерів:** `docker compose ps`. Healthcheck є в `postgres`, `web`, `console`, `caddy`, `backup`, `backup-offsite`;
+- **Стан контейнерів:** `docker compose ps`. Healthcheck є в `postgres`, `web`, `console`, `product-analytics`, `caddy`, `backup`, `backup-offsite`;
   образи .NET не містять curl/wget, тож `api` перевіряє зовнішній монітор, а `worker` — журнали й тривоги.
   Довгоживучі сервіси мають `restart: unless-stopped` і піднімаються після перезавантаження сервера.
-- **Журнали:** `docker compose logs -f --since 1h api worker`, пошук помилок:
-  `docker compose logs --since 24h api worker | grep -iE "fail|error|exception"`. Ротація — 5 файлів по 10 МБ на контейнер.
+- Python-сервіс `product-analytics` доступний API через внутрішню мережу Compose. Якщо сервіс не відповідає,
+  розділ товарної аналітики повертає `503`, а `/health/ready` API далі перевіряє PostgreSQL.
+- **Журнали:** `docker compose logs -f --since 1h api worker product-analytics`, пошук помилок:
+  `docker compose logs --since 24h api worker product-analytics | grep -iE "fail|error|exception"`. Ротація — 5 файлів по 10 МБ на контейнер.
 - **Тривоги в Telegram:** з `TELEGRAM_BOT_TOKEN` застосунок надсилає в чати з «Налаштування → Сповіщення» (або в
   `TELEGRAM_CHAT_ID`, якщо там порожньо) нові замовлення й заявки, а також тривоги про збої інтеграцій (синхронізація
   з Navkolo, оплата, фіскалізація, Нова пошта, вичерпані повтори outbox). Без токена повідомлення лише пишуться в

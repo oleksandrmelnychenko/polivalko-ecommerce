@@ -8,7 +8,7 @@ import { postOrderPayment } from "../api/client";
 
 const BEFORE_HANDOVER: OrderStatus[] = ["new", "awaitingConfirmation", "confirmed", "awaitingPayment", "paid"];
 
-export function OrderPayment({ order, returned, reload }: { order: Order; returned: boolean; reload: () => void }) {
+export function OrderPayment({ owner, order, returned, reload }: { owner: string; order: Order; returned: boolean; reload: () => void }) {
   if (returned && order.paymentStatus === "succeeded" && BEFORE_HANDOVER.includes(order.status))
     return (
       <p className="notice notice--ok" role="status">
@@ -22,7 +22,7 @@ export function OrderPayment({ order, returned, reload }: { order: Order; return
       number={order.number}
       failed={order.paymentStatus === "failed"}
       amount={formatMoney(order.total)}
-      start={() => withAccountCsrf((h) => postOrderPayment(h, order.number))}
+      start={() => withAccountCsrf((h) => postOrderPayment(h, order.number), owner)}
     />
   );
   if (returned && order.paymentStatus === "pending") return <PaymentPending onRefresh={reload}>{payButton}</PaymentPending>;

@@ -15,9 +15,10 @@ import { StateBox } from "./state-box";
 const LIMIT = 10;
 
 export function AddressesScreen() {
-  const { data, loading, failed, reload } = useAccountData("addresses", getAddresses);
+  const { owner, data, loading, failed, reload } = useAccountData("addresses", getAddresses);
   const [editing, setEditing] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>(null);
+  if (!owner) return null;
   const list = data ?? [];
   const canAdd = !loading && !failed && editing === null && list.length < LIMIT;
 
@@ -44,7 +45,7 @@ export function AddressesScreen() {
       <CabinetHead title="Мої адреси">{canAdd && list.length > 0 && addButton}</CabinetHead>
       <FormStatus status={status} />
       {editing && (
-        <AddressForm key={editing} address={list.find((a) => a.id === editing)} first={list.length === 0} onDone={done} onCancel={() => setEditing(null)} />
+        <AddressForm key={editing} owner={owner} address={list.find((a) => a.id === editing)} first={list.length === 0} onDone={done} onCancel={() => setEditing(null)} />
       )}
       {loading ? (
         <RowsSkeleton count={2} />
@@ -69,7 +70,7 @@ export function AddressesScreen() {
       ) : (
         <ul className="address-cards">
           {list.map((a) => (
-            <AddressCard key={a.id} address={a} onEdit={() => start(a.id)} onChanged={done} locked={editing !== null} />
+            <AddressCard key={a.id} owner={owner} address={a} onEdit={() => start(a.id)} onChanged={done} locked={editing !== null} />
           ))}
         </ul>
       )}

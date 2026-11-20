@@ -1,29 +1,30 @@
 import { memo, type CSSProperties } from 'react'
 import { Table } from '@mantine/core'
-import { flexRender, type Cell, type Column, type Row, type Table as TableInstance } from '@tanstack/react-table'
+import { flexRender, type Cell, type Column, type Row, type RowData, type Table as TableInstance } from '@tanstack/react-table'
+import type { DataTableFeatures } from './dataTableFeatures'
 import { hasTextSelectionWithin, isInteractiveTarget } from './dataTableRowInteraction'
 import type { DataTableColumnMeta } from './types'
 
 const SKELETON_ROW_COUNT = 10
 const SKELETON_LINE_WIDTHS = ['78%', '62%', '46%', '70%', '54%', '84%', '58%', '38%'] as const
 
-type DataTableBodyProps<TData> = {
+type DataTableBodyProps<TData extends RowData> = {
   columnWidths: ReadonlyMap<string, number>
   fillerColumnWidth: number
   fillColumnId?: string
   isLoading: boolean
   selected?: ReadonlySet<string>
-  table: TableInstance<TData>
+  table: TableInstance<DataTableFeatures, TData>
   onRowClick?: (row: TData) => void
   rowClassName?: (row: TData) => string | undefined
 }
 
-type DataTableBodyRowProps<TData> = {
+type DataTableBodyRowProps<TData extends RowData> = {
   columnWidths: ReadonlyMap<string, number>
   fillerColumnWidth: number
   fillColumnId?: string
   isSelected: boolean
-  row: Row<TData>
+  row: Row<DataTableFeatures, TData>
   onRowClick?: (row: TData) => void
   rowClassName?: (row: TData) => string | undefined
 }
@@ -34,7 +35,7 @@ function cellClassName(meta?: DataTableColumnMeta): string {
     .join(' ')
 }
 
-function cellStyle<TData>(column: Column<TData, unknown>, width: number, fillColumnId?: string): CSSProperties {
+function cellStyle<TData extends RowData>(column: Column<DataTableFeatures, TData, unknown>, width: number, fillColumnId?: string): CSSProperties {
   const meta = column.columnDef.meta as DataTableColumnMeta | undefined
   return {
     width,
@@ -44,8 +45,8 @@ function cellStyle<TData>(column: Column<TData, unknown>, width: number, fillCol
   }
 }
 
-function DataTableBodyRowInner<TData>({ columnWidths, fillerColumnWidth, fillColumnId, isSelected, row, onRowClick, rowClassName }: DataTableBodyRowProps<TData>) {
-  function renderCell(cell: Cell<TData, unknown>) {
+function DataTableBodyRowInner<TData extends RowData>({ columnWidths, fillerColumnWidth, fillColumnId, isSelected, row, onRowClick, rowClassName }: DataTableBodyRowProps<TData>) {
+  function renderCell(cell: Cell<DataTableFeatures, TData, unknown>) {
     const meta = cell.column.columnDef.meta as DataTableColumnMeta | undefined
     return (
       <Table.Td key={cell.id} className={cellClassName(meta)} style={cellStyle(cell.column, columnWidths.get(cell.column.id) ?? cell.column.getSize(), fillColumnId)}>
@@ -79,7 +80,7 @@ function DataTableBodyRowInner<TData>({ columnWidths, fillerColumnWidth, fillCol
 
 const DataTableBodyRow = memo(DataTableBodyRowInner) as typeof DataTableBodyRowInner
 
-export function DataTableBody<TData>({ columnWidths, fillerColumnWidth, fillColumnId, isLoading, selected, table, onRowClick, rowClassName }: DataTableBodyProps<TData>) {
+export function DataTableBody<TData extends RowData>({ columnWidths, fillerColumnWidth, fillColumnId, isLoading, selected, table, onRowClick, rowClassName }: DataTableBodyProps<TData>) {
   if (isLoading) {
     const columns = table.getVisibleLeafColumns()
     return (

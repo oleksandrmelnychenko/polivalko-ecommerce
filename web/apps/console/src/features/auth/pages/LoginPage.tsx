@@ -1,14 +1,18 @@
-import { Alert, Button, PasswordInput, Stack, TextInput } from '@mantine/core'
-import { IconAlertCircle, IconArrowLeft, IconArrowRight } from '@tabler/icons-react'
+import { Button, PasswordInput, Stack, TextInput } from '@mantine/core'
+import { IconAlertCircle, IconArrowLeft, IconArrowRight, IconKey, IconWifiOff } from '@tabler/icons-react'
+import Image from 'next/image'
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useDocumentTitle } from '@/shared/lib/useDocumentTitle'
 import { TwoFactorCodeInput } from '../components/TwoFactorCodeInput'
+import { invalidCodeMessage, lockedOutMessage } from '../lib/loginErrors'
 import { consumeReturnPath, sanitizeReturnPath, toPath, type ReturnLocation } from '../lib/authReturnPath'
 import { useAuth } from '../useAuth'
 import './login.css'
 
 type LoginLocationState = { from?: ReturnLocation } | null
+const emailRequired = 'Введіть електронну пошту.'
+const passwordRequired = 'Введіть пароль.'
 
 export function LoginPage() {
   const { status, reconnecting, login } = useAuth()
@@ -38,7 +42,7 @@ export function LoginPage() {
         return
       }
     } else {
-      const missing = { email: email.trim() ? undefined : 'Вкажіть email.', password: password ? undefined : 'Вкажіть пароль.' }
+      const missing = { email: email.trim() ? undefined : emailRequired, password: password ? undefined : passwordRequired }
       setFieldError(missing)
       if (missing.email || missing.password) return
     }
@@ -76,22 +80,37 @@ export function LoginPage() {
     setRecovery((current) => !current)
     setCode('')
     setFieldError({})
+    setError(null)
+  }
+
+  function clearFeedback(field: keyof typeof fieldError) {
+    if (fieldError[field]) setFieldError((current) => ({ ...current, [field]: undefined }))
+    if (error) setError(null)
   }
 
   return (
     <main className="login-page">
       <div className="login-content">
-        <header className="login-brand">
-          <span className="login-wordmark" translate="no">
-            PoliValko
-          </span>
-          <span className="login-badge">консоль</span>
+        <header className="login-brand-panel">
+          <div className="login-brand" translate="no">
+            <Image className="login-brand-mascot" src="/mascot/poli-valka-poster.png" width={125} height={200} alt="" unoptimized />
+            <span className="login-wordmark">
+              <strong>Poli-Valko</strong>
+              <span>Дім · сад · город</span>
+            </span>
+          </div>
+          <div className="login-orbit" aria-hidden="true">
+            {Array.from({ length: 23 }, (_, index) => (
+              <i key={index} style={{ transform: `rotate(${index * 5 - 55}deg) scale(${1 - index * .017})` }} />
+            ))}
+          </div>
+          <p className="login-panel-title">Консоль<br />працівників<span aria-hidden="true">.</span></p>
         </header>
 
         <section className="login-card" aria-labelledby="login-title">
           <div className="login-heading">
-            <h1 id="login-title">{codeStep ? 'Підтвердження входу' : 'Вхід для працівників'}</h1>
-            <p>{codeStep ? `Для ${email.trim()} увімкнено двофакторну перевірку.` : 'Замовлення, каталог, контент і стан інтеграцій магазину.'}</p>
+            <h1 id="login-title">{codeStep ? 'Підтвердження входу' : 'Вхід'}</h1>
+            <p>{codeStep ? `Для ${email.trim()} увімкнено двофакторну перевірку.` : 'Введіть робочу пошту та пароль.'}</p>
           </div>
 
           <form noValidate aria-busy={busy} onSubmit={submit}>
@@ -105,11 +124,12 @@ export function LoginPage() {
                     value={code}
                     recovery={recovery}
                     error={fieldError.code}
+                    errorSpace={invalidCodeMessage}
                     disabled={busy}
                     autoFocus
                     onChange={(value) => {
                       setCode(value)
-                      setFieldError({})
+                      clearFeedback('code')
                     }}
                   />
                   <Button variant="subtle" size="compact-sm" className="login-switch" disabled={busy} onClick={switchCodeKind}>
@@ -119,38 +139,39 @@ export function LoginPage() {
               ) : (
                 <>
                   <TextInput
-                    label="Email"
+                    label="Електронна пошта"
                     name="email"
                     type="email"
+                    placeholder="name@example.com"
                     autoComplete="username"
                     autoCapitalize="none"
                     spellCheck={false}
                     value={email}
                     error={fieldError.email}
+                    wrapperProps={{ 'data-error-space': emailRequired }}
                     disabled={busy}
-                    onChange={(event) => setEmail(event.currentTarget.value)}
+                    onChange={(event) => {
+                      setEmail(event.currentTarget.value)
+                      clearFeedback('email')
+                    }}
                     data-autofocus
                   />
                   <PasswordInput
                     label="Пароль"
                     name="password"
+                    visibilityToggleButtonProps={{ 'aria-label': 'Показати або приховати пароль' }}
                     autoComplete="current-password"
                     value={password}
                     error={fieldError.password}
+                    wrapperProps={{ 'data-error-space': passwordRequired }}
                     disabled={busy}
-                    onChange={(event) => setPassword(event.currentTarget.value)}
+                    onChange={(event) => {
+                      setPassword(event.currentTarget.value)
+                      clearFeedback('password')
+                    }}
                   />
                 </>
               )}
-              {error ? (
-                <Alert className="login-alert" color="red" variant="light" icon={<IconAlertCircle size={18} />} role="alert">
-                  {error}
-                </Alert>
-              ) : reconnecting ? (
-                <Alert className="login-alert" color="yellow" variant="light" icon={<IconAlertCircle size={18} />} role="status">
-                  Сервер не відповідає. Пробуємо з&apos;єднатися ще раз…
-                </Alert>
-              ) : null}
               <Button
                 className="login-submit"
                 type="submit"
@@ -169,7 +190,22 @@ export function LoginPage() {
             </Stack>
           </form>
 
-          <p className="login-help">Доступ видає працівник з роллю «Адміністратор».</p>
+          <div className="login-feedback-slot">
+            <span className="login-feedback-measure" aria-hidden="true">{lockedOutMessage}</span>
+            {error ? (
+              <p className="login-feedback" role="alert">
+                <IconAlertCircle size={17} stroke={1.7} aria-hidden="true" />
+                {error}
+              </p>
+            ) : reconnecting ? (
+              <p className="login-feedback" role="status">
+                <IconWifiOff size={17} stroke={1.7} aria-hidden="true" />
+                Сервер не відповідає. Пробуємо з&apos;єднатися ще раз…
+              </p>
+            ) : (
+              <p className="login-help"><IconKey size={16} stroke={1.6} aria-hidden="true" />Доступ надає адміністратор магазину.</p>
+            )}
+          </div>
         </section>
       </div>
     </main>

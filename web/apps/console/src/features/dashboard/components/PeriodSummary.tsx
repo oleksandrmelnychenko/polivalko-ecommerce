@@ -1,32 +1,28 @@
-import { formatMoney } from '@polivalko/shared/lib/format'
+import { IconSparkles } from '@tabler/icons-react'
+import { formatMoney, plural } from '@polivalko/shared/lib/format'
 import type { Dashboard } from '../api/dashboardApi'
 import { bestDay, numberFormat } from '../lib/insights'
-import { DashboardCard } from './DashboardCard'
-import { DeltaChip } from './DeltaChip'
 
 export function PeriodSummary({ data }: { data: Dashboard }) {
-  const { current: c, previous: p } = data
+  const { current, previous } = data
   const strongest = bestDay(data)
+  const orders = plural(current.orders, 'замовлення', 'замовлення', 'замовлень')
+
   return (
-    <DashboardCard title="Підсумок періоду">
-      <dl className="dash-summary">
-        <dt>Виручка</dt>
-        <dd>
-          <strong className="app-money">{formatMoney(c.revenue)}</strong>
-        </dd>
-        <dt>Замовлень</dt>
-        <dd>{numberFormat.format(c.orders)}</dd>
-        <dt>Скасовано</dt>
-        <dd>
-          {numberFormat.format(c.cancelled)} <DeltaChip current={c.cancelled} previous={p.cancelled} inverse />
-        </dd>
-        <dt>Середній чек</dt>
-        <dd><span className="money">{formatMoney(c.averageOrder)}</span></dd>
-        <dt>Покупців</dt>
-        <dd>{numberFormat.format(c.customers)}</dd>
-        <dt>Найкращий день</dt>
-        <dd>{strongest ? <>{strongest.date}, <span className="money">{formatMoney(strongest.revenue)}</span></> : '—'}</dd>
-      </dl>
-    </DashboardCard>
+    <section className="dash-feature-card dash-period">
+      <h2><IconSparkles aria-hidden="true" />Підсумок періоду</h2>
+      <p className="dash-period-copy">
+        {current.orders > 0 ? (
+          <>За період надійшло <strong>{numberFormat.format(current.orders)} {orders}</strong>.</>
+        ) : (
+          <>За цей період <strong>замовлень немає</strong>.</>
+        )}
+        {' '}Виручка — <strong>{formatMoney(current.revenue)}</strong>.
+        {strongest && <> Найбільше за день — <strong>{formatMoney(strongest.revenue)}</strong> ({strongest.date}).</>}
+        {(current.cancelled > 0 || previous.cancelled > 0) && <> Скасовано <strong>{numberFormat.format(current.cancelled)}</strong>, раніше — {numberFormat.format(previous.cancelled)}.</>}
+      </p>
+      <footer><span />Останні {data.days} днів</footer>
+      <div className="dash-period-matrix" aria-hidden="true" />
+    </section>
   )
 }

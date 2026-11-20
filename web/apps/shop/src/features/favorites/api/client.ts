@@ -2,11 +2,11 @@ import type { CsrfHeaders } from "@/features/customer";
 import { browserApi } from "@polivalko/shared/api/browser";
 
 export function getFavoriteIds() {
-  return browserApi.GET("/api/v1/account/favorites/ids");
+  return browserApi.GET("/api/v1/account/favorites/ids", { cache: "no-store" });
 }
 
 export function getFavoriteProducts() {
-  return browserApi.GET("/api/v1/account/favorites");
+  return browserApi.GET("/api/v1/account/favorites", { cache: "no-store" });
 }
 
 export function putFavorite(headers: CsrfHeaders, productId: string) {

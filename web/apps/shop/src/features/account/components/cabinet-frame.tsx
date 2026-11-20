@@ -27,7 +27,7 @@ export function CabinetFrame({ mailDelivers, children }: { mailDelivers: boolean
   async function logout() {
     leaving.current = true;
     setLogoutFailed(false);
-    if (await signOut()) {
+    if (await signOut(me?.id ?? null)) {
       router.replace("/");
       return;
     }
@@ -57,7 +57,7 @@ export function CabinetFrame({ mailDelivers, children }: { mailDelivers: boolean
               Не вдалося вийти. Спробуйте ще раз.
             </p>
           )}
-          {me && !me.emailConfirmed && <ConfirmBanner email={me.email} mailDelivers={mailDelivers} />}
+          {me && !me.emailConfirmed && <ConfirmBanner key={me.id} owner={me.id} email={me.email} mailDelivers={mailDelivers} />}
           {children}
         </div>
       </div>

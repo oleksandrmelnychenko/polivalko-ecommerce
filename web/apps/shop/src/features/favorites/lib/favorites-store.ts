@@ -28,16 +28,16 @@ export function subscribeFavorites(listener: () => void) {
 export function loadFavorites(owner: string): Promise<boolean> {
   if (state.owner === owner) return Promise.resolve(true);
   if (loading?.owner === owner) return loading.promise;
-  const promise = withActiveSession(getFavoriteIds)
+  const promise: Promise<boolean> = withActiveSession(getFavoriteIds, owner)
     .then(({ data }) => {
-      if (loading?.owner !== owner) return false;
+      if (loading?.promise !== promise) return false;
       loading = null;
       if (!data) return false;
       set({ owner, ids: new Set(data) });
       return true;
     })
     .catch(() => {
-      if (loading?.owner === owner) loading = null;
+      if (loading?.promise === promise) loading = null;
       return false;
     });
   loading = { owner, promise };
@@ -57,21 +57,31 @@ function withId(ids: ReadonlySet<string>, id: string, on: boolean) {
 }
 
 export async function toggleFavorite(id: string, owner: string): Promise<boolean> {
-  if (busy.has(id)) return true;
-  busy.add(id);
+  const key = `${owner}:${id}`;
+  if (busy.has(key)) return true;
+  busy.add(key);
   try {
-    if (state.owner !== owner && !(await loadFavorites(owner))) return false;
-    if (state.owner !== owner) return false;
-    const on = !state.ids.has(id);
-    set({ owner, ids: withId(state.ids, id, on) });
-    let ok = false;
-    try {
-      const { response } = await withAccountCsrf((h) => (on ? putFavorite(h, id) : deleteFavorite(h, id)));
-      ok = response.ok;
-    } catch {}
-    if (!ok && state.owner === owner) set({ owner, ids: withId(state.ids, id, !on) });
-    return ok;
+    const result = await withActiveSession(async (assertActive) => {
+      if (state.owner !== owner && !(await loadFavorites(owner))) throw new Error("Не вдалося завантажити обране.");
+      assertActive();
+      const on = !state.ids.has(id);
+      set({ owner, ids: withId(state.ids, id, on) });
+      let ok = false;
+      try {
+        const response = await withAccountCsrf((h) => (on ? putFavorite(h, id) : deleteFavorite(h, id)), owner);
+        ok = response.response.ok;
+        return response;
+      } finally {
+        if (!ok) {
+          assertActive();
+          if (state.owner === owner) set({ owner, ids: withId(state.ids, id, !on) });
+        }
+      }
+    }, owner);
+    return result.response.ok;
+  } catch {
+    return false;
   } finally {
-    busy.delete(id);
+    busy.delete(key);
   }
 }

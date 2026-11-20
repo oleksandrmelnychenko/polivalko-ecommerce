@@ -9,6 +9,7 @@ using PoliValko.Navkolo.Contracts;
 using PoliValko.Navkolo.Features.CatalogImport;
 using PoliValko.Navkolo.Features.Freshness;
 using PoliValko.Navkolo.Features.OrderExport;
+using PoliValko.Navkolo.Features.SalesArchive;
 using PoliValko.Navkolo.Features.Settings;
 using PoliValko.Navkolo.Integrations.NavkoloApi;
 using PoliValko.Navkolo.Jobs;
@@ -28,6 +29,8 @@ public static class NavkoloModule
             .Validate(o => o.ApiKey.Length <= 2048 && !o.ApiKey.Any(char.IsControl), "Invalid Navkolo API key format.")
             .ValidateOnStart();
         services.AddSingleton<DnTradeRequestGate>();
+        services.AddModelConfigurator<DnTradeArchiveModel>();
+        services.AddScoped<IDnTradeProductSales, DnTradeProductSales>();
         services.AddHttpClient("DNTrade", client =>
         {
             client.BaseAddress = new Uri("https://api.dntrade.com.ua/");
@@ -55,6 +58,8 @@ public static class NavkoloModule
             .AddHostedService<NavkoloCatalogJob>();
 
     public static RouteGroupBuilder MapConsoleNavkoloSettingsEndpoints(this RouteGroupBuilder console) => NavkoloSettingsEndpoints.Map(console);
+
+    public static RouteGroupBuilder MapConsoleDnTradeArchiveEndpoints(this RouteGroupBuilder console) => DnTradeArchiveEndpoints.Map(console);
 
     public static RouteGroupBuilder MapConsoleCatalogImportEndpoints(this RouteGroupBuilder console) =>
         CatalogImportEndpoints.Map(console);

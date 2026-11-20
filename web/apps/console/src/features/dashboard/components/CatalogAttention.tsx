@@ -1,9 +1,7 @@
 import { Button } from '@mantine/core'
-import { IconChevronRight } from '@tabler/icons-react'
-import { Link } from 'react-router-dom'
 import type { ApiQueryStatus } from '@/shared/api/useApiQuery'
 import type { ProductCounts } from '../api/dashboardApi'
-import { numberFormat } from '../lib/insights'
+import { QueueTile } from './QueueTile'
 
 type CatalogAttentionProps = {
   counts: ProductCounts | undefined
@@ -13,9 +11,9 @@ type CatalogAttentionProps = {
 
 export function CatalogAttention({ counts, status, onRetry }: CatalogAttentionProps) {
   const items = [
-    { key: 'fill', n: counts?.needsFilling, label: 'товарів без фото, опису чи характеристик', href: '/catalog/products?fill=any-missing', hot: true },
-    { key: 'new', n: counts?.recent30, label: 'нових товарів за 30 днів: перевірте картки', href: '/catalog/products?newDays=30', hot: false },
-    { key: 'hidden', n: counts?.hiddenWithStock, label: 'прихованих товарів, які є в наявності', href: '/catalog/products?hiddenWithStock=true', hot: true },
+    { key: 'fill', n: counts?.needsFilling, label: 'Без фото, опису чи характеристик', href: '/catalog/products?fill=any-missing', hot: true },
+    { key: 'new', n: counts?.recent30, label: 'Нові товари за 30 днів', href: '/catalog/products?newDays=30', hot: false },
+    { key: 'hidden', n: counts?.hiddenWithStock, label: 'Приховані товари в наявності', href: '/catalog/products?hiddenWithStock=true', hot: true },
   ]
 
   return (
@@ -34,19 +32,9 @@ export function CatalogAttention({ counts, status, onRetry }: CatalogAttentionPr
         ) : null}
       </header>
       <ul className="dash-queue is-three" aria-label="Каталог: потребує уваги">
-        {items.map((item) => {
-          const n = item.n ?? null
-          const className = `dash-queue-item${item.hot && n !== null && n > 0 ? ' is-hot' : ''}`
-          return (
-            <li key={item.key}>
-              <Link to={item.href} className={className} aria-busy={status === 'loading' || undefined}>
-                <b>{n === null ? '·' : numberFormat.format(n)}</b>
-                <span>{item.label}</span>
-                <IconChevronRight size={16} stroke={1.8} aria-hidden="true" />
-              </Link>
-            </li>
-          )
-        })}
+        {items.map((item) => (
+          <QueueTile key={item.key} count={item.n} label={item.label} href={item.href} hot={item.hot} busy={status === 'loading'} />
+        ))}
       </ul>
     </section>
   )

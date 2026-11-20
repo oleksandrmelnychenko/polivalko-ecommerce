@@ -20,13 +20,19 @@ internal sealed class NavkoloInventorySync(PoliValkoDbContext db, INavkoloSettin
         var mode = await settings.GetModeAsync(ct);
         if (mode == NavkoloModes.Disabled) return new SyncResult("Синхронізацію вимкнено.", []);
 
-        var candidates = await client.GetOrderStatesAsync(ct);
-        var ids = await orders.TrackedIdsAsync(candidates.Select(s => s.OrderId).ToArray(), ct);
-        await gate.LockForSyncAsync(ids, ct);
-        await orders.LockAsync(ids, ct);
-        // Refresh after any in-flight upload/cancellation finishes. Only touch the locked orders.
-        // Gates -> order rows -> stock rows is also the order used by outbound operations/console.
-        var states = ids.Count == 0 ? [] : (await client.GetOrderStatesAsync(ct)).Where(s => ids.Contains(s.OrderId)).ToArray();
+        var orderSyncEnabled = settings.OrderSyncEnabled;
+        ExternalOrderState[] states = [];
+        if (orderSyncEnabled)
+        {
+            var candidates = await client.GetOrderStatesAsync(ct);
+            var ids = await orders.TrackedIdsAsync(candidates.Select(s => s.OrderId).ToArray(), ct);
+            await gate.LockForSyncAsync(ids, ct);
+            await orders.LockAsync(ids, ct);
+            // Refresh after any in-flight upload/cancellation finishes. Only touch the locked orders.
+            // Gates -> order rows -> stock rows is also the order used by outbound operations/console.
+            states = ids.Count == 0 ? [] : (await client.GetOrderStatesAsync(ct)).Where(s => ids.Contains(s.OrderId)).ToArray();
+        }
+
         // Observe shipment BEFORE fetching balances: never release its reserve against an older balance.
         var catalog = mode == NavkoloModes.DnTrade ? await client.GetCatalogAsync(ct) : null;
         if (catalog is { Count: 0 })
@@ -38,9 +44,14 @@ internal sealed class NavkoloInventorySync(PoliValkoDbContext db, INavkoloSettin
         var result = catalog is not null ? await importer.ImportProductsAsync(catalog, ct) : await importer.ApplyPriceStockAsync(records, ct);
         if (result.Errors.Count > 0) throw new NavkoloUnavailableException($"Синхронізацію не застосовано, помилок даних каталогу: {result.Errors.Count}. {string.Join("; ", result.Errors.Take(5).Select(e => $"{e.Item}: {e.Message}"))}");
         if (catalog is not null) await importer.DisableMissingAsync(catalog.Select(p => p.NavkoloId!).ToArray(), ct);
-        var stockIds = catalog is not null ? catalog.Select(p => p.NavkoloId!).ToHashSet(StringComparer.OrdinalIgnoreCase)
-            : records.Select(p => p.NavkoloId).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var changed = await orders.ApplyAsync(states, stockIds, ct);
+
+        var changed = 0;
+        if (orderSyncEnabled)
+        {
+            var stockIds = catalog is not null ? catalog.Select(p => p.NavkoloId!).ToHashSet(StringComparer.OrdinalIgnoreCase)
+                : records.Select(p => p.NavkoloId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            changed = await orders.ApplyAsync(states, stockIds, ct);
+        }
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
         return new SyncResult($"Отримано {catalog?.Count ?? records.Count} записів. Змінено: {result.Updated}, без змін: {result.Unchanged}. Замовлень оновлено: {changed}.", []);

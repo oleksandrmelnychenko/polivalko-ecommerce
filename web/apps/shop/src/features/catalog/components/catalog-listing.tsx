@@ -47,13 +47,13 @@ export async function CatalogListing({
   basePath: string;
   base: ProductQuery;
   fixed?: Record<string, string>;
-  searchParams: SearchParams;
+  searchParams: SearchParams | Promise<SearchParams>;
   emptyHint: string;
   subcategories?: Subcategory[];
   listName?: string;
   saleOnly?: boolean;
 }) {
-  const p = parseListingParams(searchParams);
+  const p = parseListingParams(await searchParams);
   const result = await searchProducts(toQuery(base, p));
   if (!result) return null;
 

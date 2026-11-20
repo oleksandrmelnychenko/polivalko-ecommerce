@@ -8,6 +8,7 @@ using PoliValko.Catalog.Contracts;
 using PoliValko.Catalog.Domain;
 using PoliValko.Infrastructure.Outbox;
 using PoliValko.Infrastructure.Persistence;
+using PoliValko.Navkolo.Configuration;
 using PoliValko.Navkolo.Contracts;
 using PoliValko.Navkolo.Features.OrderSync;
 using PoliValko.Navkolo.Integrations.NavkoloApi;
@@ -47,11 +48,14 @@ public sealed class NavkoloReverseSyncTests(ApiFactory api)
         return new(id, product.Id, product.NavkoloId, created.Number);
     }
 
-    private WebApplicationFactory<Program> Host(Provider provider) => api.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
-    {
-        services.RemoveAll<INavkoloClient>(); services.AddSingleton<INavkoloClient>(provider);
-        services.RemoveAll<INavkoloSettings>(); services.AddSingleton<INavkoloSettings>(new EnabledSettings());
-    }));
+    private WebApplicationFactory<Program> Host(Provider provider, string mode = NavkoloModes.Stub, bool orderSyncEnabled = true) =>
+        api.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
+        {
+            services.RemoveAll<INavkoloClient>();
+            services.AddSingleton<INavkoloClient>(provider);
+            services.RemoveAll<INavkoloSettings>();
+            services.AddSingleton<INavkoloSettings>(new TestSettings(mode, orderSyncEnabled));
+        }));
     private static async Task Sync(WebApplicationFactory<Program> host)
     {
         await using var scope = host.Services.CreateAsyncScope();
@@ -98,6 +102,44 @@ public sealed class NavkoloReverseSyncTests(ApiFactory api)
         var dto = await (await admin.GetAsync($"/api/v1/console/orders/{order.Number}", Ct)).ReadAsync<ConsoleOrderDto>();
         dto.Status.ShouldBe(OrderStatus.Shipped); dto.NavkoloShippedAt.ShouldNotBeNull();
         provider.States = []; await Sync(host); (await Saved(order)).Status.ShouldBe(OrderStatus.Shipped);
+    }
+
+    [Fact]
+    public async Task DnTrade_catalog_sync_without_order_sync_preserves_local_reservations()
+    {
+        var order = await CreateAsync();
+        var product = await api.WithDbAsync(db => db.Set<Product>().AsNoTracking().SingleAsync(p => p.Id == order.ProductId, Ct));
+        var provider = Remote(order, shipped: true);
+        await using var host = Host(provider, NavkoloModes.DnTrade, orderSyncEnabled: false);
+        var visibleIds = await api.WithDbAsync(db => db.Set<Product>().Where(p => p.IsVisible).Select(p => p.Id).ToArrayAsync(Ct));
+
+        try
+        {
+            await Should.ThrowAsync<NavkoloUnavailableException>(() => Sync(host));
+            var afterEmpty = await api.WithDbAsync(db => db.Set<Product>().AsNoTracking().SingleAsync(p => p.Id == order.ProductId, Ct));
+            afterEmpty.IsVisible.ShouldBeTrue();
+            await Stock(order, 5, 2);
+
+            provider.Catalog = [new(order.ProductRef, product.Sku, product.Name, "Все для поливу", 125, null, 1)];
+            await Sync(host);
+
+            provider.StateRead.Task.IsCompleted.ShouldBeFalse();
+            var price = await api.WithDbAsync(db => db.Set<ProductPrice>().Where(p => p.ProductId == order.ProductId).Select(p => p.Amount).SingleAsync(Ct));
+            price.ShouldBe(125m);
+            await Stock(order, 1, 2);
+            var reservation = await api.WithDbAsync(db => db.Set<StockReservation>().AsNoTracking().SingleAsync(r => r.OrderId == order.Id, Ct));
+            reservation.Consumed.ShouldBeFalse();
+            reservation.Released.ShouldBeFalse();
+            var saved = await Saved(order);
+            saved.Status.ShouldBe(OrderStatus.New);
+            saved.NavkoloShippedAt.ShouldBeNull();
+        }
+        finally
+        {
+            // The DNTrade snapshot contains only the test product; restore visibility in the shared fixture.
+            await api.WithDbAsync(db => db.Set<Product>().Where(p => visibleIds.Contains(p.Id) && !p.IsVisible)
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsVisible, true), Ct));
+        }
     }
 
     [Fact]
@@ -204,10 +246,15 @@ public sealed class NavkoloReverseSyncTests(ApiFactory api)
         finally { provider.ContinueUpload.TrySetResult(); }
     }
 
-    private sealed class EnabledSettings : INavkoloSettings { public Task<string> GetModeAsync(CancellationToken ct) => Task.FromResult("Stub"); }
+    private sealed record TestSettings(string Mode, bool OrderSyncEnabled) : INavkoloSettings
+    {
+        public Task<string> GetModeAsync(CancellationToken ct) => Task.FromResult(Mode);
+    }
+
     private sealed class Provider : INavkoloClient
     {
         public IReadOnlyList<ExternalOrderState> States = [];
+        public IReadOnlyList<NavkoloProductRecord> Catalog = [];
         public IReadOnlyList<PriceStockRecord> Stock = [];
         public bool FailStock, PauseStock, PauseUpload;
         public int Writes;
@@ -221,7 +268,7 @@ public sealed class NavkoloReverseSyncTests(ApiFactory api)
             var snapshot = States.ToArray(); StateRead.TrySetResult();
             return Task.FromResult<IReadOnlyList<ExternalOrderState>>(snapshot);
         }
-        public Task<IReadOnlyList<NavkoloProductRecord>> GetCatalogAsync(CancellationToken ct) => throw new NotSupportedException();
+        public Task<IReadOnlyList<NavkoloProductRecord>> GetCatalogAsync(CancellationToken ct) => Task.FromResult(Catalog);
         public async Task<IReadOnlyList<PriceStockRecord>> GetPriceStockAsync(CancellationToken ct)
         {
             StockStarted.TrySetResult(); if (PauseStock) await ContinueStock.Task.WaitAsync(ct);

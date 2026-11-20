@@ -1,8 +1,11 @@
-export const PERMISSION_CATALOG_VERSION = '2026-11-08.1'
+export const PERMISSION_CATALOG_VERSION = '2026-11-19.2'
 
 export const PermissionKeys = {
   Dashboard: {
     View: 'dashboard.page.view',
+  },
+  Analytics: {
+    ViewProducts: 'analytics.products.view',
   },
   Orders: {
     View: 'orders.page.view',
@@ -62,6 +65,7 @@ export type PermissionKey = Leaves<typeof PermissionKeys>
 
 export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'dashboard.page.view': 'Огляд: перегляд показників',
+  'analytics.products.view': 'Аналітика товарів: перегляд',
   'orders.page.view': 'Замовлення: список і картка',
   'orders.status.change': 'Зміна статусу замовлення',
   'orders.refund.create': 'Оформлення повернення коштів',

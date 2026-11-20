@@ -13,7 +13,7 @@ export function ProfileScreen() {
       <CabinetHead title="Профіль" />
       <div className="profile-grid">
         <ProfileForm me={me} />
-        <PasswordForm email={me.email} />
+        <PasswordForm owner={me.id} email={me.email} />
       </div>
     </section>
   );

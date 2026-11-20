@@ -27,6 +27,7 @@ public sealed class ConsoleCatalogApiTests(ApiFactory api)
         var newSlug = $"rozpyliuvach-{product.Id.ToString("N")[..8]}";
         var brand = await CatalogDictionaries.CreateBrandAsync(await Staff.AdminAsync(api), CatalogDictionaries.Unique("Gardena"));
 
+        api.Storefront.Tags.Clear();
         var updated = await (await manager.PutAsJsonAsync($"/api/v1/console/catalog/products/{product.Id}", new UpdateProductRequest(
                 "Розпилювач латунний",
                 newSlug,
@@ -42,6 +43,7 @@ public sealed class ConsoleCatalogApiTests(ApiFactory api)
         updated.DescriptionHtml.ShouldContain("rel=\"nofollow noopener\"");
         updated.Navkolo.Name.ShouldBe("Розпилювач для консолі");
         updated.Brand.ShouldBe(brand.Name);
+        api.Storefront.Tags.ShouldContain("redirects");
 
         await api.WithScopeAsync(async services =>
         {

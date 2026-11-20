@@ -7,6 +7,7 @@ type TwoFactorCodeInputProps = {
   label?: string
   description?: ReactNode
   error?: string
+  errorSpace?: string
   disabled?: boolean
   recovery?: boolean
   autoFocus?: boolean
@@ -18,6 +19,7 @@ export function TwoFactorCodeInput({
   label = 'Код із застосунку',
   description,
   error,
+  errorSpace,
   disabled,
   recovery = false,
   autoFocus,
@@ -28,6 +30,7 @@ export function TwoFactorCodeInput({
       label={label}
       description={description}
       error={error}
+      wrapperProps={{ 'data-error-space': errorSpace }}
       disabled={disabled}
       value={value}
       inputMode={recovery ? 'text' : 'numeric'}

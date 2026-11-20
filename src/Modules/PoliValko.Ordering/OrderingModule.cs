@@ -36,6 +36,7 @@ public static class OrderingModule
             .AddScoped<IOrderStateSync, Features.Synchronization.OrderStateSync>()
             .AddScoped<IOrderReporting, OrderReporting>()
             .AddScoped<IProductSalesSource, ProductSalesSource>()
+            .AddScoped<IWebsiteProductSales, WebsiteProductSales>()
             .AddScoped<ICustomerEmailConfirmedHandler, LinkGuestOrders>()
             .AddScoped<ICustomerOrderHistory, CustomerOrderHistory>()
             .AddOutboxHandler<OrderPlaced, NotifyManagerOnOrderPlaced>()

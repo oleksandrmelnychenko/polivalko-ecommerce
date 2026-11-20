@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
-import { sessionEnded, withCsrf } from "@/features/customer";
+import { refreshAfterPasswordReset, useCustomer, withCsrf } from "@/features/customer";
 import { postResetPassword } from "../api/client";
 import { useFormState } from "../hooks/use-form-state";
 import { FormStatus } from "./form-status";
@@ -11,6 +11,7 @@ import { TextField } from "./text-field";
 
 export function ResetPasswordForm() {
   const token = useSearchParams().get("token") ?? "";
+  const customer = useCustomer();
   const formRef = useRef<HTMLFormElement>(null);
   const form = useFormState(formRef);
   const [done, setDone] = useState(false);
@@ -20,7 +21,7 @@ export function ResetPasswordForm() {
     const newPassword = String(new FormData(event.currentTarget).get("newPassword") ?? "");
     const result = await form.submit(() => withCsrf((h) => postResetPassword(h, { token, newPassword })));
     if (result?.response.ok) {
-      sessionEnded();
+      void refreshAfterPasswordReset();
       setDone(true);
     }
   }
@@ -36,8 +37,8 @@ export function ResetPasswordForm() {
               <strong>Пароль змінено</strong>
               Увійдіть з новим паролем. На інших пристроях теж потрібно буде увійти знову.
             </p>
-            <Link href="/account/login" className="btn">
-              Увійти
+            <Link href={customer.status === "signedIn" ? "/account" : "/account/login"} className="btn">
+              {customer.status === "signedIn" ? "Перейти до кабінету" : "Увійти"}
             </Link>
           </div>
         )}

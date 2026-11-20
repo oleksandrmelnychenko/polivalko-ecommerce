@@ -1,0 +1,2 @@
+gunicorn==27.0.1
+simplejson==4.3.0

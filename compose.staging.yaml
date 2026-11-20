@@ -20,6 +20,9 @@ services:
       ASPNETCORE_ENVIRONMENT: Staging
       Database__SeedDemoData: ${SEED_DEMO_DATA:-false}
 
+  product-analytics:
+    image: polivalko-staging-product-analytics:${APP_VERSION:-latest}
+
   worker:
     image: polivalko-staging-worker:${APP_VERSION:-latest}
     environment:

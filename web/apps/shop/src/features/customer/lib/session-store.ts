@@ -9,6 +9,7 @@ const RETRY_FIRST = 3000;
 const RETRY_MAX = 30000;
 
 let session: Session = UNKNOWN;
+let verifiedSignal: string | null = null;
 let pending: Promise<Session> | null = null;
 let generation = 0;
 let retryDelay = RETRY_FIRST;
@@ -21,7 +22,16 @@ function signalSessionChange() {
   } catch {}
 }
 
-function set(next: Session) {
+function readSessionSignal(): string | null {
+  try {
+    return window.localStorage.getItem(SESSION_SIGNAL);
+  } catch {
+    return null;
+  }
+}
+
+function set(next: Session, signal = readSessionSignal()) {
+  verifiedSignal = signal;
   session = next;
   listeners.forEach((l) => l());
 }
@@ -50,6 +60,10 @@ export function setSignedIn(me: CustomerMe) {
   set({ status: "signedIn", me });
 }
 
+export function updateCustomerDetails(me: CustomerMe) {
+  if (session.me?.id === me.id && verifiedSignal === readSessionSignal()) set({ status: "signedIn", me }, verifiedSignal);
+}
+
 export function setSignedOut() {
   signalSessionChange();
   generation += 1;
@@ -71,19 +85,21 @@ function checkFailed() {
 }
 
 async function fetchSession(current: number): Promise<Session> {
+  const signal = readSessionSignal();
   try {
     const { data, response } = await getMe();
     if (current !== generation) return session;
+    if (signal !== readSessionSignal()) return refreshChangedSession();
     if (data) {
       if (session.me?.id !== data.id) generation += 1;
       pending = null;
       stopRetry();
-      set({ status: "signedIn", me: data });
+      set({ status: "signedIn", me: data }, signal);
     } else if (response.status === 401) {
       if (session.status !== "guest") generation += 1;
       pending = null;
       stopRetry();
-      set(GUEST);
+      set(GUEST, signal);
     } else {
       checkFailed();
     }
@@ -110,11 +126,22 @@ export function refreshChangedSession(): Promise<Session> {
   return refreshSession();
 }
 
-export async function withActiveSession<R extends { response: Response }>(send: (assertActive: () => void) => Promise<R>): Promise<R> {
+export function refreshSessionAcrossTabs(): Promise<Session> {
+  signalSessionChange();
+  return refreshChangedSession();
+}
+
+export async function withActiveSession<R extends { response: Response }>(send: (assertActive: () => void) => Promise<R>, owner?: string | null): Promise<R> {
   const current = generation;
+  const signal = readSessionSignal();
   function assertActive() {
-    if (current !== generation) throw new Error("Сеанс змінився. Спробуйте ще раз.");
+    if (current !== generation || signal !== readSessionSignal() ||
+      (session.status !== "unknown" && signal !== verifiedSignal) ||
+      (owner !== undefined && (session.status === "unknown" || (session.me?.id ?? null) !== owner))) {
+      throw new Error("Сеанс змінився. Спробуйте ще раз.");
+    }
   }
+  assertActive();
   const result = await send(assertActive);
   assertActive();
   if (result.response.status === 401 && session.status !== "guest") setSignedOut();

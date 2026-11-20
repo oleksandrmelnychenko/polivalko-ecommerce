@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PoliValko.Console.Features.Analytics;
 using PoliValko.Console.Features.Dashboard;
 using PoliValko.Console.Features.Integration;
 using PoliValko.Console.Features.Media;
@@ -16,8 +17,21 @@ namespace PoliValko.Console;
 
 public static class ConsoleModule
 {
-    public static IServiceCollection AddConsoleModule(this IServiceCollection services, IConfiguration configuration) =>
-        services;
+    public static IServiceCollection AddConsoleModule(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddMemoryCache().AddSingleton<ProductAnalyticsSourceCache>();
+        services.AddHttpClient<ProductAnalyticsClient>(http =>
+        {
+            http.Timeout = TimeSpan.FromSeconds(20);
+            http.MaxResponseContentBufferSize = 1024 * 1024;
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false,
+            UseCookies = false,
+            UseProxy = false,
+        });
+        return services;
+    }
 
     public static RouteGroupBuilder MapConsoleSummaryEndpoints(this RouteGroupBuilder console)
     {
@@ -34,6 +48,16 @@ public static class ConsoleModule
             .MapGet(string.Empty, GetConsoleDashboard.HandleAsync)
             .WithName("ConsoleDashboard")
             .WithSummary("Виручка, замовлення, середній чек і покупці за 7, 30 чи 90 днів із порівнянням, динаміка по днях, топ товарів, залишки");
+        return console;
+    }
+
+    public static RouteGroupBuilder MapConsoleProductAnalyticsEndpoints(this RouteGroupBuilder console)
+    {
+        console.MapGroup("/product-analytics").WithTags("Console").RequireStaff(PermissionKeys.ProductAnalyticsView)
+            .MapGet(string.Empty, GetProductAnalytics.HandleAsync)
+            .WithName("ConsoleProductAnalytics")
+            .WithSummary("Попит, оборот, повернення, сезонність, прогноз попиту та покриття запасом за товарами")
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
         return console;
     }
 

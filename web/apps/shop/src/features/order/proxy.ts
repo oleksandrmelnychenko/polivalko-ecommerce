@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { apiInternalUrl } from "@polivalko/shared/api/origin";
 
-const apiUrl = process.env.API_INTERNAL_URL ?? "http://localhost:5080";
 const ORDER_NUMBER = /^[A-Za-z0-9-]{1,32}$/;
 
 /**
@@ -20,8 +20,9 @@ export async function orderNotFound(request: NextRequest) {
 /** Only a definite "no such order for this token" closes the page; an API failure leaves it to the page itself. */
 async function orderMayExist(number: string, token: string) {
   try {
-    const url = `${apiUrl}/api/v1/orders/${number}?token=${encodeURIComponent(token)}`;
-    const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(5000) });
+    const url = `${apiInternalUrl}/api/v1/orders/${number}?token=${encodeURIComponent(token)}`;
+    const response = await fetch(url, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(5000) });
+    await response.body?.cancel();
     return ![400, 401, 403, 404].includes(response.status);
   } catch {
     return true;

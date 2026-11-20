@@ -8,7 +8,7 @@
   color: var(--mantine-color-gray-7);
   display: flex;
   gap: 10px;
-  padding: 12px 14px;
+  padding: 17px 18px;
 }
 
 .palette-bar input {
@@ -16,7 +16,7 @@
   border: 0;
   color: var(--brand-ink);
   flex: 1 1 auto;
-  font-size: 15px;
+  font-size: 17px;
   min-width: 0;
   outline: none;
 }
@@ -40,7 +40,7 @@
 
 .palette-item {
   align-items: center;
-  border-radius: 8px;
+  border-radius: 14px;
   cursor: pointer;
   display: flex;
   gap: 10px;
@@ -49,7 +49,8 @@
 }
 
 .palette-item[aria-selected='true'] {
-  background: var(--brand-accent-soft);
+  background: #f0f3f1;
+  box-shadow: inset 3px 0 var(--brand-accent);
 }
 
 .palette-icon,

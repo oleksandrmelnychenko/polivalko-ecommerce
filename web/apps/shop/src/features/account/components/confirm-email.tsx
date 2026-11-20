@@ -3,38 +3,52 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { loginHref, refreshSession, signOut, useCustomer, withCsrf } from "@/features/customer";
+import { loginHref, refreshSession, signOut, useCustomer, withAccountCsrf } from "@/features/customer";
 import { fieldErrors } from "@polivalko/shared/api/problem";
 import { postConfirmEmail } from "../api/client";
 
 type State = { kind: "pending" } | { kind: "ok" } | { kind: "error"; text: string };
+type Attempt = { owner: string; token: string; request: ReturnType<typeof postConfirmEmail> };
 
 export function ConfirmEmail({ mailDelivers }: { mailDelivers: boolean }) {
   const token = useSearchParams().get("token") ?? "";
   const customer = useCustomer();
-  const [state, setState] = useState<State>({ kind: "pending" });
+  const owner = customer.me?.id;
+  const [result, setResult] = useState<{ attempt: Attempt; state: State } | null>(null);
   const [logoutFailed, setLogoutFailed] = useState(false);
-  const sent = useRef<string | null>(null);
+  const sent = useRef<Attempt | null>(null);
 
   useEffect(() => {
-    if (!token || customer.status !== "signedIn" || sent.current === token) return;
-    sent.current = token;
-    void withCsrf((h) => postConfirmEmail(h, token)).then(
+    if (!token || !owner) {
+      sent.current = null;
+      return;
+    }
+    if (sent.current?.token !== token || sent.current.owner !== owner) {
+      sent.current = { owner, token, request: withAccountCsrf((h) => postConfirmEmail(h, token), owner) };
+    }
+    const attempt = sent.current;
+    let cancelled = false;
+    function finish(state: State) {
+      if (!cancelled && sent.current === attempt) setResult({ attempt, state });
+    }
+    void attempt.request.then(
       ({ response, error }) => {
+        if (cancelled) return;
         if (response.ok) {
-          setState({ kind: "ok" });
+          finish({ kind: "ok" });
           void refreshSession();
         } else {
-          setState({ kind: "error", text: fieldErrors(error).token ?? "Не вдалося підтвердити email. Спробуйте ще раз." });
+          finish({ kind: "error", text: fieldErrors(error).token ?? "Не вдалося підтвердити email. Спробуйте ще раз." });
         }
       },
-      () => setState({ kind: "error", text: "Немає зв'язку з сервером. Оновіть сторінку." }),
+      () => finish({ kind: "error", text: "Немає зв'язку з сервером. Оновіть сторінку." }),
     );
-  }, [token, customer.status]);
+    return () => { cancelled = true; };
+  }, [token, owner]);
 
   async function switchAccount() {
     setLogoutFailed(false);
-    if (await signOut()) sent.current = null;
+    if (await signOut(owner ?? null)) sent.current = null;
     else setLogoutFailed(true);
   }
 
@@ -46,7 +60,9 @@ export function ConfirmEmail({ mailDelivers }: { mailDelivers: boolean }) {
     </div>
   );
 
-  const current: State = token ? state : { kind: "error", text: "У посиланні немає коду. Відкрийте його з листа повністю." };
+  const current: State = !token
+    ? { kind: "error", text: "У посиланні немає коду. Відкрийте його з листа повністю." }
+    : result?.attempt.owner === owner && result?.attempt.token === token ? result.state : { kind: "pending" };
 
   return (
     <div className="auth__done" aria-live="polite">

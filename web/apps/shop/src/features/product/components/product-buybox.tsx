@@ -60,6 +60,7 @@ export function ProductBuybox({ product, deliveryFacts }: { product: ProductDeta
         {product.variants.length > 1 && <ProductVariants variants={product.variants} />}
         <BuyForm product={cartProduct} inStock={product.inStock} actionsClassName="buybox__actions" aside={<FavoriteButton productId={product.id} variant="box" />} />
       </div>
+      {product.attributes.length > 0 && <a className="buybox__details link" href="#product-specs">Характеристики товару</a>}
       <Suspense fallback={null}>
         <ProductDeliveryFacts load={deliveryFacts} />
       </Suspense>

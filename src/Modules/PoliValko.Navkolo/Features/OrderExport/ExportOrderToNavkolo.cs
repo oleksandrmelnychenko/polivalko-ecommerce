@@ -1,7 +1,7 @@
-using Microsoft.Extensions.Options;
 using PoliValko.Infrastructure.Outbox;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Navkolo.Configuration;
+using PoliValko.Navkolo.Contracts;
 using PoliValko.Navkolo.Integrations.NavkoloApi;
 using PoliValko.Ordering.Contracts;
 
@@ -11,7 +11,7 @@ internal sealed class ExportOrderToNavkolo(
     PoliValkoDbContext db,
     IOrderExportSource orders,
     INavkoloClient client,
-    Contracts.INavkoloSettings settings,
+    INavkoloSettings settings,
     TimeProvider time, NavkoloOrderGate gate) : IOutboxHandler<OrderExportRequested>
 {
     public Task HandleAsync(OrderExportRequested message, CancellationToken cancellationToken) =>
@@ -19,7 +19,7 @@ internal sealed class ExportOrderToNavkolo(
 
     private async Task ExportAsync(OrderExportRequested message, CancellationToken cancellationToken)
     {
-        if (await settings.GetModeAsync(cancellationToken) == NavkoloModes.Disabled)
+        if (!settings.OrderSyncEnabled || await settings.GetModeAsync(cancellationToken) == NavkoloModes.Disabled)
         {
             return;
         }

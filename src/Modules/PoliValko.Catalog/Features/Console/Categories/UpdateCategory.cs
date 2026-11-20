@@ -56,7 +56,10 @@ internal static class UpdateCategory
             category.FilterAttributes,
         });
         await db.SaveChangesAsync(ct);
-        await storefront.InvalidateAsync([StorefrontTags.Catalog, StorefrontTags.Categories, StorefrontTags.Products], ct);
+        await storefront.InvalidateAsync(
+            oldSlug == category.Slug
+                ? [StorefrontTags.Catalog, StorefrontTags.Categories, StorefrontTags.Products]
+                : [StorefrontTags.Catalog, StorefrontTags.Categories, StorefrontTags.Products, StorefrontTags.Redirects], ct);
 
         var count = await db.Set<Product>().CountAsync(p => p.CategoryId == id, ct);
         return TypedResults.Ok(CategoryEditor.ToDto(category, count));

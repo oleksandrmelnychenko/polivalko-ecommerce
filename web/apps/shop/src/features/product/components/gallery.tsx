@@ -7,7 +7,7 @@ import { PhotoViewer } from "./photo-viewer";
 
 type Image = { url: string; alt: string };
 
-const GALLERY_SIZES = "(max-width: 40rem) 250px, (max-width: 60rem) 92vw, 640px";
+const GALLERY_SIZES = "(max-width: 60rem) 92vw, (max-width: 90rem) 52vw, 720px";
 
 export function Gallery({ images, name }: { images: Image[]; name: string }) {
   const [active, setActive] = useState(0);
@@ -27,7 +27,7 @@ export function Gallery({ images, name }: { images: Image[]; name: string }) {
             </span>
           </button>
         ) : (
-          <span className="tile__photo-empty">Фото додасть магазин</span>
+          <span className="tile__photo-empty">Фото поки немає</span>
         )}
       </figure>
       {images.length > 1 && (

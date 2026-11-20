@@ -98,7 +98,8 @@ internal static class UpdateProduct
             labelIds,
         });
         await db.SaveChangesAsync(ct);
-        await storefront.InvalidateAsync(ConsoleProductQueries.ProductTags(oldSlug, slug), ct);
+        var tags = oldSlug == slug ? ConsoleProductQueries.ProductTags : [.. ConsoleProductQueries.ProductTags, StorefrontTags.Redirects];
+        await storefront.InvalidateAsync(tags, ct);
 
         return TypedResults.Ok(await ConsoleProductQueries.ToDtoAsync(db, product, time.GetUtcNow(), ct));
     }

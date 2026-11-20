@@ -30,9 +30,11 @@ public sealed class ConsoleProductStockApiTests(ApiFactory api)
         withoutCsrf.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await withoutCsrf.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Code.ShouldBe("auth.csrf_invalid");
 
+        api.Storefront.Tags.Clear();
         var hidden = await (await manager.PostAsJsonAsync("/api/v1/console/catalog/products/visibility", request, TestJson.Options, Ct))
             .ReadAsync<SetProductsVisibilityResult>();
         hidden.Updated.ShouldBe(2);
+        api.Storefront.Tags.ShouldBe(["products", "collections"], ignoreOrder: true);
 
         var again = await (await manager.PostAsJsonAsync("/api/v1/console/catalog/products/visibility", request, TestJson.Options, Ct))
             .ReadAsync<SetProductsVisibilityResult>();

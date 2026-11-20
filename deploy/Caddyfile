@@ -1,3 +1,18 @@
+{
+	log {
+		format filter {
+			wrap json
+			fields {
+				request>uri query {
+					delete token
+					delete next
+				}
+				request>headers>Referer delete
+			}
+		}
+	}
+}
+
 (indexing-index) {
 }
 
@@ -38,11 +53,12 @@
 
 	import indexing-{$SEARCH_INDEXING:index}
 
-	@token_pages path /order/* /account/confirm-email /account/reset-password /pay/sandbox/*
+	@token_pages path /order/* /account /account/* /pay/sandbox/*
 	header @token_pages >Referrer-Policy "no-referrer"
 
 	route {
-		respond /api/v1/console/* 404
+		@console_api path /api/v1/console /api/v1/console/*
+		respond @console_api 404
 
 		import api
 

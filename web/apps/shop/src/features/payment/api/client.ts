@@ -7,8 +7,12 @@ export function startPayment(number: string, token: string, idempotencyKey: stri
   });
 }
 
-export function getSandboxInvoice(id: string) {
-  return browserApi.GET("/api/v1/payments/sandbox/{invoiceId}", { params: { path: { invoiceId: id } } });
+export function getSandboxInvoice(id: string, signal: AbortSignal) {
+  return browserApi.GET("/api/v1/payments/sandbox/{invoiceId}", {
+    params: { path: { invoiceId: id } },
+    cache: "no-store",
+    signal,
+  });
 }
 
 export function completeSandboxInvoice(id: string, outcome: "success" | "failure" | "expired", notify: boolean) {

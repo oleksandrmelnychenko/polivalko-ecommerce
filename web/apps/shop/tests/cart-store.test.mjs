@@ -62,3 +62,19 @@ test("late response from the previous account cannot replace the current account
   assert.equal(store.getSnapshot().cart.id, "new-account");
   assert.equal(store.getSnapshot().lines.length, 0);
 });
+
+test("checkout waiting for the previous cart cannot settle with the next account's cart", async () => {
+  let resolveOld;
+  let opens = 0;
+  const store = load({
+    openCart: () => ++opens === 1
+      ? new Promise((resolve) => { resolveOld = resolve; })
+      : Promise.resolve(empty("new-account")),
+  });
+  store.connect("old-account");
+  const checkout = store.settledCart();
+  store.connect("new-account");
+  await store.settledCart();
+  resolveOld(empty("old-account"));
+  await assert.rejects(checkout, /Сеанс змінився/);
+});

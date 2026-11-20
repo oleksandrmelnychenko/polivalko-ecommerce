@@ -10,7 +10,6 @@ type BarItem = { key: string; label: ReactNode; count: number }
 
 function BarList({ items }: { items: BarItem[] }) {
   const total = items.reduce((sum, item) => sum + item.count, 0)
-  const max = Math.max(...items.map((item) => item.count), 1)
   return (
     <ul className="dash-barlist">
       {[...items]
@@ -23,7 +22,7 @@ function BarList({ items }: { items: BarItem[] }) {
               <small>{share(item.count, total)}</small>
             </span>
             <span className="dash-barlist-track" aria-hidden="true">
-              <span className="dash-barlist-fill" style={{ width: `${(item.count / max) * 100}%` }} />
+              <span className="dash-barlist-fill" style={{ width: share(item.count, total) || '0%' }} />
             </span>
           </li>
         ))}

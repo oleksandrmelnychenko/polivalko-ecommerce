@@ -12,6 +12,7 @@ export function CheckoutSummary({
   delivery,
   priceNote,
   sending,
+  canConfirm,
   quantities,
   setQuantity,
   remove,
@@ -23,6 +24,7 @@ export function CheckoutSummary({
   delivery: string;
   priceNote?: string | null;
   sending: boolean;
+  canConfirm: boolean;
   quantities: ReadonlyMap<string, number>;
   setQuantity: (productId: string, quantity: number) => void;
   remove: (productId: string) => void;
@@ -88,7 +90,7 @@ export function CheckoutSummary({
       )}
       <div className="co-summary__confirm">
         {consent}
-        <button type="submit" className="btn btn--wide" disabled={sending} aria-busy={sending}>
+        <button type="submit" className="btn btn--wide" disabled={sending || !canConfirm} aria-busy={sending}>
           {sending ? "Оформлюємо…" : "Підтвердити замовлення"}
         </button>
         <p className="field__help">Ціни ще раз звіримо зі складом. Якщо щось зміниться, покажемо нову суму до підтвердження.</p>

@@ -13,7 +13,7 @@
 
 ```
 src/
-  PoliValko.Api/            ASP.NET Core 10, лише збирання модулів: Program.cs + Composition/ (/api/v1, OpenAPI, Problem Details, health checks)
+  PoliValko.Api/            ASP.NET Core 11, лише збирання модулів: Program.cs + Composition/ (/api/v1, OpenAPI, Problem Details, health checks)
   PoliValko.Worker/         фонові процеси: outbox, синхронізації за розкладом, звірка оплат (Program.cs + Composition/)
   PoliValko.Infrastructure/ EF Core + PostgreSQL, міграції, outbox, Idempotency-Key, журнал змін, журнал синхронізацій, фото,
                             сховище налаштувань (platform.settings), очищення HTML, rate limiting і CORS; точка входу — PlatformModule
@@ -54,7 +54,7 @@ tests/load/                 навантажувальний сценарій k6
 
 ## Що потрібно
 
-- .NET SDK 10 (версія зафіксована в `global.json`)
+- .NET SDK 11 (версія зафіксована в `global.json`)
 - Node.js 24 LTS
 - Docker Desktop (PostgreSQL та інтеграційні тести)
 
@@ -80,9 +80,9 @@ npm run dev -w shop     # вітрина й кабінет: http://localhost:300
 npm run dev -w console  # консоль: http://localhost:3001
 ```
 
-Запити браузера до `/api/*` обидва застосунки в режимі розробки проксіюють до API (консоль — через `dev-server.mjs`). Вітрина за замовчуванням іде на `http://localhost:5080`
-(`dotnet run`). Консоль за замовчуванням іде через Caddy Docker-стека (`http://127.0.0.1:8080` з `Host: console.localhost:8080`,
-див. нижче); щоб працювати з API з `dotnet run`, запустіть її з `API_INTERNAL_URL=http://localhost:5080`.
+Обидва вебзастосунки за замовчуванням читають каталог через Caddy локального Docker-стека на `http://127.0.0.1:8080`.
+Для API з `dotnet run` задайте `API_INTERNAL_URL=http://localhost:5080` під час запуску обох вебзастосунків.
+Щоб кнопка «На сайті» в консолі відкривала вітрину з `npm run dev`, запустіть консоль із `SITE_URL=http://localhost:3000`.
 Локальних працівників задайте через .NET User Secrets для `src/PoliValko.Api` у секції `Seed:Users`
 (поля `Email`, `Password`, `DisplayName`, `Role`; ролі `Admin` або `Manager`). Наприклад,
 `dotnet user-secrets set "Seed:Users:0:Email" "admin@example.test" --project src/PoliValko.Api`.
@@ -104,6 +104,21 @@ Caddy на обох адресах віддає `/api/*` в API, решту — 
 а адресу консолі задає `CONSOLE_ADDRESS` (на production — піддомен, напр. `console.example.ua`, див. [docs/operations.md](docs/operations.md)).
 Міграції застосовує окремий сервіс `migrate` (EF migrations bundle) до старту API та Worker.
 
+## Товарна аналітика
+
+API збирає нормалізовані дані продажів і залишків та передає їх до окремого Python-сервісу `product-analytics`.
+Сервіс розраховує товарну статистику, сезонність, прогноз попиту та сигнали для консолі. Він працює на внутрішній мережі Docker
+без прямого доступу до PostgreSQL. API підключається за адресою `PRODUCT_ANALYTICS_URL` у Compose.
+
+Щоб перевірити аналітику з API, запущеним через `dotnet run`, підніміть Python-сервіс з портом на локальній адресі:
+
+```bash
+docker build -t polivalko-product-analytics:local services/product-analytics
+docker run --rm -p 127.0.0.1:18082:8080 polivalko-product-analytics:local
+# В іншому терміналі:
+ProductAnalytics__BaseUrl=http://127.0.0.1:18082 dotnet run --project src/PoliValko.Api --launch-profile http
+```
+
 ## Тести
 
 На macOS запускайте повний backend-прогін у Linux-контейнері:
@@ -112,15 +127,18 @@ Caddy на обох адресах віддає `/api/*` в API, решту — 
 ./deploy/test-backend.sh
 ```
 
-Скрипт збирає поточний код, запускає всі тести з окремою PostgreSQL і видаляє тестові контейнери після завершення.
+Скрипт збирає поточний код, запускає .NET-тести з окремою PostgreSQL і Python-сервісом аналітики та видаляє тестові контейнери після завершення.
 Порти не публікуються, база магазину й сертифікати хоста не монтуються. Це обходить запити macOS Keychain,
 які можуть виникати в довгому нативному прогоні тестів сертифікатів. Пароль Keychain тестам не потрібен.
 
 На Linux або в CI:
 
 ```bash
-dotnet test --solution PoliValko.slnx
+ProductAnalytics__BaseUrl=http://127.0.0.1:18082 dotnet test --solution PoliValko.slnx
 ```
+
+Для локального нативного прогону запустіть сервіс аналітики командою вище. Окремі тести Python запускаються в каталозі
+`services/product-analytics` командою `python -m unittest discover -s tests -v` після встановлення `requirements.txt`.
 
 Інтеграційні тести ходять в API звичайними HTTP-запитами без веб-клієнта і перевіряють серверні
 фільтри та пагінацію, формат помилок, ідемпотентність (у тому числі паралельні запити з одним ключем), права працівників і outbox з повторами.

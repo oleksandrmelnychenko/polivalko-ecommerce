@@ -6,6 +6,7 @@ public static class StorefrontTags
     public const string Products = "products";
     public const string Categories = "categories";
     public const string Collections = "collections";
+    public const string Redirects = "redirects";
     public const string Content = "content";
     public const string Delivery = "delivery";
     public const string Site = "site";

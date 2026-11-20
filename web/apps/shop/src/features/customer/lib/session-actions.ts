@@ -1,7 +1,7 @@
 import type { components } from "@polivalko/shared/api/schema";
 import { postLogin, postLogout, postRegister } from "../api/client";
-import { forgetCsrf, withCsrf } from "./csrf";
-import { setSignedIn, setSignedOut } from "./session-store";
+import { forgetCsrf, withAccountCsrf, withCsrf } from "./csrf";
+import { getSession, refreshSessionAcrossTabs, setSignedIn, setSignedOut } from "./session-store";
 
 type S = components["schemas"];
 
@@ -23,19 +23,19 @@ export async function signUp(body: S["RegisterCustomerRequest"]) {
   return result;
 }
 
-export async function signOut(): Promise<boolean> {
+export async function signOut(owner: string | null): Promise<boolean> {
   try {
-    const { response } = await withCsrf((h) => postLogout(h));
+    const { response } = await withAccountCsrf(postLogout, owner);
     if (!response.ok && response.status !== 401) return false;
   } catch {
-    return false;
+    if (getSession().status !== "guest") return false;
   }
   forgetCsrf();
-  setSignedOut();
+  if (getSession().status !== "guest") setSignedOut();
   return true;
 }
 
-export function sessionEnded() {
+export function refreshAfterPasswordReset() {
   forgetCsrf();
-  setSignedOut();
+  return refreshSessionAcrossTabs();
 }

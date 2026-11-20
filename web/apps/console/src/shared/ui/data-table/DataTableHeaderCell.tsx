@@ -1,18 +1,19 @@
 import { memo } from 'react'
 import { Table, UnstyledButton } from '@mantine/core'
 import { IconArrowsSort, IconChevronDown, IconChevronUp } from '@tabler/icons-react'
-import { flexRender, type Header } from '@tanstack/react-table'
+import { flexRender, type Header, type RowData } from '@tanstack/react-table'
+import type { DataTableFeatures } from './dataTableFeatures'
 import type { DataTableColumnMeta, DataTableLabels } from './types'
 
-type DataTableHeaderCellProps<TData> = {
+type DataTableHeaderCellProps<TData extends RowData> = {
   columnWidth: number
-  header: Header<TData, unknown>
+  header: Header<DataTableFeatures, TData, unknown>
   isFillColumn: boolean
   labels: DataTableLabels
   sorted: false | 'asc' | 'desc'
 }
 
-function DataTableHeaderCellInner<TData>({ columnWidth, header, isFillColumn, labels, sorted }: DataTableHeaderCellProps<TData>) {
+function DataTableHeaderCellInner<TData extends RowData>({ columnWidth, header, isFillColumn, labels, sorted }: DataTableHeaderCellProps<TData>) {
   const meta = header.column.columnDef.meta as DataTableColumnMeta | undefined
   const align = meta?.align ?? 'left'
   const canSort = header.column.getCanSort()

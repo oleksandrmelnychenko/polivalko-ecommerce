@@ -1,4 +1,4 @@
-import { Alert, Autocomplete, Badge, Combobox, createTheme, Drawer, Modal, MultiSelect, Select, Tooltip, parseThemeColor, type MantineColorsTuple } from '@mantine/core'
+import { Alert, Autocomplete, Badge, Button, Combobox, createTheme, Drawer, Modal, MultiSelect, Select, Tooltip, parseThemeColor, type MantineColorsTuple } from '@mantine/core'
 import './chip-palette.css'
 import './alerts.css'
 import './table-chips.css'
@@ -48,6 +48,7 @@ export const theme = createTheme({
   defaultRadius: 'md',
   cursorType: 'pointer',
   components: {
+    Button: Button.extend({ defaultProps: { color: 'dark', radius: 'xl' } }),
     Combobox: Combobox.extend({
       defaultProps: { position: 'bottom-start' },
       styles: comboboxStyles,
@@ -72,6 +73,7 @@ export const theme = createTheme({
     Alert: Alert.extend({ classNames: { root: 'app-alert' } }),
     Modal: Modal.extend({
       defaultProps: {
+        radius: 20,
         overlayProps: { backgroundOpacity: 0.25, blur: 2 },
         transitionProps: { transition: 'pop', duration: 220, timingFunction: 'cubic-bezier(0.32, 0.72, 0, 1)' },
       },
