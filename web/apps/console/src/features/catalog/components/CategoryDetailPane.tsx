@@ -1,13 +1,13 @@
 import { ActionIcon, Button, Tooltip } from '@mantine/core'
-import { IconCategory, IconExternalLink, IconPencil } from '@tabler/icons-react'
+import { IconAdjustmentsHorizontal, IconChevronRight, IconExternalLink, IconFolder, IconFolders, IconPackage, IconPencil } from '@tabler/icons-react'
 import { Fragment, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { plural } from '@polivalko/shared/lib/format'
 import { siteUrl } from '@/shared/lib/siteUrl'
 import { TableChip } from '@/shared/ui/TableChip'
+import { MetricLabel, MetricTrack } from '@/shared/ui/MetricCard'
 import type { ConsoleCategory } from '../api/catalogApi'
 import type { AttributeDefinition } from '../api/dictionariesApi'
-import { descendantIds, isHidden, type OrderedCategory } from '../lib/categoryTree'
+import { descendantIds, isHidden, MAX_CATEGORY_FILTERS, type OrderedCategory } from '../lib/categoryTree'
 import { ProductPreviewGrid } from './ProductPreviewGrid'
 
 const countFormat = new Intl.NumberFormat('uk-UA')
@@ -16,12 +16,12 @@ type CategoryDetailPaneProps = {
   category: OrderedCategory | null
   all: ConsoleCategory[]
   attributes: AttributeDefinition[] | null
-  onEdit: (category: ConsoleCategory) => void
+  onEdit: (category: ConsoleCategory, focusFilters?: boolean) => void
   onSelect: (id: string) => void
 }
 
 export function CategoryDetailPane({ category, all, attributes, onEdit, onSelect }: CategoryDetailPaneProps) {
-  if (!category) return <section className="app-split-detail app-split-detail-empty">Оберіть категорію зліва.</section>
+  if (!category) return null
   return <CategoryDetail key={category.id} category={category} all={all} attributes={attributes} onEdit={onEdit} onSelect={onSelect} />
 }
 
@@ -43,43 +43,38 @@ function CategoryDetail({ category, all, attributes, onEdit, onSelect }: Categor
   const filters = category.filterAttributes.length ? category.filterAttributes : (inheritedFrom?.filterAttributes ?? [])
   const attributeIds = useMemo(() => new Map((attributes ?? []).map((item) => [item.name.toUpperCase(), item.id])), [attributes])
   const hidden = isHidden(category)
+  const visibleChildren = hidden ? 0 : children.filter((child) => child.isVisible).length
 
   return (
     <section className="app-split-detail" aria-labelledby="category-detail-title">
       <header className="app-split-hero">
         <div className="app-split-hero-top">
           <div className="app-split-head">
-            <span className="catalog-category-photo" aria-hidden="true">
-              {category.imageUrl ? <img src={category.imageUrl} alt="" loading="lazy" /> : <IconCategory size={26} stroke={1.5} />}
+            <span className="category-folder" aria-hidden="true">
+              {category.imageUrl ? <img src={category.imageUrl} alt="" loading="lazy" /> : <IconFolder size={16} stroke={1.7} />}
             </span>
             <div className="app-split-hero-main">
-              <p className="app-split-hero-kicker catalog-category-path">
-                {ancestors.length ? (
-                  ancestors.map((item, index) => (
+              {ancestors.length > 0 && (
+                <p className="app-split-hero-kicker catalog-category-path">
+                  {ancestors.map((item, index) => (
                     <Fragment key={item.id}>
                       {index > 0 ? ' / ' : null}
                       <button type="button" onClick={() => onSelect(item.id)}>
                         {item.name}
                       </button>
                     </Fragment>
-                  ))
-                ) : (
-                  'Розділ каталогу'
-                )}
-              </p>
+                  ))}
+                </p>
+              )}
               <h2 id="category-detail-title" className="catalog-category-title">
                 {category.name}
                 {hidden ? <TableChip value={category.isVisible ? 'прихована батьківська' : 'прихована'} /> : null}
               </h2>
-              <p className="app-split-hero-aliases catalog-category-meta">
-                <span className="app-split-mono">/catalog/{category.slug}</span>
-                <span>{category.navkoloRef ? `Група Navkolo: ${category.navkoloRef}` : 'Група Navkolo не задана'}</span>
-              </p>
               {category.description ? <p className="app-split-description">{category.description}</p> : null}
             </div>
           </div>
           <div className="app-split-actions">
-            <Button variant="default" size="sm" leftSection={<IconPencil size={16} stroke={1.7} />} onClick={() => onEdit(category)}>
+            <Button className="category-edit" variant="default" size="sm" aria-label="Змінити" leftSection={<IconPencil size={16} stroke={1.7} />} onClick={() => onEdit(category)}>
               Змінити
             </Button>
             {hidden ? null : (
@@ -101,27 +96,35 @@ function CategoryDetail({ category, all, attributes, onEdit, onSelect }: Categor
           </div>
         </div>
 
-        <dl className="app-split-stats">
-          <div>
-            <dt>Товарів</dt>
-            <dd>
-              {countFormat.format(totalProducts)}
-              {children.length && totalProducts !== category.productCount ? <small>напряму {countFormat.format(category.productCount)}</small> : null}
-            </dd>
-          </div>
-          <div>
-            <dt>Підкатегорій</dt>
-            <dd>{countFormat.format(children.length)}</dd>
-          </div>
-          <div>
-            <dt>Фільтрів на сайті</dt>
-            <dd>
-              {countFormat.format(filters.length)}
-              {inheritedFrom ? <small>успадковано</small> : null}
-            </dd>
-          </div>
-        </dl>
       </header>
+      <dl className="category-metrics">
+        <div>
+          <dt><MetricLabel icon={IconPackage}>Товарів{children.length > 0 ? ' загалом' : ''}</MetricLabel></dt>
+          <dd>
+            <strong>{countFormat.format(totalProducts)}</strong>
+            <small>
+              {children.length ? <>{countFormat.format(category.productCount)} у самій категорії<br />{countFormat.format(totalProducts - category.productCount)} у підкатегоріях</> : 'У самій категорії'}
+            </small>
+            <MetricTrack value={category.productCount} max={totalProducts} />
+          </dd>
+        </div>
+        <div>
+          <dt><MetricLabel icon={IconFolders}>Підкатегорій</MetricLabel></dt>
+          <dd>
+            <strong>{countFormat.format(children.length)}</strong>
+            <small>На сайті · {countFormat.format(visibleChildren)}</small>
+            <MetricTrack value={visibleChildren} max={children.length} />
+          </dd>
+        </div>
+        <div>
+          <dt><MetricLabel icon={IconAdjustmentsHorizontal}>Фільтрів на сайті</MetricLabel></dt>
+          <dd>
+            <strong>{countFormat.format(filters.length)}</strong>
+            <small>{inheritedFrom ? 'Успадковано' : 'Налаштовано'} · {filters.length} з {MAX_CATEGORY_FILTERS}</small>
+            <MetricTrack value={filters.length} max={MAX_CATEGORY_FILTERS} />
+          </dd>
+        </div>
+      </dl>
 
       <section className="app-split-card" aria-labelledby="category-filters-title">
         <header className="app-split-card-head">
@@ -154,7 +157,12 @@ function CategoryDetail({ category, all, attributes, onEdit, onSelect }: Categor
             })}
           </ul>
         ) : (
-          <p className="app-split-blank">Фільтрів немає ні тут, ні в батьківських категоріях. Додати можна кнопкою «Змінити».</p>
+          <div className="category-filter-setup">
+            <p>Оберіть характеристики, за якими покупці зможуть відбирати товари на сайті.</p>
+            <Button variant="default" size="xs" leftSection={<IconAdjustmentsHorizontal size={15} />} onClick={() => onEdit(category, true)}>
+              Налаштувати фільтри
+            </Button>
+          </div>
         )}
       </section>
 
@@ -162,16 +170,15 @@ function CategoryDetail({ category, all, attributes, onEdit, onSelect }: Categor
         <section className="app-split-card" aria-labelledby="category-children-title">
           <header className="app-split-card-head">
             <h3 id="category-children-title">Підкатегорії</h3>
-            <span>
-              {children.length} {plural(children.length, 'підкатегорія', 'підкатегорії', 'підкатегорій')}
-            </span>
+            <span>Товарів</span>
           </header>
-          <ul className="app-split-tags">
+          <ul className="category-children">
             {children.map((child) => (
               <li key={child.id} className={child.isVisible ? 'is-link' : 'is-link is-muted'}>
                 <button type="button" onClick={() => onSelect(child.id)}>
-                  <span className="app-split-tag-name">{child.name}</span>
-                  <span className="app-split-tag-count">{countFormat.format(child.productCount)}</span>
+                  <span>{child.name}</span>
+                  <span className="category-child-count">{countFormat.format(child.productCount)}</span>
+                  <IconChevronRight size={15} aria-hidden="true" />
                 </button>
               </li>
             ))}

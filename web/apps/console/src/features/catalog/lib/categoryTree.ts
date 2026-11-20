@@ -50,3 +50,4 @@ export function consoleCategoryOptions(all: ConsoleCategory[]): CategoryOption[]
 export function isHidden(category: OrderedCategory): boolean {
   return !category.isVisible || category.hiddenByParent
 }
+export const MAX_CATEGORY_FILTERS = 10

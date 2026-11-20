@@ -10,12 +10,13 @@ import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { useReportDirty } from '@/shared/lib/useReportDirty'
 import { getAttributeNames, saveCategory, type ConsoleCategory } from '../api/catalogApi'
 import type { AttributeDefinition } from '../api/dictionariesApi'
-import { descendantIds, orderCategories } from '../lib/categoryTree'
+import { descendantIds, MAX_CATEGORY_FILTERS, orderCategories } from '../lib/categoryTree'
 import { ImageUploadField } from './ImageUploadField'
 
 type CategoryFormProps = {
   formId: string
   category: ConsoleCategory | null
+  focusFilters: boolean
   all: ConsoleCategory[]
   attributes: AttributeDefinition[] | null
   error: string | null
@@ -38,12 +39,11 @@ type Fields = {
   seoDescription: string
 }
 
-const MAX_FILTERS = 10
 const MAX_DESCRIPTION = 2000
 
 const orNull = (value: string) => value.trim() || null
 
-export function CategoryForm({ formId, category, all, attributes, error, onBusy, onSaved, onDirty }: CategoryFormProps) {
+export function CategoryForm({ formId, category, focusFilters, all, attributes, error, onBusy, onSaved, onDirty }: CategoryFormProps) {
   const { can } = usePermissions()
   const isTop = category !== null && !category.parentId
   const [fields, setFields] = useState<Fields>(() => ({
@@ -168,7 +168,7 @@ export function CategoryForm({ formId, category, all, attributes, error, onBusy,
           value={fields.name}
           error={errors.name || undefined}
           onChange={(event) => set('name', event.currentTarget.value)}
-          data-autofocus
+          data-autofocus={!focusFilters || undefined}
         />
         <TextInput
           label="Адреса"
@@ -212,10 +212,11 @@ export function CategoryForm({ formId, category, all, attributes, error, onBusy,
         />
         {attributes ? (
           <MultiSelect
+            data-autofocus={focusFilters || undefined}
             label="Фільтри категорії"
             description={
               <>
-                До {MAX_FILTERS} характеристик із довідника. {namesHelp}
+                До {MAX_CATEGORY_FILTERS} характеристик із довідника. {namesHelp}
                 {can(PermissionKeys.Catalog.ManageAttributes) ? (
                   <>
                     {' '}
@@ -230,7 +231,7 @@ export function CategoryForm({ formId, category, all, attributes, error, onBusy,
             placeholder={fields.filterAttributes.length ? undefined : 'Як у батьківської категорії'}
             data={filterOptions}
             value={fields.filterAttributes}
-            maxValues={MAX_FILTERS}
+            maxValues={MAX_CATEGORY_FILTERS}
             searchable
             clearable
             hidePickedOptions
@@ -241,12 +242,13 @@ export function CategoryForm({ formId, category, all, attributes, error, onBusy,
           />
         ) : (
           <TagsInput
+            data-autofocus={focusFilters || undefined}
             label="Характеристики для фільтрів, через кому"
             description={namesHelp}
             inputWrapperOrder={['label', 'input', 'description', 'error']}
             data={(names.data ?? []).map((entry) => entry.name)}
             value={fields.filterAttributes}
-            maxTags={MAX_FILTERS}
+            maxTags={MAX_CATEGORY_FILTERS}
             splitChars={[',']}
             acceptValueOnBlur
             clearable

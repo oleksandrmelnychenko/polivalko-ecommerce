@@ -1,5 +1,5 @@
 import { ActionIcon, Button, CloseButton, Group, Stack, Text, TextInput, Tooltip } from '@mantine/core'
-import { IconFileImport, IconPlus, IconRefresh, IconSearch, IconTrash } from '@tabler/icons-react'
+import { IconChevronLeft, IconFileImport, IconFolder, IconPlus, IconRefresh, IconSearch, IconTrash } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
 import { usePermissions } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
@@ -14,7 +14,6 @@ import { FilterBar } from '@/shared/ui/FilterBar'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { notifySuccess } from '@/shared/ui/notify'
 import { PageHeader } from '@/shared/ui/PageHeader'
-import { TableChip } from '@/shared/ui/TableChip'
 import { deleteCategory, getCategories, type ConsoleCategory } from '../api/catalogApi'
 import { getAttributes } from '../api/dictionariesApi'
 import { CategoryDetailPane } from '../components/CategoryDetailPane'
@@ -33,7 +32,7 @@ const getRowId = (row: OrderedCategory) => row.id
 const SELECT_KEYS = ['id'] as const
 const countFormat = new Intl.NumberFormat('uk-UA')
 
-type Editing = { category: ConsoleCategory | null; key: number }
+type Editing = { category: ConsoleCategory | null; key: number; focusFilters: boolean }
 
 export function CategoriesPage() {
   const { can } = usePermissions()
@@ -57,10 +56,10 @@ export function CategoriesPage() {
     return ordered.filter((c) => [c.name, c.slug, c.navkoloRef ?? ''].some((value) => value.toLowerCase().includes(term)))
   }, [ordered, search])
 
-  const open = useCallback((category: ConsoleCategory | null) => {
+  const open = useCallback((category: ConsoleCategory | null, focusFilters = false) => {
     setDeleteError(null)
     setFormDirty(false)
-    setEditing({ category, key: Date.now() })
+    setEditing({ category, key: Date.now(), focusFilters })
     setOpened(true)
   }, [])
 
@@ -100,7 +99,10 @@ export function CategoriesPage() {
   const { values: picked, set: pick } = useListParams(SELECT_KEYS)
   const selected = rows.find((row) => row.id === picked.id) ?? rows[0] ?? null
   const selectedId = selected?.id ?? null
-  const selectCategory = useCallback((id: string) => pick({ id }), [pick])
+  const selectCategory = useCallback((id: string) => {
+    if (!rows.some((row) => row.id === id)) setSearch('')
+    pick({ id })
+  }, [pick, rows])
   const selectRow = useCallback((row: OrderedCategory) => pick({ id: row.id }), [pick])
   const inherits = useMemo(() => {
     const byId = new Map(all.map((item) => [item.id, item]))
@@ -123,33 +125,25 @@ export function CategoriesPage() {
       {
         id: 'name',
         header: 'Категорія',
-        width: 280,
-        minWidth: 200,
+        width: 180,
         fill: true,
         cell: (row) => (
-          <span className="catalog-tree-cell" style={{ paddingLeft: row.depth * 20 }}>
+          <button type="button" className="catalog-tree-cell category-pick" style={{ paddingInlineStart: Math.min(row.depth, 4) * 10 }} onClick={() => selectRow(row)}>
             {row.depth > 0 ? <span className="catalog-tree-branch" aria-hidden="true" /> : null}
-            <ProductThumb url={row.imageUrl} size={28} />
-            <span className="app-split-item-name">{row.name}</span>
-            {isHidden(row) ? <TableChip value="прихована" title={row.isVisible ? 'Прихована батьківська категорія' : undefined} /> : null}
-          </span>
+            {row.imageUrl ? <ProductThumb url={row.imageUrl} size={32} /> : <span className="category-folder"><IconFolder size={16} stroke={1.7} aria-hidden="true" /></span>}
+            <span className="category-row-text">
+              <span className="app-split-item-name">{row.name}</span>
+              <small>{isHidden(row) && (row.isVisible ? 'Прихована батьківська · ' : 'Прихована · ')}
+                {row.filterAttributes.length ? `Фільтри: ${row.filterAttributes.length}` : inherits.has(row.id) ? 'Успадковані фільтри' : 'Без фільтрів'}
+              </small>
+            </span>
+          </button>
         ),
-      },
-      {
-        id: 'filters',
-        header: 'Фільтри',
-        width: 130,
-        cell: (row) =>
-          row.filterAttributes.length ? (
-            <span className="app-split-item-meta">{row.filterAttributes.length}</span>
-          ) : (
-            <span className="app-split-item-meta is-off">{inherits.has(row.id) ? 'успадковані' : 'немає'}</span>
-          ),
       },
       {
         id: 'products',
         header: 'Товарів',
-        width: 100,
+        width: 78,
         align: 'right',
         numeric: true,
         cell: (row) =>
@@ -160,7 +154,7 @@ export function CategoriesPage() {
           ),
       },
     ],
-    [inherits],
+    [inherits, selectRow],
   )
 
   const current = editing?.category ?? null
@@ -180,7 +174,7 @@ export function CategoriesPage() {
     )
 
   return (
-    <ListPage>
+    <ListPage className="catalog-categories-page">
       <PageHeader
         title="Категорії"
         actions={
@@ -197,35 +191,34 @@ export function CategoriesPage() {
         }
       />
 
-      <FilterBar
-        search={
-          <TextInput
-            className="app-filter-wide"
-            label="Пошук"
-            placeholder="Назва, адреса або група Navkolo…"
-            value={search}
-            leftSection={<IconSearch size={16} stroke={1.7} />}
-            rightSection={search ? <CloseButton size="sm" aria-label="Очистити пошук" onClick={() => setSearch('')} /> : null}
-            autoComplete="off"
-            spellCheck={false}
-            onChange={(event) => setSearch(event.currentTarget.value)}
-          />
-        }
-        actions={
-          <>
-            {categories.data ? <span className="app-filter-summary catalog-summary">Категорій: {countFormat.format(categories.data.length)}</span> : null}
-            <Tooltip label="Оновити">
-              <ActionIcon variant="subtle" color="gray" aria-label="Оновити" loading={categories.isFetching} onClick={categories.reload}>
-                <IconRefresh size={16} />
-              </ActionIcon>
-            </Tooltip>
-          </>
-        }
-      />
-
       <ListPageBody>
-        <div className="app-split-layout">
+        <div className="app-split-layout" data-picked={selectedId !== null && picked.id === selectedId || undefined}>
           <div className="app-split-list">
+            <FilterBar
+              search={
+                <TextInput
+                  className="app-filter-wide"
+                  aria-label="Пошук категорій за назвою, адресою або групою Navkolo"
+                  placeholder="Знайти категорію…"
+                  value={search}
+                  leftSection={<IconSearch size={16} stroke={1.7} />}
+                  rightSection={search ? <CloseButton size="sm" aria-label="Очистити пошук" onClick={() => setSearch('')} /> : null}
+                  autoComplete="off"
+                  spellCheck={false}
+                  onChange={(event) => setSearch(event.currentTarget.value)}
+                />
+              }
+              actions={
+                <>
+                  {categories.data && <span className="category-results" title="Знайдено категорій">{countFormat.format(rows.length)}</span>}
+                  <Tooltip label="Оновити">
+                    <ActionIcon variant="subtle" color="gray" aria-label="Оновити" loading={categories.isFetching} onClick={categories.reload}>
+                      <IconRefresh size={16} />
+                    </ActionIcon>
+                  </Tooltip>
+                </>
+              }
+            />
             <DataTable
               ariaLabel="Категорії каталогу"
               columns={columns}
@@ -233,7 +226,7 @@ export function CategoriesPage() {
               getRowId={getRowId}
               isLoading={categories.isLoading}
               isFetching={categories.isFetching}
-              minWidth={460}
+              minWidth={0}
               height="100%"
               manualSorting
               onRowClick={selectRow}
@@ -241,6 +234,7 @@ export function CategoriesPage() {
               emptyText={emptyText}
             />
           </div>
+          <button type="button" className="category-back" onClick={() => pick({ id: null })}><IconChevronLeft size={16} />До списку категорій</button>
           <CategoryDetailPane
             category={selected}
             all={all}
@@ -282,6 +276,7 @@ export function CategoriesPage() {
             key={editing.key}
             formId={FORM_ID}
             category={editing.category}
+            focusFilters={editing.focusFilters}
             all={all}
             attributes={attributes.status === 'ready' ? (attributes.data ?? null) : null}
             error={deleteError}
