@@ -70,6 +70,9 @@ class RegisterTests(unittest.TestCase):
         headers = [dict(sale, kind="out", code=None), dict(refund, kind="back", code=None)]
         result = compare(DAY.year, headers, [sale, refund])["total"]
         self.assertEqual((result["documents"], result["net"], result["discrepancies"]), (2, 75, 0))
+        shifted = compare(DAY.year, [headers[0]], [dict(sale, day=DAY + timedelta(days=1))])
+        self.assertIn("дата джерела за Києвом", shifted["issues"][0]["reason"])
+        self.assertEqual(shifted["total"]["difference"], 0)
 
     def test_annual_invoice_control_detects_offsetting_errors_and_missing_source(self):
         first, returned = doc("1"), doc("2", kind="7", amount="-25")

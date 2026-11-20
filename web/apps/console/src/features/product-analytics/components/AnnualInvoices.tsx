@@ -27,7 +27,7 @@ type Annual = {
   year: number
   total: Period
   months: Period[]
-  issues: { id: string; number: string; day: string; header: number | null; lines: number | null; inRegister: boolean }[]
+  issues: { id: string; number: string; day: string; header: number | null; lines: number | null; inRegister: boolean; reason: string }[]
 }
 const months = ['Січ', 'Лют', 'Бер', 'Кві', 'Тра', 'Чер', 'Лип', 'Сер', 'Вер', 'Жов', 'Лис', 'Гру']
 
@@ -81,6 +81,7 @@ export function AnnualInvoices() {
           <ul>{report.issues.map(item => <li key={item.id}>
             {item.inRegister ? <Link to={'/accounting/documents/' + item.id}>{item.number}</Link> : item.number}
             {' · ' + item.day + ' · у реєстрі ' + formatValue(item.header) + ' грн · у рядках ' + formatValue(item.lines) + ' грн'}
+            {' · ' + item.reason}
           </li>)}</ul></>}
       </>}
     </AnalyticsCard>

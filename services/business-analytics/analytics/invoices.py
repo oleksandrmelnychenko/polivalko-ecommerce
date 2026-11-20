@@ -30,6 +30,9 @@ SELECT extract(month FROM d.day)::int AS month, count(*) AS documents,
        sum(abs(d.total)) AS amount, sum(s.amount) AS lines,
        count(*) FILTER (WHERE d.total IS NULL OR s.amount IS NULL OR abs(d.total) <> s.amount
                            OR a.status IS DISTINCT FROM d.status OR a.source_day IS DISTINCT FROM d.day
+                           OR CASE WHEN a.source_date ~ '(Z|[+-][0-9]{2}:[0-9]{2})$'
+                                   THEN (a.source_date::timestamptz AT TIME ZONE 'Europe/Kyiv')::date <> d.day
+                                   ELSE false END
                            OR s.invalid > 0) AS discrepancies
 FROM accounting.documents d LEFT JOIN integration.dntrade_archive_records a ON a.id=d.id
 LEFT JOIN LATERAL (
@@ -113,9 +116,23 @@ def compare(year, headers, documents):
         entry = header or line
         months[entry[0].month - 1]["discrepancies"] += 1
         if len(issues) < 50:
+            reasons = []
+            if not header or not line:
+                reasons.append("Відсутній запис у реєстрі" if not header else "Відсутні товарні рядки джерела")
+            else:
+                if header[0] != line[0]:
+                    reasons.append(f"Дата в реєстрі {header[0]}, дата джерела за Києвом {line[0]}")
+                if header[1] != line[1]:
+                    reasons.append("Тип документа відрізняється")
+                if header[2] is None or line[2] is None:
+                    reasons.append("Недостатньо даних для звірки суми")
+                elif header[2] != line[2]:
+                    reasons.append("Суми відрізняються")
+                if line[4]:
+                    reasons.append("Є некоректні товарні рядки")
             issues.append(dict(id=doc_id, number=entry[3], day=str(entry[0]),
                                header=header[2] if header else None, lines=line[2] if line else None,
-                               inRegister=bool(header)))
+                               inRegister=bool(header), reason=". ".join(reasons)))
     total = {k: sum(m[k] for m in months) for k in months[0]}
     for m in [*months, total]:
         m["net"] = m["sales"] - m["returns"] if m["knownHeaders"] else None
