@@ -7,6 +7,8 @@ const entityLabels: Record<string, string> = {
   financialReport: 'Фінансовий звіт',
   bankAccount: 'Банківський рахунок',
   debtAdjustment: 'Коригування заборгованості',
+  inventorySnapshot: 'Залишки на складі',
+  sourceReport: 'Звіт або довідник DNTrade',
   order: 'Замовлення',
   partner: 'Контрагент',
   store: 'Склад',
@@ -20,6 +22,13 @@ const entityLabels: Record<string, string> = {
 }
 
 export const ARCHIVE_ENTITY_OPTIONS = Object.entries(entityLabels).map(([value, label]) => ({ value, label }))
+
+const previewEntityTypes = ['financialReport', 'bankAccount', 'inventorySnapshot', 'sourceReport'] as const
+export type ArchivePreviewEntityType = (typeof previewEntityTypes)[number]
+
+export function hasArchivePreview(entityType: string): entityType is ArchivePreviewEntityType {
+  return previewEntityTypes.some((type) => type === entityType)
+}
 
 export function archiveEntityLabel(entityType: string): string {
   return Object.hasOwn(entityLabels, entityType) ? entityLabels[entityType] : entityType

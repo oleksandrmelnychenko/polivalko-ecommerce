@@ -17,7 +17,7 @@ internal static class DnTradeArchiveInput
     {
         "invoice", "cashOrder", "bankPayment", "order", "partner", "store", "cashbox", "partnerCategory",
         "salesChannel", "orderStatus", "productCategory", "receipt", "customerReturn",
-        "financialReport", "bankAccount", "debtAdjustment",
+        "financialReport", "bankAccount", "debtAdjustment", "inventorySnapshot", "sourceReport",
     };
 
     public static bool IsEntityType(string value) => EntityTypes.Contains(value);

@@ -5,6 +5,7 @@ import { useApiQuery, type ApiResult } from '@/shared/api/useApiQuery'
 import { PageState } from '@/shared/ui/PageState'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { archiveOriginalHref } from '../api/archiveApi'
+import type { ArchivePreviewEntityType } from '../lib/archive'
 import { parseFinancialReportPreview, type FinancialReportPreview, type ReportField } from '../lib/financialReport'
 import { ArchivedFinancialReconciliation } from './ArchivedFinancialReconciliation'
 
@@ -123,16 +124,16 @@ function ReportContent({ id }: { id: string }) {
   )
 }
 
-export function ArchivedFinancialReport({ id, entityType }: { id: string; entityType: 'financialReport' | 'bankAccount' }) {
+export function ArchivedFinancialReport({ id, entityType }: { id: string; entityType: ArchivePreviewEntityType }) {
   const [open, setOpen] = useState(false)
   const headingId = useId()
   const contentId = useId()
-  const isBankAccount = entityType === 'bankAccount'
+  const title = entityType === 'bankAccount' ? 'Реквізити рахунку' : 'Дані звіту'
 
   return (
     <section className="app-split-card" aria-labelledby={headingId}>
       <header className="app-split-card-head">
-        <h3 id={headingId}>{isBankAccount ? 'Реквізити рахунку' : 'Дані звіту'}</h3>
+        <h3 id={headingId}>{title}</h3>
         <Button size="xs" variant="default" aria-controls={contentId} aria-expanded={open} onClick={() => setOpen((visible) => !visible)}>
           {open ? 'Приховати' : 'Показати'}
         </Button>

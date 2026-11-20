@@ -11,7 +11,7 @@ export type ArchiveFilterValues = Record<(typeof archiveFilterKeys)[number], str
 
 const EMPTY_FILTERS: ArchiveFilterValues = { q: '', entityType: '', sourceAccount: '', storeId: '', from: '', to: '' }
 
-const FINANCE_ARCHIVE_GROUPS = [
+const ARCHIVE_REPORT_GROUPS = [
   {
     group: 'Каса й банк',
     items: [
@@ -19,6 +19,7 @@ const FINANCE_ARCHIVE_GROUPS = [
       { value: 'Звіт по рахунках', label: 'Звіт по рахунках', entityType: 'financialReport' },
       { value: 'Звіт по касі', label: 'Звіт по касі', entityType: 'financialReport' },
       { value: 'Звіт по змінам', label: 'Звіт про касові зміни', entityType: 'financialReport' },
+      { value: 'Реєстр Z-звітів', label: 'Реєстр Z-звітів', entityType: 'financialReport' },
       { value: 'Банківський рахунок DNTrade', label: 'Банківські рахунки DNTrade', entityType: 'bankAccount' },
     ],
   },
@@ -38,9 +39,20 @@ const FINANCE_ARCHIVE_GROUPS = [
       { value: 'Валовий прибуток', label: 'Валовий прибуток', entityType: 'financialReport' },
     ],
   },
+  {
+    group: 'Склад і довідники',
+    items: [
+      { value: 'Залишки на складі', label: 'Залишки на складі', entityType: 'inventorySnapshot' },
+      { value: 'Склади', label: 'Склади', entityType: 'sourceReport' },
+      { value: 'Довідник товарів DNTrade', label: 'Довідник товарів DNTrade', entityType: 'sourceReport' },
+      { value: 'Одиниці виміру', label: 'Одиниці виміру', entityType: 'sourceReport' },
+      { value: 'Типи цін', label: 'Типи цін', entityType: 'sourceReport' },
+      { value: 'Підрозділи організацій', label: 'Підрозділи організацій', entityType: 'sourceReport' },
+    ],
+  },
 ]
 
-const financeArchiveOptions = FINANCE_ARCHIVE_GROUPS.flatMap(({ items }) => items)
+const archiveReportOptions = ARCHIVE_REPORT_GROUPS.flatMap(({ items }) => items)
 
 export function readArchiveFilters(params: URLSearchParams): ArchiveFilterValues {
   return {
@@ -91,7 +103,7 @@ export function ArchiveFilters({ filters, actions, onChange }: ArchiveFiltersPro
     onChange(EMPTY_FILTERS)
   }
 
-  const selectedFinanceRecord = financeArchiveOptions.find(({ value, entityType }) => value === draft.q && entityType === draft.entityType)
+  const selectedReport = archiveReportOptions.find(({ value, entityType }) => value === draft.q && entityType === draft.entityType)
   const activeCount = [draft.entityType, draft.sourceAccount, draft.storeId, draft.from || draft.to].filter(Boolean).length
   return (
     <FilterBar
@@ -114,14 +126,14 @@ export function ArchiveFilters({ filters, actions, onChange }: ArchiveFiltersPro
           />
           <Select
             className="app-filter-wide"
-            label="Фінансовий архів"
+            label="Звіти й довідники"
             placeholder="Оберіть звіт або довідник"
-            data={FINANCE_ARCHIVE_GROUPS}
-            value={selectedFinanceRecord?.value ?? null}
+            data={ARCHIVE_REPORT_GROUPS}
+            value={selectedReport?.value ?? null}
             clearable
-            clearButtonProps={{ 'aria-label': 'Очистити вибір фінансового запису' }}
+            clearButtonProps={{ 'aria-label': 'Очистити вибір звіту або довідника' }}
             onChange={(value) => {
-              const record = financeArchiveOptions.find((option) => option.value === value)
+              const record = archiveReportOptions.find((option) => option.value === value)
               update({ q: record?.value ?? '', entityType: record?.entityType ?? '' }, true)
             }}
           />

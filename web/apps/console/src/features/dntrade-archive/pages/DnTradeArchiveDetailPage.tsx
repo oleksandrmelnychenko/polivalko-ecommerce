@@ -10,7 +10,7 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 import { PageState } from '@/shared/ui/PageState'
 import { archiveOriginalHref, getArchiveDetail } from '../api/archiveApi'
 import { ArchivedFinancialReport } from '../components/ArchivedFinancialReport'
-import { ARCHIVE_PATH, archiveAmount, archiveEntityLabel, archiveSourceDate } from '../lib/archive'
+import { ARCHIVE_PATH, archiveAmount, archiveEntityLabel, archiveSourceDate, hasArchivePreview } from '../lib/archive'
 import '@/shared/ui/split/split.css'
 import './dntrade-archive-detail.css'
 
@@ -98,7 +98,7 @@ export function DnTradeArchiveDetailPage() {
                 </div>
               </dl>
             </section>
-            {canReadOriginal && (item.entityType === 'financialReport' || item.entityType === 'bankAccount') ? (
+            {canReadOriginal && hasArchivePreview(item.entityType) ? (
               <ArchivedFinancialReport key={item.id} id={item.id} entityType={item.entityType} />
             ) : null}
           </article>

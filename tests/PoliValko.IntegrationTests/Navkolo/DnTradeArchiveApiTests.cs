@@ -132,6 +132,32 @@ public sealed class DnTradeArchiveApiTests(ApiFactory api)
         (await admin.GetByteArrayAsync(originalUrl, Ct)).ShouldBe(Encoding.UTF8.GetBytes(report));
     }
 
+    [Theory]
+    [InlineData("inventorySnapshot", "Залишки на складі")]
+    [InlineData("sourceReport", "Одиниці виміру")]
+    public async Task Warehouse_and_reference_reports_import_and_filter_by_type_and_title(string entityType, string documentType)
+    {
+        var account = "test-" + Guid.NewGuid().ToString("N");
+        var report = $$$"""
+            {"schemaVersion":1,"source":"dntrade","entityType":"{{{entityType}}}","sourceId":"test-report","documentType":"{{{documentType}}}","raw":{"tables":[]}}
+            """;
+        using var admin = await Staff.AdminAsync(api);
+        using var importer = await TestRoles.LoginWithPermissionsAsync(api, admin, PermissionKeys.DnTradeArchiveView, PermissionKeys.DnTradeArchiveImport);
+        using var first = await Upload(importer, account, report, Ct);
+        (await first.ReadAsync<DnTradeArchiveImportDto>()).ShouldBe(new DnTradeArchiveImportDto(1, 0));
+        using var repeated = await Upload(importer, account, report, Ct);
+        (await repeated.ReadAsync<DnTradeArchiveImportDto>()).ShouldBe(new DnTradeArchiveImportDto(0, 1));
+
+        var filter = $"{Url}?sourceAccount={account}&entityType={entityType}&q={Uri.EscapeDataString(documentType)}";
+        var page = await importer.ReadAsync<DnTradeArchivePageDto>(filter);
+        page.Total.ShouldBe(1);
+        var item = page.Items.ShouldHaveSingleItem();
+        item.EntityType.ShouldBe(entityType);
+        item.DocumentType.ShouldBe(documentType);
+        using var original = await importer.GetAsync($"{Url}/{item.Id}/original", Ct);
+        original.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
     private static Task<HttpResponseMessage> Upload(HttpClient client, string account, string content, CancellationToken ct) =>
         client.PostAsync($"{Url}/import?sourceAccount={account}", new StringContent(content, Encoding.UTF8, DnTradeArchiveInput.ContentType), ct);
 
