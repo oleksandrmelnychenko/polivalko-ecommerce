@@ -7,6 +7,7 @@ import { formatDateTime, formatMoney } from '@polivalko/shared/lib/format'
 import { useState } from 'react'
 import { siteUrl } from '@/shared/lib/siteUrl'
 import type { Product } from '../api/catalogApi'
+import { cleanProductName } from '../lib/productFilters'
 import { ProductPriceDialog } from './ProductPriceDialog'
 import { ProductStockDialog } from './ProductStockDialog'
 
@@ -32,7 +33,7 @@ export function ProductEditorNavkolo({ product, canUpdatePrice, priceLoading, on
         <dt>Артикул</dt>
         <dd className="catalog-code">{n.sku}</dd>
         <dt>Назва в обліку</dt>
-        <dd>{n.name}</dd>
+        <dd>{cleanProductName(n.name)}</dd>
         <dt>Ціна</dt>
         <dd>
           <span className="app-money">{formatMoney(n.price)}</span>
