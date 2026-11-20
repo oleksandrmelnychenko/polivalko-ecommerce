@@ -1,91 +1,48 @@
-import { useCallback, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { IconTools } from '@tabler/icons-react'
+import { useMemo, useState } from 'react'
+import { SiteRecordWorkspace } from '@/shared/ui/site/SiteRecordWorkspace'
 import { useApiQuery } from '@/shared/api/useApiQuery'
-import { DataTable } from '@/shared/ui/data-table/DataTable'
-import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { getServices, type ServiceDirection } from '../api/contentApi'
-import { ContentToolbar } from '../components/ContentToolbar'
-import { servicesColumns } from '../components/contentColumns'
 import { ListError } from '../components/ListError'
 import { ServiceDetailPane } from '../components/ServiceDetailPane'
 import { ServiceDirectionDrawer } from '../components/ServiceDirectionDrawer'
-import '@/shared/ui/split/split.css'
 import './content.css'
-
-const getRowId = (row: ServiceDirection) => row.code
 
 export function ServicesPage() {
   const services = useApiQuery('content-services', () => getServices())
-  const [editing, setEditing] = useState<{ direction: ServiceDirection | null; opened: boolean }>({ direction: null, opened: false })
+  const [editing, setEditing] = useState<ServiceDirection | null>(null)
+  const [opened, setOpened] = useState(false)
   const failed = services.status === 'error' || services.status === 'forbidden'
-  const rows = useMemo(() => (failed ? [] : [...(services.data ?? [])].sort((a, b) => a.sortOrder - b.sortOrder)), [failed, services.data])
-  const visible = useMemo(() => rows.filter((row) => row.isVisible), [rows])
-  const openEditor = useCallback((direction: ServiceDirection) => setEditing({ direction, opened: true }), [])
-  const [params, setParams] = useSearchParams()
-  const picked = params.get('code')
-  const selected = rows.find((row) => row.code === picked) ?? rows[0] ?? null
-  const selectedCode = selected?.code ?? null
-  const selectDirection = useCallback(
-    (row: ServiceDirection) =>
-      setParams(
-        (current) => {
-          const next = new URLSearchParams(current)
-          next.set('code', row.code)
-          return next
-        },
-        { replace: true },
-      ),
-    [setParams],
-  )
-  const rowClassName = useCallback((row: ServiceDirection) => (row.code === selectedCode ? 'app-split-row-active' : undefined), [selectedCode])
-
-  function onSaved(direction: ServiceDirection) {
-    const next = (services.data ?? []).map((item) => (item.code === direction.code ? direction : item))
-    services.setData(next.sort((a, b) => a.sortOrder - b.sortOrder))
-    setEditing({ direction, opened: false })
-  }
+  const rows = useMemo(() => failed ? [] : [...(services.data ?? [])].sort((a, b) => a.sortOrder - b.sortOrder), [failed, services.data])
+  const visible = rows.filter(row => row.isVisible)
 
   return (
-    <ListPage>
-      <PageHeader title="Напрямки послуг" />
-      <ContentToolbar
-        note="Сторінка послуг показує опис і фото біля назви напрямку. Напрямки стоять за полем «Порядок», від меншого числа до більшого."
-        summary={services.data ? `Напрямків: ${services.data.length}` : null}
-        isLoading={services.isFetching}
-        onRefresh={services.reload}
+    <>
+      <PageHeader title="Послуги" />
+      <SiteRecordWorkspace
+        title="Напрями послуг" parameter="code" refresh={services.reload} refreshing={services.isFetching} loading={services.isLoading}
+        empty={failed ? <ListError problem={services.problem} onRetry={services.reload} /> : 'Послуг ще немає.'}
+        rows={rows.map(row => ({
+          id: row.code, name: row.name,
+          icon: row.imageUrl ? <img src={row.imageUrl} alt="" loading="lazy" /> : <IconTools size={16} />,
+          detail: <small data-state={row.isVisible ? 'live' : 'off'}>{row.isVisible ? 'Показується' : 'Приховано'}</small>,
+          sortValues: { name: row.name, order: row.sortOrder, visible: Number(row.isVisible) },
+        }))}
+        sortOptions={[{ key: 'order', label: 'Порядок на сайті' }, { key: 'name', label: 'Назва' }, { key: 'visible', label: 'Видимість', descending: true }]}
+      >
+        {code => <ServiceDetailPane
+          direction={rows.find(row => row.code === code) ?? null}
+          position={visible.findIndex(row => row.code === code) + 1} visibleCount={visible.length}
+          onEdit={direction => { setEditing(direction); setOpened(true) }}
+        />}
+      </SiteRecordWorkspace>
+      <ServiceDirectionDrawer direction={editing} opened={opened} onClose={() => setOpened(false)}
+        onSaved={direction => {
+          services.setData(rows.map(row => row.code === direction.code ? direction : row))
+          setOpened(false)
+        }}
       />
-      <ListPageBody>
-        <div className="app-split-layout">
-          <div className="app-split-list">
-            <DataTable
-              ariaLabel="Напрямки послуг"
-              columns={servicesColumns}
-              data={rows}
-              getRowId={getRowId}
-              isLoading={services.isLoading}
-              isFetching={services.isFetching}
-              minWidth={500}
-              height="100%"
-              onRowClick={selectDirection}
-              rowClassName={rowClassName}
-              emptyText={failed ? <ListError problem={services.problem} onRetry={services.reload} /> : 'Напрямків послуг немає.'}
-            />
-          </div>
-          <ServiceDetailPane
-            direction={selected}
-            position={selected ? visible.findIndex((row) => row.code === selected.code) + 1 : 0}
-            visibleCount={visible.length}
-            onEdit={openEditor}
-          />
-        </div>
-      </ListPageBody>
-      <ServiceDirectionDrawer
-        direction={editing.direction}
-        opened={editing.opened}
-        onClose={() => setEditing((current) => ({ ...current, opened: false }))}
-        onSaved={onSaved}
-      />
-    </ListPage>
+    </>
   )
 }

@@ -11,10 +11,9 @@ export function ConsoleMain({ children, dashboard }: PropsWithChildren<{ dashboa
   const productDialog = useMatch('/catalog/products/:id')
   const catalogImport = useMatch('/catalog/import')
   const isCatalogList = activeSection?.id === 'catalog' && Boolean((matchesItem && activeItem) || productDialog || catalogImport)
-  const siteHome = useMatch('/site/home')
-  const siteBanners = useMatch('/site/banners')
-  const siteWorkspace = Boolean(siteHome || siteBanners)
-  const compactHeader = isCatalogList || siteWorkspace
+  const siteWorkspace = Boolean(useMatch('/site/*'))
+  const pageEditor = useMatch('/site/pages/:slug')
+  const compactHeader = isCatalogList || (siteWorkspace && !pageEditor)
   return (
     <AppShell.Main id="main" data-section={activeSection?.id} data-site-workspace={siteWorkspace || undefined}>
       <div className="console-content">

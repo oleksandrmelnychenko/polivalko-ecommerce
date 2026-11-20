@@ -220,65 +220,6 @@
   grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
 }
 
-.site-image-field {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 4px;
-}
-
-.site-image-preview {
-  align-items: center;
-  background: #f4f5f3;
-  border: 1px dashed var(--mantine-color-gray-4);
-  border-radius: 10px;
-  color: var(--mantine-color-gray-5);
-  display: flex;
-  flex: 0 0 auto;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.site-image-preview.is-wide {
-  aspect-ratio: 8 / 3;
-  width: 192px;
-}
-
-.site-image-preview.is-tall {
-  aspect-ratio: 3 / 4;
-  width: 84px;
-}
-
-.site-image-preview.is-square {
-  aspect-ratio: 1;
-  width: 96px;
-}
-
-.site-image-preview img {
-  display: block;
-  height: 100%;
-  object-fit: cover;
-  width: 100%;
-}
-
-.site-image-preview[aria-busy] {
-  opacity: 0.55;
-}
-
-.site-image-actions {
-  align-items: flex-start;
-  display: flex;
-  flex: 1 1 200px;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.site-image-hint {
-  font-size: 12px;
-}
-
 .site-toolbar {
   align-items: center;
   background: #fafbfa;

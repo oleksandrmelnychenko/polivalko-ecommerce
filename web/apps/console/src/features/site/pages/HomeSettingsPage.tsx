@@ -6,7 +6,7 @@ import { getHome } from '../api/siteApi'
 import { HomeSettingsForm } from '../components/HomeSettingsForm'
 import '@/shared/ui/split/split.css'
 import './site.css'
-import './site-home.css'
+import '@/shared/ui/site/site-home.css'
 
 export function HomeSettingsPage() {
   const home = useApiQuery('site-home', () => getHome())

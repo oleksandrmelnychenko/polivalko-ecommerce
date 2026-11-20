@@ -17,7 +17,7 @@ import { moveItem } from '../lib/homeSettings'
 import { periodLabel, periodState } from '../lib/period'
 import '@/shared/ui/split/split.css'
 import './site.css'
-import './site-home.css'
+import '@/shared/ui/site/site-home.css'
 import './site-banners.css'
 
 type Editing = { banner: Banner | null; opened: boolean; seq: number }

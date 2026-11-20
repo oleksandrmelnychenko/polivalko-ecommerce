@@ -1,7 +1,6 @@
 import { useSearchParams } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
-import { ListPage } from '@/shared/ui/ListPage'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { PageState } from '@/shared/ui/PageState'
 import { ScreenTabs, type ScreenTab } from '@/shared/ui/ScreenTabs'
@@ -42,9 +41,9 @@ export function SeoPage() {
   }
 
   return (
-    <ListPage>
+    <div className="site-seo-workspace">
       <ScreenTabs tabs={tabs} value={tab} label="Розділи SEO" onChange={selectTab} />
       {tab === 'redirects' ? <RedirectsPanel /> : <SeoTemplatesPanel />}
-    </ListPage>
+    </div>
   )
 }

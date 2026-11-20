@@ -4,12 +4,12 @@ import { useRef, useState, type FormEvent } from 'react'
 import { useReportDirty } from '@/shared/lib/useReportDirty'
 import { AppDateInput } from '@/shared/ui/AppDateInput'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
-import { saveBanner, type Banner, type SaveBannerRequest } from '../api/siteApi'
+import { saveBanner, uploadImage, type Banner, type SaveBannerRequest } from '../api/siteApi'
 import { isLink } from '../lib/homeSettings'
 import { invalidPeriod, periodDay, periodEnd, periodStart } from '../lib/period'
 import { fieldError, useSaveForm } from '../lib/useSaveForm'
 import { FormAlert } from './FormAlert'
-import { ImageField } from './ImageField'
+import { ImageField } from '@/shared/ui/site/ImageField'
 import { DrawerCancelButton } from '@/shared/ui/DrawerCancelButton'
 
 const FORM_ID = 'site-banner-form'
@@ -200,6 +200,7 @@ function BannerForm({ initial, uploading, onUploading, onBusy, onSaved, onDirty 
         <section className="banner-form-section banner-form-media">
           <h3>Зображення</h3>
           <ImageField
+            uploadImage={uploadImage}
             disabled={uploading || form.busy}
             onUploading={onUploading}
             label="Фото для комп'ютера"
@@ -211,6 +212,7 @@ function BannerForm({ initial, uploading, onUploading, onBusy, onSaved, onDirty 
             onChange={(url) => set('imageUrl', url)}
           />
           <ImageField
+            uploadImage={uploadImage}
             disabled={uploading || form.busy}
             onUploading={onUploading}
             label="Фото для телефона"

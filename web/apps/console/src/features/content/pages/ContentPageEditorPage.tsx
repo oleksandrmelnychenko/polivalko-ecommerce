@@ -7,6 +7,8 @@ import { getPage } from '../api/contentApi'
 import { PageEditor } from '../components/PageEditor'
 import { PageEditorHeading } from '../components/PageEditorHeading'
 import './content.css'
+import '@/shared/ui/site/site-home.css'
+import '@/shared/ui/site/site-records.css'
 
 export function ContentPageEditorPage() {
   const { slug = '' } = useParams()

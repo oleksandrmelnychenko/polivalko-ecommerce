@@ -1,13 +1,12 @@
-import { Button, Checkbox, Group, NumberInput, Stack, Text, Textarea } from '@mantine/core'
+import { Button, Switch, Group, NumberInput, Textarea } from '@mantine/core'
 import { IconDeviceFloppy } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { useReportDirty } from '@/shared/lib/useReportDirty'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
-import { TableChip } from '@/shared/ui/TableChip'
-import { saveService, type ServiceDirection } from '../api/contentApi'
+import { saveService, uploadImage, type ServiceDirection } from '../api/contentApi'
 import { useSaveForm } from '../lib/useSaveForm'
 import { FormAlert } from './FormAlert'
-import { ImageField } from './ImageField'
+import { ImageField } from '@/shared/ui/site/ImageField'
 import { DrawerCancelButton } from '@/shared/ui/DrawerCancelButton'
 
 const FORM_ID = 'content-direction-form'
@@ -23,35 +22,43 @@ export function ServiceDirectionDrawer({ direction, opened, onClose, onSaved }: 
   const [busy, setBusy] = useState(false)
   const [dirty, setDirty] = useState(false)
 
+  const [uploading, setUploading] = useState(false)
+  const locked = busy || uploading
+
   return (
     <AppEditorModal
       opened={opened}
-      onClose={busy ? () => undefined : onClose}
-      dirty={dirty && !busy}
+      onClose={locked ? () => undefined : onClose}
+      dirty={dirty && !locked}
+      closeOnEscape={!locked}
+      closeOnClickOutside={!locked}
+      className="site-record-modal service-editor-modal"
       title={direction?.name ?? 'Напрямок послуг'}
-      size="compact"
+      size="standard"
       footer={
         <Group justify="flex-end" gap="sm">
-          <DrawerCancelButton disabled={busy} onCancel={onClose} />
-          <Button type="submit" form={FORM_ID} loading={busy} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
+          <DrawerCancelButton disabled={locked} onCancel={onClose} />
+          <Button type="submit" form={FORM_ID} loading={busy} disabled={uploading} leftSection={<IconDeviceFloppy size={16} stroke={1.8} />}>
             Зберегти напрямок
           </Button>
         </Group>
       }
     >
-      {direction ? <DirectionForm key={direction.code} initial={direction} onBusy={setBusy} onSaved={onSaved} onDirty={setDirty} /> : null}
+      {direction ? <DirectionForm key={direction.code} initial={direction} uploading={uploading} onUploading={setUploading} onBusy={setBusy} onSaved={onSaved} onDirty={setDirty} /> : null}
     </AppEditorModal>
   )
 }
 
 type DirectionFormProps = {
   initial: ServiceDirection
+  uploading: boolean
+  onUploading: (busy: boolean) => void
   onBusy: (busy: boolean) => void
   onSaved: (direction: ServiceDirection) => void
   onDirty: (dirty: boolean) => void
 }
 
-function DirectionForm({ initial, onBusy, onSaved, onDirty }: DirectionFormProps) {
+function DirectionForm({ initial, uploading, onUploading, onBusy, onSaved, onDirty }: DirectionFormProps) {
   const form = useSaveForm()
   const [description, setDescription] = useState(initial.description ?? '')
   const [sortOrder, setSortOrder] = useState<string | number>(initial.sortOrder)
@@ -63,7 +70,7 @@ function DirectionForm({ initial, onBusy, onSaved, onDirty }: DirectionFormProps
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    if (form.busy) return
+    if (form.busy || uploading) return
     const order = Number(sortOrder)
     if (String(sortOrder).trim() === '' || !Number.isInteger(order)) {
       form.invalid({ sortOrder: 'Вкажіть ціле число.' })
@@ -80,61 +87,62 @@ function DirectionForm({ initial, onBusy, onSaved, onDirty }: DirectionFormProps
 
   return (
     <form id={FORM_ID} className="content-drawer-form" onSubmit={onSubmit} noValidate aria-label={initial.name}>
-      <Stack gap="md">
-        <Group gap="xs">
-          <Text className="content-code" size="sm">
-            {initial.code}
-          </Text>
-          {initial.isVisible ? null : <TableChip tone="neutral" value="прихований на сайті" />}
-        </Group>
-        <Textarea
-          label="Опис"
-          description="До 1000 символів."
-          value={description}
-          maxLength={1000}
-          autosize
-          minRows={4}
-          error={form.errors.description}
-          onChange={(event) => {
-            setDescription(event.currentTarget.value)
-            form.clearField('description')
-          }}
-          data-autofocus
-        />
-        <ImageField
-          label="Фото"
-          description="Стоїть біля напрямку на сторінці послуг. Найкраще горизонтальне, від 960 px завширшки."
-          shape="wide"
-          value={imageUrl}
-          error={form.errors.imageUrl}
-          onChange={(url) => {
-            setImageUrl(url)
-            form.clearField('imageUrl')
-          }}
-        />
-        <NumberInput
-          label="Порядок"
-          value={sortOrder}
-          allowDecimal={false}
-          step={1}
-          w={160}
-          error={form.errors.sortOrder}
-          onChange={(value) => {
-            setSortOrder(value)
-            form.clearField('sortOrder')
-          }}
-        />
-        <Checkbox
-          label="Показувати на сайті"
-          checked={visible}
-          error={form.errors.isVisible}
-          onChange={(event) => {
-            setVisible(event.currentTarget.checked)
-            form.clearField('isVisible')
-          }}
-        />
-        <FormAlert error={form.error} />
-      </Stack>
+      <fieldset className="service-form-grid" disabled={form.busy}>
+        <div className="service-form-fields">
+          <Textarea
+            label="Опис"
+            description="До 1000 символів."
+            value={description}
+            maxLength={1000}
+            autosize
+            minRows={4}
+            error={form.errors.description}
+            onChange={(event) => {
+              setDescription(event.currentTarget.value)
+              form.clearField('description')
+            }}
+            data-autofocus
+          />
+          <NumberInput
+            label="Порядок"
+            value={sortOrder}
+            allowDecimal={false}
+            step={1}
+            w="100%"
+            error={form.errors.sortOrder}
+            onChange={(value) => {
+              setSortOrder(value)
+              form.clearField('sortOrder')
+            }}
+          />
+          <Switch
+            label="Показувати на сайті"
+            checked={visible}
+            error={form.errors.isVisible}
+            onChange={(event) => {
+              setVisible(event.currentTarget.checked)
+              form.clearField('isVisible')
+            }}
+          />
+        </div>
+        <div className="service-form-media">
+          <ImageField
+            uploadImage={uploadImage}
+            label="Фото"
+            description="Горизонтальне фото, від 960 px завширшки."
+            disabled={form.busy || uploading}
+            onUploading={onUploading}
+            shape="wide"
+            value={imageUrl}
+            error={form.errors.imageUrl}
+            onChange={(url) => {
+              setImageUrl(url)
+              form.clearField('imageUrl')
+            }}
+          />
+        </div>
+      </fieldset>
+      <FormAlert error={form.error} />
     </form>
   )
 }

@@ -1,5 +1,5 @@
 import { Button, Stack } from '@mantine/core'
-import { IconDeviceFloppy } from '@tabler/icons-react'
+import { IconBox, IconCategory, IconDeviceFloppy } from '@tabler/icons-react'
 import { useRef, useState, type FormEvent } from 'react'
 import { problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
@@ -21,7 +21,6 @@ import {
 } from '../lib/seoTemplates'
 import { fieldError, useSaveForm, type FieldErrors } from '../lib/useSaveForm'
 import { FormAlert } from './FormAlert'
-import { SectionCard } from './SectionCard'
 import { SnippetPreview } from './SnippetPreview'
 import { TemplateField } from './TemplateField'
 
@@ -55,7 +54,7 @@ const ENTITIES: { key: Entity; title: string; description: string; tokens: Templ
   {
     key: 'product',
     title: 'Товари',
-    description: 'Для товарів без власного SEO-заголовка чи опису. Якщо змінна порожня (наприклад, бренд), шаблон її пропускає.',
+    description: 'Для товарів без власного SEO-заголовка чи опису.',
     tokens: PRODUCT_TOKENS,
     sample: PRODUCT_SAMPLE,
     url: siteUrl('/product/shlang-gardena-20m'),
@@ -109,18 +108,14 @@ function SeoTemplatesForm({ initial, onSaved }: { initial: SeoTemplates; onSaved
           </Button>
         }
       />
-      <div className="site-scroll">
+      <div className="seo-template-workspace">
         <form id={FORM_ID} ref={formRef} className="site-form" onSubmit={onSubmit} noValidate aria-label="Мета-шаблони">
-          <Stack gap="lg">
-            <p className="site-lead">
-              Шаблон заповнює заголовок і опис сторінки для пошукових систем, коли в товару чи категорії ці поля порожні. Заповнене вручну шаблон не
-              змінює. Натисніть змінну під полем, щоб вставити її в місце курсора.
-            </p>
+          <div className="seo-entity-cards">
             <FormAlert error={form.error} />
             {ENTITIES.map((entity) => (
               <EntityCard key={entity.key} entity={entity} value={values[entity.key]} errors={form.errors} onChange={(field, value) => change(entity.key, field, value)} />
             ))}
-          </Stack>
+          </div>
         </form>
       </div>
     </>
@@ -138,7 +133,12 @@ function EntityCard({ entity, value, errors, onChange }: EntityCardProps) {
   const title = renderTemplate(value.title, entity.sample)
   const description = renderTemplate(value.description, entity.sample)
   return (
-    <SectionCard title={entity.title} description={entity.description}>
+    <section className="site-card" aria-label={entity.title}>
+      <header className="seo-entity-heading">
+        <span aria-hidden="true">{entity.key === 'product' ? <IconBox size={18} /> : <IconCategory size={18} />}</span>
+        <h2>{entity.title}</h2>
+      </header>
+      <p className="site-card-description">{entity.description}</p>
       <div className="site-template-grid">
         <Stack gap="md">
           <TemplateField
@@ -167,6 +167,6 @@ function EntityCard({ entity, value, errors, onChange }: EntityCardProps) {
           <SnippetPreview title={title} description={description} url={entity.url} />
         </div>
       </div>
-    </SectionCard>
+    </section>
   )
 }

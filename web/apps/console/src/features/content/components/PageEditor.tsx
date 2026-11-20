@@ -58,7 +58,7 @@ export function PageEditor({ initial, onSaved }: PageEditorProps) {
           seoTitle: seoTitle.trim() || null,
           seoDescription: seoDescription.trim() || null,
         }),
-      { done: 'Сторінку збережено. У полі тепер текст, очищений сервером.', failed: 'Сторінку не збережено.' },
+      { done: 'Сторінку збережено.', failed: 'Сторінку не збережено.' },
     )
     if (!result?.data) return
     const page = result.data
@@ -116,7 +116,7 @@ export function PageEditor({ initial, onSaved }: PageEditorProps) {
             />
             <Textarea
               label="Підзаголовок"
-              description="Абзац під заголовком, до 500 символів. Можна лишити порожнім."
+              description="До 500 символів."
               value={lead}
               maxLength={500}
               autosize
@@ -129,11 +129,10 @@ export function PageEditor({ initial, onSaved }: PageEditorProps) {
             />
             <Textarea
               label="Текст сторінки, HTML"
-              description="Дозволено абзаци, заголовки h2, h3 і h4, списки, цитати, таблиці й посилання (http, https, mailto, tel). Решту розмітки, стилі й скрипти сервер прибирає під час збереження."
               classNames={{ input: 'content-code-input' }}
               value={body}
               autosize
-              minRows={18}
+              minRows={9}
               spellCheck={false}
               autoCapitalize="off"
               autoCorrect="off"
@@ -164,7 +163,7 @@ export function PageEditor({ initial, onSaved }: PageEditorProps) {
             <h2 id="content-preview-title" className="app-section-title">
               Перегляд
             </h2>
-            {draftShown ? <TableChip dot tone="warning" value="чернетка, не збережена" /> : <TableChip tone="neutral" value="збережена версія" />}
+            {dirty ? <TableChip dot tone="warning" value="чернетка, не збережена" /> : <TableChip tone="neutral" value="збережена версія" />}
           </div>
           <div className="content-preview-sheet">
             <p className="content-preview-title">{title || 'Без заголовка'}</p>
@@ -172,7 +171,6 @@ export function PageEditor({ initial, onSaved }: PageEditorProps) {
             {draftShown ? (
               <>
                 <iframe className="content-preview-frame" title="Чернетка тексту сторінки" sandbox="" srcDoc={previewDocument(draft)} />
-                <p className="content-preview-help">Після збереження сервер прибере недозволену розмітку, і тут з&apos;явиться збережена версія.</p>
               </>
             ) : saved.bodyHtml ? (
               <div className="content-prose" dangerouslySetInnerHTML={{ __html: saved.bodyHtml }} />
