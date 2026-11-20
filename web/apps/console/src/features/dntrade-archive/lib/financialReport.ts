@@ -1,6 +1,10 @@
 const maxTables = 12
 const maxRows = 1000
 const maxCells = 5000
+const maxPaginatedRows = 5000
+const maxPaginatedCells = 40000
+const maxFixedRows = 16
+const maxFixedCells = 512
 const maxColumns = 64
 const maxCellLength = 4096
 
@@ -12,7 +16,7 @@ export type ReportField = { label: string; value: string }
 type ReportFieldGroup = { title?: string; fields: ReportField[] }
 
 export type FinancialReportPreview =
-  | { kind: 'tables'; tables: ReportTable[]; limited: boolean; fields: ReportField[] }
+  | { kind: 'tables'; tables: ReportTable[]; limited: boolean; paginated: boolean; fields: ReportField[] }
   | { kind: 'fields'; groups: ReportFieldGroup[] }
   | { kind: 'empty' | 'unsupported' }
 
@@ -101,6 +105,29 @@ function parseRow(values: unknown[]): ReportRow | null {
   return row
 }
 
+function canPaginate(sourceTables: unknown[]): boolean {
+  const [table] = sourceTables
+  if (sourceTables.length !== 1 || !Array.isArray(table) || table.length > maxPaginatedRows) return false
+
+  let cells = 0
+  let fixedRows = 0
+  let fixedCells = 0
+  for (const row of table) {
+    if (!isRecord(row) || !Array.isArray(row.cells)) return false
+    cells += row.cells.length
+    if (cells > maxPaginatedCells) return false
+    if (row.section === 'TBODY') {
+      if (row.cells.some((cell) => !isRecord(cell) || cell.rowspan !== 1)) return false
+    } else {
+      fixedRows += 1
+      fixedCells += row.cells.length
+      if (fixedRows > maxFixedRows || fixedCells > maxFixedCells) return false
+    }
+  }
+
+  return table.length > maxRows || cells > maxCells
+}
+
 export function parseFinancialReportPreview(original: unknown): FinancialReportPreview {
   if (!isRecord(original) || !isRecord(original.raw)) return { kind: 'unsupported' }
   const raw = original.raw
@@ -108,6 +135,9 @@ export function parseFinancialReportPreview(original: unknown): FinancialReportP
   if (sourceTables == null) return parseStructuredReport(original.entityType, original.documentType, raw)
   if (!Array.isArray(sourceTables)) return { kind: 'unsupported' }
 
+  const paginated = canPaginate(sourceTables)
+  const rowLimit = paginated ? maxPaginatedRows : maxRows
+  const cellLimit = paginated ? maxPaginatedCells : maxCells
   const tables: ReportTable[] = []
   let rows = 0
   let cells = 0
@@ -120,7 +150,7 @@ export function parseFinancialReportPreview(original: unknown): FinancialReportP
       if (!isRecord(sourceRow) || !Array.isArray(sourceRow.cells)) return { kind: 'unsupported' }
       const { section } = sourceRow
       if (section !== 'THEAD' && section !== 'TBODY' && section !== 'TFOOT') return { kind: 'unsupported' }
-      if (rows === maxRows || cells + sourceRow.cells.length > maxCells) {
+      if (rows === rowLimit || cells + sourceRow.cells.length > cellLimit) {
         limited = true
         break
       }
@@ -138,5 +168,5 @@ export function parseFinancialReportPreview(original: unknown): FinancialReportP
 
   limited ||= sourceTables.length > maxTables
   if (tables.length === 0) return { kind: limited ? 'unsupported' : 'empty' }
-  return { kind: 'tables', tables, limited, fields: reportScope(raw) }
+  return { kind: 'tables', tables, limited, paginated, fields: reportScope(raw) }
 }

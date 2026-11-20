@@ -1,8 +1,9 @@
-import { Button, Stack, Table, Text } from '@mantine/core'
+import { Button, Group, Stack, Table, Text } from '@mantine/core'
 import { useId, useState } from 'react'
 import { apiFetch } from '@/shared/api/client'
 import { useApiQuery, type ApiResult } from '@/shared/api/useApiQuery'
 import { PageState } from '@/shared/ui/PageState'
+import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { archiveOriginalHref } from '../api/archiveApi'
 import { parseFinancialReportPreview, type FinancialReportPreview, type ReportField } from '../lib/financialReport'
 import { ArchivedFinancialReconciliation } from './ArchivedFinancialReconciliation'
@@ -16,7 +17,11 @@ async function getReport(id: string): Promise<ApiResult<LoadedReport>> {
   return { data: { original, preview: parseFinancialReportPreview(original) }, response }
 }
 
-type TableRows = Extract<FinancialReportPreview, { kind: 'tables' }>['tables'][number]['TBODY']
+type ReportTable = Extract<FinancialReportPreview, { kind: 'tables' }>['tables'][number]
+type TableRows = ReportTable['TBODY']
+const reportPageSize = 100
+const rowCount = new Intl.NumberFormat('uk-UA')
+const cellStyle = { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } as const
 
 function ReportRows({ rows, header = false }: { rows: TableRows; header?: boolean }) {
   const Cell = header ? Table.Th : Table.Td
@@ -29,6 +34,33 @@ function ReportRows({ rows, header = false }: { rows: TableRows; header?: boolea
       ))}
     </Table.Tr>
   ))
+}
+
+function ReportTableView({ table, index, paginated }: { table: ReportTable; index: number; paginated: boolean }) {
+  const [page, setPage] = useState(1)
+  const totalRows = table.TBODY.length
+  const start = (page - 1) * reportPageSize
+  const end = Math.min(start + reportPageSize, totalRows)
+  const body = paginated ? table.TBODY.slice(start, end) : table.TBODY
+
+  return (
+    <>
+      {paginated ? (
+        <Group justify="space-between" gap="xs">
+          <Text size="sm" c="dimmed" role="status">Рядки {rowCount.format(start + 1)}–{rowCount.format(end)} з {rowCount.format(totalRows)}</Text>
+          <Paginator page={page} pageSize={reportPageSize} totalPages={Math.ceil(totalRows / reportPageSize)} onPageChange={setPage} />
+        </Group>
+      ) : null}
+      <Table.ScrollContainer minWidth={480} type="native">
+        <Table aria-label={`Таблиця звіту ${index + 1}`} withTableBorder withColumnBorders styles={{ th: cellStyle, td: cellStyle }}>
+          {paginated && table.TFOOT.length ? <Table.Caption>Підсумки за весь звіт</Table.Caption> : null}
+          {table.THEAD.length ? <Table.Thead><ReportRows rows={table.THEAD} header /></Table.Thead> : null}
+          <Table.Tbody><ReportRows rows={body} /></Table.Tbody>
+          {table.TFOOT.length ? <Table.Tfoot><ReportRows rows={table.TFOOT} /></Table.Tfoot> : null}
+        </Table>
+      </Table.ScrollContainer>
+    </>
+  )
 }
 
 function ReportFields({ fields }: { fields: ReportField[] }) {
@@ -77,7 +109,6 @@ function ReportContent({ id }: { id: string }) {
     )
   }
 
-  const cellStyle = { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } as const
   return (
     <Stack gap="sm">
       <ReportFields fields={preview.fields} />
@@ -86,13 +117,7 @@ function ReportContent({ id }: { id: string }) {
         <Text size="sm" c="dimmed" role="status">Показано частину звіту. Повні дані доступні в оригіналі.</Text>
       ) : null}
       {preview.tables.map((table, index) => (
-        <Table.ScrollContainer key={index} minWidth={480} type="native">
-          <Table aria-label={`Таблиця звіту ${index + 1}`} withTableBorder withColumnBorders styles={{ th: cellStyle, td: cellStyle }}>
-            {table.THEAD.length ? <Table.Thead><ReportRows rows={table.THEAD} header /></Table.Thead> : null}
-            <Table.Tbody><ReportRows rows={table.TBODY} /></Table.Tbody>
-            {table.TFOOT.length ? <Table.Tfoot><ReportRows rows={table.TFOOT} /></Table.Tfoot> : null}
-          </Table>
-        </Table.ScrollContainer>
+        <ReportTableView key={index} table={table} index={index} paginated={preview.paginated} />
       ))}
     </Stack>
   )

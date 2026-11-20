@@ -18,6 +18,7 @@ const FINANCE_ARCHIVE_GROUPS = [
       { value: 'Рух коштів', label: 'Рух коштів', entityType: 'financialReport' },
       { value: 'Звіт по рахунках', label: 'Звіт по рахунках', entityType: 'financialReport' },
       { value: 'Звіт по касі', label: 'Звіт по касі', entityType: 'financialReport' },
+      { value: 'Звіт по змінам', label: 'Звіт про касові зміни', entityType: 'financialReport' },
       { value: 'Банківський рахунок DNTrade', label: 'Банківські рахунки DNTrade', entityType: 'bankAccount' },
     ],
   },
@@ -33,6 +34,8 @@ const FINANCE_ARCHIVE_GROUPS = [
     items: [
       { value: 'Облікові параметри організацій', label: 'Облікові параметри організацій', entityType: 'financialReport' },
       { value: 'Прибутки та витрати (P&L)', label: 'Прибутки та витрати (P&L)', entityType: 'financialReport' },
+      { value: 'Звіт по витратам', label: 'Звіт про витрати', entityType: 'financialReport' },
+      { value: 'Валовий прибуток', label: 'Валовий прибуток', entityType: 'financialReport' },
     ],
   },
 ]
