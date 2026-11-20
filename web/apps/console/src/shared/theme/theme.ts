@@ -18,7 +18,7 @@ const brand: MantineColorsTuple = [
   '#005524',
 ]
 
-const fontFamily = 'Onest, system-ui, -apple-system, "Segoe UI", sans-serif'
+const fontFamily = 'var(--font-sans)'
 
 const comboboxStyles = {
   dropdown: { minWidth: 'max(220px, var(--popover-anchor-width, 0px))' },
@@ -40,6 +40,7 @@ const chipTones: Record<string, string> = {
 
 export const theme = createTheme({
   fontFamily,
+  fontFamilyMonospace: 'var(--font-mono)',
   headings: { fontFamily, fontWeight: '600' },
   black: '#1a1a1a',
   colors: { brand },

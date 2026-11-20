@@ -36,14 +36,16 @@
   padding: 0;
 }
 
-.console-frame:has(> .dash-page) {
+.console-frame:has(> .dash-page),
+[data-section='catalog'] .console-frame {
   background: transparent;
   border: 0;
   border-radius: 0;
   box-shadow: none;
 }
 
-.mantine-AppShell-main:has(.dash-page) {
+.mantine-AppShell-main:has(.dash-page),
+.mantine-AppShell-main[data-section='catalog'] {
   background: radial-gradient(ellipse at 100% 100%, color-mix(in srgb, var(--brand-accent) 4%, transparent), transparent 42%), #fafafc;
 }
 

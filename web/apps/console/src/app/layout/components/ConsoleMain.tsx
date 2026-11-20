@@ -7,7 +7,7 @@ import { ConsoleSectionTabs } from './ConsoleSectionTabs'
 export function ConsoleMain({ children, dashboard }: PropsWithChildren<{ dashboard: boolean }>) {
   const { activeItem, activeSection } = useNavigation()
   return (
-    <AppShell.Main id="main">
+    <AppShell.Main id="main" data-section={activeSection?.id}>
       <div className="console-content">
         {!dashboard && <div className="console-page-title-row">
           <PageHeaderTitleSlot className="console-header-page-title" />

@@ -11,7 +11,7 @@ import { productHref, productName } from '../lib/productFilters'
 import { LabelChip } from './LabelChip'
 import { LOW_STOCK, StockText } from './StockText'
 
-const TILE_SIZES = 'calc((100vw - 120px) / 6)'
+const TILE_SIZES = '(max-width: 480px) 90vw, (max-width: 800px) 46vw, 280px'
 
 type TilesSelection = {
   selected: ReadonlySet<string>
@@ -135,12 +135,12 @@ function ProductTile({ row, selected, onToggle }: ProductTileProps) {
         </Tooltip>
       </div>
       <div className="catalog-tile-body">
-        <span className="catalog-tile-meta">
-          <span className="catalog-code">{row.sku}</span> · {row.categoryName}
-        </span>
         <Link to={productHref(row.id)} className="catalog-tile-name" title={name}>
           {name}
         </Link>
+        <span className="catalog-tile-meta">
+          <span className="catalog-code">{row.sku}</span> · {row.categoryName}
+        </span>
         <div className="catalog-tile-price">
           <Money value={row.price} />
           {row.stock > LOW_STOCK ? (
