@@ -12,7 +12,7 @@ import './buyer-markets.css'
 type Period = { count: number; returns: number; amount: number; lastPurchase: string | null }
 type Settlement = Period & { code: string; name: string; x: number; y: number }
 type Region = Period & { code: string; name: string; settlements: Settlement[] }
-type Geography = { unknown: Period; regions: Region[] }
+type Geography = { unknown: Period; regions: Region[]; withAddress: number }
 type Source = 'documents' | 'registered' | 'online'
 type Metric = 'count' | 'amount'
 type Markets = Record<Source, Geography> & {
@@ -112,6 +112,7 @@ function RegionalMap({ data, source, metric, regionCode, onRegion }: {
       <tbody>{[...recorded].sort((a,b) => b[metric]-a[metric]).map(r => <tr key={r.code}>
         <th><button onClick={() => onRegion(r.code)}>{r.name}</button></th><td>{formatValue(r.count)}</td><td>{formatValue(r.amount)}</td></tr>)}</tbody></table></div>}</>}
     {selected && data.unknown.count > 0 && <p>Ще {formatValue(data.unknown.count)} покупок у цьому джерелі за рік мають невідому область.</p>}
+    {total > 0 && data.withAddress === 0 && <p>За вибраний рік у джерелі немає адреси чи населеного пункту для жодної покупки.</p>}
     <small>Геодані · <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a>
       {' · '}<a href="https://www.geoboundaries.org/">geoBoundaries</a>{' · '}<a href="https://github.com/alexbabintsev/ua-geo">КАТОТТГ / ua-geo</a></small>
   </>
@@ -140,8 +141,8 @@ export function BuyerMarkets() {
     <AnalyticsCard title="Географія покупок" actions={<label>Рік <input type="number" min={1900} max={latest}
       defaultValue={year} key={year} onBlur={e => { const v = e.currentTarget.valueAsNumber
         if (Number.isInteger(v) && v >= 1900 && v <= latest) { setPage(1); changeParam('year', String(v)) } }} /></label>}>
-      <div className="ba-controls"><SegmentedControl aria-label="Джерело регіону" value={source} onChange={v => changeParam('source', v)}
-        data={Object.entries(sourceNames).map(([value, label]) => ({ value, label }))} />
+      <div className="ba-controls"><label>Джерело адреси<select value={source} onChange={e => changeParam('source', e.target.value)}>
+        {Object.entries(sourceNames).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <SegmentedControl aria-label="Показник карти" value={metric} onChange={v => changeParam('metric', v)}
           data={[{ value: 'count', label: 'Кількість покупок' }, { value: 'amount', label: 'Сума, грн' }]} /></div>
       {data ? <RegionalMap key={source + year} data={data[source]} source={source} metric={metric} regionCode={params.get('region') ?? ''} onRegion={code => changeParam('region', code)} />

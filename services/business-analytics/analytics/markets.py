@@ -73,7 +73,12 @@ WITH sales AS (
  FROM sales d LEFT JOIN identities i ON i.source_account=d.source_account AND i.ref=lower(d.partner_ref)
  LEFT JOIN accounting.partners p ON p.id=coalesce(d.native_partner_id,i.id)
  LEFT JOIN accounting.documents o ON o.entity_type='order' AND o.source_account=d.source_account
-     AND o.source_id=d.parent_ref AND lower(d.parent_kind) IN ('order','customerorder','замовлення клієнта')
+     AND o.source_id=coalesce(nullif(d.parent_ref,''), CASE WHEN jsonb_typeof(d.details->'parent_document')='string'
+          THEN nullif(d.details->>'parent_document','') END)
+     AND (lower(d.parent_kind) IN ('order','customerorder','замовлення клієнта')
+          OR (nullif(d.parent_kind,'') IS NULL AND NOT EXISTS (
+              SELECT 1 FROM accounting.documents other WHERE other.source_account=o.source_account
+              AND other.source_id=o.source_id AND other.entity_type<>'order')))
 ), addresses AS (
  SELECT s.*, coalesce(nullif(delivery->>'delivery_address',''), direct_address) AS shipping_address
  FROM selected s
@@ -91,10 +96,12 @@ WITH sales AS (
  FROM addresses a
 )
 SELECT account,entity_type,kind,status,currency,raw_kind,raw_status,raw_currency,partner,name,region,buyer_region,city,buyer_city,
+       nullif(trim(shipping_address),'') IS NOT NULL AS has_delivery_address,
+       nullif(trim(buyer_address),'') IS NOT NULL AS has_buyer_address,
        count(*) AS count,sum(abs(total)) FILTER (WHERE abs(total)<=1e15) AS amount,
        max(day) FILTER (WHERE abs(total)<=1e15) AS last_day,
        count(*) FILTER (WHERE total IS NULL OR abs(total)>1e15) AS invalid
-FROM located GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14
+FROM located GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16
 """
 WEB = """
 SELECT s.area AS region,s.name AS city,
@@ -123,8 +130,11 @@ class Geography:
     def __init__(self):
         self.regions = defaultdict(bucket)
         self.places = defaultdict(dict)
+        self.with_address = 0
 
-    def record(self, region, city, count, amount, refund=False, last=None):
+    def record(self, region, city, count, amount, refund=False, last=None, has_address=False):
+        if not refund and (has_address or region or city):
+            self.with_address += count
         code, place = resolve(region_code(region), city, not (region or "").strip())
         add(self.regions[code], count, amount, refund, last)
         if place:
@@ -136,7 +146,7 @@ class Geography:
             add(places[place.code], count, amount, refund, last)
 
     def report(self):
-        return dict(unknown=self.regions.get(None, bucket()), regions=[
+        return dict(withAddress=self.with_address, unknown=self.regions.get(None, bucket()), regions=[
             dict(code="UA"+code, name=name, settlements=list(self.places[code].values()),
                  **self.regions.get(code, bucket())) for code, name in REGIONS.items()])
 
@@ -160,8 +170,8 @@ def summarize(headers, web):
         names[key] = row["name"]
         values = count, row["amount"], kind == "return", row["last_day"]
         add(buyers[key], *values)
-        regions.record(row["region"], row.get("city"), *values)
-        registered.record(row["buyer_region"], row.get("buyer_city"), *values)
+        regions.record(row["region"], row.get("city"), *values, has_address=row.get("has_delivery_address"))
+        registered.record(row["buyer_region"], row.get("buyer_city"), *values, has_address=row.get("has_buyer_address"))
     for row in web:
         online.record(row["region"], row["city"], row["count"], row["amount"])
 

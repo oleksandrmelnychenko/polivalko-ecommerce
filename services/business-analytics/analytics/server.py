@@ -237,9 +237,9 @@ def dispatch(env):
                     "matched" if turnover == totals["documentNet"] else "differences")
                 logging.getLogger("gunicorn.error").info(
                     "Buyer geography checked (year=%s, source=%s, ledger=%s, partners=%s, sales=%s, unknown=%s, "
-                    "places=%s, kyivRegionSales=%s, kyivPlaces=%s, kyivMappedSales=%s)",
+                    "withAddress=%s, places=%s, kyivRegionSales=%s, kyivPlaces=%s, kyivMappedSales=%s)",
                     year, source, ledger, market["partnerCount"], geography["unknown"]["count"] + sum(r["count"] for r in regions),
-                    geography["unknown"]["count"], sum(len(r["settlements"]) for r in regions),
+                    geography["unknown"]["count"], geography["withAddress"], sum(len(r["settlements"]) for r in regions),
                     kyiv["count"], len(kyiv["settlements"]), sum(p["count"] for p in kyiv["settlements"]))
         except Exception as exc:
             logger.error("Buyer geography check unavailable (%s)", type(exc).__name__)
