@@ -1,6 +1,6 @@
 import { useDebouncedCallback } from '@mantine/hooks'
 import { Button, SegmentedControl } from '@mantine/core'
-import { IconChartPie, IconCoins, IconReceiptRefund, IconRefresh, IconReportMoney, IconWallet } from '@tabler/icons-react'
+import { IconAdjustmentsHorizontal, IconChartPie, IconCoins, IconFileInvoice, IconReceiptRefund, IconRefresh, IconReportMoney, IconWallet } from '@tabler/icons-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
@@ -11,6 +11,7 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import { AnalyticsChart } from '../components/AnalyticsChart'
 import { AnalyticsCard } from '../components/AnalyticsCard'
+import { AssortmentReport } from '../components/AssortmentReport'
 import { AnnualInvoices } from '../components/AnnualInvoices'
 import { TurnoverForecast } from '../components/TurnoverForecast'
 import { BuyerMarkets } from '../components/BuyerMarkets'
@@ -28,7 +29,7 @@ import {
 import './product-analytics.css'
 import './business-analytics.css'
 
-function ProductSearch({ value, onSearch }: { value: string; onSearch: (value: string) => void }) {
+function ProductSearch({ value, onSearch, placeholder }: { value: string; onSearch: (value: string) => void; placeholder?: string }) {
   const [text, setText] = useState(value)
   const [previous, setPrevious] = useState(value)
   const search = useDebouncedCallback(onSearch, 300)
@@ -38,7 +39,7 @@ function ProductSearch({ value, onSearch }: { value: string; onSearch: (value: s
   }
   return (
     <label>Пошук товару
-      <input value={text} maxLength={120} onChange={(event) => {
+      <input type="search" placeholder={placeholder} value={text} maxLength={120} onChange={(event) => {
         setText(event.currentTarget.value)
         search(event.currentTarget.value)
       }} onKeyDown={(event) => { if (event.key === 'Enter') search.flush() }} />
@@ -64,7 +65,7 @@ function Grid({ headings, children }: { headings: string[]; children: ReactNode 
 }
 function Pager({ total, page, change }: { total: number; page: number; change: (n: number) => void }) {
   return total > 40 || page > 1 ? (
-    <div className="ba-controls">
+    <div className="ba-controls ba-pager">
       <Button variant="default" disabled={page <= 1} onClick={() => change(page - 1)}>
         Назад
       </Button>
@@ -77,7 +78,6 @@ function Pager({ total, page, change }: { total: number; page: number; change: (
     </div>
   ) : null
 }
-const months = ['Січ', 'Лют', 'Бер', 'Кві', 'Тра', 'Чер', 'Лип', 'Сер', 'Вер', 'Жов', 'Лис', 'Гру']
 const runLabel: Record<string, string> = {
   waiting: 'Очікує звірки',
   queued: 'У черзі',
@@ -98,7 +98,6 @@ export function BusinessAnalyticsPage() {
   const [params, setParams] = useSearchParams()
   const [message, setMessage] = useState('')
   const [metric, setMetric] = useState<'net' | 'profit'>('net')
-  const [seasonMetric, setSeasonMetric] = useState<'months' | 'indices'>('months')
   const [showDocs, setShowDocs] = useState(false)
   const [docPage, setDocPage] = useState(1)
   const reportTabs = useRef<HTMLDivElement>(null)
@@ -169,7 +168,9 @@ export function BusinessAnalyticsPage() {
     setParams(p)
     setDocPage(1)
   }
-  const r = report.data
+  const assortment = tab === 'assortment'
+  const reportFailed = report.status === 'error' || report.status === 'forbidden'
+  const r = assortment && reportFailed ? undefined : report.data
   const f = forecast.data
   const view = tab === 'forecast' ? f : r
   const query = tab === 'forecast' ? forecast : report
@@ -195,6 +196,16 @@ export function BusinessAnalyticsPage() {
     r.start.slice(0, 4) === r.end.slice(0, 4)
       ? r.start.slice(0, 4)
       : ''
+  const runStatus = (status.data || message) && (
+    <p role="status" className="ba-run-state" data-state={status.data?.state}>
+      {[
+        status.data && runLabel[status.data.state],
+        status.data?.updated && new Date(status.data.updated).toLocaleString('uk-UA', { timeZone: 'Europe/Kyiv' }),
+        status.data?.error,
+        message,
+      ].filter(Boolean).join(' · ')}
+    </p>
+  )
   return (
     <>
       <PageHeader title={title} actions={usesReport && (
@@ -203,7 +214,7 @@ export function BusinessAnalyticsPage() {
           Звірити з виробничою БД
         </Button>
       )} />
-      <div className="pa-page ba-page" data-report-content={usesReport || undefined}>
+      <div className="pa-page ba-page" data-report-content={usesReport || undefined} data-assortment={assortment || undefined}>
         <div className="pa-report">
           <div className="ba-report-tabs" ref={reportTabs}>
             <SegmentedControl
@@ -225,19 +236,7 @@ export function BusinessAnalyticsPage() {
           {tab === 'turnover-forecast' && <TurnoverForecast />}
           {tab === 'markets' && (can(PermissionKeys.Accounting.View)
             ? <BuyerMarkets /> : <p>Для перегляду географії та продажів контрагентів потрібен доступ до обліку.</p>)}
-          {usesReport && (status.data || message) && <p role="status" className="ba-run-state" data-state={status.data?.state}>
-            {status.data
-              ? [
-                  runLabel[status.data.state],
-                  status.data.updated &&
-                    new Date(status.data.updated).toLocaleString('uk-UA', { timeZone: 'Europe/Kyiv' }),
-                  status.data.error,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')
-              : ''}{' '}
-            {message}
-          </p>}
+          {usesReport && (!assortment || !view) && runStatus}
           {!view && usesReport && (
             <p role="status">
               {query.status === 'loading'
@@ -248,6 +247,12 @@ export function BusinessAnalyticsPage() {
           {view && usesReport && (
             <>
               <div className="pa-filters ba-controls">
+                {assortment && <div className="assortment-filter-head">
+                  <MetricLabel icon={IconAdjustmentsHorizontal}>Фільтри звіту</MetricLabel>
+                  {runStatus}
+                  {['from', 'to', 'org', 'store', 'category', 'product', 'search'].some(key => params.has(key)) &&
+                    <Button size="xs" variant="default" onClick={() => update({ from: '', to: '', org: '', store: '', category: '', product: '', search: '' })}>Скинути фільтри</Button>}
+                </div>}
                 {tab !== 'forecast' && r && (
                   <>
                     <label>
@@ -302,7 +307,7 @@ export function BusinessAnalyticsPage() {
                     </select>
                   </label>
                 ))}
-                {tab !== 'overview' && (
+                {tab !== 'overview' && !assortment && (
                   <ProductSearch key={tab} value={params.get('search') ?? ''} onSearch={(search) => update({ search })} />
                 )}
                 {params.get('product') && (
@@ -403,85 +408,10 @@ export function BusinessAnalyticsPage() {
                   </AnalyticsCard>
                 </>
               )}
-              {tab === 'assortment' && r && (
-                <>
-                  <AnalyticsCard
-                    title="Сезонність за категоріями"
-                    description={
-                      seasonMetric === 'months'
-                        ? 'Чистий оборот у гривнях за календарним місяцем у вибраному періоді.'
-                        : '100 відповідає середньому місяцю року. Індекс охоплює закриті роки до кінця вибраного періоду, щонайменше два роки з документами в кожному місяці.'
-                    }
-                  >
-                    <SegmentedControl
-                      aria-label="Показник сезонності"
-                      value={seasonMetric}
-                      onChange={(v) => setSeasonMetric(v === 'indices' ? 'indices' : 'months')}
-                      data={[
-                        { value: 'months', label: 'Оборот, грн' },
-                        { value: 'indices', label: 'Сезонний індекс' },
-                      ]}
-                    />
-                    <Grid headings={['Категорія', ...months]}>
-                      {r.heatmap.map((row) => {
-                        const values = row[seasonMetric]
-                        const peak = Math.max(1, ...values.map((v) => Math.abs(v ?? 0)))
-                        return (
-                          <tr key={row.category}>
-                            <td>
-                              {label('category', row.category)}
-                              {seasonMetric === 'indices' && ' · років ' + row.years}
-                            </td>
-                            {values.map((v, i) => (
-                              <td
-                                key={i}
-                                style={{
-                                  backgroundColor:
-                                    v == null
-                                      ? undefined
-                                      : 'rgba(23,128,90,' + (0.05 + (Math.abs(v) / peak) * 0.35) + ')',
-                                }}
-                              >
-                                {fmt(v)}
-                              </td>
-                            ))}
-                          </tr>
-                        )
-                      })}
-                    </Grid>
-                  </AnalyticsCard>
-                  <AnalyticsCard title="Товари за чистим оборотом">
-                    <Grid
-                      headings={[
-                        'Товар',
-                        'Артикул',
-                        'Одиниця',
-                        'Продано',
-                        'Повернено',
-                        'Середня ціна, грн',
-                        'Оборот, грн',
-                        'Прибуток, грн',
-                      ]}
-                    >
-                      {r.products.rows.map((p) => (
-                        <tr key={p.id + p.unit}>
-                          <td>
-                            <button onClick={() => update({ product: p.id })}>{p.name}</button>
-                          </td>
-                          <td>{p.sku}</td>
-                          <td>{p.unit || 'од. товару'}</td>
-                          <td>{fmt(p.sold)}</td>
-                          <td>{fmt(p.returned)}</td>
-                          <td>{fmt(p.price)}</td>
-                          <td>{fmt(p.net)}</td>
-                          <td>{fmt(p.profit)}</td>
-                        </tr>
-                      ))}
-                    </Grid>
-                    {!r.products.total && <p>За цими фільтрами товарів немає.</p>}
-                    <Pager {...r.products} change={changePage} />
-                  </AnalyticsCard>
-                </>
+              {assortment && r && (
+                <AssortmentReport report={r} loading={report.isFetching} selectedProduct={params.get('product')}
+                  selectProduct={product => update({ product })} pager={<Pager {...r.products} change={changePage} />}
+                  search={<ProductSearch value={params.get('search') ?? ''} onSearch={search => update({ search })} placeholder="Назва або артикул…" />} />
               )}
               {tab === 'forecast' && f && (
                 <DemandForecastReport
@@ -495,14 +425,16 @@ export function BusinessAnalyticsPage() {
                 />
               )}
               {tab !== 'forecast' && can(PermissionKeys.Accounting.View) && (
-                <AnalyticsCard title="Звірка з документами">
-                  <Button variant="default" onClick={() => setShowDocs(!showDocs)}>
+                <AnalyticsCard title={assortment ? <MetricLabel icon={IconFileInvoice}>Звірка з документами</MetricLabel> : 'Звірка з документами'} actions={
+                  <Button variant="default" aria-expanded={showDocs} onClick={() => setShowDocs(!showDocs)}>
                     {showDocs ? 'Згорнути документи' : 'Показати документи'}
                   </Button>
+                }>
                   {showDocs &&
                     (docs.data ? (
                       <>
-                        <Grid
+                        {assortment && !docs.data.rows.length && <p role="status">Документів за цими фільтрами немає.</p>}
+                        {(!assortment || docs.data.rows.length > 0) && <Grid
                           headings={[
                             'Документ',
                             'Дата',
@@ -526,11 +458,13 @@ export function BusinessAnalyticsPage() {
                               <td>{fmt(d.difference)}</td>
                             </tr>
                           ))}
-                        </Grid>
+                        </Grid>}
                         <Pager {...docs.data} change={setDocPage} />
                       </>
                     ) : (
-                      <p>{docs.problem?.title ?? 'Завантаження документів…'}</p>
+                      docs.status === 'loading' ? <p role="status">Завантаження документів…</p> :
+                        <p role="alert">{docs.problem?.title ?? 'Не вдалося завантажити документи.'}{' '}
+                          <Button size="xs" variant="default" onClick={docs.reload}>Повторити</Button></p>
                     ))}
                 </AnalyticsCard>
               )}
