@@ -63,7 +63,7 @@ internal static class ProductFieldWriter
 
     public static bool SetStock(Product product, decimal quantity, DateTimeOffset now)
     {
-        if (product.Stock.Quantity == quantity)
+        if (product.Stock.WarehouseStoreId.HasValue || product.Stock.Quantity == quantity)
         {
             return false;
         }

@@ -3,6 +3,12 @@ namespace PoliValko.Infrastructure.Security.Permissions;
 public static class PermissionKeys
 {
     public const string DashboardView = "dashboard.page.view";
+    public const string AccountingView = "accounting.registers.view";
+    public const string AccountingEdit = "accounting.registers.edit";
+    public const string AccountingPost = "accounting.invoices.post";
+    public const string AccountingPay = "accounting.payments.record";
+    public const string AccountingOpening = "accounting.stock.open";
+    public const string AccountingBalanceOpening = "accounting.settlements.open";
 
     public const string OrdersView = "orders.page.view";
 

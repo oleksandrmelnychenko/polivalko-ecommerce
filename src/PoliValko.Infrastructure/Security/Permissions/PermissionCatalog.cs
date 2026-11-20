@@ -2,10 +2,16 @@ namespace PoliValko.Infrastructure.Security.Permissions;
 
 public static class PermissionCatalog
 {
-    public const string Version = "2026-11-19.1";
+    public const string Version = "2026-11-20.3";
 
     public static readonly IReadOnlyList<PermissionDefinition> Permissions =
     [
+        new(PermissionKeys.AccountingView, "Облік: перегляд реєстрів", "Контрагенти, накладні, суми і взаєморозрахунки.", "accounting", "Облік", PermissionRisk.High),
+        new(PermissionKeys.AccountingEdit, "Облік: створення записів", "Створення контрагентів і чернеток накладних.", "accounting", "Облік", PermissionRisk.High),
+        new(PermissionKeys.AccountingPost, "Проведення накладних", "Оприбуткування та відвантаження зі складу, визнання боргу за накладною.", "accounting", "Облік", PermissionRisk.High),
+        new(PermissionKeys.AccountingPay, "Реєстрація оплат", "Зарахування отриманих і сплачених коштів за проведеними накладними.", "accounting", "Облік", PermissionRisk.High),
+        new(PermissionKeys.AccountingOpening, "Введення початкових залишків", "Звірена кількість товару за організацією і складом до першого проведення.", "accounting", "Облік", PermissionRisk.High),
+        new(PermissionKeys.AccountingBalanceOpening, "Підтвердження початкових боргів", "Вибір звіту переходу й зарахування звіреного боргу контрагенту.", "accounting", "Облік", PermissionRisk.High),
         new(PermissionKeys.DashboardView, "Огляд: перегляд показників", "Виручка, замовлення, статуси й топ товарів за період.", "dashboard", "Огляд", PermissionRisk.Low),
 
         new(PermissionKeys.OrdersView, "Замовлення: список і картка", "Список, пошук, картка, оплати, чеки, повернення й історія замовлення.", "orders", "Замовлення", PermissionRisk.Low),

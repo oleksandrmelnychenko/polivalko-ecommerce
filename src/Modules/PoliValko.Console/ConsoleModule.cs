@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Console.Features.Dashboard;
+using PoliValko.Console.Features.Accounting;
 using PoliValko.Console.Features.Integration;
 using PoliValko.Console.Features.Media;
 using PoliValko.Console.Features.Search;
@@ -16,6 +17,9 @@ namespace PoliValko.Console;
 
 public static class ConsoleModule
 {
+    public static void MapConsoleAccountingEndpoints(this RouteGroupBuilder console) =>
+        AccountingRegisters.MapAccountingRegisters(console);
+
     public static IServiceCollection AddConsoleModule(this IServiceCollection services, IConfiguration configuration) =>
         services;
 

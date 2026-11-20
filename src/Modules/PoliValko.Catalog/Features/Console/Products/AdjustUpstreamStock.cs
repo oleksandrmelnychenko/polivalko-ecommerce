@@ -73,6 +73,10 @@ internal static class AdjustUpstreamStock
             {
                 conflicts.Add(new(change.ProductId, "missing_product"));
             }
+            else if (product.Stock.WarehouseStoreId.HasValue)
+            {
+                conflicts.Add(new(change.ProductId, "warehouse_managed"));
+            }
             else if (!string.Equals(product.NavkoloId, change.ExpectedNavkoloId, StringComparison.Ordinal) ||
                 product.Stock.Quantity != change.ExpectedQuantity || product.Stock.UpdatedAt != change.ExpectedStockUpdatedAt)
             {

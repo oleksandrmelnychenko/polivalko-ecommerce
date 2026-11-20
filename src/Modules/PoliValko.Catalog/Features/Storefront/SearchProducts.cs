@@ -101,7 +101,7 @@ internal static class SearchProducts
 
         if (query.InStock == true)
         {
-            products = products.Where(p => (p.Stock.Quantity - p.Stock.ReservedQuantity) > 0);
+            products = products.Where(p => (p.Stock.Quantity - p.Stock.ReservedQuantity) >= 1);
         }
 
         foreach (var (name, values) in attributeFilters)

@@ -17,6 +17,13 @@ export type ConsoleRedirect = {
 }
 
 export const consoleRoutes: readonly ConsoleRoute[] = [
+  ...[
+    ['/accounting/partners', 'Контрагенти'], ['/accounting/partners/:id', 'Документи контрагента'],
+    ['/accounting/incoming', 'Прибуткові накладні'], ['/accounting/outgoing', 'Видаткові накладні'],
+    ['/accounting/documents/:id', 'Картка документа'], ['/accounting/balances', 'Взаєморозрахунки'],
+    ['/accounting/product-history', 'Історія товару'],
+    ['/accounting/work', 'Робоче місце'], ['/accounting/warehouse', 'Складські залишки'],
+  ].map(([path, title]) => ({ path, title, permissionKey: PermissionKeys.Accounting.View, page: Pages.AccountingPage })),
   { path: '/', title: 'Дашборд', permissionKey: PermissionKeys.Dashboard.View, page: Pages.DashboardPage, redirectWhenDenied: true },
   { path: '/sales/orders', title: 'Замовлення', permissionKey: PermissionKeys.Orders.View, page: Pages.OrdersPage },
   { path: '/sales/orders/:number', title: 'Замовлення', permissionKey: PermissionKeys.Orders.View, page: Pages.OrderPage },
@@ -75,7 +82,7 @@ export const consoleRedirects: readonly ConsoleRedirect[] = [
   { from: '/staff/roles', to: '/system/roles' },
 ]
 
-export const sectionRedirects: readonly string[] = ['/sales', '/catalog', '/site', '/settings', '/system']
+export const sectionRedirects: readonly string[] = ['/sales', '/catalog', '/accounting', '/site', '/settings', '/system']
 
 export function redirectTarget(to: string, params: Readonly<Record<string, string | undefined>>, search: string, hash: string): string {
   const [pathPart, queryPart = ''] = to.split('?')

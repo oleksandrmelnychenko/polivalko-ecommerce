@@ -42,7 +42,7 @@ internal static class GetBestsellers
 
         var ids = top.Select(t => t.ProductId).ToList();
         var visible = await CatalogVisibility.ProductsAsync(db, ct);
-        var rows = await ProductListing.ListItems(visible.Where(p => ids.Contains(p.Id) && (p.Stock.Quantity - p.Stock.ReservedQuantity) > 0))
+        var rows = await ProductListing.ListItems(visible.Where(p => ids.Contains(p.Id) && (p.Stock.Quantity - p.Stock.ReservedQuantity) >= 1))
             .ToListAsync(ct);
         var products = (await ProductListing.ToListItemsAsync(db, rows, time, ct)).ToDictionary(p => p.Id);
 

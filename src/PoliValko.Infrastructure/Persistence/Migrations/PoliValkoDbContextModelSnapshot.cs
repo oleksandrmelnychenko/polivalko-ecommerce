@@ -821,6 +821,14 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
+                    b.Property<Guid?>("WarehouseOrgId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("warehouse_org_id");
+
+                    b.Property<Guid?>("WarehouseStoreId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("warehouse_store_id");
+
                     b.HasKey("ProductId")
                         .HasName("pk_product_stock");
 
@@ -855,6 +863,14 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
 
                     b.HasKey("OrderId", "ProductId")
                         .HasName("pk_stock_reservations");
+
+                    b.Property<Guid?>("WarehouseOrgId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("warehouse_org_id");
+
+                    b.Property<Guid?>("WarehouseStoreId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("warehouse_store_id");
 
                     b.HasIndex("ProductId", "Released")
                         .HasDatabaseName("ix_stock_reservations_product_id_released");

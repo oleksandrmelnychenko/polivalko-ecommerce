@@ -40,6 +40,7 @@ public static class ApiEndpoints
         console.MapConsoleStaffEndpoints();
         console.MapConsoleSummaryEndpoints();
         console.MapConsoleDashboardEndpoints();
+        console.MapConsoleAccountingEndpoints();
         console.MapConsoleSearchEndpoints();
         console.MapConsoleOrderEndpoints();
         console.MapConsoleCustomerEndpoints();

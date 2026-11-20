@@ -1,6 +1,7 @@
-export const PERMISSION_CATALOG_VERSION = '2026-11-19.1'
+export const PERMISSION_CATALOG_VERSION = '2026-11-20.3'
 
 export const PermissionKeys = {
+  Accounting: { View: 'accounting.registers.view', Edit: 'accounting.registers.edit', Post: 'accounting.invoices.post', Pay: 'accounting.payments.record', Opening: 'accounting.stock.open', BalanceOpening: 'accounting.settlements.open' },
   Dashboard: {
     View: 'dashboard.page.view',
   },
@@ -66,6 +67,12 @@ type Leaves<T> = T extends string ? T : { [K in keyof T]: Leaves<T[K]> }[keyof T
 export type PermissionKey = Leaves<typeof PermissionKeys>
 
 export const PERMISSION_LABELS: Record<PermissionKey, string> = {
+  'accounting.registers.view': 'Облік: перегляд реєстрів',
+  'accounting.registers.edit': 'Облік: створення записів',
+  'accounting.invoices.post': 'Проведення накладних',
+  'accounting.payments.record': 'Реєстрація оплат',
+  'accounting.stock.open': 'Введення початкових залишків',
+  'accounting.settlements.open': 'Підтвердження початкових боргів',
   'dashboard.page.view': 'Огляд: перегляд показників',
   'orders.page.view': 'Замовлення: список і картка',
   'orders.status.change': 'Зміна статусу замовлення',

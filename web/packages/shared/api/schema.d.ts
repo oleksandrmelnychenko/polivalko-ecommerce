@@ -906,6 +906,470 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/accounting/partners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleAccountingPartners"];
+        put?: never;
+        post: operations["ConsoleCreateAccountingPartner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/partners/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleAccountingPartner"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/references": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleAccountingReferences"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleAccountingDocuments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/documents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleAccountingDocument"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/product-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleAccountingProductHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/balance-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleAccountingBalanceReports"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/balance-reports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleAccountingBalances"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/balance-reports/{id}/partner": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["ConsoleLinkBalancePartner"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleCreateInvoiceDraft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/drafts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["ConsoleUpdateInvoiceDraft"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/work": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleAccountingWork"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/warehouse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleAccountingWarehouse"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/warehouse/openings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleAccountingOpenStock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/warehouse/shop-source/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["ConsoleConnectShopStock"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/warehouse/{id}/movements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleWarehouseMovements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/partners/{id}/positions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleAccountingPartnerPositions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/documents/{id}/operations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleInvoiceState"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/documents/{id}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsolePostInvoice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/documents/{id}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleRecordInvoicePayment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/inventory-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleInventoryReports"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/inventory-reports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleInventoryRows"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/inventory-reports/{id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleConfirmInventory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/current-balances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleCurrentPartnerBalances"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/balance-reports/{id}/openings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleConfirmPartnerOpening"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/partners/{id}/openings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsolePartnerOpenings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/openings/{id}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleOpeningPaymentHistory"];
+        put?: never;
+        post: operations["ConsolePayOpening"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/inventory-reports/{id}/inactive-products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleInactiveInventoryProducts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/inventory-reports/{id}/inactive-products/{position}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleLinkInactiveInventoryProduct"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/search": {
         parameters: {
             query?: never;
@@ -2613,6 +3077,15 @@ export interface components {
             /** Format: int32 */
             updated: number;
         };
+        AgreementRow: {
+            id: null | string;
+            title: null | string;
+            currency: null | string;
+        };
+        AnonymousTypeOfListOfRegisterReferenceAndListOfRegisterReference: {
+            organizations: null | components["schemas"]["RegisterReference"][];
+            stores: null | components["schemas"]["RegisterReference"][];
+        };
         AttributeDefinitionDto: {
             /** Format: uuid */
             id: string;
@@ -2677,6 +3150,49 @@ export interface components {
             entityType: string;
             entityId: null | string;
             details: null | components["schemas"]["JsonElement"];
+        };
+        BalancePartnerLink: {
+            /** Format: int64 */
+            headingPosition: number;
+            /** Format: uuid */
+            partnerId: string;
+            /** Format: uuid */
+            previous: null | string;
+        };
+        BalanceReport: {
+            /** Format: uuid */
+            id: string;
+            sourceAccount: string;
+            sourceId: string;
+            /** Format: date */
+            day: null | string;
+            capturedAt: null | string;
+            /** Format: uuid */
+            openingReportId: null | string;
+        };
+        BalanceRow: {
+            /** Format: int64 */
+            position: number;
+            footer: boolean;
+            partnerTitle: null | string;
+            account: null | string;
+            opening: null | string;
+            incoming: null | string;
+            outgoing: null | string;
+            closing: null | string;
+            difference: null | string;
+            sourceAmounts: string[];
+            /** Format: int64 */
+            headingPosition: null | number;
+            /** Format: uuid */
+            linkedPartner: null | string;
+            /** Format: uuid */
+            candidate: null | string;
+            /** Format: int32 */
+            candidateCount: number;
+            /** Format: uuid */
+            openingId: null | string;
+            headingConfirmed: boolean;
         };
         BannerDto: {
             /** Format: uuid */
@@ -2809,6 +3325,39 @@ export interface components {
         };
         ConfirmEmailRequest: {
             token: null | string;
+        };
+        ConfirmInventory: {
+            /** Format: uuid */
+            orgId: string;
+            /** Format: uuid */
+            storeId: string;
+            lines: null | components["schemas"]["InventorySelection"][];
+        };
+        ConfirmOpening: {
+            /** Format: int64 */
+            position: number;
+            /** Format: uuid */
+            partnerId: string;
+            /** Format: uuid */
+            orgId: string;
+            direction: string;
+            closing: string;
+        };
+        ConnectWarehouse: {
+            /** Format: uuid */
+            orgId: string;
+            /** Format: uuid */
+            storeId: string;
+            /** Format: uuid */
+            expectedOrgId: null | string;
+            /** Format: uuid */
+            expectedStoreId: null | string;
+            /** Format: double */
+            warehouseQuantity: number;
+            /** Format: double */
+            shopQuantity: number;
+            /** Format: double */
+            reserved: number;
         };
         ConsoleAccountDetailsDto: {
             /** Format: uuid */
@@ -3215,6 +3764,17 @@ export interface components {
         CsrfTokenDto: {
             token: string;
         };
+        CurrentPartnerBalance: {
+            /** Format: uuid */
+            partnerId: string;
+            partner: string;
+            /** Format: uuid */
+            orgId: string;
+            organization: string;
+            currency: string;
+            receivable: string;
+            payable: string;
+        };
         CustomerAddressDto: {
             /** Format: uuid */
             id: string;
@@ -3358,6 +3918,42 @@ export interface components {
             /** Format: int32 */
             pageSize: number;
         };
+        DocumentCard: {
+            document: components["schemas"]["DocumentRow"];
+            lines: components["schemas"]["LineRow"][];
+            parents: components["schemas"]["DocumentRow"][];
+            related: components["schemas"]["DocumentRow"][];
+        };
+        DocumentRow: {
+            /** Format: uuid */
+            id: string;
+            entityType: string;
+            kind: null | string;
+            number: null | string;
+            /** Format: date */
+            day: null | string;
+            status: null | string;
+            sourceAccount: string;
+            sourceId: string;
+            organization: null | string;
+            organizationId: null | string;
+            partnerTitle: null | string;
+            partnerRef: null | string;
+            /** Format: uuid */
+            partnerId: null | string;
+            agreement: null | string;
+            currency: null | string;
+            amount: null | string;
+            parentRef: null | string;
+            parentKind: null | string;
+            paid: null | string;
+            due: null | string;
+            paymentStatus: null | string;
+        };
+        DraftChange: {
+            revision: string;
+            draft: components["schemas"]["NewDraft"];
+        };
         ForgotPasswordRequest: {
             email: null | string;
         };
@@ -3445,6 +4041,29 @@ export interface components {
             errorCount: number;
             errors: components["schemas"]["SyncError"][];
         };
+        InactiveInventoryProduct: {
+            /** Format: int32 */
+            position: number;
+            /** Format: uuid */
+            evidenceId: string;
+            /** Format: int32 */
+            evidencePosition: number;
+            code: string;
+            title: string;
+            unit: string;
+            /** Format: double */
+            quantity: number;
+            barcode: null | string;
+            /** Format: double */
+            retailPrice: number;
+            /** Format: double */
+            purchasePrice: number;
+            /** Format: uuid */
+            categoryId: null | string;
+            /** Format: uuid */
+            productId: null | string;
+            status: string;
+        };
         IntegrationStatusDto: {
             navkoloMode: string;
             catalogDataFresh: boolean;
@@ -3453,6 +4072,85 @@ export interface components {
             outboxPending: number;
             /** Format: int32 */
             outboxFailed: number;
+        };
+        InventoryCount: {
+            status: string;
+            /** Format: int32 */
+            count: number;
+        };
+        InventoryPage: {
+            items: components["schemas"]["InventoryRow"][];
+            /** Format: int32 */
+            total: number;
+            counts: components["schemas"]["InventoryCount"][];
+        };
+        InventoryReport: {
+            /** Format: uuid */
+            id: string;
+            sourceId: string;
+            kind: string;
+            /** Format: date */
+            day: null | string;
+            storeName: null | string;
+            /** Format: int32 */
+            rows: number;
+            /** Format: int32 */
+            firstRow: null | number;
+        };
+        InventoryRow: {
+            /** Format: int32 */
+            position: number;
+            code: null | string;
+            title: null | string;
+            unit: null | string;
+            quantityText: null | string;
+            /** Format: double */
+            quantity: null | number;
+            /** Format: double */
+            booked: null | number;
+            /** Format: uuid */
+            productId: null | string;
+            productName: null | string;
+            /** Format: uuid */
+            storeId: null | string;
+            status: string;
+            /** Format: uuid */
+            openingId: null | string;
+            /** Format: uuid */
+            openingOrgId: null | string;
+        };
+        InventorySelection: {
+            /** Format: int32 */
+            position: number;
+            /** Format: uuid */
+            productId: string;
+            /** Format: double */
+            quantity: number;
+        };
+        InvoicePayment: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            day: string;
+            /** Format: double */
+            amount: number | string;
+            method: string;
+            accountTitle: string;
+            reference: string;
+        };
+        InvoiceState: {
+            status: string;
+            /** Format: uuid */
+            orgId: string;
+            /** Format: uuid */
+            storeId: string;
+            store: string;
+            revision: string;
+            total: string;
+            paid: string;
+            due: null | string;
+            stock: components["schemas"]["StockImpact"][];
+            payments: components["schemas"]["RecordedPayment"][];
         };
         JsonElement: unknown;
         LabelDto: {
@@ -3473,6 +4171,27 @@ export interface components {
         LabelKind: "manual" | "new" | "sale";
         /** @enum {unknown} */
         LabelTone: "green" | "red" | "orange" | "blue" | "gray" | "dark";
+        LineRow: {
+            /** Format: int64 */
+            position: number;
+            productRef: null | string;
+            product: null | string;
+            sku: null | string;
+            storeRef: null | string;
+            store: null | string;
+            quantity: null | string;
+            price: null | string;
+            total: null | string;
+            /** Format: uuid */
+            catalogId: null | string;
+        };
+        LinkInactiveProduct: {
+            /** Format: uuid */
+            evidenceId: string;
+            /** Format: int32 */
+            evidencePosition: number;
+            code: string;
+        };
         LockStaffUserRequest: {
             locked: boolean;
         };
@@ -3536,6 +4255,33 @@ export interface components {
         NavkoloStoreDto: {
             id: string;
             name: string;
+        };
+        NewDraft: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            partnerId: string;
+            kind: string;
+            number: string;
+            /** Format: date */
+            day: string;
+            organizationId: string;
+            storeId: string;
+            lines: null | components["schemas"]["NewLine"][];
+        };
+        NewLine: {
+            /** Format: uuid */
+            productId: string;
+            /** Format: double */
+            quantity: number;
+            /** Format: double */
+            price: number;
+        };
+        NewPartner: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            kind: string;
         };
         NotificationEventsDto: {
             newOrder: boolean;
@@ -3755,6 +4501,41 @@ export interface components {
             seoTitle: null | string;
             seoDescription: null | string;
         };
+        PartnerCard: {
+            partner: components["schemas"]["PartnerRow"];
+            agreements: components["schemas"]["AgreementRow"][];
+        };
+        PartnerOpening: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            reportId: string;
+            /** Format: int64 */
+            position: number;
+            sourceId: string;
+            account: string;
+            organization: string;
+            /** Format: date */
+            day: string;
+            direction: string;
+            amount: string;
+            due: string;
+        };
+        PartnerPosition: {
+            organization: string;
+            currency: string;
+            receivable: string;
+            payable: string;
+        };
+        PartnerRow: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            kind: null | string;
+            sourceAccount: string;
+            sourceId: string;
+            category: null | string;
+        };
         /** @enum {unknown} */
         PaymentAttemptStatus: "created" | "processing" | "succeeded" | "failed" | "expired" | "reversed";
         PaymentMethodOptionDto: {
@@ -3803,6 +4584,9 @@ export interface components {
         };
         PickupSettingsDto: {
             enabled: boolean;
+        };
+        PostInvoice: {
+            revision: string;
         };
         ProblemDetails: {
             type?: null | string;
@@ -3869,6 +4653,25 @@ export interface components {
             inStock: boolean;
             imageUrl: null | string;
             labels: components["schemas"]["ProductLabelBadgeDto"][];
+        };
+        ProductMovement: {
+            /** Format: uuid */
+            documentId: string;
+            /** Format: int32 */
+            position: number;
+            /** Format: date */
+            day: null | string;
+            number: null | string;
+            entityType: null | string;
+            kind: null | string;
+            status: null | string;
+            title: null | string;
+            sku: null | string;
+            store: null | string;
+            quantity: null | string;
+            price: null | string;
+            total: null | string;
+            currency: null | string;
         };
         ProductSearchResponse: {
             items: components["schemas"]["ProductListItemDto"][];
@@ -3944,6 +4747,16 @@ export interface components {
             name: null | string;
             phone: null | string;
         };
+        RecordedPayment: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            day: string;
+            amount: string;
+            method: string;
+            accountTitle: string;
+            reference: string;
+        };
         RedirectDto: {
             from: string;
             to: string;
@@ -3971,6 +4784,40 @@ export interface components {
             password: null | string;
             name: null | string;
             phone: null | string;
+        };
+        RegisterPageOfCurrentPartnerBalance: {
+            items: components["schemas"]["CurrentPartnerBalance"][];
+            /** Format: int32 */
+            total: number;
+        };
+        RegisterPageOfDocumentRow: {
+            items: components["schemas"]["DocumentRow"][];
+            /** Format: int32 */
+            total: number;
+        };
+        RegisterPageOfPartnerRow: {
+            items: components["schemas"]["PartnerRow"][];
+            /** Format: int32 */
+            total: number;
+        };
+        RegisterPageOfProductMovement: {
+            items: components["schemas"]["ProductMovement"][];
+            /** Format: int32 */
+            total: number;
+        };
+        RegisterPageOfWarehouseBalance: {
+            items: components["schemas"]["WarehouseBalance"][];
+            /** Format: int32 */
+            total: number;
+        };
+        RegisterPageOfWarehouseMovement: {
+            items: components["schemas"]["WarehouseMovement"][];
+            /** Format: int32 */
+            total: number;
+        };
+        RegisterReference: {
+            id: string;
+            title: string;
         };
         ReorderBannersRequest: {
             ids: null | string[];
@@ -4279,6 +5126,32 @@ export interface components {
         StartPaymentRequest: {
             token: null | string;
         };
+        StockImpact: {
+            /** Format: uuid */
+            productId: string;
+            title: string;
+            /** Format: double */
+            before: number;
+            /** Format: double */
+            change: number;
+            /** Format: double */
+            after: number;
+        };
+        StockOpening: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            orgId: string;
+            /** Format: uuid */
+            storeId: string;
+            /** Format: uuid */
+            productId: string;
+            /** Format: double */
+            quantity: number;
+            /** Format: date */
+            day: string;
+            reference: string;
+        };
         StreetAddressDto: {
             street: string;
             house: string;
@@ -4367,6 +5240,33 @@ export interface components {
         UploadedImageDto: {
             url: string;
         };
+        WarehouseBalance: {
+            /** Format: uuid */
+            orgId: string;
+            /** Format: uuid */
+            storeId: string;
+            organization: string;
+            store: string;
+            /** Format: uuid */
+            productId: string;
+            product: string;
+            sku: string;
+            /** Format: double */
+            quantity: number;
+            /** Format: double */
+            opening: number;
+            /** Format: double */
+            shopQuantity: null | number;
+            /** Format: double */
+            reserved: null | number;
+            /** Format: uuid */
+            sourceOrgId: null | string;
+            /** Format: uuid */
+            sourceStoreId: null | string;
+            sourceOrganization: null | string;
+            sourceStore: null | string;
+            visible: boolean;
+        };
         WarehouseDto: {
             ref: string;
             /** Format: int32 */
@@ -4375,8 +5275,30 @@ export interface components {
             address: string;
             type: components["schemas"]["WarehouseType"];
         };
+        WarehouseMovement: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date */
+            day: string;
+            kind: string;
+            reference: null | string;
+            /** Format: double */
+            change: number;
+            /** Format: double */
+            balance: number;
+        };
         /** @enum {unknown} */
         WarehouseType: "branch" | "postomat";
+        WorkCounts: {
+            /** Format: int32 */
+            drafts: number;
+            /** Format: int32 */
+            receivable: number;
+            /** Format: int32 */
+            payable: number;
+            /** Format: int32 */
+            settled: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -6620,6 +7542,1270 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleAccountingPartners: {
+        parameters: {
+            query?: {
+                q?: string;
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterPageOfPartnerRow"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleCreateAccountingPartner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewPartner"];
+            };
+        };
+        responses: {
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleAccountingPartner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerCard"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleAccountingReferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnonymousTypeOfListOfRegisterReferenceAndListOfRegisterReference"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleAccountingDocuments: {
+        parameters: {
+            query?: {
+                register?: string;
+                partnerId?: string;
+                q?: string;
+                status?: string;
+                from?: string;
+                to?: string;
+                queue?: string;
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterPageOfDocumentRow"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleAccountingDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentCard"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleAccountingProductHistory: {
+        parameters: {
+            query: {
+                account: string;
+                productRef: string;
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterPageOfProductMovement"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleAccountingBalanceReports: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BalanceReport"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleAccountingBalances: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BalanceRow"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleLinkBalancePartner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BalancePartnerLink"];
+            };
+        };
+        responses: {
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleCreateInvoiceDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewDraft"];
+            };
+        };
+        responses: {
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleUpdateInvoiceDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftChange"];
+            };
+        };
+        responses: {
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleAccountingWork: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkCounts"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleAccountingWarehouse: {
+        parameters: {
+            query?: {
+                q?: string;
+                store?: string;
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterPageOfWarehouseBalance"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleAccountingOpenStock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StockOpening"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleConnectShopStock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectWarehouse"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleWarehouseMovements: {
+        parameters: {
+            query: {
+                org: string;
+                store: string;
+                page?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterPageOfWarehouseMovement"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleAccountingPartnerPositions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerPosition"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleInvoiceState: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvoiceState"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsolePostInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostInvoice"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleRecordInvoicePayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvoicePayment"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleInventoryReports: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryReport"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleInventoryRows: {
+        parameters: {
+            query?: {
+                org?: string;
+                q?: string;
+                status?: string;
+                amount?: string;
+                page?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryPage"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleConfirmInventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmInventory"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": number;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleCurrentPartnerBalances: {
+        parameters: {
+            query?: {
+                q?: string;
+                org?: string;
+                direction?: string;
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterPageOfCurrentPartnerBalance"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleConfirmPartnerOpening: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmOpening"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsolePartnerOpenings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerOpening"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleOpeningPaymentHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordedPayment"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsolePayOpening: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvoicePayment"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleInactiveInventoryProducts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InactiveInventoryProduct"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleLinkInactiveInventoryProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                position: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkInactiveProduct"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
                 };
             };
             /** @description Unauthorized */

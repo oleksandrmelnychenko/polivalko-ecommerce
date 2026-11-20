@@ -1,0 +1,71 @@
+.accounting-register {
+  padding: clamp(12px, 2vw, 28px);
+  min-width: 0;
+}
+.register-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 8px;
+}
+.register-scroll th {
+  white-space: nowrap;
+}
+.register-scroll td,
+.register-scroll th {
+  padding: 9px 12px;
+  vertical-align: top;
+}
+.register-money {
+  white-space: nowrap;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.work-queues,
+.invoice-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 12px;
+}
+.work-queues button,
+.invoice-operation {
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 10px;
+  background: var(--mantine-color-body);
+  padding: 18px;
+}
+.work-queues button {
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+.work-queues button:hover,
+.work-queues button:focus-visible {
+  border-color: var(--mantine-primary-color-filled);
+}
+.work-queues button.is-active {
+  border-color: var(--mantine-primary-color-filled);
+  box-shadow: inset 0 -3px var(--mantine-primary-color-filled);
+}
+.work-queues span,
+.invoice-totals span {
+  display: block;
+  color: var(--mantine-color-dimmed);
+  font-size: 0.875rem;
+}
+.work-queues strong {
+  display: block;
+  font-size: 1.8rem;
+  margin-top: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.invoice-totals strong {
+  font-size: 1.125rem;
+  font-variant-numeric: tabular-nums;
+}
+.invoice-operation summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 8px;
+}

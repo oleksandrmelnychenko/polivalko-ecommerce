@@ -103,7 +103,7 @@ internal static class CatalogDemoData
                 product.Price.UpdatedAt = now;
             }
 
-            if (product.Stock.Quantity != item.Stock || product.Stock.UpdatedAt == default)
+            if (!product.Stock.WarehouseStoreId.HasValue && (product.Stock.Quantity != item.Stock || product.Stock.UpdatedAt == default))
             {
                 product.Stock.Quantity = item.Stock;
                 product.Stock.UpdatedAt = now;

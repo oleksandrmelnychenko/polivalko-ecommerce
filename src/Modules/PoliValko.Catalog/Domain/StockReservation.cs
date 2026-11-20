@@ -7,5 +7,7 @@ public sealed class StockReservation
     public int Quantity { get; init; }
     public DateTimeOffset CreatedAt { get; init; }
     public bool Consumed { get; set; }
+    public Guid? WarehouseOrgId { get; set; }
+    public Guid? WarehouseStoreId { get; set; }
     public bool Released { get; set; }
 }

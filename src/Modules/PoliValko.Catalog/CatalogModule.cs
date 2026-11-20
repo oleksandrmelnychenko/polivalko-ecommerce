@@ -25,6 +25,7 @@ public static class CatalogModule
             .AddModelConfigurator<CatalogModelConfigurator>()
             .AddScoped<ICatalogPricing, CatalogPricing>()
             .AddScoped<ICatalogReservations, CatalogReservations>()
+            .AddScoped<ICatalogWarehouseSource, CatalogWarehouseSource>()
             .AddOutboxHandler<StockAvailabilityChanged, InvalidateStockAvailability>()
             .AddScoped<ICatalogImporter, CatalogImporter>()
             .AddScoped<ICatalogReporting, CatalogReporting>()

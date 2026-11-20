@@ -50,7 +50,7 @@ internal static class ProductListing
         r.Brand,
         MoneyDto.Hryvnia(r.Amount),
         OldPrice(r.Amount, r.OldAmount),
-        r.Quantity > 0,
+        r.Quantity >= 1,
         r.ImageUrl,
         Badges(labels.For(r.Id, r.Amount, r.OldAmount, r.CreatedAt)));
 

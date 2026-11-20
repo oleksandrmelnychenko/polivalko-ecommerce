@@ -1,4 +1,5 @@
 import { lazy } from 'react'
+export const AccountingPage = lazy(() => import('@/features/accounting/AccountingPage'))
 
 export const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
 export const OrdersPage = lazy(() => import('@/features/orders/pages/OrdersPage').then((m) => ({ default: m.OrdersPage })))

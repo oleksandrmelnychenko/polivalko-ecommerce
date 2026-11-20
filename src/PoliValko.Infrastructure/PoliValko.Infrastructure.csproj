@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <EmbeddedResource Include="Persistence/Migrations/20261120180000_AccountingRegisters.sql" LogicalName="AccountingRegisters.sql" />
+    <EmbeddedResource Include="Persistence/Migrations/20261120210000_InventoryReview.sql" LogicalName="InventoryReview.sql" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
