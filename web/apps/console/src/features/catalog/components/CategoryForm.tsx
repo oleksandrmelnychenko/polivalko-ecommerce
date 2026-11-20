@@ -12,6 +12,7 @@ import { getAttributeNames, saveCategory, type ConsoleCategory } from '../api/ca
 import type { AttributeDefinition } from '../api/dictionariesApi'
 import { descendantIds, MAX_CATEGORY_FILTERS, orderCategories } from '../lib/categoryTree'
 import { categoryIcon } from '../lib/categoryIcons'
+import { CategoryGlyph } from './CategoryMark'
 import { ImageUploadField } from './ImageUploadField'
 
 type CategoryFormProps = {
@@ -145,7 +146,6 @@ export function CategoryForm({ formId, category, focusFilters, all, attributes, 
     onBusy(false)
   }
 
-  const PreviewIcon = categoryIcon(fields.name, Boolean(fields.parentId) || !isTop)
   const shownError = formError ?? error
 
   return (
@@ -194,7 +194,7 @@ export function CategoryForm({ formId, category, focusFilters, all, attributes, 
         />
         <ImageUploadField
           label="Зображення категорії"
-          fallback={<PreviewIcon size={26} stroke={1.6} aria-hidden="true" />}
+          fallback={<CategoryGlyph icon={categoryIcon(fields.name, Boolean(fields.parentId) || !isTop)} size={26} />}
           value={fields.imageUrl}
           alt={fields.name}
           description="Ваше зображення замінить іконку в дереві й з’явиться на плитці вітрини. JPEG, PNG або WebP."
