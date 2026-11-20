@@ -90,7 +90,7 @@ export function BusinessAnalyticsPage() {
   const reportKey = reportParams.toString()
   const report = useApiQuery(reportKey + updated, () => readBusiness<BusinessReport>('report', reportKey), {
     keepPrevious: true,
-    enabled: usesReport,
+    enabled: usesReport && tab !== 'forecast',
   })
   const forecastKey = forecastParams.toString()
   const forecast = useApiQuery(forecastKey + updated, () => readBusiness<Projection>('forecast', forecastKey), {
@@ -122,8 +122,10 @@ export function BusinessAnalyticsPage() {
   }
   const r = report.data
   const f = forecast.data
+  const view = tab === 'forecast' ? f : r
+  const query = tab === 'forecast' ? forecast : report
   const label = (key: 'store' | 'org' | 'category', id: string) =>
-    r?.options[key].find((x) => x.value === id)?.label ?? id
+    view?.options?.[key].find((x) => x.value === id)?.label ?? id
   const changePage = (n: number) => update({ page: String(n) })
   const active = f?.rows.find((row) => seriesKey(row) === selected) ?? f?.rows.find(row => row.weeks.length) ?? f?.rows[0]
   const title = 'Бізнес-аналітика'
@@ -160,8 +162,8 @@ export function BusinessAnalyticsPage() {
                   await writeBusiness('refresh')
                   setMessage('Запит на звірку прийнято')
                   reloadStatus()
-                  report.reload()
                   if (tab === 'forecast') forecast.reload()
+                  else report.reload()
                 } catch (e) {
                   setMessage(e instanceof Error ? e.message : 'Помилка оновлення')
                 }
@@ -186,17 +188,17 @@ export function BusinessAnalyticsPage() {
               : ''}{' '}
             {message}
           </p>}
-          {!r && usesReport && (
+          {!view && usesReport && (
             <p role="status">
-              {report.status === 'loading'
-                ? 'Завантаження аналітики…'
-                : (report.problem?.title ?? 'Не вдалося завантажити виробничий звіт')}
+              {query.status === 'loading'
+                ? (tab === 'forecast' ? 'Навчаємо моделі за виробничими документами…' : 'Завантаження аналітики…')
+                : (query.problem?.title ?? 'Не вдалося завантажити виробничий звіт')}
             </p>
           )}
-          {r && usesReport && (
+          {view && usesReport && (
             <>
               <div className="pa-filters ba-controls">
-                {tab !== 'forecast' && (
+                {tab !== 'forecast' && r && (
                   <>
                     <label>
                       Рік
@@ -242,7 +244,7 @@ export function BusinessAnalyticsPage() {
                     {['Організація', 'Склад', 'Категорія'][i]}
                     <select value={params.get(k) ?? ''} onChange={(e) => update({ [k]: e.target.value, product: '' })}>
                       <option value="">Усі</option>
-                      {r.options[k].map((o) => (
+                      {view.options?.[k].map((o) => (
                         <option key={o.value} value={o.value}>
                           {o.label}
                         </option>
@@ -266,7 +268,7 @@ export function BusinessAnalyticsPage() {
                   </Button>
                 )}
               </div>
-              {tab === 'overview' && (
+              {tab === 'overview' && r && (
                 <>
                   <div className="ba-kpis">
                     {[
@@ -362,7 +364,7 @@ export function BusinessAnalyticsPage() {
                   </AnalyticsCard>
                 </>
               )}
-              {tab === 'assortment' && (
+              {tab === 'assortment' && r && (
                 <>
                   <AnalyticsCard
                     title="Сезонність за категоріями"
@@ -447,7 +449,7 @@ export function BusinessAnalyticsPage() {
                   title="Попит і потреба в закупівлі"
                   description={
                     'Факт до ' +
-                    r.asOf +
+                    view.asOf +
                     '. Результати перевірено на послідовних історичних періодах. Межі показують історичний розкид помилки.'
                   }
                 >
@@ -463,7 +465,7 @@ export function BusinessAnalyticsPage() {
                   {f ? (
                     <>
                       {f.coverage && <p>Рядів із прогнозом · {fmt(f.coverage.ready)} з {fmt(f.total)}.
-                        {' '}Сезонну регресію обрано для {fmt(f.coverage.regression)}, модель нерегулярного попиту для {fmt(f.coverage.intermittent)}.</p>}
+                        {' '}Навчену регресію обрано для {fmt(f.coverage.regression)}, модель нерегулярного попиту для {fmt(f.coverage.intermittent)}.</p>}
                       <Grid
                         headings={['Товар або категорія', 'Організація', 'Склад', 'Одиниця', 'Прогноз', 'До закупівлі', 'Підстава']}
                       >
@@ -557,16 +559,15 @@ export function BusinessAnalyticsPage() {
               )}
             </>
           )}
-          {!r && usesReport && (
+          {!view && usesReport && query.status !== 'loading' && (
             <Button
               variant="default"
               onClick={() => {
-                setParams({})
-                report.reload()
+                query.reload()
                 reloadStatus()
               }}
             >
-              Повторити з початковими фільтрами
+              Повторити завантаження
             </Button>
           )}
         </div>

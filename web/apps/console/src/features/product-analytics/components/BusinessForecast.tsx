@@ -8,6 +8,7 @@ export const formatValue = (n: number | null | undefined) =>
   n == null ? '—' : n.toLocaleString('uk-UA', { maximumFractionDigits: 2 })
 const weeklyModelNames: Record<string, string> = {
   ridge: 'регресія за недавнім та торішнім попитом', mean4: 'середнє за 4 тижні',
+  ridgeRecent: 'регресія за останнім тижнем і середнім попитом за чотири тижні',
   mean8: 'середнє за 8 тижнів', season52: 'відповідні тижні торік', intermittent: 'частота та обсяг нерегулярних продажів',
 }
 const shift = (s: string, days: number) =>

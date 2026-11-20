@@ -3,9 +3,9 @@ from datetime import date, timedelta
 from hashlib import sha256
 from math import ceil
 from statistics import mean
-from .learning import seasonal_regression
+from .learning import lag_regression
 
-VERSION = "weekly-3"
+VERSION = "weekly-4"
 WEEKS = 156
 
 
@@ -19,14 +19,15 @@ def predict(history, horizon, method):
     if method == "season52":
         season = history[-52:][:horizon]
         return season if len(history) >= 52 and None not in season else None
-    if method == "ridge":
-        return seasonal_regression(history, horizon, 52, nonnegative=True)
+    if method in ("ridge", "ridgeRecent"):
+        if history[-1] is None:
+            return None
+        return lag_regression(history, horizon, 52 if method == "ridge" else 1, nonnegative=True)
     if method == "intermittent":
         # Update sale probability every observed week and order size only on sales.
-        # Start again after a stockout or gap where demand could not be observed.
-        start = max((i + 1 for i, value in enumerate(history) if value is None), default=0)
-        observed = history[start:]
-        if len(observed) < 12 or sum(v > 0 for v in observed) < 3:
+        # Only observed weeks update either state. A censored week is not a zero.
+        observed = [v for v in history if v is not None]
+        if history[-1] is None or len(observed) < 12 or sum(v > 0 for v in observed) < 3:
             return None
         probability = float(observed[0] > 0)
         size = next(v for v in observed if v > 0)
@@ -62,7 +63,7 @@ def fit(values, horizon):
     ][:7]
     if len(origins) < 3:
         return dict(result, reason="Недостатньо повних періодів для перевірки прогнозу")
-    methods = ("mean8", "mean4", "season52", "intermittent", "ridge")
+    methods = ("mean8", "mean4", "season52", "intermittent", "ridgeRecent", "ridge")
     candidates = {m for m in methods if predict(values, horizon, m) is not None}
     folds = []
     for i in origins:
@@ -71,6 +72,15 @@ def fit(values, horizon):
             folds.append((values[i : i + horizon], predictions))
     if len(folds) < 3:
         return dict(result, reason="Історія містить пропуски перед контрольними періодами")
+    # Compare mature models on the same recent origins. Early dates before a
+    # model had training data should not disqualify it for the entire series.
+    # Keep at least three selection folds plus the independent last block.
+    available = {m for m in methods if len(folds) >= 4 and all(p.get(m) is not None for _, p in folds[:4])}
+    if available:
+        for index, (_, forecasts) in enumerate(folds[4:], 4):
+            if any(forecasts.get(m) is None for m in available):
+                folds = folds[:index]
+                break
     scores = {}
     for method in methods:
         if not all(pred.get(method) is not None for _, pred in folds):

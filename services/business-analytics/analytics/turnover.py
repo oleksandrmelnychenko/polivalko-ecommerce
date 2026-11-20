@@ -7,7 +7,7 @@ from threading import Lock
 from time import monotonic
 
 from .invoices import INDEPENDENT_RECEIPTS, currency_valid
-from .learning import seasonal_regression
+from .learning import lag_regression
 from .register import kind_of
 from .source import production
 
@@ -85,7 +85,7 @@ def predict(values, horizon, method):
         energy = sum(p*p for p in previous)
         factor = sum(p*v for p, v in zip(previous, latest)) / energy if energy else 1
         return [factor * values[-12 + i] for i in range(horizon)]
-    return seasonal_regression(values, horizon, 12)
+    return lag_regression(values, horizon, 12)
 
 
 def forecast_months(totals, latest, today, horizon):

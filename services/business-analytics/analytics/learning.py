@@ -2,17 +2,17 @@ from math import fsum
 from statistics import fmean
 
 
-def seasonal_regression(history, horizon, season, *, nonnegative=False):
-    """Fit ridge regression on recent level and the same period last year."""
+def lag_regression(history, horizon, lag, *, nonnegative=False):
+    """Fit ridge regression on the recent level and a lagged observation."""
     def features(series, index):
-        recent = series[index - 4:index]
-        annual = series[index - season]
-        if annual is None or None in recent:
+        recent = [v for v in series[index - 4:index] if v is not None]
+        lagged = series[index - lag]
+        if lagged is None or len(recent) < 3:
             return None
-        return fmean(recent), annual
+        return fmean(recent), lagged
 
     samples = []
-    for i in range(season, len(history)):
+    for i in range(max(4, lag), len(history)):
         pair = features(history, i)
         if pair is not None and history[i] is not None:
             samples.append((*pair, history[i]))

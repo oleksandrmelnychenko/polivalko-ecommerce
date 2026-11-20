@@ -92,12 +92,21 @@ class TurnoverTests(unittest.TestCase):
         self.assertIsNone(predict([4.] * 70 + [None], 4, "ridge"))
         self.assertIsNone(predict([4.] * 70 + [None], 4, "intermittent"))
         self.assertEqual(predict([4.] * 80, 4, "ridge"), [4.] * 4)
+        self.assertEqual(predict([4.] * 20, 4, "ridgeRecent"), [4.] * 4)
+        self.assertEqual(predict([4.] * 18 + [None, 4.], 4, "intermittent"), [4.] * 4)
+
+    def test_recent_regression_can_win_before_a_second_year_of_sales(self):
+        model = fit([3., 9.] * 26, 4)
+        self.assertEqual(model["model"], "ridgeRecent")
+        self.assertLess(model["wape"], model["baselineWape"])
 
     def test_weekly_coverage_counts_matched_series_before_pagination(self):
         base = dict(kind="sku", org="o", store="s", unit="шт", category="c", weeks=[], model=None)
         models = [dict(base, product=str(i), name="A" + str(i)) for i in range(47)]
         models.append(dict(base, name="Z", product="z", model="ridge", weeks=[{"value": 5}]))
-        result = forecasts(dict(asOf=str(TODAY), stocks=[], models=models, version="test"), {}, {}, TODAY)
+        snapshot = dict(asOf=str(TODAY), stocks=[], models=models, version="test", categories={}, locations={})
+        result = forecasts(snapshot, {}, {}, TODAY)
         self.assertEqual(result["total"], 48)
         self.assertEqual(result["coverage"], {"ready": 1, "regression": 1, "intermittent": 0})
         self.assertEqual(result["rows"][0]["product"], "z")
+        self.assertEqual(result["options"]["store"], [{"value": "s", "label": "s"}])

@@ -2,6 +2,7 @@ import json
 from collections import defaultdict
 from datetime import date, timedelta
 from decimal import Decimal
+from itertools import chain
 from operator import itemgetter
 
 from .forecast import replenishment
@@ -63,6 +64,19 @@ def group(rows, key):
     for r in rows:
         result[key(r)].append(r)
     return result
+
+
+def dimension_options(snapshot, rows):
+    keys = {name: set() for name in ("org", "store", "category")}
+    for row in rows:
+        for field, values in keys.items():
+            values.add(row[field])
+    options = {}
+    for field, values in keys.items():
+        labels = snapshot["categories" if field == "category" else "locations"]
+        options[field] = sorted((dict(value=k, label=labels.get(k, k)) for k in values),
+                                key=lambda item: item["label"])
+    return options
 
 
 def report(snapshot, q):
@@ -152,11 +166,6 @@ def report(snapshot, q):
             )
         )
 
-    def options(field, labels):
-        keys = {r[field] for r in facts}
-        keys.update(r[field] for r in snapshot["models"])
-        return sorted([{"value": k, "label": labels.get(k, k)} for k in keys], key=lambda r: r["label"])
-
     return {
         "asOf": snapshot["asOf"],
         "start": str(start),
@@ -170,9 +179,7 @@ def report(snapshot, q):
         "coverage": coverage,
         "diagnostics": snapshot["diagnostics"],
         "options": {
-            "org": options("org", snapshot["locations"]),
-            "store": options("store", snapshot["locations"]),
-            "category": options("category", snapshot["categories"]),
+            **dimension_options(snapshot, chain(facts, snapshot["models"])),
             "years": sorted({r["day"][:4] for r in facts}, reverse=True),
         },
     }
@@ -241,6 +248,8 @@ def forecasts(snapshot, q, policies, today):
                                  not r["weeks"], r["name"]))
     else:
         rows.sort(key=lambda r: (not r["weeks"], r["name"]))
-    coverage = dict(ready=sum(bool(r["weeks"]) for r in rows), regression=sum(r["model"] == "ridge" for r in rows),
+    coverage = dict(ready=sum(bool(r["weeks"]) for r in rows),
+                    regression=sum(r["model"] in ("ridge", "ridgeRecent") for r in rows),
                     intermittent=sum(r["model"] == "intermittent" for r in rows))
-    return dict(asOf=snapshot["asOf"], start=str(start), version=snapshot["version"], coverage=coverage, **page(rows, q))
+    return dict(asOf=snapshot["asOf"], start=str(start), version=snapshot["version"], coverage=coverage,
+                options=dimension_options(snapshot, snapshot["models"]), **page(rows, q))
