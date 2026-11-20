@@ -19,6 +19,11 @@ internal static class CategoryEndpoints
             .RequirePermission(PermissionKeys.CategoriesManage)
             .WithName("ConsoleCreateCategory")
             .WithSummary("Новий підрозділ. Верхній рівень відповідає групам Navkolo й не створюється вручну.");
+        categories.MapPost("/import", ImportCategories.HandleAsync)
+            .RequirePermission(PermissionKeys.CategoriesManage)
+            .WithName("ConsoleImportCategories")
+            .WithSummary("Додати розділи з джерела, зберігаючи наявні розділи й товарні прив'язки")
+            .ProducesProblem(StatusCodes.Status409Conflict);
         categories.MapPut("/{id:guid}", UpdateCategory.HandleAsync)
             .RequirePermission(PermissionKeys.CategoriesManage)
             .WithName("ConsoleUpdateCategory")

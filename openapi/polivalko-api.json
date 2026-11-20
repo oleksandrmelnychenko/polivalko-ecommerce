@@ -4651,6 +4651,77 @@
         }
       }
     },
+    "/api/v1/console/catalog/categories/import": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Додати розділи з джерела, зберігаючи наявні розділи й товарні прив'язки",
+        "operationId": "ConsoleImportCategories",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportCategoriesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportCategoriesResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/console/catalog/categories/{id}": {
       "put": {
         "tags": [
@@ -13628,6 +13699,66 @@
       "IFormFile": {
         "type": "string",
         "format": "binary"
+      },
+      "ImportCategoriesRequest": {
+        "required": [
+          "categories"
+        ],
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ImportCategoryItem"
+            }
+          }
+        }
+      },
+      "ImportCategoriesResult": {
+        "required": [
+          "created",
+          "unchanged"
+        ],
+        "type": "object",
+        "properties": {
+          "created": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unchanged": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ImportCategoryItem": {
+        "required": [
+          "name",
+          "slug",
+          "parentSlug",
+          "navkoloRef"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "parentSlug": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "navkoloRef": {
+            "type": "string"
+          }
+        }
       },
       "ImportRunDto": {
         "required": [

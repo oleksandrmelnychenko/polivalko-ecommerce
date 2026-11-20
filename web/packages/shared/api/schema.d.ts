@@ -1266,6 +1266,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/catalog/categories/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Додати розділи з джерела, зберігаючи наявні розділи й товарні прив'язки */
+        post: operations["ConsoleImportCategories"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/catalog/categories/{id}": {
         parameters: {
             query?: never;
@@ -3351,6 +3368,21 @@ export interface components {
         };
         /** Format: binary */
         IFormFile: string;
+        ImportCategoriesRequest: {
+            categories: null | components["schemas"]["ImportCategoryItem"][];
+        };
+        ImportCategoriesResult: {
+            /** Format: int32 */
+            created: number;
+            /** Format: int32 */
+            unchanged: number;
+        };
+        ImportCategoryItem: {
+            name: string;
+            slug: string;
+            parentSlug: null | string;
+            navkoloRef: string;
+        };
         ImportRunDto: {
             /** Format: uuid */
             id: string;
@@ -7834,6 +7866,66 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleImportCategories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportCategoriesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportCategoriesResult"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

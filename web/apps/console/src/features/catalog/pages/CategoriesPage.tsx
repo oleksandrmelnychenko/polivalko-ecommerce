@@ -1,9 +1,11 @@
 import { ActionIcon, Button, CloseButton, Group, Stack, Text, TextInput, Tooltip } from '@mantine/core'
-import { IconPlus, IconRefresh, IconSearch, IconTrash } from '@tabler/icons-react'
+import { IconFileImport, IconPlus, IconRefresh, IconSearch, IconTrash } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
+import { usePermissions } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
+import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { AppDrawer } from '@/shared/ui/AppDrawer'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
@@ -17,6 +19,7 @@ import { deleteCategory, getCategories, type ConsoleCategory } from '../api/cata
 import { getAttributes } from '../api/dictionariesApi'
 import { CategoryDetailPane } from '../components/CategoryDetailPane'
 import { CategoryForm } from '../components/CategoryForm'
+import { CategoryImportDialog } from '../components/CategoryImportDialog'
 import { ProductThumb } from '../components/ProductThumb'
 import { isHidden, orderCategories, type OrderedCategory } from '../lib/categoryTree'
 import { useListParams } from '../lib/useListParams'
@@ -33,11 +36,14 @@ const countFormat = new Intl.NumberFormat('uk-UA')
 type Editing = { category: ConsoleCategory | null; key: number }
 
 export function CategoriesPage() {
+  const { can } = usePermissions()
+  const canImport = can(PermissionKeys.Catalog.ManageCategories)
   const categories = useApiQuery('catalog-categories', () => getCategories())
   const attributes = useApiQuery('catalog-attributes', () => getAttributes())
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<Editing | null>(null)
   const [opened, setOpened] = useState(false)
+  const [importOpened, setImportOpened] = useState(false)
   const [busy, setBusy] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -178,9 +184,16 @@ export function CategoriesPage() {
       <PageHeader
         title="Категорії"
         actions={
-          <Button leftSection={<IconPlus size={16} stroke={1.8} />} onClick={() => open(null)}>
-            Нова підкатегорія
-          </Button>
+          <Group gap="xs">
+            {canImport ? (
+              <Button variant="default" leftSection={<IconFileImport size={16} stroke={1.8} />} onClick={() => setImportOpened(true)}>
+                Імпортувати JSON
+              </Button>
+            ) : null}
+            <Button leftSection={<IconPlus size={16} stroke={1.8} />} onClick={() => open(null)}>
+              Нова підкатегорія
+            </Button>
+          </Group>
         }
       />
 
@@ -237,6 +250,8 @@ export function CategoriesPage() {
           />
         </div>
       </ListPageBody>
+
+      {canImport && importOpened ? <CategoryImportDialog onClose={() => setImportOpened(false)} onImported={categories.reload} /> : null}
 
       <AppDrawer
         opened={opened}
