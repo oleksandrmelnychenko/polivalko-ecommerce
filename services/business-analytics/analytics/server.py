@@ -265,7 +265,7 @@ def dispatch(env):
             logger.error("Production invoice reconciliation failed (%s)", type(exc).__name__)
             return 503, {"title": "Не вдалося прочитати виробничі накладні за вибраний рік"}
     snapshot = service.current(models=route[1] == "/forecast")
-    if not snapshot:
+    if not snapshot or (route[1] == "/forecast" and hosted() and not snapshot.get("modelsReady")):
         return 503, {"title": service.status.get("error") or "Очікуємо першу звірку з виробничою БД"}
     if route[1] == "/forecast":
         return 200, forecasts(snapshot, q, service.policies, now().date())

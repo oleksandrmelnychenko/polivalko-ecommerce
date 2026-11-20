@@ -66,7 +66,7 @@ export type Series = {
     reason: string | null
   }
 }
-export type Projection = Paged<Series> & { asOf: string; start: string; version: string }
+export type Projection = Paged<Series> & { asOf: string; start: string; version: string; coverage?: { ready: number; regression: number; intermittent: number } }
 export type DocumentRow = {
   id: string
   day: string

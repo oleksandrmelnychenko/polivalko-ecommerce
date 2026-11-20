@@ -158,6 +158,7 @@ export function ForecastDetail({
             '%'}
       </p>
       {row.baselineWape != null && <p>Похибка найкращої простої моделі на тому самому контрольному періоді · {formatValue(row.baselineWape * 100)}%</p>}
+      {row.wape != null && row.wape >= 1 && <p>На останній перевірці сума абсолютних помилок сягнула обсягу фактичних продажів або перевищила його. Прогноз цього ряду має низьку точність.</p>}
       <AnalyticsChart
         label={'Тижневий попит. Прогноз із ' + start}
         points={points}

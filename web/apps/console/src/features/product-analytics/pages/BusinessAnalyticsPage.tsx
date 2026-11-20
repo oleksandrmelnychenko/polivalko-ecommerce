@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
+import { kyivDay } from '@/shared/lib/kyivTime'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { AnalyticsChart } from '../components/AnalyticsChart'
 import { AnalyticsCard } from '../components/AnalyticsCard'
@@ -84,7 +85,8 @@ export function BusinessAnalyticsPage() {
   const docParams = new URLSearchParams(period)
   docParams.set('page', String(docPage))
   const status = useApiQuery('business-run', () => readBusiness<Run>('status'))
-  const updated = status.data?.updated ?? ''
+  // Hosted instances build the same business day at different wall-clock times.
+  const updated = status.data?.policiesWritable ? status.data.updated ?? '' : kyivDay(new Date())
   const reportKey = reportParams.toString()
   const report = useApiQuery(reportKey + updated, () => readBusiness<BusinessReport>('report', reportKey), {
     keepPrevious: true,
@@ -123,7 +125,7 @@ export function BusinessAnalyticsPage() {
   const label = (key: 'store' | 'org' | 'category', id: string) =>
     r?.options[key].find((x) => x.value === id)?.label ?? id
   const changePage = (n: number) => update({ page: String(n) })
-  const active = f?.rows.find((row) => seriesKey(row) === selected) ?? f?.rows[0]
+  const active = f?.rows.find((row) => seriesKey(row) === selected) ?? f?.rows.find(row => row.weeks.length) ?? f?.rows[0]
   const title = 'Бізнес-аналітика'
   const yearValue =
     r &&
@@ -158,6 +160,8 @@ export function BusinessAnalyticsPage() {
                   await writeBusiness('refresh')
                   setMessage('Запит на звірку прийнято')
                   reloadStatus()
+                  report.reload()
+                  if (tab === 'forecast') forecast.reload()
                 } catch (e) {
                   setMessage(e instanceof Error ? e.message : 'Помилка оновлення')
                 }
@@ -458,19 +462,22 @@ export function BusinessAnalyticsPage() {
                   />
                   {f ? (
                     <>
+                      {f.coverage && <p>Рядів із прогнозом · {fmt(f.coverage.ready)} з {fmt(f.total)}.
+                        {' '}Сезонну регресію обрано для {fmt(f.coverage.regression)}, модель нерегулярного попиту для {fmt(f.coverage.intermittent)}.</p>}
                       <Grid
-                        headings={['Товар або категорія', 'Склад', 'Одиниця', 'Прогноз', 'До закупівлі', 'Підстава']}
+                        headings={['Товар або категорія', 'Організація', 'Склад', 'Одиниця', 'Прогноз', 'До закупівлі', 'Підстава']}
                       >
                         {f.rows.map((m) => (
                           <tr key={seriesKey(m)}>
                             <td>
                               <button onClick={() => setSelected(seriesKey(m))}>{m.name}</button>
                             </td>
+                            <td>{label('org', m.org)}</td>
                             <td>{label('store', m.store)}</td>
                             <td>{m.unit || 'од. товару'}</td>
                             <td>{fmt(m.weeks.length ? m.weeks.reduce((a, w) => a + w.value, 0) : null)}</td>
                             <td>{fmt(m.purchase?.order)}</td>
-                            <td>{m.purchase?.reason ?? m.reason ?? 'Розраховано'}</td>
+                            <td>{m.reason ?? m.purchase?.reason ?? 'Розраховано'}</td>
                           </tr>
                         ))}
                       </Grid>

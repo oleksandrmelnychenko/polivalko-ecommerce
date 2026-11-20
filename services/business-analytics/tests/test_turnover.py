@@ -4,6 +4,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 from analytics.forecast import fit, predict
+from analytics.reports import forecasts
 from analytics.server import dispatch
 from analytics.turnover import forecast_months, month, predict as predict_turnover, read_history
 
@@ -91,3 +92,12 @@ class TurnoverTests(unittest.TestCase):
         self.assertIsNone(predict([4.] * 70 + [None], 4, "ridge"))
         self.assertIsNone(predict([4.] * 70 + [None], 4, "intermittent"))
         self.assertEqual(predict([4.] * 80, 4, "ridge"), [4.] * 4)
+
+    def test_weekly_coverage_counts_matched_series_before_pagination(self):
+        base = dict(kind="sku", org="o", store="s", unit="шт", category="c", weeks=[], model=None)
+        models = [dict(base, product=str(i), name="A" + str(i)) for i in range(47)]
+        models.append(dict(base, name="Z", product="z", model="ridge", weeks=[{"value": 5}]))
+        result = forecasts(dict(asOf=str(TODAY), stocks=[], models=models, version="test"), {}, {}, TODAY)
+        self.assertEqual(result["total"], 48)
+        self.assertEqual(result["coverage"], {"ready": 1, "regression": 1, "intermittent": 0})
+        self.assertEqual(result["rows"][0]["product"], "z")

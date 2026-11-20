@@ -237,5 +237,10 @@ def forecasts(snapshot, q, policies, today):
                 )
         rows.append(row)
     if q.get("kind", "sku") == "sku":
-        rows.sort(key=lambda r: (r["purchase"]["order"] is None, -(r["purchase"]["order"] or 0), r["name"]))
-    return dict(asOf=snapshot["asOf"], start=str(start), version=snapshot["version"], **page(rows, q))
+        rows.sort(key=lambda r: (r["purchase"]["order"] is None, -(r["purchase"]["order"] or 0),
+                                 not r["weeks"], r["name"]))
+    else:
+        rows.sort(key=lambda r: (not r["weeks"], r["name"]))
+    coverage = dict(ready=sum(bool(r["weeks"]) for r in rows), regression=sum(r["model"] == "ridge" for r in rows),
+                    intermittent=sum(r["model"] == "intermittent" for r in rows))
+    return dict(asOf=snapshot["asOf"], start=str(start), version=snapshot["version"], coverage=coverage, **page(rows, q))
