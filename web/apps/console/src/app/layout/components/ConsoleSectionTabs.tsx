@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useMatch } from 'react-router-dom'
 import { useNavigation } from '@/features/navigation'
 import { NavBadge } from './NavBadge'
 
 export function ConsoleSectionTabs() {
   const { activeSection, activeSectionItems, activeItem, badgeOf } = useNavigation()
+  const onCatalogImport = Boolean(useMatch('/catalog/import'))
+  const currentId = onCatalogImport ? 'products' : activeItem?.id
   const activeLink = useRef<HTMLAnchorElement>(null)
 
   useEffect(() => {
@@ -23,16 +25,16 @@ export function ConsoleSectionTabs() {
     observer.observe(nav)
     revealActiveLink()
     return () => observer.disconnect()
-  }, [activeSection?.id, activeItem?.id, activeSectionItems.length])
+  }, [activeSection?.id, currentId, activeSectionItems.length])
 
   if (!activeSection || activeSectionItems.length < 2) return null
 
   return (
     <nav className="console-section-tabs" aria-label={activeSection.label}>
       {activeSectionItems.map((item) => {
-        const current = item.id === activeItem?.id
+        const current = item.id === currentId
         return (
-          <Link key={item.id} ref={current ? activeLink : undefined} to={item.path} className={`console-section-tab${current ? ' is-active' : ''}`} aria-current={current ? 'page' : undefined}>
+          <Link key={item.id} ref={current ? activeLink : undefined} to={item.path} className={`console-section-tab${current ? ' is-active' : ''}`} aria-current={current ? (onCatalogImport ? 'location' : 'page') : undefined}>
             <span>{item.label}</span>
             <NavBadge count={badgeOf(item)} tone={item.badgeTone} label={item.label} />
           </Link>

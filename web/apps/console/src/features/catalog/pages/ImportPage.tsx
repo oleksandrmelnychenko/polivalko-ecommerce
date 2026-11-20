@@ -1,5 +1,5 @@
-import { Alert, Button, FileInput, Loader, Text } from '@mantine/core'
-import { IconAlertCircle, IconFileImport, IconFileUpload, IconRefresh } from '@tabler/icons-react'
+import { Alert, Button, Text } from '@mantine/core'
+import { IconAlertCircle, IconFileImport, IconHelpCircle, IconHistory, IconRefresh } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
@@ -12,7 +12,10 @@ import { PageState } from '@/shared/ui/PageState'
 import { getImportRuns, importCatalog, type ImportRun } from '../api/catalogApi'
 import { ImportRunReport } from '../components/ImportRunReport'
 import { StockImportForm } from '../components/StockImportForm'
+import { ImportFilePicker } from '../components/ImportFilePicker'
+import { CatalogEditorModal } from '../components/CatalogEditorModal'
 import '../components/catalog.css'
+import '../components/catalog-import.css'
 
 const MAX_FILE_BYTES = 20 * 1024 * 1024
 const TOO_LARGE = 'Файл завеликий: до 20 МБ.'
@@ -23,6 +26,7 @@ export function ImportPage() {
   const canManageCategories = can(PermissionKeys.Catalog.ManageCategories)
   const canImportStock = can(PermissionKeys.Catalog.ViewProducts) && can(PermissionKeys.Catalog.RunImport)
   const runs = useApiQuery('catalog-import-runs', () => getImportRuns(), { enabled: canViewRuns })
+  const [helpOpened, setHelpOpened] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [result, setResult] = useState<ImportRun | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -70,53 +74,19 @@ export function ImportPage() {
 
   return (
     <>
-      <PageHeader
-        title="Імпорт товарів"
-        heading={
-          <span className="catalog-crumbs">
-            <Link to="/catalog/products">Товари</Link>
-            <span aria-hidden="true">/</span>
-            <span className="catalog-crumbs-current">Імпорт з файлу</span>
-          </span>
-        }
-      />
-      <div className="catalog-page">
+      <PageHeader title="Імпорт товарів" />
+      <div className="import-page">
         <div className="catalog-import-grid">
-          <section className="catalog-card" aria-labelledby="import-title">
-            <h2 id="import-title" className="app-section-title catalog-card-title">
-              Файл каталогу
-            </h2>
+          <section className="catalog-card import-card" aria-labelledby="import-title">
+            <h2 id="import-title" className="import-heading"><IconFileImport aria-hidden="true" />Імпорт товарів</h2>
             <form noValidate onSubmit={upload} aria-labelledby="import-title">
-              <FileInput
-                aria-label="Файл каталогу"
-                placeholder="Оберіть файл JSON або CSV"
-                accept=".json,.csv,application/json,text/csv"
-                leftSection={<IconFileUpload size={16} stroke={1.7} />}
-                clearable
-                value={file}
-                disabled={busy}
-                description={
-                  <>
-                    CSV з колонками{' '}
-                    <span className="catalog-code">navkolo_id; sku; name; group; price; old_price; stock; brand; variant_group; variant_label; description</span> або
-                    JSON-масив тих самих полів. До 20 МБ.
-                  </>
-                }
-                inputWrapperOrder={['label', 'input', 'description', 'error']}
-                onChange={(value) => {
-                  setFile(value)
-                  setError(null)
-                }}
-              />
-              <div className="catalog-form-actions">
-                <Button
-                  type="submit"
-                  leftSection={busy ? <Loader size={14} color="gray" /> : <IconFileImport size={16} stroke={1.8} />}
-                  disabled={busy}
-                  aria-busy={busy || undefined}
-                >
-                  {busy ? 'Імпортуємо…' : 'Імпортувати'}
-                </Button>
+              <ImportFilePicker label="Файл каталогу" hint="CSV або JSON · до 20 МБ"
+                accept=".json,.csv,application/json,text/csv" file={file} disabled={busy}
+                onChange={value => { setFile(value); setError(null) }} />
+              <div className="import-actions">
+                <Button variant="subtle" color="gray" size="xs" leftSection={<IconHelpCircle size={16} />}
+                  onClick={() => setHelpOpened(true)}>Формат файлу</Button>
+                <Button type="submit" loading={busy} disabled={!file}>Імпортувати</Button>
               </div>
               {error ? (
                 <Alert color="red" variant="light" icon={<IconAlertCircle size={18} />} role="alert" mt="sm">
@@ -126,22 +96,25 @@ export function ImportPage() {
             </form>
           </section>
 
-          <aside className="catalog-card catalog-card-muted" aria-labelledby="import-rules-title">
-            <h2 id="import-rules-title" className="app-section-title catalog-card-title">
-              Що оновлює імпорт
-            </h2>
-            <Text size="sm" c="gray.7" lh={1.55}>
-              Щоразу: артикул, назву з обліку, групу, ціну, стару ціну й залишок. Опис, фото, характеристики, назву для вітрини й видимість імпорт задає лише
-              новим товарам і потім не змінює. Товари групи «Хлам» імпорт додає прихованими. Групу з товарами без категорії на сайті прив&apos;яжіть у{' '}
-              {categoriesLink}.
-            </Text>
-          </aside>
+          {canImportStock && <StockImportForm />}
         </div>
 
-        {canImportStock ? <StockImportForm /> : null}
+        <CatalogEditorModal icon={IconFileImport} title="Формат файлу каталогу" opened={helpOpened} onClose={() => setHelpOpened(false)}>
+          <div className="import-guide">
+            <h3>CSV</h3>
+            <p>Кодування UTF-8. Роздільник колонок — кома або крапка з комою.</p>
+            <code>navkolo_id;sku;name;group;price;old_price;stock;brand;variant_group;variant_label;description</code>
+            <h3>JSON</h3>
+            <p>Масив товарів із полями <code>navkoloId</code>, <code>sku</code>, <code>name</code>, <code>groupRef</code>, <code>price</code> і <code>stock</code>.</p>
+            <h3>Що оновиться</h3>
+            <p>Для наявних товарів імпорт оновлює артикул, облікову назву, групу, ціни та залишок. Опис, фото й характеристики додаються під час створення товару.</p>
+            <p>Нові товари групи «Хлам» додаються прихованими. Відповідність груп можна налаштувати в {categoriesLink}.</p>
+          </div>
+        </CatalogEditorModal>
 
         {result ? (
-          <section className="catalog-import-result" aria-label="Результат імпорту">
+          <section className="catalog-card catalog-import-result" aria-label="Результат імпорту">
+            <h2 className="import-heading"><IconFileImport aria-hidden="true" />Результат імпорту</h2>
             <ImportRunReport run={result} open />
             <a className="catalog-link" href={siteUrl('/catalog')} target="_blank" rel="noopener">
               Відкрити каталог магазину
@@ -151,8 +124,8 @@ export function ImportPage() {
 
         <section className="catalog-card catalog-runs" aria-labelledby="runs-title">
           <div className="catalog-card-head">
-            <h2 id="runs-title" className="app-section-title catalog-card-title">
-              Попередні імпорти
+            <h2 id="runs-title" className="import-heading">
+              <IconHistory aria-hidden="true" />Попередні імпорти
             </h2>
             {canViewRuns ? (
               <Button size="xs" variant="subtle" color="gray" leftSection={<IconRefresh size={14} />} loading={runs.isFetching} onClick={runs.reload}>

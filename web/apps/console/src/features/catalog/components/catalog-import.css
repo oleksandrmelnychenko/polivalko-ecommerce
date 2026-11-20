@@ -1,0 +1,90 @@
+.import-page {
+  --import-gap: clamp(10px, 1.2vw, 18px);
+  display: grid;
+  gap: var(--import-gap);
+  padding: 2px 2px 12px;
+}
+
+.import-page .catalog-import-grid {
+  align-items: stretch;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--import-gap);
+}
+.import-page .catalog-card {
+  padding: clamp(14px, 1.4vw, 22px);
+  border-color: var(--app-line);
+}
+.mantine-AppShell-main[data-section='catalog']:has(.import-page) { background: var(--app-ground); }
+.import-page .catalog-card-head { flex-wrap: wrap; }
+.import-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  color: var(--brand-ink);
+  font-size: 16px;
+  font-weight: 600;
+}
+.import-heading > svg {
+  box-sizing: content-box;
+  width: 17px;
+  height: 17px;
+  padding: 8px;
+  border-radius: 50%;
+  background: var(--app-ground);
+  stroke-width: 1.7;
+  flex: none;
+}
+.import-card form { margin-top: 12px; }
+.import-page .mantine-Button-root { border-radius: 999px; }
+.import-picker {
+  position: relative;
+  border: 1px dashed var(--mantine-color-gray-4);
+  border-radius: 16px;
+  background: var(--app-ground);
+}
+.import-picker:focus-within, .import-picker[data-dragging] { border-color: var(--brand-accent); }
+.import-picker[data-dragging] { background: var(--brand-accent-soft); }
+.import-picker-button {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 4px;
+  width: 100%;
+  min-height: 116px;
+  padding: 14px 38px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--brand-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+}
+.import-picker-button:disabled { cursor: default; }
+.import-picker-button:focus-visible { outline: 2px solid var(--brand-accent); }
+.import-picker-button strong { font-weight: 550; overflow-wrap: anywhere; }
+.import-picker-button span, .import-picker small { color: var(--mantine-color-gray-7); font-size: 12px; }
+.import-picker small { display: block; padding: 0 12px 8px; text-align: center; }
+.import-picker .import-clear { position: absolute; right: 7px; top: 7px; }
+.import-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.import-actions button:last-child { margin-inline-start: auto; }
+.import-guide { display: grid; gap: 6px; }
+.import-guide h3, .import-guide p { margin: 0; }
+.import-guide h3 { margin-top: 8px; font-size: 15px; }
+.import-guide h3:first-child { margin: 0; }
+.import-guide p { font-size: 14px; line-height: 1.5; }
+.import-guide code { font-family: var(--font-mono); overflow-wrap: anywhere; }
+.import-guide > code { background: var(--app-ground); border-radius: 10px; padding: 10px; font-size: 12px; }
+.import-page .catalog-run { border: 0; border-radius: 0; box-shadow: none; border-top: 1px dashed var(--app-line); }
+.import-page .catalog-run-summary { padding: 12px 0 4px; }
+.import-run-identity { display: grid; flex: 1 1 220px; gap: 4px; min-width: 0; }
+.import-run-identity strong, .import-page .catalog-run-text { overflow-wrap: anywhere; }
+.import-run-identity strong { font-size: 14px; font-weight: 600; }
+.import-run-identity time, .import-run-counts b { font-family: var(--font-mono); }
+.import-run-counts { display: flex; flex: 1 1 100%; flex-wrap: wrap; gap: 10px 24px; margin: 4px 0; }
+.import-run-counts > span { display: grid; gap: 2px; font-size: 12px; color: var(--mantine-color-gray-7); }
+.import-run-counts b { color: var(--brand-ink); font-size: 17px; font-weight: 500; }
+.import-page .catalog-run-text, .import-page .catalog-run-body { padding-left: 0; }
+.import-page .catalog-run-table { overflow-wrap: anywhere; }
+.import-page .catalog-import-result { display: grid; gap: 10px; }

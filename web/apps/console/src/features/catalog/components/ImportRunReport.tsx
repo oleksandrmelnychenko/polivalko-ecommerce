@@ -13,14 +13,23 @@ const RUN_STATUS: Record<string, { label: string; tone: TableChipTone }> = {
 
 function RunLine({ run, expandable }: { run: ImportRun; expandable: boolean }) {
   const status = RUN_STATUS[run.status] ?? { label: run.status, tone: 'neutral' as const }
+  // Older runs retain only the importer's text summary. Keep other report formats readable as received.
+  const report = /^Файл (.+), рядків: (\d+)\. Нових: (\d+), оновлено: (\d+), без змін: (\d+), помилок: (\d+)$/.exec(run.summary ?? '')
   return (
     <>
-      {expandable ? <IconChevronRight className="catalog-run-chevron" size={16} stroke={1.8} aria-hidden="true" /> : <span className="catalog-run-chevron" aria-hidden="true" />}
-      <TableChip tone={status.tone} dot value={status.label} />
-      <span className="catalog-run-meta">
-        {formatDateTime(run.startedAt)}, {run.startedBy}
+      <span className="import-run-identity">
+        {report && <strong>{report[1]}</strong>}
+        <span className="catalog-run-meta"><time dateTime={run.startedAt}>{formatDateTime(run.startedAt)}</time> · {run.startedBy}</span>
       </span>
-      {run.summary ? <span className="catalog-run-text">{run.summary}</span> : null}
+      <TableChip tone={status.tone} dot value={status.label} />
+      {expandable && <IconChevronRight className="catalog-run-chevron" size={16} stroke={1.8} aria-hidden="true" />}
+      {report ? (
+        <span className="import-run-counts">
+          {['Рядків', 'Нових', 'Оновлено', 'Без змін', 'Помилок'].map((label, index) => (
+            <span key={label}>{label} <b>{Number(report[index + 2]).toLocaleString('uk-UA')}</b></span>
+          ))}
+        </span>
+      ) : run.summary && <span className="catalog-run-text">{run.summary}</span>}
     </>
   )
 }

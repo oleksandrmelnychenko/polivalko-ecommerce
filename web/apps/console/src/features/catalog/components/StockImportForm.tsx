@@ -1,10 +1,11 @@
-import { Alert, Button, FileInput, Text } from '@mantine/core'
-import { IconAlertCircle, IconFileUpload } from '@tabler/icons-react'
+import { Alert, Button, Text } from '@mantine/core'
+import { IconAlertCircle, IconPackages } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { apiFetch } from '@/shared/api/client'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
+import { ImportFilePicker } from './ImportFilePicker'
 import type { Product } from '../api/catalogApi'
 
 const PRODUCTS = '/api/v1/console/catalog/products'
@@ -151,17 +152,14 @@ export function StockImportForm() {
   }
 
   return (
-    <section className="catalog-card" aria-labelledby="stock-import-title">
-      <h2 id="stock-import-title" className="app-section-title catalog-card-title">Оновлення залишків</h2>
+    <section className="catalog-card import-card" aria-labelledby="stock-import-title">
+      <h2 id="stock-import-title" className="import-heading"><IconPackages aria-hidden="true" />Оновлення залишків</h2>
       <form onSubmit={checkFile}>
-        <FileInput
-          aria-label="Файл залишків"
-          placeholder="Оберіть файл JSON"
+        <ImportFilePicker
+          label="Файл залишків"
           accept=".json,application/json"
-          leftSection={<IconFileUpload size={16} stroke={1.7} />}
-          description="Файл із підготовленими змінами залишків. До 200 товарів, 1 МБ."
-          clearable
-          value={file}
+          hint="JSON · до 1 МБ · до 200 товарів"
+          file={file}
           disabled={busy !== null || checked !== null}
           onChange={value => {
             setFile(value)
@@ -169,7 +167,7 @@ export function StockImportForm() {
             setSuccess(null)
           }}
         />
-        <div className="catalog-form-actions">
+        <div className="import-actions">
           <Button type="submit" disabled={!file || checked !== null || busy !== null} loading={busy === 'check'}>
             Перевірити залишки
           </Button>
