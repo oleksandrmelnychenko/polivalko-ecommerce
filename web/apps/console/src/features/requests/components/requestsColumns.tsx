@@ -4,39 +4,29 @@ import { SplitAvatar } from '@/shared/ui/split/SplitAvatar'
 import { RequestStatusChip } from '@/shared/ui/StatusChip'
 import type { ServiceRequest } from '../api/requestsApi'
 
-export const REQUESTS_COLUMNS: DataTableColumn<ServiceRequest>[] = [
-  {
-    id: 'client',
-    header: 'Клієнт',
-    fill: true,
-    width: 260,
-    minWidth: 200,
-    cell: (row) => (
-      <span className="app-split-name-cell">
-        <SplitAvatar name={row.name} size="sm" muted={row.status === 'done'} />
-        <span className="app-split-row-text">
-          <span className="app-split-item-name">{row.name}</span>
-          <span className="app-split-row-sub">{row.phone}</span>
-        </span>
-      </span>
-    ),
-  },
-  {
-    id: 'direction',
-    header: 'Напрямок',
-    width: 180,
-    cell: (row) => <span className="app-split-item-meta">{row.directionName}</span>,
-  },
-  {
-    id: 'status',
-    header: 'Статус',
-    width: 130,
-    cell: (row) => <RequestStatusChip status={row.status} />,
-  },
-  {
-    id: 'createdAt',
-    header: 'Отримано',
-    width: 160,
-    cell: (row) => <span className="app-split-item-meta">{shortWhen(row.createdAt)}</span>,
-  },
-]
+export function requestsColumns(open: (request: ServiceRequest) => void, compact: boolean): DataTableColumn<ServiceRequest>[] {
+  const columns: DataTableColumn<ServiceRequest>[] = [
+    {
+      id: 'client', header: 'Клієнт', fill: true, width: compact ? 160 : 280, minWidth: 145,
+      cell: (row) => (
+        <button className="request-client" type="button" aria-haspopup="dialog" onClick={() => open(row)}>
+          <SplitAvatar name={row.name} size="sm" muted={row.status === 'done'} />
+          <span>
+            <b>{row.name}</b>
+            <small className="request-number">{row.phone}</small>
+            {compact && <small>{row.directionName}</small>}
+          </span>
+        </button>
+      ),
+    },
+    { id: 'direction', header: 'Напрямок', width: 220, cell: (row) => row.directionName },
+    { id: 'status', header: 'Статус', width: compact ? 110 : 145, cell: (row) => (
+      <div className="request-row-status">
+        <RequestStatusChip status={row.status} />
+        {compact && <small className="request-number">{shortWhen(row.createdAt)}</small>}
+      </div>
+    ) },
+    { id: 'created', header: 'Отримано', width: 160, cell: (row) => <span className="request-number">{shortWhen(row.createdAt)}</span> },
+  ]
+  return compact ? columns.filter(({ id }) => id === 'client' || id === 'status') : columns
+}

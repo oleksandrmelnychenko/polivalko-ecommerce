@@ -1,55 +1,3 @@
-.console-content:has(.orders-list-page) .console-page-title-row {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-}
-
-.console-content:has(.orders-list-page) .console-page-toolbar { padding-top: 8px; }
-.console-frame:has(> .orders-list-page) {
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.orders-list-page {
-  gap: 10px;
-  overflow-y: auto;
-  padding: 2px 1px 4px;
-}
-
-.orders-status-picker { display: grid; flex: none; gap: 9px; }
-.orders-status-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(8px, 1vw, 15px); }
-.orders-status-card,
-.orders-list-page .app-filter-bar,
-.orders-list-page .console-list-body {
-  background: white;
-  border: 1px solid var(--app-line);
-  border-radius: var(--app-panel-radius);
-  box-shadow: var(--app-card-shadow);
-}
-
-.orders-status-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: stretch;
-  padding: clamp(12px, 1.2vw, 20px);
-  cursor: pointer;
-  text-align: start;
-}
-
-.orders-status-card strong {
-  color: var(--brand-ink);
-  margin-top: auto;
-  font: 500 clamp(24px, 2vw, 34px)/1.1 var(--font-mono);
-  letter-spacing: -.05em;
-}
-
-.orders-status-card[aria-pressed='true'] .metric-label svg { background: var(--brand-ink); color: white; }
-.orders-status-card:is(:hover, [aria-pressed='true']) { border-color: var(--mantine-color-gray-4); }
 .orders-status-options {
   display: flex;
   gap: 4px;
@@ -83,21 +31,8 @@
 .orders-list-page .app-filter-bar:not([data-expanded]) .app-filter-more { display: none; }
 .orders-list-page .app-filter-bar[data-expanded] .app-filter-more { display: flex; flex: 1 1 100%; flex-wrap: wrap; gap: 8px; }
 .orders-list-page .app-filter-bar .mantine-Input-input { border-radius: 999px; }
-.orders-list-page .console-list-body { min-height: 200px; overflow: hidden; }
 .orders-customer { display: grid; gap: 2px; }
 .orders-customer .app-number { color: var(--mantine-color-gray-7); font-size: 12px; }
-
-@media (max-width: 50em) {
-  .orders-status-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .orders-status-card { padding: 10px 12px; gap: 6px; }
-  .orders-status-card .metric-label { font-size: 12px; gap: 6px; }
-  .orders-status-card .metric-label svg { padding: 6px; }
-}
-
-@media (max-width: 24em) {
-  .orders-list-page .app-filter-bar { padding: 10px; }
-  .orders-list-page .app-paginator-size span:not(.app-paginator-size-value) { display: none; }
-}
 
 .orders-bulk-bar {
   align-items: center;

@@ -1,5 +1,6 @@
 import { Button, Stack, Text } from '@mantine/core'
 import { useCallback, useMemo, useState } from 'react'
+import { useMediaQuery } from '@mantine/hooks'
 import { useSearchParams } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
@@ -15,10 +16,12 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { changeServiceRequestStatus, getServiceRequestCounts, getServiceRequests, type RequestStatus, type ServiceRequest } from '../api/requestsApi'
 import { RequestDetailPane } from '../components/RequestDetailPane'
-import { REQUESTS_COLUMNS } from '../components/requestsColumns'
+import { requestsColumns } from '../components/requestsColumns'
 import { RequestsStatusTabs } from '../components/RequestsStatusTabs'
 import { useRequestsState } from '../lib/useRequestsState'
 import '@/shared/ui/split/split.css'
+import '@/shared/sales/sales-list.css'
+import './requests.css'
 
 const getRowId = (row: ServiceRequest) => row.id
 const countFormat = new Intl.NumberFormat('uk-UA')
@@ -32,29 +35,36 @@ export function RequestsPage() {
   const requests = useApiQuery(`requests:${JSON.stringify(query)}`, () => getServiceRequests(query), { keepPrevious: true })
   const counts = useApiQuery('requests-counts', getServiceRequestCounts)
   const [pending, setPending] = useState<{ id: string; status: RequestStatus } | null>(null)
-  const [changed, setChanged] = useState<ServiceRequest | null>(null)
+  const [snapshot, setSnapshot] = useState<ServiceRequest | null>(null)
   const [params, setParams] = useSearchParams()
   const pickedId = params.get('id')
 
   const page = requests.data
   const failed = requests.status === 'error' || requests.status === 'forbidden'
   const rows = useMemo(() => (failed ? [] : (page?.items ?? [])), [failed, page])
-  const selected = rows.find((row) => row.id === pickedId) ?? (changed && changed.id === pickedId ? changed : null) ?? rows[0] ?? null
-  const selectedId = selected?.id ?? null
+  const selected = rows.find((row) => row.id === pickedId) ?? (snapshot?.id === pickedId ? snapshot : null)
+  const detail = selected ?? snapshot
+  const compact = useMediaQuery('(max-width: 48em)')
 
-  const select = useCallback(
-    (row: ServiceRequest) =>
-      setParams(
-        (current) => {
-          const next = new URLSearchParams(current)
-          next.set('id', row.id)
-          return next
-        },
-        { replace: true },
-      ),
-    [setParams],
-  )
-  const rowClassName = useCallback((row: ServiceRequest) => (row.id === selectedId ? 'app-split-row-active' : undefined), [selectedId])
+  const setRequestId = useCallback((id: string | null) => {
+    // A filter navigation may already be in the URL while the table still renders its previous rows.
+    const next = new URLSearchParams(window.location.search)
+    if (id) next.set('id', id)
+    else next.delete('id')
+    setParams(next, { replace: true })
+  }, [setParams])
+
+  const select = useCallback((row: ServiceRequest) => {
+    setSnapshot(row)
+    setRequestId(row.id)
+  }, [setRequestId])
+  const columns = useMemo(() => requestsColumns(select, compact === true), [select, compact])
+
+  function close() {
+    if (pending) return
+    if (selected) setSnapshot(selected)
+    setRequestId(null)
+  }
 
   function reloadAll() {
     requests.reload()
@@ -64,12 +74,11 @@ export function RequestsPage() {
 
   async function changeStatus(row: ServiceRequest, status: RequestStatus) {
     setPending({ id: row.id, status })
-    select(row)
     try {
       const result = await withCsrf((headers) => changeServiceRequestStatus(headers, row.id, status))
       if (result.data) {
         const next = result.data
-        setChanged(next)
+        setSnapshot(next)
         if (page) requests.setData({ ...page, items: page.items.map((item) => (item.id === next.id ? next : item)) })
         reloadAll()
       } else {
@@ -96,10 +105,10 @@ export function RequestsPage() {
   )
 
   return (
-    <ListPage>
+    <ListPage className="sales-list-page requests-list-page">
       <PageHeader title="Заявки на послуги" />
 
-      <RequestsStatusTabs status={state.status} counts={counts.data} onChange={(status) => update({ status })} />
+      <RequestsStatusTabs status={state.status} counts={counts.status === 'ready' ? counts.data : undefined} onChange={(status) => update({ status })} />
 
       <FilterBar
         label="Сторінки заявок"
@@ -120,31 +129,31 @@ export function RequestsPage() {
       />
 
       <ListPageBody>
-        <div className="app-split-layout">
-          <div className="app-split-list">
-            <DataTable
-              ariaLabel="Заявки на послуги"
-              columns={REQUESTS_COLUMNS}
-              data={rows}
-              getRowId={getRowId}
-              isLoading={requests.isLoading}
-              isFetching={requests.isFetching}
-              minWidth={620}
-              height="100%"
-              onRowClick={select}
-              rowClassName={rowClassName}
-              emptyText={emptyText}
-            />
-          </div>
-          <RequestDetailPane
-            request={selected}
-            canChange={canChange}
-            canViewOrders={canViewOrders}
-            pendingStatus={pending && pending.id === selectedId ? pending.status : undefined}
-            onChangeStatus={(row, status) => void changeStatus(row, status)}
-          />
-        </div>
+        <DataTable
+          ariaLabel="Заявки на послуги"
+          columns={columns}
+          data={rows}
+          getRowId={getRowId}
+          isLoading={requests.isLoading}
+          isFetching={requests.isFetching}
+          minWidth={compact ? 255 : 670}
+          height="100%"
+          onRowClick={select}
+          emptyText={emptyText}
+        />
       </ListPageBody>
+
+      {detail && requests.status !== 'forbidden' && (
+        <RequestDetailPane
+          opened={Boolean(selected)}
+          request={detail}
+          canChange={canChange}
+          canViewOrders={canViewOrders}
+          pendingStatus={pending?.id === detail.id ? pending.status : undefined}
+          onClose={close}
+          onChangeStatus={(row, status) => void changeStatus(row, status)}
+        />
+      )}
     </ListPage>
   )
 }

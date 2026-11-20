@@ -16,10 +16,10 @@ const countFormat = new Intl.NumberFormat('uk-UA')
 export function OrdersStatusTabs({ status, counts, onChange }: { status: string; counts?: OrderCounts; onChange: (status: string) => void }) {
   const countOf = (value: OrderStatus | '') => value ? counts?.byStatus.find((entry) => entry.status === value)?.count ?? 0 : counts?.all ?? 0
   return (
-    <div className="orders-status-picker" role="group" aria-label="Статус замовлення">
-      <div className="orders-status-cards">
+    <div className="sales-status-picker orders-status-picker" role="group" aria-label="Статус замовлення">
+      <div className="sales-status-cards orders-status-cards">
         {primary.map(({ value, label, icon }) => (
-          <button key={value} type="button" className="orders-status-card" aria-pressed={status === value} onClick={() => onChange(value)}>
+          <button key={value} type="button" className="sales-status-card" aria-pressed={status === value} onClick={() => onChange(value)}>
             <MetricLabel icon={icon}>{label}</MetricLabel>
             <strong>{counts ? countFormat.format(countOf(value)) : '—'}</strong>
             <MetricTrack value={countOf(value)} max={counts?.all ?? 0} />

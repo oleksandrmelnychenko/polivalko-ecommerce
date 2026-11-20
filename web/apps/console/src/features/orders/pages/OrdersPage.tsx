@@ -26,6 +26,7 @@ import { OrdersStatusTabs } from '../components/OrdersStatusTabs'
 import { hasActiveFilters, orderHref, sortingToSort, sortToSorting, toApiFilters, toListQuery } from '../lib/orderFilters'
 import { statusProblemText } from '../lib/statusProblem'
 import { useOrdersState } from '../lib/useOrdersState'
+import '@/shared/sales/sales-list.css'
 import './orders.css'
 
 const getRowId = (row: OrderRow) => row.number
@@ -129,7 +130,7 @@ export function OrdersPage() {
   )
 
   return (
-    <ListPage className="orders-list-page">
+    <ListPage className="sales-list-page orders-list-page">
       <PageHeader
         title="Замовлення"
         actions={

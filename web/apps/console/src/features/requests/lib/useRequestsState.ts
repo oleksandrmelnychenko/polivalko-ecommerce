@@ -37,6 +37,7 @@ export function useRequestsState() {
             if (!value || DEFAULTS[key] === value) next.delete(key)
             else next.set(key, value)
           }
+          next.delete('id')
           if (!('page' in patch)) next.delete('page')
           return next
         },
