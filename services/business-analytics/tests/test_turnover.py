@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from analytics.forecast import fit, predict
 from analytics.server import dispatch
-from analytics.turnover import forecast_months, month, read_history
+from analytics.turnover import forecast_months, month, predict as predict_turnover, read_history
 
 
 TODAY = date(2026, 11, 20)
@@ -24,7 +24,12 @@ class TurnoverTests(unittest.TestCase):
             self.assertEqual(len(report["projection"]), horizon)
             self.assertEqual(report["projection"][0]["month"], "2026-11-01")
             self.assertEqual(report["trainingMonths"], 72)
-            self.assertEqual({m["model"] for m in report["comparisons"]}, {"recent", "season", "ridge"})
+            self.assertEqual({m["model"] for m in report["comparisons"]}, {"recent", "season", "scaledSeason", "ridge"})
+
+    def test_scaled_season_learns_change_in_level_without_future_values(self):
+        year = [8., 16., 24., 32.] * 3
+        history = year + [v * 1.5 for v in year]
+        self.assertEqual(predict_turnover(history, 6, "scaledSeason"), [v * 2.25 for v in year[:6]])
 
     def test_no_holdout_leakage_or_partial_month(self):
         totals = series()

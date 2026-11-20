@@ -6,7 +6,7 @@ import { AnalyticsCard } from './AnalyticsCard'
 import { AnalyticsChart } from './AnalyticsChart'
 import { formatValue } from './BusinessForecast'
 
-type Model = 'recent' | 'season' | 'ridge'
+type Model = 'recent' | 'season' | 'scaledSeason' | 'ridge'
 type Point = { month: string; value: number }
 type Forecast = {
   model: Model | null
@@ -24,6 +24,7 @@ type Forecast = {
 }
 const modelNames: Record<Model, string> = {
   recent: 'Середнє за три місяці', season: 'Той самий місяць торік', ridge: 'Навчена сезонна регресія',
+  scaledSeason: 'Торішній сезон із поправкою на зміну обороту',
 }
 const months = new Intl.DateTimeFormat('uk-UA', { month: 'short', year: 'numeric', timeZone: 'UTC' })
 const label = (day: string) => months.format(new Date(day + 'T00:00:00Z'))

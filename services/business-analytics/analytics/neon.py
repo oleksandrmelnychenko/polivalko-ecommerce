@@ -51,7 +51,16 @@ class Session:
 
     def execute(self, sql, params=()):
         cursor = self.connection.cursor()
-        cursor.execute(sql, params)
+        try:
+            cursor.execute(sql, params)
+        except dbapi.DatabaseError as exc:
+            details = exc.args[0] if exc.args and isinstance(exc.args[0], dict) else {}
+            # Log only the static query shape, code and parser position. Driver
+            # messages and parameters can contain accounting or connection data.
+            first_line = sql.strip().splitlines()[0].split(" AS ")[0][:72]
+            logging.getLogger(__name__).error("Analytics SQL failed (statement=%s, SQLSTATE=%s, position=%s)",
+                                              first_line, details.get("C"), details.get("P"))
+            raise
         columns = [c[0] for c in (cursor.description or [])]
         return Rows(dict(zip(columns, row)) for row in cursor) if columns else Rows(())
 

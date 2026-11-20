@@ -69,7 +69,7 @@ def history_for(today):
         return _cached[2]
 
 
-METHODS = {"recent": 3, "season": 12, "ridge": 24}
+METHODS = {"recent": 3, "season": 12, "scaledSeason": 18, "ridge": 24}
 
 
 def predict(values, horizon, method):
@@ -77,6 +77,14 @@ def predict(values, horizon, method):
         return [fmean(values[-3:])] * horizon
     if method == "season":
         return [values[-12 + i] for i in range(horizon)]
+    if method == "scaledSeason":
+        # Learn the year-over-year level change from at most 12 matched
+        # months preceding this forecast origin. Preserve the seasonal shape.
+        previous = values[-24:-12]
+        latest = values[-len(previous):]
+        energy = sum(p*p for p in previous)
+        factor = sum(p*v for p, v in zip(previous, latest)) / energy if energy else 1
+        return [factor * values[-12 + i] for i in range(horizon)]
     return seasonal_regression(values, horizon, 12)
 
 
@@ -123,7 +131,7 @@ def forecast_months(totals, latest, today, horizon):
         radii[method] = [sorted(group)[min(len(group), ceil(0.8*(len(group)+1))) - 1]
                          if len(group) >= 5 else None for group in errors]
     winner = min(scores, key=scores.get)
-    baseline = min((m for m in methods if m != "ridge"), key=scores.get)
+    baseline = min((m for m in methods if m in ("season", "recent")), key=scores.get)
     validation = predict(values[:cutoff], test, winner)
     actual = values[cutoff:]
     scale = sum(abs(v) for v in actual)
