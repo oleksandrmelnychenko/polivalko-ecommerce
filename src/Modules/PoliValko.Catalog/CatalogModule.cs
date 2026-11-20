@@ -12,6 +12,7 @@ using PoliValko.Catalog.Features.Storefront;
 using PoliValko.Catalog.Persistence;
 using PoliValko.Customers.Contracts;
 using PoliValko.Infrastructure;
+using PoliValko.Infrastructure.Media;
 using PoliValko.Infrastructure.Persistence;
 
 namespace PoliValko.Catalog;
@@ -21,6 +22,8 @@ public static class CatalogModule
     public static IServiceCollection AddCatalogModule(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOptions<CatalogOptions>().BindConfiguration("Catalog");
+        services.AddHttpClient<ProductPhotoStorage>(client => client.Timeout = TimeSpan.FromSeconds(30))
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         return services
             .AddModelConfigurator<CatalogModelConfigurator>()
             .AddScoped<ICatalogPricing, CatalogPricing>()

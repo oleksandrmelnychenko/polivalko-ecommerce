@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using PoliValko.Catalog.Domain;
 using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Media;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Storefront;
+using PoliValko.Infrastructure.Web;
 
 namespace PoliValko.Catalog.Features.Console.Products;
 
@@ -16,7 +18,8 @@ internal static class UploadProductImage
         IFormFile file,
         [FromForm] string? alt,
         PoliValkoDbContext db,
-        IMediaStorage media,
+        ProductPhotoStorage media,
+        ILogger<ProductPhotoStorage> logger,
         IAuditLog audit,
         IStorefrontCache storefront,
         TimeProvider time,
@@ -37,11 +40,17 @@ internal static class UploadProductImage
         try
         {
             await using var stream = file.OpenReadStream();
-            stored = await media.SaveImageAsync("products", stream, ct);
+            stored = await media.SaveAsync(stream, ct);
         }
         catch (MediaValidationException ex)
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]> { ["file"] = [ex.Message] });
+        }
+        catch (ProductPhotoStorageException ex)
+        {
+            logger.LogWarning("Could not upload catalog photo: {Reason}", ex.Message);
+            return Problems.Create(StatusCodes.Status503ServiceUnavailable, "catalog.photo_storage_unavailable",
+                "Збереження фото тимчасово недоступне", "Спробуйте ще раз за кілька хвилин.");
         }
 
         var now = time.GetUtcNow();

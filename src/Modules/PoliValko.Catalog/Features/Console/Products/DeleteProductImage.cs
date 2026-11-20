@@ -14,7 +14,7 @@ internal static class DeleteProductImage
         Guid id,
         Guid imageId,
         PoliValkoDbContext db,
-        IMediaStorage media,
+        ProductPhotoStorage media,
         IAuditLog audit,
         IStorefrontCache storefront,
         TimeProvider time,
