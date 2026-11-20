@@ -10,7 +10,7 @@ internal static class CountProducts
 {
     public static async Task<Ok<ConsoleProductCountsDto>> HandleAsync(PoliValkoDbContext db, TimeProvider time, CancellationToken ct)
     {
-        var products = db.Set<Product>().AsNoTracking();
+        var products = db.Set<Product>().AsNoTracking().Where(p => !p.IsArchived);
         return TypedResults.Ok(new ConsoleProductCountsDto(
             await products.CountAsync(ct),
             await products.NeedsFilling().CountAsync(ct),

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using PoliValko.Catalog.Domain;
@@ -25,10 +26,17 @@ internal static class UploadProductImage
         TimeProvider time,
         CancellationToken ct)
     {
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        await db.Database.ExecuteSqlAsync($"SELECT 1 FROM catalog.products WHERE id = {id} FOR UPDATE", ct);
         var product = await ConsoleProductQueries.LoadProductAsync(db, id, tracking: true, ct);
         if (product is null)
         {
             return ConsoleProductQueries.ProductNotFound();
+        }
+
+        if (product.IsArchived)
+        {
+            return TypedResults.Problem(statusCode: 409, detail: "Спершу відновіть товар з архіву.");
         }
 
         if (product.Images.Count >= 20)
@@ -70,6 +78,7 @@ internal static class UploadProductImage
         product.UpdatedAt = now;
         audit.Record("catalog.product_image_added", "Product", product.Sku, new { image.Url });
         await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         await storefront.InvalidateAsync(ConsoleProductQueries.ProductTags, ct);
 
         return TypedResults.Ok(await ConsoleProductQueries.ToDtoAsync(db, product, time.GetUtcNow(), ct));

@@ -1,0 +1,52 @@
+.catalog-editor-modal {
+  --editor-inset: clamp(14px, 2.5vw, 22px);
+}
+
+.catalog-editor-title {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.catalog-editor-title svg,
+.catalog-editor-modal .mantine-Modal-close {
+  background: var(--app-ground);
+  border-radius: 50%;
+  color: var(--brand-ink);
+  flex: none;
+}
+
+.catalog-editor-title svg {
+  box-sizing: content-box;
+  padding: 8px;
+}
+
+.catalog-editor-modal .app-sheet-scroll { padding: 18px var(--editor-inset); }
+.catalog-editor-modal .app-sheet-footer { padding: 12px var(--editor-inset); }
+.catalog-editor-modal .mantine-Input-input { border-radius: 12px; }
+.catalog-editor-modal .mantine-NumberInput-input { font-family: var(--font-mono); }
+.catalog-editor-modal .mantine-InputWrapper-description { margin-top: 5px; }
+.catalog-editor-modal .mantine-Alert-root { border-radius: 14px; }
+.catalog-editor-modal .mantine-InputWrapper-root:has(input[required]):not(:has(.mantine-InputWrapper-error))::after {
+  content: '';
+  display: block;
+  height: calc(1rem + 5px);
+}
+.catalog-editor-modal .mantine-InputWrapper-error { line-height: 1rem; }
+
+.catalog-editor-options {
+  border-block: 1px dashed var(--app-line);
+  display: grid;
+  gap: 14px;
+  padding-block: 16px;
+}
+
+@media (max-width: 32em) {
+  .catalog-editor-modal .app-sheet-footer > .mantine-Group-root {
+    gap: 6px;
+    justify-content: flex-end;
+  }
+  .catalog-editor-modal .app-sheet-footer .mantine-Button-root { padding-inline: 10px; }
+}

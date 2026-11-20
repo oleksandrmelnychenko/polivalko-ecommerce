@@ -29,6 +29,11 @@ internal static class UpdateProduct
             return ConsoleProductQueries.ProductNotFound();
         }
 
+        if (product.IsArchived)
+        {
+            return TypedResults.Problem(statusCode: 409, detail: "Спершу відновіть товар з архіву.");
+        }
+
         var errors = new Dictionary<string, string[]>();
         var slug = string.IsNullOrWhiteSpace(request.Slug) ? product.Slug : request.Slug.Trim().ToLowerInvariant();
         if (!CatalogConsoleValidation.IsSlug(slug) || slug.Length > 300)

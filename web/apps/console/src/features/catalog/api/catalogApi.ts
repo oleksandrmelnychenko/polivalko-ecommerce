@@ -35,6 +35,14 @@ export function getProductCounts() {
   return api.GET('/api/v1/console/catalog/products/counts')
 }
 
+export function createCatalogProduct(headers: CsrfHeaders, body: S['CreateCatalogProductRequest']) {
+  return api.POST('/api/v1/console/catalog/products', { headers, body })
+}
+
+export function setProductArchive(headers: CsrfHeaders, id: string, archived: boolean) {
+  return api.PUT('/api/v1/console/catalog/products/{id}/archive', { params: { path: { id } }, headers, body: { archived } })
+}
+
 export function bulkUpdateProducts(headers: CsrfHeaders, body: BulkProductsRequest) {
   return api.POST('/api/v1/console/catalog/products/bulk', { headers, body })
 }
@@ -49,6 +57,10 @@ export function getProduct(id: string, cache?: RequestCache) {
 
 export function adjustProductPrice(headers: CsrfHeaders, change: S['AdjustUpstreamPriceChange']) {
   return api.POST('/api/v1/console/catalog/products/price', { headers, body: { changes: [change] } })
+}
+
+export function adjustProductStock(headers: CsrfHeaders, change: S['AdjustUpstreamStockChange']) {
+  return api.POST('/api/v1/console/catalog/products/stock', { headers, body: { changes: [change] } })
 }
 
 export function updateProduct(headers: CsrfHeaders, id: string, body: UpdateProductRequest) {

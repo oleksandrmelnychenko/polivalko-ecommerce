@@ -1,7 +1,7 @@
 import { DEFAULT_PAGE_SIZE, normalizePageSize } from '@/shared/ui/paginator/pageSize'
 import type { ProductFill, ProductsQuery } from '../api/catalogApi'
 
-export const FILTER_KEYS = ['q', 'categoryId', 'stock', 'visible', 'brand', 'labelId', 'fill', 'newDays', 'hiddenWithStock'] as const
+export const FILTER_KEYS = ['q', 'categoryId', 'stock', 'visible', 'brand', 'labelId', 'fill', 'newDays', 'hiddenWithStock', 'archived'] as const
 
 export type FilterKey = (typeof FILTER_KEYS)[number]
 export type ParamKey = FilterKey | 'page' | 'pageSize'
@@ -56,6 +56,7 @@ export function readProductsState(params: URLSearchParams): ProductsState {
     fill: FILLS.includes(value('fill')) ? value('fill') : '',
     newDays: readDays(value('newDays')),
     hiddenWithStock: value('hiddenWithStock') === 'true' ? 'true' : '',
+    archived: value('archived') === 'true' ? 'true' : '',
     page: Math.max(Number(params.get('page')) || 1, 1),
     pageSize: normalizePageSize(params.get('pageSize') ?? DEFAULT_PAGE_SIZE),
   }
@@ -97,6 +98,7 @@ export function toProductsQuery(state: ProductsState): ProductsQuery {
     fill: (state.fill || undefined) as ProductFill | undefined,
     newDays: state.newDays ? Number(state.newDays) : undefined,
     hiddenWithStock: state.hiddenWithStock ? true : undefined,
+    archived: state.archived ? true : undefined,
     page: state.page,
     pageSize: state.pageSize,
   }

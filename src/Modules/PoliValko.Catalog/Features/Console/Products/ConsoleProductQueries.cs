@@ -105,7 +105,8 @@ internal static class ConsoleProductQueries
         p.UpdatedAt,
         labelIds,
         labels,
-        p.CreatedAt);
+        p.CreatedAt,
+        p.IsArchived);
 
     private sealed record ListRow(
         Guid Id,

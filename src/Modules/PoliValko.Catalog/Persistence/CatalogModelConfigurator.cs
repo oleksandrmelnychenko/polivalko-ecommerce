@@ -147,7 +147,7 @@ internal sealed class CatalogModelConfigurator : IModelConfigurator
 
     private static void ConfigureProduct(EntityTypeBuilder<Product> builder)
     {
-        builder.ToTable("products", Schemas.Catalog);
+        builder.ToTable("products", Schemas.Catalog, table => table.HasCheckConstraint("ck_products_archive_visibility", "NOT (is_archived AND is_visible)"));
         builder.HasKey(p => p.Id);
         builder.Property(p => p.Id).ValueGeneratedNever();
         builder.Property(p => p.NavkoloId).HasMaxLength(100);

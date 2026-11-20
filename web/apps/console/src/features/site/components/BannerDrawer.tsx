@@ -3,7 +3,7 @@ import { IconDeviceFloppy } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { useReportDirty } from '@/shared/lib/useReportDirty'
 import { AppDateInput } from '@/shared/ui/AppDateInput'
-import { AppDrawer } from '@/shared/ui/AppDrawer'
+import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { saveBanner, type Banner, type SaveBannerRequest } from '../api/siteApi'
 import { isLink } from '../lib/homeSettings'
 import { invalidPeriod, periodDay, periodEnd, periodStart } from '../lib/period'
@@ -28,7 +28,7 @@ export function BannerDrawer({ editing, onClose, onSaved }: BannerDrawerProps) {
   const banner = editing.banner
 
   return (
-    <AppDrawer
+    <AppEditorModal
       opened={editing.opened}
       onClose={busy ? () => undefined : onClose}
       dirty={dirty && !busy}
@@ -44,7 +44,7 @@ export function BannerDrawer({ editing, onClose, onSaved }: BannerDrawerProps) {
       }
     >
       <BannerForm key={`${banner?.id ?? 'new'}:${editing.seq}`} initial={banner} onBusy={setBusy} onSaved={onSaved} onDirty={setDirty} />
-    </AppDrawer>
+    </AppEditorModal>
   )
 }
 

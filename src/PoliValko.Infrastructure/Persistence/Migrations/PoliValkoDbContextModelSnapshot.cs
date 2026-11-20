@@ -526,6 +526,10 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("display_name");
 
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_archived");
+
                     b.Property<bool>("IsVisible")
                         .HasColumnType("boolean")
                         .HasColumnName("is_visible");
@@ -630,7 +634,10 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Slug" }, "SlugTrigrams"), "gin");
                     NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Slug" }, "SlugTrigrams"), new[] { "gin_trgm_ops" });
 
-                    b.ToTable("products", "catalog");
+                    b.ToTable("products", "catalog", t =>
+                        {
+                            t.HasCheckConstraint("ck_products_archive_visibility", "NOT (is_archived AND is_visible)");
+                        });
                 });
 
             modelBuilder.Entity("PoliValko.Catalog.Domain.ProductAttribute", b =>

@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
-import { AppDrawer } from '@/shared/ui/AppDrawer'
+import { CatalogEditorModal } from '../components/CatalogEditorModal'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
@@ -186,7 +186,8 @@ export function CollectionsPage() {
         </DictionaryLayout>
       </ListPageBody>
 
-      <AppDrawer
+      <CatalogEditorModal
+        icon={IconLayoutGrid}
         opened={opened}
         onClose={close}
         dirty={formDirty && !busy}
@@ -212,7 +213,7 @@ export function CollectionsPage() {
         }
       >
         {editing ? <CollectionForm key={editing.key} formId={FORM_ID} collection={editing.collection} error={deleteError} onBusy={setBusy} onSaved={saved} onDirty={setFormDirty} /> : null}
-      </AppDrawer>
+      </CatalogEditorModal>
 
       <ConfirmDialog
         opened={confirming}

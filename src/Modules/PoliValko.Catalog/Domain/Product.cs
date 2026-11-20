@@ -28,6 +28,8 @@ public sealed class Product
 
     public bool IsVisible { get; set; }
 
+    public bool IsArchived { get; set; }
+
     public string? SeoTitle { get; set; }
 
     public string? SeoDescription { get; set; }

@@ -11,6 +11,12 @@ internal static class ProductEndpoints
     public static RouteGroupBuilder Map(RouteGroupBuilder catalog)
     {
         var products = catalog.MapGroup("/products").RequireStaff(PermissionKeys.ProductsView);
+        products.MapPost(string.Empty, ProductLifecycle.CreateAsync)
+            .RequirePermission(PermissionKeys.ProductsEdit)
+            .WithName("ConsoleCreateProduct");
+        products.MapPut("/{id:guid}/archive", ProductLifecycle.SetArchiveAsync)
+            .RequirePermission(PermissionKeys.ProductsEdit)
+            .WithName("ConsoleSetProductArchive");
         products.MapGet(string.Empty, ListProducts.HandleAsync)
             .WithName("ConsoleListProducts")
             .WithSummary("Товари: пошук за назвою чи артикулом, фільтр за розділом, видимістю й залишком");

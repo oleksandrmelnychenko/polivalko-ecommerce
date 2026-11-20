@@ -1,5 +1,5 @@
 import { IconArrowUpRight } from '@tabler/icons-react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { formatDateTime } from '@polivalko/shared/lib/format'
 import { siteUrl } from '@/shared/lib/siteUrl'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
@@ -11,11 +11,12 @@ import { ProductThumb } from './ProductThumb'
 import { StockText } from './StockText'
 
 function ProductIdentity({ row }: { row: ProductRow }) {
+  const { search } = useLocation()
   const name = productName(row)
   return (
     <div className="catalog-row-identity">
       <ProductThumb url={row.imageUrl} size={44} />
-      <Link className="catalog-product-name" to={productHref(row.id)} title={name}>{name}</Link>
+      <Link className="catalog-product-name" to={{ pathname: productHref(row.id), search }} state={{ fromProductList: true }} title={name}>{name}</Link>
     </div>
   )
 }

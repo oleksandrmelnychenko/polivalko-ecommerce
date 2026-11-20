@@ -178,7 +178,7 @@ internal sealed class CatalogImporter(
 
     public async Task DisableMissingAsync(IReadOnlyCollection<string> ids, CancellationToken ct)
     {
-        await db.Set<Product>().Where(p => !ids.Contains(p.NavkoloId) && p.IsVisible)
+        await db.Set<Product>().Where(p => !p.NavkoloId.StartsWith("local:") && !ids.Contains(p.NavkoloId) && p.IsVisible)
             .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsVisible, false), ct);
     }
 

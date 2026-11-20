@@ -1,7 +1,7 @@
 import { ActionIcon, Checkbox, Skeleton, Tooltip } from '@mantine/core'
 import { IconExternalLink, IconPhoto } from '@tabler/icons-react'
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { sized } from '@polivalko/shared/lib/images'
 import { siteUrl } from '@/shared/lib/siteUrl'
 import { Money, NumberValue } from '@/shared/ui/Money'
@@ -96,6 +96,7 @@ type ProductTileProps = {
 }
 
 function ProductTile({ row, selected, onToggle }: ProductTileProps) {
+  const { search } = useLocation()
   const name = productName(row)
   return (
     <li className="catalog-tile" data-selected={selected || undefined} data-hidden={!row.isVisible || undefined}>
@@ -135,7 +136,7 @@ function ProductTile({ row, selected, onToggle }: ProductTileProps) {
         </Tooltip>
       </div>
       <div className="catalog-tile-body">
-        <Link to={productHref(row.id)} className="catalog-tile-name" title={name}>
+        <Link to={{ pathname: productHref(row.id), search }} state={{ fromProductList: true }} className="catalog-tile-name" title={name}>
           {name}
         </Link>
         <span className="catalog-tile-meta">

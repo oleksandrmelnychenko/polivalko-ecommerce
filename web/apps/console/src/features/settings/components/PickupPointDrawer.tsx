@@ -2,7 +2,7 @@ import { Button, Checkbox, Group, Stack, Text, Textarea, TextInput } from '@mant
 import { IconDeviceFloppy } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { useReportDirty } from '@/shared/lib/useReportDirty'
-import { AppDrawer } from '@/shared/ui/AppDrawer'
+import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { TableChip } from '@/shared/ui/TableChip'
 import { savePickupPoint, type PickupPoint } from '../api/settingsApi'
 import { fieldError, useSaveForm } from '../lib/useSaveForm'
@@ -23,7 +23,7 @@ export function PickupPointDrawer({ point, opened, onClose, onSaved }: PickupPoi
   const [dirty, setDirty] = useState(false)
 
   return (
-    <AppDrawer
+    <AppEditorModal
       opened={opened}
       onClose={busy ? () => undefined : onClose}
       dirty={dirty && !busy}
@@ -39,7 +39,7 @@ export function PickupPointDrawer({ point, opened, onClose, onSaved }: PickupPoi
       }
     >
       {point ? <PickupForm key={point.code} initial={point} onBusy={setBusy} onSaved={onSaved} onDirty={setDirty} /> : null}
-    </AppDrawer>
+    </AppEditorModal>
   )
 }
 

@@ -1,4 +1,4 @@
-import { IconChevronLeft, type Icon } from '@tabler/icons-react'
+import { IconCheck, IconChevronLeft, type Icon } from '@tabler/icons-react'
 import type { ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { MetricLabel, MetricTrack } from '@/shared/ui/MetricCard'
@@ -16,7 +16,11 @@ export function DictionaryLink({ id, children }: { id: string; children: ReactNo
   const [params] = useSearchParams()
   const next = new URLSearchParams(params)
   next.set('id', id)
-  return <Link className="dictionary-link app-split-name-cell" to={{ search: next.toString() }} replace>{children}</Link>
+  return <Link className="dictionary-link app-split-name-cell" to={{ search: next.toString() }} replace>{children}<CatalogSelectionMark /></Link>
+}
+
+export function CatalogSelectionMark() {
+  return <span className="catalog-selection-mark"><IconCheck size={14} stroke={2} aria-hidden="true" /><span className="visually-hidden">Вибрано</span></span>
 }
 
 export function DictionaryMetric({ icon, label, value, note, part, total }: {

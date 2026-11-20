@@ -17,7 +17,7 @@ internal static class ListProducts
     {
         var now = time.GetUtcNow();
         var errors = new Dictionary<string, string[]>();
-        var products = db.Set<Product>().AsNoTracking();
+        var products = db.Set<Product>().AsNoTracking().Where(p => p.IsArchived == (query.Archived == true));
         switch (query.Stock?.Trim().ToLowerInvariant())
         {
             case null or "":

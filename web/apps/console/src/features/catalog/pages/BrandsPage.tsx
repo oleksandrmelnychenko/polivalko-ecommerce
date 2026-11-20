@@ -1,12 +1,12 @@
 import { ActionIcon, Button, Select, Tooltip } from '@mantine/core'
-import { IconArrowMerge, IconFilterOff, IconPlus, IconRefresh } from '@tabler/icons-react'
+import { IconCertificate, IconArrowMerge, IconFilterOff, IconPlus, IconRefresh } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
 import { usePermissions } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemCode, problemMessage, type Problem } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
-import { AppDrawer } from '@/shared/ui/AppDrawer'
+import { CatalogEditorModal } from '../components/CatalogEditorModal'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
@@ -216,7 +216,8 @@ export function BrandsPage() {
         </DictionaryLayout>
       </ListPageBody>
 
-      <AppDrawer
+      <CatalogEditorModal
+        icon={IconCertificate}
         opened={drawer.opened}
         onClose={drawer.close}
         dirty={drawer.dirty}
@@ -242,7 +243,7 @@ export function BrandsPage() {
         {drawer.editing ? (
           <BrandForm key={drawer.editing.key} formId={FORM_ID} brand={drawer.editing.item} error={drawer.actionError} onBusy={drawer.setBusy} onSaved={saved} onDirty={drawer.setDirty} />
         ) : null}
-      </AppDrawer>
+      </CatalogEditorModal>
 
       <ConfirmDialog
         opened={drawer.confirming}

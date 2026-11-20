@@ -1,12 +1,12 @@
 import { ActionIcon, Button, Select, Tooltip } from '@mantine/core'
-import { IconFilterOff, IconPlus, IconRefresh } from '@tabler/icons-react'
+import { IconAdjustmentsHorizontal, IconFilterOff, IconPlus, IconRefresh } from '@tabler/icons-react'
 import { useCallback, useMemo } from 'react'
 import { usePermissions } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemCode, problemMessage, type Problem } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
-import { AppDrawer } from '@/shared/ui/AppDrawer'
+import { CatalogEditorModal } from '../components/CatalogEditorModal'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
@@ -162,7 +162,8 @@ export function AttributesPage() {
         </DictionaryLayout>
       </ListPageBody>
 
-      <AppDrawer
+      <CatalogEditorModal
+        icon={IconAdjustmentsHorizontal}
         opened={drawer.opened}
         onClose={drawer.close}
         dirty={drawer.dirty}
@@ -183,7 +184,7 @@ export function AttributesPage() {
             onDirty={drawer.setDirty}
           />
         ) : null}
-      </AppDrawer>
+      </CatalogEditorModal>
 
       <ConfirmDialog
         opened={drawer.confirming}

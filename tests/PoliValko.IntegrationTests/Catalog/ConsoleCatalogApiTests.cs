@@ -78,12 +78,23 @@ public sealed class ConsoleCatalogApiTests(ApiFactory api)
 
         var product = await api.AddProductAsync("vse-dlia-polyvu", "Лійка для фото", 120m);
         byte[] jpeg = [0xFF, 0xD8, 0xFF, 0xE0, .. new byte[64]];
-        using var form = new MultipartFormDataContent();
-        var file = new ByteArrayContent(jpeg);
-        file.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
-        form.Add(file, "file", "photo.jpg");
-        var uploaded = await (await admin.PostAsync($"/api/v1/console/catalog/products/{product.Id}/images", form, Ct)).ReadAsync<ConsoleProductDto>();
-        uploaded.Images.Count.ShouldBe(1);
+        var imagesUrl = $"/api/v1/console/catalog/products/{product.Id}/images";
+        async Task AddPhoto(string name)
+        {
+            using var form = new MultipartFormDataContent();
+            var file = new ByteArrayContent(jpeg);
+            file.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+            form.Add(file, "file", name);
+            (await admin.PostAsync(imagesUrl, form, Ct)).EnsureSuccessStatusCode();
+        }
+        await Task.WhenAll(AddPhoto("front.jpg"), AddPhoto("side.jpg"));
+        var url = $"/api/v1/console/catalog/products/{product.Id}";
+        var added = await admin.ReadAsync<ConsoleProductDto>(url);
+        added.Images.Select(i => i.SortOrder).ShouldBe([0, 1]);
+        var reversed = added.Images.Reverse().Select(i => new ProductImageOrderItem(i.Id, i.Alt)).ToList();
+        (await admin.PutAsJsonAsync(imagesUrl, new UpdateProductImagesRequest(reversed), Ct)).EnsureSuccessStatusCode();
+        var saved = await admin.ReadAsync<ConsoleProductDto>(url);
+        saved.Images.Select(i => i.Id).ShouldBe(reversed.Select(i => i.Id));
     }
 
     [Fact]

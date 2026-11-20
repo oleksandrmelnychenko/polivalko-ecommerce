@@ -1,3 +1,4 @@
+.app-modal .mantine-Modal-inner { inset-inline: 0; }
 .app-modal .mantine-Modal-content {
   border-radius: var(--app-panel-radius);
   overflow: hidden;

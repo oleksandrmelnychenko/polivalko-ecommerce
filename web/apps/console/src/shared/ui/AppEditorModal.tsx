@@ -1,25 +1,32 @@
-import { Button, Drawer, Text, type DrawerProps } from '@mantine/core'
+import { Button, Text } from '@mantine/core'
+import { useReducedMotion } from '@mantine/hooks'
 import { useEffect, useState, type ReactNode } from 'react'
-import { AppModal, AppModalFooter } from './AppModal'
+import { AppModal, AppModalFooter, type AppModalProps } from './AppModal'
 import { DrawerCloseContext } from './drawerClose'
-import './app-drawer.css'
+import './editor-modal.css'
 
-export type AppDrawerProps = Omit<DrawerProps, 'title' | 'size'> & {
-  title: ReactNode
+export type AppEditorModalProps = Omit<AppModalProps, 'size'> & {
   footer?: ReactNode
   size?: 'compact' | 'standard' | 'wide'
   dirty?: boolean
 }
 
-const SHEET_WIDTHS = {
+const MODAL_WIDTHS = {
   compact: 'min(560px, calc(100vw - 16px))',
   standard: 'min(880px, calc(100vw - 16px))',
   wide: 'min(1240px, calc(100vw - 16px))',
 } as const
 
 const OUTSIDE_CLOSE_ARM_DELAY_MS = 350
+const editorTransition = {
+  in: { opacity: 1, transform: 'scale(1)' },
+  out: { opacity: 0, transform: 'scale(.97)' },
+  common: { transformOrigin: 'center' },
+  transitionProperty: 'opacity, transform',
+}
 
-export function AppDrawer({ position = 'right', size = 'compact', children, className, footer, closeButtonProps, dirty = false, onClose, ...props }: AppDrawerProps) {
+export function AppEditorModal({ size = 'compact', children, className, footer, dirty = false, onClose, ...props }: AppEditorModalProps) {
+  const reducedMotion = useReducedMotion()
   const [armed, setArmed] = useState(false)
   const [asking, setAsking] = useState(false)
   const confirming = asking && Boolean(props.opened) && dirty
@@ -46,28 +53,16 @@ export function AppDrawer({ position = 'right', size = 'compact', children, clas
 
   return (
     <>
-      <Drawer
+      <AppModal
         {...props}
         onClose={requestClose}
-        className={['app-drawer', 'app-form-sheet', className].filter(Boolean).join(' ')}
-        closeButtonProps={{ 'aria-label': 'Закрити', ...closeButtonProps }}
+        className={['app-editor-modal', className].filter(Boolean).join(' ')}
         closeOnEscape={(props.closeOnEscape ?? true) && !confirming}
         closeOnClickOutside={(props.closeOnClickOutside ?? true) && armed && !confirming}
-        position={position}
-        size={SHEET_WIDTHS[size]}
-        styles={{
-          content: {
-            margin: 8,
-            height: 'calc(100% - 16px)',
-            maxWidth: 'calc(100vw - 16px)',
-            borderRadius: 14,
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-          },
-          header: { minHeight: 52, padding: '10px 16px', alignItems: 'center', flexShrink: 0, borderBottom: '1px solid var(--mantine-color-gray-2)' },
-          body: { display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0, overflow: 'hidden', padding: 0 },
-        }}
+        size={MODAL_WIDTHS[size]}
+        xOffset={8}
+        yOffset={12}
+        transitionProps={{ transition: editorTransition, duration: reducedMotion ? 0 : 180, exitDuration: reducedMotion ? 0 : 140, timingFunction: 'ease-out' }}
       >
         <DrawerCloseContext.Provider value={requestClose}>
           <div className="app-sheet-body">
@@ -75,7 +70,7 @@ export function AppDrawer({ position = 'right', size = 'compact', children, clas
             {footer ? <div className="app-sheet-footer">{footer}</div> : null}
           </div>
         </DrawerCloseContext.Provider>
-      </Drawer>
+      </AppModal>
       <AppModal opened={confirming} title="Незбережені зміни" size={440} onClose={() => setAsking(false)}>
         <Text size="sm">Зміни в цій формі не збережено. Закрити її без збереження?</Text>
         <AppModalFooter>

@@ -2,7 +2,7 @@ import { Button, Checkbox, Group, NumberInput, Stack, Text, Textarea } from '@ma
 import { IconDeviceFloppy } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { useReportDirty } from '@/shared/lib/useReportDirty'
-import { AppDrawer } from '@/shared/ui/AppDrawer'
+import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { TableChip } from '@/shared/ui/TableChip'
 import { saveService, type ServiceDirection } from '../api/contentApi'
 import { useSaveForm } from '../lib/useSaveForm'
@@ -24,7 +24,7 @@ export function ServiceDirectionDrawer({ direction, opened, onClose, onSaved }: 
   const [dirty, setDirty] = useState(false)
 
   return (
-    <AppDrawer
+    <AppEditorModal
       opened={opened}
       onClose={busy ? () => undefined : onClose}
       dirty={dirty && !busy}
@@ -40,7 +40,7 @@ export function ServiceDirectionDrawer({ direction, opened, onClose, onSaved }: 
       }
     >
       {direction ? <DirectionForm key={direction.code} initial={direction} onBusy={setBusy} onSaved={onSaved} onDirty={setDirty} /> : null}
-    </AppDrawer>
+    </AppEditorModal>
   )
 }
 

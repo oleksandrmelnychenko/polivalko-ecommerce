@@ -36,7 +36,7 @@ internal static class SetProductsVisibility
         }
 
         var visible = request.Visible!.Value;
-        var products = await db.Set<Product>().Where(p => ids.Contains(p.Id)).ToListAsync(ct);
+        var products = await db.Set<Product>().Where(p => !p.IsArchived && ids.Contains(p.Id)).ToListAsync(ct);
         if (products.Count != ids.Count)
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]> { ["productIds"] = ["Частину товарів не знайдено."] });

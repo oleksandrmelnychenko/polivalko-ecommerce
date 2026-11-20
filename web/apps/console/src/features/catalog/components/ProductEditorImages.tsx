@@ -1,10 +1,9 @@
 import { ActionIcon, Alert, Button, Loader, Text, Tooltip } from '@mantine/core'
-import { IconAlertCircle, IconArrowLeft, IconArrowRight, IconCheck, IconPhotoOff, IconPhotoUp, IconTrash, IconUpload } from '@tabler/icons-react'
+import { IconAlertCircle, IconArrowLeft, IconArrowRight, IconCheck, IconPhotoOff, IconPhoto, IconStar, IconTrash, IconUpload } from '@tabler/icons-react'
 import { useEffect, useRef, useState, type DragEvent } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
-import { TableChip } from '@/shared/ui/TableChip'
 import { deleteImage, reorderImages, uploadProductImage, type Product, type ProductImage } from '../api/catalogApi'
 import { ProductImageAlt } from './ProductImageAlt'
 
@@ -26,10 +25,12 @@ type UploadItem = {
 type ProductEditorImagesProps = {
   product: Product
   readOnly: boolean
+  disabled: boolean
+  onBusy: (busy: boolean) => void
   onChange: (product: Product) => void
 }
 
-export function ProductEditorImages({ product, readOnly, onChange }: ProductEditorImagesProps) {
+export function ProductEditorImages({ product, readOnly, disabled, onBusy, onChange }: ProductEditorImagesProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [removing, setRemoving] = useState<ProductImage | null>(null)
@@ -40,7 +41,15 @@ export function ProductEditorImages({ product, readOnly, onChange }: ProductEdit
   const previews = useRef(new Set<string>())
   const images = product.images
   const free = Math.max(0, MAX_IMAGES - images.length)
-  const locked = busy || uploading
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const selectedIndex = Math.max(0, images.findIndex((image) => image.id === selectedId))
+  const selected = images[selectedIndex]
+  const locked = busy || uploading || disabled
+
+  useEffect(() => {
+    onBusy(busy || uploading)
+    return () => onBusy(false)
+  }, [busy, uploading, onBusy])
 
   useEffect(() => {
     const urls = previews.current
@@ -73,7 +82,7 @@ export function ProductEditorImages({ product, readOnly, onChange }: ProductEdit
   }
 
   async function addFiles(files: File[]) {
-    if (locked || files.length === 0) return
+    if (locked || readOnly || files.length === 0) return
     setError(null)
     release(queue)
     const stamp = Date.now()
@@ -124,21 +133,21 @@ export function ProductEditorImages({ product, readOnly, onChange }: ProductEdit
     setQueue([])
   }
 
-  function dragOver(event: DragEvent<HTMLDivElement>) {
+  function dragOver(event: DragEvent<HTMLElement>) {
     if (!event.dataTransfer.types.includes('Files')) return
     event.preventDefault()
     event.dataTransfer.dropEffect = locked || free === 0 ? 'none' : 'copy'
     setDragging(true)
   }
 
-  function dragLeave(event: DragEvent<HTMLDivElement>) {
+  function dragLeave(event: DragEvent<HTMLElement>) {
     if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false)
   }
 
-  function drop(event: DragEvent<HTMLDivElement>) {
+  function drop(event: DragEvent<HTMLElement>) {
     event.preventDefault()
     setDragging(false)
-    if (locked || free === 0) return
+    if (readOnly || locked || free === 0) return
     void addFiles(Array.from(event.dataTransfer.files))
   }
 
@@ -165,109 +174,72 @@ export function ProductEditorImages({ product, readOnly, onChange }: ProductEdit
   const failed = queue.filter((item) => item.state === 'failed').length
 
   return (
-    <section className="catalog-card" aria-labelledby="images-title">
-      <h2 id="images-title" className="app-section-title catalog-card-title">
-        Фото
-        {images.length > 0 ? <span className="catalog-card-count">{images.length} з {MAX_IMAGES}</span> : null}
-      </h2>
-      {images.length > 0 ? (
-        <ul className="catalog-images" aria-busy={locked || undefined}>
+    <section
+      className="catalog-card product-gallery"
+      aria-labelledby="images-title"
+      data-dragging={dragging && !readOnly && !locked && free > 0 || undefined}
+      onDragEnter={dragOver} onDragOver={dragOver} onDragLeave={dragLeave} onDrop={drop}
+    >
+      <div className="catalog-card-head">
+        <h2 id="images-title" className="app-section-title catalog-card-title">
+          <span className="product-gallery-icon"><IconPhoto size={16} aria-hidden="true" /></span>
+          Фото <span className="catalog-card-count">{images.length}/{MAX_IMAGES}</span>
+        </h2>
+        {!readOnly && (
+          <Button size="xs" variant="default" leftSection={<IconUpload size={15} />}
+            loading={uploading} disabled={locked || free === 0} onClick={() => input.current?.click()}>
+            Додати фото
+          </Button>
+        )}
+      </div>
+      {!readOnly && <input ref={input} type="file" accept={ACCEPTED.join(',')} multiple hidden
+        onChange={(event) => {
+          const files = Array.from(event.currentTarget.files ?? [])
+          event.currentTarget.value = ''
+          void addFiles(files)
+        }}
+      />}
+      {images.length > 0 && (
+        <ul className="catalog-images" aria-label="Фотографії товару" aria-busy={locked}>
           {images.map((image, index) => (
-            <li key={image.id} className="catalog-image">
-              <div className="catalog-image-frame">
+            <li key={image.id}>
+              <button type="button" className="catalog-image-frame"
+                aria-label={`Фото ${index + 1}${index === 0 ? ', головне' : ''}`}
+                aria-pressed={selected?.id === image.id} onClick={() => setSelectedId(image.id)}>
                 <img src={image.url} alt={image.alt} loading="lazy" />
-                {index === 0 ? (
-                  <span className="catalog-image-main">
-                    <TableChip tone="success" value="Головне фото" />
-                  </span>
-                ) : null}
-              </div>
-              {readOnly ? (
-                <Text size="xs" c="dimmed" className="catalog-image-alt-text">
-                  {image.alt}
-                </Text>
-              ) : (
-                <>
-                  <ProductImageAlt
-                    key={`${image.id}:${image.alt}`}
-                    id={image.id}
-                    value={image.alt}
-                    disabled={locked}
-                    onSave={(text) => reorder(images.map((item) => ({ id: item.id, alt: item.id === image.id ? text : item.alt })))}
-                  />
-                  <div className="catalog-image-actions">
-                    <Tooltip label="Раніше">
-                      <ActionIcon variant="default" aria-label="Раніше" disabled={locked || index === 0} onClick={() => move(index, -1)}>
-                        <IconArrowLeft size={16} stroke={1.7} />
-                      </ActionIcon>
-                    </Tooltip>
-                    <Tooltip label="Пізніше">
-                      <ActionIcon variant="default" aria-label="Пізніше" disabled={locked || index === images.length - 1} onClick={() => move(index, 1)}>
-                        <IconArrowRight size={16} stroke={1.7} />
-                      </ActionIcon>
-                    </Tooltip>
-                    <Tooltip label="Видалити">
-                      <ActionIcon variant="subtle" color="red" ml="auto" aria-label="Видалити" disabled={locked} onClick={() => setRemoving(image)}>
-                        <IconTrash size={16} stroke={1.7} />
-                      </ActionIcon>
-                    </Tooltip>
-                  </div>
-                </>
-              )}
+                {index === 0 && <span className="catalog-image-main"><IconStar size={12} fill="currentColor" /></span>}
+              </button>
             </li>
           ))}
         </ul>
-      ) : (
-        <Text size="sm" c="dimmed">
-          Фото ще немає. Вітрина показує заглушку «Фото додасть магазин».
-        </Text>
       )}
-
-      {readOnly ? null : (
-        <div
-          className="catalog-drop"
-          data-dragging={dragging || undefined}
-          data-disabled={locked || free === 0 || undefined}
-          onDragEnter={dragOver}
-          onDragOver={dragOver}
-          onDragLeave={dragLeave}
-          onDrop={drop}
-        >
-          <IconPhotoUp className="catalog-drop-icon" size={28} stroke={1.5} aria-hidden="true" />
-          {free === 0 ? (
-            <p className="catalog-drop-title">У товару {MAX_IMAGES} фото, більше додати не можна. Видаліть зайве, щоб додати нове.</p>
-          ) : (
-            <>
-              <p className="catalog-drop-title">{dragging ? 'Відпустіть, щоб завантажити' : 'Перетягніть фото сюди або оберіть файли'}</p>
-              <p className="catalog-drop-hint">
-                JPEG, PNG чи WebP до 10 МБ кожне, кілька одразу. Можна додати ще {free}. Опис для незрячих спершу збігається з
-                назвою товару, його можна змінити під кожним фото.
-              </p>
-              <Button
-                variant="default"
-                leftSection={<IconUpload size={16} stroke={1.7} />}
-                loading={uploading}
-                disabled={busy}
-                onClick={() => input.current?.click()}
-              >
-                Обрати файли
-              </Button>
-            </>
-          )}
-          <input
-            ref={input}
-            type="file"
-            accept={ACCEPTED.join(',')}
-            multiple
-            hidden
-            onChange={(event) => {
-              const files = Array.from(event.currentTarget.files ?? [])
-              event.currentTarget.value = ''
-              void addFiles(files)
-            }}
-          />
+      {selected && !readOnly && (
+        <div className="catalog-image-actions">
+          <ProductImageAlt key={`${selected.id}:${selected.alt}`} id={selected.id} value={selected.alt} disabled={locked}
+            onSave={(text) => reorder(images.map((item) => ({ id: item.id, alt: item.id === selected.id ? text : item.alt })))} />
+          <Tooltip label="Зробити головним">
+            <ActionIcon variant="default" aria-label="Зробити головним" disabled={locked || selectedIndex === 0}
+              onClick={() => move(selectedIndex, -selectedIndex)}><IconStar size={16} /></ActionIcon>
+          </Tooltip>
+          <Tooltip label="Раніше">
+            <ActionIcon variant="default" aria-label="Раніше" disabled={locked || selectedIndex === 0}
+              onClick={() => move(selectedIndex, -1)}><IconArrowLeft size={16} /></ActionIcon>
+          </Tooltip>
+          <Tooltip label="Пізніше">
+            <ActionIcon variant="default" aria-label="Пізніше" disabled={locked || selectedIndex === images.length - 1}
+              onClick={() => move(selectedIndex, 1)}><IconArrowRight size={16} /></ActionIcon>
+          </Tooltip>
+          <Tooltip label="Видалити фото">
+            <ActionIcon variant="subtle" color="red" aria-label="Видалити фото" disabled={locked}
+              onClick={() => setRemoving(selected)}><IconTrash size={16} /></ActionIcon>
+          </Tooltip>
         </div>
       )}
+      {!readOnly ? (
+        <Text size="xs" c="dimmed" mt={6}>
+          {free === 0 ? 'Додано всі 20 фото.' : dragging ? 'Відпустіть файли тут.' : 'Оберіть або перетягніть кілька фото. JPEG, PNG чи WebP до 10 МБ кожне.'}
+        </Text>
+      ) : !selected && <Text size="sm" c="dimmed">Фото ще немає.</Text>}
 
       {queue.length > 0 ? (
         <div className="catalog-queue" aria-live="polite">

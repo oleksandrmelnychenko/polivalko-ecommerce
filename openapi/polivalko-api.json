@@ -5630,6 +5630,65 @@
       }
     },
     "/api/v1/console/catalog/products": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "operationId": "ConsoleCreateProduct",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCatalogProductRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
       "get": {
         "tags": [
           "Console"
@@ -5721,6 +5780,13 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -5743,6 +5809,60 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/catalog/products/{id}/archive": {
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "operationId": "ConsoleSetProductArchive",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetProductArchiveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
           },
           "401": {
             "description": "Unauthorized",
@@ -14898,6 +15018,10 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "isArchived": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -15311,6 +15435,26 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "CreateCatalogProductRequest": {
+        "required": [
+          "name",
+          "sku",
+          "categoryId"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
@@ -21563,6 +21707,17 @@
               "null",
               "boolean"
             ]
+          }
+        }
+      },
+      "SetProductArchiveRequest": {
+        "required": [
+          "archived"
+        ],
+        "type": "object",
+        "properties": {
+          "archived": {
+            "type": "boolean"
           }
         }
       },

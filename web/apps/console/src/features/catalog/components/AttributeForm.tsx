@@ -1,4 +1,4 @@
-import { Alert, NumberInput, SegmentedControl, SimpleGrid, Stack, TagsInput, Text, TextInput } from '@mantine/core'
+import { Alert, NumberInput, SegmentedControl, SimpleGrid, Stack, Text, TextInput } from '@mantine/core'
 import { IconAlertCircle, IconAlertTriangle } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { withCsrf } from '@/shared/api/csrf'
@@ -23,7 +23,6 @@ type Fields = {
   kind: AttributeKind
   filterView: AttributeFilterView
   sortOrder: number | string
-  aliases: string[]
 }
 
 export function AttributeForm({ formId, attribute, nextSortOrder, error, onBusy, onSaved, onDirty }: AttributeFormProps) {
@@ -33,7 +32,6 @@ export function AttributeForm({ formId, attribute, nextSortOrder, error, onBusy,
     kind: attribute?.kind ?? 'list',
     filterView: attribute?.filterView ?? 'checkboxes',
     sortOrder: attribute?.sortOrder ?? nextSortOrder,
-    aliases: attribute?.aliases ?? [],
   }))
   const [pristine] = useState(() => JSON.stringify(fields))
   useReportDirty(JSON.stringify(fields) !== pristine, onDirty)
@@ -71,7 +69,7 @@ export function AttributeForm({ formId, attribute, nextSortOrder, error, onBusy,
           kind: fields.kind,
           filterView: rangeAllowed ? fields.filterView : 'checkboxes',
           sortOrder: Number(fields.sortOrder) || 0,
-          aliases: fields.aliases.map((alias) => alias.trim()).filter(Boolean),
+          aliases: attribute?.aliases ?? [],
         }),
       )
       if (result.response.ok) {
@@ -118,37 +116,27 @@ export function AttributeForm({ formId, attribute, nextSortOrder, error, onBusy,
             Нова назва з&apos;явиться в усіх товарах ({attribute.productCount}) і у фільтрах категорій ({attribute.categoryCount}). Значення характеристик не зміняться.
           </Alert>
         ) : null}
-        <div>
-          <Text component="span" className="catalog-field-label">
-            Тип значень
-          </Text>
-          <SegmentedControl fullWidth data={ATTRIBUTE_KIND_OPTIONS} value={fields.kind} onChange={(value) => setKind(value as AttributeKind)} />
+        <div className="catalog-editor-options">
+          <div>
+            <Text component="span" id={`${formId}-kind`} className="catalog-field-label">
+              Тип значень
+            </Text>
+            <SegmentedControl aria-labelledby={`${formId}-kind`} fullWidth data={ATTRIBUTE_KIND_OPTIONS} value={fields.kind} onChange={(value) => setKind(value as AttributeKind)} />
+          </div>
+          <div>
+            <Text component="span" id={`${formId}-view`} className="catalog-field-label">
+              Вигляд у фільтрі
+            </Text>
+            <SegmentedControl
+              aria-labelledby={`${formId}-view`}
+              fullWidth
+              data={FILTER_VIEW_OPTIONS.map((option) => ({ ...option, disabled: option.value === 'range' && !rangeAllowed }))}
+              value={rangeAllowed ? fields.filterView : 'checkboxes'}
+              onChange={(value) => set('filterView', value as AttributeFilterView)}
+            />
+            {!rangeAllowed && <Text size="xs" c="dimmed" mt={4}>Для діапазону оберіть тип «Число».</Text>}
+          </div>
         </div>
-        <div>
-          <Text component="span" className="catalog-field-label">
-            Вигляд у фільтрі
-          </Text>
-          <SegmentedControl
-            fullWidth
-            data={FILTER_VIEW_OPTIONS.map((option) => ({ ...option, disabled: option.value === 'range' && !rangeAllowed }))}
-            value={rangeAllowed ? fields.filterView : 'checkboxes'}
-            onChange={(value) => set('filterView', value as AttributeFilterView)}
-          />
-          <Text size="xs" c="dimmed" mt={4}>
-            Вигляд «Діапазон» доступний лише для числових характеристик.
-          </Text>
-        </div>
-        <TagsInput
-          label="Синоніми з Navkolo й імпорту"
-          description="Інші написання цієї назви в Navkolo чи файлах імпорту. Щоб додати синонім, натисніть Enter або кому."
-          inputWrapperOrder={['label', 'input', 'description', 'error']}
-          value={fields.aliases}
-          splitChars={[',']}
-          acceptValueOnBlur
-          clearable
-          error={errors.aliases || undefined}
-          onChange={(value) => set('aliases', value)}
-        />
         <NumberInput
           label="Порядок у фільтрах"
           allowDecimal={false}

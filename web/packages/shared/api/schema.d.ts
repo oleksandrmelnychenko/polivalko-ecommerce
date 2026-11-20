@@ -1584,6 +1584,22 @@ export interface paths {
         /** Товари: пошук за назвою чи артикулом, фільтр за розділом, видимістю й залишком */
         get: operations["ConsoleListProducts"];
         put?: never;
+        post: operations["ConsoleCreateProduct"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/catalog/products/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["ConsoleSetProductArchive"];
         post?: never;
         delete?: never;
         options?: never;
@@ -3635,6 +3651,8 @@ export interface components {
             labels: components["schemas"]["ConsoleProductLabelDto"][];
             /** Format: date-time */
             createdAt: string;
+            /** @default false */
+            isArchived: boolean;
         };
         ConsoleProductImageDto: {
             /** Format: uuid */
@@ -3778,6 +3796,12 @@ export interface components {
             enabled: boolean;
             area: null | string;
             priceNote: null | string;
+        };
+        CreateCatalogProductRequest: {
+            name: string;
+            sku: string;
+            /** Format: uuid */
+            categoryId: string;
         };
         CreateOrderRequest: {
             items: null | components["schemas"]["CartLineRequest"][];
@@ -5294,6 +5318,9 @@ export interface components {
         ServiceRequestStatus: "new" | "inProgress" | "done";
         SetAccountLockRequest: {
             locked: null | boolean;
+        };
+        SetProductArchiveRequest: {
+            archived: boolean;
         };
         SetProductsVisibilityRequest: {
             productIds: null | string[];
@@ -9776,6 +9803,7 @@ export interface operations {
                 hiddenWithStock?: boolean;
                 page?: number;
                 pageSize?: number;
+                archived?: boolean;
             };
             header?: never;
             path?: never;
@@ -9800,6 +9828,99 @@ export interface operations {
                 content: {
                     "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleCreateProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCatalogProductRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleSetProductArchive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetProductArchiveRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Unauthorized */
             401: {

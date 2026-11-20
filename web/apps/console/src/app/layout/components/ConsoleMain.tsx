@@ -8,7 +8,8 @@ import { ConsoleSectionTabs } from './ConsoleSectionTabs'
 export function ConsoleMain({ children, dashboard }: PropsWithChildren<{ dashboard: boolean }>) {
   const { activeItem, activeSection } = useNavigation()
   const matchesItem = useMatch(activeItem?.path ?? '/')
-  const isCatalogList = activeSection?.id === 'catalog' && Boolean(matchesItem && activeItem)
+  const productDialog = useMatch('/catalog/products/:id')
+  const isCatalogList = activeSection?.id === 'catalog' && Boolean((matchesItem && activeItem) || productDialog)
   return (
     <AppShell.Main id="main" data-section={activeSection?.id}>
       <div className="console-content">

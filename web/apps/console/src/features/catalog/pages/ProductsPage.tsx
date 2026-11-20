@@ -1,8 +1,8 @@
 import { Button } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
-import { IconFileImport } from '@tabler/icons-react'
+import { IconArchive, IconFileImport, IconPlus } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Can, usePermissions } from '@/features/auth'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
@@ -21,6 +21,7 @@ import { ProductsBulkBar } from '../components/ProductsBulkBar'
 import { NO_BRAND, ProductsBulkDialog, type BulkAction } from '../components/ProductsBulkDialog'
 import { mobileProductsColumns, productsColumns } from '../components/productsColumns'
 import { ProductsFilters } from '../components/ProductsFilters'
+import { CreateProductModal } from '../components/CreateProductModal'
 import { ProductsTabs } from '../components/ProductsTabs'
 import { ProductsTiles } from '../components/ProductsTiles'
 import { ProductsViewToggle } from '../components/ProductsViewToggle'
@@ -54,6 +55,7 @@ function bulkBody(action: BulkAction, value: string, productIds: string[]): Bulk
 
 export function ProductsPage() {
   const navigate = useNavigate()
+  const { search } = useLocation()
   const { can } = usePermissions()
   const { state, params, update, reset } = useProductsState()
   const [view, setView] = useProductsView()
@@ -81,7 +83,7 @@ export function ProductsPage() {
   )
   const manualLabels = useMemo(() => (labelsQuery.status === 'ready' && labelsQuery.data ? manualLabelOptions(labelsQuery.data) : null), [labelsQuery.data, labelsQuery.status])
   const filtered = hasActiveFilters(state)
-  const canEdit = can(PermissionKeys.Catalog.EditProducts)
+  const canEdit = can(PermissionKeys.Catalog.EditProducts) && !state.archived
   const tab = activeTab(state)
 
   const page = products.data
@@ -93,8 +95,9 @@ export function ProductsPage() {
   const [bulkAction, setBulkAction] = useState<BulkAction | null>(null)
   const [bulkBusy, setBulkBusy] = useState(false)
   const [bulkError, setBulkError] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
 
-  const onRowClick = useCallback((row: ProductRow) => navigate(productHref(row.id)), [navigate])
+  const onRowClick = useCallback((row: ProductRow) => navigate({ pathname: productHref(row.id), search }, { state: { fromProductList: true } }), [navigate, search])
   const rowLabels = useMemo(() => new Map(rows.map((row) => [row.id, productName(row)])), [rows])
   const tableSelection = useMemo(
     () =>
@@ -169,15 +172,25 @@ export function ProductsPage() {
       <PageHeader
         title="Товари"
         actions={
+          <>
+          <Button variant={state.archived ? 'filled' : 'default'} aria-pressed={Boolean(state.archived)} leftSection={<IconArchive size={16} />} onClick={() => update({ archived: state.archived ? null : 'true', page: 1 })}>Архів</Button>
           <Can permission={PermissionKeys.Catalog.RunImport}>
             <Button component={Link} to="/catalog/import" variant="default" leftSection={<IconFileImport size={16} stroke={1.8} />}>
               Імпорт
             </Button>
           </Can>
+          <Can permission={PermissionKeys.Catalog.EditProducts}>
+            <Button leftSection={<IconPlus size={16} />} onClick={() => setCreating(true)}>Новий товар</Button>
+          </Can>
+          </>
         }
       />
 
-      <ProductsTabs value={tab} counts={counts.status === 'ready' ? counts.data : undefined} onChange={changeTab} />
+      {!state.archived && <ProductsTabs value={tab} counts={counts.status === 'ready' ? counts.data : undefined} onChange={changeTab} />}
+      <CreateProductModal opened={creating} categories={categories} onClose={() => setCreating(false)} onCreated={id => {
+        setCreating(false)
+        navigate(productHref(id))
+      }} />
 
       <ProductsFilters
         state={state}

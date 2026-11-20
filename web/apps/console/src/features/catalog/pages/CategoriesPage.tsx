@@ -6,7 +6,8 @@ import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
-import { AppDrawer } from '@/shared/ui/AppDrawer'
+import { CatalogEditorModal } from '../components/CatalogEditorModal'
+import { CatalogSelectionMark } from '../components/DictionaryLayout'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
@@ -137,6 +138,7 @@ export function CategoriesPage() {
                 {row.filterAttributes.length ? `Фільтри: ${row.filterAttributes.length}` : inherits.has(row.id) ? 'Успадковані фільтри' : 'Без фільтрів'}
               </small>
             </span>
+            <CatalogSelectionMark />
           </button>
         ),
       },
@@ -247,7 +249,8 @@ export function CategoriesPage() {
 
       {canImport && importOpened ? <CategoryImportDialog onClose={() => setImportOpened(false)} onImported={categories.reload} /> : null}
 
-      <AppDrawer
+      <CatalogEditorModal
+        icon={IconFolder}
         opened={opened}
         onClose={close}
         dirty={formDirty && !busy}
@@ -284,7 +287,7 @@ export function CategoriesPage() {
             onSaved={saved}
             onDirty={setFormDirty}
           /> : null}
-      </AppDrawer>
+      </CatalogEditorModal>
 
       <ConfirmDialog
         opened={confirming}

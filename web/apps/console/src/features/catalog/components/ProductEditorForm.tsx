@@ -1,8 +1,9 @@
-import { Alert, Button, Select, SimpleGrid, Switch, Textarea, TextInput } from '@mantine/core'
-import { IconAlertCircle, IconDeviceFloppy } from '@tabler/icons-react'
+import { Alert, Select, SimpleGrid, Switch, Textarea, TextInput } from '@mantine/core'
+import { IconAlertCircle } from '@tabler/icons-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
+import { useReportDirty } from '@/shared/lib/useReportDirty'
 import { withCsrf } from '@/shared/api/csrf'
 import { fieldErrors, NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
@@ -32,8 +33,10 @@ type ProductEditorFormProps = {
   categories: CategoryOption[]
   brands: Brand[] | null
   labels: ProductLabel[] | null
+  disabled: boolean
   readOnly: boolean
   onBusy: (busy: boolean) => void
+  onDirty: (dirty: boolean) => void
   onSaved: (product: Product) => void
 }
 
@@ -69,7 +72,7 @@ function editorSnapshot(fields: Fields, description: string, attributes: Attribu
   return JSON.stringify({ fields, description, attributes: filledAttributes(attributes), labelIds })
 }
 
-export function ProductEditorForm({ formId, product, categories, brands, labels, readOnly, onBusy, onSaved }: ProductEditorFormProps) {
+export function ProductEditorForm({ formId, product, categories, brands, labels, readOnly, disabled, onBusy, onDirty, onSaved }: ProductEditorFormProps) {
   const { can } = usePermissions()
   const [start] = useState(() => ({
     fields: initialFields(product, brands),
@@ -86,6 +89,7 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
   const [busy, setBusy] = useState(false)
   const pristine = useMemo(() => editorSnapshot(start.fields, start.description, start.attributes, start.labelIds), [start])
   const dirty = !readOnly && editorSnapshot(fields, description, attributes, labelIds) !== pristine
+  useReportDirty(dirty, onDirty)
 
   const categoryData = categories.some((option) => option.value === product.categoryId)
     ? categories
@@ -102,7 +106,7 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (readOnly || busy) return
+    if (readOnly || busy || disabled) return
     const form = event.currentTarget
     setBusy(true)
     onBusy(true)
@@ -144,7 +148,7 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
 
   return (
     <form id={formId} noValidate onSubmit={submit} aria-label="Поля сайту">
-      <fieldset className="catalog-fieldset" disabled={readOnly}>
+      <fieldset className="catalog-fieldset" disabled={readOnly || disabled || busy}>
         {formError ? (
           <Alert color="red" variant="light" icon={<IconAlertCircle size={18} />} role="alert">
             {formError}
@@ -155,7 +159,7 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
           <h2 id="main-title" className="app-section-title catalog-card-title">
             Вітрина
           </h2>
-          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" verticalSpacing="sm">
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" verticalSpacing="xs">
             <TextInput
               label="Назва на вітрині"
               value={fields.displayName}
@@ -215,7 +219,7 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
             )}
           </SimpleGrid>
           <Switch
-            mt="md"
+            mt="xs"
             label="Показувати на сайті"
             checked={fields.isVisible}
             onChange={(event) => set('isVisible', event.currentTarget.checked)}
@@ -232,8 +236,8 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
             inputWrapperOrder={['label', 'input', 'description', 'error']}
             classNames={{ input: 'catalog-code-area' }}
             autosize
-            minRows={8}
-            maxRows={24}
+            minRows={3}
+            maxRows={9}
             spellCheck={false}
             value={description}
             error={errors.descriptionHtml}
@@ -255,7 +259,7 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
           <h2 id="seo-title" className="app-section-title catalog-card-title">
             SEO
           </h2>
-          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" verticalSpacing="sm">
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" verticalSpacing="xs">
             <TextInput
               label="SEO: заголовок"
               value={fields.seoTitle}
@@ -275,13 +279,6 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
           </SimpleGrid>
         </section>
 
-        {readOnly ? null : (
-          <div className="catalog-form-actions">
-            <Button type="submit" leftSection={<IconDeviceFloppy size={16} stroke={1.8} />} loading={busy}>
-              Зберегти товар
-            </Button>
-          </div>
-        )}
       </fieldset>
       <LeaveGuard when={dirty} message="Зміни в товарі не збережено. Піти зі сторінки без збереження?" />
     </form>

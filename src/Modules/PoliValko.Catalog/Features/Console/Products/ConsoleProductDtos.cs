@@ -34,7 +34,8 @@ public sealed record ConsoleProductQuery(
     [property: Description("Створені за останні N днів")] [FromQuery(Name = "newDays")] int? NewDays,
     [property: Description("Приховані товари, що є в наявності")] [FromQuery(Name = "hiddenWithStock")] bool? HiddenWithStock,
     [FromQuery(Name = "page")] int? Page,
-    [FromQuery(Name = "pageSize")] int? PageSize);
+    [FromQuery(Name = "pageSize")] int? PageSize,
+    [FromQuery(Name = "archived")] bool? Archived = null);
 
 public sealed record SetProductsVisibilityRequest(IReadOnlyList<Guid>? ProductIds, bool? Visible);
 
@@ -83,7 +84,8 @@ public sealed record ConsoleProductDto(
     DateTimeOffset UpdatedAt,
     IReadOnlyList<Guid> LabelIds,
     IReadOnlyList<ConsoleProductLabelDto> Labels,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    bool IsArchived = false);
 
 public sealed record UpdateProductRequest(
     string? DisplayName,

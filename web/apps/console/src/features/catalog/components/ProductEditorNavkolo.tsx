@@ -1,10 +1,14 @@
 import { Anchor, Button, Text } from '@mantine/core'
-import { IconExternalLink } from '@tabler/icons-react'
+import { Link } from 'react-router-dom'
+import { Can } from '@/features/auth'
+import { PermissionKeys } from '@/shared/auth/permissionKeys'
+import { IconChartHistogram, IconExternalLink } from '@tabler/icons-react'
 import { formatDateTime, formatMoney } from '@polivalko/shared/lib/format'
 import { useState } from 'react'
 import { siteUrl } from '@/shared/lib/siteUrl'
 import type { Product } from '../api/catalogApi'
 import { ProductPriceDialog } from './ProductPriceDialog'
+import { ProductStockDialog } from './ProductStockDialog'
 
 type ProductEditorNavkoloProps = {
   product: Product
@@ -17,15 +21,13 @@ type ProductEditorNavkoloProps = {
 export function ProductEditorNavkolo({ product, canUpdatePrice, priceLoading, onReload, onPriceSaved }: ProductEditorNavkoloProps) {
   const n = product.navkolo
   const [editingPrice, setEditingPrice] = useState(false)
+  const [editingStock, setEditingStock] = useState(false)
   const [priceSaved, setPriceSaved] = useState(false)
   return (
     <aside className="catalog-card catalog-navkolo" aria-labelledby="navkolo-title">
       <h2 id="navkolo-title" className="app-section-title catalog-card-title">
-        З Navkolo
+        Ціна й залишок
       </h2>
-      <Text size="xs" c="dimmed" mb="sm">
-        Ці дані надходять з обліку.
-      </Text>
       <dl className="catalog-dl">
         <dt>Артикул</dt>
         <dd className="catalog-code">{n.sku}</dd>
@@ -59,10 +61,18 @@ export function ProductEditorNavkolo({ product, canUpdatePrice, priceLoading, on
         </Button>
       ) : null}
       {priceSaved ? <Text size="sm" role="status" mb="sm">Роздрібну ціну оновлено.</Text> : null}
-      <Anchor href={siteUrl(`/product/${product.slug}`)} target="_blank" rel="noopener" size="sm" className="catalog-site-link">
-        <IconExternalLink size={15} stroke={1.7} />
-        Відкрити на сайті
-      </Anchor>
+      {canUpdatePrice && <Button variant="default" size="sm" mb="sm" disabled={priceLoading} onClick={() => setEditingStock(true)}>Змінити залишок</Button>}
+      {editingStock && <ProductStockDialog product={product} onClose={() => setEditingStock(false)} onReload={onReload} />}
+      <div className="product-related-links">
+        <Can permission={PermissionKeys.Analytics.ViewProducts}>
+          <Anchor component={Link} to={`/sales/product-analytics?product=${product.id}`} size="sm" className="catalog-site-link">
+            <IconChartHistogram size={15} />Аналітика товару
+          </Anchor>
+        </Can>
+        <Anchor href={siteUrl(`/product/${product.slug}`)} target="_blank" rel="noopener" size="sm" className="catalog-site-link">
+          <IconExternalLink size={15} />Відкрити на сайті
+        </Anchor>
+      </div>
       {canUpdatePrice && editingPrice ? (
         <ProductPriceDialog
           product={product}

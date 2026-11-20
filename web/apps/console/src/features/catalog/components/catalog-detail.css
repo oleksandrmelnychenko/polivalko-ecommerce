@@ -356,6 +356,25 @@
   text-decoration: none;
 }
 .dictionary-link:hover .app-split-item-name { color: var(--brand-accent-hover); }
+.catalog-selection-mark {
+  align-items: center;
+  color: var(--mantine-color-gray-7);
+  display: inline-flex;
+  flex: none;
+  visibility: hidden;
+}
+[data-section='catalog'] .app-split-row-active .catalog-selection-mark { visibility: visible; }
+[data-section='catalog'] .app-split-list .data-table-row.app-split-row-active .data-table-cell {
+  background: #f1f2f4;
+  border-bottom-color: transparent;
+}
+[data-section='catalog'] .app-split-list .app-split-row-active .data-table-cell:first-child {
+  border-radius: 12px 0 0 12px;
+  box-shadow: none;
+}
+[data-section='catalog'] .app-split-list .app-split-row-active .data-table-cell:last-child {
+  border-radius: 0 12px 12px 0;
+}
 .dictionary-link:focus-visible {
   border-radius: 8px;
   outline: 2px solid var(--brand-accent);
