@@ -1,5 +1,5 @@
 import { siteUrl } from '@/shared/lib/siteUrl'
-import { ProductSectionTitle } from './ProductSectionTitle'
+import { CatalogSectionTitle } from './CatalogSectionTitle'
 import { Alert, Button, Select, SimpleGrid, Switch, Textarea, TextInput } from '@mantine/core'
 import { IconAlertCircle, IconBuildingStore, IconAlignLeft, IconSearch, IconBarcode, IconChartHistogram, IconExternalLink } from '@tabler/icons-react'
 import { useMemo, useState, type ReactNode, type FormEvent } from 'react'
@@ -179,7 +179,7 @@ export function ProductEditorForm({ gallery, formId, product, categories, brands
           ) : null}
 
           <section className="catalog-card" aria-labelledby="main-title">
-            <ProductSectionTitle id="main-title" icon={IconBuildingStore}>Вітрина</ProductSectionTitle>
+            <CatalogSectionTitle id="main-title" icon={IconBuildingStore}>Вітрина</CatalogSectionTitle>
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" verticalSpacing="xs">
               <TextInput
                 label="Назва на вітрині"
@@ -243,7 +243,7 @@ export function ProductEditorForm({ gallery, formId, product, categories, brands
           </section>
 
           <section className="catalog-card" aria-labelledby="description-title">
-            <ProductSectionTitle id="description-title" icon={IconAlignLeft}>Опис</ProductSectionTitle>
+            <CatalogSectionTitle id="description-title" icon={IconAlignLeft}>Опис</CatalogSectionTitle>
             <Textarea
               aria-label="Опис товару"
               classNames={{ input: 'catalog-code-area' }}
@@ -266,7 +266,7 @@ export function ProductEditorForm({ gallery, formId, product, categories, brands
           <ProductEditorAttributes attributes={attributes} setAttributes={setAttributes} categoryId={fields.categoryId} readOnly={readOnly} error={errors.attributes} />
 
           <section className="catalog-card" aria-labelledby="seo-title">
-            <ProductSectionTitle id="seo-title" icon={IconSearch}>SEO</ProductSectionTitle>
+            <CatalogSectionTitle id="seo-title" icon={IconSearch}>SEO</CatalogSectionTitle>
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" verticalSpacing="xs">
               <TextInput
                 label="SEO: заголовок"
@@ -294,7 +294,7 @@ export function ProductEditorForm({ gallery, formId, product, categories, brands
         {gallery}
         <fieldset className="catalog-fieldset" disabled={readOnly || disabled || busy}>
           <section className="catalog-card" aria-labelledby="accounting-title">
-            <ProductSectionTitle id="accounting-title" icon={IconBarcode}>Облікові дані</ProductSectionTitle>
+            <CatalogSectionTitle id="accounting-title" icon={IconBarcode}>Облікові дані</CatalogSectionTitle>
             <div className="product-account-fields">
               {accountingInputs.map(([key, label, limit]) => (
                 <TextInput key={key} form={formId} label={label} maxLength={limit} value={account[key] ?? ''}

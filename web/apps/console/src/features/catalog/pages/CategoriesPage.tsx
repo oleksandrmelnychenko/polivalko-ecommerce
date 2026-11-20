@@ -256,7 +256,8 @@ export function CategoriesPage() {
         onClose={close}
         dirty={formDirty && !busy}
         title={current ? `Категорія «${current.name}»` : 'Нова підкатегорія'}
-        size="compact"
+        size="standard"
+        className="category-editor-modal"
         closeOnEscape={!busy}
         footer={
           <Group justify="space-between" w="100%">

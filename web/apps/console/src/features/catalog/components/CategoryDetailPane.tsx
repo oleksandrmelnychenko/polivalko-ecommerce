@@ -175,6 +175,7 @@ function CategoryDetail({ category, all, attributes, onEdit, onSelect }: Categor
             {children.map((child) => (
               <li key={child.id} className={child.isVisible ? 'is-link' : 'is-link is-muted'}>
                 <button type="button" onClick={() => onSelect(child.id)}>
+                  <CategoryMark category={child} />
                   <span>{child.name}</span>
                   <span className="category-child-count">{countFormat.format(child.productCount)}</span>
                   <IconChevronRight size={15} aria-hidden="true" />

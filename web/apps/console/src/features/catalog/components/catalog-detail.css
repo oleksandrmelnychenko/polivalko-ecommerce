@@ -289,7 +289,7 @@
   display: grid;
   font: inherit;
   gap: 10px;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   overflow-wrap: anywhere;
   padding: 10px 2px;
   text-align: start;
@@ -382,4 +382,20 @@
 }
 @media (max-width: 50em) {
   .catalog-dictionary-page:has(.app-split-layout[data-picked]) > .app-filter-bar { display: none; }
+}
+
+.category-editor-modal .app-sheet-scroll { background: var(--app-ground); padding: 12px; }
+.category-editor-form { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 10px; align-items: start; }
+.category-editor-form > .mantine-Alert-root { grid-column: 1 / -1; }
+.category-editor-column { display: grid; min-width: 0; gap: 10px; }
+.category-editor-form .catalog-card { padding: 14px; }
+.category-editor-form .catalog-card .mantine-Button-root { border-radius: 999px; }
+.category-editor-form .catalog-link { display: inline-block; font-size: 12px; margin-top: 6px; }
+.category-editor-form .mantine-InputWrapper-root:has(input[required]):not(:has(.mantine-InputWrapper-error))::after { display: none; }
+.category-editor-form .catalog-image-field-preview.is-square { width: 64px; height: 64px; }
+.category-editor-form .catalog-image-field-row { align-items: center; }
+.category-editor-form .mantine-Switch-root { align-self: end; padding-block: 8px; }
+@media (max-width: 46em) {
+  .category-editor-form { grid-template-columns: minmax(0, 1fr); }
+  .category-editor-modal .app-sheet-scroll { padding: 8px; }
 }

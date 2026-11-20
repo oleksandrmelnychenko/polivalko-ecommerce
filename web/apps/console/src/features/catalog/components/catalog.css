@@ -1324,7 +1324,7 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
 .product-editor-metrics { margin-bottom: 10px; }
 .product-editor-columns { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
 .product-editor-side, .product-account-fields { display: grid; min-width: 0; gap: 10px; }
-.product-section-title {
+.catalog-section-title {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1332,12 +1332,12 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
   font-size: 14px;
   line-height: 1.25;
 }
-.product-section-title svg { box-sizing: content-box; padding: 7px; border-radius: 50%; background: var(--app-ground); flex: none; }
-.product-section-title i { display: inline-block; margin-left: 6px; vertical-align: middle; width: 5px; height: 5px; border-radius: 50%; background: var(--brand-accent); flex: none; }
-.product-section-title small { color: var(--mantine-color-gray-7); font: 12px var(--font-mono); }
-.catalog-card-head .product-section-title { margin: 0; }
+.catalog-section-title svg { box-sizing: content-box; padding: 7px; border-radius: 50%; background: var(--app-ground); flex: none; }
+.catalog-section-title i { display: inline-block; margin-left: 6px; vertical-align: middle; width: 5px; height: 5px; border-radius: 50%; background: var(--brand-accent); flex: none; }
+.catalog-section-title small { color: var(--mantine-color-gray-7); font: 12px var(--font-mono); }
+.catalog-card-head .catalog-section-title { margin: 0; }
 .product-metric { position: relative; }
-.product-metric .product-section-title { padding-right: 32px; }
+.product-metric .catalog-section-title { padding-right: 32px; }
 .product-metric .mantine-ActionIcon-root { position: absolute; inset: 12px 14px auto auto; }
 .product-metric-value {
   color: var(--brand-ink);
@@ -1356,7 +1356,7 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
   .product-editor-modal .app-sheet-scroll { padding: 8px; }
   .product-editor-metrics { gap: 6px; }
   .product-editor-modal .product-metric { padding: 10px; }
-  .product-metric .product-section-title { font-size: 12px; gap: 5px; padding-right: 22px; }
-  .product-metric .product-section-title svg { padding: 4px; }
+  .product-metric .catalog-section-title { font-size: 12px; gap: 5px; padding-right: 22px; }
+  .product-metric .catalog-section-title svg { padding: 4px; }
   .product-metric .mantine-ActionIcon-root { right: 5px; top: 8px; }
 }

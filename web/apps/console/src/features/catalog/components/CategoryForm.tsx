@@ -1,5 +1,5 @@
 import { Alert, MultiSelect, NumberInput, Select, SimpleGrid, Stack, Switch, TagsInput, Textarea, TextInput } from '@mantine/core'
-import { IconAlertCircle } from '@tabler/icons-react'
+import { IconAlertCircle, IconAdjustmentsHorizontal, IconCategory, IconPhoto, IconSearch } from '@tabler/icons-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
@@ -12,6 +12,7 @@ import { getAttributeNames, saveCategory, type ConsoleCategory } from '../api/ca
 import type { AttributeDefinition } from '../api/dictionariesApi'
 import { descendantIds, MAX_CATEGORY_FILTERS, orderCategories } from '../lib/categoryTree'
 import { categoryIcon } from '../lib/categoryIcons'
+import { CatalogSectionTitle } from './CatalogSectionTitle'
 import { CategoryGlyph } from './CategoryMark'
 import { ImageUploadField } from './ImageUploadField'
 
@@ -90,20 +91,6 @@ export function CategoryForm({ formId, category, focusFilters, all, attributes, 
   }, [attributes, fields.filterAttributes, usage])
   const unknownFilters = attributes ? fields.filterAttributes.filter((name) => !attributes.some((attribute) => attribute.name === name)) : []
 
-  const usedNames = (names.data ?? []).filter((entry) => entry.productCount > 0)
-  const inheritHelp = 'Якщо поле порожнє, діють фільтри батьківської категорії.'
-  const namesHelp =
-    names.status === 'forbidden'
-      ? `${inheritHelp} Характеристики з товарів категорії видно лише з правом перегляду товарів.`
-      : names.status === 'error'
-        ? `${inheritHelp} Характеристики з товарів категорії не завантажилися.`
-        : usedNames.length > 0
-          ? `У товарах категорії: ${usedNames
-              .slice(0, 12)
-              .map((n) => `${n.name} (${n.productCount})`)
-              .join(', ')}.`
-          : inheritHelp
-
   function set<K extends keyof Fields>(name: K, value: Fields[K]) {
     setFields((current) => ({ ...current, [name]: value }))
     setErrors((current) => ({ ...current, [name]: '' }))
@@ -149,134 +136,140 @@ export function CategoryForm({ formId, category, focusFilters, all, attributes, 
   const shownError = formError ?? error
 
   return (
-    <form id={formId} noValidate onSubmit={submit} aria-label={category ? `Категорія «${category.name}»` : 'Нова підкатегорія'}>
-      <Stack gap="sm">
-        {isTop ? null : (
-          <Select
-            label="Батьківська категорія"
-            placeholder="Оберіть"
-            data={parents}
-            value={fields.parentId}
-            searchable
-            nothingFoundMessage="Нічого не знайдено"
-            error={errors.parentId || undefined}
-            onChange={(value) => set('parentId', value)}
-          />
-        )}
-        <TextInput
-          label="Назва"
-          required
-          maxLength={200}
-          value={fields.name}
-          error={errors.name || undefined}
-          onChange={(event) => set('name', event.currentTarget.value)}
-          data-autofocus={!focusFilters || undefined}
-        />
-        <TextInput
-          label="Адреса"
-          description="Залиште порожнім, і адреса утвориться з назви."
-          inputWrapperOrder={['label', 'input', 'description', 'error']}
-          maxLength={200}
-          spellCheck={false}
-          autoComplete="off"
-          value={fields.slug}
-          error={errors.slug || undefined}
-          onChange={(event) => set('slug', event.currentTarget.value)}
-        />
-        <TextInput
-          label="Група Navkolo"
-          description="Нові товари цієї групи під час імпорту потрапляють у цю категорію."
-          inputWrapperOrder={['label', 'input', 'description', 'error']}
-          maxLength={100}
-          value={fields.navkoloRef}
-          error={errors.navkoloRef || undefined}
-          onChange={(event) => set('navkoloRef', event.currentTarget.value)}
-        />
-        <ImageUploadField
-          label="Зображення категорії"
-          fallback={<CategoryGlyph icon={categoryIcon(fields.name, Boolean(fields.parentId) || !isTop)} size={26} />}
-          value={fields.imageUrl}
-          alt={fields.name}
-          description="Ваше зображення замінить іконку в дереві й з’явиться на плитці вітрини. JPEG, PNG або WebP."
-          error={errors.imageUrl || undefined}
-          onChange={(url) => set('imageUrl', url)}
-        />
-        <Textarea
-          label="Опис категорії"
-          description={`Текст під заголовком сторінки категорії, кожен абзац з нового рядка. ${fields.description.length} з ${MAX_DESCRIPTION}.`}
-          inputWrapperOrder={['label', 'input', 'description', 'error']}
-          autosize
-          minRows={3}
-          maxRows={10}
-          maxLength={MAX_DESCRIPTION}
-          value={fields.description}
-          error={errors.description || undefined}
-          onChange={(event) => set('description', event.currentTarget.value)}
-        />
-        {attributes ? (
-          <MultiSelect
-            data-autofocus={focusFilters || undefined}
-            label="Фільтри категорії"
-            description={
-              <>
-                До {MAX_CATEGORY_FILTERS} характеристик із довідника. {namesHelp}
-                {can(PermissionKeys.Catalog.ManageAttributes) ? (
-                  <>
-                    {' '}
-                    <Link to="/catalog/attributes" className="catalog-link">
-                      Довідник характеристик
-                    </Link>
-                  </>
-                ) : null}
-              </>
-            }
-            inputWrapperOrder={['label', 'input', 'description', 'error']}
-            placeholder={fields.filterAttributes.length ? undefined : 'Як у батьківської категорії'}
-            data={filterOptions}
-            value={fields.filterAttributes}
-            maxValues={MAX_CATEGORY_FILTERS}
-            searchable
-            clearable
-            hidePickedOptions
-            nothingFoundMessage="Немає в довіднику характеристик"
-            comboboxProps={{ withinPortal: true }}
-            error={errors.filterAttributes || (unknownFilters.length ? `Немає в довіднику: ${unknownFilters.join(', ')}. Додайте їх у «Характеристики» або приберіть.` : undefined)}
-            onChange={(value) => set('filterAttributes', value)}
-          />
-        ) : (
-          <TagsInput
-            data-autofocus={focusFilters || undefined}
-            label="Характеристики для фільтрів, через кому"
-            description={namesHelp}
-            inputWrapperOrder={['label', 'input', 'description', 'error']}
-            data={(names.data ?? []).map((entry) => entry.name)}
-            value={fields.filterAttributes}
-            maxTags={MAX_CATEGORY_FILTERS}
-            splitChars={[',']}
-            acceptValueOnBlur
-            clearable
-            error={errors.filterAttributes || undefined}
-            onChange={(value) => set('filterAttributes', value)}
-          />
-        )}
-        <SimpleGrid cols={2} spacing="sm">
-          <NumberInput label="Порядок показу" allowDecimal={false} value={fields.sortOrder} onChange={(value) => set('sortOrder', value)} />
-          <Switch label="Показувати на сайті" mt={30} checked={fields.isVisible} onChange={(event) => set('isVisible', event.currentTarget.checked)} />
-        </SimpleGrid>
-        <TextInput label="SEO: заголовок" maxLength={200} value={fields.seoTitle} error={errors.seoTitle || undefined} onChange={(event) => set('seoTitle', event.currentTarget.value)} />
-        <TextInput
-          label="SEO: опис"
-          maxLength={500}
-          value={fields.seoDescription}
-          error={errors.seoDescription || undefined}
-          onChange={(event) => set('seoDescription', event.currentTarget.value)}
-        />
-        {shownError ? (
-          <Alert color="red" variant="light" icon={<IconAlertCircle size={18} />} role="alert">
-            {shownError}
-          </Alert>
-        ) : null}
-      </Stack>
+    <form className="category-editor-form" id={formId} noValidate onSubmit={submit} aria-label={category ? `Категорія «${category.name}»` : 'Нова підкатегорія'}>
+      <div className="category-editor-column">
+        <section className="catalog-card" aria-labelledby="category-general-title">
+          <CatalogSectionTitle id="category-general-title" icon={IconCategory}>Основне</CatalogSectionTitle>
+          <Stack gap="xs">
+            {isTop ? null : (
+              <Select
+                label="Батьківська категорія"
+                placeholder="Оберіть"
+                data={parents}
+                value={fields.parentId}
+                searchable
+                nothingFoundMessage="Нічого не знайдено"
+                error={errors.parentId || undefined}
+                onChange={(value) => set('parentId', value)}
+              />
+            )}
+            <TextInput
+              label="Назва"
+              required
+              maxLength={200}
+              value={fields.name}
+              error={errors.name || undefined}
+              onChange={(event) => set('name', event.currentTarget.value)}
+              data-autofocus={!focusFilters || undefined}
+            />
+            <TextInput
+              label="Адреса"
+              placeholder="Автоматично з назви"
+              maxLength={200}
+              spellCheck={false}
+              autoComplete="off"
+              value={fields.slug}
+              error={errors.slug || undefined}
+              onChange={(event) => set('slug', event.currentTarget.value)}
+            />
+            <TextInput
+              label="Група імпорту"
+              maxLength={100}
+              value={fields.navkoloRef}
+              error={errors.navkoloRef || undefined}
+              onChange={(event) => set('navkoloRef', event.currentTarget.value)}
+            />
+            <SimpleGrid cols={2} spacing="sm">
+              <NumberInput label="Порядок показу" allowDecimal={false} value={fields.sortOrder} onChange={(value) => set('sortOrder', value)} />
+              <Switch label="Показувати на сайті" checked={fields.isVisible} onChange={(event) => set('isVisible', event.currentTarget.checked)} />
+            </SimpleGrid>
+          </Stack>
+        </section>
+        <section className="catalog-card" aria-labelledby="category-filter-title">
+          <CatalogSectionTitle id="category-filter-title" icon={IconAdjustmentsHorizontal}>Фільтри на сайті</CatalogSectionTitle>
+          {attributes ? (
+            <MultiSelect
+              data-autofocus={focusFilters || undefined}
+              label="Фільтри категорії"
+              maxDropdownHeight={176}
+              placeholder={fields.filterAttributes.length ? undefined : fields.parentId ? 'Як у батьківської категорії' : 'Оберіть характеристики'}
+              data={filterOptions}
+              value={fields.filterAttributes}
+              maxValues={MAX_CATEGORY_FILTERS}
+              searchable
+              clearable
+              hidePickedOptions
+              nothingFoundMessage="Немає в довіднику характеристик"
+              comboboxProps={{ withinPortal: true }}
+              error={errors.filterAttributes || (unknownFilters.length ? `Немає в довіднику: ${unknownFilters.join(', ')}. Додайте їх у «Характеристики» або приберіть.` : undefined)}
+              onChange={(value) => set('filterAttributes', value)}
+            />
+          ) : (
+            <TagsInput
+              data-autofocus={focusFilters || undefined}
+              label="Характеристики для фільтрів, через кому"
+              maxDropdownHeight={176}
+              placeholder={fields.parentId ? 'Як у батьківської категорії' : 'Додайте характеристику'}
+              data={(names.data ?? []).map((entry) => entry.name)}
+              value={fields.filterAttributes}
+              maxTags={MAX_CATEGORY_FILTERS}
+              splitChars={[',']}
+              acceptValueOnBlur
+              clearable
+              error={errors.filterAttributes || undefined}
+              onChange={(value) => set('filterAttributes', value)}
+            />
+          )}
+          {can(PermissionKeys.Catalog.ManageAttributes) && (
+            <Link to="/catalog/attributes" className="catalog-link">Довідник характеристик</Link>
+          )}
+        </section>
+      </div>
+      <div className="category-editor-column">
+        <section className="catalog-card" aria-labelledby="category-content-title">
+          <CatalogSectionTitle id="category-content-title" icon={IconPhoto}>Вигляд на сайті</CatalogSectionTitle>
+          <Stack gap="xs">
+            <ImageUploadField
+              shape="square"
+              label="Зображення категорії"
+              fallback={<CategoryGlyph icon={categoryIcon(fields.name, Boolean(fields.parentId) || !isTop)} size={26} />}
+              value={fields.imageUrl}
+              alt={fields.name}
+              description="Для дерева категорій і плитки на сайті. JPEG, PNG або WebP."
+              error={errors.imageUrl || undefined}
+              onChange={(url) => set('imageUrl', url)}
+            />
+            <Textarea
+              label="Опис категорії"
+              autosize
+              minRows={3}
+              maxRows={10}
+              maxLength={MAX_DESCRIPTION}
+              value={fields.description}
+              error={errors.description || undefined}
+              onChange={(event) => set('description', event.currentTarget.value)}
+            />
+          </Stack>
+        </section>
+        <section className="catalog-card" aria-labelledby="category-seo-title">
+          <CatalogSectionTitle id="category-seo-title" icon={IconSearch}>SEO</CatalogSectionTitle>
+          <Stack gap="xs">
+            <TextInput label="SEO: заголовок" maxLength={200} value={fields.seoTitle} error={errors.seoTitle || undefined} onChange={(event) => set('seoTitle', event.currentTarget.value)} />
+            <TextInput
+              label="SEO: опис"
+              maxLength={500}
+              value={fields.seoDescription}
+              error={errors.seoDescription || undefined}
+              onChange={(event) => set('seoDescription', event.currentTarget.value)}
+            />
+          </Stack>
+        </section>
+      </div>
+      {shownError ? (
+        <Alert color="red" variant="light" icon={<IconAlertCircle size={18} />} role="alert">
+          {shownError}
+        </Alert>
+      ) : null}
     </form>
   )
 }

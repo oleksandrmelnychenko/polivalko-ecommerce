@@ -1,4 +1,4 @@
-import { ProductSectionTitle } from './ProductSectionTitle'
+import { CatalogSectionTitle } from './CatalogSectionTitle'
 import { ActionIcon, Autocomplete, Button, Text, TextInput, Tooltip } from '@mantine/core'
 import { IconPlus, IconTrash, IconListDetails } from '@tabler/icons-react'
 import { useMemo, type Dispatch, type SetStateAction } from 'react'
@@ -27,7 +27,7 @@ export function ProductEditorAttributes({ attributes, setAttributes, categoryId,
 
   return (
     <section className="catalog-card" aria-labelledby="attributes-title">
-      <ProductSectionTitle id="attributes-title" icon={IconListDetails}>Характеристики</ProductSectionTitle>
+      <CatalogSectionTitle id="attributes-title" icon={IconListDetails}>Характеристики</CatalogSectionTitle>
       {attributes.length > 0 ? (
         <div className="catalog-attr-list" role="list">
           <div className="catalog-attr-head" aria-hidden="true">

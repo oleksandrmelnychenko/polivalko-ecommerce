@@ -1,5 +1,5 @@
 import { IconTags } from '@tabler/icons-react'
-import { ProductSectionTitle } from './ProductSectionTitle'
+import { CatalogSectionTitle } from './CatalogSectionTitle'
 import { MultiSelect, Text } from '@mantine/core'
 import { useMemo } from 'react'
 import type { Product } from '../api/catalogApi'
@@ -25,7 +25,7 @@ export function ProductEditorLabels({ product, labels, value, onChange, error }:
 
   return (
     <section className="catalog-card" aria-labelledby="labels-title">
-      <ProductSectionTitle id="labels-title" icon={IconTags}>Мітки</ProductSectionTitle>
+      <CatalogSectionTitle id="labels-title" icon={IconTags}>Мітки</CatalogSectionTitle>
       {labels === null ? (
         <Text size="sm" c="dimmed">
           Довідник міток зараз недоступний, тому мітки товару змінити не можна.

@@ -1,4 +1,4 @@
-import { ProductSectionTitle } from './ProductSectionTitle'
+import { CatalogSectionTitle } from './CatalogSectionTitle'
 import { ActionIcon, Alert, Button, Loader, Text, Tooltip } from '@mantine/core'
 import { IconAlertCircle, IconArrowLeft, IconArrowRight, IconCheck, IconPhotoOff, IconPhoto, IconStar, IconTrash, IconUpload } from '@tabler/icons-react'
 import { useEffect, useRef, useState, type DragEvent } from 'react'
@@ -185,7 +185,7 @@ export function ProductEditorImages({ product, viewing, onViewingChange, readOnl
       onDragEnter={dragOver} onDragOver={dragOver} onDragLeave={dragLeave} onDrop={drop}
     >
       <div className="catalog-card-head">
-        <ProductSectionTitle id="images-title" icon={IconPhoto} count={`${images.length}/${MAX_IMAGES}`}>Фото</ProductSectionTitle>
+        <CatalogSectionTitle id="images-title" icon={IconPhoto} count={`${images.length}/${MAX_IMAGES}`}>Фото</CatalogSectionTitle>
         {!readOnly && (
           <Button size="xs" variant="default" leftSection={<IconUpload size={15} />}
             loading={uploading} disabled={locked || free === 0} onClick={() => input.current?.click()}>
