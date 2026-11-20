@@ -1,0 +1,41 @@
+.dntrade-work-form-views {
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+  flex: 0 0 auto;
+  padding: 8px 10px;
+}
+
+.dntrade-work-form-body {
+  background: #f4f6f4;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: auto;
+  padding: clamp(10px, 2vw, 24px);
+}
+
+.dntrade-work-form-content {
+  margin: 0 auto;
+  max-width: 1060px;
+}
+
+.dntrade-work-form-group {
+  background: var(--mantine-color-white);
+  min-inline-size: 0;
+}
+
+.dntrade-work-form-value {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.dntrade-work-form-origin {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+
+.dntrade-work-form-line {
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+  padding-bottom: 12px;
+}

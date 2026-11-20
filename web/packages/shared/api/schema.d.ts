@@ -2661,6 +2661,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/dntrade-work-forms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleListDnTradeWorkForms"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/dntrade-work-forms/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleGetDnTradeWorkForm"];
+        put: operations["ConsoleSaveDnTradeWorkForm"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/account/csrf": {
         parameters: {
             query?: never;
@@ -3918,6 +3950,78 @@ export interface components {
             /** Format: int32 */
             pageSize: number;
         };
+        DnTradeWorkFormData: {
+            number?: null | string;
+            organization?: null | string;
+            counterparty?: null | string;
+            warehouse?: null | string;
+            destinationWarehouse?: null | string;
+            account?: null | string;
+            direction?: null | string;
+            currency?: null | string;
+            amount?: null | string;
+            name?: null | string;
+            code?: null | string;
+            referenceKind?: null | string;
+            phone?: null | string;
+            email?: null | string;
+            note?: null | string;
+            lines?: null | components["schemas"]["DnTradeWorkFormLine"][];
+        };
+        DnTradeWorkFormDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            version: number;
+            section: string;
+            type: string;
+            status: string;
+            title: string;
+            /** Format: date */
+            documentDate: null | string;
+            /** Format: uuid */
+            sourceRecordId: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            data: components["schemas"]["DnTradeWorkFormData"];
+        };
+        DnTradeWorkFormItemDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            version: number;
+            section: string;
+            type: string;
+            status: string;
+            title: string;
+            /** Format: date */
+            documentDate: null | string;
+            /** Format: uuid */
+            sourceRecordId: null | string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        DnTradeWorkFormLine: {
+            sku?: null | string;
+            description?: null | string;
+            unit?: null | string;
+            quantity?: null | string;
+            expectedQuantity?: null | string;
+            unitPrice?: null | string;
+        };
+        DnTradeWorkFormPageDto: {
+            items: components["schemas"]["DnTradeWorkFormItemDto"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            totalItems: number;
+        };
         DocumentCard: {
             document: components["schemas"]["DocumentRow"];
             lines: components["schemas"]["LineRow"][];
@@ -4921,6 +5025,19 @@ export interface components {
             warehouseRef: null | string;
             address: null | components["schemas"]["StreetAddressRequest"];
             isDefault: boolean;
+        };
+        SaveDnTradeWorkFormRequest: {
+            /** Format: int32 */
+            expectedVersion: null | number;
+            section: string;
+            type: string;
+            status: string;
+            title: string;
+            /** Format: date */
+            documentDate: null | string;
+            /** Format: uuid */
+            sourceRecordId: null | string;
+            data: components["schemas"]["DnTradeWorkFormData"];
         };
         SaveLabelRequest: {
             name: null | string;
@@ -13780,6 +13897,171 @@ export interface operations {
             };
             /** @description Too Many Requests */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleListDnTradeWorkForms: {
+        parameters: {
+            query?: {
+                section?: string;
+                status?: string;
+                sourceRecordId?: string;
+                q?: string;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DnTradeWorkFormPageDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleGetDnTradeWorkForm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DnTradeWorkFormDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleSaveDnTradeWorkForm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDnTradeWorkFormRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DnTradeWorkFormDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

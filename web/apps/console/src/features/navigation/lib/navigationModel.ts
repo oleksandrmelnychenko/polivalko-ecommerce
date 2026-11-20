@@ -27,7 +27,7 @@ import {
   type Icon,
 } from '@tabler/icons-react'
 import type { components } from '@polivalko/shared/api/schema'
-import { PermissionKeys, type PermissionKey } from '@/shared/auth/permissionKeys'
+import { DNTRADE_FORM_ADDITIONAL_PERMISSIONS, PermissionKeys, type PermissionKey } from '@/shared/auth/permissionKeys'
 
 export type ConsoleSummary = components['schemas']['ConsoleSummaryDto']
 
@@ -39,6 +39,7 @@ export type NavItem = {
   path: string
   permissionKey: PermissionKey
   alsoAllowedBy?: readonly PermissionKey[]
+  requiredPermissions?: readonly PermissionKey[]
   icon: Icon
   badge?: (summary: ConsoleSummary) => number
   badgeTone?: NavBadgeTone
@@ -156,6 +157,10 @@ export const NAV_SECTIONS: readonly NavSection[] = [
         badgeTone: 'bad',
       },
       { id: 'dntrade-archive', label: 'Архів DNTrade', path: '/system/dntrade-archive', permissionKey: PermissionKeys.DnTradeArchive.View, icon: IconArchive },
+      {
+        id: 'dntrade-work-forms', label: 'Робочі форми', path: '/system/dntrade-work-forms',
+        permissionKey: PermissionKeys.DnTradeArchive.Import, requiredPermissions: DNTRADE_FORM_ADDITIONAL_PERMISSIONS, icon: IconFileText,
+      },
       { id: 'staff', label: 'Працівники', path: '/system/staff', permissionKey: PermissionKeys.Staff.ManageUsers, icon: IconUserCog },
       { id: 'roles', label: 'Ролі і права', path: '/system/roles', permissionKey: PermissionKeys.Staff.ManageRoles, icon: IconShieldLock },
       { id: 'audit', label: 'Журнал', path: '/system/audit', permissionKey: PermissionKeys.Audit.View, icon: IconHistory },
@@ -164,7 +169,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
 ]
 
 export function isNavItemAllowed(item: NavItem, has: (key: PermissionKey) => boolean): boolean {
-  return has(item.permissionKey) || (item.alsoAllowedBy?.some(has) ?? false)
+  return (item.requiredPermissions?.every(has) ?? true) && (has(item.permissionKey) || (item.alsoAllowedBy?.some(has) ?? false))
 }
 
 export function matchesPath(itemPath: string, pathname: string): boolean {

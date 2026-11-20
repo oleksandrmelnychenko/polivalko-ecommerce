@@ -1,10 +1,11 @@
 import { Button } from '@mantine/core'
-import { IconChevronLeft, IconDownload } from '@tabler/icons-react'
+import { IconChevronLeft, IconDownload, IconFilePlus } from '@tabler/icons-react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
+import { workFormCreateHref } from '@/features/dntrade-work-forms/lib/workForms'
 import { problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
-import { PermissionKeys } from '@/shared/auth/permissionKeys'
+import { DNTRADE_FORM_ADDITIONAL_PERMISSIONS, PermissionKeys } from '@/shared/auth/permissionKeys'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { PageState } from '@/shared/ui/PageState'
@@ -24,6 +25,7 @@ export function DnTradeArchiveDetailPage() {
   const item = document.status === 'ready' ? document.data : undefined
   const notFound = document.problem?.code === 'dntrade.archive_not_found'
   const canReadOriginal = can(PermissionKeys.DnTradeArchive.Original)
+  const canManageForms = can(PermissionKeys.DnTradeArchive.Import) && DNTRADE_FORM_ADDITIONAL_PERMISSIONS.every(can)
 
   return (
     <ListPage>
@@ -37,6 +39,11 @@ export function DnTradeArchiveDetailPage() {
             {item && canReadOriginal ? (
               <Button component="a" href={archiveOriginalHref(item.id)} download variant="default" leftSection={<IconDownload size={16} stroke={1.8} />}>
                 Завантажити оригінал
+              </Button>
+            ) : null}
+            {item && canManageForms ? (
+              <Button component={Link} to={workFormCreateHref({ sourceRecordId: item.id })} leftSection={<IconFilePlus size={16} stroke={1.8} />}>
+                Створити робочу форму
               </Button>
             ) : null}
           </>
