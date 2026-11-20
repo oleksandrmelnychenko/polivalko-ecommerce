@@ -7,7 +7,8 @@ import { siteUrl } from '@/shared/lib/siteUrl'
 import type { AttributeDefinition, AttributeDetails } from '../api/dictionariesApi'
 import { ATTRIBUTE_KIND_LABELS, FILTER_VIEW_LABELS } from '../lib/attributes'
 
-import { AttributeKindIcon } from './AttributeKindIcon'
+import { AttributeMark } from './AttributeMark'
+import { attributeIcon } from '../lib/attributeIcons'
 import { DictionaryMetric } from './DictionaryLayout'
 
 const countFormat = new Intl.NumberFormat('uk-UA')
@@ -42,7 +43,7 @@ export function AttributeDetailPane({ attribute, details, totalProducts, onEdit 
       <header className="app-split-hero">
         <div className="app-split-hero-top">
           <div className="app-split-head">
-            <AttributeKindIcon kind={attribute.kind} />
+            <AttributeMark icon={attributeIcon(attribute)} />
             <div className="app-split-hero-main">
               <p className="app-split-hero-kicker">
                 {kind} · {filter}

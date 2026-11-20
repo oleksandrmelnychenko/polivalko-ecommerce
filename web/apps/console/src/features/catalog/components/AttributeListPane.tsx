@@ -4,7 +4,8 @@ import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
 import type { AttributeDefinition } from '../api/dictionariesApi'
 import { DictionaryLink } from './DictionaryLayout'
-import { AttributeKindIcon } from './AttributeKindIcon'
+import { AttributeMark } from './AttributeMark'
+import { attributeIcon } from '../lib/attributeIcons'
 
 const countFormat = new Intl.NumberFormat('uk-UA')
 const getRowId = (row: AttributeDefinition) => row.id
@@ -19,7 +20,7 @@ const COLUMNS: DataTableColumn<AttributeDefinition>[] = [
     accessor: (row) => row.name,
     cell: (row) => (
       <DictionaryLink id={row.id}>
-        <AttributeKindIcon kind={row.kind} size={15} />
+        <AttributeMark icon={attributeIcon(row)} size={15} />
         <span className="app-split-item-name">{row.name}</span>
       </DictionaryLink>
     ),

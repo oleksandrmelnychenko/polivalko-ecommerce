@@ -21,6 +21,7 @@ import { AttributeListPane } from '../components/AttributeListPane'
 import { EditorDrawerFooter } from '../components/EditorDrawerFooter'
 import { listEmptyText } from '../components/ListEmpty'
 import { ListSearch } from '../components/ListSearch'
+import { attributeIcon } from '../lib/attributeIcons'
 import { ATTRIBUTE_KIND_OPTIONS, matchesAttribute, sortAttributes } from '../lib/attributes'
 import { useEditorDrawer } from '../lib/useEditorDrawer'
 import { useListParams } from '../lib/useListParams'
@@ -163,7 +164,7 @@ export function AttributesPage() {
       </ListPageBody>
 
       <CatalogEditorModal
-        icon={IconAdjustmentsHorizontal}
+        icon={current ? attributeIcon(current) : IconAdjustmentsHorizontal}
         opened={drawer.opened}
         onClose={drawer.close}
         dirty={drawer.dirty}
