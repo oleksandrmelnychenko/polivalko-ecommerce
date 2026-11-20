@@ -12,9 +12,11 @@ export function ConsoleMain({ children, dashboard }: PropsWithChildren<{ dashboa
   const catalogImport = useMatch('/catalog/import')
   const isCatalogList = activeSection?.id === 'catalog' && Boolean((matchesItem && activeItem) || productDialog || catalogImport)
   const siteHome = useMatch('/site/home')
-  const compactHeader = isCatalogList || Boolean(siteHome)
+  const siteBanners = useMatch('/site/banners')
+  const siteWorkspace = Boolean(siteHome || siteBanners)
+  const compactHeader = isCatalogList || siteWorkspace
   return (
-    <AppShell.Main id="main" data-section={activeSection?.id} data-site-home={siteHome ? true : undefined}>
+    <AppShell.Main id="main" data-section={activeSection?.id} data-site-workspace={siteWorkspace || undefined}>
       <div className="console-content">
         {compactHeader && <h1 className="visually-hidden">{catalogImport ? 'Імпорт товарів' : activeItem?.label}</h1>}
         {!dashboard && !compactHeader && <div className="console-page-title-row">

@@ -1,27 +1,24 @@
-import { Button, Text } from '@mantine/core'
-import { IconPlus } from '@tabler/icons-react'
+import { ActionIcon, Button, Loader, Text } from '@mantine/core'
+import { IconArrowLeft, IconChevronRight, IconPlus, IconRefresh } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { ConfirmDialog } from '@/shared/ui/ConfirmDialog'
-import { DataTable } from '@/shared/ui/data-table/DataTable'
-import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { notifyError, notifySuccess } from '@/shared/ui/notify'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { deleteBanner, getBanners, reorderBanners, type Banner } from '../api/siteApi'
 import { BannerDetailPane } from '../components/BannerDetailPane'
-import { BannerDrawer } from '../components/BannerDrawer'
-import { BANNER_COLUMNS } from '../components/bannersColumns'
+import { BannerEditorModal } from '../components/BannerEditorModal'
+import { BannerStateChip } from '../components/BannerStateChip'
 import { ListError } from '../components/ListError'
-import { SiteToolbar } from '../components/SiteToolbar'
 import { moveItem } from '../lib/homeSettings'
 import { periodLabel, periodState } from '../lib/period'
 import '@/shared/ui/split/split.css'
 import './site.css'
-
-const getRowId = (row: Banner) => row.id
+import './site-home.css'
+import './site-banners.css'
 
 type Editing = { banner: Banner | null; opened: boolean; seq: number }
 
@@ -34,7 +31,6 @@ export function BannersPage() {
   const [ordering, setOrdering] = useState(false)
   const failed = banners.status === 'error' || banners.status === 'forbidden'
   const rows = useMemo(() => (failed ? [] : [...(banners.data ?? [])].sort((a, b) => a.sortOrder - b.sortOrder)), [failed, banners.data])
-  const positions = useMemo(() => new Map(rows.map((row, index) => [row.id, index])), [rows])
   const live = rows.filter((row) => periodState(row.isActive, row.startsAt, row.endsAt) === 'live').length
 
   const move = useCallback(
@@ -70,18 +66,18 @@ export function BannersPage() {
   const selected = rows.find((row) => row.id === pickedId) ?? rows[0] ?? null
   const selectedId = selected?.id ?? null
   const selectBanner = useCallback(
-    (banner: Banner) =>
+    (banner: Banner | null) =>
       setParams(
         (current) => {
           const next = new URLSearchParams(current)
-          next.set('id', banner.id)
+          if (banner) next.set('id', banner.id)
+          else next.delete('id')
           return next
         },
         { replace: true },
       ),
     [setParams],
   )
-  const rowClassName = useCallback((row: Banner) => (row.id === selectedId ? 'app-split-row-active' : undefined), [selectedId])
 
   const openBanner = useCallback((banner: Banner) => setEditing((current) => ({ banner, opened: true, seq: current.seq + 1 })), [])
 
@@ -118,7 +114,7 @@ export function BannersPage() {
   }
 
   return (
-    <ListPage>
+    <>
       <PageHeader
         title="Банери"
         actions={
@@ -127,41 +123,46 @@ export function BannersPage() {
           </Button>
         }
       />
-      <SiteToolbar
-        note="Слайди першого екрана головної. Сайт показує активні банери в межах дат показу, у цьому порядку."
-        summary={banners.data ? `Показується: ${live} з ${rows.length}` : null}
-        isLoading={banners.isFetching}
-        onRefresh={reload}
-      />
-      <ListPageBody>
-        <div className="app-split-layout">
-          <div className="app-split-list">
-            <DataTable
-              ariaLabel="Банери"
-              columns={BANNER_COLUMNS}
-              data={rows}
-              getRowId={getRowId}
-              isLoading={banners.isLoading}
-              isFetching={banners.isFetching}
-              minWidth={560}
-              height="100%"
-              onRowClick={selectBanner}
-              rowClassName={rowClassName}
-              emptyText={failed ? <ListError problem={banners.problem} onRetry={reload} /> : 'Банерів ще немає. Додайте перший, і слайдер з’явиться на головній.'}
-            />
-          </div>
-          <BannerDetailPane
-            banner={selected}
-            index={selected ? (positions.get(selected.id) ?? 0) : 0}
-            count={rows.length}
-            busy={ordering}
-            onEdit={openBanner}
-            onDelete={setRemoving}
-            onMove={(index, delta) => void move(index, delta)}
-          />
-        </div>
-      </ListPageBody>
-      <BannerDrawer editing={editing} onClose={() => setEditing((current) => ({ ...current, opened: false }))} onSaved={onSaved} />
+      <div className="home-workspace banner-workspace" data-editing={Boolean(pickedId && selectedId === pickedId) || undefined}>
+        <section className="home-block-list" aria-labelledby="banner-list-title">
+          <header>
+            <div><h2 id="banner-list-title">Слайди головної</h2>
+              {!failed && banners.data && <span className="banner-list-count">Показується <b>{live} / {rows.length}</b></span>}
+            </div>
+            <ActionIcon variant="subtle" color="gray" aria-label="Оновити банери" title="Оновити банери"
+              loading={banners.isFetching} disabled={ordering} onClick={reload}><IconRefresh size={16} /></ActionIcon>
+          </header>
+          {failed ? <ListError problem={banners.problem} onRetry={reload} />
+            : banners.isLoading ? <Loader size="sm" aria-label="Завантаження банерів" />
+            : rows.length === 0 ? <p className="banner-empty">Банерів ще немає.</p> : (
+              <ol>
+                {rows.map(row => (
+                  <li key={row.id}>
+                    <button id={`banner-row-${row.id}`} type="button" className="home-block banner-row" aria-current={row.id === selectedId ? 'true' : undefined}
+                      onClick={() => {
+                        selectBanner(row)
+                        requestAnimationFrame(() => { if (window.matchMedia('(max-width: 52em)').matches) document.getElementById('site-banner-title')?.focus() })
+                      }}>
+                      <img src={row.imageUrl} alt="" loading="lazy" className="banner-row-image" />
+                      <span className="home-block-name"><strong>{row.title}</strong><BannerStateChip banner={row} /></span>
+                      <IconChevronRight size={14} aria-hidden="true" />
+                    </button>
+                  </li>
+                ))}
+              </ol>
+          )}
+        </section>
+        {selected && <div className="home-block-editor">
+          <Button className="home-back" variant="subtle" size="xs" color="gray" leftSection={<IconArrowLeft size={15} />}
+            onClick={() => {
+              selectBanner(null)
+              requestAnimationFrame(() => document.getElementById(`banner-row-${selected.id}`)?.focus())
+            }}>Усі банери</Button>
+          <BannerDetailPane banner={selected} index={rows.indexOf(selected)} count={rows.length} busy={ordering || removeBusy}
+            onEdit={openBanner} onDelete={setRemoving} onMove={(index, delta) => void move(index, delta)} />
+        </div>}
+      </div>
+      <BannerEditorModal editing={editing} onClose={() => setEditing((current) => ({ ...current, opened: false }))} onSaved={onSaved} />
       <ConfirmDialog
         opened={removing !== null}
         title="Видалити банер"
@@ -180,6 +181,6 @@ export function BannersPage() {
         onConfirm={() => void remove()}
         onClose={() => setRemoving(null)}
       />
-    </ListPage>
+    </>
   )
 }

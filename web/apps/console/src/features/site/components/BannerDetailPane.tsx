@@ -1,5 +1,5 @@
 import { ActionIcon, Button, Tooltip } from '@mantine/core'
-import { IconDeviceDesktop, IconDeviceMobile, IconExternalLink, IconPencil, IconTrash } from '@tabler/icons-react'
+import { IconDeviceDesktop, IconDeviceMobile, IconExternalLink, IconPhoto, IconPencil, IconTrash } from '@tabler/icons-react'
 import type { ReactNode } from 'react'
 import { formatDateTime } from '@polivalko/shared/lib/format'
 import { siteUrl } from '@/shared/lib/siteUrl'
@@ -9,7 +9,7 @@ import { BannerStateChip } from './BannerStateChip'
 import { MoveButtons } from './MoveButtons'
 
 type BannerDetailPaneProps = {
-  banner: Banner | null
+  banner: Banner
   index: number
   count: number
   busy: boolean
@@ -23,11 +23,9 @@ function linkHref(link: string): string {
 }
 
 export function BannerDetailPane({ banner, index, count, busy, onEdit, onDelete, onMove }: BannerDetailPaneProps) {
-  if (!banner) return <section className="app-split-detail app-split-detail-empty">Оберіть банер зліва або додайте новий.</section>
 
   const rows: [string, ReactNode][] = [
     ['Напис над заголовком', banner.kicker ?? <span className="app-split-value-empty">немає</span>],
-    ['Заголовок', banner.title],
     ['Текст', banner.text ?? <span className="app-split-value-empty">немає</span>],
     ['Кнопка', banner.buttonLabel ?? <span className="app-split-value-empty">{banner.link ? 'без напису' : 'немає'}</span>],
     [
@@ -46,6 +44,25 @@ export function BannerDetailPane({ banner, index, count, busy, onEdit, onDelete,
   return (
     <section key={banner.id} className="app-split-detail" aria-labelledby="site-banner-title">
       <header className="app-split-hero">
+        <div className="app-split-hero-top">
+          <div className="app-split-head">
+            <span className="site-home-icon"><IconPhoto size={18} /></span>
+            <h2 id="site-banner-title" tabIndex={-1}>
+              {banner.title}
+              <BannerStateChip banner={banner} />
+            </h2>
+          </div>
+          <div className="app-split-actions">
+            <Button variant="default" leftSection={<IconPencil size={16} stroke={1.7} />} onClick={() => onEdit(banner)}>
+              Змінити
+            </Button>
+            <Tooltip label="Видалити банер">
+              <ActionIcon variant="subtle" color="red" size="lg" aria-label={`Видалити банер «${banner.title}»`} disabled={busy} onClick={() => onDelete(banner)}>
+                <IconTrash size={17} stroke={1.7} />
+              </ActionIcon>
+            </Tooltip>
+          </div>
+        </div>
         <div className="site-banner-stage">
           <figure className="site-banner-desktop">
             <img src={banner.imageUrl} alt="" />
@@ -61,27 +78,6 @@ export function BannerDetailPane({ banner, index, count, busy, onEdit, onDelete,
               {banner.mobileImageUrl ? 'Телефон' : 'Телефон, те саме фото'}
             </figcaption>
           </figure>
-        </div>
-        <div className="app-split-hero-top">
-          <div className="app-split-hero-main">
-            <p className="app-split-hero-kicker">
-              Слайд {index + 1} з {count}
-            </p>
-            <h2 id="site-banner-title">
-              {banner.title}
-              <BannerStateChip banner={banner} />
-            </h2>
-          </div>
-          <div className="app-split-actions">
-            <Button variant="default" leftSection={<IconPencil size={16} stroke={1.7} />} onClick={() => onEdit(banner)}>
-              Змінити
-            </Button>
-            <Tooltip label="Видалити банер">
-              <ActionIcon variant="subtle" color="red" size="lg" aria-label={`Видалити банер «${banner.title}»`} disabled={busy} onClick={() => onDelete(banner)}>
-                <IconTrash size={17} stroke={1.7} />
-              </ActionIcon>
-            </Tooltip>
-          </div>
         </div>
         <dl className="app-split-stats is-text">
           <div>

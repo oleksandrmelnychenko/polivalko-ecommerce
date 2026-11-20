@@ -1,10 +1,10 @@
-[data-site-home] .console-frame {
+[data-site-workspace] .console-frame {
   background: transparent;
   border: 0;
   border-radius: 0;
   box-shadow: none;
 }
-[data-site-home] .console-page-toolbar { padding-top: 8px; }
+[data-site-workspace] .console-page-toolbar { padding-top: 8px; }
 .home-workspace {
   --home-gap: clamp(10px, 1.15vw, 18px);
   align-items: start;
@@ -75,6 +75,6 @@
   .home-workspace { grid-template-columns: minmax(0, 1fr); }
   .home-workspace[data-editing] .home-block-list, .home-workspace:not([data-editing]) .home-block-editor { display: none; }
   .home-block-editor .home-back { display: inline-flex; margin-bottom: 6px; }
-  [data-site-home] .console-page-toolbar { flex-wrap: wrap; }
+  [data-site-workspace] .console-page-toolbar { flex-wrap: wrap; }
   .home-workspace .app-split-hero h2 { gap: 5px; }
 }
