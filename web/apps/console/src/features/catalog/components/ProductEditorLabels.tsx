@@ -2,12 +2,9 @@ import { IconTags } from '@tabler/icons-react'
 import { ProductSectionTitle } from './ProductSectionTitle'
 import { MultiSelect, Text } from '@mantine/core'
 import { useMemo } from 'react'
-import { Link } from 'react-router-dom'
-import { usePermissions } from '@/features/auth'
-import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import type { Product } from '../api/catalogApi'
 import type { ProductLabel } from '../api/dictionariesApi'
-import { labelRule, manualLabelOptions, sortLabels } from '../lib/labels'
+import { manualLabelOptions } from '../lib/labels'
 import { LabelChip } from './LabelChip'
 
 type ProductEditorLabelsProps = {
@@ -18,18 +15,13 @@ type ProductEditorLabelsProps = {
   error?: string
 }
 
-function applies(label: ProductLabel, product: Product): boolean {
-  return label.isActive && product.labels.some((applied) => applied.id === label.id)
-}
-
 export function ProductEditorLabels({ product, labels, value, onChange, error }: ProductEditorLabelsProps) {
-  const { can } = usePermissions()
   const options = useMemo(() => {
     const manual = manualLabelOptions(labels ?? [])
     const missing = value.filter((id) => !manual.some((option) => option.value === id))
     return [...manual, ...missing.map((id) => ({ value: id, label: product.labels.find((label) => label.id === id)?.name ?? 'Видалена мітка' }))]
   }, [labels, product.labels, value])
-  const auto = useMemo(() => sortLabels((labels ?? []).filter((label) => label.kind !== 'manual')), [labels])
+  const auto = product.labels.filter(label => label.kind !== 'manual')
 
   return (
     <section className="catalog-card" aria-labelledby="labels-title">
@@ -42,20 +34,6 @@ export function ProductEditorLabels({ product, labels, value, onChange, error }:
         <>
           <MultiSelect
             label="Мітки на плитці товару"
-            description={
-              <>
-                Лише ручні мітки. Колір і порядок змінюють у{' '}
-                {can(PermissionKeys.Catalog.ManageLabels) ? (
-                  <Link to="/catalog/labels" className="catalog-link">
-                    довіднику міток
-                  </Link>
-                ) : (
-                  'довіднику міток'
-                )}
-                .
-              </>
-            }
-            inputWrapperOrder={['label', 'input', 'description', 'error']}
             placeholder={value.length ? undefined : 'Без міток'}
             data={options}
             value={value}
@@ -68,18 +46,9 @@ export function ProductEditorLabels({ product, labels, value, onChange, error }:
           />
           {auto.length > 0 ? (
             <ul className="catalog-auto-labels" aria-label="Автоматичні мітки">
-              {auto.map((label) => {
-                const on = applies(label, product)
-                return (
-                  <li key={label.id} className="catalog-auto-label">
-                    <LabelChip name={label.name} tone={label.tone} muted={!on} />
-                    <span className="catalog-auto-label-rule">
-                      {label.isActive ? labelRule(label) : 'Мітку вимкнено в довіднику'}
-                      {label.isActive ? <span className="catalog-muted"> · {on ? 'застосовано' : 'не застосовано'}</span> : null}
-                    </span>
-                  </li>
-                )
-              })}
+              {auto.map(label => (
+                <li key={label.id}><LabelChip name={label.name} tone={label.tone} /></li>
+              ))}
             </ul>
           ) : null}
         </>
