@@ -13883,6 +13883,10 @@
             "items": {
               "$ref": "#/components/schemas/ImportCategoryItem"
             }
+          },
+          "showOnStorefront": {
+            "type": "boolean",
+            "default": false
           }
         }
       },

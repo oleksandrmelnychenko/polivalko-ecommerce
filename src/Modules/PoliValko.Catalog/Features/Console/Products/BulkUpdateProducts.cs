@@ -119,7 +119,7 @@ internal static class BulkUpdateProducts
             skus = updated.Select(p => p.Sku).ToList(),
         });
         await db.SaveChangesAsync(ct);
-        await storefront.InvalidateAsync([StorefrontTags.Catalog, .. ConsoleProductQueries.ProductTags([.. updated.Select(p => p.Slug)])], ct);
+        await storefront.InvalidateAsync([StorefrontTags.Catalog, .. ConsoleProductQueries.ProductTags], ct);
         return TypedResults.Ok(new BulkUpdateProductsResult(updated.Count));
     }
 }

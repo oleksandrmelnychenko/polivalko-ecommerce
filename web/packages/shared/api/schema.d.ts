@@ -3415,6 +3415,8 @@ export interface components {
         IFormFile: string;
         ImportCategoriesRequest: {
             categories: null | components["schemas"]["ImportCategoryItem"][];
+            /** @default false */
+            showOnStorefront: boolean;
         };
         ImportCategoriesResult: {
             /** Format: int32 */

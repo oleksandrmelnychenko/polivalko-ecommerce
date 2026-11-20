@@ -1,4 +1,4 @@
-import { Alert, Button, FileInput, Stack, Text } from '@mantine/core'
+import { Alert, Button, Checkbox, FileInput, Stack, Text } from '@mantine/core'
 import { IconFileUpload } from '@tabler/icons-react'
 import { useRef, useState, type FormEvent } from 'react'
 import { apiFetch } from '@/shared/api/client'
@@ -37,6 +37,7 @@ function isResult(value: unknown, count: number): value is ImportResult {
 export function CategoryImportDialog({ onClose, onImported }: CategoryImportDialogProps) {
   const [file, setFile] = useState<File | null>(null)
   const [prepared, setPrepared] = useState<CategoryInput[] | null>(null)
+  const [showOnStorefront, setShowOnStorefront] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<ImportResult | null>(null)
@@ -70,7 +71,7 @@ export function CategoryImportDialog({ onClose, onImported }: CategoryImportDial
         const response = await apiFetch('/api/v1/console/catalog/categories/import', {
           method: 'POST',
           headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ categories: prepared }),
+          body: JSON.stringify({ categories: prepared, showOnStorefront }),
         })
         const payload: unknown = await response.json().catch(() => null)
         return { response, payload, error: response.ok ? undefined : payload }
@@ -100,9 +101,16 @@ export function CategoryImportDialog({ onClose, onImported }: CategoryImportDial
       <form onSubmit={submit} aria-busy={busy}>
         <Stack gap="md">
           {prepared ? (
-            <Text size="sm">
-              Записів у файлі {prepared.length}. Нові категорії будуть приховані на вітрині.
-            </Text>
+            <>
+              <Text size="sm">Записів у файлі {prepared.length}.</Text>
+              <Checkbox
+                label="Показувати нові категорії на сайті"
+                description="Для показу мають бути видимі всі батьківські категорії. Групи Navkolo зі списку прихованих залишаються прихованими."
+                checked={showOnStorefront}
+                disabled={busy}
+                onChange={event => setShowOnStorefront(event.currentTarget.checked)}
+              />
+            </>
           ) : (
             <FileInput
               label="Файл категорій"
@@ -115,6 +123,7 @@ export function CategoryImportDialog({ onClose, onImported }: CategoryImportDial
               disabled={busy}
               onChange={value => {
                 setFile(value)
+                setShowOnStorefront(true)
                 setError(null)
                 setResult(null)
               }}

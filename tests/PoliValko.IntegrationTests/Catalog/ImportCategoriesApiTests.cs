@@ -1,11 +1,18 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using PoliValko.Catalog.Configuration;
 using PoliValko.Catalog.Domain;
 using PoliValko.Catalog.Features.Console.Categories;
+using PoliValko.Catalog.Features.Storefront;
 using PoliValko.Infrastructure.Audit;
+using PoliValko.Infrastructure.Security;
 using PoliValko.Infrastructure.Security.Permissions;
 using PoliValko.Infrastructure.Storefront;
+using PoliValko.Navkolo.Contracts;
 
 namespace PoliValko.IntegrationTests;
 
@@ -57,6 +64,52 @@ public sealed class ImportCategoriesApiTests(ApiFactory api)
         (await api.WithDbAsync(db => db.Set<Product>().Where(row => row.Id == product.Id).Select(row => row.CategoryId).SingleAsync(Ct))).ShouldBe(existing.Id);
         (await AuditCountAsync()).ShouldBe(priorAudits + 1);
         api.Storefront.Tags.Count(tag => tag == StorefrontTags.Categories).ShouldBe(priorInvalidations + 1);
+    }
+
+    [Fact]
+    public async Task Staff_can_publish_new_categories_and_their_products_while_respecting_hidden_groups_and_parents()
+    {
+        const string parentSlug = "vse-dlia-polyvu";
+        var root = NewItem(parentSlug);
+        var child = NewItem(root.Slug);
+        var hiddenByName = NewItem(root.Slug) with { Name = "хЛАМ" };
+        var hiddenByRef = NewItem(root.Slug);
+        var existingHidden = NewItem();
+        var underHidden = NewItem(existingHidden.Slug);
+        await using var host = api.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
+            services.PostConfigure<CatalogOptions>(options => options.HiddenNavkoloGroups.Add(hiddenByRef.NavkoloRef.ToUpperInvariant()))));
+        using var admin = host.CreateClient();
+        (await admin.PostAsJsonAsync("/api/v1/console/auth/login", new { email = ApiFactory.AdminEmail, password = ApiFactory.TestPassword }, Ct)).EnsureSuccessStatusCode();
+        var csrf = await admin.ReadAsync<CsrfTokenDto>("/api/v1/console/auth/csrf");
+        admin.DefaultRequestHeaders.Add(CsrfHeaders.Token, csrf.Token);
+
+        // Older upload clients omit showOnStorefront. Replaying the same row in a published batch keeps its visibility.
+        (await admin.PostAsJsonAsync(Import, new { categories = new[] { existingHidden } }, Ct)).EnsureSuccessStatusCode();
+        var batch = new ImportCategoriesRequest([root, child, hiddenByName, hiddenByRef, existingHidden, underHidden], ShowOnStorefront: true);
+        var imported = await (await admin.PostAsJsonAsync(Import, batch, Ct)).ReadAsync<ImportCategoriesResult>();
+        imported.ShouldBe(new ImportCategoriesResult(5, 1));
+        var after = await admin.ReadAsync<List<ConsoleCategoryDto>>(Categories);
+        foreach (var category in new[] { root, child, underHidden })
+            after.Single(row => row.Slug == category.Slug).IsVisible.ShouldBeTrue();
+        foreach (var category in new[] { existingHidden, hiddenByName, hiddenByRef })
+            after.Single(row => row.Slug == category.Slug).IsVisible.ShouldBeFalse();
+
+        using var customer = host.CreateClient();
+        var tree = await customer.ReadAsync<List<CategoryNodeDto>>("/api/v1/categories");
+        tree.Single(category => category.Slug == parentSlug).Children.Single(category => category.Slug == root.Slug).Children.Select(category => category.Slug).ShouldBe(new[] { child.Slug });
+        foreach (var category in new[] { existingHidden, underHidden, hiddenByName, hiddenByRef })
+            (await customer.GetAsync($"/api/v1/categories/{category.Slug}", Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        var sku = "SITE-" + Guid.NewGuid().ToString("N")[..12];
+        using var form = new MultipartFormDataContent();
+        form.Add(new StringContent($"navkolo_id;sku;name;group;price;stock\n{sku};{sku};Новий товар;{child.NavkoloRef};199;5", Encoding.UTF8, "text/csv"), "file", "catalog.csv");
+        var run = await (await admin.PostAsync("/api/v1/console/integration/navkolo/import", form, Ct)).ReadAsync<ImportRunDto>();
+        run.ErrorCount.ShouldBe(0);
+        var listing = await customer.ReadAsync<ProductSearchResponse>($"/api/v1/products?category={root.Slug}");
+        var product = listing.Items.ShouldHaveSingleItem();
+        product.Sku.ShouldBe(sku);
+        var details = await customer.ReadAsync<ProductDetailsDto>($"/api/v1/products/{product.Slug}");
+        details.Category.Slug.ShouldBe(child.Slug);
     }
 
     [Fact]

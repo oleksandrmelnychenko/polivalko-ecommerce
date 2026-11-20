@@ -6,6 +6,7 @@ import { usePermissions } from '@/features/auth'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PERMISSION_LABELS, PermissionKeys } from '@/shared/auth/permissionKeys'
+import { siteUrl } from '@/shared/lib/siteUrl'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { PageState } from '@/shared/ui/PageState'
 import { getImportRuns, importCatalog, type ImportRun } from '../api/catalogApi'
@@ -142,6 +143,9 @@ export function ImportPage() {
         {result ? (
           <section className="catalog-import-result" aria-label="Результат імпорту">
             <ImportRunReport run={result} open />
+            <a className="catalog-link" href={siteUrl('/catalog')} target="_blank" rel="noopener">
+              Відкрити каталог магазину
+            </a>
           </section>
         ) : null}
 

@@ -2,6 +2,8 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using PoliValko.Catalog.Configuration;
 using PoliValko.Catalog.Domain;
 using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Persistence;
@@ -10,7 +12,9 @@ using PoliValko.Infrastructure.Web;
 
 namespace PoliValko.Catalog.Features.Console.Categories;
 
-public sealed record ImportCategoriesRequest([property: JsonRequired] IReadOnlyList<ImportCategoryItem>? Categories);
+public sealed record ImportCategoriesRequest(
+    [property: JsonRequired] IReadOnlyList<ImportCategoryItem>? Categories,
+    bool ShowOnStorefront = false);
 
 public sealed record ImportCategoryItem(
     [property: JsonRequired] string Name,
@@ -27,6 +31,7 @@ internal static class ImportCategories
     public static async Task<Results<Ok<ImportCategoriesResult>, ValidationProblem, ProblemHttpResult>> HandleAsync(
         ImportCategoriesRequest request,
         PoliValkoDbContext db,
+        IOptions<CatalogOptions> options,
         IAuditLog audit,
         IStorefrontCache storefront,
         CancellationToken ct)
@@ -64,6 +69,7 @@ internal static class ImportCategories
             .ToLookup(category => category.NavkoloRef!, StringComparer.OrdinalIgnoreCase);
         var sortOrders = existing.GroupBy(category => category.ParentId ?? Guid.Empty)
             .ToDictionary(group => group.Key, group => group.Max(category => category.SortOrder));
+        var hiddenGroups = options.Value.HiddenNavkoloGroups.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var added = new List<Category>();
 
         for (var i = 0; i < items.Count; i++)
@@ -104,7 +110,8 @@ internal static class ImportCategories
             var category = new Category
             {
                 Id = Guid.CreateVersion7(), Name = item.Name, Slug = item.Slug, ParentId = parentId,
-                NavkoloRef = item.NavkoloRef, SortOrder = sortOrder, IsVisible = false,
+                NavkoloRef = item.NavkoloRef, SortOrder = sortOrder,
+                IsVisible = request.ShowOnStorefront && !hiddenGroups.Contains(item.Name) && !hiddenGroups.Contains(item.NavkoloRef),
             };
             bySlug.Add(category.Slug, category);
             parents.Add(category.Id, category.ParentId);
@@ -120,7 +127,7 @@ internal static class ImportCategories
         db.AddRange(added);
         audit.Record("catalog.categories_imported", "Category", null, new
         {
-            categories = added.Select(category => new { category.Id, category.Slug, category.ParentId, category.NavkoloRef }).ToArray(),
+            categories = added.Select(category => new { category.Id, category.Slug, category.ParentId, category.NavkoloRef, category.IsVisible }).ToArray(),
         });
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);

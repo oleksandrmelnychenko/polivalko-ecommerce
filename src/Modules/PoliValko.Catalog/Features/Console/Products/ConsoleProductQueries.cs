@@ -74,8 +74,7 @@ internal static class ConsoleProductQueries
     public static IReadOnlyList<ConsoleProductLabelDto> Labels(IReadOnlyList<ProductLabel> labels) =>
         labels.Select(l => new ConsoleProductLabelDto(l.Id, l.Name, l.Tone, l.Kind)).ToList();
 
-    public static string[] ProductTags(params string[] slugs) =>
-        [StorefrontTags.Products, StorefrontTags.Collections, .. slugs.Distinct().Select(StorefrontTags.Product)];
+    public static readonly string[] ProductTags = [StorefrontTags.Products, StorefrontTags.Collections];
 
     public static ProblemHttpResult ProductNotFound() => Problems.NotFound("catalog.product_not_found", "Товар не знайдено");
 

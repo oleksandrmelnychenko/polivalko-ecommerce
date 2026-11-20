@@ -6,7 +6,7 @@ const apiUrl = process.env.API_INTERNAL_URL ?? "http://localhost:5080";
 
 /**
  * A listing page past the last one (an old link, fewer products now) answers a 307 to the last page,
- * before the prebuilt shell can answer 200. src/proxy.ts calls it for document requests to /catalog/<slug>,
+ * before the prebuilt shell can answer 200. src/proxy.ts calls it for document requests to /catalog, /catalog/<slug>,
  * /sale and /search; undefined lets the page render. Only pages after the first pay for the extra API request.
  */
 export async function redirectPastLastPage(request: NextRequest) {
@@ -20,7 +20,8 @@ export async function redirectPastLastPage(request: NextRequest) {
   const search = pathname === "/search";
   const q = first(sp.q)?.trim() ?? "";
   if (search && !q) return undefined;
-  const base = search ? { q } : pathname === "/sale" ? { onSale: true } : { category: safeDecode(pathname.split("/")[2] ?? "") };
+  const slug = pathname.split("/")[2];
+  const base = search ? { q } : pathname === "/sale" ? { onSale: true } : { category: slug ? safeDecode(slug) : undefined };
 
   const totalPages = await countPages(toQuery(base, parsed));
   if (totalPages === undefined) return undefined;
