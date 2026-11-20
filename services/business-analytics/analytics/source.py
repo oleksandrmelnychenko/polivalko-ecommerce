@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import socket
 from contextlib import contextmanager
@@ -82,31 +81,22 @@ def target():
         connect_timeout=12,
         application_name="polivalko-business-analytics",
     )
-    if hosted():
-        connection["gssencmode"] = "disable"
-        connection["sslcertmode"] = "disable"  # The Neon integration uses password authentication.
-    else:
+    if not hosted():
         connection["options"] = "-c default_transaction_read_only=on -c statement_timeout=120000 -c lock_timeout=3000"
     return connection
 
 
 @contextmanager
 def production():
-    try:
-        connection = psycopg.connect(**target(), row_factory=dict_row)
-    except psycopg.OperationalError as exc:
-        message = str(exc).lower()
-        categories = ("certificate verify failed", "root certificate", "certificate file", "permission denied",
-                      "unsupported startup parameter", "unsupported", "invalid connection option",
-                      "password authentication failed", "authentication", "timeout", "timed out", "refused",
-                      "network is unreachable", "name resolution", "not allowed", "endpoint id", "no route",
-                      "could not open", "does not exist", "ssl error", "connection reset", "closed the connection",
-                      "local user", "sasl", "connection is insecure", "insecure", "could not translate")
-        reasons = [name for name in categories if name in message]
-        logging.getLogger(__name__).error("Production PostgreSQL handshake failed (%s)", ", ".join(reasons) or "unknown")
-        raise
+    settings = target()
+    if hosted():
+        from .neon import connect
+        connection = connect(settings)
+    else:
+        connection = psycopg.connect(**settings, row_factory=dict_row)
     with connection as conn:
-        set_json_loads(partial(json.loads, parse_float=Decimal), conn)
+        if not hosted():
+            set_json_loads(partial(json.loads, parse_float=Decimal), conn)
         conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
         if hosted():
             conn.execute("SET LOCAL statement_timeout = '120s'")
@@ -125,6 +115,13 @@ def production():
             if identity["id"] != cluster:
                 raise RuntimeError("Ідентифікатор виробничого кластера не збігається")
         yield conn
+
+
+def archived_rows(conn, query, params):
+    # One fixed, server-side cursor per read-only snapshot limits the size of each fetch.
+    conn.execute("DECLARE business_documents NO SCROLL CURSOR FOR " + query, params)
+    while batch := conn.execute("FETCH FORWARD 256 FROM business_documents").fetchall():
+        yield from batch
 
 
 CATALOG = """
@@ -228,14 +225,11 @@ def read_register(as_of):
     with production() as conn:
         catalog = conn.execute(CATALOG).fetchall()
         refs = conn.execute(REFERENCES).fetchall()
-        with conn.cursor("business_documents") as documents:
-            documents.execute(ARCHIVE, (as_of,))
-            native = conn.execute(NATIVE, (as_of,)).fetchall()
-            from itertools import chain
+        native = conn.execute(NATIVE, (as_of,)).fetchall()
+        from itertools import chain
 
-            source = reconcile(
-                chain(documents, native), conn.execute(WEB, (as_of, as_of)), catalog, refs, as_of
-            )
+        source = reconcile(chain(archived_rows(conn, ARCHIVE, (as_of,)), native),
+                           conn.execute(WEB, (as_of, as_of)), catalog, refs, as_of)
         source["stocks"] = conn.execute(STOCK).fetchall()
         stocked = {s["product"] for s in source["stocks"]}
         source["stockMeta"] = {p["id"]: p for p in catalog if p["id"] in stocked}

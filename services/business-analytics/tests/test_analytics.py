@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch
 
 from analytics.forecast import build_models, fit, replenishment
 from analytics.invoices import add_cash, compare
+from analytics.neon import FrameStream
 from analytics.register import apply_inventory_cost, reconcile
 from analytics.reports import documents, forecasts, report
 from analytics.server import PolicyConflict, Service, app, load, now, save, service
@@ -276,7 +277,7 @@ class ConnectionTests(unittest.TestCase):
             args = target()
             self.assertEqual(args["sslmode"], "verify-full")
             self.assertNotIn("options", args)
-            with patch("analytics.source.psycopg.connect") as connect, patch("analytics.source.set_json_loads"):
+            with patch("analytics.neon.connect") as connect:
                 connection = connect.return_value.__enter__.return_value
                 connection.execute.return_value.fetchone.return_value = {"db": "app", "ro": "on"}
                 with production():
@@ -286,6 +287,17 @@ class ConnectionTests(unittest.TestCase):
                              {"PGSERVICE": "local"}, {"PGHOST_UNPOOLED": "localhost"}):
                 with patch.dict(os.environ, override), self.assertRaises(ValueError):
                     target()
+
+    def test_websocket_binary_frames_preserve_postgres_stream_boundaries(self):
+        ws = MagicMock()
+        ws.recv.side_effect = [b"ab", b"cdef", b""]
+        stream = FrameStream(ws).makefile("rwb")
+        self.assertEqual(stream.read(3), b"abc")
+        self.assertEqual(stream.read(), b"def")
+        stream.write(b"query")
+        stream.flush()
+        ws.send_binary.assert_called_once_with(b"query")
+        stream.close()
     def test_other_cluster_rejected_before_reading_registers(self):
         environment = {"PRODUCTION_ANALYTICS_CLUSTER_ID": "123", "PRODUCTION_ANALYTICS_DATABASE": "sales"}
         connection = MagicMock()

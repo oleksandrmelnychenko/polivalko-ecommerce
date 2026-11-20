@@ -1,3 +1,5 @@
 gunicorn==27.0.1
 psycopg[binary]==3.2.13
 simplejson==4.3.0
+pg8000==1.31.6
+websocket-client==1.9.2

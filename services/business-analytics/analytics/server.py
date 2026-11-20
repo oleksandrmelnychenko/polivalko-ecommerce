@@ -196,8 +196,9 @@ def dispatch(env):
         try:
             totals = read_year(year)["total"]
         except Exception as exc:
+            details = exc.args[0] if exc.args and isinstance(exc.args[0], dict) else {}
             logger.error("Annual invoice check failed (%s, SQLSTATE %s)", type(exc).__name__,
-                         getattr(exc, "sqlstate", None))
+                         getattr(exc, "sqlstate", None) or details.get("C"))
             return 503, {"status": "unavailable"}
         result = "empty"
         if totals["discrepancies"] or totals["cashDiscrepancies"]:

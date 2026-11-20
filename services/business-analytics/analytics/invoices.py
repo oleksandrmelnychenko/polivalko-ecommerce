@@ -4,7 +4,7 @@ from decimal import Decimal
 from itertools import chain
 
 from .register import business_day, identifier, kind_of, number, sale_line
-from .source import ARCHIVE_SQL, production
+from .source import ARCHIVE_SQL, archived_rows, production
 
 
 HEADERS = """
@@ -162,10 +162,9 @@ def add_cash(report, cash):
 
 def read_year(year):
     start, end = date(year, 1, 1), date(year + 1, 1, 1)
-    with production() as conn, conn.cursor("annual_invoice_lines") as archive:
+    with production() as conn:
         headers = conn.execute(HEADERS, (start, end)).fetchall()
         native = conn.execute(NATIVE_LINES, (start, end)).fetchall()
-        archive.itersize = 100
-        archive.execute(ARCHIVE_LINES, (start - timedelta(days=1), end))
+        archive = archived_rows(conn, ARCHIVE_LINES, (start - timedelta(days=1), end))
         report = compare(year, headers, chain(archive, native))
         return add_cash(report, conn.execute(CASH_MONTHS, (start, end)))
