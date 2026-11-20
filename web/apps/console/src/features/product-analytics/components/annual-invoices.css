@@ -1,0 +1,41 @@
+.annual-invoices { display: grid; gap: 12px; min-width: 0; }
+.annual-invoices .pa-card { min-width: 0; box-shadow: var(--app-card-shadow); }
+.annual-invoices :is(h2, h3, p) { margin: 0; }
+.annual-invoices section > header, .annual-controls, .annual-links, .annual-status { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.annual-invoices section > header { padding: 14px 16px; justify-content: space-between; border-bottom: 1px dashed var(--app-line); }
+.annual-invoices .mantine-Button-root { border-radius: 999px; }
+.annual-controls { padding: 14px 16px 8px; }
+.annual-controls label { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 550; }
+.annual-controls select { border-radius: 999px; border: 1px solid var(--app-line); background: white; padding: 6px 10px; height: 36px; color: inherit; }
+.annual-controls select, .annual-scroll td, .annual-issues :is(time,b,strong) { font-family: var(--font-mono); }
+.annual-status { min-height: 32px; padding: 0 16px 12px; font-size: 13px; color: var(--pa-muted); }
+.annual-status svg { color: var(--brand-accent); }
+.annual-status[role='alert'] { color: var(--mantine-color-red-8); }
+.annual-chart .mantine-SegmentedControl-root { max-width: 100%; border-radius: 999px; }
+.annual-chart .mantine-SegmentedControl-indicator { background: var(--brand-ink); border-radius: 999px; }
+.annual-chart .mantine-SegmentedControl-label[data-active] { color: white; }
+.annual-chart .pa-chart { margin: 0 12px 12px; }
+.annual-method { max-width: 50ch; font-size: 13px; color: var(--pa-muted); }
+.annual-method summary { cursor: pointer; }
+.annual-method p { margin-top: 8px; }
+.annual-scroll { overflow: auto; border-radius: 0 0 var(--app-panel-radius) var(--app-panel-radius); }
+.annual-scroll table { min-width: 860px; }
+.annual-invoices .annual-scroll :is(th,td):not(:first-child) { text-align: end; }
+.annual-invoices .annual-scroll th { position: static; }
+.annual-scroll thead th { font-size: 12px; }
+.annual-invoices .annual-scroll :is(thead,tfoot) :is(td,th) { background: var(--app-ground); }
+.annual-scroll tfoot { font-weight: 650; }
+.annual-issues { list-style: none; padding: 0 16px; margin: 0; }
+.annual-issues li { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 20px; padding: 12px 0; font-size: 13px; }
+.annual-issues li + li { border-top: 1px dashed var(--app-line); }
+.annual-issues li div { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.annual-issues time, .annual-issues p { color: var(--pa-muted); }
+@media (max-width: 40em) {
+  .annual-chart .mantine-SegmentedControl-root { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; border-radius: 16px; }
+  .annual-chart .mantine-SegmentedControl-control::before { display: none; }
+  .annual-chart .mantine-SegmentedControl-indicator { display: none; }
+  .annual-chart .mantine-SegmentedControl-label[data-active] { background: var(--brand-ink); border-radius: 999px; }
+  .annual-invoices section > header { padding: 12px; }
+  .annual-controls, .annual-status { padding-inline: 12px; }
+  .annual-links { gap: 6px; }
+}

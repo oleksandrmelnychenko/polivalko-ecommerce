@@ -1,10 +1,12 @@
-import { Button, SegmentedControl } from '@mantine/core'
+import { Button, Loader, SegmentedControl } from '@mantine/core'
+import { IconArrowUpRight, IconCalendarStats, IconChartBar, IconChartLine, IconCheckbox, IconCoins, IconFileInvoice, IconListCheck, IconRefresh, IconTable } from '@tabler/icons-react'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { kyivDay } from '@/shared/lib/kyivTime'
 import { readBusiness } from '../api/businessAnalytics'
-import { AnalyticsCard } from './AnalyticsCard'
+import { MetricLabel } from '@/shared/ui/MetricCard'
+import './annual-invoices.css'
 import { AnalyticsChart } from './AnalyticsChart'
 import { formatValue } from './BusinessForecast'
 
@@ -31,60 +33,95 @@ type Annual = {
 }
 const months = ['Січ', 'Лют', 'Бер', 'Кві', 'Тра', 'Чер', 'Лип', 'Сер', 'Вер', 'Жов', 'Лис', 'Гру']
 
+
+const chartSeries = [
+  { value: 'documentNet', label: 'Чистий оборот' },
+  { value: 'sales', label: 'Видаткові накладні' },
+  { value: 'cash', label: 'Касові продажі' },
+  { value: 'returns', label: 'Повернення' },
+] as const
+const columns = ['Період', 'Документів', 'Видаткові, грн', 'Чеки, грн', 'Повернення, грн', 'Чистий оборот, грн', 'За рядками, грн', 'Різниця, грн', 'Документів із розбіжністю']
+
+function PeriodRow({ name, period }: { name: string; period: Period }) {
+  const difference = period.documentNet == null || period.documentLineNet == null ? null : period.documentLineNet - period.documentNet
+  return <tr>
+    <th scope="row">{name}</th>
+    {[period.documents + period.cashDocuments, period.sales, period.cash, period.returns, period.documentNet, period.documentLineNet,
+      difference, period.discrepancies + period.cashDiscrepancies].map((value, i) => <td key={columns[i + 1]}>{formatValue(value)}</td>)}
+  </tr>
+}
+
 export function AnnualInvoices() {
   const [params, setParams] = useSearchParams()
-  const [series, setSeries] = useState('all')
+  const [series, setSeries] = useState<(typeof chartSeries)[number]['value']>('documentNet')
   const last = Number(kyivDay(new Date()).slice(0, 4)) - 1
-  const year = params.get('year') ?? String(last)
-  const result = useApiQuery('invoices-' + year, () => readBusiness<Annual>('documents', 'year=' + encodeURIComponent(year)))
-  const report = result.data
+  const requested = Number(params.get('year'))
+  const year = Number.isInteger(requested) && requested >= 1900 && requested <= last ? requested : last
+  const result = useApiQuery('invoices-' + year, () => readBusiness<Annual>('documents', 'year=' + year))
+  const failed = result.status === 'error' || result.status === 'forbidden'
+  const report = failed ? undefined : result.data
+  const total = report?.total
+  const count = total ? total.documents + total.cashDocuments : 0
+  const issues = total ? total.discrepancies + total.cashDiscrepancies : 0
+  const empty = total && !count && !total.lineDocuments
+
   return (
-    <AnalyticsCard title="Оборот за документами продажу"
-      description="Суми у гривні звіряються з товарними рядками. Чек, пов’язаний із проведеною видатковою накладною, враховується один раз. Повернення покупців зменшують оборот.">
-      <div className="ba-controls">
-        <label>Рік <input type="number" min={1900} max={last} defaultValue={year} key={year}
-          onBlur={e => {
-            const value = e.currentTarget.valueAsNumber
-            if (Number.isInteger(value) && value >= 1900 && value <= last) {
-              setParams({ tab: 'invoices', year: String(value) })
-            }
-          }} /></label>
-        <Button variant="default" onClick={result.reload} disabled={result.status === 'loading'}>Звірити ще раз</Button>
-        <Link to={'?tab=overview&from=' + year + '-01-01&to=' + year + '-12-31'}>Перейти до аналізу товарів</Link>
-        <Link to="?tab=turnover-forecast">Відкрити прогноз обороту</Link>
-      </div>
-      {result.status === 'error' || result.status === 'forbidden'
-        ? <p role="alert">{result.problem?.title ?? 'Не вдалося прочитати накладні.'}</p>
-        : !report && <p role="status">Читаємо накладні за {year} рік…</p>}
-      {report && <>
-        <p role="status">{!report.total.documents && !report.total.lineDocuments && !report.total.cashDocuments
-          ? 'За цей рік проведених документів продажу не знайдено.'
-          : report.total.discrepancies + report.total.cashDiscrepancies
-            ? 'Потребують перевірки ' + formatValue(report.total.discrepancies + report.total.cashDiscrepancies) + ' документів. Нижче наведено відомі суми.'
-            : 'Суми всіх відібраних документів збігаються з товарними рядками.'}</p>
-        <SegmentedControl aria-label="Показник графіка" value={series} onChange={setSeries}
-          data={[{ value: 'all', label: 'Чистий оборот' }, { value: 'sales', label: 'Видаткові накладні' },
-            { value: 'cash', label: 'Касові продажі' }, { value: 'returns', label: 'Повернення' }]} />
-        <AnalyticsChart label="Оборот за документами, грн" variant="bars" format={formatValue}
-          points={report.months.map((m, i) => ({ axisLabel: months[i], label: months[i] + ' ' + year,
-            value: series === 'sales' ? m.sales : series === 'cash' ? m.cash : series === 'returns' ? m.returns : m.documentNet }))} />
-        <div className="ba-table"><table>
-          <thead><tr>{['Період', 'Документів', 'Видаткові, грн', 'Чеки, грн', 'Повернення, грн', 'Чистий оборот, грн', 'За рядками, грн', 'Різниця, грн', 'Документів із розбіжністю'].map(h => <th key={h}>{h}</th>)}</tr></thead>
-          <tbody>{[...report.months, report.total].map((m, i) => <tr key={i}>
-            <th>{months[i] ?? 'За рік'}</th><td>{formatValue(m.documents + m.cashDocuments)}</td>
-            <td>{formatValue(m.sales)}</td><td>{formatValue(m.cash)}</td><td>{formatValue(m.returns)}</td>
-            <td>{formatValue(m.documentNet)}</td><td>{formatValue(m.documentLineNet)}</td>
-            <td>{formatValue(m.documentNet == null || m.documentLineNet == null ? null : m.documentLineNet - m.documentNet)}</td>
-            <td>{formatValue(m.discrepancies + m.cashDiscrepancies)}</td>
-          </tr>)}</tbody>
-        </table></div>
-        {report.issues.length > 0 && <><h3>Документи для перевірки · перші {report.issues.length}</h3>
-          <ul>{report.issues.map(item => <li key={item.id}>
-            {item.inRegister ? <Link to={'/accounting/documents/' + item.id}>{item.number}</Link> : item.number}
-            {' · ' + item.day + ' · у реєстрі ' + formatValue(item.header) + ' грн · у рядках ' + formatValue(item.lines) + ' грн'}
-            {' · ' + item.reason}
-          </li>)}</ul></>}
+    <div className="annual-invoices">
+      <section className="pa-card annual-toolbar" aria-labelledby="annual-title">
+        <header>
+          <h2 id="annual-title"><MetricLabel icon={IconFileInvoice}>Оборот за документами продажу</MetricLabel></h2>
+          <div className="annual-links">
+            <Button component={Link} to={`?tab=assortment&from=${year}-01-01&to=${year}-12-31`} variant="default" size="xs" rightSection={<IconArrowUpRight size={14} />}>Аналіз товарів</Button>
+            <Button component={Link} to="?tab=turnover-forecast" variant="default" size="xs" rightSection={<IconArrowUpRight size={14} />}>Прогноз обороту</Button>
+          </div>
+        </header>
+        <div className="annual-controls">
+          <label>Рік <select value={year} onChange={(event) => setParams({ tab: 'invoices', year: event.currentTarget.value })}>
+            {Array.from({ length: last - 1899 }, (_, i) => last - i).map(value => <option key={value}>{value}</option>)}
+          </select></label>
+          <Button variant="default" leftSection={<IconRefresh size={15} />} disabled={result.isFetching} onClick={result.reload}>Звірити ще раз</Button>
+        </div>
+        <p className="annual-status" role={failed ? 'alert' : 'status'}>
+          {result.isFetching ? <><Loader size={14} />Звіряємо документи за {year} рік…</> :
+            failed ? (result.problem?.title ?? 'Не вдалося прочитати накладні.') :
+            empty ? 'За цей рік проведених документів продажу не знайдено.' :
+            issues ? `Документів для перевірки — ${formatValue(issues)}. У звіті наведено відомі суми.` :
+            <><IconCheckbox size={16} />Суми документів збігаються з товарними рядками.</>}
+        </p>
+      </section>
+      {report && total && !empty && <>
+        <div className="ba-overview-metrics annual-metrics">
+          <div className="pa-card"><MetricLabel icon={IconCoins}>Чистий оборот</MetricLabel><strong>{formatValue(total.documentNet)}{total.documentNet != null && <small>₴</small>}</strong></div>
+          <div className="pa-card"><MetricLabel icon={IconCalendarStats}>Документів за рік</MetricLabel><strong>{formatValue(count)}</strong></div>
+          <div className="pa-card"><MetricLabel icon={IconListCheck}>Із розбіжностями</MetricLabel><strong>{formatValue(issues)}</strong></div>
+        </div>
+        <section className="pa-card annual-chart">
+          <header><h3><MetricLabel icon={IconChartLine}>Оборот за місяцями</MetricLabel></h3>
+            <SegmentedControl aria-label="Показник графіка" value={series} onChange={setSeries} data={[...chartSeries]} />
+          </header>
+          <AnalyticsChart label="Оборот за документами, грн" variant="bars" format={formatValue}
+            points={report.months.map((period, i) => ({ axisLabel: months[i], label: months[i] + ' ' + year, value: period[series] }))} />
+        </section>
+        <section className="pa-card">
+          <header><h3><MetricLabel icon={IconTable}>Звірка за місяцями</MetricLabel></h3>
+            <details className="annual-method"><summary>Як рахуємо</summary><p>Суми у гривні звіряються з товарними рядками. Чек, пов’язаний із проведеною видатковою накладною, враховується один раз. Повернення покупців зменшують оборот.</p></details>
+          </header>
+          <div className="annual-scroll" role="region" aria-label="Звірка за місяцями" tabIndex={0}><table>
+            <thead><tr>{columns.map(h => <th key={h} scope="col">{h}</th>)}</tr></thead>
+            <tbody>{report.months.map((period, i) => <PeriodRow key={i} period={period} name={months[i]} />)}</tbody>
+            <tfoot><PeriodRow period={total} name="За рік" /></tfoot>
+          </table></div>
+        </section>
+        {report.issues.length > 0 && <section className="pa-card">
+          <header><h3><MetricLabel icon={IconChartBar}>Документи для перевірки</MetricLabel></h3><span>Показано {formatValue(report.issues.length)}</span></header>
+          <ul className="annual-issues">{report.issues.map(item => <li key={item.id}>
+            <div>{item.inRegister ? <Button component={Link} to={'/accounting/documents/' + encodeURIComponent(item.id)} size="xs" variant="default" rightSection={<IconArrowUpRight size={14} />}>{item.number}</Button> : <strong>{item.number}</strong>}
+              <time dateTime={item.day}>{item.day}</time></div>
+            <div><span>У реєстрі <b>{formatValue(item.header)} грн</b></span><span>За рядками <b>{formatValue(item.lines)} грн</b></span></div>
+            <p>{item.reason}</p>
+          </li>)}</ul>
+        </section>}
       </>}
-    </AnalyticsCard>
+    </div>
   )
 }
