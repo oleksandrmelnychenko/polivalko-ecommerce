@@ -2,6 +2,7 @@
 from collections import defaultdict
 from datetime import date, timedelta
 from decimal import Decimal
+import logging
 from threading import Lock
 from time import monotonic
 
@@ -185,6 +186,20 @@ _lock = Lock()
 _cache = {}
 
 
+def log_coverage(year, data):
+    for source in ("documents", "registered", "online"):
+        geography = data[source]
+        regions = geography["regions"]
+        kyiv = next(r for r in regions if r["code"] == "UA32")
+        unknown = geography["unknown"]["count"]
+        logging.getLogger("gunicorn.error").info(
+            "Buyer geography checked (year=%s, source=%s, partners=%s, sales=%s, unknown=%s, "
+            "withAddress=%s, places=%s, kyivRegionSales=%s, kyivPlaces=%s, kyivMappedSales=%s)",
+            year, source, len(data["partners"]), unknown + sum(r["count"] for r in regions), unknown,
+            geography["withAddress"], sum(len(r["settlements"]) for r in regions),
+            kyiv["count"], len(kyiv["settlements"]), sum(p["count"] for p in kyiv["settlements"]))
+
+
 def markets(year, today, page=1, search=""):
     with _lock:
         item = _cache.get(year)
@@ -192,6 +207,7 @@ def markets(year, today, page=1, search=""):
             bounds = date(year, 1, 1), min(date(year+1, 1, 1), today + timedelta(days=1))
             with production() as conn:
                 data = summarize(conn.execute(DOCUMENTS, bounds*2), conn.execute(WEB, bounds))
+            log_coverage(year, data)
             if len(_cache) >= 8:
                 _cache.pop(next(iter(_cache)))
             _cache[year] = monotonic() + 600, today, data
