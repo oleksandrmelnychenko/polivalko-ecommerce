@@ -8,21 +8,30 @@ import { adjustProductPrice, getProduct, type Product } from '../api/catalogApi'
 
 type ProductPriceDialogProps = { product: Product; onClose: () => void; onReload: () => void; onSaved: (product: Product) => void }
 
+function parsePrice(input: string) {
+  const normalized = input.trim().replace(',', '.')
+  return /^\d{1,10}(\.\d{1,2})?$/.test(normalized) ? Number(normalized) : null
+}
+
 export function ProductPriceDialog({ product, onClose, onReload, onSaved }: ProductPriceDialogProps) {
   const [current] = useState(() => product.navkolo)
   const [input, setInput] = useState(() => String(current.price.value))
+  const [compareInput, setCompareInput] = useState(() => String(current.oldPrice?.value ?? ''))
   const [error, setError] = useState<string | null>(null)
   const [needsReload, setNeedsReload] = useState(false)
   const [busy, setBusy] = useState(false)
   const submitting = useRef(false)
-  const normalizedInput = input.trim().replace(',', '.')
-  const price = /^\d{1,10}(\.\d{1,2})?$/.test(normalizedInput) ? Number(normalizedInput) : null
+  const price = parsePrice(input)
+  const oldPrice = parsePrice(compareInput)
   const expectedPrice = Number(current.price.value)
   const expectedOldPrice = current.oldPrice ? Number(current.oldPrice.value) : null
 
+  const invalidCompare = Boolean(compareInput.trim()) && oldPrice === null
+  const unchanged = price === expectedPrice && oldPrice === expectedOldPrice
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (submitting.current || needsReload || price === null || price === expectedPrice) return
+    if (submitting.current || needsReload || price === null || invalidCompare || unchanged) return
     setError(null)
     submitting.current = true
     setBusy(true)
@@ -35,6 +44,8 @@ export function ProductPriceDialog({ product, onClose, onReload, onSaved }: Prod
         expectedOldPrice,
         expectedPriceUpdatedAt: current.priceUpdatedAt,
         price,
+        replaceOldPrice: true,
+        oldPrice,
       }))
 
       if (response.ok && data?.updated === 1) {
@@ -42,7 +53,7 @@ export function ProductPriceDialog({ product, onClose, onReload, onSaved }: Prod
         const verified = updated?.navkolo
         if (!updated || updated.id !== product.id || !verified || verified.sku !== current.sku ||
           verified.price.currency !== current.price.currency || Number(verified.price.value) !== price ||
-          (verified.oldPrice ? Number(verified.oldPrice.value) : null) !== expectedOldPrice ||
+          (verified.oldPrice ? Number(verified.oldPrice.value) : null) !== oldPrice ||
           verified.priceUpdatedAt === current.priceUpdatedAt) {
           setNeedsReload(true)
           setError('Результат збереження потребує перевірки. Оновіть картку.')
@@ -81,6 +92,10 @@ export function ProductPriceDialog({ product, onClose, onReload, onSaved }: Prod
             onChange={event => setInput(event.currentTarget.value)}
             data-autofocus
           />
+          <TextInput label="Попередня ціна, грн" placeholder="Без попередньої ціни" inputMode="decimal"
+            value={compareInput} disabled={busy || needsReload}
+            error={invalidCompare ? 'Введіть суму з точністю до двох знаків після коми.' : undefined}
+            onChange={event => setCompareInput(event.currentTarget.value)} />
           {error ? <Alert color="red" role="alert">{error}</Alert> : null}
         </Stack>
         <AppModalFooter>
@@ -88,7 +103,7 @@ export function ProductPriceDialog({ product, onClose, onReload, onSaved }: Prod
           {needsReload ? (
             <Button onClick={() => { onReload(); onClose() }}>Оновити картку</Button>
           ) : (
-            <Button type="submit" loading={busy} disabled={price === null || price === expectedPrice}>Зберегти ціну</Button>
+            <Button type="submit" loading={busy} disabled={price === null || invalidCompare || unchanged}>Зберегти ціну</Button>
           )}
         </AppModalFooter>
       </form>

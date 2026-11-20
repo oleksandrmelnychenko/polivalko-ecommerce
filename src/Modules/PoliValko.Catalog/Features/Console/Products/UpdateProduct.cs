@@ -23,6 +23,12 @@ internal static class UpdateProduct
         TimeProvider time,
         CancellationToken ct)
     {
+        await using var transaction = request.Accounting is null ? null : await db.Database.BeginTransactionAsync(ct);
+        if (transaction is not null)
+        {
+            // Share the manual create path's lock so two edits cannot claim the same SKU.
+            await db.Database.ExecuteSqlRawAsync("LOCK TABLE catalog.products IN SHARE ROW EXCLUSIVE MODE", ct);
+        }
         var product = await ConsoleProductQueries.LoadProductAsync(db, id, tracking: true, ct);
         if (product is null)
         {
@@ -35,6 +41,24 @@ internal static class UpdateProduct
         }
 
         var errors = new Dictionary<string, string[]>();
+        var original = new ProductAccountingFields(product.Sku, product.Name, product.NavkoloGroupRef, product.VariantGroup, product.VariantLabel);
+        if (request.Accounting is { } edit)
+        {
+            if (edit.Value is null || edit.Expected is null)
+                return TypedResults.ValidationProblem(new Dictionary<string, string[]> { ["accounting"] = ["Вкажіть вихідні й нові дані товару."] });
+            if (original != edit.Expected)
+                return TypedResults.Problem(statusCode: 409, detail: "Облікові дані змінилися. Відкрийте картку повторно й перевірте зміни.");
+            var sku = edit.Value.Sku?.Trim();
+            if (sku is not { Length: > 0 and <= 100 } || sku.Any(char.IsControl))
+                errors["sku"] = ["Введіть артикул до 100 символів."];
+            else if (sku != product.Sku && await db.Set<Product>().AnyAsync(p => p.Id != id && p.Sku.ToLower() == sku.ToLower(), ct))
+                errors["sku"] = ["Цей артикул уже є в каталозі або архіві."];
+            if (edit.Value.Name?.Trim() is not { Length: > 0 and <= 500 })
+                errors["name"] = ["Введіть назву до 500 символів."];
+            CatalogConsoleValidation.CheckLength(errors, "groupRef", edit.Value.GroupRef, 100);
+            CatalogConsoleValidation.CheckLength(errors, "variantGroup", edit.Value.VariantGroup, 100);
+            CatalogConsoleValidation.CheckLength(errors, "variantLabel", edit.Value.VariantLabel, 100);
+        }
         var slug = string.IsNullOrWhiteSpace(request.Slug) ? product.Slug : request.Slug.Trim().ToLowerInvariant();
         if (!CatalogConsoleValidation.IsSlug(slug) || slug.Length > 300)
         {
@@ -69,6 +93,15 @@ internal static class UpdateProduct
         var oldSlug = product.Slug;
         var now = time.GetUtcNow();
 
+        if (request.Accounting?.Value is { } account)
+        {
+            product.Sku = account.Sku.Trim();
+            product.Name = account.Name.Trim();
+            product.NavkoloGroupRef = CatalogConsoleValidation.NullIfEmpty(account.GroupRef);
+            product.VariantGroup = CatalogConsoleValidation.NullIfEmpty(account.VariantGroup);
+            product.VariantLabel = CatalogConsoleValidation.NullIfEmpty(account.VariantLabel);
+        }
+
         product.DisplayName = CatalogConsoleValidation.NullIfEmpty(request.DisplayName);
         product.Slug = slug;
         product.CategoryId = categoryId;
@@ -98,11 +131,13 @@ internal static class UpdateProduct
         audit.Record("catalog.product_updated", "Product", product.Sku, new
         {
             before,
+            accounting = request.Accounting,
             after = new { product.DisplayName, product.Slug, product.CategoryId, product.Brand, product.IsVisible, product.SeoTitle, product.SeoDescription },
             attributes = attributes.Count,
             labelIds,
         });
         await db.SaveChangesAsync(ct);
+        if (transaction is not null) await transaction.CommitAsync(ct);
         var tags = oldSlug == slug ? ConsoleProductQueries.ProductTags : [.. ConsoleProductQueries.ProductTags, StorefrontTags.Redirects];
         await storefront.InvalidateAsync(tags, ct);
 

@@ -1,6 +1,8 @@
-import { Alert, Select, SimpleGrid, Switch, Textarea, TextInput } from '@mantine/core'
-import { IconAlertCircle } from '@tabler/icons-react'
-import { useMemo, useState, type FormEvent } from 'react'
+import { siteUrl } from '@/shared/lib/siteUrl'
+import { ProductSectionTitle } from './ProductSectionTitle'
+import { Anchor, Alert, Select, SimpleGrid, Switch, Textarea, TextInput } from '@mantine/core'
+import { IconAlertCircle, IconBuildingStore, IconAlignLeft, IconSearch, IconBarcode, IconChartHistogram, IconExternalLink } from '@tabler/icons-react'
+import { useMemo, useState, type ReactNode, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
 import { useReportDirty } from '@/shared/lib/useReportDirty'
@@ -28,6 +30,7 @@ type Fields = {
 }
 
 type ProductEditorFormProps = {
+  gallery: ReactNode
   formId: string
   product: Product
   categories: CategoryOption[]
@@ -44,6 +47,17 @@ function dictionaryBrand(brand: string | null, brands: Brand[] | null): string {
   const value = brand?.trim() ?? ''
   const match = value ? brands?.find((entry) => entry.name.toLowerCase() === value.toLowerCase()) : undefined
   return match?.name ?? value
+}
+
+type AccountingFields = NonNullable<UpdateProductRequest['accounting']>['value']
+const accountingInputs = [
+  ['sku', 'Артикул', 100], ['name', 'Назва в обліку', 500], ['groupRef', 'Група обліку', 100],
+  ['variantGroup', 'Група варіантів', 100], ['variantLabel', 'Назва варіанта', 100],
+] as const
+
+function accountingFields(product: Product): AccountingFields {
+  const { sku, name, groupRef, variantGroup, variantLabel } = product.navkolo
+  return { sku, name, groupRef: groupRef ?? null, variantGroup: variantGroup ?? null, variantLabel: variantLabel ?? null }
 }
 
 function initialFields(product: Product, brands: Brand[] | null): Fields {
@@ -72,15 +86,18 @@ function editorSnapshot(fields: Fields, description: string, attributes: Attribu
   return JSON.stringify({ fields, description, attributes: filledAttributes(attributes), labelIds })
 }
 
-export function ProductEditorForm({ formId, product, categories, brands, labels, readOnly, disabled, onBusy, onDirty, onSaved }: ProductEditorFormProps) {
+export function ProductEditorForm({ gallery, formId, product, categories, brands, labels, readOnly, disabled, onBusy, onDirty, onSaved }: ProductEditorFormProps) {
   const { can } = usePermissions()
   const [start] = useState(() => ({
+    accounting: accountingFields(product),
     fields: initialFields(product, brands),
     description: product.descriptionHtml ?? '',
     attributes: attributeRows(product.attributes),
     labelIds: initialLabelIds(product),
   }))
   const [fields, setFields] = useState<Fields>(start.fields)
+  const [account, setAccount] = useState(() => ({ ...start.accounting, name: cleanProductName(start.accounting.name) }))
+  const accountChanged = accountingInputs.some(([key]) => account[key] !== (key === 'name' ? cleanProductName(start.accounting.name) : start.accounting[key]))
   const [description, setDescription] = useState(start.description)
   const [attributes, setAttributes] = useState<AttributeRow[]>(start.attributes)
   const [labelIds, setLabelIds] = useState<string[]>(start.labelIds)
@@ -88,7 +105,7 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
   const [formError, setFormError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const pristine = useMemo(() => editorSnapshot(start.fields, start.description, start.attributes, start.labelIds), [start])
-  const dirty = !readOnly && editorSnapshot(fields, description, attributes, labelIds) !== pristine
+  const dirty = !readOnly && (accountChanged || editorSnapshot(fields, description, attributes, labelIds) !== pristine)
   useReportDirty(dirty, onDirty)
 
   const categoryData = categories.some((option) => option.value === product.categoryId)
@@ -113,6 +130,7 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
     setFormError(null)
     try {
       const body: UpdateProductRequest = {
+        accounting: accountChanged ? { expected: start.accounting, value: account } : undefined,
         displayName: orNull(fields.displayName),
         slug: orNull(fields.slug),
         categoryId: orNull(fields.categoryId),
@@ -137,7 +155,11 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
       setErrors(fieldErrors(result.error))
       setFormError(message)
       notifyError(message)
-      requestAnimationFrame(() => form.querySelector('[aria-invalid="true"], [role="alert"]')?.scrollIntoView({ block: 'center', behavior: 'smooth' }))
+      requestAnimationFrame(() => {
+        const invalid = Array.from(form.elements).find(element => element.matches('[aria-invalid="true"]'))
+        const target = invalid ?? form.querySelector('[role="alert"]')
+        target?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      })
     } catch {
       setFormError(NETWORK_ERROR)
       notifyError(NETWORK_ERROR)
@@ -147,136 +169,151 @@ export function ProductEditorForm({ formId, product, categories, brands, labels,
   }
 
   return (
-    <form id={formId} noValidate onSubmit={submit} aria-label="Поля сайту">
-      <fieldset className="catalog-fieldset" disabled={readOnly || disabled || busy}>
-        {formError ? (
-          <Alert color="red" variant="light" icon={<IconAlertCircle size={18} />} role="alert">
-            {formError}
-          </Alert>
-        ) : null}
-
-        <section className="catalog-card" aria-labelledby="main-title">
-          <h2 id="main-title" className="app-section-title catalog-card-title">
-            Вітрина
-          </h2>
-          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" verticalSpacing="xs">
-            <TextInput
-              label="Назва на вітрині"
-              value={fields.displayName}
-              placeholder={cleanProductName(product.navkolo.name)}
-              maxLength={500}
-              error={errors.displayName}
-              onChange={(event) => set('displayName', event.currentTarget.value)}
-            />
-            <TextInput
-              label="Адреса сторінки"
-              description="Після зміни стара адреса перенаправлятиме на нову."
-              inputWrapperOrder={['label', 'input', 'description', 'error']}
-              value={fields.slug}
-              maxLength={300}
-              spellCheck={false}
-              autoComplete="off"
-              error={errors.slug}
-              onChange={(event) => set('slug', event.currentTarget.value)}
-            />
-            <Select
-              label="Категорія на сайті"
-              data={categoryData}
-              value={fields.categoryId}
-              allowDeselect={false}
-              searchable
-              nothingFoundMessage="Нічого не знайдено"
-              error={errors.categoryId}
-              onChange={(value) => set('categoryId', value ?? product.categoryId)}
-            />
-            {brands === null ? (
-              <TextInput label="Бренд" value={fields.brand} maxLength={200} error={errors.brand} onChange={(event) => set('brand', event.currentTarget.value)} />
-            ) : (
-              <Select
-                label="Бренд"
-                description={
-                  <>
-                    Зі списку брендів.{' '}
-                    {can(PermissionKeys.Catalog.ManageBrands) ? (
-                      <Link to="/catalog/brands" className="catalog-link">
-                        Довідник брендів
-                      </Link>
-                    ) : null}
-                  </>
-                }
-                inputWrapperOrder={['label', 'input', 'description', 'error']}
-                placeholder="Без бренду"
-                data={brandData}
-                value={fields.brand.trim() || null}
-                searchable
-                clearable
-                nothingFoundMessage="Немає в довіднику брендів"
-                error={errors.brand}
-                onChange={(value) => set('brand', value ?? '')}
-              />
-            )}
-          </SimpleGrid>
-          <Switch
-            mt="xs"
-            label="Показувати на сайті"
-            checked={fields.isVisible}
-            onChange={(event) => set('isVisible', event.currentTarget.checked)}
-          />
-        </section>
-
-        <section className="catalog-card" aria-labelledby="description-title">
-          <h2 id="description-title" className="app-section-title catalog-card-title">
-            Опис
-          </h2>
-          <Textarea
-            label="Опис (HTML: абзаци, списки, заголовки, таблиці, посилання)"
-            classNames={{ input: 'catalog-code-area' }}
-            autosize
-            minRows={3}
-            maxRows={9}
-            spellCheck={false}
-            value={description}
-            error={errors.descriptionHtml}
-            onChange={(event) => setDescription(event.currentTarget.value)}
-          />
-          {description.trim() ? (
-            <details className="catalog-preview">
-              <summary>Попередній перегляд</summary>
-              <iframe title="Попередній перегляд опису" sandbox="" srcDoc={description} />
-            </details>
+    <div className="product-editor-columns">
+      <form id={formId} noValidate onSubmit={submit} aria-label="Редагування товару">
+        <fieldset className="catalog-fieldset" disabled={readOnly || disabled || busy}>
+          {formError ? (
+            <Alert color="red" variant="light" icon={<IconAlertCircle size={18} />} role="alert">
+              {formError}
+            </Alert>
           ) : null}
-        </section>
 
-        <ProductEditorLabels product={product} labels={labels} value={labelIds} onChange={setLabelIds} error={errors.labelIds} />
-
-        <ProductEditorAttributes attributes={attributes} setAttributes={setAttributes} categoryId={fields.categoryId} readOnly={readOnly} error={errors.attributes} />
-
-        <section className="catalog-card" aria-labelledby="seo-title">
-          <h2 id="seo-title" className="app-section-title catalog-card-title">
-            SEO
-          </h2>
-          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" verticalSpacing="xs">
-            <TextInput
-              label="SEO: заголовок"
-              value={fields.seoTitle}
-              maxLength={200}
-              placeholder="Як назва на вітрині"
-              error={errors.seoTitle}
-              onChange={(event) => set('seoTitle', event.currentTarget.value)}
+          <section className="catalog-card" aria-labelledby="main-title">
+            <ProductSectionTitle id="main-title" icon={IconBuildingStore}>Вітрина</ProductSectionTitle>
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" verticalSpacing="xs">
+              <TextInput
+                label="Назва на вітрині"
+                value={fields.displayName}
+                placeholder={cleanProductName(product.navkolo.name)}
+                maxLength={500}
+                error={errors.displayName}
+                onChange={(event) => set('displayName', event.currentTarget.value)}
+              />
+              <TextInput
+                label="Адреса сторінки"
+                value={fields.slug}
+                maxLength={300}
+                spellCheck={false}
+                autoComplete="off"
+                error={errors.slug}
+                onChange={(event) => set('slug', event.currentTarget.value)}
+              />
+              <Select
+                label="Категорія на сайті"
+                data={categoryData}
+                value={fields.categoryId}
+                allowDeselect={false}
+                searchable
+                nothingFoundMessage="Нічого не знайдено"
+                error={errors.categoryId}
+                onChange={(value) => set('categoryId', value ?? product.categoryId)}
+              />
+              {brands === null ? (
+                <TextInput label="Бренд" value={fields.brand} maxLength={200} error={errors.brand} onChange={(event) => set('brand', event.currentTarget.value)} />
+              ) : (
+                <Select
+                  label="Бренд"
+                  description={
+                    <>
+                      {can(PermissionKeys.Catalog.ManageBrands) ? (
+                        <Link to="/catalog/brands" className="catalog-link">
+                          Довідник брендів
+                        </Link>
+                      ) : null}
+                    </>
+                  }
+                  inputWrapperOrder={['label', 'input', 'description', 'error']}
+                  placeholder="Без бренду"
+                  data={brandData}
+                  value={fields.brand.trim() || null}
+                  searchable
+                  clearable
+                  nothingFoundMessage="Немає в довіднику брендів"
+                  error={errors.brand}
+                  onChange={(value) => set('brand', value ?? '')}
+                />
+              )}
+            </SimpleGrid>
+            <Switch
+              mt="xs"
+              label="Показувати на сайті"
+              checked={fields.isVisible}
+              onChange={(event) => set('isVisible', event.currentTarget.checked)}
             />
-            <TextInput
-              label="SEO: опис"
-              value={fields.seoDescription}
-              maxLength={500}
-              placeholder="Перші речення опису"
-              error={errors.seoDescription}
-              onChange={(event) => set('seoDescription', event.currentTarget.value)}
-            />
-          </SimpleGrid>
-        </section>
+          </section>
 
-      </fieldset>
-      <LeaveGuard when={dirty} message="Зміни в товарі не збережено. Піти зі сторінки без збереження?" />
-    </form>
+          <section className="catalog-card" aria-labelledby="description-title">
+            <ProductSectionTitle id="description-title" icon={IconAlignLeft}>Опис</ProductSectionTitle>
+            <Textarea
+              aria-label="Опис товару"
+              classNames={{ input: 'catalog-code-area' }}
+              autosize
+              minRows={3}
+              maxRows={9}
+              spellCheck={false}
+              value={description}
+              error={errors.descriptionHtml}
+              onChange={(event) => setDescription(event.currentTarget.value)}
+            />
+            {description.trim() ? (
+              <details className="catalog-preview">
+                <summary>Попередній перегляд</summary>
+                <iframe title="Попередній перегляд опису" sandbox="" srcDoc={description} />
+              </details>
+            ) : null}
+          </section>
+
+          <ProductEditorAttributes attributes={attributes} setAttributes={setAttributes} categoryId={fields.categoryId} readOnly={readOnly} error={errors.attributes} />
+
+          <section className="catalog-card" aria-labelledby="seo-title">
+            <ProductSectionTitle id="seo-title" icon={IconSearch}>SEO</ProductSectionTitle>
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" verticalSpacing="xs">
+              <TextInput
+                label="SEO: заголовок"
+                value={fields.seoTitle}
+                maxLength={200}
+                placeholder="Як назва на вітрині"
+                error={errors.seoTitle}
+                onChange={(event) => set('seoTitle', event.currentTarget.value)}
+              />
+              <TextInput
+                label="SEO: опис"
+                value={fields.seoDescription}
+                maxLength={500}
+                placeholder="Перші речення опису"
+                error={errors.seoDescription}
+                onChange={(event) => set('seoDescription', event.currentTarget.value)}
+              />
+            </SimpleGrid>
+          </section>
+
+        </fieldset>
+        <LeaveGuard when={dirty} message="Зміни в товарі не збережено. Піти зі сторінки без збереження?" />
+      </form>
+      <aside className="product-editor-side">
+        {gallery}
+        <fieldset className="catalog-fieldset" disabled={readOnly || disabled || busy}>
+          <section className="catalog-card" aria-labelledby="accounting-title">
+            <ProductSectionTitle id="accounting-title" icon={IconBarcode}>Облікові дані</ProductSectionTitle>
+            <div className="product-account-fields">
+              {accountingInputs.map(([key, label, limit]) => (
+                <TextInput key={key} form={formId} label={label} maxLength={limit} value={account[key] ?? ''}
+                  className={key === 'sku' ? 'product-sku' : undefined}
+                  error={errors[key]} onChange={event => {
+                    const value = event.currentTarget.value
+                    setAccount(current => ({ ...current, [key]: key === 'sku' || key === 'name' ? value : value || null }))
+                  }} />
+              ))}
+            </div>
+            <details className="product-system-id"><summary>Системний ідентифікатор</summary><code>{product.navkolo.navkoloId}</code></details>
+          </section>
+          <ProductEditorLabels product={product} labels={labels} value={labelIds} onChange={setLabelIds} error={errors.labelIds} />
+        </fieldset>
+        <div className="product-related-links">
+          {can(PermissionKeys.Analytics.ViewProducts) && <Anchor component={Link} to={'/sales/product-analytics?product=' + product.id}><IconChartHistogram size={15} />Аналітика товару</Anchor>}
+          <Anchor href={siteUrl('/product/' + product.slug)} target="_blank" rel="noopener"><IconExternalLink size={15} />Відкрити на сайті</Anchor>
+        </div>
+      </aside>
+    </div>
   )
 }

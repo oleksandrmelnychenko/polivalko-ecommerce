@@ -97,7 +97,12 @@ public sealed record UpdateProductRequest(
     string? SeoTitle,
     string? SeoDescription,
     IReadOnlyList<ProductAttributeDto>? Attributes,
-    IReadOnlyList<Guid>? LabelIds = null);
+    IReadOnlyList<Guid>? LabelIds = null,
+    ProductAccountingEdit? Accounting = null);
+
+public sealed record ProductAccountingFields(string Sku, string Name, string? GroupRef, string? VariantGroup, string? VariantLabel);
+
+public sealed record ProductAccountingEdit(ProductAccountingFields Expected, ProductAccountingFields Value);
 
 public sealed record ProductImageOrderItem(Guid Id, string? Alt);
 

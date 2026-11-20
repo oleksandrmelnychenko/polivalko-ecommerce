@@ -75,7 +75,7 @@ export function ProductPage() {
   return (
     <>
       <ProductsPage />
-      <CatalogEditorModal icon={IconPackage} title={name} size="wide" opened={opened} dirty={dirty}
+      <CatalogEditorModal icon={IconPackage} title={name} className="product-editor-modal" size="wide" opened={opened} dirty={dirty}
         closeOnEscape={!busy && !confirmArchive} closeOnClickOutside={!busy && !confirmArchive}
         onClose={() => { if (!busy) setOpened(false) }}
         onExitTransitionEnd={() => {
@@ -121,33 +121,29 @@ export function ProductPage() {
               Лише перегляд: недостатньо прав для редагування товару.
             </Alert>
           ) : null}
-          <div className="catalog-editor-grid">
-            <div className="catalog-editor-main">
-              <ProductEditorImages key={data.id} product={data} readOnly={readOnly}
-                disabled={saving || moving} onBusy={setPhotosBusy} onChange={product.setData} />
-              <ProductEditorForm
-                key={`${data.id}:${formKey}`}
-                formId={FORM_ID}
-                product={data}
-                categories={categories}
-                brands={brands}
-                labels={labels}
-                readOnly={readOnly}
-                disabled={photosBusy || moving}
-                onDirty={setDirty}
-                onBusy={setSaving}
-                onSaved={saved}
-              />
-            </div>
-            <ProductEditorNavkolo
-              key={data.id}
-              product={data}
-              canUpdatePrice={!data.isArchived && can(PermissionKeys.Catalog.RunImport)}
-              priceLoading={product.isFetching || busy}
-              onReload={product.reload}
-              onPriceSaved={product.setData}
-            />
-          </div>
+          <ProductEditorNavkolo
+            key={data.id}
+            product={data}
+            canUpdatePrice={!data.isArchived && can(PermissionKeys.Catalog.RunImport)}
+            priceLoading={product.isFetching || busy}
+            onReload={product.reload}
+            onPriceSaved={product.setData}
+          />
+          <ProductEditorForm
+            key={`${data.id}:${formKey}`}
+            formId={FORM_ID}
+            product={data}
+            categories={categories}
+            brands={brands}
+            labels={labels}
+            readOnly={readOnly}
+            disabled={photosBusy || moving}
+            onDirty={setDirty}
+            onBusy={setSaving}
+            onSaved={saved}
+            gallery={<ProductEditorImages product={data} readOnly={readOnly}
+              disabled={saving || moving} onBusy={setPhotosBusy} onChange={product.setData} />}
+          />
         </div>
       )}
       </CatalogEditorModal>

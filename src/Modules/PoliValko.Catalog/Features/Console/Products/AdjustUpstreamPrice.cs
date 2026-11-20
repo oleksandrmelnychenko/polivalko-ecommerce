@@ -19,7 +19,9 @@ public sealed record AdjustUpstreamPriceChange(
     [property: JsonRequired] decimal ExpectedPrice,
     [property: JsonRequired] decimal? ExpectedOldPrice,
     [property: JsonRequired] DateTimeOffset ExpectedPriceUpdatedAt,
-    [property: JsonRequired] decimal Price);
+    [property: JsonRequired] decimal Price,
+    bool ReplaceOldPrice = false,
+    decimal? OldPrice = null);
 
 public sealed record AdjustUpstreamPriceResult(int Updated);
 
@@ -50,6 +52,7 @@ internal static class AdjustUpstreamPrice
         if (changes.Any(change => change is null || change.ProductId == Guid.Empty ||
             string.IsNullOrWhiteSpace(change.ExpectedSku) || change.ExpectedSku.Length > 100 || change.ExpectedSku.Any(char.IsControl) ||
             change.ExpectedPriceUpdatedAt == default || !IsRetailPrice(change.ExpectedPrice) || !IsRetailPrice(change.Price) ||
+            (change.OldPrice is { } newOldPrice && (!change.ReplaceOldPrice || !IsRetailPrice(newOldPrice))) ||
             (change.ExpectedOldPrice is { } oldPrice && (oldPrice < -MaxPrice || oldPrice > MaxPrice || decimal.Round(oldPrice, 2) != oldPrice))))
         {
             return Invalid("Вкажіть товар, артикул, час оновлення, поточну, перекреслену й нову роздрібні ціни з точністю до копійок. Для відсутньої перекресленої ціни вкажіть null.");
@@ -82,7 +85,11 @@ internal static class AdjustUpstreamPrice
             {
                 conflicts.Add(new(change.ProductId, "price_changed"));
             }
-            else if (product.Price.OldAmount is { } compareAt && (compareAt > product.Price.Amount) != (compareAt > change.Price))
+            else if (product.IsArchived)
+            {
+                conflicts.Add(new(change.ProductId, "archived"));
+            }
+            else if (!change.ReplaceOldPrice && product.Price.OldAmount is { } compareAt && (compareAt > product.Price.Amount) != (compareAt > change.Price))
             {
                 conflicts.Add(new(change.ProductId, "compare_at_conflict"));
             }
@@ -99,9 +106,10 @@ internal static class AdjustUpstreamPrice
         {
             var product = products[change.ProductId];
             var before = product.Price.Amount;
-            if (ProductFieldWriter.SetPrice(product, change.Price, product.Price.OldAmount, now))
+            var previousCompareAt = product.Price.OldAmount;
+            if (ProductFieldWriter.SetPrice(product, change.Price, change.ReplaceOldPrice ? change.OldPrice : previousCompareAt, now))
             {
-                updated.Add(new(product.Id, product.Sku, product.NavkoloId, before, change.Price, product.Price.OldAmount));
+                updated.Add(new(product.Id, product.Sku, product.NavkoloId, before, change.Price, product.Price.OldAmount, previousCompareAt));
             }
         }
 
@@ -122,5 +130,5 @@ internal static class AdjustUpstreamPrice
 
     private static ValidationProblem Invalid(string message) => TypedResults.ValidationProblem(new Dictionary<string, string[]> { ["changes"] = [message] });
 
-    private sealed record PriceAuditChange(Guid ProductId, string Sku, string NavkoloId, decimal Before, decimal After, decimal? CompareAt);
+    private sealed record PriceAuditChange(Guid ProductId, string Sku, string NavkoloId, decimal Before, decimal After, decimal? CompareAt, decimal? PreviousCompareAt);
 }

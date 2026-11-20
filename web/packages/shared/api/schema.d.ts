@@ -3196,6 +3196,10 @@ export interface components {
             expectedPriceUpdatedAt: string;
             /** Format: double */
             price: number;
+            /** @default false */
+            replaceOldPrice: boolean;
+            /** Format: double */
+            oldPrice?: null | number;
         };
         AdjustUpstreamPriceConflict: {
             conflicts: components["schemas"]["AdjustUpstreamPriceConflictItem"][];
@@ -4837,6 +4841,17 @@ export interface components {
             detail?: null | string;
             instance?: null | string;
         };
+        ProductAccountingEdit: {
+            expected: components["schemas"]["ProductAccountingFields"];
+            value: components["schemas"]["ProductAccountingFields"];
+        };
+        ProductAccountingFields: {
+            sku: string;
+            name: string;
+            groupRef: null | string;
+            variantGroup: null | string;
+            variantLabel: null | string;
+        };
         ProductAnalyticsCoverageDto: {
             /** Format: date */
             firstSourceDay: null | string;
@@ -5611,6 +5626,7 @@ export interface components {
             seoDescription: null | string;
             attributes: null | components["schemas"]["ProductAttributeDto"][];
             labelIds?: null | string[];
+            accounting?: null | components["schemas"]["ProductAccountingEdit"];
         };
         UpdateProfileRequest: {
             name: null | string;

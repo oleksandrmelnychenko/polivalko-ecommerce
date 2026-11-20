@@ -12777,6 +12777,17 @@
           "price": {
             "type": "number",
             "format": "double"
+          },
+          "replaceOldPrice": {
+            "type": "boolean",
+            "default": false
+          },
+          "oldPrice": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
           }
         }
       },
@@ -19434,6 +19445,57 @@
           }
         }
       },
+      "ProductAccountingEdit": {
+        "required": [
+          "expected",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "expected": {
+            "$ref": "#/components/schemas/ProductAccountingFields"
+          },
+          "value": {
+            "$ref": "#/components/schemas/ProductAccountingFields"
+          }
+        }
+      },
+      "ProductAccountingFields": {
+        "required": [
+          "sku",
+          "name",
+          "groupRef",
+          "variantGroup",
+          "variantLabel"
+        ],
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "groupRef": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "variantGroup": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "variantLabel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "ProductAnalyticsCoverageDto": {
         "required": [
           "firstSourceDay",
@@ -22731,6 +22793,16 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "accounting": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ProductAccountingEdit"
+              }
+            ]
           }
         }
       },
