@@ -67,7 +67,7 @@ function PeriodProducts({ data, open }: { data: DocumentSales; open: (p: Product
         <div className="dash-product-meta">{p.sku && <span className="dash-product-sku">{p.sku}</span>}{p.abc && <span className="dash-abc">Група {p.abc}</span>}</div>
       </div>
       <div className="dash-rank-side">
-        <div className="dash-profit-chip" data-loss={p.profit != null && p.profit < 0 || undefined}>
+        <div className="dash-product-result" data-loss={p.profit != null && p.profit < 0 || undefined}>
           <span>{p.profit == null ? 'Виручка' : p.purchaseSources?.length ? 'Розрах. прибуток' : 'Валовий прибуток'}</span>
           <b className="app-money">{formatPrice(p.profit ?? p.net)}</b>
         </div>

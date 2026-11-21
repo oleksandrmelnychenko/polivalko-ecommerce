@@ -685,18 +685,19 @@ a.dash-queue-item:focus-visible {
 .dash-product-report details > summary { cursor: pointer; }
 .dash-product-report .dash-cost-sources a { margin-top: 4px; }
 .dash-product-report .dash-rank-actions .mantine-Button-root { border-radius: 999px; }
-.dash-profit-chip {
+.dash-product-result {
   display: grid;
   gap: 2px;
   max-width: 100%;
-  padding: 5px 11px;
-  border-radius: 12px;
-  background: var(--brand-ink);
-  color: white;
+  color: var(--mantine-color-gray-7);
   font-size: 11px;
 }
-.dash-profit-chip .app-money { color: inherit; }
-.dash-profit-chip[data-loss] { background: #fce9e8; color: #922f29; }
+.dash-product-result .app-money {
+  color: var(--brand-ink);
+  font-size: 18px;
+  font-weight: 600;
+}
+.dash-product-result[data-loss] .app-money { color: #922f29; }
 .dash-product-finances {
   grid-column: 2 / -1;
   display: grid;
