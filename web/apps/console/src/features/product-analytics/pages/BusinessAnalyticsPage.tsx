@@ -1,6 +1,6 @@
 import { useDebouncedCallback } from '@mantine/hooks'
 import { Button, Loader, SegmentedControl } from '@mantine/core'
-import { IconAdjustmentsHorizontal, IconChartPie, IconCoins, IconFileInvoice, IconReceiptRefund, IconRefresh, IconReportMoney, IconWallet } from '@tabler/icons-react'
+import { IconAdjustmentsHorizontal, IconBuildingWarehouse, IconCategory, IconChartLine, IconChartPie, IconCoins, IconFileInvoice, IconReceiptRefund, IconRefresh, IconReportMoney, IconWallet } from '@tabler/icons-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
@@ -170,7 +170,7 @@ export function BusinessAnalyticsPage() {
   }
   const assortment = tab === 'assortment'
   const reportFailed = report.status === 'error' || report.status === 'forbidden'
-  const r = assortment && reportFailed ? undefined : report.data
+  const r = reportFailed ? undefined : report.data
   const f = forecast.data
   const view = tab === 'forecast' ? f : r
   const query = tab === 'forecast' ? forecast : report
@@ -335,7 +335,7 @@ export function BusinessAnalyticsPage() {
                     })}
                   </div>
                   <AnalyticsCard
-                    title="Оборот і прибуток за місяцями"
+                    title={<MetricLabel icon={IconChartLine}>Оборот і прибуток за місяцями</MetricLabel>}
                     description="Зелений стовпчик показує вибраний період, сірий — ті самі дати попереднього року. Суми у гривнях."
                   >
                     <SegmentedControl
@@ -372,8 +372,8 @@ export function BusinessAnalyticsPage() {
                   </AnalyticsCard>
                   <div className="ba-pair">
                     {(['category', 'store'] as const).map((k, i) => (
-                      <AnalyticsCard key={k} title={i ? 'Оборот за складами' : 'Оборот за категоріями'}>
-                        <Grid headings={[i ? 'Склад' : 'Категорія', 'Оборот, грн', 'Документи']}>
+                      <AnalyticsCard key={k} title={<MetricLabel icon={i ? IconBuildingWarehouse : IconCategory}>{i ? 'Оборот за складами' : 'Оборот за категоріями'}</MetricLabel>}>
+                        {r.contributions[k].length === 0 ? <p role="status">За вибраний період продажів немає.</p> : <Grid headings={[i ? 'Склад' : 'Категорія', 'Оборот, грн', 'Документи']}>
                           {r.contributions[k].map((v) => (
                             <tr key={v.id}>
                               <td>
@@ -383,12 +383,12 @@ export function BusinessAnalyticsPage() {
                               <td>{v.documents}</td>
                             </tr>
                           ))}
-                        </Grid>
+                        </Grid>}
                       </AnalyticsCard>
                     ))}
                   </div>
                   <AnalyticsCard
-                    title="Історія та повнота документів"
+                    title={<MetricLabel icon={IconFileInvoice}>Історія та повнота документів</MetricLabel>}
                     description="Кількість місяців із документами за всю історію вибраних товарів і складів. Пропуски в завантаженні можуть впливати на оборот та прогноз."
                   >
                     <Grid headings={['Рік', 'Склад', 'Місяці з даними', 'Документи', 'З розбіжностями', 'Оборот, грн']}>
@@ -428,7 +428,7 @@ export function BusinessAnalyticsPage() {
                 />
               )}
               {tab !== 'forecast' && can(PermissionKeys.Accounting.View) && (
-                <AnalyticsCard title={assortment ? <MetricLabel icon={IconFileInvoice}>Звірка з документами</MetricLabel> : 'Звірка з документами'} actions={
+                <AnalyticsCard title={<MetricLabel icon={IconFileInvoice}>Звірка з документами</MetricLabel>} actions={
                   <Button variant="default" aria-expanded={showDocs} onClick={() => setShowDocs(!showDocs)}>
                     {showDocs ? 'Згорнути документи' : 'Показати документи'}
                   </Button>
@@ -436,8 +436,8 @@ export function BusinessAnalyticsPage() {
                   {showDocs &&
                     (docs.data ? (
                       <>
-                        {assortment && !docs.data.rows.length && <p role="status">Документів за цими фільтрами немає.</p>}
-                        {(!assortment || docs.data.rows.length > 0) && <Grid
+                        {!docs.data.rows.length && <p role="status">Документів за цими фільтрами немає.</p>}
+                        {docs.data.rows.length > 0 && <Grid
                           headings={[
                             'Документ',
                             'Дата',
