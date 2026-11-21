@@ -703,34 +703,39 @@ a.dash-queue-item:focus-visible {
 .dash-finance-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  align-items: center;
+  gap: 5px;
   margin: 0;
 }
 .dash-finance-chips > div {
   display: inline-flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 2px 5px;
+  align-items: center;
+  gap: 6px;
+  min-height: 25px;
   max-width: 100%;
   padding: 3px 9px;
+  border: 1px solid #dedee3;
   border-radius: 999px;
   background: var(--app-ground);
   color: var(--mantine-color-gray-8);
   font-size: 11px;
-  line-height: 1.5;
+  line-height: 16px;
 }
+.dash-finance-chips dt { min-width: 0; }
 .dash-finance-chips dd {
+  min-width: 0;
   margin: 0;
   font-family: var(--font-mono);
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
-.dash-finance-chips [data-margin=positive] { background: #e8f5ee; color: #17583a; }
-.dash-finance-chips [data-margin=negative] { background: #fce9e8; color: #922f29; }
-.dash-finance-chips .dash-revenue-chip { background: #edf3fb; color: #304f75; }
+.dash-finance-chips [data-margin=positive] { background: #e8f5ee; border-color: #badcca; color: #17583a; }
+.dash-finance-chips [data-margin=negative] { background: #fce9e8; border-color: #ecc4c0; color: #922f29; }
+.dash-finance-chips .dash-revenue-chip { background: #edf3fb; border-color: #cbdbee; color: #304f75; }
 .dash-finance-chips .dash-turnover-share-chip {
   background: #fcfaff;
-  box-shadow: inset 0 0 0 1px #dcd3ed;
+  border-color: #dcd3ed;
   color: #59427a;
 }
 .dash-turnover-share-chip dt { display: inline-flex; align-items: center; gap: 4px; }
