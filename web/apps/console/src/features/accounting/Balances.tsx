@@ -1,5 +1,9 @@
-import { Alert, Button, Group, Modal, Pagination, Select, Stack, Table, Text, TextInput, Title } from '@mantine/core'
+import { Alert, Button, Group, Pagination, Select, Stack, Table, Text, TextInput } from '@mantine/core'
 import type { components } from '@polivalko/shared/api/schema'
+import { IconArrowsExchange, IconBuildingStore, IconFileCheck, IconLink, IconSearch, IconWallet } from '@tabler/icons-react'
+import { AppEditorModal } from '@/shared/ui/AppEditorModal'
+import { MetricLabel } from '@/shared/ui/MetricCard'
+import './balances.css'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useState } from 'react'
 import { usePermissions } from '@/features/auth'
@@ -15,7 +19,7 @@ const columns = ['Контрагент', 'Аналітичний рахунок'
 const amounts = ['opening', 'incoming', 'outgoing', 'closing', 'difference'] as const
 function Amounts({ row }: { row: Balance }) {
   return amounts.map((k, i) => (
-    <Table.Td key={k} className="register-money">
+    <Table.Td key={k} data-label={columns[i + 2]} className="register-money">
       {k === 'difference'
         ? money(row[k])
         : (row.sourceAmounts[i]?.split('\n').map((line, n) => <div key={n}>{line}</div>) ?? '—')}
@@ -29,10 +33,9 @@ export function Balances() {
     params.get('view') === 'reports' ||
     (!params.has('view') && ['report', 'position', 'q', 'mode'].some((k) => params.has(k)))
   return (
-    <Stack>
+    <Stack gap="sm" className="ledger-workspace balance-workspace">
       <PageHeader title="Взаєморозрахунки" />
-      <Title order={2}>Взаєморозрахунки</Title>
-      <Group gap="xs">
+      <Group wrap="nowrap" gap={2} role="group" aria-label="Режим взаєморозрахунків" className="balance-modes">
         <Button
           variant={history ? 'default' : 'filled'}
           aria-pressed={!history}
@@ -69,13 +72,11 @@ function CurrentBalances() {
     setParams(next, { replace: true })
   }
   return (
-    <Stack>
-      <Text size="sm" c="dimmed">
-        До сплати й до отримання за початковими боргами та проведеними в консолі накладними з урахуванням оплат.
-      </Text>
-      <Group align="end">
+    <Stack gap="sm">
+      <Group align="end" className="ledger-card ledger-filters">
         <TextInput
           label="Контрагент"
+          type="search" leftSection={<IconSearch size={16} />}
           placeholder="Назва або код"
           maxLength={160}
           value={params.get('q') ?? ''}
@@ -102,39 +103,45 @@ function CurrentBalances() {
           onChange={(v) => filter('direction', v)}
         />
       </Group>
-      {query.data ? (
-        query.data.total > 0 ? (
-          <>
-            <Grid columns={['Контрагент', 'Організація', 'До отримання', 'До сплати']}>
-              {query.data.items.map((r) => (
-                <Table.Tr key={[r.partnerId, r.orgId, r.currency].join(':')}>
-                  <Table.Td>
-                    <Link to={'/accounting/partners/' + r.partnerId}>{r.partner}</Link>
-                  </Table.Td>
-                  <Table.Td>{r.organization}</Table.Td>
-                  <Table.Td>{money(r.receivable, r.currency)}</Table.Td>
-                  <Table.Td>{money(r.payable, r.currency)}</Table.Td>
-                </Table.Tr>
-              ))}
-            </Grid>
-            {query.data.total > 50 && (
-              <Pagination
-                value={page}
-                total={Math.ceil(query.data.total / 50)}
-                onChange={(p) => filter('page', String(p))}
-              />
-            )}
-          </>
+      <section className="ledger-card balance-list">
+        <header className="ledger-card-head">
+          <h2><MetricLabel icon={IconWallet}>Борги за контрагентами</MetricLabel></h2>
+          {query.data && <span className="ledger-count">Позицій · {query.data.total}</span>}
+        </header>
+        {query.data ? (
+          query.data.total > 0 ? (
+            <>
+              <Grid columns={['Контрагент', 'Організація', 'До отримання', 'До сплати']}>
+                {query.data.items.map((r) => (
+                  <Table.Tr key={[r.partnerId, r.orgId, r.currency].join(':')}>
+                    <Table.Td>
+                      <Link to={'/accounting/partners/' + r.partnerId}>{r.partner}</Link>
+                    </Table.Td>
+                    <Table.Td data-label="Організація">{r.organization}</Table.Td>
+                    <Table.Td data-label="До отримання" className="register-money">{money(r.receivable, r.currency)}</Table.Td>
+                    <Table.Td data-label="До сплати" className="register-money">{money(r.payable, r.currency)}</Table.Td>
+                  </Table.Tr>
+                ))}
+              </Grid>
+              {query.data.total > 50 && (
+                <Pagination
+                  value={page}
+                  total={Math.ceil(query.data.total / 50)}
+                  onChange={(p) => filter('page', String(p))}
+                />
+              )}
+            </>
+          ) : (
+            <PageState
+              kind="empty"
+              title="Відкритих боргів за цими умовами немає"
+              description="Початковий борг з’являється після підтвердження рядка у звірці перенесення."
+            />
+          )
         ) : (
-          <PageState
-            kind="empty"
-            title="Відкритих боргів за цими умовами немає"
-            description="Початковий борг з’являється після підтвердження рядка у звірці перенесення."
-          />
-        )
-      ) : (
-        <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
-      )}
+          <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
+        )}
+      </section>
     </Stack>
   )
 }
@@ -183,9 +190,9 @@ function BalanceReports() {
   )
   const footer = data.data?.find((r) => r.footer)
   return (
-    <Stack>
+    <Stack gap="sm">
       {reports.data && reports.data.length > 0 && (
-        <Group align="end">
+        <Group align="end" className="ledger-card ledger-filters">
           <Select
             label="Звіт на дату"
             value={id}
@@ -194,6 +201,7 @@ function BalanceReports() {
           />
           <TextInput
             label="Контрагент"
+            type="search" leftSection={<IconSearch size={16} />}
             value={params.get('q') || ''}
             placeholder="Пошук за назвою"
             onChange={(e) => change('q', e.currentTarget.value)}
@@ -232,18 +240,15 @@ function BalanceReports() {
         />
       ) : (
         <>
-          <Text size="sm" c="dimmed">
-            У таблиці збережено всі суми й позначення валют джерела. Для рядків із позначкою «грн.» розбіжність дорівнює
-            залишку зі звіту мінус розрахований залишок (на початок + розхід − прихід).
-          </Text>
           {footer && (
-            <Grid columns={columns}>
-              <Table.Tr>
-                <Table.Td>Підсумок усього звіту</Table.Td>
-                <Table.Td>—</Table.Td>
-                <Amounts row={footer} />
-              </Table.Tr>
-            </Grid>
+            <section className="ledger-card balance-summary">
+              <header className="ledger-card-head"><h2><MetricLabel icon={IconArrowsExchange}>Підсумок усього звіту</MetricLabel></h2></header>
+              <dl>{amounts.map((key, index) => (
+                <div key={key}><dt>{columns[index + 2]}</dt>
+                  <dd>{key === 'difference' ? money(footer.difference) : footer.sourceAmounts[index] || '—'}</dd>
+                </div>
+              ))}</dl>
+            </section>
           )}
           {report?.openingReportId && (
             <Text size="sm">
@@ -256,57 +261,64 @@ function BalanceReports() {
               )}
             </Text>
           )}
-          <Group>
-            <Text size="sm">Рядків за фільтром · {selected.length}</Text>
-            {position && (
-              <Button size="compact-xs" variant="subtle" onClick={() => change('position', '')}>
-                Показати весь звіт
-              </Button>
+          <section className="ledger-card balance-list">
+            <header className="ledger-card-head">
+              <h2><MetricLabel icon={IconFileCheck}>Рядки звіту</MetricLabel></h2>
+              <Group gap="xs"><span className="ledger-count">Рядків · {selected.length}</span>
+              {position && (
+                <Button size="compact-xs" variant="subtle" onClick={() => change('position', '')}>
+                  Показати весь звіт
+                </Button>
+              )}
+              </Group>
+            </header>
+            {selected.length ? (
+              <Grid columns={columns}>
+                {selected.map((r) => (
+                  <Table.Tr key={r.position}>
+                    <Table.Td>
+                      {r.linkedPartner ? (
+                        <Link to={'/accounting/partners/' + r.linkedPartner}>{r.partnerTitle}</Link>
+                      ) : (
+                        r.partnerTitle || 'Без назви'
+                      )}
+                      {!r.linkedPartner && (
+                        <Text c="dimmed" size="xs">
+                          {r.candidateCount === 1
+                            ? 'Один збіг за назвою'
+                            : r.candidateCount > 1
+                              ? 'Кілька збігів за назвою'
+                              : 'Без зв’язку з довідником'}
+                        </Text>
+                      )}
+                      {r.headingPosition && !r.headingConfirmed && can(PermissionKeys.Accounting.Edit) && (
+                        <Button size="compact-xs" variant="default" onClick={() => setLinking(r)}>
+                          {r.linkedPartner ? 'Змінити прив’язку' : 'Прив’язати'}
+                        </Button>
+                      )}
+                      {r.openingId && (
+                        <Text size="xs" c="teal">
+                          Початковий борг підтверджено
+                        </Text>
+                      )}
+                      {eligible(r) && can(PermissionKeys.Accounting.BalanceOpening) && (
+                        <Button size="compact-xs" variant="default" onClick={() => setConfirming(r)}>
+                          Підтвердити борг
+                        </Button>
+                      )}
+                    </Table.Td>
+                    <Table.Td data-label="Аналітичний рахунок">{r.account || '—'}</Table.Td>
+                    <Amounts row={r} />
+                  </Table.Tr>
+                ))}
+              </Grid>
+            ) : (
+              <PageState kind="empty" title="Рядків за цими умовами немає" />
             )}
-          </Group>
-          {selected.length ? (
-            <Grid columns={columns}>
-              {selected.map((r) => (
-                <Table.Tr key={r.position}>
-                  <Table.Td>
-                    {r.linkedPartner ? (
-                      <Link to={'/accounting/partners/' + r.linkedPartner}>{r.partnerTitle}</Link>
-                    ) : (
-                      r.partnerTitle || 'Без назви'
-                    )}
-                    {!r.linkedPartner && (
-                      <Text c="dimmed" size="xs">
-                        {r.candidateCount === 1
-                          ? 'Один збіг за назвою'
-                          : r.candidateCount > 1
-                            ? 'Кілька збігів за назвою'
-                            : 'Без зв’язку з довідником'}
-                      </Text>
-                    )}
-                    {r.headingPosition && !r.headingConfirmed && can(PermissionKeys.Accounting.Edit) && (
-                      <Button size="compact-xs" variant="subtle" onClick={() => setLinking(r)}>
-                        {r.linkedPartner ? 'Змінити прив’язку' : 'Прив’язати'}
-                      </Button>
-                    )}
-                    {r.openingId && (
-                      <Text size="xs" c="teal">
-                        Початковий борг підтверджено
-                      </Text>
-                    )}
-                    {eligible(r) && can(PermissionKeys.Accounting.BalanceOpening) && (
-                      <Button size="compact-xs" variant="light" onClick={() => setConfirming(r)}>
-                        Підтвердити борг
-                      </Button>
-                    )}
-                  </Table.Td>
-                  <Table.Td>{r.account || '—'}</Table.Td>
-                  <Amounts row={r} />
-                </Table.Tr>
-              ))}
-            </Grid>
-          ) : (
-            <PageState kind="empty" title="Рядків за цими умовами немає" />
-          )}
+            <details className="balance-explanation"><summary>Як визначається розбіжність</summary>
+              Для рядків у гривнях порівнюємо залишок зі звіту з розрахунком «на початок + розхід − прихід». Суми відображено у валютах джерела.
+            </details>
+          </section>
         </>
       )}
       {confirming && report && (
@@ -347,6 +359,7 @@ function LinkPartner({
   close: () => void
   saved: () => void
 }) {
+  const [dialog, setDialog] = useState<'open' | 'closed' | 'saved'>('open')
   const [term, setTerm] = useState(row.partnerTitle || '')
   const [choice, setChoice] = useState<string | null>(row.linkedPartner || row.candidate)
   const [busy, setBusy] = useState(false)
@@ -367,7 +380,7 @@ function LinkPartner({
           }),
         }),
       )
-      if (result.response.ok) saved()
+      if (result.response.ok) setDialog('saved')
       else
         setError(
           result.response.status === 409
@@ -381,9 +394,15 @@ function LinkPartner({
     }
   }
   return (
-    <Modal opened onClose={close} title="Прив’язка до контрагента">
-      <Stack>
-        <Text>{row.partnerTitle}</Text>
+    <AppEditorModal opened={dialog === 'open'} className="ledger-editor balance-editor"
+      onClose={() => { if (!busy) setDialog('closed') }} onExitTransitionEnd={dialog === 'saved' ? saved : close}
+      title={<MetricLabel icon={IconLink}>Прив’язка до контрагента</MetricLabel>}
+      footer={<Group gap="xs">
+        <Button variant="default" disabled={busy} onClick={() => setDialog('closed')}>Скасувати</Button>
+        <Button disabled={!choice} loading={busy} onClick={confirm}>Зберегти прив’язку</Button>
+      </Group>}>
+      <section className="ledger-form-block">
+        <MetricLabel icon={IconBuildingStore}>{row.partnerTitle || 'Без назви'}</MetricLabel>
         <TextInput
           label="Пошук у довіднику"
           value={term}
@@ -399,10 +418,8 @@ function LinkPartner({
           data={(query.data?.items ?? []).map((p) => ({ value: p.id, label: p.title + ' · ' + p.sourceId }))}
         />
         {error && <Alert color="red">{error}</Alert>}
-        <Button disabled={!choice} loading={busy} onClick={confirm}>
-          Зберегти прив’язку
-        </Button>
-      </Stack>
-    </Modal>
+        {query.status === 'error' && <Button variant="default" onClick={query.reload}>Повторити пошук</Button>}
+      </section>
+    </AppEditorModal>
   )
 }

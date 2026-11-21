@@ -1,0 +1,44 @@
+.balance-modes {
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 4px;
+  border: 1px solid var(--app-line);
+  border-radius: 999px;
+  background: white;
+}
+.balance-modes .mantine-Button-root { height: 34px; padding-inline: clamp(8px, 2vw, 16px); border: 0; }
+.balance-modes button[aria-pressed=false] { color: var(--mantine-color-gray-7); }
+.balance-summary dl {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 4px 16px 16px;
+}
+.balance-summary dt, .balance-value span { color: var(--mantine-color-gray-7); font-size: 13px; }
+.balance-summary dd, .balance-value strong {
+  margin: 4px 0 0;
+  font: 600 clamp(16px, 1.4vw, 21px)/1.35 var(--font-mono);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.balance-list .register-scroll td:first-child { font-weight: 550; }
+.balance-list .register-scroll td:first-child > :is(button,p) { display: block; margin-top: 4px; }
+.balance-list .register-scroll th:nth-child(n+3) { text-align: end; }
+.balance-explanation { padding: 12px 16px; font-size: 13px; color: var(--mantine-color-gray-7); }
+.balance-explanation summary { cursor: pointer; }
+.balance-explanation[open] summary { margin-bottom: 6px; }
+.balance-value { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px; border-top: 1px dashed var(--app-line); padding-top: 8px; }
+.balance-editor .mantine-Checkbox-label { font-size: 13px; }
+@media (max-width: 700px) {
+  .balance-workspace .ledger-filters { padding: 12px; gap: 8px; }
+  .balance-workspace .ledger-filters > :first-child { flex-basis: 100%; }
+  .balance-summary dl { grid-template-columns: repeat(2, minmax(0,1fr)); padding: 4px 12px 12px; }
+  .balance-list .register-scroll table, .balance-list tbody { display: block; }
+  .balance-list thead { position: absolute; clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; }
+  .balance-list tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px 12px; padding: 12px; }
+  .balance-list tbody tr + tr { border-top: 1px dashed var(--app-line); }
+  .balance-list .register-scroll td { display: block; padding: 0; border: 0; text-align: start; white-space: normal; overflow-wrap: anywhere; }
+  .balance-list td:nth-child(-n+2) { grid-column: 1 / -1; }
+  .balance-list td[data-label]::before { content: attr(data-label); display: block; font: 12px/1.5 var(--font-sans); color: var(--mantine-color-gray-7); }
+}

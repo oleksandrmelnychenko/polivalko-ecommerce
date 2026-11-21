@@ -1,5 +1,8 @@
 import { Alert, Button, Checkbox, Group, Modal, Select, Stack, Table, Text, Title } from '@mantine/core'
 import { useState } from 'react'
+import { IconBuildingStore, IconClipboardCheck, IconScale } from '@tabler/icons-react'
+import { MetricLabel } from '@/shared/ui/MetricCard'
+import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { Link } from 'react-router-dom'
 import type { components } from '@polivalko/shared/api/schema'
 import { usePermissions } from '@/features/auth'
@@ -28,6 +31,7 @@ export function OpeningConfirmation({
   close: () => void
   saved: () => void
 }) {
+  const [dialog, setDialog] = useState<'open' | 'closed' | 'saved'>('open')
   const refs = useRegister<{ organizations: Ref[] }>('references')
   const [org, setOrg] = useState<string | null>(null)
   const [direction, setDirection] = useState<string | null>(null)
@@ -45,7 +49,7 @@ export function OpeningConfirmation({
         direction,
         closing: row.closing,
       })
-      if (result.response.ok) saved()
+      if (result.response.ok) setDialog('saved')
       else setError(problemMessage(result.error, 'Не вдалося підтвердити борг.'))
     } catch {
       setError('Немає зв’язку з сервером. Повторіть підтвердження.')
@@ -54,56 +58,53 @@ export function OpeningConfirmation({
     }
   }
   return (
-    <Modal
-      opened
-      onClose={() => {
-        if (!busy) close()
-      }}
-      title="Підтвердження початкового боргу"
-    >
-      <Stack>
-        <div>
-          <Title order={4}>{row.partnerTitle}</Title>
-          <Text>
-            {row.account} · {report.day} · рядок {row.position}
-          </Text>
-          <Text size="sm" c="dimmed">
-            {report.sourceId}
-          </Text>
-        </div>
-        <Text>
-          Залишок у звіті · <b>{money(row.closing, 'UAH')}</b>
-        </Text>
-        <Select
-          label="За якою організацією обліковувати борг"
-          searchable
-          value={org}
-          onChange={(v) => {
-            setOrg(v)
-            setChecked(false)
-          }}
-          data={(refs.data?.organizations ?? []).map((r) => ({ value: r.id, label: r.title }))}
-        />
-        {refs.status === 'error' && (
-          <Button variant="subtle" onClick={refs.reload}>
-            Завантажити організації ще раз
-          </Button>
-        )}
-        <Select
-          label="Хто кому винен"
-          value={direction}
-          onChange={(v) => {
-            setDirection(v)
-            setChecked(false)
-          }}
-          data={directions}
-        />
-        {direction && (
-          <Text>
-            {directions.find((d) => d.value === direction)?.label} ·{' '}
-            <b>{money(row.closing?.replace(/^[-+]/, '') ?? null, 'UAH')}</b>
-          </Text>
-        )}
+    <AppEditorModal opened={dialog === 'open'} className="ledger-editor balance-editor"
+      onClose={() => { if (!busy) setDialog('closed') }} onExitTransitionEnd={dialog === 'saved' ? saved : close}
+      title={<MetricLabel icon={IconClipboardCheck}>Підтвердження початкового боргу</MetricLabel>}
+      footer={<Group gap="xs">
+        <Button variant="default" disabled={busy} onClick={() => setDialog('closed')}>Скасувати</Button>
+        <Button loading={busy} disabled={!checked || !org || !direction} onClick={confirm}>Зарахувати борг</Button>
+      </Group>}>
+      <Stack gap="sm">
+        <section className="ledger-form-block">
+          <MetricLabel icon={IconBuildingStore}>{row.partnerTitle}</MetricLabel>
+          <Text size="sm" c="dimmed">{row.account} · {report.day} · рядок {row.position}</Text>
+          <Text size="xs" c="dimmed">{report.sourceId}</Text>
+          <div className="balance-value"><span>Залишок у звіті</span><strong>{money(row.closing, 'UAH')}</strong></div>
+        </section>
+        <section className="ledger-form-block">
+          <MetricLabel icon={IconScale}>Облік боргу</MetricLabel>
+          <Select
+            label="Організація" placeholder="Оберіть організацію"
+            searchable
+            value={org}
+            onChange={(v) => {
+              setOrg(v)
+              setChecked(false)
+            }}
+            data={(refs.data?.organizations ?? []).map((r) => ({ value: r.id, label: r.title }))}
+          />
+          {refs.status === 'error' && (
+            <Button variant="subtle" onClick={refs.reload}>
+              Завантажити організації ще раз
+            </Button>
+          )}
+          <Select
+            label="Хто кому винен" placeholder="Оберіть напрям"
+            value={direction}
+            onChange={(v) => {
+              setDirection(v)
+              setChecked(false)
+            }}
+            data={directions}
+          />
+          {direction && (
+            <Text>
+              {directions.find((d) => d.value === direction)?.label} ·{' '}
+              <b>{money(row.closing?.replace(/^[-+]/, '') ?? null, 'UAH')}</b>
+            </Text>
+          )}
+        </section>
         {!report.openingReportId && (
           <Alert color="blue">Перший підтверджений рядок закріпить цей звіт як джерело початкових боргів.</Alert>
         )}
@@ -113,16 +114,8 @@ export function OpeningConfirmation({
           label="Звірено контрагента, організацію, напрям і суму. Цей борг не включений до нових накладних консолі."
         />
         {error && <Alert color="red">{error}</Alert>}
-        <Group justify="end">
-          <Button variant="default" disabled={busy} onClick={close}>
-            Закрити
-          </Button>
-          <Button loading={busy} disabled={!checked || !org || !direction} onClick={confirm}>
-            Зарахувати борг
-          </Button>
-        </Group>
       </Stack>
-    </Modal>
+    </AppEditorModal>
   )
 }
 
