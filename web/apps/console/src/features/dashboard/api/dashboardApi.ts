@@ -33,6 +33,14 @@ export const getProductProfit = (params: URLSearchParams) =>
 export const getDocumentSales = (days: number) =>
   readBusiness<DocumentSales>('documents', 'analysis=dashboard&days=' + days)
 
+export type SupplierDelivery = {
+  id: string; number: string | null; day: string; eta: string | null; unit: string
+  ordered: number; received: number | null; remaining: number | null
+  state: 'confirmed' | 'shipped' | 'review'
+  timing: 'other-store' | 'units' | 'review' | 'undated' | 'overdue' | 'later' | 'within'
+}
+export type SupplierSupply = { confirmed: number; inTransit: number; within: number; orders: SupplierDelivery[] }
+
 type StockTurnoverReport = {
   start: string
   through: string
@@ -40,6 +48,9 @@ type StockTurnoverReport = {
   threshold: number
   coverDays: number
   buyCount: number
+  supplierSource: { documents: number; latest: string | null }
+  withOrders: number
+  withDatedSupply: number
   total: number
   lowCount: number
   outCount: number
@@ -63,9 +74,12 @@ type StockTurnoverReport = {
     stockDays: number | null
     margin: number | null
     need: number | null
+    needBeforeIncoming: number | null
+    minimumNeed: number | null
+    supply: SupplierSupply
   } & (
     { purchaseStatus: 'buy'; buyQuantity: number; priorityProfit: number } |
-    { purchaseStatus: 'covered' | 'no-demand' | 'sales' | 'units' | 'price' | 'cost' | 'reserves'; buyQuantity: null; priorityProfit: null }
+    { purchaseStatus: 'covered' | 'incoming' | 'supply-review' | 'no-demand' | 'sales' | 'units' | 'price' | 'cost' | 'reserves'; buyQuantity: null; priorityProfit: null }
   ))[]
 }
 

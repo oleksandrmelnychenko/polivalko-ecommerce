@@ -6,19 +6,21 @@ import { Link } from 'react-router-dom'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { problemMessage } from '@/shared/api/problem'
 import { onConsoleEvent } from '@/shared/lib/events'
-import { dateRange, formatPrice } from '@/shared/lib/salesFormat'
+import { dateLabel, dateRange, formatPrice } from '@/shared/lib/salesFormat'
 import { PageState } from '@/shared/ui/PageState'
 import { TableChip } from '@/shared/ui/TableChip'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { getStockTurnover } from '../api/dashboardApi'
 import { numberFormat } from '../lib/insights'
 import { DashboardCard } from './DashboardCard'
+import { SupplierOrders } from './SupplierOrders'
 
 const percent = new Intl.NumberFormat('uk-UA', { style: 'percent', maximumFractionDigits: 2 })
 const decisionText = {
-  covered: 'Запасу вистачає', 'no-demand': 'Немає додатних продажів після повернень',
+  covered: 'Докупити 0 · запасу вистачає', 'no-demand': 'Докупити 0 · немає додатних продажів після повернень',
   sales: 'Бракує підтверджених продажів', units: 'Звірити одиниці продажу й залишку',
   price: 'Перевірити ціну й рентабельність', cost: 'Уточнити собівартість', reserves: 'Звірити непокриті резерви',
+  incoming: 'Докупити 0 · потребу покриває поставка', 'supply-review': 'Уточнити поставку перед закупівлею',
 }
 
 function formatShare(value: number) {
@@ -48,6 +50,9 @@ export function StockTurnover({ days }: { days: number }) {
         <div className="dash-product-summary-value"><strong>{report.net != null ? formatPrice(report.net) : 'Оборот невідомий'}</strong>
           {report.share != null && <span className="dash-share" title={'Частка від загального обороту ' + formatPrice(report.periodNet)}>{formatShare(report.share)} обороту</span>}</div>
         <small>{dateRange(report.start, report.through)} · загалом {formatPrice(report.periodNet)}</small>
+        <small>Активних документів замовлення постачальникам · {report.supplierSource.documents}
+          {report.supplierSource.latest && ' · найновіший від ' + dateLabel(report.supplierSource.latest)}.
+          {' '}Товарів із підтвердженим надходженням на {report.coverDays} дн. · {report.withDatedSupply}.</small>
         {report.periodNet <= 0 && <small>Частка доступна за додатного загального обороту.</small>}
         {report.unknownCount > 0 && <small>Товарів без підтвердженого обороту · {numberFormat.format(report.unknownCount)}. У підсумку враховано лише підтверджені суми.</small>}
       </div>}
@@ -58,6 +63,7 @@ export function StockTurnover({ days }: { days: number }) {
           data={[
             { value: 'all', label: report ? `Усі · ${numberFormat.format(report.total)}` : 'Усі' },
             { value: 'buy', label: report ? `До закупівлі · ${numberFormat.format(report.buyCount)}` : 'До закупівлі' },
+            { value: 'ordered', label: report ? `Із замовленнями · ${numberFormat.format(report.withOrders)}` : 'Із замовленнями' },
             { value: 'out', label: report ? `Немає · ${numberFormat.format(report.outCount)}` : 'Немає' },
             { value: 'low', label: report ? `Мало · ${numberFormat.format(report.lowCount)}` : 'Мало' },
           ]}
@@ -73,7 +79,7 @@ export function StockTurnover({ days }: { days: number }) {
         <details className="dash-report-note">
           <summary>Позицій до закупівлі · {numberFormat.format(report.buyCount)}. Як розраховано</summary>
           <p>Темп — продана кількість за {days} днів після повернень, поділена на {days}. Від потреби на {report.coverDays} днів віднімаємо доступний залишок після резервів. Штучні товари округлюємо вгору до цілої штуки.</p>
-          <p>Першими в черзі йдуть товари з найбільшим очікуваним валовим прибутком від поповнення. Для цього беремо оборот товару за період, його маржу й кількість днів, на які бракує запасу. Розрахунок припускає той самий темп продажів. Поставки в дорозі слід врахувати окремо.</p>
+          <p>Поставку враховуємо з планової дати, після вирахування вже прийнятої кількості. Для товару з прив’язаним складом враховуємо його склад та організацію, для решти — замовлення бізнесу. Якщо строк або стан потребує уточнення, показуємо діапазон потреби. Чергу сортуємо за очікуваним валовим прибутком від кількості, якої бракуватиме навіть у разі надходження цих замовлень.</p>
         </details>
         <div className="dash-product-count" aria-live="polite"><span>Показано <b>{report.rows.length ? numberFormat.format((report.page - 1) * report.pageSize + 1) + '–' + numberFormat.format((report.page - 1) * report.pageSize + report.rows.length) : '0'} із {numberFormat.format(report.matches)}</b></span>
           <span>До {numberFormat.format(report.threshold)} од. після резервів</span></div>
@@ -96,11 +102,16 @@ export function StockTurnover({ days }: { days: number }) {
                   <dt>Маржа</dt><dd>{item.margin == null ? 'невідома' : formatShare(item.margin)}</dd>
                 </div>}
               </dl>
+              <SupplierOrders supply={item.supply} unit={item.unit} />
+              {item.supply.within > 0 && <span className="app-cell-sub">Надійде в межах плану · {numberFormat.format(item.supply.within)} {item.unit}
+                {item.needBeforeIncoming != null && ' · потреба до поставок ' + numberFormat.format(item.needBeforeIncoming) + ' ' + (item.unit || '')}</span>}
               {item.purchaseStatus === 'buy'
-                ? <><strong>Закупити {numberFormat.format(item.buyQuantity)} {item.unit}</strong>
+                ? <><strong>Докупити {numberFormat.format(item.buyQuantity)} {item.unit}</strong>
                     <span className="app-cell-sub">Очікуваний валовий прибуток від поповнення · {formatPrice(item.priorityProfit)}</span></>
                 : <><span className="app-cell-sub">{decisionText[item.purchaseStatus]}</span>
-                    {item.need != null && item.need > 0 && <span className="app-cell-sub">Розрахункова потреба · {numberFormat.format(item.need)} {item.unit || 'од.'}</span>}</>}
+                    {item.need != null && item.need > 0 && item.minimumNeed === item.need && <span className="app-cell-sub">Розрахункова потреба · {numberFormat.format(item.need)} {item.unit || 'од.'}</span>}</>}
+              {item.minimumNeed != null && item.need != null && item.minimumNeed < item.need && <span className="app-cell-sub">
+                Потреба · {numberFormat.format(item.minimumNeed)}–{numberFormat.format(item.need)} {item.unit || 'од.'} залежно від підтвердження поставки.</span>}
             </div>
             <div className="dash-rank-side">
               {item.net == null ? <span className="app-cell-sub">Оборот невідомий</span> : <div className="dash-product-result">
