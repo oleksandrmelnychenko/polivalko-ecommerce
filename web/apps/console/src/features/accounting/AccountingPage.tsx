@@ -1,5 +1,7 @@
-import { Button, Group, Pagination, Select, Stack, Table, Text, TextInput } from '@mantine/core'
-import { IconArrowLeft, IconBox, IconFileInvoice, IconFiles, IconLink, IconPlus } from '@tabler/icons-react'
+import { Button, Select, Stack, Table, Text, TextInput } from '@mantine/core'
+import { IconArrowLeft, IconBox, IconFileInvoice, IconFiles, IconLink, IconPlus, IconSearch } from '@tabler/icons-react'
+import { FilterBar } from '@/shared/ui/FilterBar'
+import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { useState } from 'react'
@@ -26,31 +28,41 @@ import {
 } from './api'
 import './registers.css'
 
+function PartnerLink({ doc }: { doc: Doc }) {
+  return doc.partnerId
+    ? <Link to={'/accounting/partners/' + doc.partnerId}>{doc.partnerTitle || 'Контрагент'}</Link>
+    : <>{doc.partnerTitle || '—'}</>
+}
+
+function DocumentStatus({ doc }: { doc: Doc }) {
+  return <span className="doc-status" data-status={doc.status}>{statusNames[doc.status ?? ''] ?? doc.status ?? '—'}</span>
+}
+
 function DocTable({ rows }: { rows: Doc[] }) {
+  const location = useLocation()
+  const returnState = ['/accounting/documents', '/accounting/incoming', '/accounting/outgoing'].includes(location.pathname)
+    ? { registerPath: location.pathname, registerSearch: location.search }
+    : location.state
   return (
-    <Grid columns={['Документ', 'Дата', 'Контрагент', 'Організація', 'Стан документа', 'Сума', 'Оплата']}>
-      {rows.map((d) => (
-        <Table.Tr key={d.id}>
-          <Table.Td>
-            <Link to={'/accounting/documents/' + d.id}>
-              {kindName(d)} № {d.number || d.sourceId}
-            </Link>
-          </Table.Td>
-          <Table.Td className="ledger-number">{d.day ?? '—'}</Table.Td>
-          <Table.Td>
-            {d.partnerId ? (
-              <Link to={'/accounting/partners/' + d.partnerId}>{d.partnerTitle || 'Контрагент'}</Link>
-            ) : (
-              d.partnerTitle || '—'
-            )}
-          </Table.Td>
-          <Table.Td>{d.organization || '—'}</Table.Td>
-          <Table.Td>{statusNames[d.status ?? ''] ?? d.status ?? '—'}</Table.Td>
-          <Table.Td className="register-money">{money(d.amount, d.currency)}</Table.Td>
-          <Table.Td>{d.paymentStatus ? paymentNames[d.paymentStatus] : '—'}</Table.Td>
-        </Table.Tr>
-      ))}
-    </Grid>
+    <div className="doc-list">
+      <Grid columns={['Документ', 'Контрагент', 'Дата', 'Стан документа', 'Сума', 'Оплата']}>
+        {rows.map((d) => (
+          <Table.Tr key={d.id}>
+            <Table.Td className="doc-name">
+              <Link to={'/accounting/documents/' + d.id} state={returnState}>
+                {kindName(d) || 'Документ'} № <span>{d.number || d.sourceId}</span>
+              </Link>
+              {d.organization && <small>{d.organization}</small>}
+            </Table.Td>
+            <Table.Td data-label="Контрагент"><PartnerLink doc={d} /></Table.Td>
+            <Table.Td data-label="Дата" className="ledger-number">{d.day ?? '—'}</Table.Td>
+            <Table.Td data-label="Стан документа"><DocumentStatus doc={d} /></Table.Td>
+            <Table.Td data-label="Сума" className="register-money">{money(d.amount, d.currency)}</Table.Td>
+            <Table.Td data-label="Оплата">{paymentNames[d.paymentStatus ?? ''] ?? d.paymentStatus ?? '—'}</Table.Td>
+          </Table.Tr>
+        ))}
+      </Grid>
+    </div>
   )
 }
 
@@ -60,18 +72,33 @@ function Document({ id }: { id: string }) {
   if (!result.data)
     return <PageState kind={result.status === 'ready' ? 'empty' : result.status} onRetry={result.reload} />
   const { document: d, lines, parents, related } = result.data
+  const title = (kindName(d) || 'Документ') + ' № ' + (d.number || d.sourceId)
+  const fromPartner = typeof state?.partnerId === 'string'
+  const registerPath = ['/accounting/documents', '/accounting/incoming', '/accounting/outgoing'].includes(state?.registerPath)
+    ? state.registerPath : '/accounting/documents'
   return (
     <Stack gap="sm" className="ledger-workspace ledger-document">
-      <PageHeader title={kindName(d) + ' № ' + (d.number ?? d.sourceId)} />
-      {typeof state?.partnerId === 'string' && (
-        <Button component={Link} variant="default" radius="xl" className="partner-return" leftSection={<IconArrowLeft size={16} />}
-          to={{ pathname: '/accounting/partners/' + encodeURIComponent(state.partnerId), search: state.documentSearch }}
-          state={state.partnerState}>До картки контрагента</Button>
-      )}
-      <section className="ledger-card">
-        <header className="ledger-card-head"><h2><MetricLabel icon={IconFileInvoice}>{kindName(d)} № {d.number ?? d.sourceId}</MetricLabel></h2></header>
-        <DocTable rows={[d]} />
-        <Text className="ledger-note" size="sm">Договір · {d.agreement || '—'} · Код документа · {d.sourceId}</Text>
+      <PageHeader title={title} />
+      <Button component={Link} variant="default" radius="xl" className="partner-return" leftSection={<IconArrowLeft size={16} />}
+        to={fromPartner
+          ? { pathname: '/accounting/partners/' + encodeURIComponent(state.partnerId), search: state.documentSearch }
+          : { pathname: registerPath, search: state?.registerSearch }}
+        state={fromPartner ? state.partnerState : undefined}>
+        {fromPartner ? 'До картки контрагента' : 'До списку документів'}
+      </Button>
+      <section className="ledger-card doc-summary">
+        <div className="doc-heading">
+          <span className="doc-symbol"><IconFileInvoice size={23} aria-hidden="true" /></span>
+          <div><h2>{title}</h2><div className="doc-meta"><time>{d.day ?? '—'}</time><DocumentStatus doc={d} /></div></div>
+          <div className="doc-amount"><span>Сума документа</span><strong>{money(d.amount, d.currency)}</strong></div>
+        </div>
+        <dl className="doc-facts">
+          <div><dt>Контрагент</dt><dd><PartnerLink doc={d} /></dd></div>
+          <div><dt>Організація</dt><dd>{d.organization || '—'}</dd></div>
+          <div><dt>Договір</dt><dd>{d.agreement || '—'}</dd></div>
+          <div><dt>Оплата</dt><dd>{paymentNames[d.paymentStatus ?? ''] ?? d.paymentStatus ?? '—'}</dd></div>
+          <div><dt>Код документа</dt><dd className="doc-code">{d.sourceId}</dd></div>
+        </dl>
       </section>
       {d.sourceAccount === 'polivalko-native' && d.entityType === 'invoice' && (
         <InvoiceActions key={d.id} doc={d} lines={lines} refresh={result.reload} />
@@ -80,12 +107,12 @@ function Document({ id }: { id: string }) {
         <Text c="orange">Контрагента з кодом {d.partnerRef} потрібно звірити з довідником.</Text>
       )}
       {lines.length > 0 && (
-        <section className="ledger-card">
+        <section className="ledger-card doc-lines">
           <header className="ledger-card-head"><h2><MetricLabel icon={IconBox}>Товари</MetricLabel></h2><span className="ledger-count">{lines.length}</span></header>
           <Grid columns={['№', 'Товар', 'Артикул', 'Склад', 'Кількість', 'Ціна', 'Сума']}>
             {lines.map((l) => (
               <Table.Tr key={l.position}>
-                <Table.Td className="ledger-number">{l.position}</Table.Td>
+                <Table.Td data-label="№" className="ledger-number">{l.position}</Table.Td>
                 <Table.Td>
                   {l.productRef ? (
                     <Link
@@ -107,11 +134,11 @@ function Document({ id }: { id: string }) {
                     )}
                   </Text>
                 </Table.Td>
-                <Table.Td className="ledger-number">{l.sku || '—'}</Table.Td>
-                <Table.Td>{l.store || '—'}</Table.Td>
-                <Table.Td className="ledger-number">{l.quantity ?? '—'}</Table.Td>
-                <Table.Td className="ledger-number">{money(l.price)}</Table.Td>
-                <Table.Td className="ledger-number">{money(l.total, d.currency)}</Table.Td>
+                <Table.Td data-label="Артикул" className="ledger-number">{l.sku || '—'}</Table.Td>
+                <Table.Td data-label="Склад">{l.store || '—'}</Table.Td>
+                <Table.Td data-label="Кількість" className="ledger-number">{l.quantity ?? '—'}</Table.Td>
+                <Table.Td data-label="Ціна" className="ledger-number">{money(l.price)}</Table.Td>
+                <Table.Td data-label="Сума" className="ledger-number">{money(l.total, d.currency)}</Table.Td>
               </Table.Tr>
             ))}
           </Grid>
@@ -139,10 +166,11 @@ function Register({ section }: { section: string }) {
   const [params, setParams] = useSearchParams()
   const [edit, setEdit] = useState(false)
   const { can } = usePermissions()
-  const direction = section === 'incoming' ? 'in' : 'out'
-  const title = direction === 'in' ? 'Прибуткові накладні' : 'Видаткові накладні'
+  const direction = section === 'incoming' ? 'in' : section === 'outgoing' ? 'out' : null
+  const title = direction === 'in' ? 'Прибуткові накладні' : direction === 'out' ? 'Видаткові накладні' : 'Документи'
   const filter = new URLSearchParams(params)
-  filter.set('register', direction)
+  if (direction) filter.set('register', direction)
+  else filter.delete('register')
   const query = useRegister<Page<Doc>>('documents?' + filter)
   const page = Math.max(1, Number(params.get('page')) || 1)
   function change(key: string, value: string) {
@@ -153,64 +181,61 @@ function Register({ section }: { section: string }) {
     setParams(next, { replace: true })
   }
   return (
-    <Stack gap="sm" className="ledger-workspace">
-      <PageHeader title={title} actions={can(PermissionKeys.Accounting.Edit) && (
+    <Stack gap="sm" className="ledger-workspace doc-register">
+      <PageHeader title={title} actions={direction && can(PermissionKeys.Accounting.Edit) && (
         <Button radius="xl" leftSection={<IconPlus size={16} />} onClick={() => setEdit(true)}>Створити накладну</Button>
       )} />
-      <Group className="ledger-card ledger-filters" align="end">
-        <TextInput
-          label="Пошук"
-          placeholder="Номер, контрагент, організація"
-          value={params.get('q') ?? ''}
-          onChange={(e) => change('q', e.currentTarget.value)}
-        />
-        <TextInput
-          type="date"
-          label="З дати"
-          value={params.get('from') ?? ''}
-          max={params.get('to') ?? undefined}
-          onChange={(e) => change('from', e.currentTarget.value)}
-        />
-        <TextInput
-          type="date"
-          label="До дати"
-          value={params.get('to') ?? ''}
-          min={params.get('from') ?? undefined}
-          onChange={(e) => change('to', e.currentTarget.value)}
-        />
-        <Select
-          label="Статус"
-          clearable
-          placeholder="Усі"
-          data={Object.entries(statusNames).map(([value, label]) => ({ value, label }))}
-          value={params.get('status')}
-          onChange={(v) => change('status', v ?? '')}
-        />
-      </Group>
       <section className="ledger-card">
-        <header className="ledger-card-head"><h2><MetricLabel icon={IconFiles}>Журнал накладних</MetricLabel></h2>
+        <header className="ledger-card-head"><h2><MetricLabel icon={IconFiles}>{direction ? 'Журнал накладних' : 'Реєстр документів'}</MetricLabel></h2>
           {query.data && <span className="ledger-count">Записів · {query.data.total.toLocaleString('uk-UA')}</span>}
         </header>
+        <FilterBar label="Фільтри документів" activeCount={['from', 'to', 'status'].filter((key) => params.has(key)).length}
+          actions={<Paginator page={page} pageSize={50} totalPages={query.data && Math.ceil(query.data.total / 50)}
+            isLoading={query.isFetching} onPageChange={(p) => change('page', String(p))} onRefresh={query.reload} />}
+          search={
+            <TextInput
+              aria-label="Пошук"
+              maxLength={160}
+              className="app-filter-wide"
+              leftSection={<IconSearch size={16} />}
+              placeholder="Номер, контрагент, організація"
+              value={params.get('q') ?? ''}
+              onChange={(e) => change('q', e.currentTarget.value)}
+            />
+          }
+        >
+          <TextInput
+            type="date"
+            label="З дати"
+            value={params.get('from') ?? ''}
+            max={params.get('to') ?? undefined}
+            onChange={(e) => change('from', e.currentTarget.value)}
+          />
+          <TextInput
+            type="date"
+            label="До дати"
+            value={params.get('to') ?? ''}
+            min={params.get('from') ?? undefined}
+            onChange={(e) => change('to', e.currentTarget.value)}
+          />
+          <Select
+            label="Статус"
+            clearable
+            placeholder="Усі"
+            data={Object.entries(statusNames).map(([value, label]) => ({ value, label }))}
+            value={params.get('status')}
+            onChange={(v) => change('status', v ?? '')}
+          />
+        </FilterBar>
         {query.data ? (
-          <>
-            {!query.data.total ? (
-              <PageState kind="empty" title="Записів за цими умовами немає" />
-            ) : (
-              <DocTable rows={query.data.items} />
-            )}
-            {query.data.total > 50 && (
-              <Pagination
-                total={Math.ceil(query.data.total / 50)}
-                value={page}
-                onChange={(p) => change('page', String(p))}
-              />
-            )}
-          </>
+          query.data.total
+            ? <DocTable rows={query.data.items} />
+            : <PageState kind="empty" title="Записів за цими умовами немає" />
         ) : (
           <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
         )}
       </section>
-      {edit && (
+      {edit && direction && (
         <EditRegister
           kind={direction}
           onClose={() => setEdit(false)}

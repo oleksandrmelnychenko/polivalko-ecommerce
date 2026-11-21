@@ -21,7 +21,7 @@ export const consoleRoutes: readonly ConsoleRoute[] = [
   ...[
     ['/accounting/partners', 'Контрагенти'], ['/accounting/partners/:id', 'Документи контрагента'],
     ['/accounting/incoming', 'Прибуткові накладні'], ['/accounting/outgoing', 'Видаткові накладні'],
-    ['/accounting/documents/:id', 'Картка документа'], ['/accounting/balances', 'Взаєморозрахунки'],
+    ['/accounting/documents', 'Документи'], ['/accounting/documents/:id', 'Картка документа'], ['/accounting/balances', 'Взаєморозрахунки'],
     ['/accounting/product-history', 'Історія товару'],
     ['/accounting/work', 'Робоче місце'], ['/accounting/warehouse', 'Складські залишки'],
   ].map(([path, title]) => ({ path, title, permissionKey: PermissionKeys.Accounting.View, page: Pages.AccountingPage })),

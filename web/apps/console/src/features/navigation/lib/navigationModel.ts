@@ -9,6 +9,7 @@ import {
   IconClipboardList,
   IconCreditCard,
   IconFileText,
+  IconFiles,
   IconHistory,
   IconHome,
   IconLayoutDashboard,
@@ -94,6 +95,7 @@ export const NAV_SECTIONS: readonly NavSection[] = [
     prefix: '/accounting',
     items: [
       { id: 'accounting-work', label: 'Робоче місце', path: '/accounting/work', permissionKey: PermissionKeys.Accounting.View, icon: IconLayoutDashboard },
+      { id: 'documents', label: 'Документи', path: '/accounting/documents', permissionKey: PermissionKeys.Accounting.View, icon: IconFiles },
       { id: 'incoming', label: 'Прибуткові накладні', path: '/accounting/incoming', permissionKey: PermissionKeys.Accounting.View, icon: IconClipboardList },
       { id: 'outgoing', label: 'Видаткові накладні', path: '/accounting/outgoing', permissionKey: PermissionKeys.Accounting.View, icon: IconFileText },
       { id: 'warehouse', label: 'Складські залишки', path: '/accounting/warehouse', permissionKey: PermissionKeys.Accounting.View, icon: IconBuildingStore },
