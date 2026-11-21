@@ -1,5 +1,5 @@
 import { Button, Group, Pagination, SegmentedControl, Select, TextInput } from '@mantine/core'
-import { IconChartBar, IconChevronDown, IconChevronRight, IconFileInvoice, IconSearch } from '@tabler/icons-react'
+import { IconChartBar, IconChartPie, IconChevronDown, IconChevronRight, IconFileInvoice, IconSearch } from '@tabler/icons-react'
 import { useState } from 'react'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
 import { dateLabel, dateRange, formatAmount, formatPrice } from '@/shared/lib/salesFormat'
@@ -75,9 +75,9 @@ function PeriodProducts({ data, open }: { data: DocumentSales; open: (p: Product
       <div className="dash-product-finances">
         <dl className="dash-finance-chips">
           {p.cost != null && <div><dt>Собівартість</dt><dd>{formatPrice(p.cost)}</dd></div>}
-          {p.profit != null && <div><dt>Виручка</dt><dd>{formatPrice(p.net)}</dd></div>}
+          {p.profit != null && <div className="dash-revenue-chip"><dt>Виручка</dt><dd>{formatPrice(p.net)}</dd></div>}
           {p.profit != null && <div data-margin={p.margin != null && p.margin !== 0 ? (p.margin > 0 ? 'positive' : 'negative') : undefined}><dt>Маржа</dt><dd>{share(p.margin)}</dd></div>}
-          <div><dt>Частка обороту</dt><dd>{share(p.share)}</dd></div>
+          <div className="dash-turnover-share-chip"><dt><IconChartPie size={13} aria-hidden="true" />Частка обороту</dt><dd>{share(p.share)}</dd></div>
         </dl>
         {!!p.purchaseSources?.length && <details className="dash-cost-sources">
           <summary><IconFileInvoice size={15} aria-hidden="true" />Прибуткові накладні

@@ -727,6 +727,13 @@ a.dash-queue-item:focus-visible {
 }
 .dash-finance-chips [data-margin=positive] { background: #e8f5ee; color: #17583a; }
 .dash-finance-chips [data-margin=negative] { background: #fce9e8; color: #922f29; }
+.dash-finance-chips .dash-revenue-chip { background: #edf3fb; color: #304f75; }
+.dash-finance-chips .dash-turnover-share-chip {
+  background: #fcfaff;
+  box-shadow: inset 0 0 0 1px #dcd3ed;
+  color: #59427a;
+}
+.dash-turnover-share-chip dt { display: inline-flex; align-items: center; gap: 4px; }
 .dash-cost-sources { max-width: 26rem; font-size: 12px; }
 .dash-cost-sources summary {
   display: flex;
