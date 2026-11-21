@@ -590,10 +590,115 @@ a.dash-queue-item:focus-visible {
 }
 
 .dash-grid:has(.dash-stock-impact) { align-items: start; }
-.dash-stock-summary { display: grid; gap: 4px; padding: 8px var(--dash-pad); font-size: 13px; color: var(--mantine-color-gray-7); }
-.dash-stock-summary > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; color: var(--brand-ink); }
-.dash-stock-summary strong { font-size: 22px; font-variant-numeric: tabular-nums; }
-.dash-stock-impact .dash-rank-main a { white-space: normal; overflow-wrap: anywhere; }
+.dash-product-report {
+  container-type: inline-size;
+}
+.dash-product-report .dash-card-head {
+  min-height: 62px;
+  padding-block: 12px;
+}
+.dash-product-report .dash-card-title, .dash-product-meta, .dash-product-summary-value {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 9px;
+}
+.dash-product-report .dash-card-title svg {
+  width: 32px;
+  height: 32px;
+  padding: 7px;
+  border-radius: 50%;
+  background: var(--app-ground);
+}
+.dash-product-summary {
+  display: grid;
+  gap: 5px;
+  margin: 0 var(--dash-pad) 6px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--app-ground);
+  font-size: 13px;
+  font-weight: 550;
+}
+.dash-product-summary strong {
+  color: var(--brand-ink);
+  font: 550 clamp(21px, 4.5cqi, 30px)/1.2 var(--font-mono);
+  letter-spacing: -.055em;
+  overflow-wrap: anywhere;
+}
+.dash-product-summary small, .dash-product-count, .dash-product-sku {
+  color: var(--mantine-color-gray-7);
+  font-size: 12px;
+  font-weight: 450;
+}
+.dash-share, .dash-abc {
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 550;
+}
+.dash-share { background: white; }
+.dash-abc { background: var(--app-ground); }
+.dash-product-sku, .dash-product-count b, .dash-product-report .dash-rank-n {
+  font-family: var(--font-mono);
+}
+.dash-product-count {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 10px;
+  padding: 2px var(--dash-pad) 10px;
+}
+.dash-product-report .dash-rank { border-block-start: 1px solid var(--dash-line); }
+.dash-product-report .dash-rank > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 34%);
+  align-items: start;
+  gap: 8px;
+  padding-block: 12px;
+  border-bottom-style: dashed;
+}
+.dash-stock-impact .dash-rank > li { grid-template-columns: minmax(0, 1fr) minmax(0, 30%); }
+.dash-product-report .dash-rank-n {
+  align-self: start;
+  border-radius: 999px;
+  min-width: 24px;
+  line-height: 24px;
+  padding-inline: 3px;
+  background: var(--app-ground);
+}
+.dash-product-report .dash-rank-main, .dash-product-report .dash-rank-side {
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+.dash-product-report .dash-product-link, .dash-product-report .dash-rank-main > :is(a,strong) {
+  white-space: normal;
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+.dash-product-report .app-money {
+  white-space: normal;
+  font: 550 16px/1.35 var(--font-mono);
+}
+.dash-product-report .app-cell-sub { white-space: normal; font-size: 12px; }
+.dash-product-report details > summary { cursor: pointer; }
+.dash-product-report .dash-cost-sources a { margin-top: 4px; }
+.dash-product-report .dash-rank-actions .mantine-Button-root { border-radius: 999px; }
+@container (max-width: 400px) {
+  .dash-product-report .dash-rank > li { grid-template-columns: 24px minmax(0, 1fr); }
+  .dash-product-report .dash-rank-side {
+    grid-column: 2;
+    flex-flow: row wrap;
+    align-items: baseline;
+    gap: 4px 8px;
+    text-align: start;
+  }
+  .dash-stock-impact .dash-rank > li { grid-template-columns: minmax(0, 1fr); }
+  .dash-stock-impact .dash-rank-side { grid-column: 1; }
+  .dash-product-report .dash-card-aside { max-width: 100%; }
+  .dash-product-report .dash-product-tools .mantine-InputWrapper-root { flex-basis: 100%; }
+}
 
 .dash-chart {
   position: relative;

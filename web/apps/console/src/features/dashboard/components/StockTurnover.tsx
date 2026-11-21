@@ -1,4 +1,5 @@
 import { Select, TextInput } from '@mantine/core'
+import { IconPackage, IconSearch } from '@tabler/icons-react'
 import { useDebouncedCallback } from '@mantine/hooks'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -35,21 +36,19 @@ export function StockTurnover({ days }: { days: number }) {
   useEffect(() => onConsoleEvent('summary-stale', reload), [reload])
   const report = query.status === 'ready' ? query.data : undefined
   return (
-    <DashboardCard title="Закінчуються" className="dash-stock-impact" flush>
-      {report && <div className="dash-stock-summary">
-        <span>Чистий оборот товарів із малим залишком · {dateRange(report.start, report.through)}</span>
-        {report.net != null
-          ? <div><strong>{formatPrice(report.net)}</strong>
-            {report.share != null && <span>{formatShare(report.share)} від обороту за період</span>}</div>
-          : <div><strong>Оборот невідомий</strong></div>}
-        <span>Загальний чистий оборот · {formatPrice(report.periodNet)}</span>
-        {report.periodNet <= 0 && <span>Частка доступна за додатного загального обороту.</span>}
-        {report.unknownCount > 0 && <span>Товарів без підтвердженого обороту · {numberFormat.format(report.unknownCount)}. Для них бракує повних рядків продажу або однозначного зв’язку з каталогом. У підсумку враховано лише підтверджені суми.</span>}
+    <DashboardCard title={<><IconPackage aria-hidden="true" />Товари з малим залишком</>} className="dash-product-report dash-stock-impact" flush>
+      {report && <div className="dash-product-summary">
+        <span>Чистий оборот товарів із малим залишком</span>
+        <div className="dash-product-summary-value"><strong>{report.net != null ? formatPrice(report.net) : 'Оборот невідомий'}</strong>
+          {report.share != null && <span className="dash-share" title={'Частка від загального обороту ' + formatPrice(report.periodNet)}>{formatShare(report.share)} обороту</span>}</div>
+        <small>{dateRange(report.start, report.through)} · загалом {formatPrice(report.periodNet)}</small>
+        {report.periodNet <= 0 && <small>Частка доступна за додатного загального обороту.</small>}
+        {report.unknownCount > 0 && <small>Товарів без підтвердженого обороту · {numberFormat.format(report.unknownCount)}. У підсумку враховано лише підтверджені суми.</small>}
       </div>}
       <div className="dash-product-tools">
-        <TextInput size="xs" aria-label="Пошук товарів із малим залишком" placeholder="Назва або артикул" maxLength={120} value={draft}
+        <TextInput size="sm" radius="xl" leftSection={<IconSearch size={16} />} aria-label="Пошук товарів із малим залишком" placeholder="Назва або артикул" maxLength={120} value={draft}
           onChange={event => { const value = event.currentTarget.value; setDraft(value); search(value) }} />
-        <Select size="xs" aria-label="Доступність товарів" allowDeselect={false} value={filters.stock}
+        <Select size="sm" radius="xl" aria-label="Доступність товарів" allowDeselect={false} value={filters.stock}
           data={[
             { value: 'all', label: report ? `Усі · ${numberFormat.format(report.total)}` : 'Усі' },
             { value: 'out', label: report ? `Немає · ${numberFormat.format(report.outCount)}` : 'Немає' },
@@ -58,19 +57,17 @@ export function StockTurnover({ days }: { days: number }) {
           onChange={value => setFilters(current => ({ ...current, stock: value ?? 'all', page: 1 }))} />
       </div>
       {report ? <>
-        <p className="dash-report-note">До списку входять товари каталогу, для яких зараз доступно до {numberFormat.format(report.threshold)} од. після резервів. Першими йдуть товари з найбільшим чистим оборотом за вибраний період.</p>
+        <div className="dash-product-count" aria-live="polite"><span>Показано <b>{report.rows.length ? numberFormat.format((report.page - 1) * report.pageSize + 1) + '–' + numberFormat.format((report.page - 1) * report.pageSize + report.rows.length) : '0'} із {numberFormat.format(report.matches)}</b></span>
+          <span>До {numberFormat.format(report.threshold)} од. після резервів</span></div>
         {report.rows.length > 0 ? <>
-          <p className="dash-report-note" aria-live="polite">
-            Показано {numberFormat.format((report.page - 1) * report.pageSize + 1)}–{numberFormat.format((report.page - 1) * report.pageSize + report.rows.length)} із {numberFormat.format(report.matches)}
-          </p>
           <ul className="dash-rank">{report.rows.map(item => <li key={item.id}>
             <div className="dash-rank-main">
               <Link to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}</Link>
-              {item.sku && <span className="app-cell-sub">{item.sku}</span>}
+              <div className="dash-product-meta">{item.sku && <span className="dash-product-sku">{item.sku}</span>}
+                <TableChip tone={item.available <= 0 ? 'danger' : 'warning'} value={`Доступно ${numberFormat.format(item.available)}`} /></div>
               <span className="app-cell-sub">Залишок {numberFormat.format(item.onHand)} · резерв {numberFormat.format(item.reserved)}</span>
             </div>
             <div className="dash-rank-side">
-              <TableChip tone={item.available <= 0 ? 'danger' : 'warning'} value={`Доступно ${numberFormat.format(item.available)}`} />
               {item.net == null ? <span className="app-cell-sub">Оборот невідомий</span> : <>
                 <strong className="app-money">{formatPrice(item.net)}</strong>
                 {item.share != null && <span className="app-cell-sub">{formatShare(item.share)} обороту</span>}

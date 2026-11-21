@@ -1,4 +1,5 @@
 import { Button, Group, Pagination, SegmentedControl, Select, TextInput } from '@mantine/core'
+import { IconChartBar, IconSearch } from '@tabler/icons-react'
 import { useState } from 'react'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
 import { dateRange, formatAmount, formatPrice } from '@/shared/lib/salesFormat'
@@ -19,10 +20,10 @@ const share = (n: number | null) => {
 export function DocumentProducts({ data }: { data: DocumentSales }) {
   const [mode, setMode] = useState('period')
   const [picked, setPicked] = useState<Product | null>(null)
-  return <DashboardCard flush title={mode === 'period' ? 'Товари за чистою виручкою' : 'Валовий прибуток за товарами'}>
-    <div className="dash-product-tools"><SegmentedControl aria-label="Аналіз товарів" size="xs" value={mode}
+  return <DashboardCard flush className="dash-product-report" title={<><IconChartBar aria-hidden="true" />{mode === 'period' ? 'Продажі товарів' : 'Валовий прибуток за товарами'}</>}
+    aside={<SegmentedControl aria-label="Аналіз товарів" size="xs" value={mode}
       data={[{value:'period', label:'Оборот за період'}, {value:'history', label:'Звіт про прибуток'}]}
-      onChange={v => {setPicked(null); setMode(v)}} /></div>
+      onChange={v => {setPicked(null); setMode(v)}} />}>
     {mode === 'period' ? <PeriodProducts data={data} open={p => { setPicked(p); setMode('history') }} /> :
       <HistoricalProfit key={picked?.code ?? 'all'} picked={picked} clear={() => setPicked(null)} />}
   </DashboardCard>
@@ -44,21 +45,26 @@ function PeriodProducts({ data, open }: { data: DocumentSales; open: (p: Product
   })
   const visible = matches.slice(0,limit)
   return <>
-    <p className="dash-report-note">{dateRange(data.start, data.through)} · чистий оборот <b>{formatPrice(data.current.net)}</b></p>
+    <div className="dash-product-summary">
+      <span>Чистий оборот</span>
+      <strong>{formatPrice(data.current.net)}</strong>
+      <small>{dateRange(data.start, data.through)}</small>
+    </div>
     <div className="dash-product-tools">
-      <TextInput size="xs" aria-label="Пошук товару за період" placeholder="Назва, код або артикул" value={search}
+      <TextInput size="sm" radius="xl" leftSection={<IconSearch size={16} />} aria-label="Пошук товару за період" placeholder="Назва, код або артикул" value={search}
         onChange={e => {setSearch(e.currentTarget.value); setLimit(batch)}} />
-      <Select size="xs" aria-label="Сортування товарів за період" allowDeselect={false} value={order}
+      <Select size="sm" radius="xl" aria-label="Сортування товарів за період" allowDeselect={false} value={order}
         data={[{value:'highest', label:'Найбільша виручка'}, {value:'lowest', label:'Найменша виручка'},
           ...(withProfit ? [{value:'profit',label:'Найбільший прибуток'}, {value:'loss',label:'Найменший прибуток'},
             {value:'margin',label:'Найвища маржа'}] : [])]}
         onChange={v => {setOrder(v ?? 'highest'); setLimit(batch)}} />
     </div>
-    <p className="dash-report-note" aria-live="polite">Показано {formatAmount(visible.length)} із {formatAmount(matches.length)} · прибуток розраховано для {formatAmount(withProfit)} із {formatAmount(data.products.length)} товарів за період.</p>
-    {visible.length > 0 ? <ol className="dash-rank">{visible.map((p,i) => <li key={i}>
+    <div className="dash-product-count" aria-live="polite"><span>Показано <b>{formatAmount(visible.length)} із {formatAmount(matches.length)}</b></span>
+      <span>З відомим прибутком <b>{formatAmount(withProfit)} із {formatAmount(data.products.length)}</b></span></div>
+    {visible.length > 0 ? <ol className="dash-rank">{visible.map((p,i) => <li key={JSON.stringify([p.account, p.code, p.sku, p.name])}>
       <span className="dash-rank-n">{i+1}</span><div className="dash-rank-main">
         {p.code ? <button className="dash-product-link" title="Відкрити звіт про прибуток цього товару" onClick={() => open(p)}>{p.name}</button> : <strong>{p.name}</strong>}
-        <span className="app-cell-sub">{[p.sku, p.abc && 'Група '+p.abc].filter(Boolean).join(' · ')}</span>
+        <div className="dash-product-meta">{p.sku && <span className="dash-product-sku">{p.sku}</span>}{p.abc && <span className="dash-abc">Група {p.abc}</span>}</div>
         {p.cost != null && <span className="app-cell-sub">Собівартість {formatPrice(p.cost)}</span>}
         {!!p.purchaseSources?.length && <details className="dash-cost-sources"><summary>За прибутковими накладними · {p.purchaseSources.length}</summary>
           {p.purchaseSources.map(s => <DocumentLink key={s.id} id={s.id}>{s.day} · № {s.number || 'без номера'}</DocumentLink>)}
@@ -100,9 +106,9 @@ function HistoricalProfit({ picked, clear }: { picked: Product | null; clear: ()
   return <>
     {picked && <Group className="dash-product-tools" gap="sm"><strong>{picked.name}</strong><Button size="xs" variant="default" onClick={clear}>Усі товари</Button></Group>}
     {!picked && <div className="dash-product-tools">
-      <TextInput size="xs" aria-label="Пошук у звіті про прибуток" placeholder="Назва або код" maxLength={160} value={search}
+      <TextInput size="sm" radius="xl" leftSection={<IconSearch size={16} />} aria-label="Пошук у звіті про прибуток" placeholder="Назва або код" maxLength={160} value={search}
         onChange={e => {setSearch(e.currentTarget.value); setPage(1)}} />
-      <Select size="xs" aria-label="Сортування товарів у звіті" allowDeselect={false} value={sort}
+      <Select size="sm" radius="xl" aria-label="Сортування товарів у звіті" allowDeselect={false} value={sort}
         data={[{value:'profit',label:'Найбільший прибуток'}, {value:'lowest',label:'Найменший прибуток'},
           {value:'margin',label:'Найвища маржа'}, {value:'sales',label:'Найбільші продажі'}]}
         onChange={v => {setSort(v ?? 'profit'); setPage(1)}} />
