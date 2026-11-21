@@ -65,7 +65,20 @@ function PeriodProducts({ data, open }: { data: DocumentSales; open: (p: Product
       <span className="dash-rank-n">{i+1}</span><div className="dash-rank-main">
         {p.code ? <button className="dash-product-link" title="Відкрити звіт про прибуток цього товару" onClick={() => open(p)}>{p.name}</button> : <strong>{p.name}</strong>}
         <div className="dash-product-meta">{p.sku && <span className="dash-product-sku">{p.sku}</span>}{p.abc && <span className="dash-abc">Група {p.abc}</span>}</div>
-        {p.cost != null && <span className="app-cell-sub">Собівартість {formatPrice(p.cost)}</span>}
+      </div>
+      <div className="dash-rank-side">
+        <div className="dash-profit-chip" data-loss={p.profit != null && p.profit < 0 || undefined}>
+          <span>{p.profit == null ? 'Виручка' : p.purchaseSources?.length ? 'Розрах. прибуток' : 'Валовий прибуток'}</span>
+          <b className="app-money">{formatPrice(p.profit ?? p.net)}</b>
+        </div>
+      </div>
+      <div className="dash-product-finances">
+        <dl className="dash-finance-chips">
+          {p.cost != null && <div><dt>Собівартість</dt><dd>{formatPrice(p.cost)}</dd></div>}
+          {p.profit != null && <div><dt>Виручка</dt><dd>{formatPrice(p.net)}</dd></div>}
+          {p.profit != null && <div data-margin={p.margin != null && p.margin !== 0 ? (p.margin > 0 ? 'positive' : 'negative') : undefined}><dt>Маржа</dt><dd>{share(p.margin)}</dd></div>}
+          <div><dt>Частка обороту</dt><dd>{share(p.share)}</dd></div>
+        </dl>
         {!!p.purchaseSources?.length && <details className="dash-cost-sources"><summary>За прибутковими накладними · {p.purchaseSources.length}</summary>
           {p.purchaseSources.map(s => <DocumentLink key={s.id} id={s.id}>{s.day} · № {s.number || 'без номера'}</DocumentLink>)}
         </details>}
@@ -73,11 +86,7 @@ function PeriodProducts({ data, open }: { data: DocumentSales; open: (p: Product
           Бракує собівартості · рядків {formatAmount(p.lines - p.costedLines)} із {formatAmount(p.lines)}.
           {p.costedLines > 0 && <> Прибуток лише за оціненими рядками {formatPrice(p.coveredNet - p.coveredCost)}.</>}
         </span>}
-      </div><div className="dash-rank-side">
-        {p.profit != null && <><b className="app-money" data-loss={p.profit < 0 || undefined}>{formatPrice(p.profit)}</b>
-          <span className="app-cell-sub">{p.purchaseSources?.length ? 'Розрах. прибуток' : 'Валовий прибуток'} · маржа {share(p.margin)}</span></>}
-        <span className={p.profit == null ? 'app-money' : 'app-cell-sub'}>Виручка {formatPrice(p.net)}</span>
-        <span className="app-cell-sub">{share(p.share)} обороту</span></div>
+      </div>
     </li>)}</ol> : <p className="dash-rank-empty">Товарів за цими умовами немає.</p>}
     {matches.length > batch && <div className="dash-rank-actions">
       {visible.length < matches.length && <Button variant="default" size="xs" onClick={() => setLimit(limit + batch)}>Показати ще {Math.min(batch, matches.length-limit)}</Button>}

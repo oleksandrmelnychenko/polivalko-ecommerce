@@ -685,6 +685,52 @@ a.dash-queue-item:focus-visible {
 .dash-product-report details > summary { cursor: pointer; }
 .dash-product-report .dash-cost-sources a { margin-top: 4px; }
 .dash-product-report .dash-rank-actions .mantine-Button-root { border-radius: 999px; }
+.dash-profit-chip {
+  display: grid;
+  gap: 2px;
+  max-width: 100%;
+  padding: 5px 11px;
+  border-radius: 12px;
+  background: var(--brand-ink);
+  color: white;
+  font-size: 11px;
+}
+.dash-profit-chip .app-money { color: inherit; }
+.dash-profit-chip[data-loss] { background: #fce9e8; color: #922f29; }
+.dash-product-finances {
+  grid-column: 2 / -1;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.dash-finance-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+}
+.dash-finance-chips > div {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 5px;
+  max-width: 100%;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--app-ground);
+  color: var(--mantine-color-gray-8);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.dash-finance-chips dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.dash-finance-chips [data-margin=positive] { background: #e8f5ee; color: #17583a; }
+.dash-finance-chips [data-margin=negative] { background: #fce9e8; color: #922f29; }
+.dash-product-finances .dash-cost-sources a { display: block; width: fit-content; }
 @container (max-width: 400px) {
   .dash-product-report .dash-rank > li { grid-template-columns: 24px minmax(0, 1fr); }
   .dash-product-report .dash-rank-side {
