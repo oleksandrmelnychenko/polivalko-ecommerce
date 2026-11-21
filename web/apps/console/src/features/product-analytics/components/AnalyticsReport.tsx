@@ -81,11 +81,7 @@ export function AnalyticsReport({ report, canOpenProduct, onSelectProduct }: Pro
             <small>{selectedProduct ? selectedProduct.stockDays == null ? 'Покриття запасу не розраховано' : `Запасу орієнтовно на ${formatDays(selectedProduct.stockDays)}` : 'У вибраному періоді'}</small>
           </div>
         </div>
-      ) : (
-        <AnalyticsCard title="Показники за період">
-          <p className="pa-empty">За вибрані дати даних немає. Змініть період або джерело продажів.</p>
-        </AnalyticsCard>
-      )}
+      ) : null}
 
       {report.trend.length ? (
         <AnalyticsCard
@@ -111,37 +107,31 @@ export function AnalyticsReport({ report, canOpenProduct, onSelectProduct }: Pro
         </AnalyticsCard>
       ) : null}
 
-      <div className="pa-model-grid">
-        <AnalyticsCard title="Сезонність" description="Середні продажі за день у кожному місяці. Індекс 100 — середній попит за день у межах року.">
-          {report.seasonality?.length ? (
-            <AnalyticsChart
-              label="Індекс сезонності"
-              variant="bars"
-              baseline={100}
-              points={report.seasonality.map((item) => ({ label: monthLabel(item.month), axisLabel: axisMonth(item.month), value: item.index }))}
-              format={formatAmount}
-            />
-          ) : <p className="pa-empty">Для оцінки сезонності потрібно щонайменше 24 повні місяці історії продажів.</p>}
-        </AnalyticsCard>
+      {(Boolean(report.seasonality?.length) || report.forecast) && <div className="pa-model-grid">
+        {report.seasonality?.length ? <AnalyticsCard title="Сезонність" description="Середні продажі за день у кожному місяці. Індекс 100 — середній попит за день у межах року.">
+          <AnalyticsChart
+            label="Індекс сезонності"
+            variant="bars"
+            baseline={100}
+            points={report.seasonality.map((item) => ({ label: monthLabel(item.month), axisLabel: axisMonth(item.month), value: item.index }))}
+            format={formatAmount}
+          />
+        </AnalyticsCard> : null}
 
-        <AnalyticsCard title="Прогноз попиту" description="Очікувані продажі в одиницях за тижнями.">
-          {report.forecast ? (
-            <>
-              <div className="pa-forecast-meta">
-                <span>{FORECAST_METHODS[report.forecast.method] ?? 'Модель часових рядів'}</span>
-                <span title="Зважена абсолютна відсоткова помилка на минулих продажах">Помилка на історії {formatPercent(report.forecast.validationWape / 100)}</span>
-              </div>
-              <AnalyticsChart
-                label="Прогноз попиту за тижнями"
-                variant="forecast"
-                points={report.forecast.points.map((item) => ({ label: dateRange(item.from, item.to), axisLabel: axisDate(item.from), value: item.soldUnits, low: item.low, high: item.high }))}
-                format={formatUnits}
-              />
-              <p className="pa-forecast-note"><span aria-hidden="true" /> Діапазон невизначеності за історичними похибками</p>
-            </>
-          ) : <p className="pa-empty">Недостатньо надійної історії продажів для прогнозу на цю дату.</p>}
-        </AnalyticsCard>
-      </div>
+        {report.forecast && <AnalyticsCard title="Прогноз попиту" description="Очікувані продажі в одиницях за тижнями.">
+          <div className="pa-forecast-meta">
+            <span>{FORECAST_METHODS[report.forecast.method] ?? 'Модель часових рядів'}</span>
+            <span title="Зважена абсолютна відсоткова помилка на минулих продажах">Помилка на історії {formatPercent(report.forecast.validationWape / 100)}</span>
+          </div>
+          <AnalyticsChart
+            label="Прогноз попиту за тижнями"
+            variant="forecast"
+            points={report.forecast.points.map((item) => ({ label: dateRange(item.from, item.to), axisLabel: axisDate(item.from), value: item.soldUnits, low: item.low, high: item.high }))}
+            format={formatUnits}
+          />
+          <p className="pa-forecast-note"><span aria-hidden="true" /> Діапазон невизначеності за історичними похибками</p>
+        </AnalyticsCard>}
+      </div>}
 
       {report.insights.length ? (
         <AnalyticsCard title="Сигнали та рекомендації">

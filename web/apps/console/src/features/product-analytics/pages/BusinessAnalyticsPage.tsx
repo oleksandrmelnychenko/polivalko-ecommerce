@@ -158,7 +158,7 @@ export function BusinessAnalyticsPage() {
     const p = new URLSearchParams(params)
     if (!('page' in changes)) p.delete('page')
     if (tab === 'markets' && changes.tab && changes.tab !== tab) {
-      for (const name of ['region', 'source', 'metric']) p.delete(name)
+      for (const name of ['region', 'source', 'metric', 'carrier']) p.delete(name)
       if (changes.tab !== 'invoices') p.delete('year')
     }
     for (const [key, value] of Object.entries(changes)) {

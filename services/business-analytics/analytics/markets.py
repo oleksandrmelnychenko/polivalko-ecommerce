@@ -7,6 +7,7 @@ from threading import Lock
 from time import monotonic
 
 from .invoices import INDEPENDENT_RECEIPTS, currency_valid
+from .nova_poshta import read_history
 from .register import kind_of
 from .settlements import address_fields, resolve
 from .shipments import ShipmentIndex, keys as shipment_keys
@@ -159,11 +160,16 @@ class Geography:
                  **self.regions.get(code, bucket())) for code, name in REGIONS.items()])
 
 
-def summarize(headers, web, shipments=None):
+def location(region, city):
+    return resolve(region_code(region), city, not (region or "").strip())
+
+
+def summarize(headers, web, shipments=None, carrier=None):
     buyers = defaultdict(bucket)
     regions, registered, online, combined = Geography(), Geography(), Geography(), Geography()
     shipments = shipments if shipments is not None else ShipmentIndex()
     linkage = dict(ttn=0, number=0, ref=0, ambiguous=0, mapped=0, mappedByRegion={})
+    carrier_links = dict(ttn=0, number=0, ambiguous=0, addedByRegion={})
     purchases_with_key = 0
     names, invalid = {}, 0
     for row in headers:
@@ -196,8 +202,27 @@ def summarize(headers, web, shipments=None):
                     linkage["mapped"] += count
                     regional = linkage["mappedByRegion"]
                     regional["UA"+code] = regional.get("UA"+code, 0) + count
-        known, _ = regions.record(*delivery, *values, has_address=row.get("has_delivery_address"))
         buyer = (row["buyer_region"], row.get("buyer_city"))
+        if carrier is not None and kind == "sale" and row["entity_type"] == "invoice":
+            hit = carrier.match(row)
+            if hit.status == "ambiguous":
+                carrier_links["ambiguous"] += count
+            elif hit.status in ("ttn", "number"):
+                old_code, old_place = location(*delivery)
+                code, place = location(hit.region, hit.city)
+                conflict = (match.status == "ambiguous" or (old_code and code and old_code != code)
+                            or (old_place and place and old_place.code != place.code))
+                if conflict:
+                    carrier_links["ambiguous"] += count
+                else:
+                    carrier_links[hit.status] += count
+                    if place:
+                        previous = old_place if old_code else location(*buyer)[1]
+                        if not previous or previous.region != code:
+                            added = carrier_links["addedByRegion"]
+                            added["UA"+code] = added.get("UA"+code, 0) + count
+                        delivery = (hit.region, hit.city)
+        known, _ = regions.record(*delivery, *values, has_address=row.get("has_delivery_address"))
         registered.record(*buyer, *values, has_address=row.get("has_buyer_address"))
         combined.record(*(delivery if known else buyer), *values,
                         has_address=row.get("has_delivery_address") or row.get("has_buyer_address"))
@@ -206,6 +231,9 @@ def summarize(headers, web, shipments=None):
 
     ordered = sorted((dict(id=k, name=names[k], **v) for k,v in buyers.items() if k),
                      key=lambda r: (-r["amount"], -r["count"], r["id"]))
+    if carrier is not None:
+        linkage["novaPoshta"] = dict(status=carrier.status, months=carrier.months, documents=carrier.documents,
+                                     **carrier_links)
     return dict(partners=ordered, unlinked=buyers.get(None, bucket()), excluded=invalid,
                 documents=regions.report(), registered=registered.report(), online=online.report(),
                 combined=combined.report(), shipmentLinks=dict(linkage, purchasesWithKey=purchases_with_key))
@@ -213,6 +241,8 @@ def summarize(headers, web, shipments=None):
 
 _lock = Lock()
 _cache = {}
+_carrier_lock = Lock()
+_carrier_cache = {}
 
 
 def log_coverage(year, data):
@@ -233,19 +263,34 @@ def log_coverage(year, data):
         data["shipmentLinks"]["mappedByRegion"].get("UA32",0))
 
 
-def markets(year, today, page=1, search=""):
-    with _lock:
-        item = _cache.get(year)
+def markets(year, today, page=1, search="", include_carrier=False):
+    cache = _carrier_cache if include_carrier else _cache
+    with (_carrier_lock if include_carrier else _lock):
+        item = cache.get(year)
         if not item or item[0] <= monotonic() or item[1] != today:
             bounds = date(year, 1, 1), min(date(year+1, 1, 1), today + timedelta(days=1))
             with production() as conn:
                 headers = list(conn.execute(DOCUMENTS, bounds*2))
                 shipments = ShipmentIndex.read(conn, headers)
-                data = summarize(headers, conn.execute(WEB, bounds), shipments)
+                web = list(conn.execute(WEB, bounds))
+            carrier = None
+            if include_carrier:
+                invoices = (r for r in headers if r["entity_type"] == "invoice" and kind_of(r) == "sale"
+                            and currency_valid(r) and r["count"] > r["invalid"])
+                carrier = read_history(year, today, invoices)
+            data = summarize(headers, web, shipments, carrier)
             log_coverage(year, data)
-            if len(_cache) >= 8:
-                _cache.pop(next(iter(_cache)))
-            _cache[year] = monotonic() + 600, today, data
+            if carrier is not None:
+                stats = data["shipmentLinks"]["novaPoshta"]
+                logging.getLogger("gunicorn.error").info(
+                    "Nova Poshta register (year=%d, status=%s, months=%d, documents=%d, ttn=%d, "
+                    "number=%d, ambiguous=%d, kyivAdded=%d, providerCode=%s)", year, carrier.status, carrier.months,
+                    carrier.documents, stats["ttn"], stats["number"], stats["ambiguous"],
+                    stats["addedByRegion"].get("UA32", 0), carrier.error_code)
+            if year not in cache and len(cache) >= 8:
+                cache.pop(next(iter(cache)))
+            ttl = 60 if carrier is not None and carrier.status != "complete" else 600
+            cache[year] = monotonic() + ttl, today, data
         else:
             data = item[2]
     buyers = [r for r in data["partners"] if search.casefold() in r["name"].casefold()]

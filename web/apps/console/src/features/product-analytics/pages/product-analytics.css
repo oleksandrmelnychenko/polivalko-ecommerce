@@ -147,6 +147,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.pa-model-grid > :only-child {
+  grid-column: 1 / -1;
+}
+
 .pa-metric {
   display: grid;
   align-content: start;

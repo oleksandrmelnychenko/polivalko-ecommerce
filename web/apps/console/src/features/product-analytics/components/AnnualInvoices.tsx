@@ -3,7 +3,7 @@ import { IconArrowUpRight, IconCalendarStats, IconChartBar, IconChartLine, IconC
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useApiQuery } from '@/shared/api/useApiQuery'
-import { kyivDay } from '@/shared/lib/kyivTime'
+import { ReportYears } from './ReportYears'
 import { readBusiness } from '../api/businessAnalytics'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import './annual-invoices.css'
@@ -52,11 +52,12 @@ function PeriodRow({ name, period }: { name: string; period: Period }) {
 }
 
 export function AnnualInvoices() {
-  const [params, setParams] = useSearchParams()
+  return <ReportYears report="invoices">{(year, years) => <InvoiceReport year={year} years={years} />}</ReportYears>
+}
+
+function InvoiceReport({ year, years }: { year: number; years: number[] }) {
+  const [, setParams] = useSearchParams()
   const [series, setSeries] = useState<(typeof chartSeries)[number]['value']>('documentNet')
-  const last = Number(kyivDay(new Date()).slice(0, 4)) - 1
-  const requested = Number(params.get('year'))
-  const year = Number.isInteger(requested) && requested >= 1900 && requested <= last ? requested : last
   const result = useApiQuery('invoices-' + year, () => readBusiness<Annual>('documents', 'year=' + year))
   const failed = result.status === 'error' || result.status === 'forbidden'
   const report = failed ? undefined : result.data
@@ -77,7 +78,7 @@ export function AnnualInvoices() {
         </header>
         <div className="annual-controls">
           <label>Рік <select value={year} onChange={(event) => setParams({ tab: 'invoices', year: event.currentTarget.value })}>
-            {Array.from({ length: last - 1899 }, (_, i) => last - i).map(value => <option key={value}>{value}</option>)}
+            {years.map(value => <option key={value}>{value}</option>)}
           </select></label>
           <Button variant="default" leftSection={<IconRefresh size={15} />} disabled={result.isFetching} onClick={result.reload}>Звірити ще раз</Button>
         </div>

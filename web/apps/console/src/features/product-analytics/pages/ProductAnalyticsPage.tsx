@@ -26,7 +26,8 @@ const PERIOD_OPTIONS = PERIODS.map((days) => String(days))
 export function ProductAnalyticsPage() {
   const [params, setParams] = useSearchParams()
   const { can } = usePermissions()
-  const source: AnalyticsSource = params.get('source') === 'dntrade' ? 'dntrade' : 'web'
+  const legacyCatalogLink = !params.has('source') && CATALOG_ID.test(params.get('product') ?? '')
+  const source: AnalyticsSource = params.get('source') === 'web' || legacyCatalogLink ? 'web' : 'dntrade'
   const days = PERIODS.find((period) => String(period) === params.get('days')) ?? 90
   const product = params.get('product')?.trim() || undefined
   const search = params.get('search')?.trim().slice(0, 120) ?? ''
@@ -36,7 +37,7 @@ export function ProductAnalyticsPage() {
   const rawEnd = params.get('end') ?? ''
   const yesterday = shiftDay(kyivDay(new Date()), -1)
   const parsedEnd = new Date(rawEnd)
-  const end = rawEnd >= MIN_END && rawEnd < yesterday && Number.isFinite(parsedEnd.getTime()) && parsedEnd.toISOString().slice(0, 10) === rawEnd ? rawEnd : undefined
+  const end = rawEnd >= MIN_END && rawEnd <= yesterday && Number.isFinite(parsedEnd.getTime()) && parsedEnd.toISOString().slice(0, 10) === rawEnd ? rawEnd : undefined
   const rawPage = Number(params.get('page'))
   const page = Number.isInteger(rawPage) && rawPage > 0 ? Math.min(rawPage, 1_000_000) : 1
   const scope = JSON.stringify([source, days, end, product])
@@ -46,6 +47,7 @@ export function ProductAnalyticsPage() {
   }, { keepPrevious: true })
   const report = query.data?.scope === scope ? query.data.report : undefined
   const inventory = report && !report.selectedProduct ? <AnalyticsInventory inventory={report.inventory} /> : null
+  const showProducts = Boolean(report && (report.trend.length || report.products.total || search))
 
   function update(patch: Record<string, string | undefined>, replace = true) {
     setParams((current) => {
@@ -59,7 +61,7 @@ export function ProductAnalyticsPage() {
   }
 
   function selectProduct(key: string) {
-    update({ product: key }, false)
+    update({ product: key, source }, false)
     const heading = document.getElementById('product-analytics-heading')
     heading?.focus({ preventScroll: true })
     heading?.scrollIntoView({ block: 'start' })
@@ -75,9 +77,9 @@ export function ProductAnalyticsPage() {
     <>
       <PageHeader title={TITLE} actions={
         <div className="pa-heading-actions">
-          <Button variant="default" radius="xl" disabled={!report || query.status !== 'ready'} leftSection={<IconSearch size={16} stroke={1.8} />} onClick={goToProducts}>
+          {showProducts && <Button variant="default" radius="xl" disabled={query.status !== 'ready'} leftSection={<IconSearch size={16} stroke={1.8} />} onClick={goToProducts}>
             Знайти товар
-          </Button>
+          </Button>}
           <Tooltip label="Оновити звіт">
             <ActionIcon size={36} radius="xl" variant="default" aria-label="Оновити звіт" loading={query.isFetching} onClick={query.reload}>
               <IconRefresh size={17} stroke={1.8} />
@@ -93,8 +95,8 @@ export function ProductAnalyticsPage() {
               <SegmentedControl
                 aria-labelledby="pa-source-label"
                 value={source}
-                data={[{ value: 'web', label: 'Інтернет-магазин' }, { value: 'dntrade', label: 'DNTrade' }]}
-                onChange={(value) => update({ source: value === 'dntrade' ? value : undefined, product: product && CATALOG_ID.test(product) ? product : undefined, page: undefined }, false)}
+                data={[{ value: 'dntrade', label: 'DNTrade' }, { value: 'web', label: 'Інтернет-магазин' }]}
+                onChange={(value) => update({ source: value, product: product && CATALOG_ID.test(product) ? product : undefined, page: undefined }, false)}
               />
             </div>
             <div className="pa-source-field">
@@ -109,13 +111,13 @@ export function ProductAnalyticsPage() {
             </div>
             <DatePickerInput
               label="Останній день періоду"
-              value={end ?? yesterday}
+              value={end ?? report?.to ?? yesterday}
               minDate={MIN_END}
               maxDate={yesterday}
               valueFormat="DD.MM.YYYY"
               clearable={Boolean(end)}
-              clearButtonProps={{ 'aria-label': 'Повернутися до останнього завершеного дня' }}
-              onChange={(value) => update({ end: value === yesterday ? undefined : value ?? undefined, page: undefined })}
+              clearButtonProps={{ 'aria-label': 'Відкрити останній доступний період' }}
+              onChange={(value) => update({ end: value ?? undefined, page: undefined })}
             />
             {product ? (
               <Button variant="light" color="gray" rightSection={<IconX size={16} stroke={1.8} />} onClick={() => update({ product: undefined }, false)}>
@@ -129,12 +131,11 @@ export function ProductAnalyticsPage() {
           <PageState kind={query.status} description={problemMessage(query.problem, 'Не вдалося завантажити товарну аналітику.')} onRetry={query.status === 'error' ? query.reload : undefined} />
         ) : report ? (
           <div className="pa-report" aria-busy={query.isFetching || undefined}>
-            <Coverage report={report} onSetEnd={(date) => update({ end: date, page: undefined })} />
+            <Coverage report={report} onSetEnd={(date) => update({ end: date, page: undefined })}
+              onShowArchive={() => update({ source: 'dntrade', product: undefined, page: undefined, search: undefined }, false)} />
             {product && !report.selectedProduct ? <p className="pa-coverage" role="status">Товар за цим посиланням відсутній у вибраному джерелі. Показано загальний звіт.</p> : null}
-            {report.trend.length === 0 ? inventory : null}
             <AnalyticsReport report={report} canOpenProduct={can(PermissionKeys.Catalog.ViewProducts)} onSelectProduct={selectProduct} />
-            {report.trend.length > 0 ? inventory : null}
-            <AnalyticsProducts
+            {showProducts && <AnalyticsProducts
               products={report.products}
               search={search}
               draft={displayedSearch}
@@ -145,22 +146,25 @@ export function ProductAnalyticsPage() {
               onSearch={(value) => update({ search: value, page: undefined })}
               onPageChange={(value) => update({ page: value === 1 ? undefined : String(value) })}
               onSelect={selectProduct}
-            />
-            <details className="pa-methods">
+            />}
+            {inventory && <details className="pa-methods"><summary>Поточні залишки інтернет-магазину</summary>{inventory}</details>}
+            {report.trend.length > 0 && <details className="pa-methods">
               <summary>Як розраховані показники</summary>
               <p>Дати згруповано за київським часом. Зміни порівнюються з попереднім періодом такої самої тривалості.</p>
               {source === 'dntrade' ? <p>Межі архіву визначаються за датами імпортованих документів. Якщо імпорт частковий, показники відображають лише завантажені операції.</p> : null}
               <p>Чиста виручка враховує доступні товарні повернення. ABC-клас показує внесок SKU у виручку вибраного джерела за період.</p>
               <p>Залишок береться з каталогу сайту після резервів. Дні запасу розраховуються для інтернет-магазину за актуальний період, коли відомий темп продажів.</p>
-            </details>
+            </details>}
           </div>
-        ) : <Loading />}
+        ) : query.isFetching ? <Loading /> : (
+          <PageState kind="error" description="Сервіс не повернув товарний звіт за вибраний період." onRetry={query.reload} />
+        )}
       </div>
     </>
   )
 }
 
-function Coverage({ report, onSetEnd }: { report: ProductAnalytics; onSetEnd: (date: string) => void }) {
+function Coverage({ report, onSetEnd, onShowArchive }: { report: ProductAnalytics; onSetEnd: (date: string) => void; onShowArchive: () => void }) {
   const { firstSourceDay, lastSourceDay, ignoredDocuments, unmatchedLines, returnsAvailable } = report.coverage
   const archive = report.source === 'dntrade'
   const lastBeforePeriodEnd = Boolean(archive && lastSourceDay && lastSourceDay < report.to)
@@ -175,13 +179,14 @@ function Coverage({ report, onSetEnd }: { report: ProductAnalytics; onSetEnd: (d
         <p>{firstSourceDay && lastSourceDay ? `${archive ? 'Дані джерела' : 'Зафіксовані операції'}: ${dateRange(firstSourceDay, lastSourceDay)}` : 'У джерелі ще немає підтверджених даних про продажі.'}</p>
         {noOverlap ? <p>Історія цього джерела не охоплює вибрані дати.</p> : null}
         {partial ? <p>Історія цього джерела покриває лише частину вибраного періоду.</p> : null}
-        {!returnsAvailable ? <p>Повернення недоступні або неповні. Виручка показана за продажами.</p> : null}
+        {!returnsAvailable && report.trend.length > 0 ? <p>Повернення недоступні або неповні. Виручка показана за продажами.</p> : null}
         {ignoredDocuments > 0 ? <p>Пропущено документів: {formatAmount(ignoredDocuments)}.</p> : null}
         {unmatchedLines > 0 ? <p>Позицій без відповідника в каталозі: {formatAmount(unmatchedLines)}.</p> : null}
       </div>
       {archive && lastSourceDay && lastBeforePeriodEnd ? (
         <Button variant="default" size="xs" onClick={() => onSetEnd(lastSourceDay)}>Завершити період {dateLabel(lastSourceDay)}</Button>
       ) : null}
+      {!archive && !firstSourceDay && <Button variant="default" size="xs" onClick={onShowArchive}>Переглянути продажі DNTrade</Button>}
     </div>
   )
 }

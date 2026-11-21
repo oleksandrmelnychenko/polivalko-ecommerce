@@ -39,10 +39,17 @@ internal static class GetProductAnalytics
         if (errors.Count > 0) return TypedResults.ValidationProblem(errors);
         if (!analytics.IsConfigured) return ServiceUnavailable();
 
-        var from = to.AddDays(1 - length);
-        var previousFrom = from.AddDays(-length);
         var historyFrom = new DateOnly(to.Year, to.Month, 1).AddMonths(-36);
         var sales = await cache.ReadAsync(source, historyFrom, to, source == "web" ? website.ReadAsync : archive.ReadAsync, ct);
+        if (end is null && source == "dntrade" && sales.LastSourceDay is { Year: >= 2000 } last && last < to)
+        {
+            to = last;
+            var archiveStart = new DateOnly(to.Year, to.Month, 1).AddMonths(-36);
+            if (archiveStart < historyFrom)
+                sales = await cache.ReadAsync(source, archiveStart, to, archive.ReadAsync, ct);
+        }
+        var from = to.AddDays(1 - length);
+        var previousFrom = from.AddDays(-length);
 
         if (Guid.TryParseExact(product, "D", out var productId))
         {

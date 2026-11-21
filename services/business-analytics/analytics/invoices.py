@@ -65,6 +65,26 @@ def currency_valid(doc):
     return bool(values) and values <= {"uah", "980"}
 
 
+def report_years(today):
+    bounds = date(1900, 1, 1), today + timedelta(days=1)
+    with production() as conn:
+        headers = conn.execute("""
+            SELECT DISTINCT extract(year FROM day)::int AS year, source_account AS account, kind, status, currency,
+                   details->>'type' AS raw_kind, details->>'status' AS raw_status, details->>'currency_iso' AS raw_currency
+            FROM accounting.documents WHERE entity_type IN ('invoice','customerReturn') AND day >= %s AND day < %s
+            """, bounds)
+        years = {r["year"] for r in headers if kind_of(r) in ("sale", "return") and currency_valid(r)}
+        years.update(r["year"] for r in conn.execute(
+            "SELECT DISTINCT extract(year FROM d.day)::int AS year FROM accounting.documents d " + INDEPENDENT_RECEIPTS, bounds))
+        web = conn.execute("""
+            SELECT DISTINCT extract(year FROM created_at AT TIME ZONE 'Europe/Kyiv')::int AS year FROM ordering.orders
+            WHERE created_at >= (%s::date::timestamp AT TIME ZONE 'Europe/Kyiv')
+              AND created_at < (%s::date::timestamp AT TIME ZONE 'Europe/Kyiv')
+              AND status IN ('Paid','Shipped','ReadyForPickup','Completed')""", bounds)
+        markets = years | {r["year"] for r in web}
+    return dict(invoices=sorted((y for y in years if y < today.year), reverse=True), markets=sorted(markets, reverse=True))
+
+
 def compare(year, headers, documents):
     expected, actual, candidates = {}, {}, {}
     for doc in headers:

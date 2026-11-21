@@ -2,7 +2,7 @@ import { Button, Loader, SegmentedControl } from '@mantine/core'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useApiQuery } from '@/shared/api/useApiQuery'
-import { kyivDay } from '@/shared/lib/kyivTime'
+import { ReportYears } from './ReportYears'
 import { readBusiness } from '../api/businessAnalytics'
 import { IconFileInvoice, IconMap2, IconMapPin, IconReceipt2, IconSearch, IconShoppingBag, IconTrophy, IconUsers, IconWallet } from '@tabler/icons-react'
 import { MetricLabel, MetricTile, MetricTrack } from '@/shared/ui/MetricCard'
@@ -19,7 +19,8 @@ type Metric = 'count' | 'amount'
 type Markets = Record<Source, Geography> & {
   year: number; partnerCount: number; matches: number; excluded: number; unlinked: Period
   partners: (Period & { id: string; name: string })[]
-  shipmentLinks?: { ttn: number; number: number; ref: number; ambiguous: number; mapped: number; mappedByRegion: Record<string, number> }
+  shipmentLinks?: { ttn: number; number: number; ref: number; ambiguous: number; mapped: number; mappedByRegion: Record<string, number>
+    novaPoshta?: { status: string; months: number; documents: number; ttn: number; number: number; ambiguous: number; addedByRegion: Record<string, number> } }
 }
 const sourceNames: Record<Source, string> = { combined: 'Доставка або адреса покупця', documents: 'Доставка за документами', registered: 'Адреса контрагента', online: 'Доставка вебзамовлень' }
 const descriptions: Record<Source, string> = {
@@ -147,10 +148,11 @@ function RegionalMap({ data, metric, regionCode, onRegion }: {
 }
 
 export function BuyerMarkets() {
+  return <ReportYears report="markets">{(year, years) => <MarketReport year={year} years={years} />}</ReportYears>
+}
+
+function MarketReport({ year, years }: { year: number; years: number[] }) {
   const [params, setParams] = useSearchParams()
-  const latest = Number(kyivDay(new Date()).slice(0, 4))
-  const chosen = Number(params.get('year') ?? latest)
-  const year = Number.isInteger(chosen) && chosen >= 1900 && chosen <= latest ? chosen : latest
   const rawSource = params.get('source')
   const regionCode = params.get('region') ?? ''
   const metric: Metric = params.get('metric') === 'amount' ? 'amount' : 'count'
@@ -164,9 +166,12 @@ export function BuyerMarkets() {
   const search = (params.get('partnerSearch') ?? '').slice(0, 120)
   const page = Math.max(1, Math.trunc(Number(params.get('partnerPage'))) || 1)
   const args = new URLSearchParams({ analysis: 'markets', year: String(year), page: String(page), search })
+  const withCarrier = params.get('carrier') === 'nova-poshta'
+  if (withCarrier) args.set('carrier', 'nova-poshta')
   const query = useApiQuery('markets-' + args, () => readBusiness<Markets>('documents', args.toString()), { keepPrevious: true })
   const failed = query.status === 'error' || query.status === 'forbidden'
-  const data = !failed && query.data?.year === year ? query.data : undefined
+  const data = !failed && query.data?.year === year && Boolean(query.data.shipmentLinks?.novaPoshta) === withCarrier ? query.data : undefined
+  const carrier = data?.shipmentLinks?.novaPoshta
   const source = (rawSource === 'combined' && data?.combined) || rawSource === 'documents' || rawSource === 'registered' || rawSource === 'online'
     ? rawSource : bestCoveredSource(data, regionCode)
   const geography = data?.[source]
@@ -175,7 +180,7 @@ export function BuyerMarkets() {
       <header className="market-header">
         <h2 id="market-map-title"><MetricLabel icon={IconMap2}>Географія покупок</MetricLabel></h2>
         <label className="market-year">Рік <select aria-label="Рік" value={year} onChange={e => changeParam('year', e.target.value)}>
-          {Array.from({ length: latest - 1899 }, (_, i) => latest - i).map(value => <option key={value}>{value}</option>)}
+          {years.map(value => <option key={value}>{value}</option>)}
         </select></label>
       </header>
       <div className="market-body">
@@ -194,6 +199,12 @@ export function BuyerMarkets() {
           <Button size="xs" variant="default" onClick={query.reload}>Повторити</Button></div>
           : geography ? <RegionalMap key={source + year} data={geography} metric={metric} regionCode={regionCode} onRegion={code => changeParam('region', code)} />
             : <div role="status" className="market-status"><Loader size={16} />Читаємо реєстр продажів…</div>}
+        {(source === 'combined' || source === 'documents') && <label><input type="checkbox" checked={withCarrier}
+          onChange={event => changeParam('carrier', event.currentTarget.checked ? 'nova-poshta' : '')} /> Врахувати реєстр Нової пошти</label>}
+        {carrier && (source === 'documents' || source === 'combined') && <p role="status">{carrier.status === 'complete'
+          ? `ЕН у реєстрі: ${formatValue(carrier.documents)}. Збігів за ТТН: ${carrier.ttn}, за номером замовлення: ${carrier.number}. Додаткових покупок на карті доставки або адреси покупця: ${formatValue(regionCode ? carrier.addedByRegion[regionCode] ?? 0 : Object.values(carrier.addedByRegion).reduce((a,b) => a+b, 0))}.`
+          : carrier.status === 'not_configured' ? 'Ключ Нової пошти не налаштовано. Показано дані обліку.'
+            : `Повного реєстру Нової пошти за ${year} рік отримати не вдалося. Показано дані обліку.`}</p>}
         {geography && <details className="market-method"><summary>Як визначено адресу</summary><p>{descriptions[source]}</p>
           {data?.shipmentLinks && (source === 'combined' || source === 'documents') && <p>
             Покупок, нанесених на карту за відправленнями · {formatValue(regionCode && paths[regionCode] ? data.shipmentLinks.mappedByRegion[regionCode] ?? 0 : data.shipmentLinks.mapped)}.
