@@ -519,6 +519,12 @@ a.dash-queue-item:focus-visible {
   padding: 10px var(--dash-pad);
 }
 
+.dash-product-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px var(--dash-pad); }
+.dash-product-tools .mantine-InputWrapper-root { flex: 1 1 145px; min-width: 0; }
+.dash-product-link { cursor: pointer; text-align: start; background: none; border: 0; padding: 0; color: var(--mantine-color-gray-9); font: inherit; font-weight: 600; }
+.dash-product-link:is(:hover,:focus-visible) { text-decoration: underline; }
+.dash-rank-side [data-loss] { color: var(--mantine-color-red-8); }
+
 .dash-rank-n {
   color: var(--mantine-color-gray-7);
   flex: 0 0 18px;

@@ -4,9 +4,36 @@ from unittest import TestCase
 
 from analytics.dashboard import summarize
 from analytics.invoices import compare
+from analytics.product_contribution import HEADERS, parse_profit
 
 
 class SalesPeriodTests(TestCase):
+    def test_shares_use_full_net_turnover_and_cost_requires_all_lines(self):
+        end = date(2026, 1, 3)
+        def doc(kind, code, amount, cost):
+            return dict(entity_type="customerReturn" if kind == "back" else "invoice", account="a",
+                        kind=kind, status="active", currency="UAH", day=end, total=amount,
+                        lines=[dict(product=dict(code=code), quantity=1, total=amount, cogs_total=cost)])
+        docs = [doc("out", "a", 100, 80), doc("back", "a", 10, -8), doc("out", "b", 20, None),
+                doc("out", "b", 5, 1), doc("back", "c", 15, 12), dict(doc("out", "d", 40, 0), lines=[])]
+        rows = {r["code"]:r for r in summarize(docs,end,7)["products"]}
+        self.assertEqual((rows["a"]["share"], rows["a"]["profit"], rows["a"]["margin"]), (Decimal(90)/140,18,Decimal(".2")))
+        self.assertIsNone(rows["b"]["profit"])
+        self.assertEqual(rows["c"]["share"], Decimal(-15)/140)
+        self.assertIsNone(rows["c"]["abc"])
+        self.assertIsNone(summarize([docs[4]],end,7)["products"][0]["share"])
+        tied = summarize([doc("out",code,total,0) for code,total in (("a",79),("b",9),("c",9),("d",3))],end,7)["products"]
+        self.assertEqual([p["abc"] for p in tied], ["A","A","A","C"])
+
+    def test_gross_profit_uses_reported_profit_and_checks_all_control_totals(self):
+        rows = [["THEAD",HEADERS], ["TBODY",["12","Товар","шт","2","90,01","110","19,98","22"]],
+                ["TFOOT",["Всього:","2","90.01 грн.","110.00 грн.","19.98 грн.","22%"]]]
+        report = dict(account="src",period={"from":"2023-01-01","to":"2026-11-20"},rows=rows)
+        p = parse_profit(report)["products"][0]
+        self.assertEqual((p["share"],p["margin"]), (1,Decimal("19.98")/110))
+        rows[-1][1][4] = "20.00 грн."
+        with self.assertRaises(ValueError):
+            parse_profit(report)
     def test_product_ranking_includes_products_beyond_first_page_in_revenue_order(self):
         end = date(2026, 1, 3)
         lines = [dict(product=dict(code=str(i), title=f"Товар {i}"), quantity=1, total=i) for i in range(1, 24)]

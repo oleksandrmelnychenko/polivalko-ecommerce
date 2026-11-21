@@ -1,5 +1,4 @@
-import { Button, SegmentedControl } from '@mantine/core'
-import { useState } from 'react'
+import { SegmentedControl } from '@mantine/core'
 import { IconCash, IconReceipt, IconReceiptRefund, IconShoppingBag, IconSparkles, IconWallet } from '@tabler/icons-react'
 import { Link } from 'react-router-dom'
 import { dateLabel, dateRange, formatAmount, formatPrice } from '@/shared/lib/salesFormat'
@@ -60,28 +59,4 @@ export function DocumentKpis({ data }: { data: DocumentSales }) {
     label: title, icon, now: data.current[field], before: data.previous[field],
     value: format(data.current[field]), prior: format(data.previous[field]), inverse: field === 'returned',
   }))} />
-}
-
-const PRODUCT_BATCH = 10
-
-export function DocumentProducts({ data }: { data: DocumentSales }) {
-  const [limit, setLimit] = useState(PRODUCT_BATCH)
-  const total = data.products.length
-  const shown = Math.min(limit, total)
-  return (
-    <DashboardCard flush title="Товари за чистою виручкою" aside={total > 0 && <span className="dash-muted" aria-live="polite">{formatAmount(shown)} із {formatAmount(total)}</span>}>
-      {total > 0 ? <ol className="dash-rank">{data.products.slice(0, shown).map((p, i) => <li key={i}>
-        <span className="dash-rank-n">{i + 1}</span><span className="dash-rank-main"><strong>{p.name}</strong>
-          <span className="app-cell-sub">{p.sku}</span></span><span className="app-money">{formatPrice(p.net)}</span>
-      </li>)}</ol> : <p className="dash-rank-empty">За ці дати немає товарів із додатною чистою виручкою.</p>}
-      {total > PRODUCT_BATCH && <div className="dash-rank-actions">
-        {shown < total && <Button variant="default" size="xs" onClick={() => setLimit(n => n + PRODUCT_BATCH)}>
-          Показати ще {Math.min(PRODUCT_BATCH, total - shown)}
-        </Button>}
-        {shown > PRODUCT_BATCH && <Button variant="subtle" size="xs" onClick={() => setLimit(PRODUCT_BATCH)}>Згорнути</Button>}
-      </div>}
-      {data.incompleteProducts > 0 && <p className="dash-report-note" role="status">До рейтингу ввійшли документи зі звіреними рядками.
-        {' '}Потребують перевірки · {formatAmount(data.incompleteProducts)}.</p>}
-    </DashboardCard>
-  )
 }

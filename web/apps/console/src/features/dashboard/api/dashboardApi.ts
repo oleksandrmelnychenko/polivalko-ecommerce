@@ -17,8 +17,16 @@ export type DocumentSales = {
   start: string; through: string; latest: string | null; days: number
   current: SalesTotals; previous: SalesTotals; excluded: number; incompleteProducts: number
   byDay: { day: string; net: number; purchases: number }[]
-  products: { name: string; sku: string; net: number }[]
+  products: { name: string; sku: string; net: number; code: string | null; account: string; share: number | null;
+    abc: 'A' | 'B' | 'C' | null; profit: number | null; margin: number | null }[]
 }
+
+type ProfitReport = { available: false } | { available: true; start: string; through: string; total: number;
+  net: number; profit: number; matches: number; lossCount: number; page: number;
+  rows: { code: string; name: string; net: number; cost: number; profit: number; share: number | null; margin: number | null }[] }
+
+export const getProductProfit = (params: URLSearchParams) =>
+  readBusiness<ProfitReport>('documents', 'analysis=product-profit&' + params)
 
 export const getDocumentSales = (days: number) =>
   readBusiness<DocumentSales>('documents', 'analysis=dashboard&days=' + days)

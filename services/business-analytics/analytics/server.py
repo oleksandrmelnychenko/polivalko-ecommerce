@@ -16,6 +16,7 @@ from .reports import documents, forecasts, policy_key, report
 from .source import hosted, read_register
 from .invoices import read_year, report_years
 from .dashboard import dashboard
+from .product_contribution import profit_page
 from .turnover import forecast_months, history_for
 from .markets import markets
 from .shipments import check_shipment_sources
@@ -263,6 +264,17 @@ def dispatch(env):
     if route[0] != "GET" or route[1] not in (*handlers, "/forecast"):
         return 404, {"title": "Операцію не знайдено"}
     q = {k: v[-1] for k, v in parse_qs(env.get("QUERY_STRING", ""), max_num_fields=20).items()}
+    if route[1] == "/documents" and q.get("analysis") == "product-profit":
+        page, sort = int(q.get("page", 1)), q.get("sort", "profit")
+        if (set(q) - {"analysis", "page", "sort", "search", "account", "code"} or not 1 <= page <= 1000000
+                or sort not in ("profit", "lowest", "margin", "sales") or any(len(q.get(k, "")) > 160 for k in ("search", "account", "code"))
+                or bool(q.get("account")) != bool(q.get("code"))):
+            raise ValueError("Перевірте параметри рейтингу товарів")
+        try:
+            return 200, profit_page(now().date(), page, sort, q.get("search", ""), q.get("account", ""), q.get("code", ""))
+        except Exception as exc:
+            logger.error("Product gross profit report unavailable (%s)", type(exc).__name__)
+            return 503, {"title": "Не вдалося прочитати й звірити звіт про валовий прибуток"}
     if route[1] == "/documents" and q.get("analysis") == "dashboard":
         days = int(q.get("days", 30))
         if set(q) - {"analysis", "days"} or days not in (7, 30, 90):

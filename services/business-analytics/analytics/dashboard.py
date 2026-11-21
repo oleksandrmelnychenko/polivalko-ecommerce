@@ -6,6 +6,7 @@ from threading import Lock
 from time import monotonic
 
 from .invoices import INDEPENDENT_RECEIPTS, currency_valid
+from .product_contribution import turnover_ranking
 from .register import kind_of, number, sale_line
 from .source import production
 
@@ -14,7 +15,7 @@ FIELDS = """
 SELECT d.day, d.entity_type, d.source_account AS account, d.kind, d.status, d.currency, d.total,
        d.details->>'type' AS raw_kind, d.details->>'status' AS raw_status, d.details->>'currency_iso' AS raw_currency,
        CASE WHEN d.day >= %s THEN (
-           SELECT jsonb_agg(jsonb_build_object('quantity', l->'quantity', 'total', l->'total',
+           SELECT jsonb_agg(jsonb_build_object('quantity', l->'quantity', 'total', l->'total', 'cogs_total', l->'cogs_total',
                'product', jsonb_build_object('id', l#>'{product,id}', 'sku', l#>'{product,sku}',
                               'code', l#>'{product,code}', 'title', l#>'{product,title}')))
            FROM jsonb_array_elements(CASE WHEN jsonb_typeof(d.details->'products')='array'
@@ -61,16 +62,26 @@ def summarize(rows, through, days):
         if not parsed or not all(parsed) or sum(line[-1] for line in parsed) != amount:
             incomplete_products += 1
             continue
-        for product, code, pid, sku, _, value in parsed:
+        for line, (product, code, pid, sku, _, value) in zip(row["lines"], parsed):
             identity = pid or code or sku
             key = row["account"], "id" if pid else "code" if code else "sku", identity
             if key not in products:
-                products[key] = dict(name=str(product.get("title") or identity), sku=str(product.get("sku") or ""), net=Decimal(0))
-            products[key]["net"] += -value if refund else value
+                products[key] = dict(name=str(product.get("title") or identity), sku=str(product.get("sku") or ""),
+                                     code=code, account=row["account"], net=Decimal(0), profit=Decimal(0))
+            item = products[key]
+            if item["code"] != code:
+                item["code"] = None
+            sign = -1 if refund else 1
+            item["net"] += sign * value
+            cost = number(line.get("cogs_total"))
+            if cost is None or (cost < 0 and not refund):
+                item["profit"] = None
+            elif item["profit"] is not None:
+                item["profit"] += sign * (value - abs(cost))
     for period in (current, previous):
         period["purchases"] = period["receipts"] + period["invoices"]
         period["net"] = period["gross"] - period["returned"]
-    ranking = sorted((p for p in products.values() if p["net"] > 0), key=lambda p: (-p["net"], p["name"], p["sku"]))
+    ranking = turnover_ranking(products.values(), current["net"])
     return dict(days=days, start=str(start), through=str(through), latest=str(latest) if latest else None,
                 current=current, previous=previous, byDay=[dict(day=d, **v) for d, v in by_day.items()],
                 products=ranking, excluded=excluded, incompleteProducts=incomplete_products)
