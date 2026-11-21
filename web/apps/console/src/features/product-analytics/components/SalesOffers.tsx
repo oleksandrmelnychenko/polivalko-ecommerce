@@ -1,4 +1,5 @@
 import { Button, Select, Textarea, TextInput } from '@mantine/core'
+import { IconChevronDown, IconCopy, IconFileInvoice, IconFileText, IconPlus, IconSend } from '@tabler/icons-react'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { problemTitle } from '@polivalko/shared/api/problem'
@@ -9,6 +10,11 @@ import { withCsrf } from '@/shared/api/csrf'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { kyivDay } from '@/shared/lib/kyivTime'
 import { AnalyticsCard } from './AnalyticsCard'
+import { AppEditorModal } from '@/shared/ui/AppEditorModal'
+import { MetricLabel } from '@/shared/ui/MetricCard'
+import { TableChip } from '@/shared/ui/TableChip'
+import { dateLabel } from '@/shared/lib/salesFormat'
+import './sales-offers.css'
 
 type Focus = 'general' | 'irrigation'
 type Draft = { mode: string; name: string; intro: string; items: {
@@ -20,7 +26,14 @@ type Invoice = { id: string; number: string | null; day: string; amount: number 
 export const uah = (amount: number | null) => amount === null ? '—' :
   amount.toLocaleString('uk-UA', { style: 'currency', currency: 'UAH', maximumFractionDigits: 2 })
 
-function Compose({ partner, focus, onIssued }: { partner: string; focus: Focus; onIssued: () => void }) {
+function Compose({ initialPartner, opened, onClose, onIssued }: { initialPartner: string | null; opened: boolean; onClose: () => void; onIssued: (day: string) => void }) {
+  const [partner, setPartner] = useState(initialPartner)
+  const [search, setSearch] = useState('')
+  const [focus, setFocus] = useState<Focus>('general')
+  const partners = useRegister<Page<Partner>>('partners?q=' + encodeURIComponent(search), opened)
+  const direct = useRegister<{ partner: Partner }>('partners/' + partner, opened && Boolean(partner))
+  const options = new Map((partners.data?.items ?? []).map(p => [p.id,p.title]))
+  if (direct.data) options.set(direct.data.partner.id,direct.data.partner.title)
   const [draft, setDraft] = useState<Draft>()
   const [body, setBody] = useState('')
   const [quantities, setQuantities] = useState<Record<string, string>>({})
@@ -32,10 +45,12 @@ function Compose({ partner, focus, onIssued }: { partner: string; focus: Focus; 
     ...(lines.length ? ['Разом ' + uah(total)] : [])].join('\n\n')
   const [day, setDay] = useState(kyivDay(new Date()))
   const [issueId, setIssueId] = useState('')
-  const [busy, setBusy] = useState(false)
+  const [pending, setPending] = useState<'draft' | 'issue' | null>(null)
+  const busy = pending !== null
   const [message, setMessage] = useState('')
   async function generate() {
-    setBusy(true)
+    if (!partner) return
+    setPending('draft')
     setMessage('')
     try {
       const result = await withCsrf(async headers => {
@@ -51,48 +66,64 @@ function Compose({ partner, focus, onIssued }: { partner: string; focus: Focus; 
       setQuantities(Object.fromEntries(next.items.map(i => [i.id, String(Math.min(i.available, 1))])))
       setBody('Для ' + next.name + '\n\n' + next.intro)
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Сервіс недоступний') }
-    finally { setBusy(false) }
+    finally { setPending(null) }
   }
   async function record() {
-    setBusy(true)
+    setPending('issue')
     setMessage('')
     try {
       const result = await save('offers/' + issueId, { partnerId: partner, day, focus, body: finalText }, 'PUT')
       if (!result.response.ok) throw new Error(problemTitle(result.error, 'Не вдалося зареєструвати пропозицію'))
       setDraft(undefined)
       setBody('')
-      setMessage('Видану пропозицію зареєстровано.')
-      onIssued()
+      onIssued(day)
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Не вдалося зберегти') }
-    finally { setBusy(false) }
+    finally { setPending(null) }
   }
-  return <div className="winter-stack">
-    <Button variant="default" loading={busy} onClick={generate}>{draft ? 'Створити іншу чернетку' : 'Підготувати пропозицію'}</Button>
-    {!draft && <Button variant="subtle" disabled={busy} onClick={() => {
-      setDraft({ mode: 'manual', name: '', intro: '', items: [] })
-      setBody('')
-      setIssueId(crypto.randomUUID())
-      setMessage('')
-    }}>Внести готовий розрахунок</Button>}
-    {draft && <>
+  function startManual() {
+    setDraft({ mode: 'manual', name: '', intro: '', items: [] })
+    setBody('')
+    setIssueId(crypto.randomUUID())
+    setMessage('')
+  }
+  return <AppEditorModal opened={opened} onClose={() => { if (!busy) onClose() }} dirty={!!draft && !busy} size="standard" className="offer-editor"
+    title={<MetricLabel icon={IconFileText}>Нова пропозиція</MetricLabel>}
+    footer={draft && <div className="offer-actions"><Button radius="xl" variant="default" leftSection={<IconCopy size={16} />} disabled={!body.trim() || invalidQuantity || busy} onClick={async () => {
+      try { await navigator.clipboard.writeText(finalText); setMessage('Текст пропозиції скопійовано.') }
+      catch { setMessage('Копіювання недоступне в цьому браузері.') }
+    }}>Скопіювати</Button>
+      <Button radius="xl" leftSection={<IconSend size={16} />} loading={pending === 'issue'} disabled={!body.trim() || finalText.length > 8000 || invalidQuantity || !day || day > kyivDay(new Date()) || busy} onClick={record}>Зареєструвати пропозицію</Button></div>}>
+    <div className="offer-section">
+      <div className="offer-fields">
+        <Select searchable clearable disabled={!!draft || busy} label="Контрагент" placeholder="Знайдіть за назвою" value={partner}
+          onChange={setPartner} onSearchChange={setSearch} data={[...options].map(([value,label]) => ({value,label}))}
+          nothingFoundMessage="Контрагента не знайдено" />
+        <Select disabled={!!draft || busy} label="Напрям пропозиції" value={focus} allowDeselect={false} data={[{value:'general',label:'Асортимент для клієнта'},
+          {value:'irrigation',label:'Комплектація поливу'}]} onChange={v => setFocus(v === 'irrigation' ? v : 'general')} />
+      </div>
+      {partners.status === 'error' && <Button variant="default" onClick={partners.reload}>Оновити довідник</Button>}
+      <div className="offer-actions">
+        <Button variant="default" disabled={!partner || busy} loading={pending === 'draft'} onClick={generate}>{draft ? 'Створити іншу чернетку' : 'Підготувати чернетку'}</Button>
+        {!draft && <Button variant="default" disabled={!partner || busy} onClick={startManual}>Внести готовий розрахунок</Button>}
+      </div>
+    </div>
+    {draft && <div className="offer-section">
       <p>{draft.mode === 'manual' ? 'Введіть текст і суму вже підготовленого розрахунку.' : draft.mode === 'ai' ? 'Чернетку підготував ШІ.' : draft.mode === 'catalog'
-        ? 'Каталожна чернетка. Для генерації ШІ налаштуйте модель і серверний ключ.'
+        ? 'Чернетку підготовлено за каталогом.'
         : 'Модель тимчасово недоступна. Підготовлено каталожну чернетку.'}</p>
-      {lines.map(i => <TextInput key={i.id} type="number" min="0.001" step="0.001" max={i.available}
-        label={i.name + ' · ' + uah(i.price) + ' за одиницю'} description={'Доступно ' + i.available + ' · ' +
-          (i.purchases ? 'покупок цієї позиції: ' + i.purchases : i.related ? 'раніше купував цю категорію' : 'з доступного асортименту')}
-        value={quantities[i.id] ?? ''} onChange={e => setQuantities({ ...quantities,[i.id]:e.currentTarget.value })} />)}
-      {lines.length > 0 && <strong>{invalidQuantity ? 'Перевірте кількість і залишок.' : 'Разом ' + uah(total)}</strong>}
+      {lines.length > 0 && <div className="offer-lines">{lines.map(i => <div className="offer-line" key={i.id}>
+        <div><strong>{i.name}</strong><p>{uah(i.price)} за одиницю · доступно {i.available}</p>
+          <small>{i.purchases ? 'Покупок цієї позиції · ' + i.purchases : i.related ? 'Раніше купував цю категорію' : 'З доступного асортименту'}</small></div>
+        <TextInput type="number" min="0.001" step="0.001" max={i.available} label="Кількість" aria-label={'Кількість · ' + i.name}
+          value={quantities[i.id] ?? ''} onChange={e => setQuantities({ ...quantities,[i.id]:e.currentTarget.value })} />
+        <b className="offer-amount">{uah(i.sum)}</b>
+      </div>)}</div>}
+      {lines.length > 0 && <strong className="offer-total">{invalidQuantity ? 'Перевірте кількість і залишок.' : 'Разом ' + uah(total)}</strong>}
       <Textarea autosize minRows={5} maxLength={8000} label="Текст для контрагента" value={body} onChange={e => setBody(e.currentTarget.value)} />
       <TextInput type="date" label="Дата видачі пропозиції" value={day} max={kyivDay(new Date())} onChange={e => setDay(e.currentTarget.value)} />
-      <Button variant="default" disabled={!body.trim() || invalidQuantity} onClick={async () => {
-        try { await navigator.clipboard.writeText(finalText); setMessage('Текст пропозиції скопійовано.') }
-        catch { setMessage('Копіювання недоступне в цьому браузері.') }
-      }}>Скопіювати пропозицію</Button>
-      <Button disabled={!body.trim() || finalText.length > 8000 || invalidQuantity || !day || busy} onClick={record}>Зареєструвати видану пропозицію</Button>
-    </>}
-    {message && <p role="status">{message}</p>}
-  </div>
+    </div>}
+    {message && <p className="offer-feedback" role="status">{message}</p>}
+  </AppEditorModal>
 }
 
 function LinkInvoice({ offer, changed }: { offer: string; changed: () => void }) {
@@ -113,7 +144,7 @@ function LinkInvoice({ offer, changed }: { offer: string; changed: () => void })
     } catch (e) { setMessage(e instanceof Error ? e.message : 'Помилка збереження') }
     finally { setBusy(false) }
   }
-  return <div className="winter-stack">
+  return <div className="offer-invoice">
     {result.status === 'error' || result.status === 'forbidden' ? <Button variant="default" onClick={result.reload}>Повторити завантаження накладних</Button>
       : <Select searchable label="Видаткова накладна контрагента" value={invoice} onChange={setInvoice}
         placeholder={result.isFetching ? 'Завантаження…' : 'Оберіть накладну'} nothingFoundMessage="Немає відповідних накладних"
@@ -126,46 +157,45 @@ function LinkInvoice({ offer, changed }: { offer: string; changed: () => void })
 export function OfferLedger({ rows, changed }: { rows: Offer[]; changed: () => void }) {
   const { can } = usePermissions()
   const [opened, setOpened] = useState('')
-  if (!rows.length) return <p>За вибраний період немає зареєстрованих пропозицій.</p>
-  return <div>{rows.map(o => <details key={o.id} onToggle={e => { if (e.currentTarget.open) setOpened(o.id) }}>
-    <summary>{o.day} · {o.partner} · {o.shipments ? 'Є відвантаження · ' + uah(o.shipped) : 'Очікує відвантаження'}</summary>
-    <p style={{ whiteSpace: 'pre-wrap' }}>{o.body}</p>
-    {o.invoiceNumbers && <p>Видаткові накладні · {o.invoiceNumbers}</p>}
-    {can(PermissionKeys.Accounting.Edit) && opened === o.id && <LinkInvoice offer={o.id} changed={changed} />}
+  if (!rows.length) return <p className="offer-feedback">За вибраний період немає зареєстрованих пропозицій.</p>
+  return <div className="offer-ledger">{rows.map(o => <details key={o.id} name="issued-offers" onToggle={e => { if (e.currentTarget.open) setOpened(o.id) }}>
+    <summary><span className="offer-partner"><IconFileText size={17} aria-hidden="true" /><span><strong>{o.partner}</strong>
+      <time dateTime={o.day}>{dateLabel(o.day)}</time></span></span>
+      <TableChip tone={o.shipments ? 'success' : 'neutral'} value={o.shipments ? 'Є відвантаження' : 'Очікує відвантаження'} />
+      <b className="offer-amount">{o.shipments ? uah(o.shipped) : '—'}</b><IconChevronDown size={16} aria-hidden="true" /></summary>
+    <div className="offer-details"><p>{o.body}</p>
+    {o.invoiceNumbers && <p><IconFileInvoice size={15} aria-hidden="true" /> Видаткові накладні · {o.invoiceNumbers}</p>}
+    {can(PermissionKeys.Accounting.Edit) && opened === o.id && <LinkInvoice offer={o.id} changed={changed} />}</div>
   </details>)}</div>
 }
 
 export function SalesOffers() {
   const [params] = useSearchParams()
-  const [partner, setPartner] = useState<string | null>(params.get('partner'))
-  const [search, setSearch] = useState('')
-  const [focus, setFocus] = useState<Focus>('general')
+  const initialPartner = params.get('partner')
+  const [opened, setOpened] = useState(Boolean(initialPartner))
+  const [session, setSession] = useState(0)
+  const [notice, setNotice] = useState('')
   const { can } = usePermissions()
   const today = kyivDay(new Date())
   const [from, setFrom] = useState(today.slice(0,7) + '-01')
   const [to, setTo] = useState(today)
-  const partners = useRegister<Page<Partner>>('partners?q=' + encodeURIComponent(search))
-  const direct = useRegister<{ partner: Partner }>('partners/' + partner, Boolean(partner))
-  const options = new Map((partners.data?.items ?? []).map(p => [p.id,p.title]))
-  if (direct.data) options.set(direct.data.partner.id,direct.data.partner.title)
   const history = useRegister<Offer[]>('offers?' + new URLSearchParams({ from,to }), Boolean(from && to && from <= to))
-  return <div className="winter-stack">
-    {can(PermissionKeys.Accounting.Edit) && <AnalyticsCard title="Пропозиція для контрагента">
-      <div className="winter-stack">
-        <Select searchable clearable label="Контрагент" placeholder="Знайдіть за назвою" value={partner}
-          onChange={setPartner} onSearchChange={setSearch} data={[...options].map(([value,label]) => ({value,label}))}
-          nothingFoundMessage="Контрагента не знайдено" />
-        {partners.status === 'error' && <Button variant="default" onClick={partners.reload}>Оновити довідник</Button>}
-        <Select label="Напрям пропозиції" value={focus} allowDeselect={false} data={[{value:'general',label:'Асортимент для клієнта'},
-          {value:'irrigation',label:'Комплектація поливу'}]} onChange={v => setFocus(v === 'irrigation' ? v : 'general')} />
-        {partner && <Compose key={partner + focus} partner={partner} focus={focus} onIssued={history.reload} />}
-      </div>
-    </AnalyticsCard>}
-    <AnalyticsCard title="Видані пропозиції">
-      <div className="ba-controls"><TextInput type="date" label="Від" value={from} max={to} onChange={e => setFrom(e.currentTarget.value)} />
-        <TextInput type="date" label="До" value={to} min={from} onChange={e => setTo(e.currentTarget.value)} /></div>
+  return <div className="sales-offers">
+    <AnalyticsCard title={<MetricLabel icon={IconSend}>Видані пропозиції</MetricLabel>} actions={can(PermissionKeys.Accounting.Edit) &&
+      <Button radius="xl" leftSection={<IconPlus size={16} />} onClick={() => {setNotice(''); setSession(s => s + 1); setOpened(true)}}>Нова пропозиція</Button>}>
+      <div className="offer-toolbar"><TextInput radius="xl" type="date" label="Від" value={from} max={to} onChange={e => setFrom(e.currentTarget.value)} />
+        <TextInput radius="xl" type="date" label="До" value={to} min={from} onChange={e => setTo(e.currentTarget.value)} />
+        {history.data && <span>Пропозицій <b>{history.data.length}</b></span>}</div>
+      {notice && <p role="status" className="offer-feedback">{notice}</p>}
       {history.data ? <OfferLedger rows={history.data} changed={history.reload} /> : history.isFetching ? <p>Завантаження…</p> :
-        <p role="status">{history.problem?.title ?? 'Перевірте період до одного року.'} <button onClick={history.reload}>Оновити</button></p>}
+        <p role="status" className="offer-feedback">{history.problem?.title ?? 'Перевірте період до одного року.'} <Button radius="xl" variant="default" size="xs" onClick={history.reload}>Оновити</Button></p>}
     </AnalyticsCard>
+    {can(PermissionKeys.Accounting.Edit) && <Compose key={session} opened={opened} initialPartner={initialPartner} onClose={() => setOpened(false)}
+      onIssued={day => {
+        setOpened(false)
+        setNotice('Пропозицію зареєстровано.')
+        if (!from || !to || day < from || day > to) { setFrom(day); setTo(day) }
+        else history.reload()
+      }} />}
   </div>
 }
