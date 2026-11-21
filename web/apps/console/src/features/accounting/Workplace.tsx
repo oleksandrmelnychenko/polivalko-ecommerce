@@ -1,7 +1,7 @@
 import { DocTable } from './DocumentTable'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
-import { Button, Group, Pagination, SegmentedControl, Select, Stack, Table, TextInput } from '@mantine/core'
+import { Button, Group, SegmentedControl, Select, Stack, Table, TextInput } from '@mantine/core'
 import { IconArrowDownLeft, IconArrowUpRight, IconBuildingWarehouse, IconChecklist, IconFilePencil, IconFiles, IconWallet, IconHistory, IconPackage, IconPlus, IconSearch, IconListCheck } from '@tabler/icons-react'
 import type { components } from '@polivalko/shared/api/schema'
 import { useState } from 'react'
@@ -155,13 +155,14 @@ function WarehouseBalances() {
   const page = Math.max(1, Number(params.get('page')) || 1)
   function filter(key: string, value: string | null) {
     const next = new URLSearchParams(params)
+    next.set('view', 'current')
     next.delete('page')
     if (value) next.set(key, value)
     else next.delete(key)
     setParams(next, { replace: true })
   }
   return (
-    <Stack gap="sm" className="ledger-workspace warehouse-page">
+    <Stack gap="sm" className="ledger-workspace warehouse-page wh-current doc-register">
       <PageHeader title="Складські залишки" actions={
         <Group gap="xs">
           <Button component={Link} to="/accounting/warehouse?view=inventory" radius="xl" variant="default"
@@ -170,29 +171,24 @@ function WarehouseBalances() {
             onClick={() => setOpening(true)}>Ввести початковий залишок</Button>}
         </Group>
       } />
-      <Group align="end" className="ledger-card ledger-filters">
-        <TextInput
-          leftSection={<IconSearch size={16} />} type="search"
-          label="Пошук товару"
-          placeholder="Назва або артикул"
-          value={params.get('q') ?? ''}
-          onChange={(e) => filter('q', e.currentTarget.value)}
-        />
-        <Select
-          label="Склад"
-          placeholder="Усі склади"
-          clearable
-          data={(refs.data?.stores ?? []).map((s) => ({ value: s.id, label: s.title }))}
-          value={params.get('store')}
-          onChange={(v) => filter('store', v)}
-        />
-      </Group>
       <section className="ledger-card warehouse-list">
         <header className="ledger-card-head">
           <h2><MetricLabel icon={IconBuildingWarehouse}>Залишки за складами</MetricLabel></h2>
           {result.data && <span className="ledger-count">Позицій · {count(result.data.total)}</span>}
         </header>
-        {result.data ? result.data.total ? <>
+        <FilterBar label="Фільтри проведених залишків"
+          search={<>
+            <TextInput className="app-filter-wide" leftSection={<IconSearch size={16} />} type="search"
+              aria-label="Пошук товару" placeholder="Назва або артикул" maxLength={160}
+              value={params.get('q') ?? ''} onChange={e => filter('q', e.currentTarget.value)} />
+            <Select aria-label="Склад" placeholder="Усі склади" clearable searchable
+              data={(refs.data?.stores ?? []).map(s => ({ value: s.id, label: s.title }))}
+              value={params.get('store')} onChange={v => filter('store', v)} />
+          </>}
+          actions={<Paginator page={page} pageSize={50} totalPages={result.data && Math.ceil(result.data.total / 50)}
+            isLoading={result.isFetching} onPageChange={p => filter('page', String(p))} onRefresh={result.reload} />} />
+        {refs.status === 'error' && <Button variant="subtle" onClick={refs.reload}>Повторити завантаження складів</Button>}
+        {result.data ? result.data.total ? (
           <Grid columns={['Товар', 'Артикул', 'Склад', 'На початок', 'Залишок', 'Інтернет-магазин', 'Операції']}>
             {result.data.items.map(r => (
               <Table.Tr key={[r.orgId, r.storeId, r.productId].join(':')}>
@@ -201,7 +197,7 @@ function WarehouseBalances() {
                 <Table.Td data-label="Артикул" className="ledger-number">{r.sku}</Table.Td>
                 <Table.Td data-label="Склад">{r.store}<small>{r.organization}</small></Table.Td>
                 <Table.Td data-label="На початок" className="wh-quantity">{count(r.opening)}</Table.Td>
-                <Table.Td data-label="Залишок" className="wh-quantity"><b>{count(r.quantity)}</b></Table.Td>
+                <Table.Td data-label="Залишок" className="wh-quantity"><strong className="wh-stock-value" data-direction={Math.sign(r.quantity)}>{count(r.quantity)}</strong></Table.Td>
                 <Table.Td className="wh-online" data-label="Інтернет-магазин">
                   <span className="wh-source" data-connected={activeSource(r) || undefined}>
                     {activeSource(r) ? 'Підключено цей склад' : r.sourceStore ? 'Інший склад · ' + r.sourceStore : 'Залишок із каталогу'}
@@ -216,8 +212,7 @@ function WarehouseBalances() {
               </Table.Tr>
             ))}
           </Grid>
-          {result.data.total > 50 && <Pagination total={Math.ceil(result.data.total / 50)} value={page} onChange={p => filter('page', String(p))} />}
-        </> : <PageState kind="empty" title={params.has('q') || params.has('store') ? 'За цими умовами позицій немає' : 'Проведених складських залишків поки немає'} /> :
+        ) : <PageState kind="empty" title={params.has('q') || params.has('store') ? 'За цими умовами позицій немає' : 'Проведених складських залишків поки немає'} /> :
           <PageState kind={result.status === 'ready' ? 'empty' : result.status} onRetry={result.reload} />}
       </section>
       {source && (
@@ -229,7 +224,8 @@ function WarehouseBalances() {
           }}
         />
       )}
-      {history && <MovementHistory row={history} close={() => setHistory(null)} />}
+      {history && <MovementHistory row={result.data?.items.find(r => r.orgId === history.orgId && r.storeId === history.storeId && r.productId === history.productId) ?? history}
+        onRefresh={result.reload} close={() => setHistory(null)} />}
       {opening && (
         <StockOpeningForm
           close={() => setOpening(false)}

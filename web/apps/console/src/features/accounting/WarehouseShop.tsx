@@ -1,10 +1,11 @@
 import { DocumentLink, DocumentOverlayContext } from '@/shared/ui/DocumentLink'
-import { Alert, Button, Group, Pagination, Stack, Table, Text } from '@mantine/core'
+import { Alert, Button, Group, Stack, Table, Text } from '@mantine/core'
 import { useContext, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { components } from '@polivalko/shared/api/schema'
 import { IconBuildingStore, IconHistory, IconPackage } from '@tabler/icons-react'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
+import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import { PageState } from '@/shared/ui/PageState'
 import { problemMessage } from '@/shared/api/problem'
@@ -94,7 +95,7 @@ export function ShopSourceForm({ row, close }: { row: WarehouseRow; close: () =>
   )
 }
 
-export function MovementHistory({ row, close }: { row: WarehouseRow; close: () => void }) {
+export function MovementHistory({ row, close, onRefresh }: { row: WarehouseRow; close: () => void; onRefresh: () => void }) {
   const [opened, setOpened] = useState(true)
   const documentOpen = useContext(DocumentOverlayContext)
   const [page, setPage] = useState(1)
@@ -114,15 +115,26 @@ export function MovementHistory({ row, close }: { row: WarehouseRow; close: () =
     <AppEditorModal opened={opened} size="standard" className="ledger-editor warehouse-modal" onClose={() => setOpened(false)}
       closeOnEscape={!documentOpen} closeOnClickOutside={!documentOpen} trapFocus={!documentOpen}
       onExitTransitionEnd={close} title={<MetricLabel icon={IconHistory}>Рух товару</MetricLabel>}>
-      <section className="ledger-card wh-movements">
-        <header className="ledger-card-head">
-          <div><MetricLabel icon={IconPackage}>{row.product}</MetricLabel><small>{row.organization} · {row.store}</small></div>
-          <span className="ledger-count">{row.sku}</span>
-        </header>
-        {query.data ? (
-          query.data.items.length ? (
-            <>
-              <Grid columns={['Дата документа', 'Операція', 'Документ', 'Кількість', 'Після руху']}>
+      <Stack gap="sm" className="wh-history">
+        <section className="ledger-form-block wh-history-summary">
+          <h3><MetricLabel icon={IconPackage}>{row.product}</MetricLabel></h3>
+          <dl>
+            <div><dt>Артикул</dt><dd className="ledger-number">{row.sku}</dd></div>
+            <div><dt>Склад</dt><dd>{row.store}</dd></div>
+            <div><dt>Організація</dt><dd>{row.organization}</dd></div>
+            <div><dt>На початок</dt><dd className="ledger-number">{count(row.opening)}</dd></div>
+            <div><dt>Поточний залишок</dt><dd className="wh-history-balance">{count(row.quantity)}</dd></div>
+          </dl>
+        </section>
+        <section className="ledger-card wh-movements">
+          <header className="ledger-card-head">
+            <h3><MetricLabel icon={IconHistory}>Історія операцій</MetricLabel></h3>
+            <Paginator page={page} pageSize={50} totalPages={query.data && Math.ceil(query.data.total / 50)}
+              isLoading={query.isFetching} onPageChange={setPage} onRefresh={() => { query.reload(); onRefresh() }} />
+          </header>
+          {query.data ? (
+            query.data.items.length ? (
+              <Grid columns={['Дата документа', 'Операція', 'Документ', 'Зміна', 'Після руху']}>
                 {query.data.items.map((m) => {
                   const url =
                     m.kind === 'order' && m.reference
@@ -132,27 +144,24 @@ export function MovementHistory({ row, close }: { row: WarehouseRow; close: () =
                     <Table.Tr key={m.kind + m.id}>
                       <Table.Td data-label="Дата">{m.day}</Table.Td>
                       <Table.Td data-label="Операція">{kinds[m.kind] ?? m.kind}</Table.Td>
-                      <Table.Td data-label="Документ">{m.kind === 'in' || m.kind === 'out' ? <DocumentLink id={m.id}>{m.reference || m.id}</DocumentLink> : url ? <Link to={url}>{m.reference || m.id}</Link> : m.reference}</Table.Td>
-                      <Table.Td data-label="Кількість">
+                      <Table.Td data-label="Документ">{m.kind === 'in' || m.kind === 'out' ? <DocumentLink id={m.id}>{m.reference || m.id}</DocumentLink> : url ? <Link to={url}>{m.reference || m.id}</Link> : m.reference || '—'}</Table.Td>
+                      <Table.Td data-label="Зміна"><span className="wh-change" data-direction={Math.sign(m.change)}>
                         {m.change > 0 ? '+' : ''}
-                        {count(m.change)}
+                        {count(m.change)}</span>
                       </Table.Td>
                       <Table.Td data-label="Після руху">{count(m.balance)}</Table.Td>
                     </Table.Tr>
                   )
                 })}
               </Grid>
-              {query.data.total > 50 && (
-                <Pagination value={page} total={Math.ceil(query.data.total / 50)} onChange={setPage} />
-              )}
-            </>
+            ) : (
+              <p className="ledger-note">Рухів ще немає.</p>
+            )
           ) : (
-            <p className="ledger-note">Рухів ще немає.</p>
-          )
-        ) : (
-          <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
-        )}
-      </section>
+            <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
+          )}
+        </section>
+      </Stack>
     </AppEditorModal>
   )
 }
