@@ -132,7 +132,7 @@ export function ProductAnalyticsPage() {
         ) : report ? (
           <div className="pa-report" aria-busy={query.isFetching || undefined}>
             <Coverage report={report} onSetEnd={(date) => update({ end: date, page: undefined })}
-              onShowArchive={() => update({ source: 'dntrade', product: undefined, page: undefined, search: undefined }, false)} />
+              onShowArchive={() => update({ source: 'dntrade', product: product && CATALOG_ID.test(product) ? product : undefined, page: undefined, search: undefined }, false)} />
             {product && !report.selectedProduct ? <p className="pa-coverage" role="status">Товар за цим посиланням відсутній у вибраному джерелі. Показано загальний звіт.</p> : null}
             <AnalyticsReport report={report} canOpenProduct={can(PermissionKeys.Catalog.ViewProducts)} onSelectProduct={selectProduct} />
             {showProducts && <AnalyticsProducts

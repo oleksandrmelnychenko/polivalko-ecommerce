@@ -203,6 +203,7 @@ function MarketReport({ year, years }: { year: number; years: number[] }) {
           onChange={event => changeParam('carrier', event.currentTarget.checked ? 'nova-poshta' : '')} /> Врахувати реєстр Нової пошти</label>}
         {carrier && (source === 'documents' || source === 'combined') && <p role="status">{carrier.status === 'complete'
           ? `ЕН у реєстрі: ${formatValue(carrier.documents)}. Збігів за ТТН: ${carrier.ttn}, за номером замовлення: ${carrier.number}. Додаткових покупок на карті доставки або адреси покупця: ${formatValue(regionCode ? carrier.addedByRegion[regionCode] ?? 0 : Object.values(carrier.addedByRegion).reduce((a,b) => a+b, 0))}.`
+          : carrier.status === 'rate_limited' ? `Нова пошта обмежила частоту запитів. Прочитано місяців: ${carrier.months}. На карті показано дані обліку.`
           : carrier.status === 'not_configured' ? 'Ключ Нової пошти не налаштовано. Показано дані обліку.'
             : `Повного реєстру Нової пошти за ${year} рік отримати не вдалося. Показано дані обліку.`}</p>}
         {geography && <details className="market-method"><summary>Як визначено адресу</summary><p>{descriptions[source]}</p>

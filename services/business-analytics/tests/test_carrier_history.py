@@ -53,10 +53,14 @@ class CarrierHistoryTests(TestCase):
         second = shipment("02", "20400000000002")
         pages = [dict(success=True, data=[d], info={"totalCount": 2}) for d in (first, second)]
         empty = dict(success=True, data=[], info={"totalCount": 0})
-        page.side_effect = [*pages, *[empty for _ in range(11)]]
+        throttle = dict(success=False, data=[], errorCodes=["20000401501"])
+        page.side_effect = [pages[0], throttle, pages[1], *[empty for _ in range(11)]]
         full = read_history(2025, date(2026, 1, 1), [row])
         self.assertEqual((full.status, full.months, full.documents, full.match(row).status), ("complete", 12, 2, "number"))
-        self.assertEqual([args.args[3] for args in page.call_args_list[:3]], [1, 2, 1])
+        self.assertEqual([args.args[3] for args in page.call_args_list[:4]], [1, 2, 2, 1])
+        page.side_effect = [throttle] * 4
+        limited = read_history(2025, date(2026, 1, 1), [row])
+        self.assertEqual((limited.status, limited.months), ("rate_limited", 0))
         for invalid in (pages[0], empty, {"success": False, "errorCodes": ["10001"]}):
             page.side_effect = [pages[0], invalid]
             partial = read_history(2025, date(2026, 1, 1), [row])

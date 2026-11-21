@@ -11,6 +11,11 @@ from time import monotonic, sleep
 from .shipments import Match, keys
 
 
+class RateLimited(Exception):
+    def __init__(self, delay=2):
+        self.delay = delay
+
+
 def _page(key, first, last, page, timeout):
     connection = http.client.HTTPSConnection("api.novaposhta.ua", timeout=timeout)
     body = dict(apiKey=key, modelName="InternetDocument", calledMethod="getDocumentList",
@@ -19,6 +24,9 @@ def _page(key, first, last, page, timeout):
     try:
         connection.request("POST", "/v2.0/json/", json.dumps(body), {"Content-Type": "application/json"})
         response = connection.getresponse()
+        if response.status == 429:
+            retry_after = response.getheader("Retry-After", "")
+            raise RateLimited(int(retry_after) if re.fullmatch(r"[0-9]{1,6}", retry_after) else 2)
         if response.status != 200:
             raise ValueError("carrier HTTP " + str(response.status))
         payload = response.read(8 * 1024 * 1024 + 1)
@@ -27,6 +35,24 @@ def _page(key, first, last, page, timeout):
         return json.loads(payload)
     finally:
         connection.close()
+
+
+def _read_page(key, first, last, page, deadline):
+    for attempt in range(4):
+        remaining = deadline - monotonic()
+        if remaining < 1:
+            raise TimeoutError()
+        try:
+            result = _page(key, first, last, page, min(10, remaining))
+            codes = result.get("errorCodes") if isinstance(result, dict) else None
+            if isinstance(codes, list) and {str(c) for c in codes} == {"20000401501"}:
+                raise RateLimited()
+            return result
+        except RateLimited as exc:
+            delay = max(exc.delay, 2 ** (attempt + 1))
+            if attempt == 3 or monotonic() + delay + 1 >= deadline:
+                raise
+            sleep(delay)
 
 
 def _day(value):
@@ -121,10 +147,9 @@ def read_history(year, today, invoices):
             page, month_count = 1, 0
             month_total = None
             while True:
-                remaining = deadline - monotonic()
-                if remaining < 1:
-                    raise TimeoutError()
-                result = _page(key, first, last, page, min(10, remaining))
+                if page > 1 or month > 1:
+                    sleep(2)
+                result = _read_page(key, first, last, page, deadline)
                 if not isinstance(result, dict) or result.get("success") is not True or result.get("errors"):
                     codes = result.get("errorCodes") if isinstance(result, dict) else None
                     if isinstance(codes, list) and codes and re.fullmatch(r"[0-9]{3,16}", str(codes[0])):
@@ -157,11 +182,11 @@ def read_history(year, today, invoices):
                         raise ValueError("incomplete carrier register")
                     break
                 page += 1
-                sleep(0.25)
             history.months += 1
             history.documents = len(seen)
-            sleep(0.25)
         history.status = "complete"
+    except RateLimited:
+        history.status = "rate_limited"
     except (OSError, http.client.HTTPException, ValueError, TypeError, OverflowError):
         # A partial register cannot establish whether an order number is unique.
         history.status = "unavailable"

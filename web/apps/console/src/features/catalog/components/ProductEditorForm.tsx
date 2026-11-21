@@ -310,7 +310,7 @@ export function ProductEditorForm({ gallery, formId, product, categories, brands
         </fieldset>
         <div className="product-related-links">
           {can(PermissionKeys.Analytics.ViewProducts) && (
-            <Button component={Link} to={'/sales/product-analytics?product=' + product.id}
+            <Button component={Link} to={'/sales/product-analytics?source=dntrade&product=' + product.id}
               variant="default" radius="xl" size="xs" leftSection={<IconChartHistogram size={15} />}>
               Аналітика товару
             </Button>
