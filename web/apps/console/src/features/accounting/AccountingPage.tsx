@@ -1,4 +1,6 @@
-import { Button, Group, Pagination, Select, Stack, Table, Text, TextInput, Title } from '@mantine/core'
+import { Button, Group, Pagination, Select, Stack, Table, Text, TextInput } from '@mantine/core'
+import { IconBox, IconFileInvoice, IconFiles, IconLink, IconPlus } from '@tabler/icons-react'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { useState } from 'react'
 import { usePermissions } from '@/features/auth'
@@ -34,7 +36,7 @@ function DocTable({ rows }: { rows: Doc[] }) {
               {kindName(d)} № {d.number || d.sourceId}
             </Link>
           </Table.Td>
-          <Table.Td>{d.day ?? '—'}</Table.Td>
+          <Table.Td className="ledger-number">{d.day ?? '—'}</Table.Td>
           <Table.Td>
             {d.partnerId ? (
               <Link to={'/accounting/partners/' + d.partnerId}>{d.partnerTitle || 'Контрагент'}</Link>
@@ -58,28 +60,26 @@ function Document({ id }: { id: string }) {
     return <PageState kind={result.status === 'ready' ? 'empty' : result.status} onRetry={result.reload} />
   const { document: d, lines, parents, related } = result.data
   return (
-    <Stack>
+    <Stack gap="sm" className="ledger-workspace ledger-document">
       <PageHeader title={kindName(d) + ' № ' + (d.number ?? d.sourceId)} />
-      <Title order={2}>
-        {kindName(d)} № {d.number ?? d.sourceId}
-      </Title>
-      <DocTable rows={[d]} />
+      <section className="ledger-card">
+        <header className="ledger-card-head"><h2><MetricLabel icon={IconFileInvoice}>{kindName(d)} № {d.number ?? d.sourceId}</MetricLabel></h2></header>
+        <DocTable rows={[d]} />
+        <Text className="ledger-note" size="sm">Договір · {d.agreement || '—'} · Код документа · {d.sourceId}</Text>
+      </section>
       {d.sourceAccount === 'polivalko-native' && d.entityType === 'invoice' && (
         <InvoiceActions key={d.id} doc={d} lines={lines} refresh={result.reload} />
       )}
-      <Text size="sm">
-        Договір · {d.agreement || '—'} · Код документа · {d.sourceId}
-      </Text>
       {d.partnerRef && !d.partnerId && (
         <Text c="orange">Контрагента з кодом {d.partnerRef} потрібно звірити з довідником.</Text>
       )}
       {lines.length > 0 && (
-        <>
-          <Title order={3}>Товари · {lines.length}</Title>
+        <section className="ledger-card">
+          <header className="ledger-card-head"><h2><MetricLabel icon={IconBox}>Товари</MetricLabel></h2><span className="ledger-count">{lines.length}</span></header>
           <Grid columns={['№', 'Товар', 'Артикул', 'Склад', 'Кількість', 'Ціна', 'Сума']}>
             {lines.map((l) => (
               <Table.Tr key={l.position}>
-                <Table.Td>{l.position}</Table.Td>
+                <Table.Td className="ledger-number">{l.position}</Table.Td>
                 <Table.Td>
                   {l.productRef ? (
                     <Link
@@ -101,28 +101,30 @@ function Document({ id }: { id: string }) {
                     )}
                   </Text>
                 </Table.Td>
-                <Table.Td>{l.sku || '—'}</Table.Td>
+                <Table.Td className="ledger-number">{l.sku || '—'}</Table.Td>
                 <Table.Td>{l.store || '—'}</Table.Td>
-                <Table.Td>{l.quantity ?? '—'}</Table.Td>
-                <Table.Td>{money(l.price)}</Table.Td>
-                <Table.Td>{money(l.total, d.currency)}</Table.Td>
+                <Table.Td className="ledger-number">{l.quantity ?? '—'}</Table.Td>
+                <Table.Td className="ledger-number">{money(l.price)}</Table.Td>
+                <Table.Td className="ledger-number">{money(l.total, d.currency)}</Table.Td>
               </Table.Tr>
             ))}
           </Grid>
-        </>
+        </section>
       )}
       {d.parentRef && (
-        <>
-          <Title order={3}>Документ-підстава</Title>
+        <section className="ledger-card">
+          <header className="ledger-card-head"><h2><MetricLabel icon={IconFileInvoice}>Документ-підстава</MetricLabel></h2></header>
           {parents.length === 1 ? <DocTable rows={parents} /> : <Text>Потребує звірки · {d.parentRef}</Text>}
-        </>
+        </section>
       )}
-      <Title order={3}>Пов’язані документи й оплати</Title>
-      {related.length ? (
-        <DocTable rows={related} />
-      ) : (
-        <Text c="dimmed">Документів із посиланням на цей запис немає.</Text>
-      )}
+      <section className="ledger-card">
+        <header className="ledger-card-head"><h2><MetricLabel icon={IconLink}>Пов’язані документи й оплати</MetricLabel></h2></header>
+        {related.length ? (
+          <DocTable rows={related} />
+        ) : (
+          <Text className="ledger-note" c="dimmed">Документів із посиланням на цей запис немає.</Text>
+        )}
+      </section>
     </Stack>
   )
 }
@@ -145,15 +147,11 @@ function Register({ section }: { section: string }) {
     setParams(next, { replace: true })
   }
   return (
-    <Stack>
-      <PageHeader title={title} />
-      <Group justify="space-between">
-        <Title order={2}>{title}</Title>
-        {can(PermissionKeys.Accounting.Edit) && (
-          <Button onClick={() => setEdit(true)}>Створити накладну</Button>
-        )}
-      </Group>
-      <Group align="end">
+    <Stack gap="sm" className="ledger-workspace">
+      <PageHeader title={title} actions={can(PermissionKeys.Accounting.Edit) && (
+        <Button radius="xl" leftSection={<IconPlus size={16} />} onClick={() => setEdit(true)}>Створити накладну</Button>
+      )} />
+      <Group className="ledger-card ledger-filters" align="end">
         <TextInput
           label="Пошук"
           placeholder="Номер, контрагент, організація"
@@ -183,28 +181,29 @@ function Register({ section }: { section: string }) {
           onChange={(v) => change('status', v ?? '')}
         />
       </Group>
-      {query.data ? (
-        <>
-          <Text size="sm" c="dimmed">
-            Записів · {query.data.total}
-          </Text>
-          {!query.data.total ? (
-            <PageState kind="empty" title="Записів за цими умовами немає" />
-          ) : (
-            <DocTable rows={query.data.items} />
-          )}
-          {query.data.total > 50 && (
-            <Pagination
-              total={Math.ceil(query.data.total / 50)}
-              value={page}
-              onChange={(p) => change('page', String(p))}
-            />
-          )}
-        </>
-
-      ) : (
-        <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
-      )}
+      <section className="ledger-card">
+        <header className="ledger-card-head"><h2><MetricLabel icon={IconFiles}>Журнал накладних</MetricLabel></h2>
+          {query.data && <span className="ledger-count">Записів · {query.data.total.toLocaleString('uk-UA')}</span>}
+        </header>
+        {query.data ? (
+          <>
+            {!query.data.total ? (
+              <PageState kind="empty" title="Записів за цими умовами немає" />
+            ) : (
+              <DocTable rows={query.data.items} />
+            )}
+            {query.data.total > 50 && (
+              <Pagination
+                total={Math.ceil(query.data.total / 50)}
+                value={page}
+                onChange={(p) => change('page', String(p))}
+              />
+            )}
+          </>
+        ) : (
+          <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
+        )}
+      </section>
       {edit && (
         <EditRegister
           kind={direction}

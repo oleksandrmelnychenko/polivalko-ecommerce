@@ -1,11 +1,12 @@
 import { Button, Group, Pagination, Select, Stack, Table, Text, TextInput, Title } from '@mantine/core'
-import { IconArrowDownLeft, IconArrowUpRight, IconBuildingWarehouse } from '@tabler/icons-react'
+import { IconArrowDownLeft, IconArrowUpRight, IconBuildingWarehouse, IconChecklist, IconFilePencil, IconFiles, IconWallet } from '@tabler/icons-react'
 import type { components } from '@polivalko/shared/api/schema'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { PageHeader } from '@/shared/ui/PageHeader'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { PageState } from '@/shared/ui/PageState'
 import { EditRegister } from './EditRegister'
 import { Grid } from './RegisterTable'
@@ -16,10 +17,10 @@ import { money, paymentNames, useRegister, type Doc, type Page, type Ref } from 
 
 type S = components['schemas']
 const queues = [
-  { id: 'drafts', title: 'До проведення', empty: 'Чернеток немає' },
-  { id: 'receivable', title: 'До отримання', empty: 'Усі проведені продажі оплачені' },
-  { id: 'payable', title: 'До сплати', empty: 'Немає відкритих оплат постачальникам' },
-  { id: 'settled', title: 'Закриті', empty: 'Повністю оплачених накладних ще немає' },
+  { id: 'drafts', icon: IconFilePencil, title: 'До проведення', empty: 'Чернеток немає' },
+  { id: 'receivable', icon: IconArrowDownLeft, title: 'До отримання', empty: 'Усі проведені продажі оплачені' },
+  { id: 'payable', icon: IconWallet, title: 'До сплати', empty: 'Немає відкритих оплат постачальникам' },
+  { id: 'settled', icon: IconChecklist, title: 'Закриті', empty: 'Повністю оплачених накладних ще немає' },
 ] as const
 
 export function Workplace() {
@@ -31,28 +32,13 @@ export function Workplace() {
   const [create, setCreate] = useState<'in' | 'out' | null>(null)
   const { can } = usePermissions()
   return (
-    <Stack gap="lg">
-      <PageHeader title="Робоче місце" />
-      <Group justify="space-between" align="end">
-        <div>
-          <Title order={2}>Робоче місце</Title>
-          <Text size="sm" c="dimmed">
-            Накладні та розрахунки вашої команди
-          </Text>
-        </div>
+    <Stack gap="sm" className="ledger-workspace">
+      <PageHeader title="Робоче місце" actions={can(PermissionKeys.Accounting.Edit) && (
         <Group gap="xs">
-          {can(PermissionKeys.Accounting.Edit) && (
-            <>
-              <Button variant="default" leftSection={<IconArrowDownLeft size={17} />} onClick={() => setCreate('in')}>
-                Прийняти товар
-              </Button>
-              <Button leftSection={<IconArrowUpRight size={17} />} onClick={() => setCreate('out')}>
-                Оформити продаж
-              </Button>
-            </>
-          )}
+          <Button radius="xl" variant="default" leftSection={<IconArrowDownLeft size={16} />} onClick={() => setCreate('in')}>Прийняти товар</Button>
+          <Button radius="xl" leftSection={<IconArrowUpRight size={16} />} onClick={() => setCreate('out')}>Оформити продаж</Button>
         </Group>
-      </Group>
+      )} />
       <nav aria-label="Черги документів" className="work-queues">
         {queues.map((q) => (
           <button
@@ -62,78 +48,79 @@ export function Workplace() {
             aria-pressed={q.id === queue.id}
             onClick={() => setParams({ queue: q.id })}
           >
-            <span>{q.title}</span>
-            <strong>{counts.data?.[q.id] ?? '—'}</strong>
+            <MetricLabel icon={q.icon}>{q.title}</MetricLabel>
+            <strong>{counts.data?.[q.id]?.toLocaleString('uk-UA') ?? '—'}</strong>
           </button>
         ))}
       </nav>
-      <Group justify="space-between">
-        <Title order={3}>{queue.title}</Title>
-        <Button
-          component={Link}
-          to="/accounting/warehouse"
-          variant="subtle"
-          size="compact-sm"
-          leftSection={<IconBuildingWarehouse size={16} />}
-        >
-          Залишки по складах
-        </Button>
-      </Group>
-      {counts.status === 'error' && (
-        <Button variant="subtle" onClick={counts.reload}>
-          Оновити лічильники
-        </Button>
-      )}
-      {docs.data ? (
-        docs.data.total ? (
-          <>
-            <Grid columns={['Накладна', 'Дата', 'Контрагент', 'Організація', 'Сума', 'Залишок до оплати']}>
-              {docs.data.items.map((d) => (
-                <Table.Tr key={d.id}>
-                  <Table.Td>
-                    <Link to={'/accounting/documents/' + d.id}>
-                      {d.kind === 'in' ? 'Прибуткова' : 'Видаткова'} № {d.number}
-                    </Link>
-                  </Table.Td>
-                  <Table.Td>{d.day}</Table.Td>
-                  <Table.Td>{d.partnerTitle}</Table.Td>
-                  <Table.Td>{d.organization}</Table.Td>
-                  <Table.Td className="register-money">{money(d.amount, d.currency)}</Table.Td>
-                  <Table.Td className="register-money">
-                    {money(d.due, d.currency)}
-                    {d.paymentStatus && (
-                      <Text size="xs" c="dimmed">
-                        {paymentNames[d.paymentStatus]}
-                      </Text>
-                    )}
-                  </Table.Td>
-                </Table.Tr>
-              ))}
-            </Grid>
-            {docs.data.total > 50 && (
-              <Pagination
-                total={Math.ceil(docs.data.total / 50)}
-                value={page}
-                onChange={(p) => setParams({ queue: queue.id, page: String(p) })}
-              />
-            )}
-          </>
+      <section className="ledger-card">
+        <header className="ledger-card-head">
+          <h2><MetricLabel icon={IconFiles}>{queue.title}</MetricLabel></h2>
+          <Button
+            component={Link}
+            to="/accounting/warehouse"
+            variant="default"
+            size="xs"
+            leftSection={<IconBuildingWarehouse size={16} />}
+          >
+            Залишки на складах
+          </Button>
+        </header>
+        {counts.status === 'error' && (
+          <Button variant="subtle" onClick={counts.reload}>
+            Оновити лічильники
+          </Button>
+        )}
+        {docs.data ? (
+          docs.data.total ? (
+            <>
+              <Grid columns={['Накладна', 'Дата', 'Контрагент', 'Організація', 'Сума', 'Залишок до оплати']}>
+                {docs.data.items.map((d) => (
+                  <Table.Tr key={d.id}>
+                    <Table.Td>
+                      <Link to={'/accounting/documents/' + d.id}>
+                        {d.kind === 'in' ? 'Прибуткова' : 'Видаткова'} № {d.number}
+                      </Link>
+                    </Table.Td>
+                    <Table.Td className="ledger-number">{d.day}</Table.Td>
+                    <Table.Td>{d.partnerTitle}</Table.Td>
+                    <Table.Td>{d.organization}</Table.Td>
+                    <Table.Td className="register-money">{money(d.amount, d.currency)}</Table.Td>
+                    <Table.Td className="register-money">
+                      {money(d.due, d.currency)}
+                      {d.paymentStatus && (
+                        <Text size="xs" c="dimmed">
+                          {paymentNames[d.paymentStatus]}
+                        </Text>
+                      )}
+                    </Table.Td>
+                  </Table.Tr>
+                ))}
+              </Grid>
+              {docs.data.total > 50 && (
+                <Pagination
+                  total={Math.ceil(docs.data.total / 50)}
+                  value={page}
+                  onChange={(p) => setParams({ queue: queue.id, page: String(p) })}
+                />
+              )}
+            </>
+          ) : (
+            <PageState
+              kind="empty"
+              title={queue.empty}
+              action={
+                <Group>
+                  <Button component={Link} to="/accounting/incoming" variant="default" size="xs">Журнал надходжень</Button>
+                  <Button component={Link} to="/accounting/outgoing" variant="default" size="xs">Журнал продажів</Button>
+                </Group>
+              }
+            />
+          )
         ) : (
-          <PageState
-            kind="empty"
-            title={queue.empty}
-            description="Тут відображаються накладні, створені працівниками консолі."
-            action={
-              <Group>
-                <Link to="/accounting/incoming">Журнал надходжень</Link>
-                <Link to="/accounting/outgoing">Журнал продажів</Link>
-              </Group>
-            }
-          />
-        )
-      ) : (
-        <PageState kind={docs.status === 'ready' ? 'empty' : docs.status} onRetry={docs.reload} />
-      )}
+          <PageState kind={docs.status === 'ready' ? 'empty' : docs.status} onRetry={docs.reload} />
+        )}
+      </section>
       {create && (
         <EditRegister
           kind={create}

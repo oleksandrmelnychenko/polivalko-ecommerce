@@ -1,9 +1,12 @@
-import { Alert, Button, Group, Modal, Select, Stack, Table, Text, TextInput } from '@mantine/core'
+import { Alert, Button, Group, Select, Stack, Table, Text, TextInput } from '@mantine/core'
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getProducts } from '@/features/catalog/api/catalogApi'
 import { problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
+import { IconFileInvoice, IconPackage, IconUser } from '@tabler/icons-react'
+import { AppEditorModal } from '@/shared/ui/AppEditorModal'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { save, useRegister, type Page, type Partner, type Ref } from './api'
 
 type LineInput = { productId: string; title: string; quantity: string; price: string }
@@ -35,6 +38,7 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
   const [term, setTerm] = useState(initial?.partner.title ?? '')
   const [productTerm, setProductTerm] = useState('')
   const [lines, setLines] = useState<LineInput[]>(initial?.lines ?? [])
+  const [opened, setOpened] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const partners = useRegister<Page<Partner>>('partners?q=' + encodeURIComponent(term), !person)
@@ -91,78 +95,84 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
     setLines((current) => current.map((item, index) => (index === i ? { ...item, [key]: value } : item)))
   }
   return (
-    <Modal
-      opened
-      onClose={busy ? () => {} : onClose}
-      size={person ? 'md' : 'xl'}
-      title={
-        initial
-          ? 'Редагування чернетки'
-          : person
-            ? 'Новий контрагент'
-            : kind === 'in'
-              ? 'Нова прибуткова накладна'
-              : 'Нова видаткова накладна'
-      }
+    <AppEditorModal
+      opened={opened}
+      onClose={() => { if (!busy) setOpened(false) }}
+      onExitTransitionEnd={onClose}
+      size={person ? 'compact' : 'standard'}
+      className="ledger-editor"
+      title={<MetricLabel icon={person ? IconUser : IconFileInvoice}>
+        {initial ? 'Редагування чернетки' : person ? 'Новий контрагент' : kind === 'in' ? 'Нова прибуткова накладна' : 'Нова видаткова накладна'}
+      </MetricLabel>}
+      footer={<Group gap="xs">
+        <Button variant="default" onClick={() => setOpened(false)} disabled={busy}>Скасувати</Button>
+        <Button type="submit" form={'register-' + id} loading={busy}>{person ? 'Зберегти' : 'Зберегти чернетку'}</Button>
+      </Group>}
     >
-      <form onSubmit={submit}>
-        <Stack>
-          <TextInput
-            required
-            label={person ? 'Назва контрагента' : 'Номер накладної'}
-            value={title}
-            maxLength={person ? 300 : 80}
-            onChange={(e) => setTitle(e.currentTarget.value)}
-          />
-          {person ? (
-            <Select
+      <form id={'register-' + id} onSubmit={submit}>
+        <Stack gap="sm">
+          <section className="ledger-form-block">
+            <TextInput
               required
-              label="Вид"
-              value={category}
-              onChange={(v) => v && setCategory(v)}
-              data={[
-                { value: 'juridical', label: 'Юридична особа' },
-                { value: 'individual', label: 'Фізична особа' },
-              ]}
+              label={person ? 'Назва контрагента' : 'Номер накладної'}
+              value={title}
+              maxLength={person ? 300 : 80}
+              onChange={(e) => setTitle(e.currentTarget.value)}
             />
-          ) : (
-            <>
-              <Group grow align="end">
-                <TextInput
-                  required
-                  type="date"
-                  label="Дата"
-                  value={day}
-                  onChange={(e) => setDay(e.currentTarget.value)}
-                />
-                <Select
-                  searchable
-                  required
-                  label="Контрагент"
-                  searchValue={term}
-                  onSearchChange={setTerm}
-                  data={candidates}
-                  value={partner?.id ?? null}
-                  onChange={(value, item) => setPartner(value && item ? { id: value, title: item.label } : null)}
-                />
-              </Group>
-              <Group grow>
-                <Select
-                  required
-                  label="Організація"
-                  searchable
-                  data={refs.data?.organizations.map(option) ?? []}
-                  value={org}
-                  onChange={setOrg}
-                />
-                <Select
-                  required
-                  label="Склад"
-                  data={refs.data?.stores.map(option) ?? []}
-                  value={store}
-                  onChange={setStore}
-                />
-              </Group>
+            {person ? (
+              <Select
+                required
+                label="Вид"
+                value={category}
+                onChange={(v) => v && setCategory(v)}
+                data={[
+                  { value: 'juridical', label: 'Юридична особа' },
+                  { value: 'individual', label: 'Фізична особа' },
+                ]}
+              />
+            ) : (
+              <>
+                <Group grow align="end">
+                  <TextInput
+                    required
+                    type="date"
+                    label="Дата"
+                    value={day}
+                    onChange={(e) => setDay(e.currentTarget.value)}
+                  />
+                  <Select
+                    searchable
+                    required
+                    label="Контрагент"
+                    searchValue={term}
+                    onSearchChange={setTerm}
+                    data={candidates}
+                    value={partner?.id ?? null}
+                    onChange={(value, item) => setPartner(value && item ? { id: value, title: item.label } : null)}
+                  />
+                </Group>
+                <Group grow>
+                  <Select
+                    required
+                    label="Організація"
+                    searchable
+                    data={refs.data?.organizations.map(option) ?? []}
+                    value={org}
+                    onChange={setOrg}
+                  />
+                  <Select
+                    required
+                    label="Склад"
+                    data={refs.data?.stores.map(option) ?? []}
+                    value={store}
+                    onChange={setStore}
+                  />
+                </Group>
+              </>
+            )}
+          </section>
+          {!person && <section className="ledger-form-block">
+              <h3><MetricLabel icon={IconPackage}>Товари</MetricLabel></h3>
               <Select
                 label="Додати товар"
                 placeholder="Введіть назву або артикул"
@@ -186,7 +196,7 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
                   Повторити завантаження складів і організацій
                 </Button>
               )}
-              <Table>
+              {lines.length > 0 && <div className="ledger-lines"><Table>
                 <Table.Thead>
                   <Table.Tr>
                     {['Товар', 'Кількість', 'Ціна, грн', ''].map((c) => (
@@ -228,23 +238,14 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
                     </Table.Tr>
                   ))}
                 </Table.Tbody>
-              </Table>
+              </Table></div>}
               <Text size="sm" c="dimmed">
                 Чернетка зберігає позиції та суму в гривнях. Рух запасів і зміна боргу потребують проведення.
               </Text>
-            </>
-          )}
-          {error && <Alert color="red">{error}</Alert>}
-          <Group justify="end">
-            <Button variant="default" onClick={onClose} disabled={busy}>
-              Скасувати
-            </Button>
-            <Button type="submit" loading={busy}>
-              {person ? 'Зберегти' : 'Зберегти чернетку'}
-            </Button>
-          </Group>
+          </section>}
+          {error && <Alert color="red" role="alert">{error}</Alert>}
         </Stack>
       </form>
-    </Modal>
+    </AppEditorModal>
   )
 }
