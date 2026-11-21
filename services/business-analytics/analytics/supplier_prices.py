@@ -19,7 +19,7 @@ WITH positions AS (
            d.total AS invoice_total
     FROM accounting.documents d CROSS JOIN LATERAL jsonb_array_elements(
         CASE WHEN jsonb_typeof(d.details->'products')='array' THEN d.details->'products' ELSE '[]'::jsonb END) l
-    WHERE d.day BETWEEN %s AND %s AND d.entity_type='invoice' AND d.kind='in'
+    WHERE d.day <= %s AND d.entity_type='invoice' AND d.kind='in'
       AND ((d.source_account='polivalko-native' AND d.status='posted')
         OR (d.source_account='valko-dntrade' AND lower(d.status) IN ('active','активна','активний','posted')
         AND coalesce(lower(d.details->>'status'),'active') IN ('active','активна','активний','posted')
@@ -96,8 +96,10 @@ def latest_purchase(entries, unit, buy_quantity):
     return purchase
 
 
-def supplier_budget(rows):
+def supplier_budget(rows, through):
     groups = {}
+    year_start = through.replace(month=1, day=1).isoformat()
+    historical_count, historical_amount = 0, Decimal(0)
     for row in rows:
         if row["buyQuantity"] is None:
             continue
@@ -110,9 +112,14 @@ def supplier_budget(rows):
             group["unpriced"] += 1
         else:
             group["subtotal"] += amount
+            if purchase["day"] < year_start:
+                historical_count += 1
+                historical_amount += amount
         group["items"].append(dict(id=row["id"], sku=row["sku"], name=row["name"], quantity=row["buyQuantity"],
                                    unit=row["unit"], unitPrice=purchase.get("unitPrice") if amount is not None else None,
-                                   amount=amount))
+                                   amount=amount, priceDay=purchase.get("day") if amount is not None else None,
+                                   receiptId=purchase.get("documentId") if amount is not None else None))
     suppliers = sorted(groups.values(), key=lambda g: (not g["id"], -g["subtotal"], g["name"] or "", g["id"] or ""))
     return dict(subtotal=sum((g["subtotal"] for g in suppliers), Decimal(0)),
+                historicalCount=historical_count, historicalAmount=historical_amount,
                 unpriced=sum(g["unpriced"] for g in suppliers), suppliers=suppliers)

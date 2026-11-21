@@ -45,9 +45,10 @@ export type LastPurchase = {
   unit: string | null; unitPrice: number | null; amount: number | null; issue: 'ambiguous' | 'unit' | 'price' | null
 }
 export type SupplierBudget = {
-  subtotal: number; unpriced: number
+  subtotal: number; unpriced: number; historicalCount: number; historicalAmount: number
   suppliers: { id: string | null; name: string | null; subtotal: number; unpriced: number
-    items: { id: string; sku: string; name: string; quantity: number; unit: string; unitPrice: number | null; amount: number | null }[] }[]
+    items: { id: string; sku: string; name: string; quantity: number; unit: string; unitPrice: number | null; amount: number | null
+      priceDay: string | null; receiptId: string | null }[] }[]
 }
 
 type StockTurnoverReport = {

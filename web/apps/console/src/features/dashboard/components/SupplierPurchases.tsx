@@ -12,10 +12,11 @@ const issueText = {
 }
 
 export function ReceiptPrice({ purchase, year }: { purchase: LastPurchase | null; year: string }) {
-  if (!purchase) return <span className="app-cell-sub">Прибуткової накладної за {year} рік для цього товару не знайдено.</span>
+  if (!purchase) return <span className="app-cell-sub">У реєстрі немає отриманої прибуткової накладної для цього товару.</span>
   return <div className="dash-last-purchase">
     <div>{purchase.supplier || 'Постачальника слід уточнити'}
       {purchase.unitPrice != null && <> · {priceFormat.format(purchase.unitPrice)} ₴/{purchase.unit}</>}
+      {purchase.unitPrice != null && purchase.day.slice(0, 4) < year && ' · ціна попередніх років'}
     </div>
     {purchase.documentId && <DocumentLink id={purchase.documentId}>Прибуткова накладна №{purchase.number || '—'} від {dateLabel(purchase.day)}</DocumentLink>}
     {purchase.issue && <span>{issueText[purchase.issue]}</span>}
@@ -30,7 +31,9 @@ export function BudgetBySupplier({ budget, count, year }: { budget: SupplierBudg
         {' · '}{group.items.length > group.unpriced ? formatPrice(group.subtotal) : 'сума невідома'}
         {group.unpriced > 0 && group.items.length > group.unpriced && ' + без оцінки ' + group.unpriced + ' поз.'}</summary>
       <ul>{group.items.map(item => <li key={item.id}>
-        <Link to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}{item.sku && <small> · {item.sku}</small>}</Link>
+        <div><Link to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}{item.sku && <small> · {item.sku}</small>}</Link>
+          {item.receiptId && item.priceDay && <small className="app-cell-sub"><DocumentLink id={item.receiptId}>Ціна від {dateLabel(item.priceDay)}</DocumentLink></small>}
+        </div>
         <span>{numberFormat.format(item.quantity)} {item.unit}{item.unitPrice != null && ' × ' + priceFormat.format(item.unitPrice) + ' ₴'}</span>
         <strong>{item.amount == null ? 'Ціну уточнити' : formatPrice(item.amount)}</strong>
       </li>)}</ul>
@@ -40,7 +43,8 @@ export function BudgetBySupplier({ budget, count, year }: { budget: SupplierBudg
       <h3>Закупівлі за постачальниками</h3>
       <strong>{priced ? formatPrice(budget.subtotal) : 'Суму ще не визначено'}</strong>
     </div>
-    <p>За останніми цінами прибуткових накладних за {year} рік. Оцінено {priced} із {count} позицій усієї черги.</p>
+    <p>Оцінено {priced} із {count} позицій за останніми цінами прибуткових накладних.
+      {budget.historicalCount > 0 && <> Ціни до {year} року використано для {budget.historicalCount} поз. на {formatPrice(budget.historicalAmount)}.</>}</p>
     {groups.slice(0, 3)}
     {groups.length > 3 && <details className="dash-budget-group">
       <summary>Показати решту · {groups.length - 3}</summary>{groups.slice(3)}

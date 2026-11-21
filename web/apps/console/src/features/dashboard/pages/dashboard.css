@@ -1061,7 +1061,7 @@ a.dash-queue-item:focus-visible {
 .dash-last-purchase { display: grid; justify-items: start; gap: 2px; margin-top: 4px; }
 @media (max-width: 36em) {
   .dash-budget-group li { grid-template-columns: 1fr auto; }
-  .dash-budget-group li a { grid-column: 1 / -1; }
+  .dash-budget-group li > div { grid-column: 1 / -1; }
 }
 .dash-period > .dash-link { align-self: start; margin-block: 4px 12px; }
 @media (max-width: 68em) {

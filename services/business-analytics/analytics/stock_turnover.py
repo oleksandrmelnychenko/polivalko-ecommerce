@@ -144,7 +144,7 @@ def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), r
     out = sum(r["available"] <= 0 for r in rows)
     return dict(start=report["start"], through=report["through"], periodNet=period_net, threshold=THRESHOLD,
                 coverDays=cover_days, buyCount=sum(r["purchaseStatus"] == "buy" for r in rows),
-                supplierSource=source, supplierBudget=supplier_budget(rows),
+                supplierSource=source, supplierBudget=supplier_budget(rows, today),
                 withOrders=sum(bool(r["supply"]["orders"]) for r in rows),
                 withDatedSupply=sum(r["supply"]["within"] > 0 for r in rows),
                 total=len(rows), outCount=out, lowCount=len(rows)-out, unknownCount=len(rows)-len(known),
@@ -163,7 +163,7 @@ def stock_page(through, days, page, stock, search, cover_days=DEFAULT_COVER_DAYS
             with production() as conn:
                 supplier_docs = list(conn.execute(DOCUMENTS, (through,through)))
                 register = conn.execute(REGISTER, (through,)).fetchone()
-                prices = conn.execute(RECEIPT_PRICES, (through.replace(month=1, day=1), through))
+                prices = conn.execute(RECEIPT_PRICES, (through,))
                 result = exposure(report, conn.execute(CATALOG), cover_days, supplier_docs,
                                   register_entries(register["tables"]) if register else {}, prices)
             _cache[days, cover_days] = report, monotonic()+120, result

@@ -47,7 +47,20 @@ class SupplierPricesTests(TestCase):
         base = dict(sku="A", name="Товар", unit="кг", id="a", buyQuantity=Decimal(".27"))
         source = latest_purchase([(receipt(unit="301", amount=Decimal("31.05")), True)], "кг", base["buyQuantity"])
         result = supplier_budget([dict(base, lastPurchase=source), dict(base, id="b", lastPurchase=None),
-                                  dict(base, id="c", buyQuantity=None, lastPurchase=None)])
+                                  dict(base, id="c", buyQuantity=None, lastPurchase=None)], date(2026, 11, 21))
         self.assertEqual((result["subtotal"], result["unpriced"]), (Decimal("2.79"), 1))
         self.assertEqual([g["id"] for g in result["suppliers"]], ["valko-dntrade:partner", None])
         self.assertIsNone(result["suppliers"][1]["items"][0]["amount"])
+
+    def test_prior_year_receipt_prices_only_items_without_a_newer_receipt(self):
+        previous = (receipt("prior", day=date(2025, 12, 31), amount=Decimal("12")), True)
+        current = (receipt("current", day=date(2026, 1, 1), amount=Decimal("9")), True)
+        base = dict(name="Товар", unit="шт", buyQuantity=Decimal(2))
+        rows = [dict(base, id="a", sku="a", lastPurchase=latest_purchase([previous], "шт", 2)),
+                dict(base, id="b", sku="b", lastPurchase=latest_purchase([current, previous], "шт", 2))]
+        result = supplier_budget(rows, date(2026, 11, 21))
+        self.assertEqual((result["subtotal"], result["historicalCount"], result["historicalAmount"]), (14, 1, 8))
+        self.assertEqual([(i["priceDay"], i["receiptId"]) for i in result["suppliers"][0]["items"]],
+                         [("2025-12-31", "prior"), ("2026-01-01", "current")])
+        invalid = latest_purchase([previous, (dict(current[0], amount=None), True)], "шт", 2)
+        self.assertIsNone(invalid["amount"])
