@@ -1,9 +1,11 @@
+import { DocumentLink } from '@/shared/ui/DocumentLink'
+import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { Button, Select, Stack, Table, Text, TextInput } from '@mantine/core'
-import { IconArrowLeft, IconBox, IconFileInvoice, IconFiles, IconLink, IconPackageImport, IconPlus, IconSearch } from '@tabler/icons-react'
+import { IconBox, IconFileInvoice, IconFiles, IconLink, IconPackageImport, IconPlus, IconSearch } from '@tabler/icons-react'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { MetricLabel } from '@/shared/ui/MetricCard'
-import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useState } from 'react'
 import { usePermissions } from '@/features/auth'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
@@ -17,6 +19,7 @@ import { Workplace, WarehousePage } from './Workplace'
 import { InvoiceActions } from './InvoiceActions'
 import { PartnersDirectory } from './Partners'
 import {
+  ACCOUNTING_DOCUMENT_CHANGED,
   kindName,
   money,
   paymentNames,
@@ -39,19 +42,15 @@ function DocumentStatus({ doc }: { doc: Doc }) {
 }
 
 function DocTable({ rows, incoming = false }: { rows: Doc[]; incoming?: boolean }) {
-  const location = useLocation()
-  const returnState = ['/accounting/documents', '/accounting/incoming', '/accounting/outgoing'].includes(location.pathname)
-    ? { registerPath: location.pathname, registerSearch: location.search }
-    : location.state
   return (
     <div className="doc-list">
       <Grid columns={['Документ', incoming ? 'Постачальник' : 'Контрагент', 'Дата', 'Стан документа', 'Сума', 'Оплата', ...(incoming ? ['До сплати'] : [])]}>
         {rows.map((d) => (
           <Table.Tr key={d.id}>
             <Table.Td className="doc-name">
-              <Link to={'/accounting/documents/' + d.id} state={returnState}>
+              <DocumentLink id={d.id}>
                 {kindName(d) || 'Документ'} № <span>{d.number || d.sourceId}</span>
-              </Link>
+              </DocumentLink>
               {d.organization && <small>{d.organization}</small>}
             </Table.Td>
             <Table.Td data-label={incoming ? 'Постачальник' : 'Контрагент'}><PartnerLink doc={d} /></Table.Td>
@@ -69,28 +68,36 @@ function DocTable({ rows, incoming = false }: { rows: Doc[]; incoming?: boolean 
 
 function Document({ id }: { id: string }) {
   const { state } = useLocation()
+  const navigate = useNavigate()
+  const [opened, setOpened] = useState(true)
+  const [operationOpen, setOperationOpen] = useState(false)
   const result = useRegister<Card>('documents/' + id)
-  if (!result.data)
-    return <PageState kind={result.status === 'ready' ? 'empty' : result.status} onRetry={result.reload} />
-  const { document: d, lines, parents, related } = result.data
-  const title = (kindName(d) || 'Документ') + ' № ' + (d.number || d.sourceId)
-  const fromPartner = typeof state?.partnerId === 'string'
-  const registerPath = ['/accounting/documents', '/accounting/incoming', '/accounting/outgoing'].includes(state?.registerPath)
-    ? state.registerPath : '/accounting/documents'
+  const card = result.data
+  const title = card ? (kindName(card.document) || 'Документ') + ' № ' + (card.document.number || card.document.sourceId) : 'Картка документа'
+  return (
+    <AppEditorModal opened={opened} onClose={() => setOpened(false)} size="wide" className="ledger-editor document-modal"
+      closeOnEscape={!operationOpen} closeOnClickOutside={!operationOpen} trapFocus={!operationOpen}
+      onExitTransitionEnd={() => {
+        if (state?.documentBackground) navigate(-1)
+        else navigate('/accounting/documents', { replace: true })
+      }}
+      title={<MetricLabel icon={IconFileInvoice}>{title}</MetricLabel>}>
+      {card ? <DocumentDetails card={card} onDialogChange={setOperationOpen} reload={() => {
+        result.reload()
+        window.dispatchEvent(new Event(ACCOUNTING_DOCUMENT_CHANGED))
+      }} /> :
+        <PageState kind={result.status === 'ready' ? 'empty' : result.status} onRetry={result.reload} />}
+    </AppEditorModal>
+  )
+}
+
+function DocumentDetails({ card, reload, onDialogChange }: { card: Card; reload: () => void; onDialogChange: (opened: boolean) => void }) {
+  const { document: d, lines, parents, related } = card
   return (
     <Stack gap="sm" className="ledger-workspace ledger-document">
-      <PageHeader title={title} />
-      <Button component={Link} variant="default" radius="xl" className="partner-return" leftSection={<IconArrowLeft size={16} />}
-        to={fromPartner
-          ? { pathname: '/accounting/partners/' + encodeURIComponent(state.partnerId), search: state.documentSearch }
-          : { pathname: registerPath, search: state?.registerSearch }}
-        state={fromPartner ? state.partnerState : undefined}>
-        {fromPartner ? 'До картки контрагента' : 'До списку документів'}
-      </Button>
       <section className="ledger-card doc-summary">
         <div className="doc-heading">
-          <span className="doc-symbol"><IconFileInvoice size={23} aria-hidden="true" /></span>
-          <div><h2>{title}</h2><div className="doc-meta"><time>{d.day ?? '—'}</time><DocumentStatus doc={d} /></div></div>
+          <div className="doc-meta"><time>{d.day ?? '—'}</time><DocumentStatus doc={d} /></div>
           <div className="doc-amount"><span>Сума документа</span><strong>{money(d.amount, d.currency)}</strong></div>
         </div>
         <dl className="doc-facts">
@@ -102,7 +109,7 @@ function Document({ id }: { id: string }) {
         </dl>
       </section>
       {d.sourceAccount === 'polivalko-native' && d.entityType === 'invoice' && (
-        <InvoiceActions key={d.id} doc={d} lines={lines} refresh={result.reload} />
+        <InvoiceActions key={d.id} doc={d} lines={lines} refresh={reload} onDialogChange={onDialogChange} />
       )}
       {d.partnerRef && !d.partnerId && (
         <Text c="orange">Контрагента з кодом {d.partnerRef} потрібно звірити з довідником.</Text>
@@ -148,7 +155,7 @@ function Document({ id }: { id: string }) {
       {d.parentRef && (
         <section className="ledger-card">
           <header className="ledger-card-head"><h2><MetricLabel icon={IconFileInvoice}>Документ-підстава</MetricLabel></h2></header>
-          {parents.length === 1 ? <DocTable rows={parents} /> : <Text>Потребує звірки · {d.parentRef}</Text>}
+          {parents.length === 1 ? <DocTable rows={parents} /> : <Text className="ledger-note">Потребує звірки · {d.parentRef}</Text>}
         </section>
       )}
       <section className="ledger-card">
@@ -261,6 +268,7 @@ export function AccountingReturnsPage({ sourceSwitch }: { sourceSwitch?: React.R
 export default function AccountingPage() {
   const section = useLocation().pathname.split('/')[2]
   const { id } = useParams()
+  if (section === 'documents' && id) return <Document key={id} id={id} />
   if (section === 'partners') return <PartnersDirectory id={id} />
   if (section === 'work' || section === 'warehouse')
     return <div className="accounting-register">{section === 'work' ? <Workplace /> : <WarehousePage />}</div>
@@ -274,8 +282,6 @@ export default function AccountingPage() {
     <div className="accounting-register">
       {section === 'balances' ? (
         <Balances />
-      ) : section === 'documents' && id ? (
-        <Document id={id} />
       ) : (
         <Register key={section} section={section} />
       )}

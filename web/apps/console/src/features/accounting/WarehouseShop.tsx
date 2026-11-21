@@ -1,5 +1,6 @@
+import { DocumentLink, DocumentOverlayContext } from '@/shared/ui/DocumentLink'
 import { Alert, Button, Group, Pagination, Stack, Table, Text } from '@mantine/core'
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { components } from '@polivalko/shared/api/schema'
 import { IconBuildingStore, IconHistory, IconPackage } from '@tabler/icons-react'
@@ -95,6 +96,7 @@ export function ShopSourceForm({ row, close }: { row: WarehouseRow; close: () =>
 
 export function MovementHistory({ row, close }: { row: WarehouseRow; close: () => void }) {
   const [opened, setOpened] = useState(true)
+  const documentOpen = useContext(DocumentOverlayContext)
   const [page, setPage] = useState(1)
   const query = useRegister<Page<Movement>>(
     'warehouse/' +
@@ -110,6 +112,7 @@ export function MovementHistory({ row, close }: { row: WarehouseRow; close: () =
   }
   return (
     <AppEditorModal opened={opened} size="standard" className="ledger-editor warehouse-modal" onClose={() => setOpened(false)}
+      closeOnEscape={!documentOpen} closeOnClickOutside={!documentOpen} trapFocus={!documentOpen}
       onExitTransitionEnd={close} title={<MetricLabel icon={IconHistory}>Рух товару</MetricLabel>}>
       <section className="ledger-card wh-movements">
         <header className="ledger-card-head">
@@ -124,14 +127,12 @@ export function MovementHistory({ row, close }: { row: WarehouseRow; close: () =
                   const url =
                     m.kind === 'order' && m.reference
                       ? '/sales/orders/' + encodeURIComponent(m.reference)
-                      : ['in', 'out'].includes(m.kind)
-                        ? '/accounting/documents/' + m.id
-                        : null
+                      : null
                   return (
                     <Table.Tr key={m.kind + m.id}>
                       <Table.Td data-label="Дата">{m.day}</Table.Td>
                       <Table.Td data-label="Операція">{kinds[m.kind] ?? m.kind}</Table.Td>
-                      <Table.Td data-label="Документ">{url ? <Link to={url}>{m.reference || m.id}</Link> : m.reference}</Table.Td>
+                      <Table.Td data-label="Документ">{m.kind === 'in' || m.kind === 'out' ? <DocumentLink id={m.id}>{m.reference || m.id}</DocumentLink> : url ? <Link to={url}>{m.reference || m.id}</Link> : m.reference}</Table.Td>
                       <Table.Td data-label="Кількість">
                         {m.change > 0 ? '+' : ''}
                         {count(m.change)}

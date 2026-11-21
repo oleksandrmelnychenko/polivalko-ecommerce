@@ -1,4 +1,5 @@
 import { AppShell } from '@mantine/core'
+import type { ReactNode } from 'react'
 import { Outlet, useMatch } from 'react-router-dom'
 import { NavigationProvider } from '@/features/navigation'
 import { SearchPalette } from '@/features/search'
@@ -8,7 +9,7 @@ import { ConsoleMain } from './components/ConsoleMain'
 import { ConsoleSectionNav } from './components/ConsoleSectionNav'
 import './layout.css'
 
-export function ConsoleLayout() {
+export function ConsoleLayout({ overlay }: { overlay?: ReactNode }) {
   const dashboard = Boolean(useMatch('/'))
   return (
     <NavigationProvider>
@@ -24,6 +25,7 @@ export function ConsoleLayout() {
           </ConsoleMain>
         </AppShell>
         <SearchPalette />
+        {overlay}
       </PageHeaderActionsProvider>
     </NavigationProvider>
   )

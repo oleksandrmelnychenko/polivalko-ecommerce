@@ -1,3 +1,4 @@
+import { DocumentLink } from '@/shared/ui/DocumentLink'
 import { Button, Loader, SegmentedControl } from '@mantine/core'
 import { IconArrowUpRight, IconCalendarStats, IconChartBar, IconChartLine, IconCheckbox, IconCoins, IconFileInvoice, IconListCheck, IconRefresh, IconTable } from '@tabler/icons-react'
 import { useState } from 'react'
@@ -124,7 +125,7 @@ function InvoiceReport({ year, years }: { year: number; years: number[] }) {
         {report.issues.length > 0 && <section className="pa-card">
           <header><h3><MetricLabel icon={IconChartBar}>Документи для перевірки</MetricLabel></h3><span>Показано {formatValue(report.issues.length)}</span></header>
           <ul className="annual-issues">{report.issues.map(item => <li key={item.id}>
-            <div>{item.inRegister ? <Button component={Link} to={'/accounting/documents/' + encodeURIComponent(item.id)} size="xs" variant="default" rightSection={<IconArrowUpRight size={14} />}>{item.number}</Button> : <strong>{item.number}</strong>}
+            <div>{item.inRegister ? <Button component={DocumentLink} id={item.id} size="xs" variant="default" rightSection={<IconArrowUpRight size={14} />}>{item.number}</Button> : <strong>{item.number}</strong>}
               <time dateTime={item.day}>{item.day}</time></div>
             <div><span>У реєстрі <b>{formatValue(item.header)} грн</b></span><span>За рядками <b>{formatValue(item.lines)} грн</b></span></div>
             <p>{item.reason}</p>

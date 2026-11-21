@@ -106,7 +106,7 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
       onSaved()
       if (!initial) {
         navigate(person ? '/accounting/partners/' + id : '/accounting/documents/' + id, {
-          state: { registerPath: location.pathname, registerSearch: location.search },
+          state: person ? { registerPath: location.pathname, registerSearch: location.search } : { documentBackground: location },
         })
       }
     } catch {

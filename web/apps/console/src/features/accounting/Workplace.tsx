@@ -1,3 +1,4 @@
+import { DocumentLink } from '@/shared/ui/DocumentLink'
 import { Button, Group, Pagination, SegmentedControl, Select, Stack, Table, Text, TextInput } from '@mantine/core'
 import { IconArrowDownLeft, IconArrowUpRight, IconBuildingWarehouse, IconChecklist, IconFilePencil, IconFiles, IconWallet, IconHistory, IconPackage, IconPlus, IconSearch, IconListCheck } from '@tabler/icons-react'
 import type { components } from '@polivalko/shared/api/schema'
@@ -80,9 +81,9 @@ export function Workplace() {
                 {docs.data.items.map((d) => (
                   <Table.Tr key={d.id}>
                     <Table.Td>
-                      <Link to={'/accounting/documents/' + d.id}>
+                      <DocumentLink id={d.id}>
                         {d.kind === 'in' ? 'Прибуткова' : 'Видаткова'} № {d.number}
-                      </Link>
+                      </DocumentLink>
                     </Table.Td>
                     <Table.Td className="ledger-number">{d.day}</Table.Td>
                     <Table.Td>{d.partnerTitle}</Table.Td>

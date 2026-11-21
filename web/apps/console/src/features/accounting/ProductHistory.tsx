@@ -1,5 +1,6 @@
+import { DocumentLink } from '@/shared/ui/DocumentLink'
 import { Pagination, Stack, Table, Text, Title } from '@mantine/core'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import type { components } from '@polivalko/shared/api/schema'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { PageState } from '@/shared/ui/PageState'
@@ -23,9 +24,9 @@ export function ProductHistory() {
           <Table.Tr key={r.documentId + ':' + r.position}>
             <Table.Td>{r.day || '—'}</Table.Td>
             <Table.Td>
-              <Link to={'/accounting/documents/' + r.documentId}>
+              <DocumentLink id={r.documentId}>
                 {kindName(r)} № {r.number || '—'}
-              </Link>
+              </DocumentLink>
             </Table.Td>
             <Table.Td>{statusNames[r.status ?? ''] ?? r.status ?? '—'}</Table.Td>
             <Table.Td>

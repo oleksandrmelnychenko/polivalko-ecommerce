@@ -1,8 +1,9 @@
+import { DocumentLink } from '@/shared/ui/DocumentLink'
 import { useDebouncedCallback } from '@mantine/hooks'
 import { Button, Loader, SegmentedControl } from '@mantine/core'
 import { IconAdjustmentsHorizontal, IconBuildingWarehouse, IconCategory, IconChartLine, IconChartPie, IconCoins, IconFileInvoice, IconReceiptRefund, IconRefresh, IconReportMoney, IconWallet } from '@tabler/icons-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
@@ -450,7 +451,7 @@ export function BusinessAnalyticsPage() {
                             <tr key={d.id}>
                               <td>
                                 {d.origin === 'accounting' ? (
-                                  <Link to={'/accounting/documents/' + d.id}>{d.number}</Link>
+                                  <DocumentLink id={d.id}>{d.number}</DocumentLink>
                                 ) : (
                                   d.number
                                 )}

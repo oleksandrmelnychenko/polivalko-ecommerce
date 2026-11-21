@@ -1,15 +1,7 @@
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { DocumentLink } from '@/shared/ui/DocumentLink'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
 import { kindName, money, paymentNames, statusNames, type Doc } from './api'
-
-function DocumentLink({ doc }: { doc: Doc }) {
-  const location = useLocation()
-  const { id } = useParams()
-  return <Link to={'/accounting/documents/' + doc.id} state={{
-    partnerId: id, documentSearch: location.search, partnerState: location.state,
-  }}>{kindName(doc)} № {doc.number || doc.sourceId}</Link>
-}
 
 const columns: DataTableColumn<Doc>[] = [
   {
@@ -19,7 +11,7 @@ const columns: DataTableColumn<Doc>[] = [
     width: 186,
     cell: (doc) => (
       <div className="partner-doc-name">
-        <DocumentLink doc={doc} />
+        <DocumentLink id={doc.id}>{kindName(doc)} № {doc.number || doc.sourceId}</DocumentLink>
         {doc.organization && <small>{doc.organization}</small>}
       </div>
     ),

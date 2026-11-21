@@ -12,10 +12,14 @@ import { EditRegister } from './EditRegister'
 const amount = (value: string) => money(value, 'UAH')
 type State = components['schemas']['InvoiceState']
 
-export function InvoiceActions({ doc, lines, refresh }: { doc: Doc; lines: Card['lines']; refresh: () => void }) {
+export function InvoiceActions({ doc, lines, refresh, onDialogChange }: { doc: Doc; lines: Card['lines']; refresh: () => void; onDialogChange: (opened: boolean) => void }) {
   const url = 'documents/' + doc.id
   const query = useRegister<State>(url + '/operations')
-  const [action, setAction] = useState<'post' | 'pay' | 'edit' | null>(null)
+  const [action, updateAction] = useState<'post' | 'pay' | 'edit' | null>(null)
+  function setAction(next: typeof action) {
+    updateAction(next)
+    onDialogChange(next !== null)
+  }
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const { can } = usePermissions()

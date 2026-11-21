@@ -172,3 +172,8 @@
   .invoice-editor .draft-details { gap: 8px; padding: 12px; }
   .draft-details .mantine-InputWrapper-root { min-width: 0; }
 }
+
+.document-modal .mantine-Modal-title .metric-label { font-size: clamp(16px, 2vw, 20px); }
+.document-modal .app-sheet-scroll { overscroll-behavior: contain; }
+.document-modal .ledger-note, .document-modal .ledger-document > p { overflow-wrap: anywhere; }
+.document-modal .doc-meta { margin-top: 0; }
