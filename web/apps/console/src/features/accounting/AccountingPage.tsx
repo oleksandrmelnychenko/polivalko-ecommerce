@@ -1,4 +1,4 @@
-import { DocumentLink } from '@/shared/ui/DocumentLink'
+import { DocTable, DocumentStatus, PartnerLink } from './DocumentTable'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { Button, Select, Stack, Table, Text, TextInput } from '@mantine/core'
 import { IconBox, IconFileInvoice, IconFiles, IconLink, IconPackageExport, IconPackageImport, IconPlus, IconSearch } from '@tabler/icons-react'
@@ -30,45 +30,6 @@ import {
   type Page,
 } from './api'
 import './registers.css'
-
-function PartnerLink({ doc }: { doc: Doc }) {
-  return doc.partnerId
-    ? <Link to={'/accounting/partners/' + doc.partnerId}>{doc.partnerTitle || 'Контрагент'}</Link>
-    : <>{doc.partnerTitle || '—'}</>
-}
-
-function DocumentStatus({ doc }: { doc: Doc }) {
-  return <span className="doc-status" data-status={doc.status}>{statusNames[doc.status ?? ''] ?? doc.status ?? '—'}</span>
-}
-
-function DocTable({ rows, direction }: { rows: Doc[]; direction?: 'in' | 'out' | null }) {
-  const outgoing = direction === 'out'
-  const partnerLabel = direction === 'in' ? 'Постачальник' : outgoing ? 'Покупець' : 'Контрагент'
-  const dueLabel = outgoing ? 'До отримання' : 'До сплати'
-  return (
-    <div className="doc-list" data-outgoing={outgoing || undefined}>
-      <Grid columns={['Документ', partnerLabel, 'Дата', 'Стан документа', 'Сума', 'Оплата', ...(direction ? [dueLabel] : [])]}>
-        {rows.map((d) => (
-          <Table.Tr key={d.id}>
-            <Table.Td className="doc-name">
-              {outgoing && <IconPackageExport className="doc-row-icon" size={32} aria-hidden="true" />}
-              <DocumentLink id={d.id}>
-                {kindName(d) || 'Документ'} № <span>{d.number || d.sourceId}</span>
-              </DocumentLink>
-              {d.organization && <small>{d.organization}</small>}
-            </Table.Td>
-            <Table.Td data-label={partnerLabel}><PartnerLink doc={d} /></Table.Td>
-            <Table.Td data-label="Дата" className="ledger-number">{d.day ?? '—'}</Table.Td>
-            <Table.Td data-label="Стан документа"><DocumentStatus doc={d} /></Table.Td>
-            <Table.Td data-label="Сума" className="register-money">{money(d.amount, d.currency)}</Table.Td>
-            <Table.Td data-label="Оплата"><span data-payment={outgoing ? d.paymentStatus : undefined}>{paymentNames[d.paymentStatus ?? ''] ?? d.paymentStatus ?? '—'}</span></Table.Td>
-            {direction && <Table.Td data-label={dueLabel} className="register-money">{money(d.due ?? null, d.currency)}</Table.Td>}
-          </Table.Tr>
-        ))}
-      </Grid>
-    </div>
-  )
-}
 
 function Document({ id }: { id: string }) {
   const { state } = useLocation()

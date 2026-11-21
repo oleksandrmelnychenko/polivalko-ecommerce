@@ -1,5 +1,7 @@
-import { DocumentLink } from '@/shared/ui/DocumentLink'
-import { Button, Group, Pagination, SegmentedControl, Select, Stack, Table, Text, TextInput } from '@mantine/core'
+import { DocTable } from './DocumentTable'
+import { FilterBar } from '@/shared/ui/FilterBar'
+import { Paginator } from '@/shared/ui/paginator/Paginator'
+import { Button, Group, Pagination, SegmentedControl, Select, Stack, Table, TextInput } from '@mantine/core'
 import { IconArrowDownLeft, IconArrowUpRight, IconBuildingWarehouse, IconChecklist, IconFilePencil, IconFiles, IconWallet, IconHistory, IconPackage, IconPlus, IconSearch, IconListCheck } from '@tabler/icons-react'
 import type { components } from '@polivalko/shared/api/schema'
 import { useState } from 'react'
@@ -7,7 +9,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { PageHeader } from '@/shared/ui/PageHeader'
-import { MetricLabel } from '@/shared/ui/MetricCard'
+import { MetricLabel, MetricTrack } from '@/shared/ui/MetricCard'
 import { PageState } from '@/shared/ui/PageState'
 import { EditRegister } from './EditRegister'
 import { Grid } from './RegisterTable'
@@ -16,7 +18,7 @@ import './warehouse.css'
 import { InventoryReview } from './InventoryReview'
 import { WarehouseReports } from './WarehouseReports'
 import { activeSource, count, ShopSourceForm, MovementHistory, type WarehouseRow } from './WarehouseShop'
-import { money, paymentNames, useRegister, type Doc, type Page, type Ref } from './api'
+import { useRegister, type Doc, type Page, type Ref } from './api'
 
 type S = components['schemas']
 const queues = [
@@ -31,11 +33,21 @@ export function Workplace() {
   const queue = queues.find((q) => q.id === params.get('queue')) ?? queues[0]
   const page = Math.max(1, Number(params.get('page')) || 1)
   const counts = useRegister<S['WorkCounts']>('work')
-  const docs = useRegister<Page<Doc>>('documents?' + new URLSearchParams({ queue: queue.id, page: String(page) }))
+  const search = params.get('q') ?? ''
+  const filter = new URLSearchParams({ queue: queue.id, page: String(page) })
+  if (search) filter.set('q', search)
+  const docs = useRegister<Page<Doc>>('documents?' + filter)
+  const totalCount = queues.reduce((sum, q) => sum + (counts.data?.[q.id] ?? 0), 0)
+  function updateList(nextQueue: typeof queue.id, nextSearch = search, nextPage = 1) {
+    const next = new URLSearchParams({ queue: nextQueue })
+    if (nextSearch) next.set('q', nextSearch)
+    if (nextPage > 1) next.set('page', String(nextPage))
+    setParams(next, { replace: nextQueue === queue.id && nextPage === page })
+  }
   const [create, setCreate] = useState<'in' | 'out' | null>(null)
   const { can } = usePermissions()
   return (
-    <Stack gap="sm" className="ledger-workspace">
+    <Stack gap="sm" className="ledger-workspace doc-register work-page">
       <PageHeader title="Робоче місце" actions={can(PermissionKeys.Accounting.Edit) && (
         <Group gap="xs">
           <Button radius="xl" variant="default" leftSection={<IconArrowDownLeft size={16} />} onClick={() => setCreate('in')}>Прийняти товар</Button>
@@ -47,16 +59,17 @@ export function Workplace() {
           <button
             type="button"
             key={q.id}
-            className={q.id === queue.id ? 'is-active' : ''}
+            className={q.id === queue.id ? 'metric-tile is-active' : 'metric-tile'}
             aria-pressed={q.id === queue.id}
-            onClick={() => setParams({ queue: q.id })}
+            onClick={() => updateList(q.id)}
           >
             <MetricLabel icon={q.icon}>{q.title}</MetricLabel>
             <strong>{counts.data?.[q.id]?.toLocaleString('uk-UA') ?? '—'}</strong>
+            <MetricTrack value={counts.data?.[q.id] ?? 0} max={totalCount} />
           </button>
         ))}
       </nav>
-      <section className="ledger-card">
+      <section className="ledger-card work-documents">
         <header className="ledger-card-head">
           <h2><MetricLabel icon={IconFiles}>{queue.title}</MetricLabel></h2>
           <Button
@@ -69,6 +82,13 @@ export function Workplace() {
             Залишки на складах
           </Button>
         </header>
+        <FilterBar label="Пошук у черзі" search={<TextInput
+          className="app-filter-wide" aria-label="Пошук документів" placeholder="Номер, контрагент, організація"
+          leftSection={<IconSearch size={16} />} maxLength={160} value={search}
+          onChange={event => updateList(queue.id, event.currentTarget.value)} />}
+          actions={<Paginator page={page} pageSize={50} totalPages={docs.data && Math.ceil(docs.data.total / 50)}
+            isLoading={docs.isFetching} onPageChange={p => updateList(queue.id, search, p)}
+            onRefresh={() => { docs.reload(); counts.reload() }} />} />
         {counts.status === 'error' && (
           <Button variant="subtle" onClick={counts.reload}>
             Оновити лічильники
@@ -76,43 +96,13 @@ export function Workplace() {
         )}
         {docs.data ? (
           docs.data.total ? (
-            <>
-              <Grid columns={['Накладна', 'Дата', 'Контрагент', 'Організація', 'Сума', 'Залишок до оплати']}>
-                {docs.data.items.map((d) => (
-                  <Table.Tr key={d.id}>
-                    <Table.Td>
-                      <DocumentLink id={d.id}>
-                        {d.kind === 'in' ? 'Прибуткова' : 'Видаткова'} № {d.number}
-                      </DocumentLink>
-                    </Table.Td>
-                    <Table.Td className="ledger-number">{d.day}</Table.Td>
-                    <Table.Td>{d.partnerTitle}</Table.Td>
-                    <Table.Td>{d.organization}</Table.Td>
-                    <Table.Td className="register-money">{money(d.amount, d.currency)}</Table.Td>
-                    <Table.Td className="register-money">
-                      {money(d.due, d.currency)}
-                      {d.paymentStatus && (
-                        <Text size="xs" c="dimmed">
-                          {paymentNames[d.paymentStatus]}
-                        </Text>
-                      )}
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
-              </Grid>
-              {docs.data.total > 50 && (
-                <Pagination
-                  total={Math.ceil(docs.data.total / 50)}
-                  value={page}
-                  onChange={(p) => setParams({ queue: queue.id, page: String(p) })}
-                />
-              )}
-            </>
+            <DocTable rows={docs.data.items} direction={queue.id === 'receivable' ? 'out' : queue.id === 'payable' ? 'in' : null}
+              balanceLabel={queue.id === 'receivable' ? 'До отримання' : queue.id === 'payable' ? 'До сплати' : 'Залишок до оплати'} />
           ) : (
             <PageState
               kind="empty"
-              title={queue.empty}
-              action={
+              title={search ? 'Документів за цим запитом немає' : queue.empty}
+              action={search ? <Button variant="default" onClick={() => updateList(queue.id, '')}>Очистити пошук</Button> :
                 <Group>
                   <Button component={Link} to="/accounting/incoming" variant="default" size="xs">Журнал надходжень</Button>
                   <Button component={Link} to="/accounting/outgoing" variant="default" size="xs">Журнал продажів</Button>
