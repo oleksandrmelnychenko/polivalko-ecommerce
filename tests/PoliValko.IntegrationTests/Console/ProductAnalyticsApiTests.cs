@@ -17,6 +17,15 @@ public sealed class ProductAnalyticsApiTests(ApiFactory api)
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
+    public async Task Stock_turnover_requires_catalog_read_access_in_addition_to_document_analytics()
+    {
+        using var admin = await Staff.AdminAsync(api);
+        using var reader = await TestRoles.LoginWithPermissionsAsync(api, admin, PermissionKeys.ProductAnalyticsView, PermissionKeys.AccountingView);
+        using var response = await reader.GetAsync("/api/v1/console/business-analytics/documents?analysis=stock-turnover&days=30", Ct);
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
     public async Task Analytics_without_a_service_reports_unavailable_while_the_console_stays_available()
     {
         await using var host = api.WithWebHostBuilder(builder => builder.UseSetting("ProductAnalytics:BaseUrl", string.Empty));

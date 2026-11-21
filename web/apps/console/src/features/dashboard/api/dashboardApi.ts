@@ -33,6 +33,35 @@ export const getProductProfit = (params: URLSearchParams) =>
 export const getDocumentSales = (days: number) =>
   readBusiness<DocumentSales>('documents', 'analysis=dashboard&days=' + days)
 
+type StockTurnoverReport = {
+  start: string
+  through: string
+  periodNet: number
+  threshold: number
+  total: number
+  lowCount: number
+  outCount: number
+  net: number | null
+  share: number | null
+  unknownCount: number
+  matches: number
+  page: number
+  pageSize: number
+  rows: {
+    id: string
+    name: string
+    sku: string
+    onHand: number
+    reserved: number
+    available: number
+    net: number | null
+    share: number | null
+  }[]
+}
+
+export const getStockTurnover = (params: URLSearchParams) =>
+  readBusiness<StockTurnoverReport>('documents', 'analysis=stock-turnover&' + params)
+
 export type ProductCounts = S['ConsoleProductCountsDto']
 
 export function getDashboard(days: number) {

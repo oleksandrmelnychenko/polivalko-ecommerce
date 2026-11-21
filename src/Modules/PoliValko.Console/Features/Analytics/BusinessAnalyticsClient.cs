@@ -1,7 +1,9 @@
 using System.Net.Http.Headers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Infrastructure.Security;
 using PoliValko.Infrastructure.Security.Permissions;
 
@@ -16,7 +18,22 @@ internal sealed class BusinessAnalyticsClient(HttpClient http)
         {
             var route = group.MapGet("/" + operation, (BusinessAnalyticsClient client, HttpContext context, CancellationToken ct) =>
                 client.Send(operation, context, ct)).WithName("BusinessAnalytics" + char.ToUpperInvariant(operation[0]) + operation[1..]);
-            if (operation == "documents") route.RequirePermission(PermissionKeys.AccountingView);
+            if (operation == "documents")
+            {
+                route.RequirePermission(PermissionKeys.AccountingView)
+                    .AddEndpointFilter(async (invocation, next) =>
+                    {
+                        var context = invocation.HttpContext;
+                        if (context.Request.Query["analysis"].Contains("stock-turnover"))
+                        {
+                            var authorization = context.RequestServices.GetRequiredService<IAuthorizationService>();
+                            var check = await authorization.AuthorizeAsync(context.User, context,
+                                PermissionRequirement.PolicyName([PermissionKeys.ProductsView]));
+                            if (!check.Succeeded) return Results.Forbid();
+                        }
+                        return await next(invocation);
+                    });
+            }
         }
         group.MapPost("/refresh", (BusinessAnalyticsClient client, HttpContext context, CancellationToken ct) =>
             client.Send("refresh", context, ct)).WithName("BusinessAnalyticsRefresh");

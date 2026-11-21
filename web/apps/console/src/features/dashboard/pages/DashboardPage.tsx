@@ -18,6 +18,7 @@ import { KpiList } from '../components/KpiList'
 import { LatestOrders } from '../components/LatestOrders'
 import { PeriodSummary } from '../components/PeriodSummary'
 import { LowStock, TopProducts } from '../components/Rankings'
+import { StockTurnover } from '../components/StockTurnover'
 import { SalesChartCard } from '../components/SalesChartCard'
 import { WorkQueue } from '../components/WorkQueue'
 import { QueueTile } from '../components/QueueTile'
@@ -144,7 +145,7 @@ export function DashboardPage() {
         />}
         {documents && <div className="dash-grid is-even">
           {report && <DocumentProducts key={report.start} data={report} />}
-          {canCatalog && dashboard.data && <LowStock data={dashboard.data} canOpen />}
+          {canCatalog && <StockTurnover key={days} days={days} />}
         </div>}
         {report && report.excluded > 0 && <p className="dash-muted" role="status">Документів із непідтвердженою сумою або статусом · {report.excluded.toLocaleString('uk-UA')}.</p>}
 

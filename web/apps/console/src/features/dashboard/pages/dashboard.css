@@ -589,6 +589,12 @@ a.dash-queue-item:focus-visible {
   text-align: center;
 }
 
+.dash-grid:has(.dash-stock-impact) { align-items: start; }
+.dash-stock-summary { display: grid; gap: 4px; padding: 8px var(--dash-pad); font-size: 13px; color: var(--mantine-color-gray-7); }
+.dash-stock-summary > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; color: var(--brand-ink); }
+.dash-stock-summary strong { font-size: 22px; font-variant-numeric: tabular-nums; }
+.dash-stock-impact .dash-rank-main a { white-space: normal; overflow-wrap: anywhere; }
+
 .dash-chart {
   position: relative;
 }

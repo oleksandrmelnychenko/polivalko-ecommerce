@@ -63,7 +63,7 @@ def summarize(rows, through, days):
             key = row["account"], "id" if pid else "code" if code else "sku", identity
             if key not in products:
                 products[key] = dict(name=str(product.get("title") or identity), sku=str(product.get("sku") or ""),
-                                     code=code, account=row["account"], net=Decimal(0), profit=Decimal(0),
+                                     code=code, productRef=pid, account=row["account"], net=Decimal(0), profit=Decimal(0),
                                      lines=0, costedLines=0, coveredNet=Decimal(0), coveredCost=Decimal(0), purchaseSources={})
             item = products[key]
             if item["code"] != code:
