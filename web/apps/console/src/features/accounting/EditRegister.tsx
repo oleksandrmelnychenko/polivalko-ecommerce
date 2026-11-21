@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { getProducts } from '@/features/catalog/api/catalogApi'
 import { problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
-import { IconFileInvoice, IconPackage, IconSearch, IconTrash, IconUser } from '@tabler/icons-react'
+import { IconFileInvoice, IconPackage, IconPackageExport, IconSearch, IconTrash, IconUser } from '@tabler/icons-react'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import { money, save, useRegister, type Page, type Partner, type Ref } from './api'
@@ -44,6 +44,7 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
   const navigate = useNavigate()
   const location = useLocation()
   const person = kind === 'partner'
+  const outgoing = kind === 'out'
   const [id] = useState(() => initial?.id ?? crypto.randomUUID())
   const [title, setTitle] = useState(initial?.number ?? '')
   const [category, setCategory] = useState('juridical')
@@ -125,11 +126,12 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
       onExitTransitionEnd={onClose}
       size={person ? 'compact' : 'standard'}
       className={person ? 'ledger-editor' : 'ledger-editor invoice-editor'}
-      title={<MetricLabel icon={person ? IconUser : IconFileInvoice}>
-        {initial ? 'Редагування чернетки' : person ? 'Новий контрагент' : kind === 'in' ? 'Нова прибуткова накладна' : 'Нова видаткова накладна'}
+      data-outgoing={outgoing || undefined}
+      title={<MetricLabel icon={person ? IconUser : outgoing ? IconPackageExport : IconFileInvoice}>
+        {initial && outgoing ? 'Редагування видаткової накладної № ' + initial.number : initial ? 'Редагування чернетки' : person ? 'Новий контрагент' : kind === 'in' ? 'Нова прибуткова накладна' : 'Нова видаткова накладна'}
       </MetricLabel>}
       footer={<>
-        {!person && <div className="draft-total"><span>Сума накладної</span><strong>{draftAmount(total)}</strong></div>}
+        {!person && <div className="draft-total"><span>{outgoing ? 'Сума відвантаження' : 'Сума накладної'}</span><strong>{draftAmount(total)}</strong></div>}
         <Group gap="xs">
         <Button variant="default" onClick={() => setOpened(false)} disabled={busy}>Скасувати</Button>
         <Button type="submit" form={'register-' + id} loading={busy}>{person ? 'Зберегти' : 'Зберегти чернетку'}</Button>
@@ -169,9 +171,9 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
                   <Select
                     searchable
                     required
-                    label={kind === 'in' ? 'Постачальник' : 'Контрагент'}
+                    label={outgoing ? 'Покупець' : 'Постачальник'}
                     className="draft-partner"
-                    placeholder={kind === 'in' ? 'Оберіть постачальника' : 'Оберіть контрагента'}
+                    placeholder={kind === 'in' ? 'Оберіть постачальника' : 'Оберіть покупця'}
                     searchValue={term}
                     onSearchChange={setTerm}
                     data={candidates}
@@ -189,7 +191,7 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
                   />
                   <Select
                     required
-                    label="Склад"
+                    label={outgoing ? "Склад відвантаження" : "Склад"}
                     placeholder="Оберіть склад"
                     data={refs.data?.stores.map(option) ?? []}
                     value={store}
@@ -199,7 +201,7 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
             )}
           </section>
           {!person && <section className="ledger-form-block draft-products">
-              <header><h3><MetricLabel icon={IconPackage}>Товари</MetricLabel></h3><span>{lines.length}</span></header>
+              <header><h3><MetricLabel icon={IconPackage}>{outgoing ? 'Товари до відвантаження' : 'Товари'}</MetricLabel></h3><span>{lines.length}</span></header>
               <Select
                 label="Додати товар"
                 placeholder="Назва або артикул від двох символів"

@@ -141,9 +141,9 @@
   :is(.doc-list,.doc-lines) td[data-label]::before { content: attr(data-label); display: block; color: var(--mantine-color-gray-7); font: 12px/1.5 var(--font-sans); }
 }
 
-.doc-register[data-incoming] .doc-list th:last-child { text-align: end; }
-.doc-register[data-incoming] .register-money { font-weight: 550; }
-.doc-register[data-incoming] .doc-status[data-status=draft] { color: #785014; background: #fbf2de; }
+.doc-register[data-invoice] .doc-list th:last-child { text-align: end; }
+.doc-register[data-invoice] .register-money { font-weight: 550; }
+.doc-register[data-invoice] .doc-status[data-status=draft] { color: #785014; background: #fbf2de; }
 .invoice-editor .draft-details { grid-template-columns: repeat(2,minmax(0,1fr)); }
 .draft-details :is(h3,.draft-partner) { grid-column: 1/-1; }
 .draft-products header { display: flex; align-items: center; justify-content: space-between; }
@@ -177,3 +177,15 @@
 .document-modal .app-sheet-scroll { overscroll-behavior: contain; }
 .document-modal .ledger-note, .document-modal .ledger-document > p { overflow-wrap: anywhere; }
 .document-modal .doc-meta { margin-top: 0; }
+
+.doc-list[data-outgoing] .doc-name { position: relative; padding-inline-start: 54px; }
+.doc-row-icon { position: absolute; inset-inline-start: 12px; top: 50%; transform: translateY(-50%); padding: 7px; border-radius: 50%; background: var(--app-ground); color: var(--brand-ink); }
+.doc-list [data-payment] { display: inline-block; padding: 3px 9px; border-radius: 99px; background: var(--app-ground); font-size: 12px; }
+.doc-list [data-payment=settled] { background: #e7f5ed; color: #22643c; }
+.doc-list [data-payment=partial] { background: #fbf2de; color: #785014; }
+.invoice-editor[data-outgoing] .draft-line-list li { padding: 10px; margin-top: 8px; border: 1px solid var(--app-line); border-radius: 14px; background: var(--app-ground); }
+.invoice-editor[data-outgoing] .draft-remove { border-radius: 50%; }
+@media (max-width: 700px) {
+  .doc-list[data-outgoing] .doc-name { padding-inline-start: 42px; min-height: 32px; }
+  .doc-row-icon { inset-inline-start: 0; }
+}

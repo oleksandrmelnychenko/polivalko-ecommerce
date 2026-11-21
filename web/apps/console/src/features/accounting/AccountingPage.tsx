@@ -1,7 +1,7 @@
 import { DocumentLink } from '@/shared/ui/DocumentLink'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { Button, Select, Stack, Table, Text, TextInput } from '@mantine/core'
-import { IconBox, IconFileInvoice, IconFiles, IconLink, IconPackageImport, IconPlus, IconSearch } from '@tabler/icons-react'
+import { IconBox, IconFileInvoice, IconFiles, IconLink, IconPackageExport, IconPackageImport, IconPlus, IconSearch } from '@tabler/icons-react'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { MetricLabel } from '@/shared/ui/MetricCard'
@@ -41,24 +41,28 @@ function DocumentStatus({ doc }: { doc: Doc }) {
   return <span className="doc-status" data-status={doc.status}>{statusNames[doc.status ?? ''] ?? doc.status ?? '—'}</span>
 }
 
-function DocTable({ rows, incoming = false }: { rows: Doc[]; incoming?: boolean }) {
+function DocTable({ rows, direction }: { rows: Doc[]; direction?: 'in' | 'out' | null }) {
+  const outgoing = direction === 'out'
+  const partnerLabel = direction === 'in' ? 'Постачальник' : outgoing ? 'Покупець' : 'Контрагент'
+  const dueLabel = outgoing ? 'До отримання' : 'До сплати'
   return (
-    <div className="doc-list">
-      <Grid columns={['Документ', incoming ? 'Постачальник' : 'Контрагент', 'Дата', 'Стан документа', 'Сума', 'Оплата', ...(incoming ? ['До сплати'] : [])]}>
+    <div className="doc-list" data-outgoing={outgoing || undefined}>
+      <Grid columns={['Документ', partnerLabel, 'Дата', 'Стан документа', 'Сума', 'Оплата', ...(direction ? [dueLabel] : [])]}>
         {rows.map((d) => (
           <Table.Tr key={d.id}>
             <Table.Td className="doc-name">
+              {outgoing && <IconPackageExport className="doc-row-icon" size={32} aria-hidden="true" />}
               <DocumentLink id={d.id}>
                 {kindName(d) || 'Документ'} № <span>{d.number || d.sourceId}</span>
               </DocumentLink>
               {d.organization && <small>{d.organization}</small>}
             </Table.Td>
-            <Table.Td data-label={incoming ? 'Постачальник' : 'Контрагент'}><PartnerLink doc={d} /></Table.Td>
+            <Table.Td data-label={partnerLabel}><PartnerLink doc={d} /></Table.Td>
             <Table.Td data-label="Дата" className="ledger-number">{d.day ?? '—'}</Table.Td>
             <Table.Td data-label="Стан документа"><DocumentStatus doc={d} /></Table.Td>
             <Table.Td data-label="Сума" className="register-money">{money(d.amount, d.currency)}</Table.Td>
-            <Table.Td data-label="Оплата">{paymentNames[d.paymentStatus ?? ''] ?? d.paymentStatus ?? '—'}</Table.Td>
-            {incoming && <Table.Td data-label="До сплати" className="register-money">{money(d.due ?? null, d.currency)}</Table.Td>}
+            <Table.Td data-label="Оплата"><span data-payment={outgoing ? d.paymentStatus : undefined}>{paymentNames[d.paymentStatus ?? ''] ?? d.paymentStatus ?? '—'}</span></Table.Td>
+            {direction && <Table.Td data-label={dueLabel} className="register-money">{money(d.due ?? null, d.currency)}</Table.Td>}
           </Table.Tr>
         ))}
       </Grid>
@@ -193,12 +197,12 @@ function Register({ section, sourceSwitch }: { section: string; sourceSwitch?: R
     setParams(next, { replace: true })
   }
   return (
-    <Stack gap="sm" className="ledger-workspace doc-register" data-incoming={direction === 'in' || undefined}>
+    <Stack gap="sm" className="ledger-workspace doc-register" data-invoice={direction ?? undefined}>
       <PageHeader title={title} actions={sourceSwitch ?? (direction && can(PermissionKeys.Accounting.Edit) && (
         <Button radius="xl" leftSection={<IconPlus size={16} />} onClick={() => setEdit(true)}>Створити накладну</Button>
       ))} />
       <section className="ledger-card">
-        <header className="ledger-card-head"><h2><MetricLabel icon={direction === 'in' ? IconPackageImport : IconFiles}>{returns ? 'Повернення від покупців' : direction === 'in' ? 'Надходження від постачальників' : direction ? 'Журнал накладних' : 'Реєстр документів'}</MetricLabel></h2>
+        <header className="ledger-card-head"><h2><MetricLabel icon={direction === 'out' ? IconPackageExport : direction === 'in' ? IconPackageImport : IconFiles}>{returns ? 'Повернення від покупців' : direction === 'in' ? 'Надходження від постачальників' : direction ? 'Відвантаження покупцям' : 'Реєстр документів'}</MetricLabel></h2>
           {query.data && <span className="ledger-count">Записів · {query.data.total.toLocaleString('uk-UA')}</span>}
         </header>
         <FilterBar label="Фільтри документів" activeCount={['from', 'to', 'status'].filter((key) => params.has(key)).length}
@@ -210,7 +214,7 @@ function Register({ section, sourceSwitch }: { section: string; sourceSwitch?: R
               maxLength={160}
               className="app-filter-wide"
               leftSection={<IconSearch size={16} />}
-              placeholder={direction === 'in' ? 'Номер, постачальник, організація' : 'Номер, контрагент, організація'}
+              placeholder={direction === 'in' ? 'Номер, постачальник, організація' : direction === 'out' ? 'Номер, покупець, організація' : 'Номер, контрагент, організація'}
               value={params.get('q') ?? ''}
               onChange={(e) => change('q', e.currentTarget.value)}
             />
@@ -241,7 +245,7 @@ function Register({ section, sourceSwitch }: { section: string; sourceSwitch?: R
         </FilterBar>
         {query.data ? (
           query.data.total
-            ? <DocTable rows={query.data.items} incoming={direction === 'in'} />
+            ? <DocTable rows={query.data.items} direction={direction} />
             : <PageState kind="empty" title="Записів за цими умовами немає" />
         ) : (
           <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
