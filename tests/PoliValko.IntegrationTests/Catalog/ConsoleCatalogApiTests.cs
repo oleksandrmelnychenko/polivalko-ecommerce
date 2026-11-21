@@ -33,7 +33,10 @@ public sealed class ConsoleCatalogApiTests(ApiFactory api)
                 newSlug,
                 null,
                 brand.Name.ToUpperInvariant(),
-                "<p>Опис<script>alert(1)</script> з <a href=\"https://example.com\">посиланням</a></p>",
+                "<p>Опис<script>alert(1)</script> з <a href=\"https://example.com/photo\">Джерело фото</a></p>" +
+                "<p><a href=\"https://example.com/manufacturer\">Дані виробника Agrecol</a></p>" +
+                "<p><a href=\"https://example.com/supplier\">Дані постачальника</a></p>" +
+                "<p><a href=\"https://example.com/specs\">Характеристики постачальника</a></p>",
                 true,
                 "Розпилювач латунний — купити",
                 null,
@@ -57,6 +60,9 @@ public sealed class ConsoleCatalogApiTests(ApiFactory api)
         var client = api.CreateClient();
         var details = await client.GetFromJsonAsync<ProductDetailsDto>($"/api/v1/products/{newSlug}", TestJson.Options, Ct);
         details!.Name.ShouldBe("Розпилювач латунний");
+        details.DescriptionHtml.ShouldNotBeNull().ShouldContain("Джерело фото</a>");
+        details.DescriptionHtml.ShouldNotContain("виробника");
+        details.DescriptionHtml.ShouldNotContain("постачальника");
         details.Price.ShouldBe(new MoneyDto("455.00", "UAH"));
         details.Attributes.ShouldBe([new ProductAttributeDto("Матеріал", "Латунь"), new ProductAttributeDto("Довжина", "20 см")]);
         details.SeoTitle.ShouldBe("Розпилювач латунний — купити");
