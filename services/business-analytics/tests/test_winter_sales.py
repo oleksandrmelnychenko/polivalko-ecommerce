@@ -26,14 +26,14 @@ class WinterSalesTests(unittest.TestCase):
         self.assertIsNone(weeks[0]["kit"]["ticket"])
         self.assertEqual(season_bounds(2023,date(2026,11,21))[1],date(2024,2,29))
 
-    def test_model_may_select_only_offered_positions(self):
+    def test_model_writes_only_an_intro(self):
         facts = [dict(name="Субстрат",category="Ґрунти",purchases=2,related=True)]
-        for selection,valid in [([0],True),([1],False),([0,0],False)]:
-            generated = json.dumps(dict(intro="Пропонуємо поповнити запас.",selection=selection))
+        for intro in ["Пропонуємо поповнити запас.", " ", 12]:
+            generated = json.dumps(dict(intro=intro))
             response = dict(status="completed",output=[dict(type="message",content=[dict(type="output_text",text=generated)])])
             with patch("analytics.offers.urlopen",return_value=io.BytesIO(json.dumps(response).encode())):
-                if valid:
-                    self.assertEqual(compose(facts,"general","model","key")[1],[0])
+                if isinstance(intro, str) and intro.strip():
+                    self.assertEqual(compose(facts,"general","model","key"), intro)
                 else:
                     with self.assertRaises(ValueError):
                         compose(facts,"general","model","key")

@@ -17,8 +17,8 @@ import { dateLabel } from '@/shared/lib/salesFormat'
 import './sales-offers.css'
 
 type Focus = 'general' | 'irrigation'
-type Draft = { mode: string; name: string; intro: string; items: {
-  id: string; name: string; price: number; available: number; purchases: number; related: boolean
+type Draft = { mode: string; basis?: string; name: string; intro: string; items: {
+  id: string; name: string; price: number; available: number; purchases: number; related: boolean; reason?: string
 }[] }
 export type Offer = { id: string; partner: string; day: string; body: string; focus: Focus;
   shipments: number; shipped: number; invoiceNumbers: string | null }
@@ -30,6 +30,7 @@ function Compose({ initialPartner, opened, onClose, onIssued }: { initialPartner
   const [partner, setPartner] = useState(initialPartner)
   const [search, setSearch] = useState('')
   const [focus, setFocus] = useState<Focus>('general')
+  const [method, setMethod] = useState('statistics')
   const partners = useRegister<Page<Partner>>('partners?q=' + encodeURIComponent(search), opened)
   const direct = useRegister<{ partner: Partner }>('partners/' + partner, opened && Boolean(partner))
   const options = new Map((partners.data?.items ?? []).map(p => [p.id,p.title]))
@@ -58,7 +59,7 @@ function Compose({ initialPartner, opened, onClose, onIssued }: { initialPartner
     try {
       const result = await withCsrf(async headers => {
         const response = await apiFetch('/api/v1/console/business-analytics/offer-draft?' +
-          new URLSearchParams({ partner, focus }), { method: 'POST', headers })
+          new URLSearchParams({ partner, focus, method }), { method: 'POST', headers })
         const payload = await response.json()
         return response.ok ? { data: payload as Draft } : { error: payload }
       })
@@ -103,6 +104,9 @@ function Compose({ initialPartner, opened, onClose, onIssued }: { initialPartner
           nothingFoundMessage="Контрагента не знайдено" />
         <Select disabled={!!draft || busy} label="Напрям пропозиції" value={focus} allowDeselect={false} data={[{value:'general',label:'Асортимент для клієнта'},
           {value:'irrigation',label:'Комплектація поливу'}]} onChange={v => setFocus(v === 'irrigation' ? v : 'general')} />
+        <Select disabled={busy} label="Підготовка чернетки" value={method} allowDeselect={false}
+          data={[{value:'statistics',label:'За статистикою продажів'}, {value:'openai',label:'Статистика й текст від OpenAI'}]}
+          onChange={value => setMethod(value ?? 'statistics')} />
       </div>
       {partners.status === 'error' && <Button variant="default" onClick={partners.reload}>Оновити довідник</Button>}
       <div className="offer-actions">
@@ -111,12 +115,14 @@ function Compose({ initialPartner, opened, onClose, onIssued }: { initialPartner
       </div>
     </div>
     {draft && <div className="offer-section">
-      <p>{draft.mode === 'manual' ? 'Внесіть підготовлений розрахунок.' : draft.mode === 'ai' ? 'Чернетку підготував ШІ.' : draft.mode === 'catalog'
-        ? 'Чернетку підготовлено за каталогом.'
-        : 'Модель тимчасово недоступна. Підготовлено каталожну чернетку.'}</p>
+      <p>{draft.mode === 'manual' ? 'Внесіть підготовлений розрахунок.' :
+        draft.basis === 'statistics' ? 'Товари підібрано за статистикою продажів.' : 'Товари підібрано з каталогу.'}
+        {draft.mode === 'ai' && ' Вступ підготував OpenAI.'}
+        {draft.mode === 'provider-unconfigured' && ' OpenAI ще не налаштовано. Використано стандартний вступ.'}
+        {draft.mode === 'provider-unavailable' && ' OpenAI тимчасово недоступний. Використано стандартний вступ.'}</p>
       {lines.length > 0 && <div className="offer-lines">{lines.map(i => <div className="offer-line" key={i.id}>
         <div><strong>{i.name}</strong><p>{uah(i.price)} за одиницю · доступно {i.available}</p>
-          <small>{i.purchases ? 'Покупок цієї позиції · ' + i.purchases : i.related ? 'Раніше купував цю категорію' : 'З доступного асортименту'}</small></div>
+          <small>{i.reason || (i.purchases ? 'Покупок цієї позиції · ' + i.purchases : i.related ? 'Раніше купував цю категорію' : 'З доступного асортименту')}</small></div>
         <TextInput type="number" min="0.001" step="0.001" max={i.available} label="Кількість" aria-label={'Кількість · ' + i.name}
           value={quantities[i.id] ?? ''} onChange={e => setQuantities({ ...quantities,[i.id]:e.currentTarget.value })} />
         <b className="offer-amount">{uah(i.sum)}</b>

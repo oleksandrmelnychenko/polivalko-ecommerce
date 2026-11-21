@@ -270,7 +270,7 @@ def dispatch(env):
             if route[1] == "/winter":
                 year = int(args.get("year", today.year if today.month >= 11 else today.year-1))
                 return 200, winter(year, today)
-            return generate(args.get("partner", ""), args.get("focus", "general"))
+            return generate(args.get("partner", ""), args.get("focus", "general"), args.get("method", "auto"), today)
         except (ValueError, TypeError):
             raise
         except Exception as exc:
