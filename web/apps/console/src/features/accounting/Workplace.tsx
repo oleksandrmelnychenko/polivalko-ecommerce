@@ -1,4 +1,4 @@
-import { Button, Group, Pagination, Select, Stack, Table, Text, TextInput } from '@mantine/core'
+import { Button, Group, Pagination, SegmentedControl, Select, Stack, Table, Text, TextInput } from '@mantine/core'
 import { IconArrowDownLeft, IconArrowUpRight, IconBuildingWarehouse, IconChecklist, IconFilePencil, IconFiles, IconWallet, IconHistory, IconPackage, IconPlus, IconSearch, IconListCheck } from '@tabler/icons-react'
 import type { components } from '@polivalko/shared/api/schema'
 import { useState } from 'react'
@@ -13,6 +13,7 @@ import { Grid } from './RegisterTable'
 import { StockOpeningForm } from './StockOpeningForm'
 import './warehouse.css'
 import { InventoryReview } from './InventoryReview'
+import { WarehouseReports } from './WarehouseReports'
 import { activeSource, count, ShopSourceForm, MovementHistory, type WarehouseRow } from './WarehouseShop'
 import { money, paymentNames, useRegister, type Doc, type Page, type Ref } from './api'
 
@@ -138,8 +139,18 @@ export function Workplace() {
 }
 
 export function WarehousePage() {
-  const [params] = useSearchParams()
-  return params.get('view') === 'inventory' ? <InventoryReview /> : <WarehouseBalances />
+  const [params, setParams] = useSearchParams()
+  const requested = params.get('view') ?? (params.size ? 'current' : null)
+  const current = useRegister<Page<WarehouseRow>>('warehouse', requested === null)
+  if (requested === 'inventory') return <InventoryReview />
+  const view = requested ?? (current.data ? (current.data.total ? 'current' : 'reports') : null)
+  return <Stack gap="sm">
+    <Group><SegmentedControl aria-label="Джерело складських залишків" value={view ?? ''}
+      data={[{ value: 'reports', label: 'Звіти DNTrade' }, { value: 'current', label: 'Проведені залишки' }]}
+      onChange={value => setParams({ view: value })} /></Group>
+    {view === 'reports' ? <WarehouseReports /> : view ? <WarehouseBalances /> :
+      <PageState kind={current.status === 'ready' ? 'empty' : current.status} onRetry={current.reload} />}
+  </Stack>
 }
 
 function WarehouseBalances() {
@@ -215,7 +226,7 @@ function WarehouseBalances() {
             ))}
           </Grid>
           {result.data.total > 50 && <Pagination total={Math.ceil(result.data.total / 50)} value={page} onChange={p => filter('page', String(p))} />}
-        </> : <PageState kind="empty" title="Немає залишків за цими умовами" /> :
+        </> : <PageState kind="empty" title={params.has('q') || params.has('store') ? 'За цими умовами позицій немає' : 'Проведених складських залишків поки немає'} /> :
           <PageState kind={result.status === 'ready' ? 'empty' : result.status} onRetry={result.reload} />}
       </section>
       {source && (

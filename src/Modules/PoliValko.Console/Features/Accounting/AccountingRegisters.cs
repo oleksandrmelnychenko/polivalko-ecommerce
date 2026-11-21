@@ -122,7 +122,7 @@ public static class AccountingRegisters
     private static async Task<IResult> Documents(PoliValkoDbContext db, string? register, Guid? partnerId,
         string? q, string? status, DateOnly? from, DateOnly? to, string? queue, int page = 1, CancellationToken ct = default)
     {
-        if (InvalidPage(page, q) || from > to || register is not (null or "in" or "out")) return Invalid();
+        if (InvalidPage(page, q) || from > to || register is not (null or "in" or "out" or "customerReturn")) return Invalid();
         var rows = AllDocuments(db);
         if (queue != null)
         {
@@ -137,7 +137,8 @@ public static class AccountingRegisters
             };
             if (rows==null) return Invalid();
         }
-        if (register != null) rows = rows.Where(d => d.EntityType == "invoice" && d.Kind == register);
+        if (register == "customerReturn") rows = rows.Where(d => d.EntityType == "customerReturn");
+        else if (register != null) rows = rows.Where(d => d.EntityType == "invoice" && d.Kind == register);
         if (partnerId != null) rows = rows.Where(d => d.PartnerId == partnerId);
         if (status != null) rows = rows.Where(d => d.Status == status);
         if (from != null) rows = rows.Where(d => d.Day >= from);

@@ -73,7 +73,7 @@ def summarize(rows, through, days):
     ranking = sorted((p for p in products.values() if p["net"] > 0), key=lambda p: (-p["net"], p["name"], p["sku"]))
     return dict(days=days, start=str(start), through=str(through), latest=str(latest) if latest else None,
                 current=current, previous=previous, byDay=[dict(day=d, **v) for d, v in by_day.items()],
-                products=ranking[:5], excluded=excluded, incompleteProducts=incomplete_products)
+                products=ranking, excluded=excluded, incompleteProducts=incomplete_products)
 
 
 _lock = Lock()

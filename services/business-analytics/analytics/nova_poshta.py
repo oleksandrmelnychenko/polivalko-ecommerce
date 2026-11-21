@@ -130,10 +130,14 @@ class CarrierHistory:
         return Match(kind, region, city) if sent else Match()
 
 
+def sender_api_key():
+    return os.getenv("NOVAPOSHTA_SENDER_API_KEY", "").strip()
+
+
 def read_history(year, today, invoices):
     history = CarrierHistory(invoices)
-    key = os.getenv("Delivery__NovaPoshta__ApiKey") or os.getenv("NOVAPOSHTA_API_KEY")
-    if not key or not key.strip():
+    key = sender_api_key()
+    if not key:
         history.status = "not_configured"
         return history
     seen = set()

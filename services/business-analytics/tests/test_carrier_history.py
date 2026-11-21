@@ -44,7 +44,18 @@ class CarrierHistoryTests(TestCase):
         history.status = "complete"
         self.assertTrue(all(history.match(row).status == "ambiguous" for row in rows))
 
-    @patch.dict("os.environ", {"Delivery__NovaPoshta__ApiKey": "test"})
+    @patch.dict("os.environ", {"Delivery__NovaPoshta__ApiKey": "directory", "NOVAPOSHTA_API_KEY": "directory"}, clear=True)
+    @patch("analytics.nova_poshta._page")
+    def test_directory_credentials_do_not_enable_sender_history(self, page):
+        rows = [sale("01", buyer_region="Київська")]
+        history = read_history(2025, date(2026, 1, 1), rows)
+        page.assert_not_called()
+        data = summarize(rows, [], carrier=history)
+        self.assertFalse(data["shipmentLinks"]["senderRegisterConfigured"])
+        self.assertEqual(data["shipmentLinks"]["novaPoshta"], {"status": "not_configured", "months": 0})
+        self.assertEqual(sum(r["count"] for r in data["combined"]["regions"]), 1)
+
+    @patch.dict("os.environ", {"NOVAPOSHTA_SENDER_API_KEY": "test"})
     @patch("analytics.nova_poshta.sleep")
     @patch("analytics.nova_poshta._page")
     def test_read_every_page_and_reject_partial_register(self, page, _sleep):

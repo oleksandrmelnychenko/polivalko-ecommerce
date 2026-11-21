@@ -22,12 +22,16 @@ public sealed class AccountingRegisterTests(ApiFactory api)
             {"schemaVersion":1,"source":"dntrade","entityType":"partner","sourceId":"part","raw":{"title":"Example"}}
             {"schemaVersion":1,"source":"dntrade","entityType":"store","sourceId":"store","raw":{"title":"Register store"}}
             {"schemaVersion":1,"source":"dntrade","entityType":"cashOrder","sourceId":"settle","documentType":"out","raw":{"parent_document":{"external_id":"inv","type":"in"}}}
+            {"schemaVersion":1,"source":"dntrade","entityType":"customerReturn","sourceId":"return-customer","documentType":"back","sourceDate":"2026-04-07","raw":{"number":"register-return-customer"}}
+            {"schemaVersion":1,"source":"dntrade","entityType":"invoice","sourceId":"return-supplier","documentType":"back_from_provider","sourceDate":"2026-04-07","raw":{"number":"register-return-supplier"}}
             """;
         var import = await admin.PostAsync("/api/v1/console/dntrade-archive/import?sourceAccount=" + account,
             new StringContent(source, Encoding.UTF8, "application/x-ndjson"), Ct);
         import.StatusCode.ShouldBe(HttpStatusCode.OK);
         var docs = await admin.ReadAsync<RegisterPage<DocumentRow>>(Root + "/documents?register=in&q=register-137");
         var invoice = docs.Items.Single(x => x.SourceAccount == account);
+        var returns = await admin.ReadAsync<RegisterPage<DocumentRow>>(Root + "/documents?register=customerReturn&q=register-return&from=2026-04-01&to=2026-04-30");
+        returns.Items.Where(x => x.SourceAccount == account).ShouldHaveSingleItem().SourceId.ShouldBe("return-customer");
         invoice.PartnerId.ShouldNotBeNull();
         var card = await admin.ReadAsync<DocumentCard>(Root + "/documents/" + invoice.Id);
         card.Lines.ShouldHaveSingleItem().Total.ShouldBe("12.51");

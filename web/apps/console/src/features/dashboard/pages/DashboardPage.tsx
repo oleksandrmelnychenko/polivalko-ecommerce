@@ -142,7 +142,7 @@ export function DashboardPage() {
           canCatalog={canCatalog}
         />}
         {documents && <div className="dash-grid is-even">
-          {report && <DocumentProducts data={report} />}
+          {report && <DocumentProducts key={report.start} data={report} />}
           {canCatalog && dashboard.data && <LowStock data={dashboard.data} canOpen />}
         </div>}
         {report && report.excluded > 0 && <p className="dash-muted" role="status">Документів із непідтвердженою сумою або статусом · {report.excluded.toLocaleString('uk-UA')}.</p>}

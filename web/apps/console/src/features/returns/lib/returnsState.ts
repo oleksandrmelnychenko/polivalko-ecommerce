@@ -59,6 +59,7 @@ export function useReturnsState() {
       setParams(
         (current) => {
           const next = new URLSearchParams(current)
+          next.set('source', 'web')
           for (const [key, raw] of Object.entries(patch) as [ReturnsParam, string | number | null][]) {
             const value = raw == null ? '' : String(raw).trim()
             if (!value || DEFAULTS[key] === value) next.delete(key)
@@ -76,7 +77,7 @@ export function useReturnsState() {
   const reset = useCallback(() => {
     setParams(
       (current) => {
-        const next = new URLSearchParams()
+        const next = new URLSearchParams({ source: 'web' })
         const pageSize = current.get('pageSize')
         if (pageSize) next.set('pageSize', pageSize)
         return next

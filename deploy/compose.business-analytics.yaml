@@ -23,6 +23,7 @@ services:
       PRODUCTION_ANALYTICS_DATABASE: ${PRODUCTION_ANALYTICS_DATABASE:?Вкажіть назву виробничої БД}
       PRODUCTION_ANALYTICS_CLUSTER_ID: ${PRODUCTION_ANALYTICS_CLUSTER_ID:-}
       PRODUCTION_ANALYTICS_DSN_FILE: /run/secrets/business_analytics_dsn
+      NOVAPOSHTA_SENDER_API_KEY: ${NOVAPOSHTA_SENDER_API_KEY:-}
     secrets: [business_analytics_dsn]
     volumes:
       - business-analytics-data:/var/lib/business-analytics

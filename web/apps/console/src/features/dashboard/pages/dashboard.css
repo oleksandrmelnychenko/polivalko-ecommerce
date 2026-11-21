@@ -513,6 +513,12 @@ a.dash-queue-item:focus-visible {
   border-bottom: 0;
 }
 
+.dash-rank-actions {
+  display: flex;
+  gap: 8px;
+  padding: 10px var(--dash-pad);
+}
+
 .dash-rank-n {
   color: var(--mantine-color-gray-7);
   flex: 0 0 18px;

@@ -49,7 +49,7 @@ internal static class InventoryReview
         if (!string.IsNullOrWhiteSpace(q))
         {
             var term=q.Trim().ToLowerInvariant();
-            rows=rows.Where(r=>(r.Code!=null && r.Code.Contains(term)) || (r.Title!=null && r.Title.ToLower().Contains(term)));
+            rows=rows.Where(r=>(r.Code!=null && r.Code.ToLower().Contains(term)) || (r.Title!=null && r.Title.ToLower().Contains(term)));
         }
         var counts=await rows.GroupBy(r=>r.Status).Select(g=>new InventoryCount(g.Key,g.Count())).ToListAsync(ct);
         if (status=="review") rows=rows.Where(r=>r.Status!="ready" && r.Status!="confirmed" && r.Status!="reference");

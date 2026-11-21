@@ -7,7 +7,7 @@ from threading import Lock
 from time import monotonic
 
 from .invoices import INDEPENDENT_RECEIPTS, currency_valid
-from .nova_poshta import read_history
+from .nova_poshta import read_history, sender_api_key
 from .register import kind_of
 from .settlements import address_fields, resolve
 from .shipments import ShipmentIndex, keys as shipment_keys
@@ -238,11 +238,14 @@ def summarize(headers, web, shipments=None, carrier=None):
     ordered = sorted((dict(id=k, name=names[k], **v) for k,v in buyers.items() if k),
                      key=lambda r: (-r["amount"], -r["count"], r["id"]))
     if carrier is not None:
-        linkage["novaPoshta"] = dict(status=carrier.status, months=carrier.months, documents=carrier.documents,
-                                     **carrier_links)
+        status = dict(status=carrier.status, months=carrier.months)
+        if carrier.status == "complete":
+            status.update(documents=carrier.documents, **carrier_links)
+        linkage["novaPoshta"] = status
     return dict(partners=ordered, unlinked=buyers.get(None, bucket()), excluded=invalid,
                 documents=regions.report(), registered=registered.report(), online=online.report(),
-                combined=combined.report(), documentCounts=breakdown, shipmentLinks=dict(linkage, purchasesWithKey=purchases_with_key))
+                combined=combined.report(), documentCounts=breakdown,
+                shipmentLinks=dict(linkage, purchasesWithKey=purchases_with_key, senderRegisterConfigured=bool(sender_api_key())))
 
 
 _lock = Lock()
@@ -286,13 +289,16 @@ def markets(year, today, page=1, search="", include_carrier=False):
                 carrier = read_history(year, today, invoices)
             data = summarize(headers, web, shipments, carrier)
             log_coverage(year, data)
-            if carrier is not None:
+            if carrier is not None and carrier.status == "complete":
                 stats = data["shipmentLinks"]["novaPoshta"]
                 logging.getLogger("gunicorn.error").info(
                     "Nova Poshta register (year=%d, status=%s, months=%d, documents=%d, ttn=%d, "
                     "number=%d, ambiguous=%d, kyivAdded=%d, providerCode=%s)", year, carrier.status, carrier.months,
                     carrier.documents, stats["ttn"], stats["number"], stats["ambiguous"],
                     stats["addedByRegion"].get("UA32", 0), carrier.error_code)
+            elif carrier is not None:
+                logging.getLogger("gunicorn.error").info("Nova Poshta register (year=%d, status=%s, months=%d, providerCode=%s)",
+                                                        year, carrier.status, carrier.months, carrier.error_code)
             if year not in cache and len(cache) >= 8:
                 cache.pop(next(iter(cache)))
             ttl = 60 if carrier is not None and carrier.status != "complete" else 600

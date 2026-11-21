@@ -7,6 +7,13 @@ from analytics.invoices import compare
 
 
 class SalesPeriodTests(TestCase):
+    def test_product_ranking_includes_products_beyond_first_page_in_revenue_order(self):
+        end = date(2026, 1, 3)
+        lines = [dict(product=dict(code=str(i), title=f"Товар {i}"), quantity=1, total=i) for i in range(1, 24)]
+        receipt = dict(entity_type="receipt", account="archive", day=end, total=sum(range(1, 24)), lines=lines)
+        ranking = summarize([receipt], end, 7)["products"]
+        self.assertEqual([p["net"] for p in ranking], list(range(23, 0, -1)))
+
     def test_dashboard_counts_sale_documents_once_and_subtracts_returns(self):
         end = date(2026, 1, 3)
         item = {"product": {"code": "1", "title": "Товар"}, "quantity": 1, "total": "20.45"}

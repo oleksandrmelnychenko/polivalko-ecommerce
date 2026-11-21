@@ -163,19 +163,23 @@ function Document({ id }: { id: string }) {
   )
 }
 
-function Register({ section }: { section: string }) {
+function Register({ section, sourceSwitch }: { section: string; sourceSwitch?: React.ReactNode }) {
   const [params, setParams] = useSearchParams()
   const [edit, setEdit] = useState(false)
   const { can } = usePermissions()
   const direction = section === 'incoming' ? 'in' : section === 'outgoing' ? 'out' : null
-  const title = direction === 'in' ? 'Прибуткові накладні' : direction === 'out' ? 'Видаткові накладні' : 'Документи'
+  const returns = section === 'returns'
+  const title = returns ? 'Повернення' : direction === 'in' ? 'Прибуткові накладні' : direction === 'out' ? 'Видаткові накладні' : 'Документи'
   const filter = new URLSearchParams(params)
-  if (direction) filter.set('register', direction)
+  filter.delete('source')
+  if (returns) filter.set('register', 'customerReturn')
+  else if (direction) filter.set('register', direction)
   else filter.delete('register')
   const query = useRegister<Page<Doc>>('documents?' + filter)
   const page = Math.max(1, Number(params.get('page')) || 1)
   function change(key: string, value: string) {
     const next = new URLSearchParams(params)
+    if (returns) next.set('source', 'accounting')
     next.delete('page')
     if (value) next.set(key, value)
     else next.delete(key)
@@ -183,11 +187,11 @@ function Register({ section }: { section: string }) {
   }
   return (
     <Stack gap="sm" className="ledger-workspace doc-register" data-incoming={direction === 'in' || undefined}>
-      <PageHeader title={title} actions={direction && can(PermissionKeys.Accounting.Edit) && (
+      <PageHeader title={title} actions={sourceSwitch ?? (direction && can(PermissionKeys.Accounting.Edit) && (
         <Button radius="xl" leftSection={<IconPlus size={16} />} onClick={() => setEdit(true)}>Створити накладну</Button>
-      )} />
+      ))} />
       <section className="ledger-card">
-        <header className="ledger-card-head"><h2><MetricLabel icon={direction === 'in' ? IconPackageImport : IconFiles}>{direction === 'in' ? 'Надходження від постачальників' : direction ? 'Журнал накладних' : 'Реєстр документів'}</MetricLabel></h2>
+        <header className="ledger-card-head"><h2><MetricLabel icon={direction === 'in' ? IconPackageImport : IconFiles}>{returns ? 'Повернення від покупців' : direction === 'in' ? 'Надходження від постачальників' : direction ? 'Журнал накладних' : 'Реєстр документів'}</MetricLabel></h2>
           {query.data && <span className="ledger-count">Записів · {query.data.total.toLocaleString('uk-UA')}</span>}
         </header>
         <FilterBar label="Фільтри документів" activeCount={['from', 'to', 'status'].filter((key) => params.has(key)).length}
@@ -248,6 +252,10 @@ function Register({ section }: { section: string }) {
       )}
     </Stack>
   )
+}
+
+export function AccountingReturnsPage({ sourceSwitch }: { sourceSwitch?: React.ReactNode }) {
+  return <div className="accounting-register"><Register section="returns" sourceSwitch={sourceSwitch} /></div>
 }
 
 export default function AccountingPage() {

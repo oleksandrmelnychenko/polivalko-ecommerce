@@ -1,6 +1,6 @@
 import { Button, Stack, Text } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
@@ -19,7 +19,7 @@ import './returns.css'
 const getRowId = (row: RefundRow) => row.id
 const countFormat = new Intl.NumberFormat('uk-UA')
 
-export function ReturnsPage() {
+export function ReturnsPage({ sourceSwitch }: { sourceSwitch?: ReactNode }) {
   const { state, update, reset } = useReturnsState()
   const query = useMemo(() => toRefundsQuery(state), [state])
   const refunds = useApiQuery(`refunds:${JSON.stringify(query)}`, () => getRefunds(query), { keepPrevious: true })
@@ -37,6 +37,7 @@ export function ReturnsPage() {
 
   const setId = useCallback((id: string | null) => {
     const next = new URLSearchParams(window.location.search)
+    next.set('source', 'web')
     if (id) next.set('id', id)
     else next.delete('id')
     setParams(next, { replace: true })
@@ -67,7 +68,7 @@ export function ReturnsPage() {
 
   return (
     <ListPage className="sales-list-page returns-list-page">
-      <PageHeader title="Повернення" />
+      <PageHeader title="Повернення" actions={sourceSwitch} />
 
       <ReturnsFilters
         state={state}

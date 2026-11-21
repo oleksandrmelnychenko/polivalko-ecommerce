@@ -22,7 +22,9 @@ type Markets = Record<Source, Geography> & {
   documentCounts?: { receipts: number; invoices: number; returns: number }
   partners: (Period & { id: string; name: string })[]
   shipmentLinks?: { ttn: number; number: number; ref: number; ambiguous: number; mapped: number; mappedByRegion: Record<string, number>
-    novaPoshta?: { status: string; months: number; documents: number; ttn: number; number: number; ambiguous: number; addedByRegion: Record<string, number> } }
+    senderRegisterConfigured?: boolean
+    novaPoshta?: { status: 'complete'; months: number; documents: number; ttn: number; number: number; ambiguous: number; addedByRegion: Record<string, number> }
+      | { status: 'not_configured' | 'rate_limited' | 'unavailable'; months: number } }
 }
 const sourceNames: Record<Source, string> = { combined: 'Доставка або адреса покупця', documents: 'Доставка за документами', registered: 'Адреса контрагента', online: 'Доставка вебзамовлень' }
 const descriptions: Record<Source, string> = {
@@ -205,12 +207,13 @@ function MarketReport({ year, years }: { year: number; years: number[] }) {
         {data?.documentCounts && source !== 'online' && <p>{data.through ? dateRange(`${year}-01-01`, data.through) : year} · по Україні · окремих чеків {formatValue(data.documentCounts.receipts)} ·
           {' '}видаткових накладних {formatValue(data.documentCounts.invoices)} · повернень {formatValue(data.documentCounts.returns)}.
           {' '}Повернення зменшують суму обороту. На карті показано покупки з визначеною областю.</p>}
-        {(source === 'combined' || source === 'documents') && <label><input type="checkbox" checked={withCarrier}
+        {data?.shipmentLinks && data.shipmentLinks.senderRegisterConfigured !== false && (source === 'combined' || source === 'documents') && <label><input type="checkbox" checked={withCarrier}
           onChange={event => changeParam('carrier', event.currentTarget.checked ? 'nova-poshta' : '')} /> Врахувати реєстр Нової пошти</label>}
-        {carrier && (source === 'documents' || source === 'combined') && <p role="status">{carrier.status === 'complete'
+        {(data?.shipmentLinks?.senderRegisterConfigured === false || carrier?.status === 'not_configured') && (source === 'combined' || source === 'documents') &&
+          <p role="status">Очікуємо ключ кабінету відправника Нової пошти. На карті показано дані обліку.</p>}
+        {carrier && carrier.status !== 'not_configured' && (source === 'documents' || source === 'combined') && <p role="status">{carrier.status === 'complete'
           ? `ЕН у реєстрі: ${formatValue(carrier.documents)}. Збігів за ТТН: ${carrier.ttn}, за номером замовлення: ${carrier.number}. Додаткових покупок на карті доставки або адреси покупця: ${formatValue(regionCode ? carrier.addedByRegion[regionCode] ?? 0 : Object.values(carrier.addedByRegion).reduce((a,b) => a+b, 0))}.`
           : carrier.status === 'rate_limited' ? `Нова пошта обмежила частоту запитів. Прочитано місяців: ${carrier.months}. На карті показано дані обліку.`
-          : carrier.status === 'not_configured' ? 'Ключ Нової пошти не налаштовано. Показано дані обліку.'
             : `Повного реєстру Нової пошти за ${year} рік отримати не вдалося. Показано дані обліку.`}</p>}
         {geography && <details className="market-method"><summary>Як визначено адресу</summary><p>{descriptions[source]}</p>
           {data?.shipmentLinks && (source === 'combined' || source === 'documents') && <p>
