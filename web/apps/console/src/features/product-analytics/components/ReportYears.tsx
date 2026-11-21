@@ -19,7 +19,7 @@ export function ReportYears({ report, children }: {
   }
   if (!years) return <p role="status">Завантажуємо роки продажів…</p>
   if (!years.length) return <p role="status">{report === 'invoices'
-    ? 'За завершені роки ще немає документів продажу.' : 'Ще немає років із продажами.'}</p>
+    ? 'Ще немає проведених документів продажу.' : 'Ще немає років із продажами.'}</p>
   const requested = Number(params.get('year'))
   return children(years.includes(requested) ? requested : years[0], years)
 }

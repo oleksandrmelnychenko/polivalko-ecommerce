@@ -4,7 +4,8 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { ReportYears } from './ReportYears'
 import { readBusiness } from '../api/businessAnalytics'
-import { IconFileInvoice, IconMap2, IconMapPin, IconReceipt2, IconSearch, IconShoppingBag, IconTrophy, IconUsers, IconWallet } from '@tabler/icons-react'
+import { dateRange } from '../lib/format'
+import { IconFileInvoice, IconMap2, IconMapPin, IconMapPinOff, IconReceipt2, IconSearch, IconShoppingBag, IconUsers, IconWallet } from '@tabler/icons-react'
 import { MetricLabel, MetricTile, MetricTrack } from '@/shared/ui/MetricCard'
 import { formatValue } from './BusinessForecast'
 import shapes from './ukraineRegions.json'
@@ -17,7 +18,8 @@ type Geography = { unknown: Period; regions: Region[]; withAddress: number }
 type Source = 'combined' | 'documents' | 'registered' | 'online'
 type Metric = 'count' | 'amount'
 type Markets = Record<Source, Geography> & {
-  year: number; partnerCount: number; matches: number; excluded: number; unlinked: Period
+  year: number; through?: string; partnerCount: number; matches: number; excluded: number; unlinked: Period
+  documentCounts?: { receipts: number; invoices: number; returns: number }
   partners: (Period & { id: string; name: string })[]
   shipmentLinks?: { ttn: number; number: number; ref: number; ambiguous: number; mapped: number; mappedByRegion: Record<string, number>
     novaPoshta?: { status: string; months: number; documents: number; ttn: number; number: number; ambiguous: number; addedByRegion: Record<string, number> } }
@@ -29,7 +31,8 @@ const descriptions: Record<Source, string> = {
   registered: 'Продажі за областю з картки контрагента. Ця адреса може відрізнятися від місця доставки.',
   online: 'Оплачені, відвантажені, готові до видачі та завершені вебзамовлення. Місце доставки визначає довідник Нової пошти. Сума відображає вартість замовлень до вирахування повернень.',
 }
-const metricLabel = (value: number, metric: Metric) => formatValue(value) + (metric === 'amount' ? ' грн' : '')
+const money = new Intl.NumberFormat('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const metricLabel = (value: number, metric: Metric) => metric === 'amount' ? money.format(value) + ' грн' : formatValue(value)
 const colors = ['#d7ebe7', '#98d0bf', '#56af93', '#238267', '#10553e']
 
 const paths: Record<string, { path: string; bounds: number[] }> = shapes
@@ -65,7 +68,7 @@ function SettlementMap({ region, metric }: { region: Region; metric: Metric }) {
   return <>
     <ul className="market-stats" aria-label="Показники регіону">
       <MetricTile icon={IconShoppingBag} label="Покупок у регіоні"><strong>{formatValue(region.count)}</strong></MetricTile>
-      <MetricTile icon={IconWallet} label="Сума у регіоні"><strong>{formatValue(region.amount)} грн</strong></MetricTile>
+      <MetricTile icon={IconWallet} label="Сума у регіоні"><strong>{money.format(region.amount)} грн</strong></MetricTile>
       <MetricTile icon={IconMapPin} label="Покупок із визначеним населеним пунктом"><strong>{formatValue(known.count)} із {formatValue(region.count)}</strong></MetricTile>
     </ul>
     <div className="ba-market-map ba-locality-map">
@@ -80,7 +83,7 @@ function SettlementMap({ region, metric }: { region: Region; metric: Metric }) {
       </svg>
       <div className="ba-market-region" aria-live="polite">
         {active && <><strong>{active.name}</strong><span>{formatValue(active.count)} покупок · {formatValue(active.returns)} повернень</span>
-          <span>{formatValue(active.amount)} грн</span></>}
+          <span>{money.format(active.amount)} грн</span></>}
         {peak > 0 ? <span>Площа круга відповідає {metric === 'count' ? 'кількості покупок' : 'сумі у гривнях'}. Найбільший круг · {metricLabel(peak, metric)}.</span>
           : <span>{points.length ? 'У визначених населених пунктах немає додатного значення для цього показника.'
             : region.count || region.returns ? 'Область відома, але в цих продажах не вдалося визначити населений пункт.'
@@ -89,8 +92,8 @@ function SettlementMap({ region, metric }: { region: Region; metric: Metric }) {
     </div>
     {points.length > 0 && <div className="ba-table"><table><thead><tr><th>Населений пункт</th><th>Покупок</th><th>Повернень</th><th>Сума, грн</th></tr></thead>
       <tbody>{points.map(p => <tr key={p.code}><th><button type="button" aria-pressed={active?.code === p.code} onClick={() => setSelected(p.code)}>{p.name}</button></th>
-        <td>{formatValue(p.count)}</td><td>{formatValue(p.returns)}</td><td>{formatValue(p.amount)}</td></tr>)}</tbody></table></div>}
-    <p>Область відома, населений пункт не визначено · {formatValue(region.count - known.count)} покупок · {formatValue(region.amount - known.amount)} грн.</p>
+        <td>{formatValue(p.count)}</td><td>{formatValue(p.returns)}</td><td>{money.format(p.amount)}</td></tr>)}</tbody></table></div>}
+    <p>Область відома, населений пункт не визначено · {formatValue(region.count - known.count)} покупок · {money.format(region.amount - known.amount)} грн.</p>
   </>
 }
 
@@ -103,17 +106,17 @@ function RegionalMap({ data, metric, regionCode, onRegion }: {
   const selected = data.regions.find(r => r.code === regionCode)
   const known = recorded.reduce((sum, r) => sum + r.count, 0)
   const total = known + data.unknown.count
-  const leaders = ranking.filter(r => r[metric] === peak)
+  const share = total ? (known / total).toLocaleString('uk-UA', { style: 'percent', maximumFractionDigits: 2 }) : null
   return <>
     {selected ? <SettlementMap key={selected.code} region={selected} metric={metric} /> : <>
     <ul className="market-stats" aria-label="Географія покупок за рік">
-      <MetricTile icon={IconShoppingBag} label="Покупок за рік"><strong>{formatValue(total)}</strong></MetricTile>
+      <MetricTile icon={IconShoppingBag} label="Покупок за період"><strong>{formatValue(total)}</strong></MetricTile>
       <MetricTile icon={IconMapPin} label="З відомою областю">
-        <strong>{formatValue(known)}</strong>
+        <strong>{formatValue(known)}</strong>{share && <small>{share} усіх покупок</small>}
         <MetricTrack value={known} max={total} />
       </MetricTile>
-      <MetricTile icon={IconTrophy} label={metric === 'count' ? 'Найбільше покупок' : 'Найбільша сума'}>
-        <strong className="market-leaders">{leaders.length ? leaders.map(r => r.name).join(', ') : '—'}</strong>
+      <MetricTile icon={IconMapPinOff} label="Без визначеної області">
+        <strong>{formatValue(data.unknown.count)}</strong>
       </MetricTile>
     </ul>
     <div className="market-geography"><div className="market-figure">
@@ -135,10 +138,10 @@ function RegionalMap({ data, metric, regionCode, onRegion }: {
     </div>
     {recorded.length > 0 && <div className="ba-table"><table><thead><tr><th>Область</th><th>Покупок</th><th>Сума, грн</th></tr></thead>
       <tbody>{[...recorded].sort((a,b) => b[metric]-a[metric]).map(r => <tr key={r.code}>
-        <th><button onClick={() => onRegion(r.code)}>{r.name}</button></th><td>{formatValue(r.count)}</td><td>{formatValue(r.amount)}</td></tr>)}</tbody></table></div>}
+        <th><button onClick={() => onRegion(r.code)}>{r.name}</button></th><td>{formatValue(r.count)}</td><td>{money.format(r.amount)}</td></tr>)}</tbody></table></div>}
     </div>
     {!known && <p role="status">{total ? 'У вибраних продажах немає підтвердженої області. Лідера визначити неможливо.' : 'За цей рік у вибраному джерелі немає покупок.'}</p>}
-    <p>Регіон невідомий · {formatValue(data.unknown.count)} покупок · {formatValue(data.unknown.amount)} грн.</p>
+    <p>Регіон невідомий · {formatValue(data.unknown.count)} покупок · {money.format(data.unknown.amount)} грн.</p>
     </>}
     {selected && data.unknown.count > 0 && <p>Ще {formatValue(data.unknown.count)} покупок у цьому джерелі за рік мають невідому область.</p>}
     {total > 0 && data.withAddress === 0 && <p>За вибраний рік у джерелі немає адреси чи населеного пункту для жодної покупки.</p>}
@@ -199,6 +202,9 @@ function MarketReport({ year, years }: { year: number; years: number[] }) {
           <Button size="xs" variant="default" onClick={query.reload}>Повторити</Button></div>
           : geography ? <RegionalMap key={source + year} data={geography} metric={metric} regionCode={regionCode} onRegion={code => changeParam('region', code)} />
             : <div role="status" className="market-status"><Loader size={16} />Читаємо реєстр продажів…</div>}
+        {data?.documentCounts && source !== 'online' && <p>{data.through ? dateRange(`${year}-01-01`, data.through) : year} · по Україні · окремих чеків {formatValue(data.documentCounts.receipts)} ·
+          {' '}видаткових накладних {formatValue(data.documentCounts.invoices)} · повернень {formatValue(data.documentCounts.returns)}.
+          {' '}Повернення зменшують суму обороту. На карті показано покупки з визначеною областю.</p>}
         {(source === 'combined' || source === 'documents') && <label><input type="checkbox" checked={withCarrier}
           onChange={event => changeParam('carrier', event.currentTarget.checked ? 'nova-poshta' : '')} /> Врахувати реєстр Нової пошти</label>}
         {carrier && (source === 'documents' || source === 'combined') && <p role="status">{carrier.status === 'complete'
@@ -230,13 +236,13 @@ function MarketReport({ year, years }: { year: number; years: number[] }) {
             <ul className="market-stats" aria-label="Підсумки покупок контрагентів">
               <MetricTile icon={IconFileInvoice} label="Контрагентів із документами"><strong>{formatValue(data.partnerCount)}</strong></MetricTile>
               <MetricTile icon={IconReceipt2} label="Покупок без контрагента"><strong>{formatValue(data.unlinked.count)}</strong></MetricTile>
-              <MetricTile icon={IconWallet} label="Їхній чистий оборот"><strong>{formatValue(data.unlinked.amount)} ₴</strong></MetricTile>
+              <MetricTile icon={IconWallet} label="Їхній чистий оборот"><strong>{money.format(data.unlinked.amount)} ₴</strong></MetricTile>
             </ul>
             {data.excluded > 0 && <p>Документи з непідтвердженою сумою, валютою або статусом · {formatValue(data.excluded)}.</p>}
             {data.partners.length > 0 ? <div className="ba-table"><table aria-label="Рейтинг контрагентів за чистим оборотом"><thead><tr>
               <th>Контрагент</th><th>Покупок</th><th>Повернень</th><th>Чистий оборот, грн</th><th>Остання покупка</th></tr></thead>
               <tbody>{data.partners.map(p => <tr key={p.id}><th scope="row"><Link to={'/accounting/partners/' + p.id} state={{ marketSearch: params.toString() }}>{p.name}</Link></th>
-                <td>{formatValue(p.count)}</td><td>{formatValue(p.returns)}</td><td>{formatValue(p.amount)}</td><td>{p.lastPurchase ?? '—'}</td></tr>)}</tbody>
+                <td>{formatValue(p.count)}</td><td>{formatValue(p.returns)}</td><td>{money.format(p.amount)}</td><td>{p.lastPurchase ?? '—'}</td></tr>)}</tbody>
             </table></div> : <p role="status">{search ? 'За цим пошуком контрагентів не знайдено.' : 'За цей рік немає покупок із прив’язкою до контрагента.'}</p>}
             {data.matches > 25 && <nav className="market-pages" aria-label="Сторінки контрагентів">
               <Button size="xs" variant="default" disabled={page <= 1} onClick={() => changeParam('partnerPage', String(page - 1))}>Назад</Button>

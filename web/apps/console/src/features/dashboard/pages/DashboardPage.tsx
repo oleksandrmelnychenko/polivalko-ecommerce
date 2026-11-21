@@ -9,7 +9,8 @@ import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { notifySummaryStale, onConsoleEvent } from '@/shared/lib/events'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { PageState } from '@/shared/ui/PageState'
-import { getDashboard, getDashboardCustomers, getDashboardRequests, getDashboardSummary, getLatestOrders, getProductCounts, type Dashboard } from '../api/dashboardApi'
+import { getDashboard, getDashboardCustomers, getDashboardRequests, getDashboardSummary, getDocumentSales, getLatestOrders, getProductCounts, type Dashboard } from '../api/dashboardApi'
+import { DocumentSalesReport } from '../components/DocumentSalesReport'
 import { DeliveryBreakdown, StatusBreakdown } from '../components/Breakdowns'
 import { CompletionCard } from '../components/CompletionCard'
 import { KpiList } from '../components/KpiList'
@@ -33,6 +34,9 @@ export function DashboardPage() {
   const canRequests = can(PermissionKeys.Requests.View)
   const canCustomers = can(PermissionKeys.Customers.View)
   const canCatalog = can(PermissionKeys.Catalog.ViewProducts)
+  const canDocuments = can(PermissionKeys.Analytics.ViewProducts) && can(PermissionKeys.Accounting.View)
+  const documents = canDocuments && params.get('source') !== 'web'
+  const sales = useApiQuery('document-sales-' + days, () => getDocumentSales(days), { enabled: documents })
 
   const dashboard = useApiQuery(`dashboard:${days}`, () => getDashboard(days), { keepPrevious: true })
   const summary = useApiQuery('dashboard-summary', () => getDashboardSummary())
@@ -42,8 +46,8 @@ export function DashboardPage() {
   const requests = useApiQuery('dashboard-requests', getDashboardRequests, { enabled: canRequests })
   const totals = [
     { allowed: canCatalog, query: productCounts, count: productCounts.data?.all, label: 'Товари в каталозі', href: '/catalog/products' },
-    { allowed: canOrders, query: latest, count: latest.data?.totalItems, label: 'Замовлення', href: '/sales/orders' },
-    { allowed: canCustomers, query: customers, count: customers.data?.totalItems, label: 'Покупці', href: '/sales/customers' },
+    { allowed: canOrders, query: latest, count: latest.data?.totalItems, label: 'Вебзамовлення', href: '/sales/orders' },
+    { allowed: canCustomers, query: customers, count: customers.data?.totalItems, label: 'Покупці інтернет-магазину', href: '/sales/customers' },
     { allowed: canRequests, query: requests, count: requests.data?.totalItems, label: 'Заявки на послуги', href: '/sales/requests' },
   ].filter(item => item.allowed && item.query.status !== 'forbidden')
   const reloadSummary = summary.reload
@@ -64,6 +68,7 @@ export function DashboardPage() {
 
   function refresh() {
     dashboard.reload()
+    if (documents) sales.reload()
     if (canOrders) latest.reload()
     if (canCatalog) productCounts.reload()
     if (canCustomers) customers.reload()
@@ -75,9 +80,16 @@ export function DashboardPage() {
     <div className="dash-page">
       <PageHeader title="Дашборд" actions={
         <div className="dash-toolbar-actions">
+          {canDocuments ? <SegmentedControl aria-label="Джерело продажів" value={documents ? 'documents' : 'web'}
+            data={[{ value: 'documents', label: 'Документи продажу' }, { value: 'web', label: 'Інтернет-магазин' }]}
+            onChange={value => setParams(current => {
+              const next = new URLSearchParams(current)
+              next.set('source', value)
+              return next
+            })} /> : <span className="dash-muted">Інтернет-магазин</span>}
           <SegmentedControl aria-label="Період" data={PERIOD_OPTIONS} value={String(days)} onChange={setPeriod} />
           <Tooltip label="Оновити">
-            <ActionIcon variant="default" size={36} aria-label="Оновити" loading={dashboard.isFetching || summary.isFetching || totals.some(item => item.query.isFetching)} onClick={refresh}>
+            <ActionIcon variant="default" size={36} aria-label="Оновити" loading={sales.isFetching || dashboard.isFetching || summary.isFetching || totals.some(item => item.query.isFetching)} onClick={refresh}>
               <IconRefresh size={17} stroke={1.7} />
             </ActionIcon>
           </Tooltip>
@@ -85,13 +97,16 @@ export function DashboardPage() {
       } />
 
       <div className="dash-body">
-        {dashboard.status === 'ready' && dashboard.data &&
+        {documents && (sales.status === 'error' || sales.status === 'forbidden'
+          ? <PageState kind={sales.status} description={problemMessage(sales.problem, 'Не вдалося завантажити продажі за документами.')} onRetry={sales.reload} />
+          : sales.data ? <DocumentSalesReport data={sales.data} /> : <Skeleton height={220} radius={12} role="status" aria-label="Завантаження продажів за документами" />)}
+        {!documents && dashboard.status === 'ready' && dashboard.data &&
           <div className="dash-feature-row">
             <CompletionCard statuses={dashboard.data.byStatus} />
             <SalesChartCard data={dashboard.data} metric={metric} onMetric={setMetric} />
           </div>}
         <div className="dash-overview-row">
-          {dashboard.status === 'ready' && dashboard.data && <PeriodSummary data={dashboard.data} />}
+          {!documents && dashboard.status === 'ready' && dashboard.data && <PeriodSummary data={dashboard.data} />}
           {summary.data && <WorkQueue summary={summary.data} canOrders={canOrders} canRequests={canRequests} />}
         {totals.length > 0 && <section className="dash-card dash-work" aria-labelledby="dash-totals-title">
           <header className="dash-card-head"><h2 className="dash-card-title" id="dash-totals-title">У системі за весь час</h2></header>
@@ -101,9 +116,9 @@ export function DashboardPage() {
           {totals.some(item => item.query.status === 'error') && <p className="dash-muted" role="status">Частину показників не вдалося завантажити. <button className="dash-retry" type="button" onClick={() => totals.filter(item => item.query.status === 'error').forEach(item => item.query.reload())}>Повторити</button></p>}
         </section>}
         </div>
-        {dashboard.status === 'ready' && dashboard.data && <KpiList data={dashboard.data} />}
+        {!documents && dashboard.status === 'ready' && dashboard.data && <KpiList data={dashboard.data} />}
 
-        <DashboardInsights
+        {!documents && <DashboardInsights
           data={dashboard.status === 'ready' ? dashboard.data : undefined}
           status={dashboard.status}
           problem={dashboard.problem}
@@ -111,9 +126,10 @@ export function DashboardPage() {
           onRetry={dashboard.reload}
           canOrders={canOrders}
           canCatalog={canCatalog}
-        />
+        />}
+        {documents && canCatalog && dashboard.data && <LowStock data={dashboard.data} canOpen />}
 
-        {canOrders ? (
+        {!documents && canOrders ? (
           <LatestOrders
             items={latest.data?.items}
             status={latest.status}

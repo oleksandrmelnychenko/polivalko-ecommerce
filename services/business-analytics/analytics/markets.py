@@ -55,12 +55,12 @@ WITH sales AS (
  SELECT d.source_account AS account,d.entity_type,d.kind,d.status,d.currency,d.details->>'type' AS raw_kind,
         d.details->>'status' AS raw_status,d.details->>'currency_iso' AS raw_currency,
         p.id::text AS partner,p.title AS name,d.total,d.day,
-        coalesce(nullif(p.details#>>'{address,region,title}',''),nullif(p.details#>>'{address,region}',''),
-                 nullif(p.details#>>'{region,title}',''),nullif(p.details->>'region',''),p.details->>'oblast') AS partner_region,
-        coalesce(nullif(p.details#>>'{address,katottg}',''),nullif(p.details#>>'{address,city,title}',''),
-                 nullif(p.details#>>'{address,city,name}',''),nullif(p.details#>>'{address,city}',''),
-                 nullif(p.details#>>'{city,title}',''),nullif(p.details#>>'{city,name}',''),p.details->>'city') AS partner_city,
-        CASE WHEN jsonb_typeof(p.details->'address')='string' THEN p.details->>'address' END AS buyer_address,
+        coalesce(nullif(profile#>>'{address,region,title}',''),nullif(profile#>>'{address,region}',''),
+                 nullif(profile#>>'{region,title}',''),nullif(profile->>'region',''),profile->>'oblast') AS partner_region,
+        coalesce(nullif(profile#>>'{address,katottg}',''),nullif(profile#>>'{address,city,title}',''),
+                 nullif(profile#>>'{address,city,name}',''),nullif(profile#>>'{address,city}',''),
+                 nullif(profile#>>'{city,title}',''),nullif(profile#>>'{city,name}',''),profile->>'city') AS partner_city,
+        CASE WHEN jsonb_typeof(profile->'address')='string' THEN profile->>'address' END AS buyer_address,
         nullif(d.details->>'delivery_region','') AS delivery_region, nullif(d.details->>'shipping_region','') AS shipping_region,
         nullif(d.details->>'delivery_city','') AS delivery_city, nullif(d.details->>'shipping_city','') AS shipping_city,
         coalesce(nullif(d.details->>'order_number',''),nullif(d.details#>>'{order,number}',''),
@@ -79,6 +79,10 @@ WITH sales AS (
         coalesce(nullif(nullif(d.details->'delivery','{}'::jsonb),'null'::jsonb),o.details->'delivery') AS delivery
  FROM sales d LEFT JOIN identities i ON i.source_account=d.source_account AND i.ref=lower(d.partner_ref)
  LEFT JOIN accounting.partners p ON p.id=coalesce(d.native_partner_id,i.id)
+ CROSS JOIN LATERAL (SELECT CASE
+   WHEN (jsonb_typeof(d.details#>'{partner,address}')='string' AND nullif(trim(d.details#>>'{partner,address}'),'') IS NOT NULL)
+     OR (d.details#>'{partner,address}') ?| array['katottg','region','city']
+   THEN d.details->'partner' ELSE p.details END AS profile) buyer_profile
  LEFT JOIN accounting.documents o ON o.entity_type='order' AND o.source_account=d.source_account
      AND o.source_id=coalesce(nullif(d.parent_ref,''), CASE WHEN jsonb_typeof(d.details->'parent_document')='string'
           THEN nullif(d.details->>'parent_document','') END)
@@ -171,6 +175,7 @@ def summarize(headers, web, shipments=None, carrier=None):
     linkage = dict(ttn=0, number=0, ref=0, ambiguous=0, mapped=0, mappedByRegion={})
     carrier_links = dict(ttn=0, number=0, ambiguous=0, addedByRegion={})
     purchases_with_key = 0
+    breakdown = dict(invoices=0, receipts=0, returns=0)
     names, invalid = {}, 0
     for row in headers:
         kind = "receipt" if row["entity_type"] == "receipt" else kind_of(row)
@@ -183,6 +188,7 @@ def summarize(headers, web, shipments=None, carrier=None):
         count = row["count"] - row["invalid"]
         if not count or row["amount"] is None:
             continue
+        breakdown[{"sale": "invoices", "receipt": "receipts", "return": "returns"}[kind]] += count
         key = row["partner"]
         names[key] = row["name"]
         values = count, row["amount"], kind == "return", row["last_day"]
@@ -236,7 +242,7 @@ def summarize(headers, web, shipments=None, carrier=None):
                                      **carrier_links)
     return dict(partners=ordered, unlinked=buyers.get(None, bucket()), excluded=invalid,
                 documents=regions.report(), registered=registered.report(), online=online.report(),
-                combined=combined.report(), shipmentLinks=dict(linkage, purchasesWithKey=purchases_with_key))
+                combined=combined.report(), documentCounts=breakdown, shipmentLinks=dict(linkage, purchasesWithKey=purchases_with_key))
 
 
 _lock = Lock()
@@ -294,5 +300,5 @@ def markets(year, today, page=1, search="", include_carrier=False):
         else:
             data = item[2]
     buyers = [r for r in data["partners"] if search.casefold() in r["name"].casefold()]
-    return dict(data, year=year, partnerCount=len(data["partners"]), matches=len(buyers),
+    return dict(data, year=year, through=str(min(today, date(year, 12, 31))), partnerCount=len(data["partners"]), matches=len(buyers),
                 partners=buyers[(page-1)*25:page*25])

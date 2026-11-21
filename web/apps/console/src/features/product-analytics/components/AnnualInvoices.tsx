@@ -6,6 +6,8 @@ import { useApiQuery } from '@/shared/api/useApiQuery'
 import { ReportYears } from './ReportYears'
 import { readBusiness } from '../api/businessAnalytics'
 import { MetricLabel } from '@/shared/ui/MetricCard'
+import { kyivDay, shiftDay } from '@/shared/lib/kyivTime'
+import { dateRange } from '../lib/format'
 import './annual-invoices.css'
 import { AnalyticsChart } from './AnalyticsChart'
 import { formatValue } from './BusinessForecast'
@@ -27,6 +29,7 @@ type Period = {
 }
 type Annual = {
   year: number
+  through: string
   total: Period
   months: Period[]
   issues: { id: string; number: string; day: string; header: number | null; lines: number | null; inRegister: boolean; reason: string }[]
@@ -65,6 +68,10 @@ function InvoiceReport({ year, years }: { year: number; years: number[] }) {
   const count = total ? total.documents + total.cashDocuments : 0
   const issues = total ? total.discrepancies + total.cashDiscrepancies : 0
   const empty = total && !count && !total.lineDocuments
+  const end = report?.through ?? `${year}-12-31`
+  const today = kyivDay(new Date())
+  const partial = end < `${year}-12-31`
+  const assortmentEnd = end >= today ? shiftDay(today, -1) : end
 
   return (
     <div className="annual-invoices">
@@ -72,7 +79,7 @@ function InvoiceReport({ year, years }: { year: number; years: number[] }) {
         <header>
           <h2 id="annual-title"><MetricLabel icon={IconFileInvoice}>Оборот за документами продажу</MetricLabel></h2>
           <div className="annual-links">
-            <Button component={Link} to={`?tab=assortment&from=${year}-01-01&to=${year}-12-31`} variant="default" size="xs" rightSection={<IconArrowUpRight size={14} />}>Аналіз товарів</Button>
+            {assortmentEnd >= `${year}-01-01` && <Button component={Link} to={`?tab=assortment&from=${year}-01-01&to=${assortmentEnd}`} variant="default" size="xs" rightSection={<IconArrowUpRight size={14} />}>Аналіз товарів</Button>}
             <Button component={Link} to="?tab=turnover-forecast" variant="default" size="xs" rightSection={<IconArrowUpRight size={14} />}>Прогноз обороту</Button>
           </div>
         </header>
@@ -81,6 +88,7 @@ function InvoiceReport({ year, years }: { year: number; years: number[] }) {
             {years.map(value => <option key={value}>{value}</option>)}
           </select></label>
           <Button variant="default" leftSection={<IconRefresh size={15} />} disabled={result.isFetching} onClick={result.reload}>Звірити ще раз</Button>
+          {report && partial && <span>{dateRange(`${year}-01-01`, end)} · рік триває</span>}
         </div>
         <p className="annual-status" role={failed ? 'alert' : 'status'}>
           {result.isFetching ? <><Loader size={14} />Звіряємо документи за {year} рік…</> :
@@ -93,7 +101,7 @@ function InvoiceReport({ year, years }: { year: number; years: number[] }) {
       {report && total && !empty && <>
         <div className="ba-overview-metrics annual-metrics">
           <div className="pa-card"><MetricLabel icon={IconCoins}>Чистий оборот</MetricLabel><strong>{formatValue(total.documentNet)}{total.documentNet != null && <small>₴</small>}</strong></div>
-          <div className="pa-card"><MetricLabel icon={IconCalendarStats}>Документів за рік</MetricLabel><strong>{formatValue(count)}</strong></div>
+          <div className="pa-card"><MetricLabel icon={IconCalendarStats}>Документів за період</MetricLabel><strong>{formatValue(count)}</strong></div>
           <div className="pa-card"><MetricLabel icon={IconListCheck}>Із розбіжностями</MetricLabel><strong>{formatValue(issues)}</strong></div>
         </div>
         <section className="pa-card annual-chart">
@@ -110,7 +118,7 @@ function InvoiceReport({ year, years }: { year: number; years: number[] }) {
           <div className="annual-scroll" role="region" aria-label="Звірка за місяцями" tabIndex={0}><table>
             <thead><tr>{columns.map(h => <th key={h} scope="col">{h}</th>)}</tr></thead>
             <tbody>{report.months.map((period, i) => <PeriodRow key={i} period={period} name={months[i]} />)}</tbody>
-            <tfoot><PeriodRow period={total} name="За рік" /></tfoot>
+            <tfoot><PeriodRow period={total} name={partial ? 'Від початку року' : 'За рік'} /></tfoot>
           </table></div>
         </section>
         {report.issues.length > 0 && <section className="pa-card">

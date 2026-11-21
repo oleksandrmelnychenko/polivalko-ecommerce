@@ -83,13 +83,7 @@ export type DocumentRow = {
 }
 export type Run = { state: string; updated: string | null; error: string | null; version: string; policiesWritable: boolean }
 
-export async function readBusiness<T>(op: string, params = '') {
-  const response = await apiFetch('/api/v1/console/business-analytics/' + op + (params ? '?' + params : ''), {
-    cache: 'no-store',
-  })
-  const body = await response.json()
-  return { response, data: response.ok ? (body as T) : undefined, error: response.ok ? undefined : body }
-}
+export { readBusiness } from '@/shared/api/readBusiness'
 
 export async function writeBusiness(op: 'refresh' | 'policy', body?: object) {
   const send = async () =>

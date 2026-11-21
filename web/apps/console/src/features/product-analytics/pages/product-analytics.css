@@ -217,97 +217,15 @@
   padding: 18px 14px;
 }
 
-.pa-chart {
-  margin: 2px 14px 12px;
-  min-width: 0;
-}
-
-.pa-chart > svg {
-  display: block;
-  max-width: 100%;
-  touch-action: pan-y;
-}
-
-.pa-chart-readout {
-  display: flex;
-  align-items: baseline;
-  gap: 4px 10px;
-  min-height: 31px;
-  padding: 6px 0 0;
-  color: var(--pa-muted);
-  font-size: 12px;
-  flex-wrap: wrap;
-}
-
-.pa-chart-readout strong {
-  color: var(--pa-ink);
-  font-size: 13px;
-}
-
-.pa-chart-grid {
-  stroke: #e6ebe6;
-}
-
-.pa-chart-axis {
-  fill: var(--pa-muted);
-  font-size: 11px;
-}
-
-.pa-chart-line,
-.pa-chart-reference {
-  fill: none;
-  stroke: var(--pa-green);
-  stroke-width: 2;
-}
-
-.pa-chart-line,
-.pa-chart-reference {
-  stroke-dasharray: 5 4;
-}
-
-.pa-chart-reference {
-  stroke: #74837a;
-  stroke-width: 1;
-}
-
-.pa-chart-band {
-  fill: #d9ebe0;
-}
-
-.pa-chart-cursor {
-  stroke: #677b6c;
-  stroke-dasharray: 2 3;
-}
-
-.pa-chart-bar {
-  fill: #5bbb8b;
-}
-
-.pa-chart-bar[data-active],
-.pa-chart-dot {
-  fill: var(--pa-green);
-}
-
-.pa-chart-hit {
-  fill: transparent;
-}
-
-.pa-chart-details,
 .pa-methods {
   color: var(--pa-muted);
   font-size: 12px;
 }
 
-.pa-chart-details summary,
 .pa-methods summary {
   color: var(--pa-green);
   cursor: pointer;
   font-weight: 600;
-}
-
-.pa-chart-details > div {
-  margin-top: 6px;
-  max-height: 230px;
 }
 
 .pa-methods {

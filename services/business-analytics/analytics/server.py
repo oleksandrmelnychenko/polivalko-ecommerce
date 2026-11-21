@@ -15,6 +15,7 @@ from .register import KYIV
 from .reports import documents, forecasts, policy_key, report
 from .source import hosted, read_register
 from .invoices import read_year, report_years
+from .dashboard import dashboard
 from .turnover import forecast_months, history_for
 from .markets import markets
 from .shipments import check_shipment_sources
@@ -262,6 +263,15 @@ def dispatch(env):
     if route[0] != "GET" or route[1] not in (*handlers, "/forecast"):
         return 404, {"title": "Операцію не знайдено"}
     q = {k: v[-1] for k, v in parse_qs(env.get("QUERY_STRING", ""), max_num_fields=20).items()}
+    if route[1] == "/documents" and q.get("analysis") == "dashboard":
+        days = int(q.get("days", 30))
+        if set(q) - {"analysis", "days"} or days not in (7, 30, 90):
+            raise ValueError("Виберіть 7, 30 або 90 днів")
+        try:
+            return 200, dashboard(now().date(), days)
+        except Exception as exc:
+            logger.error("Sales dashboard unavailable (%s)", type(exc).__name__)
+            return 503, {"title": "Не вдалося прочитати показники за документами продажу"}
     if route[1] == "/documents" and q == {"analysis": "years"}:
         try:
             return 200, report_years(now().date())
@@ -293,10 +303,11 @@ def dispatch(env):
             return 503, {"title": "Не вдалося розрахувати прогноз за виробничими документами"}
     if route[1] == "/documents" and "year" in q:
         year = int(q["year"])
-        if set(q) != {"year"} or not 1900 <= year < now().year:
-            raise ValueError("Виберіть закритий рік")
+        today = now().date()
+        if set(q) != {"year"} or not 1900 <= year <= today.year:
+            raise ValueError("Виберіть поточний або минулий рік")
         try:
-            return 200, read_year(year)
+            return 200, read_year(year, today)
         except Exception as exc:
             logger.error("Production invoice reconciliation failed (%s)", type(exc).__name__)
             return 503, {"title": "Не вдалося прочитати виробничі накладні за вибраний рік"}

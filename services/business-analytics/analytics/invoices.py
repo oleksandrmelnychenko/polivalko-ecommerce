@@ -82,12 +82,14 @@ def report_years(today):
               AND created_at < (%s::date::timestamp AT TIME ZONE 'Europe/Kyiv')
               AND status IN ('Paid','Shipped','ReadyForPickup','Completed')""", bounds)
         markets = years | {r["year"] for r in web}
-    return dict(invoices=sorted((y for y in years if y < today.year), reverse=True), markets=sorted(markets, reverse=True))
+    return dict(invoices=sorted(years, reverse=True), markets=sorted(markets, reverse=True))
 
 
-def compare(year, headers, documents):
+def compare(year, headers, documents, through=None):
     expected, actual, candidates = {}, {}, {}
     for doc in headers:
+        if through and doc["day"] > through:
+            continue
         kind = kind_of(doc)
         if kind not in ("sale", "return", "invalid"):
             continue
@@ -97,7 +99,7 @@ def compare(year, headers, documents):
     for doc in documents:
         day = business_day(doc)
         kind = kind_of(doc)
-        if not day or day.year != year or kind not in ("sale", "return", "invalid"):
+        if not day or day.year != year or (through and day > through) or kind not in ("sale", "return", "invalid"):
             continue
         lines = doc.get("products")
         amounts, invalid = [], 0
@@ -181,11 +183,13 @@ def add_cash(report, cash):
     return report
 
 
-def read_year(year):
-    start, end = date(year, 1, 1), date(year + 1, 1, 1)
+def read_year(year, through=None):
+    last = min(through or date(year, 12, 31), date(year, 12, 31))
+    start, end = date(year, 1, 1), last + timedelta(days=1)
     with production() as conn:
         headers = conn.execute(HEADERS, (start, end)).fetchall()
         native = conn.execute(NATIVE_LINES, (start, end)).fetchall()
         archive = archived_rows(conn, ARCHIVE_LINES, (start - timedelta(days=1), end))
-        report = compare(year, headers, chain(archive, native))
-        return add_cash(report, conn.execute(CASH_MONTHS, (start, end)))
+        report = compare(year, headers, chain(archive, native), last)
+        add_cash(report, conn.execute(CASH_MONTHS, (start, end)))
+    return dict(report, through=str(last), months=report["months"][:last.month])
