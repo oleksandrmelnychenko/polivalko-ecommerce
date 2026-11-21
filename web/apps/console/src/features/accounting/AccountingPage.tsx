@@ -1,5 +1,5 @@
 import { Button, Select, Stack, Table, Text, TextInput } from '@mantine/core'
-import { IconArrowLeft, IconBox, IconFileInvoice, IconFiles, IconLink, IconPlus, IconSearch } from '@tabler/icons-react'
+import { IconArrowLeft, IconBox, IconFileInvoice, IconFiles, IconLink, IconPackageImport, IconPlus, IconSearch } from '@tabler/icons-react'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { MetricLabel } from '@/shared/ui/MetricCard'
@@ -38,14 +38,14 @@ function DocumentStatus({ doc }: { doc: Doc }) {
   return <span className="doc-status" data-status={doc.status}>{statusNames[doc.status ?? ''] ?? doc.status ?? '—'}</span>
 }
 
-function DocTable({ rows }: { rows: Doc[] }) {
+function DocTable({ rows, incoming = false }: { rows: Doc[]; incoming?: boolean }) {
   const location = useLocation()
   const returnState = ['/accounting/documents', '/accounting/incoming', '/accounting/outgoing'].includes(location.pathname)
     ? { registerPath: location.pathname, registerSearch: location.search }
     : location.state
   return (
     <div className="doc-list">
-      <Grid columns={['Документ', 'Контрагент', 'Дата', 'Стан документа', 'Сума', 'Оплата']}>
+      <Grid columns={['Документ', incoming ? 'Постачальник' : 'Контрагент', 'Дата', 'Стан документа', 'Сума', 'Оплата', ...(incoming ? ['До сплати'] : [])]}>
         {rows.map((d) => (
           <Table.Tr key={d.id}>
             <Table.Td className="doc-name">
@@ -54,11 +54,12 @@ function DocTable({ rows }: { rows: Doc[] }) {
               </Link>
               {d.organization && <small>{d.organization}</small>}
             </Table.Td>
-            <Table.Td data-label="Контрагент"><PartnerLink doc={d} /></Table.Td>
+            <Table.Td data-label={incoming ? 'Постачальник' : 'Контрагент'}><PartnerLink doc={d} /></Table.Td>
             <Table.Td data-label="Дата" className="ledger-number">{d.day ?? '—'}</Table.Td>
             <Table.Td data-label="Стан документа"><DocumentStatus doc={d} /></Table.Td>
             <Table.Td data-label="Сума" className="register-money">{money(d.amount, d.currency)}</Table.Td>
             <Table.Td data-label="Оплата">{paymentNames[d.paymentStatus ?? ''] ?? d.paymentStatus ?? '—'}</Table.Td>
+            {incoming && <Table.Td data-label="До сплати" className="register-money">{money(d.due ?? null, d.currency)}</Table.Td>}
           </Table.Tr>
         ))}
       </Grid>
@@ -181,12 +182,12 @@ function Register({ section }: { section: string }) {
     setParams(next, { replace: true })
   }
   return (
-    <Stack gap="sm" className="ledger-workspace doc-register">
+    <Stack gap="sm" className="ledger-workspace doc-register" data-incoming={direction === 'in' || undefined}>
       <PageHeader title={title} actions={direction && can(PermissionKeys.Accounting.Edit) && (
         <Button radius="xl" leftSection={<IconPlus size={16} />} onClick={() => setEdit(true)}>Створити накладну</Button>
       )} />
       <section className="ledger-card">
-        <header className="ledger-card-head"><h2><MetricLabel icon={IconFiles}>{direction ? 'Журнал накладних' : 'Реєстр документів'}</MetricLabel></h2>
+        <header className="ledger-card-head"><h2><MetricLabel icon={direction === 'in' ? IconPackageImport : IconFiles}>{direction === 'in' ? 'Надходження від постачальників' : direction ? 'Журнал накладних' : 'Реєстр документів'}</MetricLabel></h2>
           {query.data && <span className="ledger-count">Записів · {query.data.total.toLocaleString('uk-UA')}</span>}
         </header>
         <FilterBar label="Фільтри документів" activeCount={['from', 'to', 'status'].filter((key) => params.has(key)).length}
@@ -198,7 +199,7 @@ function Register({ section }: { section: string }) {
               maxLength={160}
               className="app-filter-wide"
               leftSection={<IconSearch size={16} />}
-              placeholder="Номер, контрагент, організація"
+              placeholder={direction === 'in' ? 'Номер, постачальник, організація' : 'Номер, контрагент, організація'}
               value={params.get('q') ?? ''}
               onChange={(e) => change('q', e.currentTarget.value)}
             />
@@ -229,7 +230,7 @@ function Register({ section }: { section: string }) {
         </FilterBar>
         {query.data ? (
           query.data.total
-            ? <DocTable rows={query.data.items} />
+            ? <DocTable rows={query.data.items} incoming={direction === 'in'} />
             : <PageState kind="empty" title="Записів за цими умовами немає" />
         ) : (
           <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />

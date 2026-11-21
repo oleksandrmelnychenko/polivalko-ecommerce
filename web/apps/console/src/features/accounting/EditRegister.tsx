@@ -1,13 +1,13 @@
-import { Alert, Button, Group, Select, Stack, Table, Text, TextInput } from '@mantine/core'
+import { ActionIcon, Alert, Button, Group, Select, Stack, Text, TextInput } from '@mantine/core'
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { getProducts } from '@/features/catalog/api/catalogApi'
 import { problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
-import { IconFileInvoice, IconPackage, IconUser } from '@tabler/icons-react'
+import { IconFileInvoice, IconPackage, IconSearch, IconTrash, IconUser } from '@tabler/icons-react'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { MetricLabel } from '@/shared/ui/MetricCard'
-import { save, useRegister, type Page, type Partner, type Ref } from './api'
+import { money, save, useRegister, type Page, type Partner, type Ref } from './api'
 
 type LineInput = { productId: string; title: string; quantity: string; price: string }
 export type EditableDraft = {
@@ -23,8 +23,26 @@ export type EditableDraft = {
 type Props = { kind: 'partner' | string; initial?: EditableDraft; onClose: () => void; onSaved: () => void }
 const option = (r: Ref) => ({ value: r.id, label: r.title })
 
+// The register rounds each line to kopecks before adding up the invoice.
+function lineKopecks({ quantity, price }: LineInput) {
+  const units = Number(quantity)
+  const hryvnias = Number(price)
+  const thousandths = Math.round(units * 1000)
+  const kopecks = Math.round(hryvnias * 100)
+  if (!price.trim() || !Number.isFinite(units) || !Number.isFinite(hryvnias) ||
+      units <= 0 || units > 1_000_000 || hryvnias < 0 || hryvnias > 100_000_000 ||
+      thousandths / 1000 !== units || kopecks / 100 !== hryvnias) return null
+  return (BigInt(thousandths) * BigInt(kopecks) + 500n) / 1000n
+}
+
+function draftAmount(kopecks: bigint | null) {
+  if (kopecks === null) return '—'
+  return money(String(kopecks / 100n) + '.' + String(kopecks % 100n).padStart(2, '0'), 'UAH')
+}
+
 export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
   const navigate = useNavigate()
+  const location = useLocation()
   const person = kind === 'partner'
   const [id] = useState(() => initial?.id ?? crypto.randomUUID())
   const [title, setTitle] = useState(initial?.number ?? '')
@@ -38,6 +56,8 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
   const [term, setTerm] = useState(initial?.partner.title ?? '')
   const [productTerm, setProductTerm] = useState('')
   const [lines, setLines] = useState<LineInput[]>(initial?.lines ?? [])
+  const amounts = lines.map(lineKopecks)
+  const total = amounts.reduce<bigint | null>((sum, value) => sum === null || value === null ? null : sum + value, 0n)
   const [opened, setOpened] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -84,7 +104,11 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
         return
       }
       onSaved()
-      navigate(person ? '/accounting/partners/' + id : '/accounting/documents/' + id)
+      if (!initial) {
+        navigate(person ? '/accounting/partners/' + id : '/accounting/documents/' + id, {
+          state: { registerPath: location.pathname, registerSearch: location.search },
+        })
+      }
     } catch {
       setError('Не вдалося отримати відповідь сервера. Повторіть збереження.')
     } finally {
@@ -100,18 +124,21 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
       onClose={() => { if (!busy) setOpened(false) }}
       onExitTransitionEnd={onClose}
       size={person ? 'compact' : 'standard'}
-      className="ledger-editor"
+      className={person ? 'ledger-editor' : 'ledger-editor invoice-editor'}
       title={<MetricLabel icon={person ? IconUser : IconFileInvoice}>
         {initial ? 'Редагування чернетки' : person ? 'Новий контрагент' : kind === 'in' ? 'Нова прибуткова накладна' : 'Нова видаткова накладна'}
       </MetricLabel>}
-      footer={<Group gap="xs">
+      footer={<>
+        {!person && <div className="draft-total"><span>Сума накладної</span><strong>{draftAmount(total)}</strong></div>}
+        <Group gap="xs">
         <Button variant="default" onClick={() => setOpened(false)} disabled={busy}>Скасувати</Button>
         <Button type="submit" form={'register-' + id} loading={busy}>{person ? 'Зберегти' : 'Зберегти чернетку'}</Button>
-      </Group>}
+      </Group></>}
     >
       <form id={'register-' + id} onSubmit={submit}>
         <Stack gap="sm">
-          <section className="ledger-form-block">
+          <section className={person ? 'ledger-form-block' : 'ledger-form-block draft-details'}>
+            {!person && <h3><MetricLabel icon={IconFileInvoice}>Реквізити накладної</MetricLabel></h3>}
             <TextInput
               required
               label={person ? 'Назва контрагента' : 'Номер накладної'}
@@ -132,7 +159,6 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
               />
             ) : (
               <>
-                <Group grow align="end">
                   <TextInput
                     required
                     type="date"
@@ -143,18 +169,19 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
                   <Select
                     searchable
                     required
-                    label="Контрагент"
+                    label={kind === 'in' ? 'Постачальник' : 'Контрагент'}
+                    className="draft-partner"
+                    placeholder={kind === 'in' ? 'Оберіть постачальника' : 'Оберіть контрагента'}
                     searchValue={term}
                     onSearchChange={setTerm}
                     data={candidates}
                     value={partner?.id ?? null}
                     onChange={(value, item) => setPartner(value && item ? { id: value, title: item.label } : null)}
                   />
-                </Group>
-                <Group grow>
                   <Select
                     required
                     label="Організація"
+                    placeholder="Оберіть організацію"
                     searchable
                     data={refs.data?.organizations.map(option) ?? []}
                     value={org}
@@ -163,19 +190,21 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
                   <Select
                     required
                     label="Склад"
+                    placeholder="Оберіть склад"
                     data={refs.data?.stores.map(option) ?? []}
                     value={store}
                     onChange={setStore}
                   />
-                </Group>
               </>
             )}
           </section>
-          {!person && <section className="ledger-form-block">
-              <h3><MetricLabel icon={IconPackage}>Товари</MetricLabel></h3>
+          {!person && <section className="ledger-form-block draft-products">
+              <header><h3><MetricLabel icon={IconPackage}>Товари</MetricLabel></h3><span>{lines.length}</span></header>
               <Select
                 label="Додати товар"
-                placeholder="Введіть назву або артикул"
+                placeholder="Назва або артикул від двох символів"
+                leftSection={<IconSearch size={16} />}
+                disabled={lines.length >= 250}
                 searchable
                 value={null}
                 searchValue={productTerm}
@@ -196,52 +225,24 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
                   Повторити завантаження складів і організацій
                 </Button>
               )}
-              {lines.length > 0 && <div className="ledger-lines"><Table>
-                <Table.Thead>
-                  <Table.Tr>
-                    {['Товар', 'Кількість', 'Ціна, грн', ''].map((c) => (
-                      <Table.Th key={c}>{c}</Table.Th>
-                    ))}
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {lines.map((l, i) => (
-                    <Table.Tr key={i}>
-                      <Table.Td>{l.title}</Table.Td>
-                      <Table.Td>
-                        <TextInput
-                          aria-label={'Кількість ' + l.title}
-                          type="number"
-                          required
-                          min="0.001"
-                          step="0.001"
-                          value={l.quantity}
-                          onChange={(e) => updateLine(i, 'quantity', e.currentTarget.value)}
-                        />
-                      </Table.Td>
-                      <Table.Td>
-                        <TextInput
-                          aria-label={'Ціна ' + l.title}
-                          type="number"
-                          required
-                          min="0"
-                          step="0.01"
-                          value={l.price}
-                          onChange={(e) => updateLine(i, 'price', e.currentTarget.value)}
-                        />
-                      </Table.Td>
-                      <Table.Td>
-                        <Button variant="subtle" onClick={() => setLines((old) => old.filter((_, j) => i !== j))}>
-                          Прибрати
-                        </Button>
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table></div>}
-              <Text size="sm" c="dimmed">
-                Чернетка зберігає позиції та суму в гривнях. Рух запасів і зміна боргу потребують проведення.
-              </Text>
+              {lines.length > 0 && <ol className="draft-line-list">
+                {lines.map((line, index) => (
+                  <li key={index}>
+                    <strong className="draft-product-name">{line.title}</strong>
+                    <TextInput label="Кількість" aria-label={'Кількість ' + line.title} type="number" required
+                      min="0.001" max="1000000" step="0.001" value={line.quantity}
+                      onChange={(e) => updateLine(index, 'quantity', e.currentTarget.value)} />
+                    <TextInput label="Ціна, грн" aria-label={'Ціна ' + line.title} type="number" required
+                      min="0" max="100000000" step="0.01" value={line.price}
+                      onChange={(e) => updateLine(index, 'price', e.currentTarget.value)} />
+                    <div className="draft-line-sum"><span>Сума</span><strong>{draftAmount(amounts[index])}</strong></div>
+                    <ActionIcon className="draft-remove" variant="subtle" color="gray" aria-label={'Прибрати ' + line.title}
+                      onClick={() => setLines((old) => old.filter((_, i) => i !== index))}>
+                      <IconTrash size={16} />
+                    </ActionIcon>
+                  </li>
+                ))}
+              </ol>}
           </section>}
           {error && <Alert color="red" role="alert">{error}</Alert>}
         </Stack>
