@@ -76,7 +76,8 @@ function Compose({ initialPartner, opened, onClose, onIssued }: { initialPartner
     setPending('issue')
     setMessage('')
     try {
-      const result = await save('offers/' + issueId, { partnerId: partner, day, focus, body: finalText }, 'PUT')
+      const result = await save('offers/' + issueId, { partnerId: partner, day, focus, body: finalText,
+        selectionBasis: draft?.mode === 'manual' ? 'manual' : draft?.basis }, 'PUT')
       if (!result.response.ok) throw new Error(problemTitle(result.error, 'Не вдалося зареєструвати пропозицію'))
       setDraft(undefined)
       setBody('')

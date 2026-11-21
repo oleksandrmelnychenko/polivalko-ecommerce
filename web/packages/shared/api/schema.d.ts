@@ -4500,6 +4500,7 @@ export interface components {
             day: string;
             focus: string;
             body: string;
+            selectionBasis?: null | string;
         };
         JsonElement: unknown;
         LabelDto: {

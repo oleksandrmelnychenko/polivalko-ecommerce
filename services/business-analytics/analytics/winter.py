@@ -7,6 +7,7 @@ from .invoices import INDEPENDENT_RECEIPTS
 from .product_contribution import GROSS_REPORT, parse_profit
 from .register import number
 from .source import production
+from .weekly_offers import add_weekly_offers
 
 SALES = """
 WITH sales AS (
@@ -96,4 +97,5 @@ def winter(year, today):
         margins = {p["code"]: p["margin"] for p in reference.get("products", []) if p["margin"] is not None}
         bounds = (start, end + timedelta(days=1))
         weeks = summarize(conn.execute(SALES, (*bounds, *bounds)), start, end, margins, reference.get("account"))
+        add_weekly_offers(conn, weeks, start, end, today)
     return dict(weeks=weeks, through=str(end), marginThrough=reference.get("through"))

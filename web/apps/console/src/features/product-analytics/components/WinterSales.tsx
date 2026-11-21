@@ -10,7 +10,13 @@ import { AnalyticsCard } from './AnalyticsCard'
 import { OfferLedger, uah, type Offer } from './SalesOffers'
 
 type Cohort = { count: number; ticket: number | null; actual: number | null; known: number; estimate: number | null; estimated: number }
-type Week = { start: string; end: string; kit: Cohort; soil: Cohort }
+type Shipment = { id: string; number: string | null; day: string; amount: number; profit: number | null; estimated: boolean }
+type StatisticalOffers = {
+  issued: number; converted: number; shipments: number; turnover: number; profit: number | null
+  costed: number; estimated: number; unknownBasis: number
+  offers: { id: string; partner: string; day: string; focus: string; invoices: Shipment[] }[]
+}
+type Week = { start: string; end: string; kit: Cohort; soil: Cohort; statOffers?: StatisticalOffers }
 type Season = { weeks: Week[]; through: string; marginThrough: string | null }
 const difference = (a: number | null, b: number | null) => a == null || b == null ? '—' : uah(a-b)
 const dates = new Intl.DateTimeFormat('uk-UA', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
@@ -20,6 +26,32 @@ function CohortRow({ name, group }: { name: string; group: Cohort }) {
   return <tr><th scope="row">{name}</th><td>{group.count}</td><td>{uah(group.ticket)}</td>
     <td>{uah(group.actual)} <small className="winter-coverage" title="Оцінено чеків із усіх покупок">{group.known}/{group.count}</small></td>
     <td>{uah(group.estimate)} <small className="winter-coverage" title="Оцінено чеків із усіх покупок">{group.estimated}/{group.count}</small></td></tr>
+}
+
+function StatisticalOfferResults({ group }: { group: StatisticalOffers }) {
+  const partial = group.costed < group.shipments
+  return <AnalyticsCard title={<MetricLabel icon={IconSend}>Пропозиції за статистикою продажів</MetricLabel>}
+    description="За тижнем видачі пропозиції. Оборот і валовий прибуток включають повну суму прив’язаних видаткових накладних, зокрема пізніших тижнів, до повернень.">
+    <ul className="winter-metrics">
+      <MetricTile icon={IconSend} label="Видано пропозицій"><strong>{group.issued}</strong></MetricTile>
+      <MetricTile icon={IconTruck} label="Пропозицій з відвантаженням"><strong>{group.converted}</strong></MetricTile>
+      <MetricTile icon={IconFileInvoice} label="Оборот за накладними"><strong>{uah(group.turnover)}</strong></MetricTile>
+      <MetricTile icon={IconWallet} label={partial ? 'Прибуток за оціненими накладними' : 'Валовий прибуток'}><strong>{uah(group.profit)}</strong></MetricTile>
+    </ul>
+    {group.shipments > 0 && <p>Собівартість визначено для {group.costed} із {group.shipments} накладних.
+      {group.estimated > 0 && ' Для ' + group.estimated + ' накладних використано ціни попередніх закупівель.'}</p>}
+    {group.unknownBasis > 0 && <p>За цей тиждень є пропозиції без збереженого способу підбору ({group.unknownBasis}). Їх виключено з показників.</p>}
+    {group.offers.length ? <div className="ba-table"><table>
+      <thead><tr><th>Контрагент і дата видачі</th><th>Відвантаження</th><th>Оборот</th><th>Валовий прибуток</th></tr></thead>
+      <tbody>{group.offers.map(offer => {
+        const label = <>{offer.partner}<br /><small>{dates.format(new Date(offer.day))} · {offer.focus === 'irrigation' ? 'Полив' : 'Асортимент'} · {offer.id.slice(0,8)}</small></>
+        return offer.invoices.length ? offer.invoices.map((invoice,index) => <tr key={invoice.id}>
+          {index === 0 && <th scope="row" rowSpan={offer.invoices.length}>{label}</th>}
+          <td>{invoice.number || invoice.id.slice(0,8)} · {dates.format(new Date(invoice.day))}</td>
+          <td>{uah(invoice.amount)}</td><td>{uah(invoice.profit)}{invoice.estimated && ' (оцінка)'}</td>
+        </tr>) : <tr key={offer.id}><th scope="row">{label}</th><td>Очікує відвантаження</td><td>—</td><td>—</td></tr>
+      })}</tbody></table></div> : <p>За цей тиждень немає зареєстрованих пропозицій зі статистичним підбором.</p>}
+  </AnalyticsCard>
 }
 
 export function WinterSales() {
@@ -73,6 +105,7 @@ export function WinterSales() {
           })}</tbody>
         </table></div>
       </details>
+      {week.statOffers && <StatisticalOfferResults group={week.statOffers} />}
       <AnalyticsCard title={<MetricLabel icon={IconTruck}>Розрахунки поливу й відвантаження</MetricLabel>} description="За тижнем видачі розрахунку. Враховано також прив’язані накладні наступних тижнів."
         actions={<Button component={Link} to="?tab=offers" radius="xl" variant="default" size="xs" rightSection={<IconArrowRight size={15} />}>Пропозиції для контрагентів</Button>}>
         {offers.data ? <>
@@ -82,7 +115,7 @@ export function WinterSales() {
             <MetricTile icon={IconPercentage} label="Конверсія"><strong>{rows.length ? Math.round(100*shipped.length/rows.length) + '%' : '—'}</strong></MetricTile>
             <MetricTile icon={IconWallet} label="За накладними"><strong>{uah(shipped.reduce((sum,o) => sum+o.shipped,0))}</strong></MetricTile>
           </ul>
-          <div className="winter-ledger"><OfferLedger rows={rows} changed={offers.reload} /></div>
+          <div className="winter-ledger"><OfferLedger rows={rows} changed={() => { offers.reload(); result.reload() }} /></div>
         </> : <p className="winter-status" role="status">{offers.isFetching ? 'Завантаження розрахунків…' : 'Не вдалося прочитати реєстр розрахунків.'}
           {!offers.isFetching && <Button variant="default" radius="xl" onClick={offers.reload}>Повторити</Button>}</p>}
       </AnalyticsCard>

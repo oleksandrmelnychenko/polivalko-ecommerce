@@ -18061,6 +18061,12 @@
           },
           "body": {
             "type": "string"
+          },
+          "selectionBasis": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

@@ -37,10 +37,14 @@ public sealed class SalesOfferTests(ApiFactory api)
         var first = Guid.NewGuid();
         var second = Guid.NewGuid();
         var differentBuyer = Guid.NewGuid();
-        var quote = new IssuedOffer(partner, day, "irrigation", "Обладнання для поливу");
+        var quote = new IssuedOffer(partner, day, "irrigation", "Обладнання для поливу", "statistics");
         foreach (var id in new[]{first,first,second,differentBuyer})
-            (await admin.PutAsJsonAsync($"{route}/{id}", id == differentBuyer ? quote with { PartnerId=other } : quote, ct))
+            (await admin.PutAsJsonAsync($"{route}/{id}", id == differentBuyer ? quote with { PartnerId=other, SelectionBasis=null } : quote, ct))
                 .StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.PutAsJsonAsync($"{route}/{first}", quote with { SelectionBasis="manual" }, ct))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await admin.PutAsJsonAsync($"{route}/{Guid.NewGuid()}", quote with { SelectionBasis="invalid" }, ct))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         async Task<HttpStatusCode> Link(Guid id, Guid document) =>
             (await admin.PutAsJsonAsync($"{route}/{id}/invoices/{document}", new {},ct)).StatusCode;
         (await Link(differentBuyer,invoice)).ShouldBe(HttpStatusCode.Conflict);

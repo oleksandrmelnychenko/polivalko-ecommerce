@@ -9,7 +9,7 @@ using PoliValko.Infrastructure.Security.Permissions;
 
 namespace PoliValko.Console.Features.Accounting;
 
-public sealed record IssuedOffer(Guid PartnerId, DateOnly Day, string Focus, string Body);
+public sealed record IssuedOffer(Guid PartnerId, DateOnly Day, string Focus, string Body, string? SelectionBasis = null);
 public sealed record OfferRow(Guid Id, Guid PartnerId, string Partner, DateOnly Day, string Focus, string Body,
     int Shipments, decimal Shipped, string? InvoiceNumbers);
 public sealed record OfferInvoice(Guid Id, string? Number, DateOnly Day, decimal Amount);
@@ -44,12 +44,13 @@ internal static class SalesOffers
     private static async Task<IResult> Issue(Guid id, IssuedOffer input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
     {
         if (id == Guid.Empty || input.PartnerId == Guid.Empty || input.Day == default || input.Focus is not ("irrigation" or "general")
+            || input.SelectionBasis is not (null or "statistics" or "catalog" or "manual")
             || string.IsNullOrWhiteSpace(input.Body) || input.Body.Length > 8000)
             return Results.BadRequest(new { title = "Перевірте дату, контрагента й текст пропозиції" });
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         var added = await db.Database.ExecuteSqlAsync($"""
-            INSERT INTO accounting.sales_offers(id,partner_id,day,focus,body)
-            SELECT {id},p.id,{input.Day},{input.Focus},{input.Body} FROM accounting.partners p
+            INSERT INTO accounting.sales_offers(id,partner_id,day,focus,body,selection_basis)
+            SELECT {id},p.id,{input.Day},{input.Focus},{input.Body},{input.SelectionBasis} FROM accounting.partners p
             WHERE p.id={input.PartnerId} AND {input.Day} <= (now() AT TIME ZONE 'Europe/Kyiv')::date
             ON CONFLICT (id) DO NOTHING
             """,ct);
@@ -57,11 +58,12 @@ internal static class SalesOffers
         {
             var same = await db.Database.SqlQuery<bool>($"""
                 SELECT EXISTS(SELECT 1 FROM accounting.sales_offers WHERE id={id} AND partner_id={input.PartnerId}
-                    AND day={input.Day} AND focus={input.Focus} AND body={input.Body}) AS "Value"
+                    AND day={input.Day} AND focus={input.Focus} AND body={input.Body}
+                    AND selection_basis IS NOT DISTINCT FROM {input.SelectionBasis}) AS "Value"
                 """).SingleAsync(ct);
             return same ? Results.Ok(id) : Results.Conflict(new { title = "Перевірте дату та контрагента або оновіть пропозицію" });
         }
-        audit.Record("sales_offer.issued","SalesOffer",id.ToString(),new { input.PartnerId,input.Focus });
+        audit.Record("sales_offer.issued","SalesOffer",id.ToString(),new { input.PartnerId,input.Focus,input.SelectionBasis });
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
         return Results.Ok(id);
