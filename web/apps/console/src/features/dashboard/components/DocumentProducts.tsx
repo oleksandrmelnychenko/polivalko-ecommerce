@@ -1,7 +1,9 @@
-import { Button, Group, Pagination, SegmentedControl, Select, TextInput } from '@mantine/core'
+import { Button, Group, Pagination, Select, TextInput } from '@mantine/core'
 import { IconChartBar, IconChartPie, IconChevronDown, IconChevronRight, IconFileInvoice, IconSearch } from '@tabler/icons-react'
 import { useState } from 'react'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
+import { AppEditorModal } from '@/shared/ui/AppEditorModal'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { dateLabel, dateRange, formatAmount, formatPrice } from '@/shared/lib/salesFormat'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PageState } from '@/shared/ui/PageState'
@@ -18,14 +20,21 @@ const share = (n: number | null) => {
 }
 
 export function DocumentProducts({ data }: { data: DocumentSales }) {
-  const [mode, setMode] = useState('period')
+  const [opened, setOpened] = useState(false)
   const [picked, setPicked] = useState<Product | null>(null)
-  return <DashboardCard flush className="dash-product-report" title={<><IconChartBar aria-hidden="true" />{mode === 'period' ? 'Продажі товарів' : 'Валовий прибуток за товарами'}</>}
-    aside={<SegmentedControl aria-label="Аналіз товарів" size="xs" value={mode}
-      data={[{value:'period', label:'Оборот за період'}, {value:'history', label:'Звіт про прибуток'}]}
-      onChange={v => {setPicked(null); setMode(v)}} />}>
-    {mode === 'period' ? <PeriodProducts data={data} open={p => { setPicked(p); setMode('history') }} /> :
-      <HistoricalProfit key={picked?.code ?? 'all'} picked={picked} clear={() => setPicked(null)} />}
+  function openProfit(product: Product | null) {
+    setPicked(product)
+    setOpened(true)
+  }
+  return <DashboardCard flush className="dash-product-report" title={<><IconChartBar aria-hidden="true" />Продажі товарів</>}
+    aside={<Button size="xs" radius="xl" variant="default" aria-haspopup="dialog" onClick={() => openProfit(null)}>Звіт про прибуток</Button>}>
+    <PeriodProducts data={data} open={openProfit} />
+    <AppEditorModal opened={opened} onClose={() => setOpened(false)} size="standard" className="dash-profit-modal"
+      title={<MetricLabel icon={IconChartBar}>Валовий прибуток за товарами</MetricLabel>}>
+      <div className="dash-product-report dash-profit-panel">
+        <HistoricalProfit key={picked ? JSON.stringify([picked.account, picked.code]) : 'all'} picked={picked} clear={() => setPicked(null)} />
+      </div>
+    </AppEditorModal>
   </DashboardCard>
 }
 
@@ -63,7 +72,7 @@ function PeriodProducts({ data, open }: { data: DocumentSales; open: (p: Product
       <span>З відомим прибутком <b>{formatAmount(withProfit)} із {formatAmount(data.products.length)}</b></span></div>
     {visible.length > 0 ? <ol className="dash-rank">{visible.map((p,i) => <li key={JSON.stringify([p.account, p.code, p.sku, p.name])}>
       <span className="dash-rank-n">{i+1}</span><div className="dash-rank-main">
-        {p.code ? <button className="dash-product-link" title="Відкрити звіт про прибуток цього товару" onClick={() => open(p)}>{p.name}</button> : <strong>{p.name}</strong>}
+        {p.code ? <button className="dash-product-link" aria-haspopup="dialog" title="Відкрити звіт про прибуток цього товару" onClick={() => open(p)}>{p.name}</button> : <strong>{p.name}</strong>}
         <div className="dash-product-meta">{p.sku && <span className="dash-product-sku">{p.sku}</span>}{p.abc && <span className="dash-abc">Група {p.abc}</span>}</div>
       </div>
       <div className="dash-rank-side">
@@ -121,7 +130,7 @@ function HistoricalProfit({ picked, clear }: { picked: Product | null; clear: ()
   const query = useApiQuery('product-profit?' + params, () => getProductProfit(params))
   const report = query.data
   return <>
-    {picked && <Group className="dash-product-tools" gap="sm"><strong>{picked.name}</strong><Button size="xs" variant="default" onClick={clear}>Усі товари</Button></Group>}
+    {picked && <Group className="dash-product-tools" gap="sm"><strong>{picked.name}</strong><Button size="xs" radius="xl" variant="default" onClick={clear}>Усі товари</Button></Group>}
     {!picked && <div className="dash-product-tools">
       <TextInput size="sm" radius="xl" leftSection={<IconSearch size={16} />} aria-label="Пошук у звіті про прибуток" placeholder="Назва або код" maxLength={160} value={search}
         onChange={e => {setSearch(e.currentTarget.value); setPage(1)}} />
@@ -132,7 +141,7 @@ function HistoricalProfit({ picked, clear }: { picked: Product | null; clear: ()
     </div>}
     {query.status !== 'ready' ? <PageState kind={query.status} onRetry={query.reload} /> :
       !report?.available ? <p className="dash-rank-empty">У прод-БД поки немає зведеного звіту DNTrade про валовий прибуток.</p> : <>
-        <p className="dash-report-note"><b>Звіт DNTrade · {dateRange(report.start,report.through)}</b><br />
+        <p className="dash-report-note"><b>Загалом у звіті DNTrade · {dateRange(report.start,report.through)}</b><br />
           Продажі {formatPrice(report.net)} · валовий прибуток {formatPrice(report.profit)}. Товарів {formatAmount(report.total)}, з них збиткових {formatAmount(report.lossCount)}.</p>
         <ol className="dash-rank">{report.rows.map((p,i) => <li key={p.code}><span className="dash-rank-n">{(page-1)*25+i+1}</span>
           <div className="dash-rank-main"><strong>{p.name}</strong><span className="app-cell-sub">Код {p.code} · {share(p.share)} продажів</span>

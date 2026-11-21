@@ -590,6 +590,17 @@ a.dash-queue-item:focus-visible {
 .dash-product-report {
   container-type: inline-size;
 }
+.dash-profit-modal .app-sheet-scroll { padding: 12px; background: var(--app-ground); }
+.dash-profit-panel {
+  --dash-pad: clamp(12px, 2vw, 20px);
+  --dash-line: var(--app-line);
+  min-width: 0;
+  padding-block: 6px;
+  border: 1px solid var(--dash-line);
+  border-radius: var(--app-panel-radius);
+  background: white;
+  overflow-wrap: anywhere;
+}
 .dash-product-report .dash-card-head {
   min-height: 62px;
   padding-block: 12px;
