@@ -1,5 +1,5 @@
 import { Button, Select, Textarea, TextInput } from '@mantine/core'
-import { IconChevronDown, IconCopy, IconFileInvoice, IconFileText, IconPlus, IconSend } from '@tabler/icons-react'
+import { IconChevronRight, IconCopy, IconFileInvoice, IconFileText, IconPlus, IconSend } from '@tabler/icons-react'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { problemTitle } from '@polivalko/shared/api/problem'
@@ -36,13 +36,16 @@ function Compose({ initialPartner, opened, onClose, onIssued }: { initialPartner
   if (direct.data) options.set(direct.data.partner.id,direct.data.partner.title)
   const [draft, setDraft] = useState<Draft>()
   const [body, setBody] = useState('')
+  const [manualAmount, setManualAmount] = useState('')
   const [quantities, setQuantities] = useState<Record<string, string>>({})
   const invalidQuantity = draft?.items.some(i => !Number.isFinite(Number(quantities[i.id])) || Number(quantities[i.id]) <= 0 || Number(quantities[i.id]) > i.available)
   const lines = draft?.items.map(i => ({ ...i, qty: Number(quantities[i.id] || 0),
     sum: Math.round(i.price * Number(quantities[i.id] || 0) * 100) / 100 })) ?? []
   const total = lines.reduce((sum, i) => sum + i.sum, 0)
+  const offerTotal = lines.length ? total : draft?.mode === 'manual' && manualAmount !== '' ? Number(manualAmount) : null
+  const invalidTotal = offerTotal != null && (!Number.isFinite(offerTotal) || offerTotal < 0)
   const finalText = [body.trim(), ...lines.map(i => i.name + ' · ' + i.qty + ' × ' + uah(i.price) + ' = ' + uah(i.sum)),
-    ...(lines.length ? ['Разом ' + uah(total)] : [])].join('\n\n')
+    ...(offerTotal != null ? ['Разом ' + uah(offerTotal)] : [])].join('\n\n')
   const [day, setDay] = useState(kyivDay(new Date()))
   const [issueId, setIssueId] = useState('')
   const [pending, setPending] = useState<'draft' | 'issue' | null>(null)
@@ -88,11 +91,11 @@ function Compose({ initialPartner, opened, onClose, onIssued }: { initialPartner
   }
   return <AppEditorModal opened={opened} onClose={() => { if (!busy) onClose() }} dirty={!!draft && !busy} size="standard" className="offer-editor"
     title={<MetricLabel icon={IconFileText}>Нова пропозиція</MetricLabel>}
-    footer={draft && <div className="offer-actions"><Button radius="xl" variant="default" leftSection={<IconCopy size={16} />} disabled={!body.trim() || invalidQuantity || busy} onClick={async () => {
+    footer={draft && <div className="offer-actions"><Button radius="xl" variant="default" leftSection={<IconCopy size={16} />} disabled={!body.trim() || invalidQuantity || invalidTotal || busy} onClick={async () => {
       try { await navigator.clipboard.writeText(finalText); setMessage('Текст пропозиції скопійовано.') }
       catch { setMessage('Копіювання недоступне в цьому браузері.') }
     }}>Скопіювати</Button>
-      <Button radius="xl" leftSection={<IconSend size={16} />} loading={pending === 'issue'} disabled={!body.trim() || finalText.length > 8000 || invalidQuantity || !day || day > kyivDay(new Date()) || busy} onClick={record}>Зареєструвати пропозицію</Button></div>}>
+      <Button radius="xl" leftSection={<IconSend size={16} />} loading={pending === 'issue'} disabled={!body.trim() || finalText.length > 8000 || invalidQuantity || invalidTotal || !day || day > kyivDay(new Date()) || busy} onClick={record}>Зареєструвати пропозицію</Button></div>}>
     <div className="offer-section">
       <div className="offer-fields">
         <Select searchable clearable disabled={!!draft || busy} label="Контрагент" placeholder="Знайдіть за назвою" value={partner}
@@ -108,7 +111,7 @@ function Compose({ initialPartner, opened, onClose, onIssued }: { initialPartner
       </div>
     </div>
     {draft && <div className="offer-section">
-      <p>{draft.mode === 'manual' ? 'Введіть текст і суму вже підготовленого розрахунку.' : draft.mode === 'ai' ? 'Чернетку підготував ШІ.' : draft.mode === 'catalog'
+      <p>{draft.mode === 'manual' ? 'Внесіть підготовлений розрахунок.' : draft.mode === 'ai' ? 'Чернетку підготував ШІ.' : draft.mode === 'catalog'
         ? 'Чернетку підготовлено за каталогом.'
         : 'Модель тимчасово недоступна. Підготовлено каталожну чернетку.'}</p>
       {lines.length > 0 && <div className="offer-lines">{lines.map(i => <div className="offer-line" key={i.id}>
@@ -120,7 +123,11 @@ function Compose({ initialPartner, opened, onClose, onIssued }: { initialPartner
       </div>)}</div>}
       {lines.length > 0 && <strong className="offer-total">{invalidQuantity ? 'Перевірте кількість і залишок.' : 'Разом ' + uah(total)}</strong>}
       <Textarea autosize minRows={5} maxLength={8000} label="Текст для контрагента" value={body} onChange={e => setBody(e.currentTarget.value)} />
-      <TextInput type="date" label="Дата видачі пропозиції" value={day} max={kyivDay(new Date())} onChange={e => setDay(e.currentTarget.value)} />
+      <div className="offer-fields">
+        {draft.mode === 'manual' && <TextInput type="number" min="0" step="0.01" label="Сума пропозиції, грн" value={manualAmount}
+          onChange={e => setManualAmount(e.currentTarget.value)} error={invalidTotal ? 'Перевірте суму' : undefined} />}
+        <TextInput type="date" label="Дата видачі пропозиції" value={day} max={kyivDay(new Date())} onChange={e => setDay(e.currentTarget.value)} />
+      </div>
     </div>}
     {message && <p className="offer-feedback" role="status">{message}</p>}
   </AppEditorModal>
@@ -156,17 +163,39 @@ function LinkInvoice({ offer, changed }: { offer: string; changed: () => void })
 
 export function OfferLedger({ rows, changed }: { rows: Offer[]; changed: () => void }) {
   const { can } = usePermissions()
-  const [opened, setOpened] = useState('')
+  const [selectedId, setSelectedId] = useState('')
+  const [opened, setOpened] = useState(false)
+  const selected = rows.find(row => row.id === selectedId)
+  // Issued offers persist the sent text. Only the explicit closing total is a quote amount.
+  const lastLine = selected?.body.trimEnd().split('\n').pop()?.trim()
+  const quoted = lastLine?.match(/^Разом\s+([\d\s.,]+\s*(?:₴|грн\.?|UAH))$/iu)?.[1]
   if (!rows.length) return <p className="offer-feedback">За вибраний період немає зареєстрованих пропозицій.</p>
-  return <div className="offer-ledger">{rows.map(o => <details key={o.id} name="issued-offers" onToggle={e => { if (e.currentTarget.open) setOpened(o.id) }}>
-    <summary><span className="offer-partner"><IconFileText size={17} aria-hidden="true" /><span><strong>{o.partner}</strong>
+  return <><div className="offer-ledger">{rows.map(o => <button type="button" key={o.id} className="offer-row" aria-haspopup="dialog"
+    onClick={() => { setSelectedId(o.id); setOpened(true) }}><span className="offer-partner"><IconFileText size={17} aria-hidden="true" /><span><strong>{o.partner}</strong>
       <time dateTime={o.day}>{dateLabel(o.day)}</time></span></span>
       <TableChip tone={o.shipments ? 'success' : 'neutral'} value={o.shipments ? 'Є відвантаження' : 'Очікує відвантаження'} />
-      <b className="offer-amount">{o.shipments ? uah(o.shipped) : '—'}</b><IconChevronDown size={16} aria-hidden="true" /></summary>
-    <div className="offer-details"><p>{o.body}</p>
-    {o.invoiceNumbers && <p><IconFileInvoice size={15} aria-hidden="true" /> Видаткові накладні · {o.invoiceNumbers}</p>}
-    {can(PermissionKeys.Accounting.Edit) && opened === o.id && <LinkInvoice offer={o.id} changed={changed} />}</div>
-  </details>)}</div>
+      <b className="offer-amount">{o.shipments ? uah(o.shipped) : '—'}</b><IconChevronRight size={16} aria-hidden="true" /></button>)}</div>
+    <AppEditorModal opened={opened && !!selected} onClose={() => setOpened(false)} size="standard" className="offer-editor"
+      title={<MetricLabel icon={IconSend}>Видана пропозиція</MetricLabel>}>
+      {selected && <div className="offer-card">
+        <section className="offer-section">
+          <h3>{selected.partner}</h3>
+          <div className="offer-card-meta"><time dateTime={selected.day}>{dateLabel(selected.day)}</time>
+            <span>{selected.focus === 'irrigation' ? 'Комплектація поливу' : 'Асортимент для клієнта'}</span>
+            <TableChip tone={selected.shipments ? 'success' : 'neutral'} value={selected.shipments ? 'Є відвантаження' : 'Очікує відвантаження'} /></div>
+          <dl className="offer-card-sums">
+            <div><dt>Сума пропозиції</dt><dd>{quoted ?? 'Не вказано окремо'}</dd></div>
+            <div><dt>За накладними</dt><dd>{uah(selected.shipped)}</dd></div>
+          </dl>
+        </section>
+        <section className="offer-section"><h3><MetricLabel icon={IconFileText}>Текст пропозиції</MetricLabel></h3>
+          <p className="offer-letter">{selected.body}</p></section>
+        <section className="offer-section"><h3><MetricLabel icon={IconFileInvoice}>Прив’язані накладні · {selected.shipments}</MetricLabel></h3>
+          <p>{selected.invoiceNumbers ?? 'Накладних ще немає.'}</p>
+          {opened && can(PermissionKeys.Accounting.Edit) && <LinkInvoice key={selected.id} offer={selected.id} changed={changed} />}
+        </section>
+      </div>}
+    </AppEditorModal></>
 }
 
 export function SalesOffers() {

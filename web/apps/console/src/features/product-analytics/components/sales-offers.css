@@ -9,10 +9,15 @@
 .offer-toolbar { padding: 12px 16px; border-bottom: 1px solid var(--app-line); }
 .offer-toolbar > span { margin-inline-start: auto; align-self: center; color: var(--pa-muted); font-size: 13px; }
 .offer-toolbar b, .offer-toolbar input, .offer-editor input:is([type=date],[type=number]), .offer-total, .offer-amount { font-family: var(--font-mono); }
-.offer-ledger details { border-bottom: 1px dashed var(--app-line); padding: 0; }
-.offer-ledger details:last-child { border-bottom: 0; }
-.offer-ledger summary {
+.offer-row {
   display: grid;
+  width: 100%;
+  text-align: start;
+  border: 0;
+  border-bottom: 1px dashed var(--app-line);
+  background: white;
+  font: inherit;
+  color: inherit;
   grid-template-columns: minmax(0,1fr) minmax(10rem,auto) minmax(8rem,auto) 16px;
   align-items: center;
   gap: 12px;
@@ -20,16 +25,22 @@
   font-size: 14px;
   cursor: pointer;
 }
-.offer-ledger summary::-webkit-details-marker { display: none; }
-.offer-ledger summary:hover, .offer-ledger details[open] > summary { background: var(--app-ground); }
-.offer-ledger details[open] > summary > svg { transform: rotate(180deg); }
+.offer-row:last-child { border-bottom: 0; }
+.offer-row:hover, .offer-row:focus-visible { background: var(--app-ground); }
+.offer-row:focus-visible { outline: 2px solid var(--brand-accent); outline-offset: -2px; }
 .offer-partner { display: flex; align-items: center; gap: 10px; min-width: 0; overflow-wrap: anywhere; }
 .offer-partner > svg { flex: none; padding: 8px; box-sizing: content-box; border-radius: 50%; background: var(--app-ground); }
 .offer-partner time { display: block; margin-top: 2px; font: 400 12px/1.4 var(--font-mono); color: var(--pa-muted); }
 .offer-ledger .app-table-chip { justify-self: start; }
 .offer-amount { text-align: end; }
-.offer-details { padding: 12px 16px; }
-.offer-details p { margin: 0 0 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.offer-card { overflow-wrap: anywhere; }
+.offer-card h3, .offer-card-sums { margin: 0; }
+.offer-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 13px; }
+.offer-card-sums { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,175px),1fr)); gap: 8px; }
+.offer-card-sums > div { background: var(--app-ground); border-radius: 12px; padding: 10px 12px; }
+.offer-card-sums dt { color: var(--mantine-color-gray-7); font-size: 12px; }
+.offer-card-sums dd { margin: 4px 0 0; font: 550 18px/1.4 var(--font-mono); }
+.offer-card .offer-letter { white-space: pre-wrap; color: var(--brand-ink); font-size: 14px; }
 .offer-invoice > .mantine-InputWrapper-root { flex: 1 1 16rem; max-width: 32rem; }
 .offer-invoice button, .offer-editor button.mantine-Button-root { border-radius: 999px; }
 .offer-feedback, .sales-offers .pa-card > p { padding: 12px 16px; margin: 0; font-size: 13px; }
@@ -43,9 +54,9 @@
 .offer-total { justify-self: end; font-size: 17px; }
 .offer-editor .app-sheet-footer .offer-actions { justify-content: flex-end; }
 @media (max-width: 42em) {
-  .offer-ledger summary { grid-template-columns: minmax(0,1fr) auto 16px; gap: 6px; }
+  .offer-row { grid-template-columns: minmax(0,1fr) auto 16px; gap: 6px; }
   .offer-partner { grid-column: 1 / 3; }
-  .offer-ledger summary > svg { grid-column: 3; grid-row: 1; }
+  .offer-row > svg { grid-column: 3; grid-row: 1; }
   .offer-fields { grid-template-columns: minmax(0,1fr); }
   .offer-line { grid-template-columns: minmax(0,6rem) minmax(0,1fr); }
   .offer-line > div:first-child { grid-column: 1 / -1; }
