@@ -111,13 +111,15 @@ export function DashboardPage() {
       } />
 
       <div className="dash-body">
+        {report && <DocumentKpis data={report} />}
+        {!documents && dashboard.status === 'ready' && dashboard.data && <KpiList data={dashboard.data} />}
         {documents && (sales.status === 'error' || sales.status === 'forbidden'
           ? <PageState kind={sales.status} description={problemMessage(sales.problem, 'Не вдалося завантажити продажі за документами.')} onRetry={sales.reload} />
           : report ? <DocumentSalesFeatures data={report} metric={metric} onMetric={setMetric} /> : <Skeleton height={220} radius={12} role="status" aria-label="Завантаження продажів за документами" />)}
         {!documents && dashboard.status === 'ready' && dashboard.data &&
           <div className="dash-feature-row">
-            <CompletionCard statuses={dashboard.data.byStatus} />
             <SalesChartCard data={dashboard.data} metric={metric} onMetric={setMetric} />
+            <CompletionCard statuses={dashboard.data.byStatus} />
           </div>}
         <div className="dash-overview-row">
           {report && <DocumentPeriodSummary data={report} />}
@@ -131,9 +133,6 @@ export function DashboardPage() {
           {totals.some(item => item.query.status === 'error') && <p className="dash-muted" role="status">Частину показників не вдалося завантажити. <button className="dash-retry" type="button" onClick={() => totals.filter(item => item.query.status === 'error').forEach(item => item.query.reload())}>Повторити</button></p>}
         </section>}
         </div>
-        {report && <DocumentKpis data={report} />}
-        {!documents && dashboard.status === 'ready' && dashboard.data && <KpiList data={dashboard.data} />}
-
         {!documents && <DashboardInsights
           data={dashboard.status === 'ready' ? dashboard.data : undefined}
           status={dashboard.status}

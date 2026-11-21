@@ -1,5 +1,5 @@
 import { Button, Group, Pagination, Select, TextInput } from '@mantine/core'
-import { IconChartBar, IconChartPie, IconChevronDown, IconChevronRight, IconFileInvoice, IconSearch } from '@tabler/icons-react'
+import { IconChartBar, IconChevronDown, IconChevronRight, IconFileInvoice, IconSearch } from '@tabler/icons-react'
 import { useState } from 'react'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
@@ -54,11 +54,7 @@ function PeriodProducts({ data, open }: { data: DocumentSales; open: (p: Product
   })
   const visible = matches.slice(0,limit)
   return <>
-    <div className="dash-product-summary">
-      <span>Чистий оборот</span>
-      <strong>{formatPrice(data.current.net)}</strong>
-      <small>{dateRange(data.start, data.through)}</small>
-    </div>
+    <p className="dash-products-period">{dateRange(data.start, data.through)}</p>
     <div className="dash-product-tools">
       <TextInput size="sm" radius="xl" leftSection={<IconSearch size={16} />} aria-label="Пошук товару за період" placeholder="Назва, код або артикул" value={search}
         onChange={e => {setSearch(e.currentTarget.value); setLimit(batch)}} />
@@ -70,41 +66,42 @@ function PeriodProducts({ data, open }: { data: DocumentSales; open: (p: Product
     </div>
     <div className="dash-product-count" aria-live="polite"><span>Показано <b>{formatAmount(visible.length)} із {formatAmount(matches.length)}</b></span>
       <span>З відомим прибутком <b>{formatAmount(withProfit)} із {formatAmount(data.products.length)}</b></span></div>
-    {visible.length > 0 ? <ol className="dash-rank">{visible.map((p,i) => <li key={JSON.stringify([p.account, p.code, p.sku, p.name])}>
-      <span className="dash-rank-n">{i+1}</span><div className="dash-rank-main">
-        {p.code ? <button className="dash-product-link" aria-haspopup="dialog" title="Відкрити звіт про прибуток цього товару" onClick={() => open(p)}>{p.name}</button> : <strong>{p.name}</strong>}
-        <div className="dash-product-meta">{p.sku && <span className="dash-product-sku">{p.sku}</span>}{p.abc && <span className="dash-abc">Група {p.abc}</span>}</div>
-      </div>
-      <div className="dash-rank-side">
-        <div className="dash-product-result" data-loss={p.profit != null && p.profit < 0 || undefined}>
-          <span>{p.profit == null ? 'Виручка' : p.purchaseSources?.length ? 'Розрах. прибуток' : 'Валовий прибуток'}</span>
-          <b className="app-money">{formatPrice(p.profit ?? p.net)}</b>
-        </div>
-      </div>
-      <div className="dash-product-finances">
-        <dl className="dash-finance-chips">
-          {p.cost != null && <div><dt>Собівартість</dt><dd>{formatPrice(p.cost)}</dd></div>}
-          {p.profit != null && <div className="dash-revenue-chip"><dt>Виручка</dt><dd>{formatPrice(p.net)}</dd></div>}
-          {p.profit != null && <div data-margin={p.margin != null && p.margin !== 0 ? (p.margin > 0 ? 'positive' : 'negative') : undefined}><dt>Маржа</dt><dd>{share(p.margin)}</dd></div>}
-          <div className="dash-turnover-share-chip"><dt><IconChartPie size={13} aria-hidden="true" />Частка обороту</dt><dd>{share(p.share)}</dd></div>
-        </dl>
-        {!!p.purchaseSources?.length && <details className="dash-cost-sources">
-          <summary><IconFileInvoice size={15} aria-hidden="true" />Прибуткові накладні
-            <span className="dash-invoice-count">{p.purchaseSources.length}</span><IconChevronDown size={13} aria-hidden="true" /></summary>
-          <div className="dash-invoice-list">
-            {p.purchaseSources.map(source => <DocumentLink key={source.id} id={source.id}>
-              <span>{source.number ? '№ ' + source.number : 'Без номера'}</span>
-              <time dateTime={source.day}>{dateLabel(source.day)}</time>
-              <IconChevronRight size={14} aria-hidden="true" />
-            </DocumentLink>)}
+    {visible.length > 0 ? <table className="dash-sales-table" aria-label="Продажі товарів за період">
+      <thead><tr><th scope="col">Товар</th><th scope="col">Виручка</th><th scope="col">Прибуток</th><th scope="col">Маржа</th></tr></thead>
+      {visible.map((p, i) => <tbody key={JSON.stringify([p.account, p.code, p.sku, p.name])}>
+        <tr className="dash-sales-values">
+          <th scope="row">
+            {p.code ? <button className="dash-product-link" aria-haspopup="dialog" title="Відкрити звіт про прибуток цього товару" onClick={() => open(p)}>{p.name}</button> : p.name}
+            <div className="dash-product-meta"><span>№ {i + 1}</span>{p.sku && <span className="dash-product-sku">{p.sku}</span>}{p.abc && <span className="dash-abc">Група {p.abc}</span>}</div>
+          </th>
+          <td><span className="dash-mobile-label" aria-hidden="true">Виручка</span>{formatPrice(p.net)}</td>
+          <td data-loss={p.profit != null && p.profit < 0 || undefined}><span className="dash-mobile-label" aria-hidden="true">Прибуток</span><strong>{p.profit == null ? "—" : formatPrice(p.profit)}</strong>
+            {!!p.purchaseSources?.length && p.profit != null && <small>розрахунковий</small>}</td>
+          <td><span className="dash-mobile-label" aria-hidden="true">Маржа</span>{share(p.margin)}</td>
+        </tr>
+        <tr><td colSpan={4} className="dash-sales-context">
+          <div className="dash-sales-secondary">
+            {p.cost != null && <span>Собівартість · {formatPrice(p.cost)}</span>}
+            <span>Частка обороту · {share(p.share)}</span>
           </div>
-        </details>}
-        {p.profit == null && p.lines != null && <span className="app-cell-sub">
-          Бракує собівартості · рядків {formatAmount(p.lines - p.costedLines)} із {formatAmount(p.lines)}.
-          {p.costedLines > 0 && <> Прибуток лише за оціненими рядками {formatPrice(p.coveredNet - p.coveredCost)}.</>}
-        </span>}
-      </div>
-    </li>)}</ol> : <p className="dash-rank-empty">Товарів за цими умовами немає.</p>}
+          {!!p.purchaseSources?.length && <details className="dash-cost-sources">
+            <summary><IconFileInvoice size={15} aria-hidden="true" />Прибуткові накладні
+              <span className="dash-invoice-count">{p.purchaseSources.length}</span><IconChevronDown size={13} aria-hidden="true" /></summary>
+            <div className="dash-invoice-list">
+              {p.purchaseSources.map(source => <DocumentLink key={source.id} id={source.id}>
+                <span>{source.number ? '№ ' + source.number : 'Без номера'}</span>
+                <time dateTime={source.day}>{dateLabel(source.day)}</time>
+                <IconChevronRight size={14} aria-hidden="true" />
+              </DocumentLink>)}
+            </div>
+          </details>}
+          {p.profit == null && p.lines != null && <span className="app-cell-sub">
+            Бракує собівартості · рядків {formatAmount(p.lines - p.costedLines)} із {formatAmount(p.lines)}.
+            {p.costedLines > 0 && <> Прибуток лише за оціненими рядками {formatPrice(p.coveredNet - p.coveredCost)}.</>}
+          </span>}
+        </td></tr>
+      </tbody>)}
+    </table> : <p className="dash-rank-empty">Товарів за цими умовами немає.</p>}
     {matches.length > batch && <div className="dash-rank-actions">
       {visible.length < matches.length && <Button variant="default" size="xs" onClick={() => setLimit(limit + batch)}>Показати ще {Math.min(batch, matches.length-limit)}</Button>}
       {limit > batch && <Button variant="subtle" size="xs" onClick={() => setLimit(batch)}>Згорнути</Button>}

@@ -28,7 +28,7 @@ export function RevenueChart({ days, metric, documents = false }: { days: ChartD
   const band = days.length ? plotW / days.length : 0
   const barW = Math.max(Math.min(24, band - 2, band * 0.72), 1.5)
   const y = (v: number) => PAD.top + plotH * (top - v) / (top - bottom || 1)
-  const labelEvery = Math.ceil(days.length / Math.max(Math.floor(plotW / 64), 1))
+  const labelEvery = Math.ceil(days.length / Math.max(Math.floor(plotW / 84), 1))
   const peakIndex = peak > 0 ? values.lastIndexOf(peak) : -1
   const format = (v: number) => (metric === 'revenue' ? formatPrice(v) : v.toLocaleString('uk-UA'))
   const tick = (v: number) => (metric === 'revenue' ? (v === 0 ? '0' : compact.format(v)) : Number.isInteger(v) ? String(v) : '')
