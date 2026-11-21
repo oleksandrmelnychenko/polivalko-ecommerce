@@ -4,8 +4,8 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { kyivDay } from '@/shared/lib/kyivTime'
 import { readBusiness } from '../api/businessAnalytics'
-import { IconMap2, IconSearch, IconUsers } from '@tabler/icons-react'
-import { MetricLabel, MetricTrack } from '@/shared/ui/MetricCard'
+import { IconFileInvoice, IconMap2, IconMapPin, IconReceipt2, IconSearch, IconShoppingBag, IconTrophy, IconUsers, IconWallet } from '@tabler/icons-react'
+import { MetricLabel, MetricTile, MetricTrack } from '@/shared/ui/MetricCard'
 import { formatValue } from './BusinessForecast'
 import shapes from './ukraineRegions.json'
 import './buyer-markets.css'
@@ -62,9 +62,11 @@ function SettlementMap({ region, metric }: { region: Region; metric: Metric }) {
   const { path, bounds } = paths[region.code]
   const maxRadius = Math.min(bounds[2], bounds[3]) * .045
   return <>
-    <div className="market-stats"><div>Покупок у регіоні<strong>{formatValue(region.count)}</strong></div>
-      <div>Сума у регіоні<strong>{formatValue(region.amount)} грн</strong></div>
-      <div>Покупок із визначеним населеним пунктом<strong>{formatValue(known.count)} із {formatValue(region.count)}</strong></div></div>
+    <ul className="market-stats" aria-label="Показники регіону">
+      <MetricTile icon={IconShoppingBag} label="Покупок у регіоні"><strong>{formatValue(region.count)}</strong></MetricTile>
+      <MetricTile icon={IconWallet} label="Сума у регіоні"><strong>{formatValue(region.amount)} грн</strong></MetricTile>
+      <MetricTile icon={IconMapPin} label="Покупок із визначеним населеним пунктом"><strong>{formatValue(known.count)} із {formatValue(region.count)}</strong></MetricTile>
+    </ul>
     <div className="ba-market-map ba-locality-map">
       <svg viewBox={bounds.join(' ')} aria-label={'Населені пункти · ' + region.name} role="group">
         <path d={path} fill="#e8f3ed" stroke="#82a695" strokeWidth={1.3} vectorEffect="non-scaling-stroke" fillRule="evenodd" />
@@ -103,9 +105,16 @@ function RegionalMap({ data, metric, regionCode, onRegion }: {
   const leaders = ranking.filter(r => r[metric] === peak)
   return <>
     {selected ? <SettlementMap key={selected.code} region={selected} metric={metric} /> : <>
-    <div className="market-stats"><div>Покупок за рік<strong>{formatValue(total)}</strong></div>
-      <div>З відомою областю<strong>{formatValue(known)}</strong><MetricTrack value={known} max={total} /></div>
-      <div>{metric === 'count' ? 'Найбільше покупок' : 'Найбільша сума'}<strong className="market-leaders">{leaders.length ? leaders.map(r => r.name).join(', ') : '—'}</strong></div></div>
+    <ul className="market-stats" aria-label="Географія покупок за рік">
+      <MetricTile icon={IconShoppingBag} label="Покупок за рік"><strong>{formatValue(total)}</strong></MetricTile>
+      <MetricTile icon={IconMapPin} label="З відомою областю">
+        <strong>{formatValue(known)}</strong>
+        <MetricTrack value={known} max={total} />
+      </MetricTile>
+      <MetricTile icon={IconTrophy} label={metric === 'count' ? 'Найбільше покупок' : 'Найбільша сума'}>
+        <strong className="market-leaders">{leaders.length ? leaders.map(r => r.name).join(', ') : '—'}</strong>
+      </MetricTile>
+    </ul>
     <div className="market-geography"><div className="market-figure">
     <div className="ba-market-map">
       <svg viewBox="-12 42 1035 706" aria-label="Карта покупок за областями України" role="group">
@@ -147,12 +156,13 @@ export function BuyerMarkets() {
   const metric: Metric = params.get('metric') === 'amount' ? 'amount' : 'count'
   function changeParam(key: string, value: string) {
     const next = new URLSearchParams(params)
+    if (key === 'year' || key === 'partnerSearch') next.delete('partnerPage')
     if (value) next.set(key, value)
     else next.delete(key)
-    setParams(next)
+    setParams(next, { replace: key === 'partnerSearch' })
   }
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
+  const search = (params.get('partnerSearch') ?? '').slice(0, 120)
+  const page = Math.max(1, Math.trunc(Number(params.get('partnerPage'))) || 1)
   const args = new URLSearchParams({ analysis: 'markets', year: String(year), page: String(page), search })
   const query = useApiQuery('markets-' + args, () => readBusiness<Markets>('documents', args.toString()), { keepPrevious: true })
   const failed = query.status === 'error' || query.status === 'forbidden'
@@ -164,7 +174,7 @@ export function BuyerMarkets() {
     <section className="pa-card" aria-labelledby="market-map-title">
       <header className="market-header">
         <h2 id="market-map-title"><MetricLabel icon={IconMap2}>Географія покупок</MetricLabel></h2>
-        <label className="market-year">Рік <select aria-label="Рік" value={year} onChange={e => { setPage(1); changeParam('year', e.target.value) }}>
+        <label className="market-year">Рік <select aria-label="Рік" value={year} onChange={e => changeParam('year', e.target.value)}>
           {Array.from({ length: latest - 1899 }, (_, i) => latest - i).map(value => <option key={value}>{value}</option>)}
         </select></label>
       </header>
@@ -199,27 +209,27 @@ export function BuyerMarkets() {
         <h2 id="market-partners-title"><MetricLabel icon={IconUsers}>Покупки контрагентів</MetricLabel></h2>
         <label className="market-search"><IconSearch size={16} aria-hidden="true" />
           <input type="search" aria-label="Пошук контрагента" placeholder="Знайти контрагента…" value={search} maxLength={120}
-            onChange={e => { setSearch(e.target.value); setPage(1) }} /></label>
+            onChange={e => changeParam('partnerSearch', e.target.value)} /></label>
       </header>
       <div className="market-body">
         {failed ? <p>Рейтинг контрагентів недоступний.</p>
           : query.isFetching || !data ? <div role="status" className="market-status"><Loader size={16} />Завантажуємо покупки…</div>
           : <>
-            <div className="market-stats">
-              <div>Контрагентів із документами<strong>{formatValue(data.partnerCount)}</strong></div>
-              <div>Покупок без контрагента<strong>{formatValue(data.unlinked.count)}</strong></div>
-              <div>Їхній чистий оборот<strong>{formatValue(data.unlinked.amount)} ₴</strong></div>
-            </div>
+            <ul className="market-stats" aria-label="Підсумки покупок контрагентів">
+              <MetricTile icon={IconFileInvoice} label="Контрагентів із документами"><strong>{formatValue(data.partnerCount)}</strong></MetricTile>
+              <MetricTile icon={IconReceipt2} label="Покупок без контрагента"><strong>{formatValue(data.unlinked.count)}</strong></MetricTile>
+              <MetricTile icon={IconWallet} label="Їхній чистий оборот"><strong>{formatValue(data.unlinked.amount)} ₴</strong></MetricTile>
+            </ul>
             {data.excluded > 0 && <p>Документи з непідтвердженою сумою, валютою або статусом · {formatValue(data.excluded)}.</p>}
             {data.partners.length > 0 ? <div className="ba-table"><table aria-label="Рейтинг контрагентів за чистим оборотом"><thead><tr>
               <th>Контрагент</th><th>Покупок</th><th>Повернень</th><th>Чистий оборот, грн</th><th>Остання покупка</th></tr></thead>
-              <tbody>{data.partners.map(p => <tr key={p.id}><th scope="row"><Link to={'/accounting/partners/' + p.id}>{p.name}</Link></th>
+              <tbody>{data.partners.map(p => <tr key={p.id}><th scope="row"><Link to={'/accounting/partners/' + p.id} state={{ marketSearch: params.toString() }}>{p.name}</Link></th>
                 <td>{formatValue(p.count)}</td><td>{formatValue(p.returns)}</td><td>{formatValue(p.amount)}</td><td>{p.lastPurchase ?? '—'}</td></tr>)}</tbody>
             </table></div> : <p role="status">{search ? 'За цим пошуком контрагентів не знайдено.' : 'За цей рік немає покупок із прив’язкою до контрагента.'}</p>}
             {data.matches > 25 && <nav className="market-pages" aria-label="Сторінки контрагентів">
-              <Button size="xs" variant="default" disabled={page <= 1} onClick={() => setPage(page - 1)}>Назад</Button>
+              <Button size="xs" variant="default" disabled={page <= 1} onClick={() => changeParam('partnerPage', String(page - 1))}>Назад</Button>
               <span>{page} / {Math.ceil(data.matches / 25)}</span>
-              <Button size="xs" variant="default" disabled={page * 25 >= data.matches} onClick={() => setPage(page + 1)}>Далі</Button>
+              <Button size="xs" variant="default" disabled={page * 25 >= data.matches} onClick={() => changeParam('partnerPage', String(page + 1))}>Далі</Button>
             </nav>}
           </>}
       </div>

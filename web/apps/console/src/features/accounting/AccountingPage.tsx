@@ -1,5 +1,5 @@
 import { Button, Group, Pagination, Select, Stack, Table, Text, TextInput } from '@mantine/core'
-import { IconBox, IconFileInvoice, IconFiles, IconLink, IconPlus } from '@tabler/icons-react'
+import { IconArrowLeft, IconBox, IconFileInvoice, IconFiles, IconLink, IconPlus } from '@tabler/icons-react'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { useState } from 'react'
@@ -55,6 +55,7 @@ function DocTable({ rows }: { rows: Doc[] }) {
 }
 
 function Document({ id }: { id: string }) {
+  const { state } = useLocation()
   const result = useRegister<Card>('documents/' + id)
   if (!result.data)
     return <PageState kind={result.status === 'ready' ? 'empty' : result.status} onRetry={result.reload} />
@@ -62,6 +63,11 @@ function Document({ id }: { id: string }) {
   return (
     <Stack gap="sm" className="ledger-workspace ledger-document">
       <PageHeader title={kindName(d) + ' № ' + (d.number ?? d.sourceId)} />
+      {typeof state?.partnerId === 'string' && (
+        <Button component={Link} variant="default" radius="xl" className="partner-return" leftSection={<IconArrowLeft size={16} />}
+          to={{ pathname: '/accounting/partners/' + encodeURIComponent(state.partnerId), search: state.documentSearch }}
+          state={state.partnerState}>До картки контрагента</Button>
+      )}
       <section className="ledger-card">
         <header className="ledger-card-head"><h2><MetricLabel icon={IconFileInvoice}>{kindName(d)} № {d.number ?? d.sourceId}</MetricLabel></h2></header>
         <DocTable rows={[d]} />

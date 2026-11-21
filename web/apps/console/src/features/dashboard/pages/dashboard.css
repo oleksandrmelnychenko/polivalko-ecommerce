@@ -253,19 +253,6 @@ a.dash-queue-item:focus-visible {
   padding: 0;
 }
 
-.dash-kpi {
-  background: white;
-  border: 1px solid var(--dash-line);
-  border-radius: var(--app-panel-radius);
-  box-shadow: var(--app-card-shadow);
-  container-type: inline-size;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-width: 0;
-  padding: var(--dash-pad);
-}
-
 .dash-kpi-value {
   color: var(--brand-ink);
   font-size: clamp(22px, 14cqi, 42px);
@@ -390,7 +377,7 @@ a.dash-queue-item:focus-visible {
 }
 .dash-completion { container-type: inline-size; }
 .dash-completion .dash-dial strong { font-size: clamp(28px, 13cqi, 70px); }
-.dash-page :is(.dash-card, .dash-feature-card, .dash-kpi, .dash-queue-item) { border-color: rgb(24 24 40 / 3%); }
+.dash-page :is(.dash-card, .dash-feature-card, .metric-tile, .dash-queue-item) { border-color: rgb(24 24 40 / 3%); }
 .dash-completion .dash-dial { margin: auto; width: 100%; }
 .dash-completion-counts { margin: 0; }
 .dash-completion-counts div + div { border-top: 1px dashed var(--dash-line); margin-top: 12px; padding-top: 12px; }
@@ -789,7 +776,7 @@ a.dash-queue-item:focus-visible {
     flex: 1 1 auto;
   }
 
-  .dash-kpi { gap: 10px; }
+  .dash-kpis .metric-tile { gap: 10px; }
   .dash-queue-item { gap: 10px; }
 }
 

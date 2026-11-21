@@ -1,6 +1,6 @@
 import { IconReceipt2, IconShoppingBag, IconUsers, IconWallet } from '@tabler/icons-react'
 import { formatMoney } from '@polivalko/shared/lib/format'
-import { MetricLabel, MetricTrack } from '@/shared/ui/MetricCard'
+import { MetricTile, MetricTrack } from '@/shared/ui/MetricCard'
 import type { Dashboard } from '../api/dashboardApi'
 import { numberFormat } from '../lib/insights'
 import { DeltaChip } from './DeltaChip'
@@ -19,8 +19,7 @@ export function KpiList({ data }: { data: Dashboard }) {
       {kpis.map(({ label, icon: Icon, now, before, value, prior }) => {
         const scale = Math.max(now, before, 1)
         return (
-          <li key={label} className="dash-kpi">
-            <MetricLabel icon={Icon}>{label}</MetricLabel>
+          <MetricTile key={label} icon={Icon} label={label}>
             <div className="dash-kpi-amount">
               <strong className="dash-kpi-value">{value}</strong>
               <DeltaChip current={now} previous={before} />
@@ -31,7 +30,7 @@ export function KpiList({ data }: { data: Dashboard }) {
                 <MetricTrack key={index} value={amount} max={scale} muted={index === 1} />
               ))}
             </div>
-          </li>
+          </MetricTile>
         )
       })}
     </ul>

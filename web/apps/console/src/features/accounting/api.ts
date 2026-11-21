@@ -31,12 +31,16 @@ export function save(path: string, body: unknown, method: 'POST' | 'PUT' = 'POST
     }),
   )
 }
+export function currencyLabel(currency: string | null | undefined) {
+  return currency ? ({ '980': 'грн', UAH: 'грн', '840': 'USD', '978': 'EUR' }[currency] ?? currency) : ''
+}
+
 export function money(value: string | null, currency?: string | null) {
   if (value === null) return '—'
   const [whole, fraction = ''] = value.split('.')
   const formatted = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ',' + fraction.padEnd(2, '0')
   return (
-    formatted + (currency ? ' ' + ({ '980': 'грн', UAH: 'грн', '840': 'USD', '978': 'EUR' }[currency] ?? currency) : '')
+    formatted + (currency ? ' ' + currencyLabel(currency) : '')
   )
 }
 export function kindName(d: { entityType: string | null; kind: string | null }) {

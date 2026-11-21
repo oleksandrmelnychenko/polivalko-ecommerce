@@ -6,6 +6,10 @@ export function MetricLabel({ icon: Glyph, children }: { icon: Icon; children: R
   return <span className="metric-label"><Glyph size={16} stroke={1.7} aria-hidden="true" />{children}</span>
 }
 
+export function MetricTile({ icon, label, children }: { icon: Icon; label: string; children: ReactNode }) {
+  return <li className="metric-tile"><MetricLabel icon={icon}>{label}</MetricLabel>{children}</li>
+}
+
 export function MetricTrack({ value, max, muted = false }: { value: number; max: number; muted?: boolean }) {
   const percent = max > 0 ? Math.min(100, Math.max(0, value / max * 100)) : 0
   return <span className="metric-track" aria-hidden="true"><span data-muted={muted || undefined} style={{ width: `${percent}%` }} /></span>

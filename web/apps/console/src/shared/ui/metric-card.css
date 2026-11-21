@@ -1,3 +1,16 @@
+.metric-tile {
+  background: white;
+  border: 1px solid var(--dash-line, #e9e9ed);
+  border-radius: var(--app-panel-radius);
+  box-shadow: var(--app-card-shadow);
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding: var(--dash-pad, clamp(14px, 1.4vw, 22px));
+}
+
 .metric-label {
   align-items: center;
   color: var(--brand-ink);

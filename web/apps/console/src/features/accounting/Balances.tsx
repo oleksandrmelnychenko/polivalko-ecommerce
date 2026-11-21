@@ -115,7 +115,7 @@ function CurrentBalances() {
                 {query.data.items.map((r) => (
                   <Table.Tr key={[r.partnerId, r.orgId, r.currency].join(':')}>
                     <Table.Td>
-                      <Link to={'/accounting/partners/' + r.partnerId}>{r.partner}</Link>
+                      <Link to={'/accounting/partners/' + r.partnerId} state={{ balanceSearch: params.toString() }}>{r.partner}</Link>
                     </Table.Td>
                     <Table.Td data-label="Організація">{r.organization}</Table.Td>
                     <Table.Td data-label="До отримання" className="register-money">{money(r.receivable, r.currency)}</Table.Td>
@@ -278,7 +278,7 @@ function BalanceReports() {
                   <Table.Tr key={r.position}>
                     <Table.Td>
                       {r.linkedPartner ? (
-                        <Link to={'/accounting/partners/' + r.linkedPartner}>{r.partnerTitle}</Link>
+                        <Link to={'/accounting/partners/' + r.linkedPartner} state={{ balanceSearch: params.toString() }}>{r.partnerTitle}</Link>
                       ) : (
                         r.partnerTitle || 'Без назви'
                       )}

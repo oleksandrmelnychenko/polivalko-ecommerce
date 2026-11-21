@@ -27,7 +27,7 @@ import { EditRegister } from './EditRegister'
 import { PartnerDocuments } from './PartnerDocuments'
 import { PartnerOpeningList } from './PartnerOpenings'
 import { Grid } from './RegisterTable'
-import { money, read, useRegister, type Page, type Partner, type PartnerCard } from './api'
+import { currencyLabel, money, read, useRegister, type Page, type Partner, type PartnerCard } from './api'
 import './partners.css'
 
 const directory = '/accounting/partners'
@@ -67,12 +67,19 @@ function PartnerMark({ kind }: { kind: Partner['kind'] }) {
 export function PartnersDirectory({ id }: { id?: string }) {
   const location = useLocation()
   if (!id) return <DirectoryList />
+  let back = { pathname: directory, search: location.state?.directorySearch ?? '', label: 'До списку контрагентів' }
+  if (typeof location.state?.marketSearch === 'string') {
+    back = { pathname: '/sales/business-analytics', search: location.state.marketSearch, label: 'До аналітики контрагентів' }
+  } else if (typeof location.state?.balanceSearch === 'string') {
+    back = { pathname: '/accounting/balances', search: location.state.balanceSearch, label: 'До взаєморозрахунків' }
+  }
   return (
     <div className="partners-workspace ledger-workspace">
       <PageHeader title="Картка контрагента" />
       <Button component={Link} variant="default" radius="xl" className="partner-return"
-        leftSection={<IconArrowLeft size={16} />} to={{ pathname: directory, search: location.state?.directorySearch ?? '' }}>
-        До списку контрагентів
+        leftSection={<IconArrowLeft size={16} />}
+        to={{ pathname: back.pathname, search: back.search }}>
+        {back.label}
       </Button>
       <PartnerProfile key={id} id={id} />
     </div>
@@ -236,8 +243,12 @@ function DirectoryList() {
 }
 
 function PartnerProfile({ id }: { id: string }) {
+  const location = useLocation()
+  const [params] = useSearchParams()
+  const section = params.get('section')
+  const active = section === 'balances' || section === 'agreements' ? section : 'documents'
   const detail = useRegister<PartnerCard>('partners/' + id)
-  const positions = useRegister<components['schemas']['PartnerPosition'][]>('partners/' + id + '/positions')
+  const positions = useRegister<components['schemas']['PartnerPosition'][]>('partners/' + id + '/positions', active === 'balances')
   const partner = detail.data?.partner
   return (
     <div className="partners-page">
@@ -256,7 +267,18 @@ function PartnerProfile({ id }: { id: string }) {
             </div>
             <span className="partner-id">Код <code>{partner.sourceId}</code></span>
           </header>
-          <div className="partner-detail-grid">
+          <nav className="partner-sections" aria-label="Розділи картки контрагента">
+            {Object.entries({ documents: 'Документи', balances: 'Взаєморозрахунки', agreements: 'Договори' }).map(([key, label]) => {
+              const next = new URLSearchParams(params)
+              if (key === 'documents') next.delete('section')
+              else next.set('section', key)
+              return <Link key={key} to={{ search: next.toString() }} state={location.state}
+                aria-current={active === key ? 'page' : undefined}>{label}</Link>
+            })}
+          </nav>
+          {active === 'documents' && <section className="ledger-card partner-block"><PartnerDocuments id={id} /></section>}
+          {active === 'balances' && <>
+
             <section className="ledger-card partner-block">
               <h2>
                 <MetricLabel icon={IconScale}>Взаєморозрахунки</MetricLabel>
@@ -284,6 +306,11 @@ function PartnerProfile({ id }: { id: string }) {
               </Button>
             </section>
             <section className="ledger-card partner-block">
+              <PartnerOpeningList partnerId={id} refresh={positions.reload} />
+            </section>
+          </>}
+          {active === 'agreements' && (
+            <section className="ledger-card partner-block">
               <h2>
                 <MetricLabel icon={IconFileDescription}>Договори · {detail.data.agreements.length}</MetricLabel>
               </h2>
@@ -292,7 +319,7 @@ function PartnerProfile({ id }: { id: string }) {
                   {detail.data.agreements.map((a, i) => (
                     <Table.Tr key={i}>
                       <Table.Td>{a.title || '—'}</Table.Td>
-                      <Table.Td data-label="Валюта">{a.currency || '—'}</Table.Td>
+                      <Table.Td data-label="Валюта">{currencyLabel(a.currency) || '—'}</Table.Td>
                       <Table.Td data-label="Код договору" className="partner-code">{a.id || '—'}</Table.Td>
                     </Table.Tr>
                   ))}
@@ -301,11 +328,7 @@ function PartnerProfile({ id }: { id: string }) {
                 <p>Договорів немає.</p>
               )}
             </section>
-          </div>
-          <section className="ledger-card partner-block">
-            <PartnerOpeningList partnerId={id} refresh={positions.reload} />
-          </section>
-          <section className="ledger-card partner-block"><PartnerDocuments id={id} /></section>
+          )}
         </>
       )}
     </div>
