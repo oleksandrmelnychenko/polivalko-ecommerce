@@ -18,7 +18,9 @@ export type DocumentSales = {
   current: SalesTotals; previous: SalesTotals; excluded: number; incompleteProducts: number
   byDay: { day: string; net: number; purchases: number }[]
   products: { name: string; sku: string; net: number; code: string | null; account: string; share: number | null;
-    abc: 'A' | 'B' | 'C' | null; profit: number | null; margin: number | null }[]
+    abc: 'A' | 'B' | 'C' | null; profit: number | null; margin: number | null; cost: number | null;
+    costedLines: number; lines: number; coveredNet: number; coveredCost: number;
+    purchaseSources: { id: string; number: string | null; day: string }[] }[]
 }
 
 type ProfitReport = { available: false } | { available: true; start: string; through: string; total: number;

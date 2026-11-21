@@ -7,20 +7,16 @@ from time import monotonic
 
 from .invoices import INDEPENDENT_RECEIPTS, currency_valid
 from .product_contribution import turnover_ranking
+from .purchase_cost import LINES, ORG, enrich_costs
 from .register import kind_of, number, sale_line
 from .source import production
 
 
-FIELDS = """
+FIELDS = f"""
 SELECT d.day, d.entity_type, d.source_account AS account, d.kind, d.status, d.currency, d.total,
+       {ORG} AS org, d.details->>'date' AS stamp, d.parent_ref AS parent,d.parent_kind,
        d.details->>'type' AS raw_kind, d.details->>'status' AS raw_status, d.details->>'currency_iso' AS raw_currency,
-       CASE WHEN d.day >= %s THEN (
-           SELECT jsonb_agg(jsonb_build_object('quantity', l->'quantity', 'total', l->'total', 'cogs_total', l->'cogs_total',
-               'product', jsonb_build_object('id', l#>'{product,id}', 'sku', l#>'{product,sku}',
-                              'code', l#>'{product,code}', 'title', l#>'{product,title}')))
-           FROM jsonb_array_elements(CASE WHEN jsonb_typeof(d.details->'products')='array'
-                                    THEN d.details->'products' ELSE '[]'::jsonb END) l)
-       END AS lines
+       CASE WHEN d.day >= %s THEN {LINES} END AS lines
 FROM accounting.documents d
 """
 HEADERS = FIELDS + "WHERE d.entity_type IN ('invoice','customerReturn') AND d.day >= %s AND d.day < %s"
@@ -67,21 +63,34 @@ def summarize(rows, through, days):
             key = row["account"], "id" if pid else "code" if code else "sku", identity
             if key not in products:
                 products[key] = dict(name=str(product.get("title") or identity), sku=str(product.get("sku") or ""),
-                                     code=code, account=row["account"], net=Decimal(0), profit=Decimal(0))
+                                     code=code, account=row["account"], net=Decimal(0), profit=Decimal(0),
+                                     lines=0, costedLines=0, coveredNet=Decimal(0), coveredCost=Decimal(0), purchaseSources={})
             item = products[key]
             if item["code"] != code:
                 item["code"] = None
             sign = -1 if refund else 1
             item["net"] += sign * value
+            item["lines"] += 1
             cost = number(line.get("cogs_total"))
+            if cost is None:
+                cost = line.get("derived_cost")
+                for ref, label, source_day in line.get("purchase_sources", ()):
+                    item["purchaseSources"][ref] = dict(id=ref, number=label, day=source_day)
             if cost is None or (cost < 0 and not refund):
                 item["profit"] = None
-            elif item["profit"] is not None:
-                item["profit"] += sign * (value - abs(cost))
+            else:
+                item["costedLines"] += 1
+                item["coveredNet"] += sign * value
+                item["coveredCost"] += sign * abs(cost)
+                if item["profit"] is not None:
+                    item["profit"] += sign * (value - abs(cost))
     for period in (current, previous):
         period["purchases"] = period["receipts"] + period["invoices"]
         period["net"] = period["gross"] - period["returned"]
     ranking = turnover_ranking(products.values(), current["net"])
+    for item in ranking:
+        item["cost"] = item["net"] - item["profit"] if item["profit"] is not None else None
+        item["purchaseSources"] = sorted(item["purchaseSources"].values(),key=lambda s: (s["day"],s["id"]))
     return dict(days=days, start=str(start), through=str(through), latest=str(latest) if latest else None,
                 current=current, previous=previous, byDay=[dict(day=d, **v) for d, v in by_day.items()],
                 products=ranking, excluded=excluded, incompleteProducts=incomplete_products)
@@ -101,7 +110,8 @@ def dashboard(through, days):
         if saved and saved[0] == through and saved[1] > monotonic():
             return saved[2]
         with production() as conn:
-            rows = chain(conn.execute(HEADERS, bounds), conn.execute(RECEIPTS, bounds))
+            rows = list(chain(conn.execute(HEADERS, bounds), conn.execute(RECEIPTS, bounds)))
+            enrich_costs(conn, rows, start)
             result = summarize(rows, through, days)
         _cache[days] = through, monotonic() + 120, result
         return result
