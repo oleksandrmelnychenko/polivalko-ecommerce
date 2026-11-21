@@ -24,6 +24,8 @@ services:
       PRODUCTION_ANALYTICS_CLUSTER_ID: ${PRODUCTION_ANALYTICS_CLUSTER_ID:-}
       PRODUCTION_ANALYTICS_DSN_FILE: /run/secrets/business_analytics_dsn
       NOVAPOSHTA_SENDER_API_KEY: ${NOVAPOSHTA_SENDER_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      SALES_OFFER_MODEL: ${SALES_OFFER_MODEL:-}
     secrets: [business_analytics_dsn]
     volumes:
       - business-analytics-data:/var/lib/business-analytics

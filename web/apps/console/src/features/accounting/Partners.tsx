@@ -243,6 +243,7 @@ function DirectoryList() {
 }
 
 function PartnerProfile({ id }: { id: string }) {
+  const { can } = usePermissions()
   const location = useLocation()
   const [params] = useSearchParams()
   const section = params.get('section')
@@ -260,6 +261,8 @@ function PartnerProfile({ id }: { id: string }) {
             <PartnerMark kind={partner.kind} />
             <div>
               <h2>{partner.title}</h2>
+              {can(PermissionKeys.Analytics.ViewProducts) && can(PermissionKeys.Accounting.Edit) &&
+                <Link to={'/sales/business-analytics?tab=offers&partner=' + id}>Підготувати пропозицію</Link>}
               <div className="partner-meta">
                 <span>{kindLabel(partner.kind)}</span>
                 <span className="partner-category">{partner.category || 'Без категорії'}</span>

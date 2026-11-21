@@ -14,6 +14,8 @@ import { AnalyticsChart } from '../components/AnalyticsChart'
 import { AnalyticsCard } from '../components/AnalyticsCard'
 import { AssortmentReport } from '../components/AssortmentReport'
 import { AnnualInvoices } from '../components/AnnualInvoices'
+import { WinterSales } from '../components/WinterSales'
+import { SalesOffers } from '../components/SalesOffers'
 import { TurnoverForecast } from '../components/TurnoverForecast'
 import { BuyerMarkets } from '../components/BuyerMarkets'
 import { DemandForecastReport } from '../components/DemandForecastReport'
@@ -120,7 +122,7 @@ export function BusinessAnalyticsPage() {
     observer.observe(nav)
     return () => observer.disconnect()
   }, [tab])
-  const usesReport = tab !== 'invoices' && tab !== 'turnover-forecast' && tab !== 'markets'
+  const usesReport = !['invoices', 'turnover-forecast', 'markets', 'winter', 'offers'].includes(tab)
   const period = new URLSearchParams(params)
   for (const name of ['tab', 'kind', 'page', 'year', 'horizon']) period.delete(name)
   const reportParams = new URLSearchParams(period)
@@ -158,6 +160,7 @@ export function BusinessAnalyticsPage() {
   function update(changes: Record<string, string>) {
     const p = new URLSearchParams(params)
     if (!('page' in changes)) p.delete('page')
+    if (changes.tab && changes.tab !== tab) for (const key of ['season', 'week', 'partner']) p.delete(key)
     if (tab === 'markets' && changes.tab && changes.tab !== tab) {
       for (const name of ['region', 'source', 'metric', 'carrier']) p.delete(name)
       if (changes.tab !== 'invoices') p.delete('year')
@@ -226,6 +229,8 @@ export function BusinessAnalyticsPage() {
                 { value: 'overview', label: 'Оборот і прибуток' },
                 ...(can(PermissionKeys.Accounting.View) ? [{ value: 'invoices', label: 'Звірка накладних' }] : []),
                 ...(can(PermissionKeys.Accounting.View) ? [{ value: 'markets', label: 'Контрагенти й карта' }] : []),
+                ...(can(PermissionKeys.Accounting.View) ? [{ value: 'winter', label: 'Зимові продажі' },
+                  { value: 'offers', label: 'Пропозиції' }] : []),
                 { value: 'assortment', label: 'Товари й сезонність' },
                 { value: 'turnover-forecast', label: 'Прогноз обороту' },
                 { value: 'forecast', label: 'Попит і закупівлі' },
@@ -234,6 +239,8 @@ export function BusinessAnalyticsPage() {
           </div>
           {tab === 'invoices' && (can(PermissionKeys.Accounting.View)
             ? <AnnualInvoices /> : <p>Для звірки потрібен доступ до реєстру накладних.</p>)}
+          {tab === 'winter' && (can(PermissionKeys.Accounting.View) ? <WinterSales /> : <p>Потрібен доступ до обліку.</p>)}
+          {tab === 'offers' && (can(PermissionKeys.Accounting.View) ? <SalesOffers /> : <p>Потрібен доступ до обліку.</p>)}
           {tab === 'turnover-forecast' && <TurnoverForecast />}
           {tab === 'markets' && (can(PermissionKeys.Accounting.View)
             ? <BuyerMarkets /> : <p>Для перегляду географії та продажів контрагентів потрібен доступ до обліку.</p>)}

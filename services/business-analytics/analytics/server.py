@@ -20,6 +20,8 @@ from .stock_turnover import stock_page
 from .product_contribution import profit_page
 from .turnover import forecast_months, history_for
 from .markets import markets
+from .winter import winter
+from .offers import generate
 from .shipments import check_shipment_sources
 
 logger = logging.getLogger(__name__)
@@ -261,6 +263,19 @@ def dispatch(env):
         if not 0 < size <= 16384:
             return 400, {"title": "Перевірте розмір налаштувань"}
         return 200, service.set_policy(json.loads(env["wsgi.input"].read(size), use_decimal=True))
+    if route in (("GET", "/winter"), ("POST", "/offer-draft")):
+        args = {k: v[-1] for k, v in parse_qs(env.get("QUERY_STRING", ""), max_num_fields=3).items()}
+        today = now().date()
+        try:
+            if route[1] == "/winter":
+                year = int(args.get("year", today.year if today.month >= 11 else today.year-1))
+                return 200, winter(year, today)
+            return generate(args.get("partner", ""), args.get("focus", "general"))
+        except (ValueError, TypeError):
+            raise
+        except Exception as exc:
+            logger.error("Sales report unavailable (%s)", type(exc).__name__)
+            return 503, {"title": "Не вдалося прочитати дані продажів"}
     handlers = {"/report": report, "/documents": documents}
     if route[0] != "GET" or route[1] not in (*handlers, "/forecast"):
         return 404, {"title": "Операцію не знайдено"}

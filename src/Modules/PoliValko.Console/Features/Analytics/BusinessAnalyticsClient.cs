@@ -35,6 +35,11 @@ internal sealed class BusinessAnalyticsClient(HttpClient http)
                     });
             }
         }
+        group.MapGet("/winter", (BusinessAnalyticsClient client, HttpContext context, CancellationToken ct) =>
+            client.Send("winter", context, ct)).RequirePermission(PermissionKeys.AccountingView).WithName("BusinessWinterSales");
+        group.MapPost("/offer-draft", (BusinessAnalyticsClient client, HttpContext context, CancellationToken ct) =>
+            client.Send("offer-draft", context, ct)).RequirePermission(PermissionKeys.AccountingEdit)
+            .RequirePermission(PermissionKeys.AccountingView).WithName("BusinessOfferDraft");
         group.MapPost("/refresh", (BusinessAnalyticsClient client, HttpContext context, CancellationToken ct) =>
             client.Send("refresh", context, ct)).WithName("BusinessAnalyticsRefresh");
         group.MapPut("/policy", (BusinessAnalyticsClient client, HttpContext context, CancellationToken ct) =>
