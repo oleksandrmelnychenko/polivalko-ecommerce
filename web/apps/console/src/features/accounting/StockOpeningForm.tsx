@@ -1,11 +1,15 @@
-import { Alert, Button, Modal, Select, Stack, TextInput } from '@mantine/core'
+import { Alert, Button, Group, Select, Stack, TextInput } from '@mantine/core'
 import { useState, type FormEvent } from 'react'
+import { IconBox, IconClipboardList, IconBuildingWarehouse } from '@tabler/icons-react'
+import { AppEditorModal } from '@/shared/ui/AppEditorModal'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { getProducts } from '@/features/catalog/api/catalogApi'
 import { problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { save, useRegister, type Ref } from './api'
 
 export function StockOpeningForm({ close, saved }: { close: () => void; saved: () => void }) {
+  const [dialog, setDialog] = useState<'open' | 'closed' | 'saved'>('open')
   const [id] = useState(() => crypto.randomUUID())
   const [orgId, setOrg] = useState<string | null>(null)
   const [storeId, setStore] = useState<string | null>(null)
@@ -39,7 +43,7 @@ export function StockOpeningForm({ close, saved }: { close: () => void; saved: (
         reference,
       })
       if (result.response.ok) {
-        saved()
+        setDialog('saved')
         return
       }
       setError(problemMessage(result.error, 'Не вдалося ввести початковий залишок.'))
@@ -50,53 +54,66 @@ export function StockOpeningForm({ close, saved }: { close: () => void; saved: (
     }
   }
   return (
-    <Modal opened onClose={busy ? () => {} : close} title="Початковий залишок">
-      <form onSubmit={submit}>
-        <Stack>
-          <Select
-            label="Організація"
-            required
-            data={options(refs.data?.organizations ?? [])}
-            value={orgId}
-            onChange={setOrg}
-          />
-          <Select label="Склад" required data={options(refs.data?.stores ?? [])} value={storeId} onChange={setStore} />
-          <Select
-            label="Товар"
-            required
-            searchable
-            placeholder="Назва або артикул"
-            searchValue={term}
-            onSearchChange={setTerm}
-            data={items}
-            value={product?.id ?? null}
-            onChange={(v, item) => setProduct(v && item ? { id: v, title: item.label } : null)}
-          />
-          <TextInput
-            label="Звірена кількість"
-            type="number"
-            required
-            min="0"
-            max="1000000000"
-            step="0.001"
-            value={quantity}
-            onChange={(e) => setQuantity(e.currentTarget.value)}
-          />
-          <TextInput label="На дату" type="date" required value={day} onChange={(e) => setDay(e.currentTarget.value)} />
-          <TextInput
-            label="Документ-підстава"
-            placeholder="Номер інвентаризаційної відомості"
-            maxLength={150}
-            required
-            value={reference}
-            onChange={(e) => setReference(e.currentTarget.value)}
-          />
-          {error && <Alert color="red">{error}</Alert>}
-          <Button loading={busy} type="submit" disabled={!product || !orgId || !storeId}>
-            Ввести залишок
-          </Button>
+    <AppEditorModal opened={dialog === 'open'} onClose={() => { if (!busy) setDialog('closed') }}
+      onExitTransitionEnd={dialog === 'saved' ? saved : close}
+      className="ledger-editor warehouse-modal"
+      title={<MetricLabel icon={IconClipboardList}>Початковий залишок</MetricLabel>}
+      footer={<Group gap="xs">
+        <Button variant="default" disabled={busy} onClick={() => setDialog('closed')}>Скасувати</Button>
+        <Button loading={busy} type="submit" form={'opening-' + id} disabled={!product || !orgId || !storeId}>Ввести залишок</Button>
+      </Group>}>
+      <form id={'opening-' + id} onSubmit={submit}>
+        <Stack gap="sm">
+          <section className="ledger-form-block">
+            <MetricLabel icon={IconBuildingWarehouse}>Місце обліку</MetricLabel>
+            <Select
+              label="Організація"
+              required
+              data={options(refs.data?.organizations ?? [])}
+              value={orgId}
+              onChange={setOrg}
+            />
+            <Select label="Склад" required data={options(refs.data?.stores ?? [])} value={storeId} onChange={setStore} />
+            {refs.status === 'error' && <Button variant="default" onClick={refs.reload}>Повторити завантаження складів</Button>}
+          </section>
+          <section className="ledger-form-block">
+            <MetricLabel icon={IconBox}>Облік товару</MetricLabel>
+            <Select
+              label="Товар"
+              required
+              searchable
+              placeholder="Назва або артикул"
+              searchValue={term}
+              onSearchChange={setTerm}
+              data={items}
+              value={product?.id ?? null}
+              onChange={(v, item) => setProduct(v && item ? { id: v, title: item.label } : null)}
+            />
+            <Group>
+              <TextInput
+                label="Звірена кількість"
+                type="number"
+                required
+                min="0"
+                max="1000000000"
+                step="0.001"
+                value={quantity}
+                onChange={(e) => setQuantity(e.currentTarget.value)}
+              />
+              <TextInput label="На дату" type="date" required value={day} onChange={(e) => setDay(e.currentTarget.value)} />
+            </Group>
+            <TextInput
+              label="Документ-підстава"
+              placeholder="Номер інвентаризаційної відомості"
+              maxLength={150}
+              required
+              value={reference}
+              onChange={(e) => setReference(e.currentTarget.value)}
+            />
+          </section>
+          {error && <Alert role="alert" color="red">{error}</Alert>}
         </Stack>
       </form>
-    </Modal>
+    </AppEditorModal>
   )
 }

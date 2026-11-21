@@ -1,5 +1,5 @@
-import { Button, Group, Pagination, Select, Stack, Table, Text, TextInput, Title } from '@mantine/core'
-import { IconArrowDownLeft, IconArrowUpRight, IconBuildingWarehouse, IconChecklist, IconFilePencil, IconFiles, IconWallet } from '@tabler/icons-react'
+import { Button, Group, Pagination, Select, Stack, Table, Text, TextInput } from '@mantine/core'
+import { IconArrowDownLeft, IconArrowUpRight, IconBuildingWarehouse, IconChecklist, IconFilePencil, IconFiles, IconWallet, IconHistory, IconPackage, IconPlus, IconSearch, IconListCheck } from '@tabler/icons-react'
 import type { components } from '@polivalko/shared/api/schema'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -11,6 +11,7 @@ import { PageState } from '@/shared/ui/PageState'
 import { EditRegister } from './EditRegister'
 import { Grid } from './RegisterTable'
 import { StockOpeningForm } from './StockOpeningForm'
+import './warehouse.css'
 import { InventoryReview } from './InventoryReview'
 import { activeSource, count, ShopSourceForm, MovementHistory, type WarehouseRow } from './WarehouseShop'
 import { money, paymentNames, useRegister, type Doc, type Page, type Ref } from './api'
@@ -158,24 +159,18 @@ function WarehouseBalances() {
     setParams(next, { replace: true })
   }
   return (
-    <Stack>
-      <PageHeader title="Складські залишки" />
-      <Group justify="space-between">
-        <Title order={2}>Складські залишки</Title>
-        <Button component={Link} to="/accounting/warehouse?view=inventory" variant="default">
-          Звірити перенесені залишки
-        </Button>
-        {can(PermissionKeys.Accounting.Opening) && (
-          <Button variant="default" onClick={() => setOpening(true)}>
-            Ввести початковий залишок
-          </Button>
-        )}
-      </Group>
-      <Text size="sm" c="dimmed">
-        Звірена початкова кількість і проведені в консолі надходження та відвантаження.
-      </Text>
-      <Group align="end">
+    <Stack gap="sm" className="ledger-workspace warehouse-page">
+      <PageHeader title="Складські залишки" actions={
+        <Group gap="xs">
+          <Button component={Link} to="/accounting/warehouse?view=inventory" radius="xl" variant="default"
+            leftSection={<IconListCheck size={16} />}>Звірити залишки</Button>
+          {can(PermissionKeys.Accounting.Opening) && <Button radius="xl" leftSection={<IconPlus size={16} />}
+            onClick={() => setOpening(true)}>Ввести початковий залишок</Button>}
+        </Group>
+      } />
+      <Group align="end" className="ledger-card ledger-filters">
         <TextInput
+          leftSection={<IconSearch size={16} />} type="search"
           label="Пошук товару"
           placeholder="Назва або артикул"
           value={params.get('q') ?? ''}
@@ -190,80 +185,43 @@ function WarehouseBalances() {
           onChange={(v) => filter('store', v)}
         />
       </Group>
-      {result.data ? (
-        result.data.total ? (
-          <>
-            <Grid
-              columns={[
-                'Товар',
-                'Артикул',
-                'Організація',
-                'Склад',
-                'На початок',
-                'Залишок',
-                'Інтернет-магазин',
-                'Операції',
-              ]}
-            >
-              {result.data.items.map((r) => (
-                <Table.Tr key={[r.orgId, r.storeId, r.productId].join(':')}>
-                  <Table.Td>
-                    <Link to={'/catalog/products/' + r.productId}>{r.product}</Link>
-                  </Table.Td>
-                  <Table.Td>{r.sku}</Table.Td>
-                  <Table.Td>{r.organization}</Table.Td>
-                  <Table.Td>{r.store}</Table.Td>
-                  <Table.Td>{r.opening}</Table.Td>
-                  <Table.Td>{r.quantity}</Table.Td>
-                  <Table.Td>
-                    <Text size="sm">
-                      {activeSource(r)
-                        ? 'Підключено цей склад'
-                        : r.sourceStore
-                          ? 'Інший склад · ' + r.sourceStore
-                          : 'Залишок із каталогу'}
-                    </Text>
-                    <Text size="xs" c="dimmed">
-                      Доступно ·{' '}
-                      {count(r.shopQuantity == null || r.reserved == null ? null : r.shopQuantity - r.reserved)} ·
-                      резерв {count(r.reserved)}
-                    </Text>
-                  </Table.Td>
-                  <Table.Td>
-                    <Button size="compact-xs" variant="subtle" onClick={() => setHistory(r)}>
-                      Рух товару
-                    </Button>
-                    {!activeSource(r) && r.shopQuantity != null && can(PermissionKeys.Catalog.RunImport) && (
-                      <Button size="compact-xs" variant="default" onClick={() => setSource(r)}>
-                        Підключити склад
-                      </Button>
-                    )}
-                  </Table.Td>
-                </Table.Tr>
-              ))}
-            </Grid>
-            {result.data.total > 50 && (
-              <Pagination
-                total={Math.ceil(result.data.total / 50)}
-                value={page}
-                onChange={(p) => filter('page', String(p))}
-              />
-            )}
-          </>
-        ) : (
-          <PageState kind="empty" title="Немає залишків за цими умовами" />
-        )
-      ) : (
-        <PageState kind={result.status === 'ready' ? 'empty' : result.status} onRetry={result.reload} />
-      )}
+      <section className="ledger-card warehouse-list">
+        <header className="ledger-card-head">
+          <h2><MetricLabel icon={IconBuildingWarehouse}>Залишки за складами</MetricLabel></h2>
+          {result.data && <span className="ledger-count">Позицій · {count(result.data.total)}</span>}
+        </header>
+        {result.data ? result.data.total ? <>
+          <Grid columns={['Товар', 'Артикул', 'Склад', 'На початок', 'Залишок', 'Інтернет-магазин', 'Операції']}>
+            {result.data.items.map(r => (
+              <Table.Tr key={[r.orgId, r.storeId, r.productId].join(':')}>
+                <Table.Td className="wh-name"><Link to={'/catalog/products/' + r.productId}>
+                  <IconPackage size={16} aria-hidden="true" />{r.product}</Link></Table.Td>
+                <Table.Td data-label="Артикул" className="ledger-number">{r.sku}</Table.Td>
+                <Table.Td data-label="Склад">{r.store}<small>{r.organization}</small></Table.Td>
+                <Table.Td data-label="На початок" className="wh-quantity">{count(r.opening)}</Table.Td>
+                <Table.Td data-label="Залишок" className="wh-quantity"><b>{count(r.quantity)}</b></Table.Td>
+                <Table.Td className="wh-online" data-label="Інтернет-магазин">
+                  <span className="wh-source" data-connected={activeSource(r) || undefined}>
+                    {activeSource(r) ? 'Підключено цей склад' : r.sourceStore ? 'Інший склад · ' + r.sourceStore : 'Залишок із каталогу'}
+                  </span>
+                  <small>Доступно <b>{count(r.shopQuantity == null || r.reserved == null ? null : r.shopQuantity - r.reserved)}</b> · резерв <b>{count(r.reserved)}</b></small>
+                </Table.Td>
+                <Table.Td className="wh-actions"><Group gap={6}>
+                  <Button size="compact-xs" variant="default" leftSection={<IconHistory size={14} />} onClick={() => setHistory(r)}>Рух товару</Button>
+                  {!activeSource(r) && r.shopQuantity != null && can(PermissionKeys.Catalog.RunImport) &&
+                    <Button size="compact-xs" variant="default" onClick={() => setSource(r)}>Підключити склад</Button>}
+                </Group></Table.Td>
+              </Table.Tr>
+            ))}
+          </Grid>
+          {result.data.total > 50 && <Pagination total={Math.ceil(result.data.total / 50)} value={page} onChange={p => filter('page', String(p))} />}
+        </> : <PageState kind="empty" title="Немає залишків за цими умовами" /> :
+          <PageState kind={result.status === 'ready' ? 'empty' : result.status} onRetry={result.reload} />}
+      </section>
       {source && (
         <ShopSourceForm
           row={source}
           close={() => {
-            setSource(null)
-            result.reload()
-          }}
-          saved={() => {
             setSource(null)
             result.reload()
           }}
