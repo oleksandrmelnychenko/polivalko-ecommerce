@@ -3,16 +3,19 @@ import {
   Button,
   Checkbox,
   Group,
-  Modal,
-  Pagination,
   Select,
   Stack,
   Table,
   Text,
   TextInput,
-  Title,
 } from '@mantine/core'
+import { IconArrowLeft, IconChecklist, IconFileText, IconAdjustmentsHorizontal, IconListCheck, IconPackage, IconSearch } from '@tabler/icons-react'
 import { useState } from 'react'
+import { FilterBar } from '@/shared/ui/FilterBar'
+import { MetricLabel } from '@/shared/ui/MetricCard'
+import { Paginator } from '@/shared/ui/paginator/Paginator'
+import { AppEditorModal } from '@/shared/ui/AppEditorModal'
+import './inventory-review.css'
 import { Link, useSearchParams } from 'react-router-dom'
 import type { components } from '@polivalko/shared/api/schema'
 import { usePermissions } from '@/features/auth'
@@ -62,79 +65,80 @@ export function InventoryReview() {
     setParams(next, { replace: true })
   }
   return (
-    <Stack>
-      <PageHeader title="Звірка складських залишків" />
-      <Group justify="space-between">
-        <Title order={2}>Звірка складських залишків</Title>
-        <Button component={Link} to="/accounting/warehouse" variant="default">
+    <Stack gap="sm" className="ledger-workspace doc-register inventory-review">
+      <PageHeader title="Звірка складських залишків" actions={
+        <Button component={Link} to="/accounting/warehouse" variant="default" radius="xl" leftSection={<IconArrowLeft size={16} />}>
           Складські залишки
         </Button>
-      </Group>
-      <Group align="end">
-        <Select
-          label="Вихідний звіт"
-          searchable
-          w={420}
-          value={report?.id ?? null}
-          data={(reports.data ?? []).map((r) => ({
-            value: r.id,
-            label: [r.storeName, r.day, kinds[r.kind], r.firstRow != null ? 'з рядка ' + r.firstRow : null]
-              .filter(Boolean)
-              .join(' · '),
-          }))}
-          onChange={(v) => filter('report', v)}
-        />
-        <Select
-          label="Організація для початкового залишку"
-          searchable
-          clearable
-          placeholder="Оберіть організацію"
-          value={org?.id ?? null}
-          data={(refs.data?.organizations ?? []).map((r) => ({ value: r.id, label: r.title }))}
-          onChange={(v) => filter('org', v)}
-        />
-      </Group>
-      <Group align="end">
-        <TextInput
-          label="Товар у звіті"
+      } />
+      <section className="ledger-card">
+        <header className="ledger-card-head"><h2><MetricLabel icon={IconAdjustmentsHorizontal}>Параметри звірки</MetricLabel></h2></header>
+        <div className="inventory-fields">
+          <Select
+            label="Вихідний звіт"
+            searchable
+            value={report?.id ?? null}
+            data={(reports.data ?? []).map((r) => ({
+              value: r.id,
+              label: [r.storeName, r.day, kinds[r.kind], r.firstRow != null ? 'з рядка ' + r.firstRow : null]
+                .filter(Boolean)
+                .join(' · '),
+            }))}
+            onChange={(v) => filter('report', v)}
+          />
+          <Select
+            label="Організація для початкового залишку"
+            searchable
+            clearable
+            placeholder="Оберіть організацію"
+            value={org?.id ?? null}
+            data={(refs.data?.organizations ?? []).map((r) => ({ value: r.id, label: r.title }))}
+            onChange={(v) => filter('org', v)}
+          />
+        </div>
+        <FilterBar label="Фільтри звірки" activeCount={Number(params.has('status')) + Number(params.has('amount'))}
+          search={<TextInput className="app-filter-wide"
+          leftSection={<IconSearch size={16} />}
+          aria-label="Товар у звіті"
           placeholder="Код або назва"
           maxLength={160}
           value={params.get('q') ?? ''}
           onChange={(e) => filter('q', e.currentTarget.value)}
-        />
-        <Select
-          label="Стан звірки"
-          value={params.get('status') ?? 'all'}
-          onChange={(v) => filter('status', v === 'all' ? null : v)}
-          data={[
-            { value: 'all', label: 'Усі рядки' },
-            { value: 'review', label: 'Усі винятки' },
-            ...Object.entries(descriptions).map(([value, label]) => ({ value, label })),
-          ]}
-        />
-        <Select
-          label="Кількість у джерелі"
-          clearable
-          placeholder="Усі залишки"
-          value={params.get('amount')}
-          onChange={(v) => filter('amount', v)}
-          data={[
-            { value: 'positive', label: 'Більше нуля' },
-            { value: 'zero', label: 'Нульові' },
-            { value: 'negative', label: 'Від’ємні' },
-          ]}
-        />
-      </Group>
-      {refs.status === 'error' && (
-        <Button variant="subtle" onClick={refs.reload}>
-          Завантажити організації знову
-        </Button>
-      )}
-      {!org && (
-        <Text size="sm" c="dimmed">
-          Оберіть організацію, щоб перевірити наявні рухи перед введенням залишків.
-        </Text>
-      )}
+        />}>
+          <Select
+            label="Стан звірки"
+            value={params.get('status') ?? 'all'}
+            onChange={(v) => filter('status', v === 'all' ? null : v)}
+            data={[
+              { value: 'all', label: 'Усі рядки' },
+              { value: 'review', label: 'Усі винятки' },
+              ...Object.entries(descriptions).map(([value, label]) => ({ value, label })),
+            ]}
+          />
+          <Select
+            label="Кількість у джерелі"
+            clearable
+            placeholder="Усі залишки"
+            value={params.get('amount')}
+            onChange={(v) => filter('amount', v)}
+            data={[
+              { value: 'positive', label: 'Більше нуля' },
+              { value: 'zero', label: 'Нульові' },
+              { value: 'negative', label: 'Від’ємні' },
+            ]}
+          />
+        </FilterBar>
+        {refs.status === 'error' && (
+          <Button variant="subtle" onClick={refs.reload}>
+            Завантажити організації знову
+          </Button>
+        )}
+        {!org && (
+          <Text className="ledger-note" size="sm" c="dimmed">
+            Оберіть організацію, щоб перевірити наявні рухи перед введенням залишків.
+          </Text>
+        )}
+      </section>
       {report ? (
         <InventoryRows
           key={report.id + params.toString()}
@@ -142,6 +146,7 @@ export function InventoryReview() {
           org={org}
           params={params}
           changePage={(p) => filter('page', String(p))}
+          changeStatus={value => filter('status', value)}
         />
       ) : (
         <PageState
@@ -159,10 +164,12 @@ function InventoryRows({
   org,
   params,
   changePage,
+  changeStatus,
 }: {
   report: S['InventoryReport']
   org?: Ref
   params: URLSearchParams
+  changeStatus: (value: string | null) => void
   changePage: (page: number) => void
 }) {
   const filter = new URLSearchParams(params)
@@ -179,7 +186,7 @@ function InventoryRows({
   const editable = !!org && can(PermissionKeys.Accounting.Opening)
   const rows = query.data?.items ?? []
   const ready = rows.filter((r) => r.status === 'ready')
-  const chosen = rows.filter((r) => selected.includes(r.position))
+  const chosen = ready.filter((r) => selected.includes(r.position))
   function toggle(r: Row) {
     setSelected((v) => (v.includes(r.position) ? v.filter((p) => p !== r.position) : [...v, r.position]))
     setMessage('')
@@ -214,26 +221,33 @@ function InventoryRows({
   if (!query.data) return <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
   const counts = query.data.counts
   return (
-    <Stack>
-      <Text size="sm" c="dimmed">
-        {report.sourceId} · товарних рядків у звіті {report.rows}
-      </Text>
+    <Stack gap="sm">
       {report.kind === 'cutover' && <InactiveProductCards reportUrl={url} reloadRows={query.reload} />}
-      <Group gap="lg">
-        {counts.map((c) => (
-          <Text size="sm" key={c.status}>
-            {descriptions[c.status]} · <b>{c.count}</b>
-          </Text>
-        ))}
-      </Group>
-      <Group justify="space-between">
-        <Text size="sm">За фільтром · {query.data.total}</Text>
+      <section className="ledger-card warehouse-list inventory-list">
+        <header className="ledger-card-head">
+          <h2><MetricLabel icon={IconFileText}>Рядки звіту</MetricLabel></h2>
+          <span className="ledger-count">У звіті · {report.rows.toLocaleString('uk-UA')}</span>
+        </header>
+        <div className="inventory-report-id">{report.sourceId}</div>
+        {counts.length > 0 && <div className="inventory-counts" role="group" aria-label="Рядки за станом звірки">
+          {counts.map(c => {
+            const active = params.get('status') === c.status
+            return <button key={c.status} type="button" aria-pressed={active} onClick={() => changeStatus(active ? null : c.status)}>
+              {descriptions[c.status] ?? c.status} <strong>{c.count.toLocaleString('uk-UA')}</strong>
+            </button>
+          })}
+        </div>}
+        <div className="inventory-toolbar">
+          <span className="ledger-count">За фільтром · {query.data.total.toLocaleString('uk-UA')}</span>
+          <Paginator page={Number(params.get('page')) || 1} totalPages={Math.ceil(query.data.total / 50)}
+            pageSize={50} onPageChange={changePage} isLoading={query.isFetching} onRefresh={query.reload} />
+        </div>
         {editable && ready.length > 0 && (
-          <Group>
+          <Group className="inventory-bulk" justify="space-between">
             <Checkbox
               label="Готові на цій сторінці"
-              checked={selected.length === ready.length}
-              indeterminate={selected.length > 0 && selected.length < ready.length}
+              checked={chosen.length === ready.length}
+              indeterminate={chosen.length > 0 && chosen.length < ready.length}
               onChange={(e) => setSelected(e.currentTarget.checked ? ready.map((r) => r.position) : [])}
             />
             <Button
@@ -247,85 +261,79 @@ function InventoryRows({
             </Button>
           </Group>
         )}
-      </Group>
-      {message && <Alert color="green">{message}</Alert>}
-      {error && !confirm && <Alert color="red">{error}</Alert>}
-      {rows.length ? (
-        <Grid columns={['Рядок', 'Код', 'Товар у джерелі', 'Товар каталогу', 'Залишок', 'Резерв у джерелі', 'Стан']}>
-          {rows.map((r) => (
-            <Table.Tr key={r.position}>
-              <Table.Td>
-                {editable && r.status === 'ready' ? (
-                  <Checkbox
-                    label={String(r.position)}
-                    checked={selected.includes(r.position)}
-                    onChange={() => toggle(r)}
-                  />
-                ) : (
-                  r.position
-                )}
-              </Table.Td>
-              <Table.Td>{r.code}</Table.Td>
-              <Table.Td>{r.title}</Table.Td>
-              <Table.Td>
-                {r.productId ? <Link to={'/catalog/products/' + r.productId}>{r.productName}</Link> : '—'}
-              </Table.Td>
-              <Table.Td>
-                {r.quantityText ?? '—'} {r.unit}
-              </Table.Td>
-              <Table.Td>{r.booked ?? '—'}</Table.Td>
-              <Table.Td>{descriptions[r.status]}</Table.Td>
-            </Table.Tr>
-          ))}
-        </Grid>
-      ) : (
-        <Text>Рядків за цими умовами немає.</Text>
-      )}
-      {query.data.total > 50 && (
-        <Pagination
-          value={Number(params.get('page')) || 1}
-          total={Math.ceil(query.data.total / 50)}
-          onChange={changePage}
-        />
-      )}
-      <Modal
-        opened={confirm}
-        onClose={() => {
-          if (!busy) setConfirm(false)
-        }}
-        title="Підтвердження початкових залишків"
-        size="lg"
-      >
-        <Stack>
-          <Text fw={600}>
-            {org?.title} / {report.storeName}
-          </Text>
-          <Text>Дата залишків · {report.day}</Text>
-          <Grid columns={['Рядок', 'Товар', 'Звірена кількість']}>
-            {chosen.map((r) => (
-              <Table.Tr key={r.position}>
-                <Table.Td>{r.position}</Table.Td>
-                <Table.Td>{r.productName}</Table.Td>
-                <Table.Td>
-                  {r.quantityText} {r.unit}
+        {message && <Alert color="green">{message}</Alert>}
+        {error && !confirm && <Alert color="red">{error}</Alert>}
+        {rows.length ? (
+          <Grid columns={['Рядок', 'Код', 'Товар у джерелі', 'Товар каталогу', 'Залишок', 'Резерв у джерелі', 'Стан']}>
+            {rows.map((r) => (
+              <Table.Tr key={r.position} data-selected={chosen.some(item => item.position === r.position) || undefined}>
+                <Table.Td data-label="Рядок" className="ledger-number">
+                  {editable && r.status === 'ready' ? (
+                    <Checkbox
+                      label={String(r.position)}
+                      checked={selected.includes(r.position)}
+                      onChange={() => toggle(r)}
+                    />
+                  ) : (
+                    r.position
+                  )}
                 </Table.Td>
+                <Table.Td className="ledger-number" data-label="Код">{r.code}</Table.Td>
+                <Table.Td className="inventory-product" data-label="Товар у джерелі">{r.title}</Table.Td>
+                <Table.Td data-label="Товар каталогу">
+                  {r.productId ? <Link to={'/catalog/products/' + r.productId}>{r.productName}</Link> : '—'}
+                </Table.Td>
+                <Table.Td className="inventory-number" data-label="Залишок">
+                  {r.quantityText ?? '—'} {r.unit}
+                </Table.Td>
+                <Table.Td className="inventory-number" data-label="Резерв у джерелі">{r.booked ?? '—'}</Table.Td>
+                <Table.Td data-label="Стан"><span className="inventory-status" data-status={r.status}>{descriptions[r.status] ?? r.status}</span></Table.Td>
               </Table.Tr>
             ))}
           </Grid>
-          <Text size="sm">
+        ) : (
+          <PageState kind="empty" title="Рядків за цими умовами немає" />
+        )}
+      </section>
+      <AppEditorModal opened={confirm} onClose={() => { if (!busy) setConfirm(false) }}
+        title={<MetricLabel icon={IconListCheck}>Підтвердження початкових залишків</MetricLabel>}
+        size="standard" className="ledger-editor inventory-modal"
+        footer={<>
+          <span className="ledger-count">Вибрано рядків · {chosen.length}</span>
+          <Group gap="xs">
+            <Button variant="default" disabled={busy} onClick={() => setConfirm(false)}>Назад</Button>
+            <Button loading={busy} disabled={!chosen.length} onClick={submit}>Ввести залишки</Button>
+          </Group>
+        </>}>
+        <Stack gap="sm">
+          <section className="ledger-form-block">
+            <h3><MetricLabel icon={IconChecklist}>Реквізити звірки</MetricLabel></h3>
+            <dl className="inventory-facts">
+              <div><dt>Організація</dt><dd>{org?.title}</dd></div>
+              <div><dt>Склад</dt><dd>{report.storeName ?? '—'}</dd></div>
+              <div><dt>Дата залишків</dt><dd className="ledger-number">{report.day ?? '—'}</dd></div>
+            </dl>
+          </section>
+          <section className="ledger-card inventory-confirm-lines">
+            <header className="ledger-card-head"><h2><MetricLabel icon={IconPackage}>Вибрані товари</MetricLabel></h2></header>
+            <Grid columns={['Рядок', 'Товар', 'Звірена кількість']}>
+              {chosen.map((r) => (
+                <Table.Tr key={r.position}>
+                  <Table.Td className="ledger-number">{r.position}</Table.Td>
+                  <Table.Td>{r.productName}</Table.Td>
+                  <Table.Td className="inventory-number">
+                    {r.quantityText} {r.unit}
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Grid>
+          </section>
+          <Text size="sm" c="dimmed">
             Підтвердження запише початкову кількість на цей склад. Вибір складу для магазину виконується окремо.
           </Text>
           {error && <Alert color="red">{error}</Alert>}
-          <Group justify="end">
-            <Button variant="default" disabled={busy} onClick={() => setConfirm(false)}>
-              Назад
-            </Button>
-            <Button loading={busy} onClick={submit}>
-              Ввести залишки ({chosen.length})
-            </Button>
-          </Group>
         </Stack>
-      </Modal>
+      </AppEditorModal>
     </Stack>
   )
 }
