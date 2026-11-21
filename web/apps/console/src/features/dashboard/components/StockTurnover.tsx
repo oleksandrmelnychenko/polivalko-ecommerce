@@ -14,6 +14,7 @@ import { getStockTurnover } from '../api/dashboardApi'
 import { numberFormat } from '../lib/insights'
 import { DashboardCard } from './DashboardCard'
 import { SupplierOrders } from './SupplierOrders'
+import { BudgetBySupplier, ReceiptPrice } from './SupplierPurchases'
 
 const percent = new Intl.NumberFormat('uk-UA', { style: 'percent', maximumFractionDigits: 2 })
 const decisionText = {
@@ -76,6 +77,7 @@ export function StockTurnover({ days }: { days: number }) {
           onChange={value => setFilters(current => ({ ...current, sort: value ?? 'purchase', page: 1 }))} />
       </div>
       {report ? <>
+        {report.supplierBudget && <BudgetBySupplier budget={report.supplierBudget} count={report.buyCount} year={report.through.slice(0, 4)} />}
         <details className="dash-report-note">
           <summary>Позицій до закупівлі · {numberFormat.format(report.buyCount)}. Як розраховано</summary>
           <p>Темп — продана кількість за {days} днів після повернень, поділена на {days}. Від потреби на {report.coverDays} днів віднімаємо доступний залишок після резервів. Штучні товари округлюємо вгору до цілої штуки.</p>
@@ -106,12 +108,13 @@ export function StockTurnover({ days }: { days: number }) {
               {item.supply.within > 0 && <span className="app-cell-sub">Надійде в межах плану · {numberFormat.format(item.supply.within)} {item.unit}
                 {item.needBeforeIncoming != null && ' · потреба до поставок ' + numberFormat.format(item.needBeforeIncoming) + ' ' + (item.unit || '')}</span>}
               {item.purchaseStatus === 'buy'
-                ? <><strong>Докупити {numberFormat.format(item.buyQuantity)} {item.unit}</strong>
+                ? <><strong>Докупити {numberFormat.format(item.buyQuantity)} {item.unit}{item.lastPurchase?.amount != null && ' · ' + formatPrice(item.lastPurchase.amount)}</strong>
                     <span className="app-cell-sub">Очікуваний валовий прибуток від поповнення · {formatPrice(item.priorityProfit)}</span></>
                 : <><span className="app-cell-sub">{decisionText[item.purchaseStatus]}</span>
                     {item.need != null && item.need > 0 && item.minimumNeed === item.need && <span className="app-cell-sub">Розрахункова потреба · {numberFormat.format(item.need)} {item.unit || 'од.'}</span>}</>}
               {item.minimumNeed != null && item.need != null && item.minimumNeed < item.need && <span className="app-cell-sub">
                 Потреба · {numberFormat.format(item.minimumNeed)}–{numberFormat.format(item.need)} {item.unit || 'од.'} залежно від підтвердження поставки.</span>}
+              {report.supplierBudget && <ReceiptPrice purchase={item.lastPurchase} year={report.through.slice(0, 4)} />}
             </div>
             <div className="dash-rank-side">
               {item.net == null ? <span className="app-cell-sub">Оборот невідомий</span> : <div className="dash-product-result">

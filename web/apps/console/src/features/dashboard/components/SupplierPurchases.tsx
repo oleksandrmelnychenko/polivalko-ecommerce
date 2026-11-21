@@ -1,0 +1,49 @@
+import { Link } from 'react-router-dom'
+import { dateLabel, formatPrice } from '@/shared/lib/salesFormat'
+import { DocumentLink } from '@/shared/ui/DocumentLink'
+import type { LastPurchase, SupplierBudget } from '../api/dashboardApi'
+import { numberFormat } from '../lib/insights'
+
+const priceFormat = new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 6 })
+const issueText = {
+  ambiguous: 'Останню накладну не вдалося визначити однозначно.',
+  unit: 'Для розрахунку суми потрібно звірити одиниці виміру.',
+  price: 'Ціну в гривнях потрібно уточнити за накладною.',
+}
+
+export function ReceiptPrice({ purchase, year }: { purchase: LastPurchase | null; year: string }) {
+  if (!purchase) return <span className="app-cell-sub">Прибуткової накладної за {year} рік для цього товару не знайдено.</span>
+  return <div className="dash-last-purchase">
+    <div>{purchase.supplier || 'Постачальника слід уточнити'}
+      {purchase.unitPrice != null && <> · {priceFormat.format(purchase.unitPrice)} ₴/{purchase.unit}</>}
+    </div>
+    {purchase.documentId && <DocumentLink id={purchase.documentId}>Прибуткова накладна №{purchase.number || '—'} від {dateLabel(purchase.day)}</DocumentLink>}
+    {purchase.issue && <span>{issueText[purchase.issue]}</span>}
+  </div>
+}
+
+export function BudgetBySupplier({ budget, count, year }: { budget: SupplierBudget; count: number; year: string }) {
+  if (!count) return null
+  const priced = count - budget.unpriced
+  const groups = budget.suppliers.map(group => <details key={group.id ?? 'unknown'} className="dash-budget-group">
+      <summary>{group.name || 'Уточнити постачальника'} · {group.items.length} поз.
+        {' · '}{group.items.length > group.unpriced ? formatPrice(group.subtotal) : 'сума невідома'}
+        {group.unpriced > 0 && group.items.length > group.unpriced && ' + без оцінки ' + group.unpriced + ' поз.'}</summary>
+      <ul>{group.items.map(item => <li key={item.id}>
+        <Link to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}{item.sku && <small> · {item.sku}</small>}</Link>
+        <span>{numberFormat.format(item.quantity)} {item.unit}{item.unitPrice != null && ' × ' + priceFormat.format(item.unitPrice) + ' ₴'}</span>
+        <strong>{item.amount == null ? 'Ціну уточнити' : formatPrice(item.amount)}</strong>
+      </li>)}</ul>
+    </details>)
+  return <section className="dash-supplier-budget" aria-label="Закупівлі за постачальниками">
+    <div className="dash-budget-header">
+      <h3>Закупівлі за постачальниками</h3>
+      <strong>{priced ? formatPrice(budget.subtotal) : 'Суму ще не визначено'}</strong>
+    </div>
+    <p>За останніми цінами прибуткових накладних за {year} рік. Оцінено {priced} із {count} позицій усієї черги.</p>
+    {groups.slice(0, 3)}
+    {groups.length > 3 && <details className="dash-budget-group">
+      <summary>Показати решту · {groups.length - 3}</summary>{groups.slice(3)}
+    </details>}
+  </section>
+}

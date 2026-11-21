@@ -1025,6 +1025,22 @@ a.dash-queue-item:focus-visible {
 
 .dash-source .mantine-Button-label { gap: 6px; }
 .dash-report-note { padding: 8px var(--dash-pad); margin: 0; font-size: 13px; color: var(--mantine-color-gray-7); }
+.dash-supplier-budget { padding: 14px var(--dash-pad); border-block: 1px solid var(--mantine-color-default-border); }
+.dash-budget-header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; }
+.dash-budget-header h3, .dash-supplier-budget p { margin: 0; }
+.dash-budget-header h3 { font-size: 1rem; }
+.dash-budget-header strong, .dash-budget-group li > span, .dash-budget-group li > strong { font-variant-numeric: tabular-nums; }
+.dash-supplier-budget p, .dash-last-purchase { color: var(--mantine-color-dimmed); font-size: .8125rem; }
+.dash-supplier-budget p { margin: 4px 0 8px; }
+.dash-budget-group summary { cursor: pointer; padding-block: 5px; }
+.dash-budget-group ul { padding: 0; margin: 0 0 8px; list-style: none; }
+.dash-budget-group li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: baseline; padding-block: 4px; }
+.dash-budget-group li a { overflow-wrap: anywhere; }
+.dash-last-purchase { display: grid; justify-items: start; gap: 2px; margin-top: 4px; }
+@media (max-width: 36em) {
+  .dash-budget-group li { grid-template-columns: 1fr auto; }
+  .dash-budget-group li a { grid-column: 1 / -1; }
+}
 .dash-period > .dash-link { align-self: start; margin-block: 4px 12px; }
 @media (max-width: 68em) {
   .dash-toolbar-actions .dash-source { width: 34px; height: 34px; padding: 0; }

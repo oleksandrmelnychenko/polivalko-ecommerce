@@ -40,6 +40,15 @@ export type SupplierDelivery = {
   timing: 'other-store' | 'units' | 'review' | 'undated' | 'overdue' | 'later' | 'within'
 }
 export type SupplierSupply = { confirmed: number; inTransit: number; within: number; orders: SupplierDelivery[] }
+export type LastPurchase = {
+  day: string; documentId: string | null; number: string | null; supplier: string | null
+  unit: string | null; unitPrice: number | null; amount: number | null; issue: 'ambiguous' | 'unit' | 'price' | null
+}
+export type SupplierBudget = {
+  subtotal: number; unpriced: number
+  suppliers: { id: string | null; name: string | null; subtotal: number; unpriced: number
+    items: { id: string; sku: string; name: string; quantity: number; unit: string; unitPrice: number | null; amount: number | null }[] }[]
+}
 
 type StockTurnoverReport = {
   start: string
@@ -49,6 +58,7 @@ type StockTurnoverReport = {
   coverDays: number
   buyCount: number
   supplierSource: { documents: number; latest: string | null }
+  supplierBudget: SupplierBudget
   withOrders: number
   withDatedSupply: number
   total: number
@@ -77,6 +87,7 @@ type StockTurnoverReport = {
     needBeforeIncoming: number | null
     minimumNeed: number | null
     supply: SupplierSupply
+    lastPurchase: LastPurchase | null
   } & (
     { purchaseStatus: 'buy'; buyQuantity: number; priorityProfit: number } |
     { purchaseStatus: 'covered' | 'incoming' | 'supply-review' | 'no-demand' | 'sales' | 'units' | 'price' | 'cost' | 'reserves'; buyQuantity: null; priorityProfit: null }

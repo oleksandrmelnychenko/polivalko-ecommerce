@@ -9,6 +9,7 @@ from .dashboard import dashboard
 from .register import identifier
 from .source import INVENTORY_UNITS, production
 from .supplier_orders import DOCUMENTS, REGISTER, incoming_by_product, register_entries, schedule, unit_label
+from .supplier_prices import RECEIPT_PRICES, index_receipts, latest_purchase, supplier_budget
 
 
 THRESHOLD = 3
@@ -19,7 +20,8 @@ CATALOG = """
 SELECT p.id::text, p.navkolo_id AS external, p.sku, coalesce(nullif(p.display_name,''),p.name) AS name,
        p.is_visible AND NOT p.is_archived AS visible, s.quantity AS on_hand, s.reserved_quantity AS reserved, u.unit,
        (s.warehouse_org_id IS NOT NULL OR s.warehouse_store_id IS NOT NULL) AS bound,
-       lower(org.source_id) AS org,lower(store.source_id) AS store
+       lower(org.source_id) AS org,lower(store.source_id) AS store,
+       s.warehouse_org_id::text AS native_org,s.warehouse_store_id::text AS native_store
 FROM catalog.products p LEFT JOIN catalog.product_stock s ON s.product_id=p.id
 LEFT JOIN accounting.references org ON org.id=s.warehouse_org_id AND org.source_account='valko-dntrade' AND org.kind='organization'
 LEFT JOIN accounting.references store ON store.id=s.warehouse_store_id AND store.source_account='valko-dntrade' AND store.kind='store'
@@ -89,9 +91,9 @@ def purchase_plan(sales, known, stock_unit, available, days, cover_days, arrival
     return dict(plan, purchaseStatus="buy", buyQuantity=minimum, priorityProfit=profit * uncovered / (days * demand))
 
 
-def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), register=None):
+def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), register=None, receipt_prices=()):
     catalog = list(catalog)
-    by_id = {p["id"] for p in catalog}
+    by_id = {p["id"]: p for p in catalog}
     by_external = defaultdict(set)
     for p in catalog:
         external = identifier(p["external"])
@@ -99,6 +101,7 @@ def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), r
             by_external[external].add(p["id"])
     today = date.fromisoformat(report["through"])
     incoming, source = incoming_by_product(supplier_docs, register or {}, by_external)
+    receipts = index_receipts(receipt_prices, by_id, by_external)
 
     matched = defaultdict(list)
     ambiguous = set()
@@ -134,14 +137,15 @@ def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), r
         plan = purchase_plan(sales, known, p["unit"], available, report["days"], cover_days, arrivals.items(), possible.items())
         rows.append(dict(id=p["id"], name=p["name"], sku=p["sku"], onHand=p["on_hand"], reserved=p["reserved"],
                          available=available, net=net, share=net/period_net if net is not None and period_net>0 else None,
-                         supply=supply, **plan))
+                         supply=supply, lastPurchase=latest_purchase(receipts.get(p["id"]), plan["unit"], plan["buyQuantity"]), **plan))
     rows.sort(key=lambda r: (r["net"] is None, -(r["net"] or 0), r["available"], r["name"], r["id"]))
     known = [r["net"] for r in rows if r["net"] is not None]
     subtotal = sum(known, Decimal(0)) if known or not rows else None
     out = sum(r["available"] <= 0 for r in rows)
     return dict(start=report["start"], through=report["through"], periodNet=period_net, threshold=THRESHOLD,
                 coverDays=cover_days, buyCount=sum(r["purchaseStatus"] == "buy" for r in rows),
-                supplierSource=source, withOrders=sum(bool(r["supply"]["orders"]) for r in rows),
+                supplierSource=source, supplierBudget=supplier_budget(rows),
+                withOrders=sum(bool(r["supply"]["orders"]) for r in rows),
                 withDatedSupply=sum(r["supply"]["within"] > 0 for r in rows),
                 total=len(rows), outCount=out, lowCount=len(rows)-out, unknownCount=len(rows)-len(known),
                 net=subtotal, share=subtotal/period_net if subtotal is not None and period_net>0 else None, rows=rows)
@@ -159,8 +163,9 @@ def stock_page(through, days, page, stock, search, cover_days=DEFAULT_COVER_DAYS
             with production() as conn:
                 supplier_docs = list(conn.execute(DOCUMENTS, (through,through)))
                 register = conn.execute(REGISTER, (through,)).fetchone()
+                prices = conn.execute(RECEIPT_PRICES, (through.replace(month=1, day=1), through))
                 result = exposure(report, conn.execute(CATALOG), cover_days, supplier_docs,
-                                  register_entries(register["tables"]) if register else {})
+                                  register_entries(register["tables"]) if register else {}, prices)
             _cache[days, cover_days] = report, monotonic()+120, result
         else:
             result = cached[2]
