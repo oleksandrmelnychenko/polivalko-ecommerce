@@ -90,10 +90,12 @@ export function StockTurnover({ days }: { days: number }) {
                   <dt><IconChartPie size={13} aria-hidden="true" />Частка обороту</dt>
                   <dd>{item.share == null ? '—' : formatShare(item.share)}</dd>
                 </div>
+                {item.dailyRate != null && <div><dt>Темп</dt><dd>{item.dailyRate > 0 && item.dailyRate < 0.001 ? '< 0,001' : numberFormat.format(item.dailyRate)} {item.unit || 'од.'}/день</dd></div>}
+                {item.dailyRate != null && item.stockDays != null && <div><dt>Запас на</dt><dd>{numberFormat.format(Math.round(item.stockDays * 10) / 10)} дн.</dd></div>}
+                {item.dailyRate !== 0 && <div data-margin={item.margin ? (item.margin > 0 ? 'positive' : 'negative') : undefined}>
+                  <dt>Маржа</dt><dd>{item.margin == null ? 'невідома' : formatShare(item.margin)}</dd>
+                </div>}
               </dl>
-              {item.dailyRate != null && <span className="app-cell-sub">Темп {item.dailyRate > 0 && item.dailyRate < 0.001 ? '< 0,001' : numberFormat.format(item.dailyRate)} {item.unit || 'од.'}/день
-                {item.stockDays != null && ` · запас на ${numberFormat.format(Math.round(item.stockDays * 10) / 10)} дн.`}</span>}
-              {item.dailyRate !== 0 && <span className="app-cell-sub">Маржа {item.margin == null ? 'невідома' : formatShare(item.margin)}</span>}
               {item.purchaseStatus === 'buy'
                 ? <><strong>Закупити {numberFormat.format(item.buyQuantity)} {item.unit}</strong>
                     <span className="app-cell-sub">Очікуваний валовий прибуток від поповнення · {formatPrice(item.priorityProfit)}</span></>
