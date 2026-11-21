@@ -1,4 +1,5 @@
 import { IconCircleCheck } from '@tabler/icons-react'
+import type { ReactNode } from 'react'
 import type { Dashboard } from '../api/dashboardApi'
 import { numberFormat } from '../lib/insights'
 
@@ -11,12 +12,19 @@ const percent = new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 1 })
 export function CompletionCard({ statuses }: { statuses: Dashboard['byStatus'] }) {
   const total = statuses.reduce((sum, item) => sum + item.count, 0)
   const completed = statuses.find((item) => item.status === 'completed')?.count ?? 0
-  const ratio = total ? completed / total : 0
+  return <ShareCard heading={<><IconCircleCheck aria-hidden="true" />Виконані замовлення</>}
+    total={total} part={completed} totalLabel="Усього замовлень" partLabel="Виконано" empty="За цей період замовлень немає." />
+}
+
+export function ShareCard({ heading, total, part, totalLabel, partLabel, empty }: {
+  heading: ReactNode; total: number; part: number; totalLabel: string; partLabel: string; empty: string
+}) {
+  const ratio = total ? part / total : 0
   const filled = Math.round(ratio * dots.length)
 
   return (
     <section className="dash-feature-card dash-completion">
-      <h2><IconCircleCheck aria-hidden="true" />Виконані замовлення</h2>
+      <h2>{heading}</h2>
       <div className="dash-completion-body">
         <div className="dash-dial">
         <svg viewBox="0 0 256 130" aria-hidden="true">
@@ -31,11 +39,11 @@ export function CompletionCard({ statuses }: { statuses: Dashboard['byStatus'] }
         <strong>{total ? <>{percent.format(ratio * 100)}<small>%</small></> : '—'}</strong>
         </div>
         <dl className="dash-completion-counts">
-          <div><dt>Усього замовлень</dt><dd>{numberFormat.format(total)}</dd></div>
-          <div><dt>Виконано</dt><dd>{numberFormat.format(completed)}</dd></div>
+          <div><dt>{totalLabel}</dt><dd>{numberFormat.format(total)}</dd></div>
+          <div><dt>{partLabel}</dt><dd>{numberFormat.format(part)}</dd></div>
         </dl>
       </div>
-      {!total && <p>За цей період замовлень немає.</p>}
+      {!total && <p>{empty}</p>}
     </section>
   )
 }

@@ -1,28 +1,33 @@
 import { useState, type KeyboardEvent } from 'react'
 import { formatPrice, plural } from '@polivalko/shared/lib/format'
 import { useElementClientWidth } from '@/shared/ui/data-table/useElementClientWidth'
-import type { DashboardDay } from '../api/dashboardApi'
 import { asDate, barPath, compact, longDate, niceMax, shortDate, type Metric } from '../lib/insights'
 
 const HEIGHT = 260
 const PAD = { top: 28, right: 8, bottom: 30, left: 72 }
 
-export function RevenueChart({ days, metric }: { days: DashboardDay[]; metric: Metric }) {
+type ChartDay = { date: string; count: number; amount: number }
+export function RevenueChart({ days, metric, documents = false }: { days: ChartDay[]; metric: Metric; documents?: boolean }) {
   const [box, setBox] = useState<HTMLDivElement | null>(null)
   const width = useElementClientWidth(box)
   const [active, setActive] = useState<number | null>(null)
 
-  const value = (d: DashboardDay) => (metric === 'revenue' ? Number(d.revenue.value) : d.orders)
+  const amountLabel = documents ? 'Чистий оборот' : 'Виручка'
+  const countLabel = documents ? 'Покупки' : 'Замовлення'
+  const value = (d: ChartDay) => (metric === 'revenue' ? d.amount : d.count)
   const values = days.map(value)
   const peak = Math.max(...values, 0)
-  const top = niceMax(peak)
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => t * top)
+  const trough = Math.min(...values, 0)
+  const hasValues = peak > 0 || trough < 0
+  const top = peak > 0 ? niceMax(peak) : 0
+  const bottom = trough < 0 ? -niceMax(-trough) : 0
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => bottom + t * (top - bottom))
 
   const plotW = Math.max(width - PAD.left - PAD.right, 0)
   const plotH = HEIGHT - PAD.top - PAD.bottom
   const band = days.length ? plotW / days.length : 0
   const barW = Math.max(Math.min(24, band - 2, band * 0.72), 1.5)
-  const y = (v: number) => PAD.top + plotH - (v / top) * plotH
+  const y = (v: number) => PAD.top + plotH * (top - v) / (top - bottom || 1)
   const labelEvery = Math.ceil(days.length / Math.max(Math.floor(plotW / 64), 1))
   const peakIndex = peak > 0 ? values.lastIndexOf(peak) : -1
   const format = (v: number) => (metric === 'revenue' ? formatPrice(v) : v.toLocaleString('uk-UA'))
@@ -45,13 +50,13 @@ export function RevenueChart({ days, metric }: { days: DashboardDay[]; metric: M
 
   return (
     <div className="dash-chart" ref={setBox}>
-      {width > 0 && peak > 0 ? (
+      {width > 0 && hasValues ? (
         <svg
           width={width}
           height={HEIGHT}
           role="group"
           tabIndex={0}
-          aria-label={`${metric === 'revenue' ? 'Виручка' : 'Замовлення'} по днях, разом ${format(total)}. Стрілки ліворуч і праворуч перемикають дні.`}
+          aria-label={`${metric === 'revenue' ? amountLabel : countLabel} по днях, разом ${format(total)}. Стрілки ліворуч і праворуч перемикають дні.`}
           onKeyDown={onKey}
           onFocus={() => setActive((a) => a ?? days.length - 1)}
           onBlur={() => setActive(null)}
@@ -60,7 +65,7 @@ export function RevenueChart({ days, metric }: { days: DashboardDay[]; metric: M
           <g className="dash-chart-grid dash-chart-axis">
             {ticks.map((t) => (
               <g key={t}>
-                {t > 0 ? <line x1={PAD.left} x2={width - PAD.right} y1={y(t)} y2={y(t)} /> : null}
+                {t !== 0 ? <line x1={PAD.left} x2={width - PAD.right} y1={y(t)} y2={y(t)} /> : null}
                 <text className={metric === 'revenue' ? 'money' : undefined} x={PAD.left - 10} y={y(t)} dy="0.32em" textAnchor="end">
                   {tick(t)}
                 </text>
@@ -71,11 +76,11 @@ export function RevenueChart({ days, metric }: { days: DashboardDay[]; metric: M
           {days.map((d, i) => {
             const v = values[i]
             const x = PAD.left + i * band + (band - barW) / 2
-            const h = Math.max(y(0) - y(v), v > 0 ? 2 : 0)
+            const h = v === 0 ? 0 : Math.max(Math.abs(y(0) - y(v)), 2)
             return (
               <g key={d.date} className={`dash-chart-col${active === i ? ' is-active' : ''}`} onPointerEnter={() => setActive(i)}>
                 <rect className="dash-chart-hit" x={PAD.left + i * band} y={PAD.top} width={band} height={plotH} />
-                {h > 0 ? <path className="dash-chart-bar" d={barPath(x, y(0) - h, barW, h)} /> : null}
+                {h > 0 ? <path className="dash-chart-bar" d={barPath(x, v < 0 ? y(0) : y(0) - h, barW, h)} /> : null}
               </g>
             )
           })}
@@ -88,29 +93,29 @@ export function RevenueChart({ days, metric }: { days: DashboardDay[]; metric: M
             {days.map((d, i) =>
               (days.length - 1 - i) % labelEvery === 0 ? (
                 <text key={d.date} x={PAD.left + i * band + band / 2} y={HEIGHT - 8} textAnchor={i === days.length - 1 ? 'end' : 'middle'}>
-                  {i === days.length - 1 ? 'сьогодні' : shortDate.format(asDate(d.date))}
+                  {!documents && i === days.length - 1 ? 'сьогодні' : shortDate.format(asDate(d.date))}
                 </text>
               ) : null,
             )}
           </g>
         </svg>
       ) : null}
-      {current && active !== null && peak > 0 ? (
+      {current && active !== null && hasValues ? (
         <div
           className="dash-chart-tip"
           style={{ left: Math.min(Math.max(PAD.left + active * band + band / 2, 90), width - 90), top: y(values[active]) }}
           aria-live="polite"
         >
           <span>{longDate.format(asDate(current.date))}</span>
-          <b><span className="money">{formatPrice(current.revenue.value)}</span></b>
+          <b><span className="money">{formatPrice(current.amount)}</span></b>
           <span>
-            {current.orders} {plural(current.orders, 'замовлення', 'замовлення', 'замовлень')}
+            {current.count} {documents ? plural(current.count, 'покупка', 'покупки', 'покупок') : plural(current.count, 'замовлення', 'замовлення', 'замовлень')}
           </span>
         </div>
       ) : null}
-      {peak === 0 ? (
+      {!hasValues ? (
         <p className="dash-chart-empty">
-          {metric === 'revenue' ? 'За цей період немає виручки.' : 'За цей період замовлень немає.'}
+          {documents ? (metric === 'revenue' ? 'Чистий оборот за кожен день дорівнює нулю.' : 'За цей період покупок немає.') : (metric === 'revenue' ? 'За цей період немає виручки.' : 'За цей період замовлень немає.')}
         </p>
       ) : null}
       <details className="dash-chart-table">
@@ -121,10 +126,10 @@ export function RevenueChart({ days, metric }: { days: DashboardDay[]; metric: M
               <tr>
                 <th scope="col">День</th>
                 <th scope="col" className="is-num">
-                  Замовлень
+                  {documents ? 'Покупок' : 'Замовлень'}
                 </th>
                 <th scope="col" className="is-num">
-                  Виручка
+                  {amountLabel}
                 </th>
               </tr>
             </thead>
@@ -132,8 +137,8 @@ export function RevenueChart({ days, metric }: { days: DashboardDay[]; metric: M
               {[...days].reverse().map((d) => (
                 <tr key={d.date}>
                   <td>{longDate.format(asDate(d.date))}</td>
-                  <td className="is-num">{d.orders}</td>
-                  <td className="is-num"><span className="money">{formatPrice(d.revenue.value)}</span></td>
+                  <td className="is-num">{d.count}</td>
+                  <td className="is-num"><span className="money">{formatPrice(d.amount)}</span></td>
                 </tr>
               ))}
             </tbody>

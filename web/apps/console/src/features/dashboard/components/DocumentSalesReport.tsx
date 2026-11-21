@@ -1,13 +1,14 @@
 import { SegmentedControl } from '@mantine/core'
-import { IconCash, IconReceiptRefund, IconShoppingBag, IconWallet } from '@tabler/icons-react'
-import { useState } from 'react'
+import { IconCash, IconReceipt, IconReceiptRefund, IconShoppingBag, IconSparkles, IconWallet } from '@tabler/icons-react'
 import { Link } from 'react-router-dom'
-import { AnalyticsChart } from '@/shared/ui/AnalyticsChart'
-import { axisDate, dateLabel, dateRange, formatAmount, formatPrice } from '@/shared/lib/salesFormat'
-import { MetricTile } from '@/shared/ui/MetricCard'
+import { dateLabel, dateRange, formatAmount, formatPrice } from '@/shared/lib/salesFormat'
 import type { DocumentSales } from '../api/dashboardApi'
+import type { Metric } from '../lib/insights'
+import { ShareCard } from './CompletionCard'
 import { DashboardCard } from './DashboardCard'
 import { DeltaChip } from './DeltaChip'
+import { KpiTiles } from './KpiList'
+import { RevenueChart } from './RevenueChart'
 
 const metrics = [
   { field: 'net', title: 'Чистий оборот', icon: IconWallet, format: formatPrice },
@@ -16,39 +17,59 @@ const metrics = [
   { field: 'returned', title: 'Сума повернень', icon: IconReceiptRefund, format: formatPrice },
 ] as const
 
-export function DocumentSalesReport({ data }: { data: DocumentSales }) {
-  const [measure, setMeasure] = useState('net')
-  const turnover = measure === 'net'
-  return <>
-    <ul className="dash-kpis" aria-label="Продажі за документами обліку">
-      {metrics.map(({ field, title, icon, format }) => (
-        <MetricTile key={field} label={title} icon={icon}>
-          <div className="dash-kpi-amount"><strong className="dash-kpi-value">{format(data.current[field])}</strong>
-            <DeltaChip current={data.current[field]} previous={data.previous[field]} inverse={field === 'returned'} /></div>
-          <span className="dash-kpi-prior">Попередні {data.days} днів · {format(data.previous[field])}</span>
-        </MetricTile>
-      ))}
-    </ul>
-    <div className="dash-grid is-even">
-      <DashboardCard title="Продажі за документами" aside={<SegmentedControl size="xs" aria-label="Показник за днями"
-        value={measure} data={[{ value: 'net', label: 'Оборот' }, { value: 'purchases', label: 'Покупки' }]} onChange={setMeasure} />}>
-        <p className="dash-muted">{dateRange(data.start, data.through)}{data.latest && ' · останній документ ' + dateLabel(data.latest)}</p>
-        <AnalyticsChart variant="bars" label={turnover ? 'Чистий оборот за день' : 'Покупки за день'}
-          points={data.byDay.map(d => ({ label: dateLabel(d.day), axisLabel: axisDate(d.day), value: turnover ? d.net : d.purchases }))}
-          format={turnover ? formatPrice : formatAmount} />
-        <p className="dash-muted">Окремих чеків · {formatAmount(data.current.receipts)}. Видаткових накладних · {formatAmount(data.current.invoices)}.
-          {' '}Повернень · {formatAmount(data.current.refunds)}.</p>
-        <Link className="dash-link" to={'/sales/business-analytics?tab=invoices&year=' + data.through.slice(0, 4)}>Звірка документів за рік</Link>
-      </DashboardCard>
-      <DashboardCard title="Товари за чистою виручкою" aside={<span className="dash-muted">за цей період</span>}>
-        {data.products.length ? <ol className="dash-rank">{data.products.map((p, i) => <li key={i}>
-          <span className="dash-rank-n">{i + 1}</span><span className="dash-rank-main"><strong>{p.name}</strong>
-            <span className="app-cell-sub">{p.sku}</span></span><span className="app-money">{formatPrice(p.net)}</span>
-        </li>)}</ol> : <p className="dash-muted">За ці дати немає товарів із додатною чистою виручкою.</p>}
-        {data.incompleteProducts > 0 && <p role="status">До товарного рейтингу ввійшли документи зі звіреними рядками.
-          {' '}Потребують перевірки · {formatAmount(data.incompleteProducts)}.</p>}
+export function DocumentSalesFeatures({ data, metric, onMetric }: { data: DocumentSales; metric: Metric; onMetric: (value: Metric) => void }) {
+  const turnover = metric === 'revenue'
+  const field = turnover ? 'net' : 'purchases'
+  return (
+    <div className="dash-feature-row">
+      <ShareCard heading={<><IconReceipt aria-hidden="true" />Частка покупок за окремими чеками</>}
+        totalLabel="Усього покупок" total={data.current.purchases} partLabel="Окремих чеків"
+        part={data.current.receipts} empty="За цей період покупок немає." />
+      <DashboardCard className="dash-chart-card" title={turnover ? 'Чистий оборот по днях' : 'Покупки по днях'}
+        aside={<SegmentedControl size="xs" aria-label="Показник графіка" value={metric}
+          data={[{ value: 'revenue', label: 'Оборот' }, { value: 'orders', label: 'Покупки' }]}
+          onChange={value => onMetric(value === 'orders' ? 'orders' : 'revenue')} />}>
+        <div className="dash-chart-total">
+          <strong>{turnover ? formatPrice(data.current.net) : formatAmount(data.current.purchases)}</strong>
+          <DeltaChip current={data.current[field]} previous={data.previous[field]} />
+        </div>
+        <RevenueChart documents metric={metric} days={data.byDay.map(d => ({ date: d.day, count: d.purchases, amount: d.net }))} />
       </DashboardCard>
     </div>
-    {data.excluded > 0 && <p role="status">Документів із непідтвердженою сумою або статусом · {formatAmount(data.excluded)}.</p>}
-  </>
+  )
+}
+
+export function DocumentPeriodSummary({ data }: { data: DocumentSales }) {
+  return (
+    <section className="dash-feature-card dash-period">
+      <h2><IconSparkles aria-hidden="true" />Підсумок періоду</h2>
+      <p className="dash-period-copy">Чистий оборот — <strong>{formatPrice(data.current.net)}</strong>.
+        {' '}Видаткових накладних — <strong>{formatAmount(data.current.invoices)}</strong>,
+        повернень — <strong>{formatAmount(data.current.refunds)}</strong>.</p>
+      {data.latest && <p className="dash-muted">Останній документ · {dateLabel(data.latest)}</p>}
+      <Link className="dash-link" to={'/sales/business-analytics?tab=invoices&year=' + data.through.slice(0, 4)}>Звірка документів за рік</Link>
+      <footer><span />{dateRange(data.start, data.through)}</footer>
+      <div className="dash-period-matrix" aria-hidden="true" />
+    </section>
+  )
+}
+
+export function DocumentKpis({ data }: { data: DocumentSales }) {
+  return <KpiTiles items={metrics.map(({ field, title, icon, format }) => ({
+    label: title, icon, now: data.current[field], before: data.previous[field],
+    value: format(data.current[field]), prior: format(data.previous[field]), inverse: field === 'returned',
+  }))} />
+}
+
+export function DocumentProducts({ data }: { data: DocumentSales }) {
+  return (
+    <DashboardCard flush title="Товари за чистою виручкою" aside={<span className="dash-muted">за цей період</span>}>
+      {data.products.length ? <ol className="dash-rank">{data.products.map((p, i) => <li key={i}>
+        <span className="dash-rank-n">{i + 1}</span><span className="dash-rank-main"><strong>{p.name}</strong>
+          <span className="app-cell-sub">{p.sku}</span></span><span className="app-money">{formatPrice(p.net)}</span>
+      </li>)}</ol> : <p className="dash-rank-empty">За ці дати немає товарів із додатною чистою виручкою.</p>}
+      {data.incompleteProducts > 0 && <p className="dash-report-note" role="status">До рейтингу ввійшли документи зі звіреними рядками.
+        {' '}Потребують перевірки · {formatAmount(data.incompleteProducts)}.</p>}
+    </DashboardCard>
+  )
 }

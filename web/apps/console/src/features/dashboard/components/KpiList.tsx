@@ -1,4 +1,4 @@
-import { IconReceipt2, IconShoppingBag, IconUsers, IconWallet } from '@tabler/icons-react'
+import { IconReceipt2, IconShoppingBag, IconUsers, IconWallet, type Icon } from '@tabler/icons-react'
 import { formatMoney } from '@polivalko/shared/lib/format'
 import { MetricTile, MetricTrack } from '@/shared/ui/MetricCard'
 import type { Dashboard } from '../api/dashboardApi'
@@ -14,20 +14,26 @@ export function KpiList({ data }: { data: Dashboard }) {
     { label: 'Покупці', icon: IconUsers, now: current.customers, before: previous.customers, value: numberFormat.format(current.customers), prior: numberFormat.format(previous.customers) },
   ]
 
+  return <KpiTiles items={kpis} />
+}
+
+export function KpiTiles({ items }: { items: {
+  label: string; icon: Icon; now: number; before: number; value: string; prior: string; inverse?: boolean
+}[] }) {
   return (
     <ul className="dash-kpis" aria-label="Показники за період">
-      {kpis.map(({ label, icon: Icon, now, before, value, prior }) => {
-        const scale = Math.max(now, before, 1)
+      {items.map(({ label, icon: Icon, now, before, value, prior, inverse }) => {
+        const scale = Math.max(Math.abs(now), Math.abs(before), 1)
         return (
           <MetricTile key={label} icon={Icon} label={label}>
             <div className="dash-kpi-amount">
               <strong className="dash-kpi-value">{value}</strong>
-              <DeltaChip current={now} previous={before} />
+              <DeltaChip current={now} previous={before} inverse={inverse} />
             </div>
             <span className="dash-kpi-prior">Попередній період · {prior}</span>
             <div className="dash-kpi-lines" aria-hidden="true">
               {[now, before].map((amount, index) => (
-                <MetricTrack key={index} value={amount} max={scale} muted={index === 1} />
+                <MetricTrack key={index} value={Math.abs(amount)} max={scale} muted={index === 1} />
               ))}
             </div>
           </MetricTile>

@@ -25,7 +25,7 @@ export function SalesChartCard({ data, metric, onMetric }: { data: Dashboard; me
           previous={metric === 'revenue' ? Number(data.previous.revenue.value) : data.previous.orders}
         />
       </div>
-      <RevenueChart days={data.byDay} metric={metric} />
+      <RevenueChart days={data.byDay.map(d => ({ date: d.date, count: d.orders, amount: Number(d.revenue.value) }))} metric={metric} />
     </DashboardCard>
   )
 }
