@@ -1,5 +1,5 @@
 import { Select, TextInput } from '@mantine/core'
-import { IconPackage, IconSearch } from '@tabler/icons-react'
+import { IconChartPie, IconPackage, IconSearch } from '@tabler/icons-react'
 import { useDebouncedCallback } from '@mantine/hooks'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -83,7 +83,14 @@ export function StockTurnover({ days }: { days: number }) {
               <Link to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}</Link>
               <div className="dash-product-meta">{item.sku && <span className="dash-product-sku">{item.sku}</span>}
                 <TableChip tone={item.available <= 0 ? 'danger' : 'warning'} value={`Доступно ${numberFormat.format(item.available)}`} /></div>
-              <span className="app-cell-sub">Залишок {numberFormat.format(item.onHand)} · резерв {numberFormat.format(item.reserved)}</span>
+              <dl className="dash-finance-chips">
+                <div><dt>Залишок</dt><dd>{numberFormat.format(item.onHand)}</dd></div>
+                <div className="dash-reserve-chip"><dt>Резерв</dt><dd>{numberFormat.format(item.reserved)}</dd></div>
+                <div className="dash-turnover-share-chip">
+                  <dt><IconChartPie size={13} aria-hidden="true" />Частка обороту</dt>
+                  <dd>{item.share == null ? '—' : formatShare(item.share)}</dd>
+                </div>
+              </dl>
               {item.dailyRate != null && <span className="app-cell-sub">Темп {item.dailyRate > 0 && item.dailyRate < 0.001 ? '< 0,001' : numberFormat.format(item.dailyRate)} {item.unit || 'од.'}/день
                 {item.stockDays != null && ` · запас на ${numberFormat.format(Math.round(item.stockDays * 10) / 10)} дн.`}</span>}
               {item.dailyRate !== 0 && <span className="app-cell-sub">Маржа {item.margin == null ? 'невідома' : formatShare(item.margin)}</span>}
@@ -94,10 +101,10 @@ export function StockTurnover({ days }: { days: number }) {
                     {item.need != null && item.need > 0 && <span className="app-cell-sub">Розрахункова потреба · {numberFormat.format(item.need)} {item.unit || 'од.'}</span>}</>}
             </div>
             <div className="dash-rank-side">
-              {item.net == null ? <span className="app-cell-sub">Оборот невідомий</span> : <>
+              {item.net == null ? <span className="app-cell-sub">Оборот невідомий</span> : <div className="dash-product-result">
+                <span>Чистий оборот</span>
                 <strong className="app-money">{formatPrice(item.net)}</strong>
-                {item.share != null && <span className="app-cell-sub">{formatShare(item.share)} обороту</span>}
-              </>}
+              </div>}
             </div>
           </li>)}</ul>
         </> : <p className="dash-rank-empty">{report.total === 0 ? 'У каталозі немає товарів із підтвердженим малим або нульовим залишком.' : 'За цими умовами товарів немає.'}</p>}

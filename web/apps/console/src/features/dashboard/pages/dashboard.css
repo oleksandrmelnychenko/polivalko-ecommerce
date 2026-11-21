@@ -732,7 +732,7 @@ a.dash-queue-item:focus-visible {
 }
 .dash-finance-chips [data-margin=positive] { background: #e8f5ee; border-color: #badcca; color: #17583a; }
 .dash-finance-chips [data-margin=negative] { background: #fce9e8; border-color: #ecc4c0; color: #922f29; }
-.dash-finance-chips .dash-revenue-chip { background: #edf3fb; border-color: #cbdbee; color: #304f75; }
+.dash-finance-chips :is(.dash-revenue-chip, .dash-reserve-chip) { background: #edf3fb; border-color: #cbdbee; color: #304f75; }
 .dash-finance-chips .dash-turnover-share-chip {
   background: #fcfaff;
   border-color: #dcd3ed;
