@@ -36,9 +36,7 @@ async function readDocumentPage(filters: URLSearchParams, page: number, size: nu
 export function PartnerDocuments({ id }: { id: string }) {
   const location = useLocation()
   const navigate = useNavigate()
-  const [routeParams] = useSearchParams()
-  const preview = location.pathname === '/accounting/partners'
-  const params = preview ? new URLSearchParams() : routeParams
+  const [params] = useSearchParams()
   const size = normalizePageSize(params.get('pageSize'))
   const page = Math.max(1, Math.trunc(Number(params.get('page'))) || 1)
   const filters = new URLSearchParams({ partnerId: id })
@@ -58,10 +56,7 @@ export function PartnerDocuments({ id }: { id: string }) {
     else next.delete(key)
     navigate(
       { pathname: '/accounting/partners/' + id, search: next.toString() },
-      {
-        replace: !preview,
-        state: preview ? { directorySearch: routeParams.toString() } : location.state,
-      },
+      { replace: true, state: location.state },
     )
   }
 

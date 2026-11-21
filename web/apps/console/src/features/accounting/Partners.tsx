@@ -2,7 +2,6 @@ import { Button, Select, Table, TextInput } from '@mantine/core'
 import {
   IconArrowLeft,
   IconBuilding,
-  IconCheck,
   IconChevronRight,
   IconFileDescription,
   IconFilterOff,
@@ -66,10 +65,23 @@ function PartnerMark({ kind }: { kind: Partner['kind'] }) {
 }
 
 export function PartnersDirectory({ id }: { id?: string }) {
-  const [params] = useSearchParams()
   const location = useLocation()
+  if (!id) return <DirectoryList />
+  return (
+    <div className="partners-workspace ledger-workspace">
+      <PageHeader title="Картка контрагента" />
+      <Button component={Link} variant="default" radius="xl" className="partner-return"
+        leftSection={<IconArrowLeft size={16} />} to={{ pathname: directory, search: location.state?.directorySearch ?? '' }}>
+        До списку контрагентів
+      </Button>
+      <PartnerProfile key={id} id={id} />
+    </div>
+  )
+}
+
+function DirectoryList() {
+  const [list] = useSearchParams()
   const navigate = useNavigate()
-  const list = id ? new URLSearchParams(location.state?.directorySearch ?? '') : params
   const [adding, setAdding] = useState(false)
   const { can } = usePermissions()
   const query = useApiQuery('partner-directory', loadDirectory)
@@ -93,10 +105,9 @@ export function PartnersDirectory({ id }: { id?: string }) {
   const requestedPage = Math.trunc(Number(list.get('page'))) || 1
   const page = Math.min(pages, Math.max(1, requestedPage))
   const visible = filtered.slice((page - 1) * size, page * size)
-  const selected = id ?? visible[0]?.id
 
   function update(values: Record<string, string>) {
-    const next = new URLSearchParams(list)
+    const next = new URLSearchParams(window.location.search)
     next.delete('page')
     for (const [key, value] of Object.entries(values)) {
       if (value) next.set(key, value)
@@ -106,7 +117,7 @@ export function PartnersDirectory({ id }: { id?: string }) {
   }
 
   return (
-    <div className="partners-workspace" data-picked={id ? true : undefined}>
+    <div className="partners-workspace ledger-workspace">
       <PageHeader title="Контрагенти" />
       <FilterBar
         activeCount={Number(Boolean(kind)) + Number(Boolean(category))}
@@ -144,11 +155,6 @@ export function PartnersDirectory({ id }: { id?: string }) {
               onPageSizeChange={(n) => update({ pageSize: String(n) })}
               onRefresh={query.reload}
             />
-            {can(PermissionKeys.Accounting.Edit) && (
-              <Button radius="xl" leftSection={<IconPlus size={16} stroke={1.7} />} onClick={() => setAdding(true)}>
-                Додати контрагента
-              </Button>
-            )}
           </>
         }
       >
@@ -170,55 +176,51 @@ export function PartnersDirectory({ id }: { id?: string }) {
           onChange={(value) => update({ category: value ?? '' })}
         />
       </FilterBar>
-      <div className="partner-split">
-        <section className="partner-panel partner-list" aria-label="Список контрагентів">
-          {query.status !== 'ready' ? (
-            <PageState kind={query.status} onRetry={query.reload} />
-          ) : !visible.length ? (
-            <PageState kind="empty" title="Контрагентів не знайдено" />
-          ) : (
-            <table className="partner-table">
-              <thead>
-                <tr>
-                  <th scope="col">Контрагент</th>
-                  <th scope="col">Вид</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((row) => (
-                  <tr key={row.id} data-selected={selected === row.id || undefined}>
-                    <td>
-                      <Link
-                        className="partner-person"
-                        to={directory + '/' + row.id}
-                        state={{ directorySearch: list.toString() }}
-                        aria-current={selected === row.id ? 'true' : undefined}
-                      >
-                        <PartnerMark kind={row.kind} />
-                        <span>
-                          <strong>{row.title}</strong>
-                          <small>{row.category || 'Без категорії'}</small>
-                        </span>
-                        {selected === row.id && <IconCheck size={13} stroke={1.8} aria-hidden />}
-                      </Link>
-                    </td>
-                    <td>{kindLabel(row.kind)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <section className="ledger-card partner-list" aria-label="Список контрагентів">
+        <header className="ledger-card-head">
+          <h2><MetricLabel icon={IconUsers}>Довідник контрагентів</MetricLabel></h2>
+          {can(PermissionKeys.Accounting.Edit) && (
+            <Button size="compact-sm" radius="xl" leftSection={<IconPlus size={15} />} onClick={() => setAdding(true)}>
+              Додати контрагента
+            </Button>
           )}
-        </section>
-        {selected && (
-          <div className="partner-pane" key={selected}>
-            <Link className="partner-back partner-mobile-back" to={{ pathname: directory, search: list.toString() }}>
-              <IconArrowLeft size={16} />
-              До списку контрагентів
-            </Link>
-            <PartnerProfile id={selected} />
-          </div>
+        </header>
+        {query.status !== 'ready' ? (
+          <PageState kind={query.status} onRetry={query.reload} />
+        ) : !visible.length ? (
+          <PageState kind="empty" title="Контрагентів не знайдено" />
+        ) : (
+          <table className="partner-table">
+            <thead>
+              <tr>
+                <th scope="col">Контрагент</th>
+                <th scope="col">Код</th>
+                <th scope="col">Категорія</th>
+                <th scope="col">Вид</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((row) => (
+                <tr key={row.id}>
+                  <td>
+                    <Link
+                      className="partner-person"
+                      to={directory + '/' + row.id}
+                      state={{ directorySearch: list.toString() }}
+                    >
+                      <PartnerMark kind={row.kind} />
+                      <strong>{row.title}</strong>
+                    </Link>
+                  </td>
+                  <td data-label="Код" className="partner-code">{row.sourceId}</td>
+                  <td data-label="Категорія">{row.category || 'Без категорії'}</td>
+                  <td data-label="Вид">{kindLabel(row.kind)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
-      </div>
+      </section>
       {adding && (
         <EditRegister
           kind="partner"
@@ -243,7 +245,7 @@ function PartnerProfile({ id }: { id: string }) {
         <PageState kind={detail.status === 'ready' ? 'empty' : detail.status} onRetry={detail.reload} />
       ) : (
         <>
-          <header className="partner-panel partner-identity">
+          <header className="ledger-card partner-identity">
             <PartnerMark kind={partner.kind} />
             <div>
               <h2>{partner.title}</h2>
@@ -251,13 +253,11 @@ function PartnerProfile({ id }: { id: string }) {
                 <span>{kindLabel(partner.kind)}</span>
                 <span className="partner-category">{partner.category || 'Без категорії'}</span>
               </div>
-              <div className="partner-id">
-                Код <code>{partner.sourceId}</code>
-              </div>
             </div>
+            <span className="partner-id">Код <code>{partner.sourceId}</code></span>
           </header>
           <div className="partner-detail-grid">
-            <section className="partner-panel partner-block">
+            <section className="ledger-card partner-block">
               <h2>
                 <MetricLabel icon={IconScale}>Взаєморозрахунки</MetricLabel>
               </h2>
@@ -271,20 +271,19 @@ function PartnerProfile({ id }: { id: string }) {
                   {positions.data.map((p) => (
                     <Table.Tr key={JSON.stringify([p.organization, p.currency])}>
                       <Table.Td>{p.organization}</Table.Td>
-                      <Table.Td className="register-money">{money(p.receivable, p.currency)}</Table.Td>
-                      <Table.Td className="register-money">{money(p.payable, p.currency)}</Table.Td>
+                      <Table.Td data-label="До отримання" className="register-money">{money(p.receivable, p.currency)}</Table.Td>
+                      <Table.Td data-label="До сплати" className="register-money">{money(p.payable, p.currency)}</Table.Td>
                     </Table.Tr>
                   ))}
                 </Grid>
               ) : (
                 <p>Облікових залишків немає.</p>
               )}
-              <Link className="partner-back" to={balancesLink(partner.title)}>
+              <Button component={Link} size="compact-sm" radius="xl" variant="default" className="partner-return" rightSection={<IconChevronRight size={15} />} to={balancesLink(partner.title)}>
                 Перейти до звірки
-                <IconChevronRight size={15} />
-              </Link>
+              </Button>
             </section>
-            <section className="partner-panel partner-block">
+            <section className="ledger-card partner-block">
               <h2>
                 <MetricLabel icon={IconFileDescription}>Договори · {detail.data.agreements.length}</MetricLabel>
               </h2>
@@ -293,8 +292,8 @@ function PartnerProfile({ id }: { id: string }) {
                   {detail.data.agreements.map((a, i) => (
                     <Table.Tr key={i}>
                       <Table.Td>{a.title || '—'}</Table.Td>
-                      <Table.Td>{a.currency || '—'}</Table.Td>
-                      <Table.Td>{a.id || '—'}</Table.Td>
+                      <Table.Td data-label="Валюта">{a.currency || '—'}</Table.Td>
+                      <Table.Td data-label="Код договору" className="partner-code">{a.id || '—'}</Table.Td>
                     </Table.Tr>
                   ))}
                 </Grid>
@@ -303,10 +302,10 @@ function PartnerProfile({ id }: { id: string }) {
               )}
             </section>
           </div>
-          <section className="partner-panel partner-block">
+          <section className="ledger-card partner-block">
             <PartnerOpeningList partnerId={id} refresh={positions.reload} />
           </section>
-          <section className="partner-panel partner-block"><PartnerDocuments id={id} /></section>
+          <section className="ledger-card partner-block"><PartnerDocuments id={id} /></section>
         </>
       )}
     </div>

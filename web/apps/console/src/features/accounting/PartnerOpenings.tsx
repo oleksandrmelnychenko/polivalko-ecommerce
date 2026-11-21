@@ -1,6 +1,6 @@
-import { Alert, Button, Checkbox, Group, Modal, Select, Stack, Table, Text, Title } from '@mantine/core'
+import { Alert, Button, Checkbox, Group, Select, Stack, Table, Text, Title } from '@mantine/core'
 import { useState } from 'react'
-import { IconBuildingStore, IconClipboardCheck, IconScale } from '@tabler/icons-react'
+import { IconBuildingStore, IconClipboardCheck, IconHistory, IconScale } from '@tabler/icons-react'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { Link } from 'react-router-dom'
@@ -119,22 +119,30 @@ export function OpeningConfirmation({
   )
 }
 
-function OpeningPayments({ opening }: { opening: Opening }) {
+function OpeningPayments({ opening, close }: { opening: Opening; close: () => void }) {
+  const [opened, setOpened] = useState(true)
   const query = useRegister<Payment[]>('openings/' + opening.id + '/payments')
-  if (!query.data) return <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
-  if (!query.data.length) return <Text size="sm">Зареєстрованих оплат ще немає.</Text>
   return (
-    <Grid columns={['Дата', 'Спосіб', 'Каса або рахунок', 'Документ', 'Сума']}>
-      {query.data.map((p) => (
-        <Table.Tr key={p.id}>
-          <Table.Td>{p.day}</Table.Td>
-          <Table.Td>{p.method === 'bank' ? 'Банк' : 'Готівка'}</Table.Td>
-          <Table.Td>{p.accountTitle}</Table.Td>
-          <Table.Td>{p.reference}</Table.Td>
-          <Table.Td>{money(p.amount, 'UAH')}</Table.Td>
-        </Table.Tr>
-      ))}
-    </Grid>
+    <AppEditorModal opened={opened} onClose={() => setOpened(false)} onExitTransitionEnd={close}
+      className="ledger-editor" size="standard" title={<MetricLabel icon={IconHistory}>Історія оплат</MetricLabel>}>
+      <section className="ledger-form-block partner-payments">
+        <MetricLabel icon={IconScale}>{opening.account}</MetricLabel>
+        {!query.data ? <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
+          : !query.data.length ? <Text size="sm">Зареєстрованих оплат ще немає.</Text> : (
+            <Grid columns={['Дата', 'Спосіб', 'Каса або рахунок', 'Документ', 'Сума']}>
+              {query.data.map((p) => (
+                <Table.Tr key={p.id}>
+                  <Table.Td data-label="Дата">{p.day}</Table.Td>
+                  <Table.Td data-label="Спосіб">{p.method === 'bank' ? 'Банк' : 'Готівка'}</Table.Td>
+                  <Table.Td data-label="Каса або рахунок">{p.accountTitle}</Table.Td>
+                  <Table.Td data-label="Документ">{p.reference}</Table.Td>
+                  <Table.Td data-label="Сума" className="register-money">{money(p.amount, 'UAH')}</Table.Td>
+                </Table.Tr>
+              ))}
+            </Grid>
+        )}
+      </section>
+    </AppEditorModal>
   )
 }
 
@@ -165,7 +173,7 @@ export function PartnerOpeningList({ partnerId, refresh }: { partnerId: string; 
   }
   return (
     <Stack gap="xs">
-      <Title order={4}>Підтверджені початкові борги</Title>
+      <Title order={2}><MetricLabel icon={IconScale}>Початкові борги</MetricLabel></Title>
       {!query.data ? (
         <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
       ) : !query.data.length ? (
@@ -182,10 +190,10 @@ export function PartnerOpeningList({ partnerId, refresh }: { partnerId: string; 
                 </Link>
                 <Text size="xs">{o.account}</Text>
               </Table.Td>
-              <Table.Td>{o.organization}</Table.Td>
-              <Table.Td>{directions.find((d) => d.value === o.direction)?.label}</Table.Td>
-              <Table.Td>{money(o.amount, 'UAH')}</Table.Td>
-              <Table.Td>{money(o.due, 'UAH')}</Table.Td>
+              <Table.Td data-label="Організація">{o.organization}</Table.Td>
+              <Table.Td data-label="Напрям">{directions.find((d) => d.value === o.direction)?.label}</Table.Td>
+              <Table.Td data-label="Початкова сума" className="register-money">{money(o.amount, 'UAH')}</Table.Td>
+              <Table.Td data-label="Залишилось" className="register-money">{money(o.due, 'UAH')}</Table.Td>
               <Table.Td>
                 <Group gap="xs">
                   <Button variant="subtle" size="compact-xs" onClick={() => setHistory(o)}>
@@ -209,16 +217,7 @@ export function PartnerOpeningList({ partnerId, refresh }: { partnerId: string; 
           ))}
         </Grid>
       )}
-      {history && (
-        <Modal
-          opened
-          onClose={() => setHistory(null)}
-          title={'Оплати початкового боргу · ' + history.account}
-          size="lg"
-        >
-          <OpeningPayments opening={history} />
-        </Modal>
-      )}
+      {history && <OpeningPayments opening={history} close={() => setHistory(null)} />}
       {pay && (
         <PaymentForm
           due={query.data?.find((o) => o.id === pay.id)?.due ?? pay.due}
