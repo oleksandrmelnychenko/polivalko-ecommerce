@@ -1,8 +1,8 @@
 import { Button, Group, Pagination, SegmentedControl, Select, TextInput } from '@mantine/core'
-import { IconChartBar, IconSearch } from '@tabler/icons-react'
+import { IconChartBar, IconChevronDown, IconChevronRight, IconFileInvoice, IconSearch } from '@tabler/icons-react'
 import { useState } from 'react'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
-import { dateRange, formatAmount, formatPrice } from '@/shared/lib/salesFormat'
+import { dateLabel, dateRange, formatAmount, formatPrice } from '@/shared/lib/salesFormat'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PageState } from '@/shared/ui/PageState'
 import { getProductProfit, type DocumentSales } from '../api/dashboardApi'
@@ -79,8 +79,16 @@ function PeriodProducts({ data, open }: { data: DocumentSales; open: (p: Product
           {p.profit != null && <div data-margin={p.margin != null && p.margin !== 0 ? (p.margin > 0 ? 'positive' : 'negative') : undefined}><dt>Маржа</dt><dd>{share(p.margin)}</dd></div>}
           <div><dt>Частка обороту</dt><dd>{share(p.share)}</dd></div>
         </dl>
-        {!!p.purchaseSources?.length && <details className="dash-cost-sources"><summary>За прибутковими накладними · {p.purchaseSources.length}</summary>
-          {p.purchaseSources.map(s => <DocumentLink key={s.id} id={s.id}>{s.day} · № {s.number || 'без номера'}</DocumentLink>)}
+        {!!p.purchaseSources?.length && <details className="dash-cost-sources">
+          <summary><IconFileInvoice size={15} aria-hidden="true" />Прибуткові накладні
+            <span className="dash-invoice-count">{p.purchaseSources.length}</span><IconChevronDown size={13} aria-hidden="true" /></summary>
+          <div className="dash-invoice-list">
+            {p.purchaseSources.map(source => <DocumentLink key={source.id} id={source.id}>
+              <span>{source.number ? '№ ' + source.number : 'Без номера'}</span>
+              <time dateTime={source.day}>{dateLabel(source.day)}</time>
+              <IconChevronRight size={14} aria-hidden="true" />
+            </DocumentLink>)}
+          </div>
         </details>}
         {p.profit == null && p.lines != null && <span className="app-cell-sub">
           Бракує собівартості · рядків {formatAmount(p.lines - p.costedLines)} із {formatAmount(p.lines)}.

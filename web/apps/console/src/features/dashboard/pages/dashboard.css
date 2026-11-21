@@ -524,9 +524,6 @@ a.dash-queue-item:focus-visible {
 .dash-product-link { cursor: pointer; text-align: start; background: none; border: 0; padding: 0; color: var(--mantine-color-gray-9); font: inherit; font-weight: 600; }
 .dash-product-link:is(:hover,:focus-visible) { text-decoration: underline; }
 .dash-rank-side [data-loss] { color: var(--mantine-color-red-8); }
-.dash-cost-sources { color: var(--mantine-color-gray-7); font-size: 12px; }
-.dash-cost-sources summary { cursor: pointer; }
-.dash-rank-main .dash-cost-sources a { font: inherit; text-decoration: underline; white-space: normal; }
 
 .dash-rank-n {
   color: var(--mantine-color-gray-7);
@@ -683,7 +680,6 @@ a.dash-queue-item:focus-visible {
 }
 .dash-product-report .app-cell-sub { white-space: normal; font-size: 12px; }
 .dash-product-report details > summary { cursor: pointer; }
-.dash-product-report .dash-cost-sources a { margin-top: 4px; }
 .dash-product-report .dash-rank-actions .mantine-Button-root { border-radius: 999px; }
 .dash-product-result {
   display: grid;
@@ -731,7 +727,52 @@ a.dash-queue-item:focus-visible {
 }
 .dash-finance-chips [data-margin=positive] { background: #e8f5ee; color: #17583a; }
 .dash-finance-chips [data-margin=negative] { background: #fce9e8; color: #922f29; }
-.dash-product-finances .dash-cost-sources a { display: block; width: fit-content; }
+.dash-cost-sources { max-width: 26rem; font-size: 12px; }
+.dash-cost-sources summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 28px;
+  color: var(--mantine-color-gray-7);
+  list-style: none;
+}
+.dash-cost-sources summary::-webkit-details-marker { display: none; }
+.dash-cost-sources[open] summary svg:last-child { transform: rotate(180deg); }
+.dash-invoice-count {
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: var(--app-ground);
+  font: 500 11px/1.5 var(--font-mono);
+}
+.dash-invoice-list {
+  margin-top: 3px;
+  border: 1px solid var(--dash-line);
+  border-radius: 12px;
+}
+.dash-invoice-list a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  color: var(--brand-ink);
+  font: 500 12px/1.45 var(--font-mono);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.dash-invoice-list a + a { border-top: 1px solid var(--dash-line); }
+.dash-invoice-list a:first-child { border-radius: 11px 11px 0 0; }
+.dash-invoice-list a:last-child { border-radius: 0 0 11px 11px; }
+.dash-invoice-list a:only-child { border-radius: 11px; }
+.dash-invoice-list :is(time, svg) { color: var(--mantine-color-gray-7); }
+.dash-invoice-list time { font-size: 11px; font-weight: 400; }
+.dash-invoice-list a:is(:hover, :focus-visible) { background: var(--app-ground); }
+.dash-cost-sources :is(summary, a):focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 1px;
+}
 @container (max-width: 400px) {
   .dash-product-report .dash-rank > li { grid-template-columns: 24px minmax(0, 1fr); }
   .dash-product-report .dash-rank-side {
