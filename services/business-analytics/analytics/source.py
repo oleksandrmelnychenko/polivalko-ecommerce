@@ -142,10 +142,7 @@ def archived_rows(conn, query, params):
         after = (batch[-1]["day"], batch[-1]["id"])
 
 
-CATALOG = """
-SELECT p.id::text AS id, p.navkolo_id, p.sku, coalesce(nullif(p.display_name,''),p.name) AS name,
-       p.category_id::text AS category, c.name AS category_name, u.unit
-FROM catalog.products p LEFT JOIN catalog.categories c ON c.id=p.category_id
+INVENTORY_UNITS = """
 LEFT JOIN (
     SELECT 'dntrade-code:' || l.code AS navkolo_id, min(lower(trim(l.unit))) AS unit
     FROM accounting.inventory_lines l JOIN accounting.inventory_reports r ON r.id=l.report_id
@@ -153,6 +150,11 @@ LEFT JOIN (
     GROUP BY l.code HAVING count(DISTINCT lower(trim(l.unit)))=1
 ) u ON u.navkolo_id=p.navkolo_id
 """
+CATALOG = """
+SELECT p.id::text AS id, p.navkolo_id, p.sku, coalesce(nullif(p.display_name,''),p.name) AS name,
+       p.category_id::text AS category, c.name AS category_name, u.unit
+FROM catalog.products p LEFT JOIN catalog.categories c ON c.id=p.category_id
+""" + INVENTORY_UNITS
 REFERENCES = (
     "SELECT id::text, source_account AS account, kind, source_id AS ref, title FROM accounting.references"
 )

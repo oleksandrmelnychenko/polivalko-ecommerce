@@ -145,7 +145,7 @@ export function DashboardPage() {
         />}
         {documents && <div className="dash-grid is-even">
           {report && <DocumentProducts key={report.start} data={report} />}
-          {canCatalog && <StockTurnover key={days} days={days} />}
+          {canCatalog && <StockTurnover days={days} />}
         </div>}
         {report && report.excluded > 0 && <p className="dash-muted" role="status">Документів із непідтвердженою сумою або статусом · {report.excluded.toLocaleString('uk-UA')}.</p>}
 

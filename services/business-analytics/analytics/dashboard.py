@@ -58,17 +58,21 @@ def summarize(rows, through, days):
         if not parsed or not all(parsed) or sum(line[-1] for line in parsed) != amount:
             incomplete_products += 1
             continue
-        for line, (product, code, pid, sku, _, value) in zip(row["lines"], parsed):
+        for line, (product, code, pid, sku, quantity, value) in zip(row["lines"], parsed):
             identity = pid or code or sku
             key = row["account"], "id" if pid else "code" if code else "sku", identity
             if key not in products:
                 products[key] = dict(name=str(product.get("title") or identity), sku=str(product.get("sku") or ""),
                                      code=code, productRef=pid, account=row["account"], net=Decimal(0), profit=Decimal(0),
+                                     netQuantity=Decimal(0), salesUnit=line.get("unit"),
                                      lines=0, costedLines=0, coveredNet=Decimal(0), coveredCost=Decimal(0), purchaseSources={})
             item = products[key]
             if item["code"] != code:
                 item["code"] = None
             sign = -1 if refund else 1
+            if item["salesUnit"] != line.get("unit"):
+                item["salesUnit"] = None
+            item["netQuantity"] += sign * quantity
             item["net"] += sign * value
             item["lines"] += 1
             cost = number(line.get("cogs_total"))

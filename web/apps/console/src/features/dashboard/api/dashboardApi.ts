@@ -38,6 +38,8 @@ type StockTurnoverReport = {
   through: string
   periodNet: number
   threshold: number
+  coverDays: number
+  buyCount: number
   total: number
   lowCount: number
   outCount: number
@@ -47,7 +49,7 @@ type StockTurnoverReport = {
   matches: number
   page: number
   pageSize: number
-  rows: {
+  rows: ({
     id: string
     name: string
     sku: string
@@ -56,7 +58,15 @@ type StockTurnoverReport = {
     available: number
     net: number | null
     share: number | null
-  }[]
+    unit: string | null
+    dailyRate: number | null
+    stockDays: number | null
+    margin: number | null
+    need: number | null
+  } & (
+    { purchaseStatus: 'buy'; buyQuantity: number; priorityProfit: number } |
+    { purchaseStatus: 'covered' | 'no-demand' | 'sales' | 'units' | 'price' | 'cost' | 'reserves'; buyQuantity: null; priorityProfit: null }
+  ))[]
 }
 
 export const getStockTurnover = (params: URLSearchParams) =>

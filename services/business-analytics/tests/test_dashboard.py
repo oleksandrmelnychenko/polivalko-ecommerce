@@ -19,6 +19,7 @@ class SalesPeriodTests(TestCase):
         rows = {r["code"]:r for r in summarize(docs,end,7)["products"]}
         self.assertEqual((rows["a"]["share"], rows["a"]["profit"], rows["a"]["margin"]), (Decimal(90)/140,18,Decimal(".2")))
         self.assertIsNone(rows["b"]["profit"])
+        self.assertEqual((rows["a"]["netQuantity"],rows["b"]["netQuantity"],rows["c"]["netQuantity"]),(0,2,-1))
         self.assertEqual(rows["c"]["share"], Decimal(-15)/140)
         self.assertIsNone(rows["c"]["abc"])
         self.assertIsNone(summarize([docs[4]],end,7)["products"][0]["share"])

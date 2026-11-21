@@ -16,7 +16,7 @@ from .reports import documents, forecasts, policy_key, report
 from .source import hosted, read_register
 from .invoices import read_year, report_years
 from .dashboard import dashboard
-from .stock_turnover import stock_page
+from .stock_turnover import COVER_OPTIONS, DEFAULT_COVER_DAYS, stock_page
 from .product_contribution import profit_page
 from .turnover import forecast_months, history_for
 from .markets import markets
@@ -294,11 +294,13 @@ def dispatch(env):
     if route[1] == "/documents" and q.get("analysis") == "stock-turnover":
         days, page = int(q.get("days",30)), int(q.get("page",1))
         stock, search = q.get("stock","all"), q.get("search","")
-        if (set(q) - {"analysis","days","page","stock","search"} or days not in (7,30,90) or not 1 <= page <= 1000000
-                or stock not in ("all","out","low") or len(search) > 160):
+        cover_days, sort = int(q.get("coverDays", DEFAULT_COVER_DAYS)), q.get("sort", "turnover")
+        if (set(q) - {"analysis","days","page","stock","search","sort","coverDays"} or days not in (7,30,90)
+                or cover_days not in COVER_OPTIONS or sort not in ("purchase","turnover") or not 1 <= page <= 1000000
+                or stock not in ("all","out","low","buy") or len(search) > 160):
             raise ValueError("Перевірте період, стан залишку та параметри списку")
         try:
-            return 200, stock_page(now().date(), days, page, stock, search)
+            return 200, stock_page(now().date(), days, page, stock, search, cover_days, sort)
         except Exception as exc:
             logger.error("Stock turnover unavailable (%s)", type(exc).__name__)
             return 503, {"title": "Не вдалося звірити наявність товарів із продажами"}

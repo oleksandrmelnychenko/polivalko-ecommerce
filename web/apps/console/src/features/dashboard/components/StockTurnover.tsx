@@ -15,6 +15,11 @@ import { numberFormat } from '../lib/insights'
 import { DashboardCard } from './DashboardCard'
 
 const percent = new Intl.NumberFormat('uk-UA', { style: 'percent', maximumFractionDigits: 2 })
+const decisionText = {
+  covered: 'Запасу вистачає', 'no-demand': 'Немає додатних продажів після повернень',
+  sales: 'Бракує підтверджених продажів', units: 'Звірити одиниці продажу й залишку',
+  price: 'Перевірити ціну й рентабельність', cost: 'Уточнити собівартість', reserves: 'Звірити непокриті резерви',
+}
 
 function formatShare(value: number) {
   if (value > 0 && value < 0.0001) return '< 0,01 %'
@@ -24,12 +29,13 @@ function formatShare(value: number) {
 
 export function StockTurnover({ days }: { days: number }) {
   const [draft, setDraft] = useState('')
-  const [filters, setFilters] = useState({ page: 1, stock: 'all', search: '' })
+  const [filters, setFilters] = useState({ page: 1, pageDays: days, stock: 'all', search: '', cover: '14', sort: 'purchase' })
   const search = useDebouncedCallback((value: string) => {
     setFilters(current => ({ ...current, search: value.trim(), page: 1 }))
   }, 300)
   const params = new URLSearchParams({
-    days: String(days), page: String(filters.page), stock: filters.stock, search: filters.search,
+    days: String(days), page: String(filters.pageDays === days ? filters.page : 1), stock: filters.stock, search: filters.search,
+    coverDays: filters.cover, sort: filters.sort,
   })
   const query = useApiQuery('stock-turnover?' + params, () => getStockTurnover(params))
   const { reload } = query
@@ -51,12 +57,24 @@ export function StockTurnover({ days }: { days: number }) {
         <Select size="sm" radius="xl" aria-label="Доступність товарів" allowDeselect={false} value={filters.stock}
           data={[
             { value: 'all', label: report ? `Усі · ${numberFormat.format(report.total)}` : 'Усі' },
+            { value: 'buy', label: report ? `До закупівлі · ${numberFormat.format(report.buyCount)}` : 'До закупівлі' },
             { value: 'out', label: report ? `Немає · ${numberFormat.format(report.outCount)}` : 'Немає' },
             { value: 'low', label: report ? `Мало · ${numberFormat.format(report.lowCount)}` : 'Мало' },
           ]}
           onChange={value => setFilters(current => ({ ...current, stock: value ?? 'all', page: 1 }))} />
+        <Select size="sm" radius="xl" label="Запас на" allowDeselect={false} value={filters.cover}
+          data={[{ value: '7', label: '7 днів' }, { value: '14', label: '14 днів' }, { value: '30', label: '30 днів' }]}
+          onChange={value => setFilters(current => ({ ...current, cover: value ?? '14', page: 1 }))} />
+        <Select size="sm" radius="xl" label="Сортування" allowDeselect={false} value={filters.sort}
+          data={[{ value: 'purchase', label: 'Черга закупівель' }, { value: 'turnover', label: 'За оборотом' }]}
+          onChange={value => setFilters(current => ({ ...current, sort: value ?? 'purchase', page: 1 }))} />
       </div>
       {report ? <>
+        <details className="dash-report-note">
+          <summary>Позицій до закупівлі · {numberFormat.format(report.buyCount)}. Як розраховано</summary>
+          <p>Темп — продана кількість за {days} днів після повернень, поділена на {days}. Від потреби на {report.coverDays} днів віднімаємо доступний залишок після резервів. Штучні товари округлюємо вгору до цілої штуки.</p>
+          <p>Першими в черзі йдуть товари з найбільшим очікуваним валовим прибутком від поповнення. Для цього беремо оборот товару за період, його маржу й кількість днів, на які бракує запасу. Розрахунок припускає той самий темп продажів. Поставки в дорозі слід врахувати окремо.</p>
+        </details>
         <div className="dash-product-count" aria-live="polite"><span>Показано <b>{report.rows.length ? numberFormat.format((report.page - 1) * report.pageSize + 1) + '–' + numberFormat.format((report.page - 1) * report.pageSize + report.rows.length) : '0'} із {numberFormat.format(report.matches)}</b></span>
           <span>До {numberFormat.format(report.threshold)} од. після резервів</span></div>
         {report.rows.length > 0 ? <>
@@ -66,6 +84,14 @@ export function StockTurnover({ days }: { days: number }) {
               <div className="dash-product-meta">{item.sku && <span className="dash-product-sku">{item.sku}</span>}
                 <TableChip tone={item.available <= 0 ? 'danger' : 'warning'} value={`Доступно ${numberFormat.format(item.available)}`} /></div>
               <span className="app-cell-sub">Залишок {numberFormat.format(item.onHand)} · резерв {numberFormat.format(item.reserved)}</span>
+              {item.dailyRate != null && <span className="app-cell-sub">Темп {item.dailyRate > 0 && item.dailyRate < 0.001 ? '< 0,001' : numberFormat.format(item.dailyRate)} {item.unit || 'од.'}/день
+                {item.stockDays != null && ` · запас на ${numberFormat.format(Math.round(item.stockDays * 10) / 10)} дн.`}</span>}
+              {item.dailyRate !== 0 && <span className="app-cell-sub">Маржа {item.margin == null ? 'невідома' : formatShare(item.margin)}</span>}
+              {item.purchaseStatus === 'buy'
+                ? <><strong>Закупити {numberFormat.format(item.buyQuantity)} {item.unit}</strong>
+                    <span className="app-cell-sub">Очікуваний валовий прибуток від поповнення · {formatPrice(item.priorityProfit)}</span></>
+                : <><span className="app-cell-sub">{decisionText[item.purchaseStatus]}</span>
+                    {item.need != null && item.need > 0 && <span className="app-cell-sub">Розрахункова потреба · {numberFormat.format(item.need)} {item.unit || 'од.'}</span>}</>}
             </div>
             <div className="dash-rank-side">
               {item.net == null ? <span className="app-cell-sub">Оборот невідомий</span> : <>
@@ -77,7 +103,7 @@ export function StockTurnover({ days }: { days: number }) {
         </> : <p className="dash-rank-empty">{report.total === 0 ? 'У каталозі немає товарів із підтвердженим малим або нульовим залишком.' : 'За цими умовами товарів немає.'}</p>}
         {report.matches > report.pageSize && <div className="dash-product-tools">
           <Paginator page={report.page} pageSize={report.pageSize} totalPages={Math.ceil(report.matches / report.pageSize)}
-            onPageChange={page => setFilters(current => ({ ...current, page }))} />
+            onPageChange={page => setFilters(current => ({ ...current, page, pageDays: days }))} />
         </div>}
       </> : <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={reload}
         description={problemMessage(query.problem, 'Не вдалося завантажити залишки й оборот товарів.')} />}
