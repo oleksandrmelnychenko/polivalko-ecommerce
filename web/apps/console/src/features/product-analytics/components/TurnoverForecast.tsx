@@ -99,7 +99,7 @@ export function TurnoverForecast() {
           <strong>{money(first.value)}</strong><span>{label(first.month)}</span></div>
       </div>
       <AnalyticsCard title={<MetricLabel icon={IconChartLine}>Очікуваний оборот за місяцями</MetricLabel>}
-        description="Лінія показує прогноз. Затінена область — межі за 80-м процентилем історичної абсолютної похибки. Для меж потрібно п’ять перевірок відповідного кроку.">
+        description="Лінія показує прогноз. Затінена область — межі за 80-м процентилем історичної абсолютної похибки. Для меж потрібно п’ять перевірок відповідного кроку. Прогноз і межі не опускаються нижче нуля, якщо в історії не було місяця з від’ємним оборотом.">
         <AnalyticsChart key={horizon} label="Очікуваний чистий оборот" variant="forecast" format={money}
           points={future.map(p => ({ ...point(p), low: p.low ?? undefined, high: p.high ?? undefined }))} />
       </AnalyticsCard>

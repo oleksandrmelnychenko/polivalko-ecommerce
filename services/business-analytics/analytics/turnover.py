@@ -147,8 +147,12 @@ def forecast_months(totals, latest, today, horizon):
                               for m,p,a in zip(dates[cutoff:], validation, actual)],
                   comparisons=[dict(model=m, mae=round(scores[m], 2), origins=len(origins),
                                     holdoutWape=holdout_wape(m)) for m in methods])
+    # Net turnover of a month falls below zero only when returns exceed sales. Unless the history has
+    # such a month, neither the forecast nor its range goes below zero.
+    floor = min(0.0, min(values))
     for i, (value, radius) in enumerate(zip(predict(values, horizon, winner), radii[winner]), 1):
-        result["projection"].append(dict(month=str(month(end, i)), value=round(value, 2),
-                                         low=round(value-radius, 2) if radius is not None else None,
-                                         high=round(value+radius, 2) if radius is not None else None))
+        shown = max(value, floor)
+        result["projection"].append(dict(month=str(month(end, i)), value=round(shown, 2),
+                                         low=round(max(value-radius, floor), 2) if radius is not None else None,
+                                         high=round(max(value+radius, shown), 2) if radius is not None else None))
     return result
