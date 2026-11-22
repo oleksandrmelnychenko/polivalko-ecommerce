@@ -135,7 +135,8 @@ export type RecommendationPeriod = RecommendationMetrics & {
 }
 export type RecommendationResultsReport = {
   through: string; periods: RecommendationPeriod[]
-  invoices: { id: string; number: string; day: string; turnover: number; profit: number | null; estimated: boolean }[]
+  // day is the date written on the invoice; soldDay is the day it was posted, which decides the period.
+  invoices: { id: string; number: string; day: string; soldDay?: string; turnover: number; profit: number | null; estimated: boolean }[]
 }
 export const getRecommendationResults = () => readBusiness<RecommendationResultsReport>('documents', 'analysis=recommendation-results')
 

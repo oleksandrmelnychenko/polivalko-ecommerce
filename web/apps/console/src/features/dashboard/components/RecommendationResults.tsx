@@ -11,7 +11,7 @@ export function RecommendationResults({ report, days, ranking, onRanking }: {
 }) {
   const [limit, setLimit] = useState(20)
   const selected = report.periods.find(p => p.days === days)
-  const invoices = selected ? report.invoices.filter(i => i.day >= selected.start) : []
+  const invoices = selected ? report.invoices.filter(i => (i.soldDay ?? i.day) >= selected.start) : []
   return <div className="rec-results">
     <section>
       <h3 className="dash-with-info">Від пропозиції до продажу
@@ -29,7 +29,7 @@ export function RecommendationResults({ report, days, ranking, onRanking }: {
     <section>
       <h3 className="dash-with-info">Продажі з рекомендацій
         <CalculationInfo title="За якою датою враховано продажі">
-          <p>За датою проведеної видаткової накладної, включно з продажами за давнішими пропозиціями.</p>
+          <p>За днем проведення видаткової накладної, включно з продажами за давнішими пропозиціями. Дата на самій накладній може бути іншою: чернетку створюють під час погодження, а проводять під час відвантаження.</p>
         </CalculationInfo>
       </h3>
       <div className="rec-results-scroll"><table aria-label="Оборот і валовий прибуток з рекомендацій">
@@ -51,7 +51,8 @@ export function RecommendationResults({ report, days, ranking, onRanking }: {
         <div className="rec-results-scroll"><table aria-label="Накладні з рекомендацій">
           <thead><tr><th>Накладна</th><th>Оборот</th><th>Валовий прибуток</th></tr></thead>
           <tbody>{invoices.slice(0,limit).map(i => <tr key={i.id}>
-            <th scope="row"><DocumentLink id={i.id}>{i.number}</DocumentLink><small>{dateLabel(i.day)}</small></th>
+            <th scope="row"><DocumentLink id={i.id}>{i.number}</DocumentLink>
+              <small>{i.soldDay && i.soldDay !== i.day ? `Проведено ${dateLabel(i.soldDay)} · дата накладної ${dateLabel(i.day)}` : dateLabel(i.day)}</small></th>
             <td>{formatPrice(i.turnover)}</td><td>{i.profit === null ? 'Собівартість невідома' : formatPrice(i.profit)}
               {i.estimated && <small>За ціною закупівлі</small>}</td>
           </tr>)}</tbody>

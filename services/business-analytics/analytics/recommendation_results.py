@@ -11,25 +11,31 @@ from .supplier_orders import unit_label
 
 
 PERIODS = (7, 30, 90)
+# The date on the invoice is the day the draft was created at acceptance, and it can be edited.
+# The sale happened when the invoice was posted: posting sets the offer to fulfilled and stamps
+# changed_at in the same transaction, and a fulfilled offer does not change again.
 JOURNAL = f"""
 SELECT (o.offered_at AT TIME ZONE 'Europe/Kyiv')::date AS offered_day,o.status AS decision,
        o.partner_id::text AS client,partner.title AS client_name,
        coalesce(nullif(p.display_name,''),p.name) AS product_name,p.sku,
        o.product_id::text AS product,o.unit,lower(p.navkolo_id) AS external,
-       d.id::text AS invoice_id,d.number,d.day,d.total,d.native_org_id::text AS org,d.native_store_id::text AS store,
+       d.id::text AS invoice_id,d.number,d.day,
+       CASE WHEN d.id IS NOT NULL THEN (o.changed_at AT TIME ZONE 'Europe/Kyiv')::date END AS sold_day,
+       d.total,d.native_org_id::text AS org,d.native_store_id::text AS store,
        lower(org.source_id) AS external_org,lower(store.source_id) AS external_store,
-       CASE WHEN d.day >= %s THEN {LINES} END AS lines
+       CASE WHEN o.changed_at >= (%s::date::timestamp AT TIME ZONE 'Europe/Kyiv') THEN {LINES} END AS lines
 FROM accounting.recommendation_offers o
 LEFT JOIN accounting.documents d ON d.id=o.invoice_id AND o.status='fulfilled'
   AND d.native_partner_id=o.partner_id AND d.source_account='polivalko-native'
-  AND d.entity_type='invoice' AND d.kind='out' AND d.status='posted' AND d.currency='UAH' AND d.day<=%s
+  AND d.entity_type='invoice' AND d.kind='out' AND d.status='posted' AND d.currency='UAH'
 LEFT JOIN catalog.products p ON p.id=o.product_id
 LEFT JOIN accounting.partners partner ON partner.id=o.partner_id
 LEFT JOIN accounting.references org ON org.id=d.native_org_id AND org.source_account='valko-dntrade' AND org.kind='organization'
 LEFT JOIN accounting.references store ON store.id=d.native_store_id AND store.source_account='valko-dntrade' AND store.kind='store'
 WHERE (o.offered_at >= (%s::date::timestamp AT TIME ZONE 'Europe/Kyiv')
-       AND o.offered_at < (%s::date::timestamp AT TIME ZONE 'Europe/Kyiv')) OR d.day >= %s
-ORDER BY d.day DESC NULLS LAST,d.number,d.id
+       AND o.offered_at < (%s::date::timestamp AT TIME ZONE 'Europe/Kyiv'))
+   OR (o.status='fulfilled' AND o.changed_at >= (%s::date::timestamp AT TIME ZONE 'Europe/Kyiv'))
+ORDER BY sold_day DESC NULLS LAST,d.number,d.id
 """
 
 # Normalize both accounting sources to the invoice's actual owner, warehouse and catalog product.
@@ -133,21 +139,22 @@ def breakdown(cohort, invoices, dimension, labels):
 def recommendation_results(today):
     start = today-timedelta(days=89)
     with production() as conn:
-        rows = conn.execute(JOURNAL, (start,today,start,today+timedelta(days=1),start)).fetchall()
-        sales = [r for r in rows if r["invoice_id"] and start <= r["day"] <= today]
+        rows = conn.execute(JOURNAL, (start,start,today+timedelta(days=1),start)).fetchall()
+        sales = [r for r in rows if r["invoice_id"] and r["sold_day"] >= start]
         book = receipt_book(conn, sales)
     customers = {r["client"]: {"name": r["client_name"] or r["client"]} for r in rows}
     products = {r["product"]: {"name": r["product_name"] or r["product"], "sku": r["sku"]} for r in rows}
     invoices = []
     for doc in sales:
         profit, estimated = invoice_profit(doc, book)
-        invoices.append(dict(id=doc["invoice_id"], number=doc["number"], day=str(doc["day"]), turnover=doc["total"],
-                             profit=profit, estimated=estimated, client=doc["client"], product=doc["product"]))
+        invoices.append(dict(id=doc["invoice_id"], number=doc["number"], day=str(doc["day"]), soldDay=str(doc["sold_day"]),
+                             turnover=doc["total"], profit=profit, estimated=estimated,
+                             client=doc["client"], product=doc["product"]))
     periods = []
     for days in PERIODS:
         since = today-timedelta(days=days-1)
         cohort = [r for r in rows if since <= r["offered_day"] <= today]
-        sales_period = [i for i in invoices if i["day"] >= str(since)]
+        sales_period = [i for i in invoices if i["soldDay"] >= str(since)]
         periods.append(dict(days=days, start=str(since), **results_for(cohort, sales_period),
                             customers=breakdown(cohort, sales_period, "client", customers),
                             products=breakdown(cohort, sales_period, "product", products)))

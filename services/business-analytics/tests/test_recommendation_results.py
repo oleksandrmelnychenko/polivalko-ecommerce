@@ -10,9 +10,12 @@ TODAY = date(2026, 11, 22)
 D = Decimal
 
 
-def row(age, decision, invoice=None, sale_age=0, cost=None, client="client", product="sku"):
+def row(age, decision, invoice=None, sale_age=0, cost=None, client="client", product="sku", dated=None):
+    """An offer made `age` days ago. Its invoice was posted `sale_age` days ago and is dated `dated` days ago."""
+    dated = sale_age if dated is None else dated
     return dict(offered_day=TODAY-timedelta(days=age), decision=decision, invoice_id=invoice, number=invoice,
-                day=TODAY-timedelta(days=sale_age) if invoice else None, total=D("15.00"), product=product.lower(), unit="кг",
+                day=TODAY-timedelta(days=dated) if invoice else None,
+                sold_day=TODAY-timedelta(days=sale_age) if invoice else None, total=D("15.00"), product=product.lower(), unit="кг",
                 client=client, client_name="Покупець", product_name="Товар", sku=product,
                 org="org",store="store",external="dntrade-code:101",external_org="o",external_store="s",
                 lines=[dict(product=dict(id=product.lower()), quantity="1.5", total="15.00", cogs_total=cost)] if invoice else None)
@@ -25,7 +28,7 @@ class RecommendationResultsTests(unittest.TestCase):
             query.return_value.fetchall.return_value = rows
             query.side_effect = lambda sql, params: purchases if sql == RECEIPTS else query.return_value
             result = recommendation_results(TODAY)
-            self.assertEqual(query.call_args_list[0].args, (JOURNAL, (TODAY-timedelta(days=89),TODAY,
+            self.assertEqual(query.call_args_list[0].args, (JOURNAL, (TODAY-timedelta(days=89),
                              TODAY-timedelta(days=89),TODAY+timedelta(days=1),TODAY-timedelta(days=89))))
             return result
 
@@ -86,3 +89,15 @@ class RecommendationResultsTests(unittest.TestCase):
         malformed["lines"][0]["total"]="14"
         period = self.report([malformed,row(0,"fulfilled","wrong cost",cost="-1")])["periods"][0]
         self.assertEqual((period["invoices"],period["turnover"],period["profit"],period["priced"]), (2,30,None,0))
+
+    def test_a_sale_belongs_to_the_day_its_invoice_was_posted_not_to_the_date_written_on_the_draft(self):
+        # The draft is created when the customer agrees and posted at pickup; its date can also be edited.
+        report = self.report([row(12,"fulfilled","picked up later",sale_age=0,dated=10,cost="5"),
+                              row(3,"fulfilled","dated ahead",sale_age=1,dated=-3,cost="5"),
+                              row(40,"fulfilled","dated today, posted long ago",sale_age=20,dated=0,cost="5")])
+        week, month, quarter = report["periods"]
+        self.assertEqual([(p["invoices"],p["turnover"],p["profit"]) for p in (week,month,quarter)],
+                         [(2,30,20),(3,45,30),(3,45,30)])
+        self.assertEqual({i["id"]: (i["day"],i["soldDay"]) for i in report["invoices"]}, {
+            "picked up later": ("2026-11-12","2026-11-22"), "dated ahead": ("2026-11-25","2026-11-21"),
+            "dated today, posted long ago": ("2026-11-22","2026-11-02")})
