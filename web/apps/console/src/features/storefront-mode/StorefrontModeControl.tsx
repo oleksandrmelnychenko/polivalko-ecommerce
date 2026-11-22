@@ -1,6 +1,6 @@
 import { ActionIcon, Alert, Button, Group, Radio, Stack, Text, TextInput } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
-import { IconArrowDown, IconArrowUp, IconBuildingStore, IconChevronDown, IconPackage, IconPlus, IconSearch, IconX } from '@tabler/icons-react'
+import { IconArrowDown, IconArrowUp, IconBuildingStore, IconChevronDown, IconGripVertical, IconPackage, IconPlus, IconSearch, IconX } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import type { components } from '@polivalko/shared/api/schema'
 import { formatMoney } from '@polivalko/shared/lib/format'
@@ -68,22 +68,32 @@ function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: 
   const [mode, setMode] = useState(initial.mode)
   const [through, setThrough] = useState(initial.through ?? '')
   const [pins, setPins] = useState<string[]>(initial.pinnedProductIds ?? [])
+  const [draggedId, setDraggedId] = useState<string | null>(null)
+  const [targetId, setTargetId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [term] = useDebouncedValue(search.trim(), 250)
   const results = useApiQuery('storefront-search:' + term, () => api.GET('/api/v1/products',
     { params: { query: { q: term, sort: 'seasonal', pageSize: 8 } } }), { enabled: Boolean(term) })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const preview = useApiQuery('storefront-preview:' + mode + ':' + pins.join(','), () =>
+  // Reordering the same pins only changes their positions, not the automatic selections.
+  const preview = useApiQuery('storefront-preview:' + mode + ':' + [...pins].sort().join(','), () =>
     api.GET('/api/v1/console/catalog/storefront-mode/preview', { params: { query: { mode, pinned: pins } }, cache: 'no-store' }))
   const end = mode === 'seasonal' || !through ? null : through
   const invalid = Boolean(end && end < kyivDate())
   const dirty = mode !== baseline.mode || end !== (baseline.through ?? null) || pins.join() !== (baseline.pinnedProductIds ?? []).join()
-  const missing = preview.status === 'ready' ? pins.filter(id => !preview.data?.some(product => product.id === id)) : []
-  function movePin(index: number, offset: number) {
+  const byId = new Map(preview.data?.map(product => [product.id, product]))
+  const products = [...pins.flatMap(id => byId.get(id) ?? []), ...(preview.data ?? []).filter(product => !pins.includes(product.id))]
+  const missing = preview.status === 'ready' ? pins.filter(id => !byId.has(id)) : []
+  function movePin(index: number, destination: number) {
+    if (busy || index < 0 || destination < 0 || destination >= pins.length || destination === index) return
     const next = pins.slice()
-    next.splice(index + offset, 0, ...next.splice(index, 1))
+    next.splice(destination, 0, ...next.splice(index, 1))
     setPins(next)
+  }
+  function finishDrag() {
+    setDraggedId(null)
+    setTargetId(null)
   }
   async function save() {
     setBusy(true)
@@ -135,18 +145,47 @@ function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: 
         {missing.length > 0 && <Alert color="orange">Закріплених товарів поза каталогом · {missing.length}{' '}
           <Button variant="default" size="compact-xs" onClick={() => setPins(pins.filter(id => !missing.includes(id)))}>Зняти закріплення з недоступних</Button></Alert>}
         {preview.status !== 'ready' ? <PageState kind={preview.status} onRetry={preview.reload} /> :
-          preview.data?.length ? <ol className="storefront-mode-products">{preview.data.map((product, index) => <li key={product.id}>
-            <span className="storefront-mode-rank" aria-hidden="true">{index + 1}</span>
-            <ProductInfo product={product} />
-            {pins.includes(product.id) && <div className="storefront-pin-actions"><TableChip value="Закріплено" tone="product" />
-              <ActionIcon variant="default" size="sm" aria-label={'Підняти ' + product.name} disabled={busy || pins.indexOf(product.id) === 0}
-                onClick={() => movePin(pins.indexOf(product.id), -1)}><IconArrowUp size={14} /></ActionIcon>
-              <ActionIcon variant="default" size="sm" aria-label={'Опустити ' + product.name} disabled={busy || pins.indexOf(product.id) === pins.length - 1}
-                onClick={() => movePin(pins.indexOf(product.id), 1)}><IconArrowDown size={14} /></ActionIcon>
-              <ActionIcon variant="default" size="sm" aria-label={'Відкріпити ' + product.name} disabled={busy}
-                onClick={() => setPins(pins.filter(id => id !== product.id))}><IconX size={14} /></ActionIcon>
-            </div>}
-          </li>)}</ol> : <Text size="sm">Опублікованих товарів поки немає.</Text>}
+          products.length ? <ol className="storefront-mode-products">{products.map((product, index) => {
+            const pinIndex = pins.indexOf(product.id)
+            const canDrop = !busy && draggedId !== null && draggedId !== product.id && pinIndex >= 0
+            return <li key={product.id} data-dragging={draggedId === product.id || undefined}
+              data-drop-target={canDrop && targetId === product.id || undefined}
+              onDragOver={event => {
+                if (!canDrop) return
+                event.preventDefault()
+                event.dataTransfer.dropEffect = 'move'
+                setTargetId(product.id)
+              }}
+              onDragLeave={event => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null) && targetId === product.id) setTargetId(null)
+              }}
+              onDrop={event => {
+                if (!canDrop) return
+                event.preventDefault()
+                movePin(pins.indexOf(draggedId), pinIndex)
+                finishDrag()
+              }}>
+              <span className="storefront-mode-rank" aria-hidden="true">{index + 1}</span>
+              <ProductInfo product={product} />
+              {pinIndex >= 0 && <div className="storefront-pin-actions">
+                <span className="app-table-chip is-product storefront-pin-grip" draggable={!busy && pins.length > 1}
+                  title={pins.length > 1 ? 'Перетягнути на місце іншого закріпленого товару' : 'Закріплено'}
+                  onDragStart={event => {
+                    event.dataTransfer.effectAllowed = 'move'
+                    event.dataTransfer.setData('application/x-storefront-pin', product.id)
+                    setDraggedId(product.id)
+                  }} onDragEnd={finishDrag}>
+                  {pins.length > 1 && <IconGripVertical size={14} aria-hidden="true" />}Закріплено
+                </span>
+                <ActionIcon variant="default" size="sm" aria-label={'Підняти ' + product.name} disabled={busy || pinIndex === 0}
+                  onClick={() => movePin(pinIndex, pinIndex - 1)}><IconArrowUp size={14} /></ActionIcon>
+                <ActionIcon variant="default" size="sm" aria-label={'Опустити ' + product.name} disabled={busy || pinIndex === pins.length - 1}
+                  onClick={() => movePin(pinIndex, pinIndex + 1)}><IconArrowDown size={14} /></ActionIcon>
+                <ActionIcon variant="default" size="sm" aria-label={'Відкріпити ' + product.name} disabled={busy}
+                  onClick={() => setPins(pins.filter(id => id !== product.id))}><IconX size={14} /></ActionIcon>
+              </div>}
+            </li>
+          })}</ol> : <Text size="sm">Опублікованих товарів поки немає.</Text>}
       </section>
       {error && <Alert color="red" role="alert">{error}</Alert>}
     </Stack>
