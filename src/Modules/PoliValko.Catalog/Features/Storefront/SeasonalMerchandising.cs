@@ -9,15 +9,16 @@ namespace PoliValko.Catalog.Features.Storefront;
 internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
 {
     private readonly SemaphoreSlim _refresh = new(1, 1);
+    private const string PlantCovers = "Укривні матеріали";
 
     internal static string[] PriorityCategories(DateOnly day) => day.Month switch
     {
-        11 or 12 => ["novyi-rik", "Обігрівачі", "Годівниці", "Укривні матеріали"],
+        11 or 12 => ["novyi-rik", "Обігрівачі", "Годівниці", PlantCovers],
         1 => ["Обігрівачі", "Годівниці", "Насіння", "Грунти та добавки"],
-        2 or 3 => ["Насіння", "Грунти та добавки", "Горщики", "Укривні матеріали", "Гілкорізи/Сучкорізи/Секатори/Ножиці"],
+        2 or 3 => ["Насіння", "Грунти та добавки", "Горщики", PlantCovers, "Гілкорізи/Сучкорізи/Секатори/Ножиці"],
         4 or 5 => ["vse-dlia-roslyn", "vse-dlia-polyvu", "Композитні грядки"],
         6 or 7 or 8 => ["vse-dlia-polyvu", "vse-dlia-vidpochynku", "Хімія для басейнів"],
-        _ => ["Гілкорізи/Сучкорізи/Секатори/Ножиці", "Насіння газонних трав", "Укривні матеріали", "Септик/Компост", "Все для прибирання"],
+        _ => ["Гілкорізи/Сучкорізи/Секатори/Ножиці", "Насіння газонних трав", PlantCovers, "Септик/Компост", "Все для прибирання"],
     };
 
     public async Task<IQueryable<Product>> SortAsync(IQueryable<Product> products, IReadOnlyList<Category> categories,
@@ -26,10 +27,15 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
     {
         var priority = PriorityCategories(today);
         var byParent = categories.ToLookup(c => c.ParentId);
-        var families = priority.Select(key => categories.Where(c => c.Slug == key || c.Name == key)
-            .SelectMany(c => CategoryQueries.Descendants(c.Id, byParent).Prepend(c.Id)).Distinct().ToArray())
+        Guid[] Family(string key) => categories.Where(c => c.Slug == key || c.Name == key)
+            .SelectMany(c => CategoryQueries.Descendants(c.Id, byParent).Prepend(c.Id)).Distinct().ToArray();
+        var seasonalMode = mode == ProductSort.Seasonal;
+        var coverCategories = seasonalMode ? Family(PlantCovers) : [];
+        var familyKeys = seasonalMode ? priority.Append(PlantCovers).Distinct() : priority;
+        var families = familyKeys.Select(key => key == PlantCovers && seasonalMode ? coverCategories : Family(key))
             .Where(family => family.Length > 0).ToArray();
         var seasonal = families.SelectMany(family => family).Distinct().ToArray();
+        var shadeSeason = today.Month is >= 5 and <= 8;
         var signals = await DemandAsync(db, today, ct);
         var ids = signals.Select(s => s.ProductId).ToArray();
         var trends = signals.Select(s => Math.Max(0, s.Week - s.Previous / 3m) * s.Week / (s.Week + 3m)).ToArray();
@@ -45,11 +51,18 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
                from rank in demand.DefaultIfEmpty()
                let available = p.Stock.Quantity - p.Stock.ReservedQuantity
                let sold = (decimal?)rank.Units
+               let title = p.DisplayName ?? p.Name
+               let matchesCoverSeason = shadeSeason
+                   ? EF.Functions.ILike(title, "сіт%затін%") || EF.Functions.ILike(title, "затін%сіт%")
+                   : EF.Functions.ILike(title, "%чох%") && (EF.Functions.ILike(title, "%рослин%") || EF.Functions.ILike(title, "%троянд%"))
+                     || EF.Functions.ILike(title, "%агроволокн%") && EF.Functions.ILike(title, "%біл%") && !EF.Functions.ILike(title, "%чорн%")
+                     || EF.Functions.ILike(title, "%від мороз%") || EF.Functions.ILike(title, "%від замороз%")
                // Zero sales count as slow movement only for established items with several units available.
                let cover = sold > 0 ? 28m * available / sold :
                    ((rank.ProductId == null || sold == 0) && available >= 3 && p.CreatedAt < measuredSince ? 3650m : 0m)
                select new { p, available, trend = (decimal?)rank.Trend ?? 0m, cover,
-                   seasonal = seasonal.Contains(p.CategoryId), demand = (long?)rank.Demand ?? 0L };
+                   seasonal = seasonal.Contains(p.CategoryId) && (!coverCategories.Contains(p.CategoryId) || matchesCoverSeason),
+                   demand = (long?)rank.Demand ?? 0L };
         Guid[] leaders = [];
         if (mode == ProductSort.Seasonal && acrossCategories && string.IsNullOrWhiteSpace(term) && families.Length > 1)
         {
