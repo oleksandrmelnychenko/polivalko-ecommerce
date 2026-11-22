@@ -41,6 +41,48 @@ public sealed class StorefrontModeTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Summer_leaders_use_distinct_monthly_receipts_and_rotate_available_seasonal_products()
+    {
+        var hose = await api.AddProductAsync("vse-dlia-polyvu", "Садовий шланг", 120);
+        var grill = await api.AddProductAsync("vse-dlia-vidpochynku", "Мангал", 100);
+        var hammock = await api.AddProductAsync("vse-dlia-vidpochynku", "Гамак", 110);
+        var soldOut = await api.AddProductAsync("vse-dlia-polyvu", "Дощувач", 110, stock: 0);
+        var offSeason = await api.AddProductAsync("novyi-rik", "Ялинка", 110);
+        Product[] items = [hose, grill, hammock, soldOut, offSeason];
+        var ids = items.Select(p => p.Id).ToArray();
+        await api.WithScopeAsync(async services =>
+        {
+            var db = services.GetRequiredService<PoliValkoDbContext>();
+            foreach (var item in items)
+            {
+                var code = item.Id.ToString();
+                await db.Set<Product>().Where(p => p.Id == item.Id)
+                    .ExecuteUpdateAsync(s => s.SetProperty(p => p.NavkoloId, "dntrade-code:" + code), Ct);
+                // Repeated lines and bulk quantities in a single receipt count as one purchase.
+                var lineCount = item.Id == hammock.Id ? 6 : 1;
+                var receipts = item.Id == hose.Id ? 4 : item.Id == grill.Id ? 3 : item.Id == hammock.Id ? 1 : 8;
+                await db.Database.ExecuteSqlAsync($"""
+                    INSERT INTO accounting.documents(id,source_account,source_id,entity_type,kind,day,status,store_ids,total,details)
+                    SELECT gen_random_uuid(),'valko-dntrade',gen_random_uuid()::text,'receipt','cash',
+                        make_date(2036,m,1),'active',ARRAY[]::text[],100,jsonb_build_object('products',
+                            (SELECT jsonb_agg(jsonb_build_object('product',jsonb_build_object('code',{code}),'quantity',50))
+                             FROM generate_series(1,{lineCount})))
+                    FROM generate_series(5,7) m CROSS JOIN generate_series(1,{receipts})
+                    """, Ct);
+            }
+            var merchandising = services.GetRequiredService<SeasonalMerchandising>();
+            var categories = await CategoryQueries.LoadVisibleCategoriesAsync(db, Ct);
+            foreach (var (month, expected) in new[] { (7, hammock.Id), (5, hose.Id), (6, grill.Id) })
+            {
+                var ranked = await merchandising.SortAsync(db.Set<Product>().Where(p => ids.Contains(p.Id)), categories,
+                    null, db, new DateOnly(2036, 11, 15), Ct, seasonDate: new DateOnly(2037, month, 15));
+                (await ranked.Select(p => p.Id).FirstAsync(Ct)).ShouldBe(expected);
+            }
+            return true;
+        });
+    }
+
+    [Fact]
     public async Task Seasonal_leaders_rotate_available_families_before_pagination_and_fill_empty_slots()
     {
         var irrigation = new List<Product>();

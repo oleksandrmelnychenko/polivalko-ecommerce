@@ -58,7 +58,11 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
                    family = match.Family ?? -1,
                    demand = (long?)rank.Demand ?? 0L };
         Guid[] leaders = [];
-        if (seasonalMode && acrossCategories && string.IsNullOrWhiteSpace(term) && purposes.Families > 1)
+        Guid? monthlyLeader = null;
+        var automaticListing = seasonalMode && acrossCategories && string.IsNullOrWhiteSpace(term);
+        if (automaticListing && season.Month is >= 5 and <= 7)
+            monthlyLeader = await SummerSalesLeader.PickAsync(products, categories, db, cache, today, season, purposes.Rows, ct);
+        if (automaticListing && purposes.Families > 1)
         {
             var candidates = scored.Where(s => s.seasonal && s.available >= 1 && s.p.Price.Amount > 0)
                 .OrderByDescending(s => s.demand).ThenByDescending(s => s.p.Images.Any())
@@ -70,6 +74,7 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
         if (pinned is { Length: > 0 })
             first = first.ThenByDescending(s => pinned.Contains(s.p.Id)).ThenBy(s => Array.IndexOf(pinned, s.p.Id));
         first = first.ThenByDescending(s => s.available >= 1 && s.p.Price.Amount > 0);
+        if (monthlyLeader is { } leader) first = first.ThenByDescending(s => s.p.Id == leader);
         var ordered = mode switch
         {
             ProductSort.Trending => first.ThenByDescending(s => s.trend).ThenByDescending(s => s.seasonal),
