@@ -1,10 +1,10 @@
 import { Button, Group, Pagination, Select, TextInput } from '@mantine/core'
-import { IconChartBar, IconChartPie, IconChevronDown, IconChevronRight, IconFileInvoice, IconSearch } from '@tabler/icons-react'
+import { IconChartBar, IconChartPie, IconSearch } from '@tabler/icons-react'
 import { useState } from 'react'
-import { DocumentLink } from '@/shared/ui/DocumentLink'
+import { PurchaseInvoices } from './PurchaseInvoices'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { MetricLabel } from '@/shared/ui/MetricCard'
-import { dateLabel, dateRange, formatAmount, formatPrice } from '@/shared/lib/salesFormat'
+import { dateRange, formatAmount, formatPrice } from '@/shared/lib/salesFormat'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PageState } from '@/shared/ui/PageState'
 import { getProductProfit, type DocumentSales } from '../api/dashboardApi'
@@ -84,17 +84,7 @@ function PeriodProducts({ data, open }: { data: DocumentSales; open: (p: Product
             {p.cost != null && <div><dt>Собівартість</dt><dd>{formatPrice(p.cost)}</dd></div>}
             <div className="dash-turnover-share-chip"><dt><IconChartPie size={13} aria-hidden="true" />Частка обороту</dt><dd>{share(p.share)}</dd></div>
           </dl>
-          {!!p.purchaseSources?.length && <details className="dash-cost-sources">
-            <summary><IconFileInvoice size={15} aria-hidden="true" />Прибуткові накладні
-              <span className="dash-invoice-count">{p.purchaseSources.length}</span><IconChevronDown size={13} aria-hidden="true" /></summary>
-            <div className="dash-invoice-list">
-              {p.purchaseSources.map(source => <DocumentLink key={source.id} id={source.id}>
-                <span>{source.number ? '№ ' + source.number : 'Без номера'}</span>
-                <time dateTime={source.day}>{dateLabel(source.day)}</time>
-                <IconChevronRight size={14} aria-hidden="true" />
-              </DocumentLink>)}
-            </div>
-          </details>}
+          {!!p.purchaseSources?.length && <PurchaseInvoices invoices={p.purchaseSources} />}
           {p.profit == null && p.lines != null && <span className="app-cell-sub">
             Бракує собівартості · рядків {formatAmount(p.lines - p.costedLines)} із {formatAmount(p.lines)}.
             {p.costedLines > 0 && <> Прибуток лише за оціненими рядками {formatPrice(p.coveredNet - p.coveredCost)}.</>}

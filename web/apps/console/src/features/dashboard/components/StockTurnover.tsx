@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { problemMessage } from '@/shared/api/problem'
 import { onConsoleEvent } from '@/shared/lib/events'
-import { dateLabel, dateRange, formatPrice } from '@/shared/lib/salesFormat'
+import { dateRange, formatPrice } from '@/shared/lib/salesFormat'
 import { PageState } from '@/shared/ui/PageState'
 import { TableChip } from '@/shared/ui/TableChip'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
@@ -50,10 +50,7 @@ export function StockTurnover({ days }: { days: number }) {
         <span>Чистий оборот товарів із малим залишком</span>
         <div className="dash-product-summary-value"><strong>{report.net != null ? formatPrice(report.net) : 'Оборот невідомий'}</strong>
           {report.share != null && <span className="dash-share" title={'Частка від загального обороту ' + formatPrice(report.periodNet)}>{formatShare(report.share)} обороту</span>}</div>
-        <small>{dateRange(report.start, report.through)} · загалом {formatPrice(report.periodNet)}</small>
-        <small>Замовлення постачальникам · {report.supplierSource.documents} активних
-          {report.supplierSource.latest && ', останнє від ' + dateLabel(report.supplierSource.latest)}.
-          {' '}Підтверджене надходження за {report.coverDays} дн. · {report.withDatedSupply} тов.</small>
+        <small>{dateRange(report.start, report.through)}</small>
         {report.periodNet <= 0 && <small>Частка доступна за додатного загального обороту.</small>}
         {report.unknownCount > 0 && <small>Товарів без підтвердженого обороту · {numberFormat.format(report.unknownCount)}. У підсумку враховано лише підтверджені суми.</small>}
       </div>}

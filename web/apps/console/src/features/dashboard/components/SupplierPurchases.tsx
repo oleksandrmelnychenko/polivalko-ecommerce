@@ -4,6 +4,7 @@ import { dateLabel, formatPrice } from '@/shared/lib/salesFormat'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
 import type { LastPurchase, SupplierBudget } from '../api/dashboardApi'
 import { numberFormat } from '../lib/insights'
+import { PurchaseInvoices } from './PurchaseInvoices'
 
 const priceFormat = new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 6 })
 const issueText = {
@@ -19,7 +20,7 @@ export function ReceiptPrice({ purchase, year }: { purchase: LastPurchase | null
       {purchase.unitPrice != null && <> · {priceFormat.format(purchase.unitPrice)} ₴/{purchase.unit}</>}
       {purchase.unitPrice != null && purchase.day.slice(0, 4) < year && ' · ціна попередніх років'}
     </div>
-    {purchase.documentId && <DocumentLink id={purchase.documentId}>Прибуткова накладна №{purchase.number || '—'} від {dateLabel(purchase.day)}</DocumentLink>}
+    {purchase.documentId && <PurchaseInvoices invoices={[{ id: purchase.documentId, number: purchase.number, day: purchase.day }]} />}
     {purchase.issue && <span>{issueText[purchase.issue]}</span>}
   </div>
 }
