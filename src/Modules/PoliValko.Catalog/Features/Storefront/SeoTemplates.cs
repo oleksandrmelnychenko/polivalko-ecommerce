@@ -18,11 +18,19 @@ internal static partial class SeoTemplates
     public static (string? Title, string? Description) Fill(Pair? template, string? title, string? description, Values values) =>
         (Pick(title, template?.Title, values), Pick(description, template?.Description, values));
 
-    public static string Price(decimal amount) => $"{amount.ToString(amount % 1 == 0 ? "N0" : "N2", Ukrainian)} грн";
+    /// <summary>Ціна для шаблону; у товару без ціни (0) — null, і шаблон із <c>{price}</c> не застосовується.</summary>
+    public static string? Price(decimal amount) =>
+        amount > 0 ? $"{amount.ToString(amount % 1 == 0 ? "N0" : "N2", Ukrainian)} грн" : null;
 
     private static string? Pick(string? own, string? template, Values values)
     {
         if (!string.IsNullOrWhiteSpace(own) || string.IsNullOrWhiteSpace(template))
+        {
+            return own;
+        }
+
+        // Без ціни шаблон «ціна {price}» дав би «ціна 0 грн» або обірвану фразу, тому його не застосовуємо.
+        if (values.Price is null && template.Contains("{price}", StringComparison.Ordinal))
         {
             return own;
         }

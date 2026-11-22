@@ -56,10 +56,10 @@ internal static class GetProduct
             : (await visibleProducts
                 .AsNoTracking()
                 .Where(p => p.VariantGroup == row.VariantGroup && p.IsVisible && p.VariantLabel != null)
-                .Select(p => new { p.Id, p.Slug, Label = p.VariantLabel!, Quantity = (p.Stock.Quantity - p.Stock.ReservedQuantity) })
+                .Select(p => new { p.Id, p.Slug, Label = p.VariantLabel!, Quantity = (p.Stock.Quantity - p.Stock.ReservedQuantity), p.Price.Amount })
                 .ToListAsync(ct))
                 .OrderBy(v => v.Label, CategoryQueries.NaturalOrder)
-                .Select(v => new ProductVariantDto(v.Slug, v.Label, v.Quantity >= 1, v.Id == row.Id))
+                .Select(v => new ProductVariantDto(v.Slug, v.Label, ProductListing.IsPurchasable(v.Quantity, v.Amount), v.Id == row.Id))
                 .ToList();
 
         var labels = await ProductLabelSet.LoadAsync(db, [row.Id], time.GetUtcNow(), ct);
@@ -79,7 +79,7 @@ internal static class GetProduct
             row.DescriptionHtml,
             MoneyDto.Hryvnia(row.Amount),
             ProductListing.OldPrice(row.Amount, row.OldAmount),
-            row.Quantity >= 1,
+            ProductListing.IsPurchasable(row.Quantity, row.Amount),
             row.Category,
             row.Images,
             row.Attributes,

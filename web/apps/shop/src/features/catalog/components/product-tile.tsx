@@ -8,10 +8,12 @@ import { sized } from "@polivalko/shared/lib/images";
 import { CircleCheckIcon } from "@polivalko/shared/ui/icons";
 import { toCartProduct } from "../lib/cart-product";
 import { discountPercent } from "../lib/discount";
+import { canBuy, hasPrice, PRICE_ON_REQUEST } from "@/shared/lib/price";
 import { TileFlashes } from "./tile-flashes";
 
 export function ProductTile({ product, priority }: { product: ProductListItem; priority?: boolean }) {
   const discount = discountPercent(product.price, product.oldPrice);
+  const buyable = canBuy(product);
   const image = product.imageUrl ? sized(product.imageUrl, "(max-width: 48rem) 46vw, (max-width: 80rem) 30vw, 320px", 330) : null;
   const href = `/product/${product.slug}`;
   return (
@@ -34,7 +36,7 @@ export function ProductTile({ product, priority }: { product: ProductListItem; p
         <p className="tile__name">
           <Link href={href}>{product.name}</Link>
         </p>
-        {product.inStock ? (
+        {buyable ? (
           <p className="tile__stock">
             <CircleCheckIcon />
             В наявності
@@ -42,19 +44,25 @@ export function ProductTile({ product, priority }: { product: ProductListItem; p
         ) : (
           <p className="tile__stock tile__stock--out">Немає в наявності</p>
         )}
-        <p className="tile__price">
-          <strong className={discount ? "price-sale" : undefined}>
-            {discount && <span className="visually-hidden">Нова ціна </span>}
-            <span className="money">{formatMoney(product.price)}</span>
-          </strong>
-          {product.oldPrice && discount && (
-            <s className="price-old">
-              <span className="visually-hidden">Стара ціна </span>
-              <span className="money">{formatMoney(product.oldPrice)}</span>
-            </s>
-          )}
-        </p>
-        {product.inStock ? (
+        {hasPrice(product.price) ? (
+          <p className="tile__price">
+            <strong className={discount ? "price-sale" : undefined}>
+              {discount && <span className="visually-hidden">Нова ціна </span>}
+              <span className="money">{formatMoney(product.price)}</span>
+            </strong>
+            {product.oldPrice && discount && (
+              <s className="price-old">
+                <span className="visually-hidden">Стара ціна </span>
+                <span className="money">{formatMoney(product.oldPrice)}</span>
+              </s>
+            )}
+          </p>
+        ) : (
+          <p className="tile__price">
+            <strong className="price-ask">{PRICE_ON_REQUEST}</strong>
+          </p>
+        )}
+        {buyable ? (
           <AddToCart product={toCartProduct(product)} inStock />
         ) : (
           <Link href={href} className="tile__buy tile__buy--off">
