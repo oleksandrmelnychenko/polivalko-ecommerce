@@ -1596,6 +1596,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/orders/open-carts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Відкриті кошики покупців із поточними цінами й доступними залишками */
+        get: operations["ConsoleListOpenCarts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/orders": {
         parameters: {
             query?: never;
@@ -3711,6 +3728,15 @@ export interface components {
             lowStock: components["schemas"]["DashboardLowStockDto"][];
             byDelivery: components["schemas"]["DashboardDeliveryDto"][];
         };
+        ConsoleOpenCart: {
+            /** Format: uuid */
+            id: string;
+            isGuest: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+            items: components["schemas"]["QuoteLineDto"][];
+            subtotal: components["schemas"]["MoneyDto"];
+        };
         ConsoleOrderCountsDto: {
             /** Format: int32 */
             all: number;
@@ -4812,6 +4838,17 @@ export interface components {
         };
         PagedResponseOfConsoleCustomerDto: {
             items: components["schemas"]["ConsoleCustomerDto"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            totalItems: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
+        PagedResponseOfConsoleOpenCart: {
+            items: components["schemas"]["ConsoleOpenCart"][];
             /** Format: int32 */
             page: number;
             /** Format: int32 */
@@ -9824,6 +9861,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConsoleSearchDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleListOpenCarts: {
+        parameters: {
+            query?: {
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagedResponseOfConsoleOpenCart"];
                 };
             };
             /** @description Unauthorized */

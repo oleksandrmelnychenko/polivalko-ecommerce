@@ -35,11 +35,15 @@ export function useCartQuote() {
 
   useEffect(() => {
     const t = setTimeout(() => void refresh(), 200);
+    const timer = items.length ? window.setInterval(() => {
+      if (document.visibilityState === "visible") void refresh();
+    }, 30_000) : undefined;
     return () => {
       clearTimeout(t);
+      window.clearInterval(timer);
       latest.current?.abort();
     };
-  }, [refresh]);
+  }, [items.length, refresh]);
 
   const current = result?.key === key;
   return { items, quote: items.length ? result?.quote ?? null : null, current, failed: current && !result?.quote, refresh };

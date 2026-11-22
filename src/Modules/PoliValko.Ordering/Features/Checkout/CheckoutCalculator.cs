@@ -44,6 +44,12 @@ internal sealed class CheckoutCalculator(ICatalogPricing pricing)
     public async Task<(IReadOnlyList<PricedLine> Lines, decimal Subtotal)> PriceAsync(IReadOnlyList<CartLineRequest> items, CancellationToken ct)
     {
         var products = await pricing.GetAsync(items.Select(i => i.ProductId).ToList(), ct);
+        return Price(items, products);
+    }
+
+    internal static (IReadOnlyList<PricedLine> Lines, decimal Subtotal) Price(
+        IReadOnlyList<CartLineRequest> items, IReadOnlyDictionary<Guid, ProductPricing> products)
+    {
         var lines = new List<PricedLine>(items.Count);
 
         foreach (var item in items)

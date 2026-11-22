@@ -8,6 +8,8 @@ using PoliValko.Infrastructure.Persistence;
 using PoliValko.Ordering.Domain;
 using PoliValko.Ordering.Features.Cart;
 using PoliValko.Ordering.Features.Checkout;
+using PoliValko.Ordering.Features.Console.Orders;
+using PoliValko.SharedKernel;
 
 namespace PoliValko.IntegrationTests;
 
@@ -17,6 +19,28 @@ public sealed class ServerCartApiTests(ApiFactory api)
     private static async Task<ServerCartDto> Open(HttpClient client) => await (await client.PostAsync("/api/v1/cart/open", null, Ct)).ReadAsync<ServerCartDto>();
     private static async Task<ServerCartDto> Save(HttpClient client, ServerCartDto cart, Guid product, int quantity) =>
         await (await client.PutJsonAsync("/api/v1/cart/", new SaveCartRequest(cart.Id, cart.Revision, [new(product, quantity)]))).ReadAsync<ServerCartDto>();
+
+    [Fact]
+    public async Task Staff_see_open_guest_cart_with_live_stock_until_it_becomes_an_order()
+    {
+        var product = await api.AddProductAsync("vse-dlia-polyvu", "Кошик у консолі", 85, 5);
+        using var shopper = await Accounts.AnonymousAsync(api);
+        using var manager = await Staff.ManagerAsync(api);
+        var cart = await Save(shopper, await Open(shopper), product.Id, 2);
+        const string path = "/api/v1/console/orders/open-carts";
+        (await shopper.GetAsync(path, Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        await api.WithDbAsync(db => db.Set<ProductStock>().Where(s => s.ProductId == product.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.Quantity, 3m), Ct));
+        var result = await manager.ReadAsync<PagedResponse<ConsoleOpenCart>>(path);
+        var row = result.Items.Single(c => c.Id == cart.Id);
+        row.IsGuest.ShouldBeTrue();
+        row.Items.ShouldHaveSingleItem().AvailableQuantity.ShouldBe(3);
+        row.Subtotal.ShouldBe(MoneyDto.Hryvnia(170m));
+        var checkout = new CartCheckoutRequest(cart.Id, cart.Revision, CheckoutApiTests.Order(product.Id, 2, "170.00", CheckoutApiTests.UniquePhone()));
+        var order = await (await shopper.PostJsonAsync("/api/v1/cart/checkout", checkout)).ReadAsync<OrderCreatedDto>(HttpStatusCode.Created);
+        (await manager.ReadAsync<PagedResponse<ConsoleOpenCart>>(path)).Items.Any(c => c.Id == cart.Id).ShouldBeFalse();
+        (await manager.GetAsync($"/api/v1/console/orders/{order.Number}", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
 
     [Fact]
     public async Task Opening_an_empty_cart_keeps_its_identity_without_storing_a_row()

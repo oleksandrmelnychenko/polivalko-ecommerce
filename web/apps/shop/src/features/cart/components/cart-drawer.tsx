@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import { formatPrice } from "@polivalko/shared/lib/format";
 import { thumb } from "@polivalko/shared/lib/images";
 import { CloseIcon } from "@polivalko/shared/ui/icons";
@@ -10,8 +10,22 @@ import { QuantityStepper } from "@/shared/ui/quantity-stepper";
 import { useCart } from "./cart-provider";
 
 export function CartDrawer() {
-  const { ready, saving, error, lines, isOpen, close, setQuantity, remove, subtotal, count } = useCart();
+  const { ready, saving, error, cart, lines, isOpen, close, setQuantity, remove, count, refresh } = useCart();
   const dialog = useRef<HTMLDialogElement>(null);
+  const quoted = new Map(cart?.items.map(item => [item.productId, item]));
+  const amount = (line: typeof lines[number]) =>
+    quoted.get(line.productId)?.issue === "unavailable" ? 0 : Number(line.price) * line.quantity;
+  const subtotal = lines.reduce((sum, line) => sum + amount(line), 0);
+  const blocked = cart?.items.some(item => item.issue) ?? false;
+  const sync = useEffectEvent(() => {
+    if (document.visibilityState === "visible" && ready && !saving && lines.length) void refresh();
+  });
+  useEffect(() => {
+    if (!isOpen) return;
+    sync();
+    const timer = window.setInterval(sync, 30_000);
+    return () => window.clearInterval(timer);
+  }, [isOpen]);
 
   useEffect(() => {
     const el = dialog.current;
@@ -49,13 +63,17 @@ export function CartDrawer() {
                 <span className="line__photo">{line.imageUrl && <img src={thumb(line.imageUrl)} alt="" width={72} height={72} loading="lazy" />}</span>
                 <div>
                   <p className="line__name">
-                    <Link href={`/product/${line.slug}`} onClick={close}>
+                    {line.slug ? <Link href={`/product/${line.slug}`} onClick={close}>
                       {line.name}
-                    </Link>
+                    </Link> : line.name}
                   </p>
                   <p className="code line__sku" translate="no">
                     {line.sku}
                   </p>
+                  {quoted.get(line.productId)?.issue && (
+                    <p role="status">{quoted.get(line.productId)?.issue === "unavailable" ? "Немає в наявності" :
+                      `Доступно лише ${quoted.get(line.productId)?.availableQuantity} шт.`}</p>
+                  )}
                   <div className="line__controls">
                     <QuantityStepper small value={line.quantity} onChange={(q) => setQuantity(line.productId, q)} label={`Кількість: ${line.name}`} />
                     <button type="button" className="remove" onClick={() => remove(line.productId)}>
@@ -63,7 +81,7 @@ export function CartDrawer() {
                     </button>
                   </div>
                 </div>
-                <p className="line__total"><span className="money">{formatPrice(Number(line.price) * line.quantity)}</span></p>
+                <p className="line__total"><span className="money">{formatPrice(amount(line))}</span></p>
               </li>
             ))}
           </ul>
@@ -78,9 +96,9 @@ export function CartDrawer() {
             <p className="muted" style={{ fontSize: "var(--text-sm)" }}>
               Ціни й наявність ще раз перевіримо під час оформлення. Доставка за тарифами перевізника.
             </p>
-            <Link href="/checkout" className="btn btn--wide" onClick={close}>
+            {!blocked && <Link href="/checkout" className="btn btn--wide" onClick={close}>
               Оформити замовлення
-            </Link>
+            </Link>}
             <Link href="/cart" className="btn btn--quiet btn--wide" onClick={close}>
               Перейти в кошик
             </Link>

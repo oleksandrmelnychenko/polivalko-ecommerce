@@ -15,6 +15,9 @@ internal static class ConsoleOrderEndpoints
     {
         var group = console.MapGroup("/orders").WithTags("Console").RequireStaff(PermissionKeys.OrdersView);
 
+        group.MapGet("/open-carts", ListOpenCarts.HandleAsync).WithName("ConsoleListOpenCarts")
+            .WithSummary("Відкриті кошики покупців із поточними цінами й доступними залишками");
+
         group.MapGet(string.Empty, ListOrders.HandleAsync)
             .WithName("ConsoleListOrders")
             .WithEnumQuery<OrderStatus>("status")

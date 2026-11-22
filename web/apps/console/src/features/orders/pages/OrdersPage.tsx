@@ -1,5 +1,5 @@
 import { Button, Stack, Text } from '@mantine/core'
-import { IconDownload } from '@tabler/icons-react'
+import { IconDownload, IconShoppingCart } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { OrderStatus } from '@polivalko/shared/api/types'
@@ -19,6 +19,8 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { changeOrderStatus, exportOrders, getOrderCounts, getOrders, type OrderRow } from '../api/ordersApi'
 import { OrdersBulkBar } from '../components/OrdersBulkBar'
+import { OpenCarts } from '../components/OpenCarts'
+import { useSalesRefresh } from '../lib/useSalesRefresh'
 import { OrdersBulkConfirm } from '../components/OrdersBulkConfirm'
 import { ordersColumns } from '../components/ordersColumns'
 import { OrdersFilters } from '../components/OrdersFilters'
@@ -53,6 +55,13 @@ export function OrdersPage() {
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [showCarts, setShowCarts] = useState(false)
+  useSalesRefresh(() => {
+    if (!orders.isFetching && !counts.isFetching && !busy && !confirming && !showCarts) {
+      orders.reload()
+      counts.reload()
+    }
+  })
 
   const sorting = useMemo(() => sortToSorting(state.sort), [state.sort])
   const onSortingChange = useCallback((next: DataTableSortingState) => update({ sort: sortingToSort(next) }), [update])
@@ -134,14 +143,20 @@ export function OrdersPage() {
       <PageHeader
         title="Замовлення"
         actions={
+          <>
+          <Button variant="default" radius="xl" leftSection={<IconShoppingCart size={16} />} onClick={() => setShowCarts(true)}>
+            Відкриті кошики
+          </Button>
           <Can permission={PermissionKeys.Orders.Export}>
             <Button variant="default" radius="xl" leftSection={<IconDownload size={16} stroke={1.8} />} loading={exporting} onClick={exportCsv}>
               Експорт CSV
             </Button>
           </Can>
+          </>
         }
       />
 
+      {showCarts && <OpenCarts onClose={() => setShowCarts(false)} />}
       <OrdersStatusTabs status={state.status} counts={counts.status === 'ready' ? counts.data : undefined} onChange={(status) => update({ status })} />
 
       <OrdersFilters

@@ -5238,6 +5238,57 @@
         }
       }
     },
+    "/api/v1/console/orders/open-carts": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Відкриті кошики покупців із поточними цінами й доступними залишками",
+        "operationId": "ConsoleListOpenCarts",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfConsoleOpenCart"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/console/orders": {
       "get": {
         "tags": [
@@ -14744,6 +14795,38 @@
           }
         }
       },
+      "ConsoleOpenCart": {
+        "required": [
+          "id",
+          "isGuest",
+          "updatedAt",
+          "items",
+          "subtotal"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "isGuest": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteLineDto"
+            }
+          },
+          "subtotal": {
+            "$ref": "#/components/schemas/MoneyDto"
+          }
+        }
+      },
       "ConsoleOrderCountsDto": {
         "required": [
           "all",
@@ -19243,6 +19326,40 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ConsoleCustomerDto"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PagedResponseOfConsoleOpenCart": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalItems",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleOpenCart"
             }
           },
           "page": {
