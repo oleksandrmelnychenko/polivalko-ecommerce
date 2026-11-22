@@ -52,15 +52,23 @@ class SupplierPricesTests(TestCase):
         self.assertEqual([g["id"] for g in result["suppliers"]], ["valko-dntrade:partner", None])
         self.assertIsNone(result["suppliers"][1]["items"][0]["amount"])
 
-    def test_prior_year_receipt_prices_only_items_without_a_newer_receipt(self):
-        previous = (receipt("prior", day=date(2025, 12, 31), amount=Decimal("12")), True)
-        current = (receipt("current", day=date(2026, 1, 1), amount=Decimal("9")), True)
+    def test_receipt_older_than_a_year_prices_only_items_without_a_newer_receipt(self):
+        previous = (receipt("prior", day=date(2025, 11, 20), amount=Decimal("12")), True)
+        current = (receipt("current", day=date(2025, 11, 21), amount=Decimal("9")), True)
         base = dict(name="Товар", unit="шт", buyQuantity=Decimal(2))
         rows = [dict(base, id="a", sku="a", lastPurchase=latest_purchase([previous], "шт", 2)),
                 dict(base, id="b", sku="b", lastPurchase=latest_purchase([current, previous], "шт", 2))]
         result = supplier_budget(rows, date(2026, 11, 21))
         self.assertEqual((result["subtotal"], result["historicalCount"], result["historicalAmount"]), (14, 1, 8))
         self.assertEqual([(i["priceDay"], i["receiptId"]) for i in result["suppliers"][0]["items"]],
-                         [("2025-12-31", "prior"), ("2026-01-01", "current")])
+                         [("2025-11-20", "prior"), ("2025-11-21", "current")])
         invalid = latest_purchase([previous, (dict(current[0], amount=None), True)], "шт", 2)
         self.assertIsNone(invalid["amount"])
+
+    def test_a_purchase_price_is_old_after_a_year_not_at_the_turn_of_the_calendar_year(self):
+        base = dict(name="Товар", unit="шт", buyQuantity=Decimal(3))
+        receipts = dict(recent=(date(2026, 12, 30), "12"), year=(date(2026, 1, 2), "9"), older=(date(2026, 1, 1), "6"))
+        rows = [dict(base, id=key, sku=key, lastPurchase=latest_purchase(
+            [(receipt(key, day=day, amount=Decimal(amount)), True)], "шт", 3)) for key, (day, amount) in receipts.items()]
+        result = supplier_budget(rows, date(2027, 1, 2))
+        self.assertEqual((result["subtotal"], result["historicalCount"], result["historicalAmount"]), (27, 1, 6))

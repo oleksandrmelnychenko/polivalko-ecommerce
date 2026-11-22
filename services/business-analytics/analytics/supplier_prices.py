@@ -98,7 +98,9 @@ def latest_purchase(entries, unit, buy_quantity):
 
 def supplier_budget(rows, through):
     groups = {}
-    year_start = through.replace(month=1, day=1).isoformat()
+    # A price is old when its receipt is more than a year before the plan. The calendar year is no
+    # measure: on 2 January a receipt of 30 December is three days old. The console compares the same text.
+    year_ago = f"{through.year - 1:04d}{through.isoformat()[4:]}"
     historical_count, historical_amount = 0, Decimal(0)
     for row in rows:
         if row["buyQuantity"] is None:
@@ -112,7 +114,7 @@ def supplier_budget(rows, through):
             group["unpriced"] += 1
         else:
             group["subtotal"] += amount
-            if purchase["day"] < year_start:
+            if purchase["day"] < year_ago:
                 historical_count += 1
                 historical_amount += amount
         group["items"].append(dict(id=row["id"], sku=row["sku"], name=row["name"], quantity=row["buyQuantity"],

@@ -28,8 +28,9 @@ export function ReceiptPrice({ purchase }: { purchase: LastPurchase | null }) {
 export function BudgetBySupplier({ budget, count, through, days, cover, seasonal, basket }: {
   budget: SupplierBudget; count: number; through: string; days: number; cover: number; seasonal: boolean; basket: Basket
 }) {
-  const year = through.slice(0, 4)
-  const historical = budget.suppliers.flatMap(group => group.items.filter(item => item.priceDay && item.priceDay.slice(0, 4) < year)
+  // A price is old when its receipt is more than a year before the plan; the service counts by the same text.
+  const yearAgo = String(Number(through.slice(0, 4)) - 1).padStart(4, '0') + through.slice(4)
+  const historical = budget.suppliers.flatMap(group => group.items.filter(item => item.priceDay && item.priceDay < yearAgo)
     .map(item => ({ item, supplier: group.name })))
   const priced = count - budget.unpriced
   const selected = new Map(basket.picked.map(row => [row.id, row]))
@@ -68,7 +69,7 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
       <div className="dash-budget-context"><TableChip value={`Продажі за ${days} днів`} /><TableChip value={`Запас на ${cover} днів`} />
         <TableChip tone="source" value={seasonal ? 'З урахуванням сезону' : 'За поточним темпом'} /></div>
     </div>
-    {historical.length > 0 && <details className="dash-price-history"><summary>Товари з цінами попередніх років <TableChip tone="warning" value={numberFormat.format(historical.length) + ' поз.'} /><IconChevronDown size={16} aria-hidden="true" /></summary>
+    {historical.length > 0 && <details className="dash-price-history"><summary>Товари з цінами, старшими за рік <TableChip tone="warning" value={numberFormat.format(historical.length) + ' поз.'} /><IconChevronDown size={16} aria-hidden="true" /></summary>
       <ul>{historical.map(({ item, supplier }) => <li key={item.id}>
         <div className="dash-history-item"><strong>{item.name}</strong><span>{supplier || 'Уточнити постачальника'}</span></div>
         <div className="dash-history-amount"><span>{numberFormat.format(item.quantity)} {item.unit}{item.unitPrice != null && <> × {priceFormat.format(item.unitPrice)} ₴</>}</span>
