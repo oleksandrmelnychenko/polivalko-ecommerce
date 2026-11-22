@@ -28,7 +28,7 @@ export type BusinessReport = {
     Group & { name: string; sku: string; unit: string; sold: number; returned: number; price: number | null }
   >
   contributions: { store: Group[]; category: Group[] }
-  coverage: (Totals & { year: string; store: string; months: number; mismatches: number })[]
+  coverage: (Totals & { year: string; store: string; months: number; expected?: number; mismatches: number })[]
   diagnostics: Record<string, number>
   options: { org: Option[]; store: Option[]; category: Option[]; years: string[] }
 }

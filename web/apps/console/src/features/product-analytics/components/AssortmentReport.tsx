@@ -47,7 +47,7 @@ export function AssortmentReport({ report, loading, selectedProduct, selectProdu
           data={[{ value: 'months', label: 'Оборот, грн' }, { value: 'indices', label: 'Сезонний індекс' }]} />
       </header>
       {mode === 'months' ? <div className="assortment-legend">
-        <span>Оборот у межах категорії</span>
+        <span>Оборот у межах категорії; якщо період довший за рік — у середньому за рік</span>
         <span><i className="assortment-scale" aria-hidden="true"><i /><i /><i /></i>Від меншого до більшого</span>
         <span><i className="assortment-negative" aria-hidden="true" />Від’ємний</span>
         <span>— Немає даних</span>

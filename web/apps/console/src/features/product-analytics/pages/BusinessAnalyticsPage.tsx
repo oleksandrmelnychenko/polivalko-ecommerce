@@ -404,7 +404,7 @@ export function BusinessAnalyticsPage() {
                         <tr key={x.year + x.store}>
                           <td>{x.year}</td>
                           <td>{label('store', x.store)}</td>
-                          <td>{x.months} / 12</td>
+                          <td>{x.months} / {x.expected ?? 12}</td>
                           <td>{x.documents}</td>
                           <td>{x.mismatches}</td>
                           <td>{fmt(x.net)}</td>

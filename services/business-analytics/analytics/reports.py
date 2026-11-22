@@ -16,11 +16,15 @@ def window(snapshot, query):
     return start, end
 
 
-def prev_year(day):
+def prev_year(day, closing=False):
     try:
-        return day.replace(year=day.year - 1)
+        result = day.replace(year=day.year - 1)
     except ValueError:
         return day.replace(year=day.year - 1, day=28)
+    # A period that ends with February compares with the whole February a year earlier, the 29th included.
+    if closing and (day + timedelta(days=1)).month == 3:
+        result = result.replace(month=3, day=1) - timedelta(days=1)
+    return result
 
 
 def matches(row, query):
@@ -84,7 +88,7 @@ def report(snapshot, q):
     facts = snapshot["facts"]
     scoped = [r for r in facts if matches(r, q)]
     current_start, current_end = str(start), str(end)
-    previous_start, previous_end = str(prev_year(start)), str(prev_year(end))
+    previous_start, previous_end = str(prev_year(start)), str(prev_year(end, closing=True))
     rows = [r for r in scoped if current_start <= r["day"] <= current_end]
     before = [r for r in scoped if previous_start <= r["day"] <= previous_end]
     monthly = group(rows, lambda r: r["day"][:7])
@@ -150,17 +154,22 @@ def report(snapshot, q):
                     sum(values[i] for values in seasonal[cat]) / years if years >= 2 else None
                     for i in range(12)
                 ],
-                "months": [aggregate(by_month[m])["net"] if by_month[m] else None for m in range(1, 13)],
+                # A period longer than a year repeats calendar months. Show a typical month, not their sum.
+                "months": [aggregate(by_month[m])["net"] / len({r["day"][:4] for r in by_month[m]}) if by_month[m] else None
+                           for m in range(1, 13)],
             }
         )
     coverage = []
     mismatches = {a["doc"] for a in snapshot["audits"] if a["invalid"] or a["difference"] not in (0, None)}
+    # A year can have documents only from the first month of the history to the month of the snapshot.
+    span = (min((r["day"][:7] for r in facts), default=""), snapshot["asOf"][:7])
     for (year, store), items in sorted(group(scoped, lambda r: (r["day"][:4], r["store"])).items()):
         coverage.append(
             dict(
                 year=year,
                 store=store,
                 months=len({r["day"][:7] for r in items}),
+                expected=sum(span[0] <= f"{year}-{m:02}" <= span[1] for m in range(1, 13)),
                 mismatches=len(mismatches.intersection(r["doc"] for r in items)),
                 **aggregate(items),
             )
