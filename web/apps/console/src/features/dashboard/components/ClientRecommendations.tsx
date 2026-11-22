@@ -3,6 +3,7 @@ import { IconChevronDown, IconFileText, IconRefresh, IconSearch, IconUsers } fro
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
+import { CalculationInfo } from './CalculationInfo'
 import { ACCOUNTING_DOCUMENT_CHANGED, save, useRegister } from '@/shared/api/accounting'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { notifySummaryStale } from '@/shared/lib/events'
@@ -236,22 +237,27 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
     return canEdit && item.quantity > 0 && <div className="client-rec-actions"><Button size="xs" disabled={disabled}
       onClick={() => issue(client, item)}>Запропонувати</Button></div>
   }
+  const method = <CalculationInfo title={journal ? 'Що враховано в журналі пропозицій' : 'Як формуються рекомендації'}>
+    {!journal && <>
+      <p>Для кожного клієнта показуємо до трьох товарів з його покупок за два роки. Вище стоять товари, для яких наближається звичний строк повторної покупки, далі — покупки у відповідні тижні попередніх років. Якщо покупка була одна, варто уточнити потребу.</p>
+      <p>Потреба — середня кількість на документ з урахуванням повернень. Вільний залишок ділимо в порядку черги між активними клієнтами вибраного періоду. За однакової підстави раніше пропонуємо тому, в кого раніше очікується повторна покупка, більше сезонів або документів із товаром, далі — за свіжістю покупки.</p>
+    </>}
+    {offers && <p>{canEdit && !journal ? 'Після розмови натисніть «Запропонувати», щоб записати клієнта й кількість.' : '«Запропонувати» фіксує розмову з покупцем.'} До відповіді ця кількість закріплена в черзі в усіх періодах. Після згоди створюється складський резерв, після відмови кількість переходить далі. Журнал показує всі відкриті пропозиції й резерви та рішення за вибраний період.</p>}
+  </CalculationInfo>
   return <AppEditorModal opened={opened} onClose={onClose} size="standard" className="client-rec-modal"
     title={<MetricLabel icon={IconUsers}>Рекомендації клієнтам</MetricLabel>}>
     <div className="client-rec-panel">
-      <div className="client-rec-toolbar"><div className="client-rec-period"><span>{journal ? 'Записи журналу за' : 'Клієнти з покупкою за'}</span>
+      <div className="client-rec-toolbar"><div className="client-rec-period"><span className="dash-with-info">{journal ? 'Записи журналу за' : 'Клієнти з покупкою за'}{journal && offers && method}</span>
         <SegmentedControl aria-label={journal ? 'Період журналу' : 'Період активності клієнтів'} value={String(days)} data={periods} onChange={setPeriod} /></div>
         {report && <Button variant="default" size="xs" radius="xl" leftSection={<IconRefresh size={14} />}
           loading={query.isFetching || (journal && results.isFetching)} onClick={reload}>{journal ? 'Оновити журнал' : 'Оновити залишки'}</Button>}
       </div>
       {notice && <p role="status" className="client-rec-notice">{notice}</p>}
       {report && typeof report.offeredClients !== 'number' ? <p role="status">Оновлюється розрахунок спільного залишку.</p> : report ? <>
-        {!journal && <div className="client-rec-summary"><h3>Кому запропонувати товар</h3>
+        {!journal && <div className="client-rec-summary"><h3 className="dash-with-info">Кому запропонувати товар {method}</h3>
           <div><strong>{numberFormat.format(report.offeredClients)}</strong><span> із {numberFormat.format(report.active)} активних клієнтів</span></div>
           <small>{dateRange(report.start, report.through)}</small></div>}
         {(report.clients.length > 0 || offers) && <SegmentedControl aria-label="Перегляд рекомендацій" data={offers ? workflowViews : views} value={view} onChange={setView} />}
-        {canEdit && offers && report.clients.length > 0 && view !== 'offers' &&
-          <small>Після розмови натисніть «Запропонувати», щоб записати клієнта й кількість.</small>}
         {view === 'offers' && offers ? <section aria-label="Журнал пропозицій">
           {results.status === 'ready' && results.data ? <RecommendationResults key={days} report={results.data} days={days} /> :
             <PageState kind={results.status === 'ready' ? 'loading' : results.status} description="Не вдалося завантажити показники журналу." onRetry={reloadResults} />}
@@ -272,11 +278,6 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
           : <ClientList key={days} clients={report.clients} actions={actions} /> : <p role="status">{report.active
           ? 'Для цих клієнтів немає раніше придбаних товарів із підтвердженою ціною та вільним залишком.'
           : 'За цей період немає підтверджених покупок із визначеним клієнтом.'}</p>}
-        <details className="client-rec-method"><summary>Як формуються рекомендації</summary>
-          <p>Для кожного клієнта показуємо до трьох товарів з його покупок за два роки. Вище стоять товари, для яких наближається звичний строк повторної покупки, далі — покупки у відповідні тижні попередніх років. Якщо покупка була одна, варто уточнити потребу.</p>
-          <p>Потреба — середня кількість на документ з урахуванням повернень. Вільний залишок ділимо в порядку черги між активними клієнтами вибраного періоду. За однакової підстави раніше пропонуємо тому, в кого раніше очікується повторна покупка, більше сезонів або документів із товаром, далі — за свіжістю покупки.</p>
-          <p>«Запропонувати» фіксує вашу розмову з покупцем. До відповіді ця кількість закріплена в черзі в усіх періодах. Після згоди створюється складський резерв, після відмови кількість переходить далі. Журнал показує всі відкриті пропозиції й резерви та рішення за вибраний період.</p>
-        </details>
       </> : <PageState kind={query.status === 'ready' ? 'loading' : query.status}
         description={problemMessage(query.problem, 'Не вдалося завантажити рекомендації.')} onRetry={query.reload} />}
     </div>

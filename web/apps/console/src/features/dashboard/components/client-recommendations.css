@@ -1,6 +1,6 @@
 .client-rec-modal .app-sheet-scroll { background: var(--app-ground); padding: 12px; }
 .client-rec-panel { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 10px; color: var(--brand-ink); }
-.client-rec-toolbar, .client-rec-summary, .client-rec-card, .client-rec-stock, .client-rec-method, .client-rec-journal {
+.client-rec-toolbar, .client-rec-summary, .client-rec-card, .client-rec-stock, .client-rec-journal {
   background: white; border: 1px solid var(--app-line); border-radius: 16px;
 }
 .client-rec-toolbar, .client-rec-item-title, .client-rec-quantity {
@@ -14,7 +14,7 @@
 .client-rec-summary small { font-size: .78rem; }
 .client-rec-panel .mantine-TextInput-input { border-radius: 999px; }
 .client-rec-summary h3, .client-rec-card h3 { font-size: 1rem; margin: 0; }
-.client-rec-summary small, .client-rec-summary > div > span, .client-rec-card small, .client-rec-method p { color: var(--mantine-color-dimmed); }
+.client-rec-summary small, .client-rec-summary > div > span, .client-rec-card small { color: var(--mantine-color-dimmed); }
 .client-rec-card, .client-rec-stock { overflow: clip; }
 .client-rec-card h3 button {
   display: grid; grid-template-columns: minmax(0,1fr) auto 16px; text-align: left; gap: 10px;
@@ -39,9 +39,6 @@
 .client-rec-quantity:empty { display: none; }
 .client-rec-quantity strong { font-size: 1rem; }
 .client-rec-footer { padding: 10px 14px; border-top: 1px solid var(--app-line); }
-.client-rec-method { padding: 10px 14px; }
-.client-rec-method summary { cursor: pointer; font-weight: 600; font-size: .8125rem; }
-.client-rec-method p { margin: 6px 0; font-size: .8125rem; }
 .client-rec-stock summary {
   display: flex; align-items: center; gap: 8px; padding: 12px 14px; cursor: pointer; list-style: none;
 }
