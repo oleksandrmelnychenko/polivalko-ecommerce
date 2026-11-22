@@ -93,7 +93,12 @@ def winter(year, today):
     start, end = season_bounds(year, today)
     with production() as conn:
         raw = conn.execute(GROSS_REPORT, (today, str(today))).fetchone()
-        reference = parse_profit(raw) if raw else {}
+        try:
+            reference = parse_profit(raw) if raw else {}
+        except (ValueError, KeyError, TypeError):
+            # The report only feeds the profit estimate. One that fails its control totals leaves
+            # the estimate empty; it must not replace the whole season with an error.
+            reference = {}
         margins = {p["code"]: p["margin"] for p in reference.get("products", []) if p["margin"] is not None}
         bounds = (start, end + timedelta(days=1))
         weeks = summarize(conn.execute(SALES, (*bounds, *bounds)), start, end, margins, reference.get("account"))
