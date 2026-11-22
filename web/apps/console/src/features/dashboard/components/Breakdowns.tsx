@@ -32,11 +32,14 @@ function BarList({ items }: { items: BarItem[] }) {
 
 export function StatusBreakdown({ data, canOrders }: { data: Dashboard; canOrders: boolean }) {
   const total = data.byStatus.reduce((sum, item) => sum + item.count, 0)
+  // The counts cover the selected period, so the list they open has to cover the same days.
+  const days = data.byDay
+  const period = days.length ? `&from=${days[0].date}&to=${days[days.length - 1].date}` : ''
   const items = data.byStatus.map((item) => ({
     key: item.status,
     count: item.count,
     label: canOrders ? (
-      <Link to={`/sales/orders?status=${item.status}`} aria-label={`${orderStatusLabel[item.status]}: відкрити замовлення`}>
+      <Link to={`/sales/orders?status=${item.status}${period}`} aria-label={`${orderStatusLabel[item.status]}: відкрити замовлення за період`}>
         <OrderStatusChip status={item.status} />
       </Link>
     ) : (

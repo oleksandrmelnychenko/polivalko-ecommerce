@@ -48,9 +48,10 @@ def summarize(rows, through, days):
         period = current if day >= start else previous
         period[{"sale": "invoices", "receipt": "receipts", "return": "refunds"}[kind]] += 1
         period["returned" if refund else "gross"] += amount
+        # Keep the date when the newest document is older than the period: zeros then have a reason.
+        latest = max(latest or day, day)
         if day < start:
             continue
-        latest = max(latest or day, day)
         daily = by_day[str(day)]
         daily["net"] += -amount if refund else amount
         daily["purchases"] += int(not refund)
