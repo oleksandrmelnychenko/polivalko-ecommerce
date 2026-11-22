@@ -9,7 +9,7 @@ const timingText = {
 }
 
 export function SupplierOrders({ supply, unit }: { supply: SupplierSupply; unit: string | null }) {
-  if (!supply.orders.length) return <span className="app-cell-sub">Відкритих замовлень у реєстрі не знайдено</span>
+  if (!supply.orders.length) return null
   const totals = new Map<string, number>()
   for (const order of supply.orders) totals.set(order.unit, (totals.get(order.unit) ?? 0) + order.ordered)
   const ordered = [...totals].map(([u, qty]) => numberFormat.format(qty) + ' ' + u).join(', ')
