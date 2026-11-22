@@ -214,9 +214,9 @@ def reconcile(documents, website, catalog, refs, as_of):
                     "refund": kind == "return",
                 }
             )
-        diagnostics["invalidLines"] += invalid
         if not rows:
             diagnostics["emptyDocuments"] += 1
+            diagnostics["invalidLines"] += invalid
             continue
         parent = identifier(d.get("parent_document")) or identifier(d.get("parent"))
         doc = {
@@ -258,6 +258,8 @@ def reconcile(documents, website, catalog, refs, as_of):
         if d["kind"] == "receipt" and (account, ref) in receipt_parents:
             diagnostics["linkedReceipts"] += 1
             continue
+        # Lines of a duplicate copy or of a receipt linked to its invoice belong to documents that are not counted.
+        diagnostics["invalidLines"] += d["invalid"]
         parent = receipt_parents.get((account, d["parent"]), d["parent"])
         linked = {ref, parent, d["client"]} - {""}
         linked.update(orders.get((account, parent), set()))
