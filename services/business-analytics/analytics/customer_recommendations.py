@@ -142,7 +142,20 @@ def buyer_priority(entry):
             -date.fromisoformat(item["last"]).toordinal(), client_id)
 
 
-def allocate_stock(active):
+OFFER_LOG = """
+SELECT o.id::text, o.partner_id::text AS client, p.title AS customer, o.product_id::text AS product,
+       coalesce(nullif(c.display_name,''),c.name) AS name,c.sku,
+       o.last_purchase::text AS last,o.quantity,o.unit,o.price,o.status,
+       (o.offered_at AT TIME ZONE 'Europe/Kyiv')::text AS "offeredAt",
+       (o.changed_at AT TIME ZONE 'Europe/Kyiv')::text AS "changedAt"
+FROM accounting.recommendation_offers o JOIN accounting.partners p ON p.id=o.partner_id
+JOIN catalog.products c ON c.id=o.product_id
+WHERE o.status IN ('offered','reserved') OR o.last_purchase >= %s OR o.changed_at >= %s
+ORDER BY o.offered_at,o.id
+"""
+
+
+def allocate_stock(active, offers=()):
     """Allocate one period's shortlist without modifying the cached sales history."""
     clients = []
     by_product = defaultdict(list)
@@ -154,12 +167,37 @@ def allocate_stock(active):
         for item in items:
             by_product[item["id"]].append((customer["id"], item))
 
-    for queue in by_product.values():
-        queue.sort(key=buyer_priority)
+    cycles = {(o["client"], o["product"], o["last"]): o for o in offers}
+    open_pairs = {(o["client"], o["product"]): o for o in offers if o["status"] in ("offered","reserved")}
+    pending = defaultdict(list)
+    for offer in offers:
+        if offer["status"] == "offered":
+            pending[offer["product"]].append(offer)
+    offer_order = {o["id"]: n for n, o in enumerate(offers)}
+    for product, queue in by_product.items():
         remaining = queue[0][1]["available"]
+        assigned = {}
+        for offer in pending[product]:
+            assigned[offer["id"]] = min(offer["quantity"], remaining)
+            remaining -= assigned[offer["id"]]
+        for client, item in queue:
+            offer = open_pairs.get((client, product)) or cycles.get((client, product, item["last"]))
+            item["offerId"] = offer["id"] if offer else None
+            item["offerStatus"] = offer["status"] if offer else None
+            if offer and offer["status"] == "offered":
+                item["price"] = offer["price"]
+        def priority(entry):
+            item = entry[1]
+            if item["offerStatus"] == "offered":
+                return (0, offer_order[item["offerId"]])
+            return (2 if item["offerId"] else 1, buyer_priority(entry))
+        queue.sort(key=priority)
         for rank, (_, item) in enumerate(queue, start=1):
-            quantity = min(item["requested"], remaining)
-            remaining -= quantity
+            if item["offerId"]:
+                quantity = assigned.get(item["offerId"], 0)
+            else:
+                quantity = min(item["requested"], remaining)
+                remaining -= quantity
             item.update(rank=rank, buyers=len(queue), quantity=quantity,
                         amount=(quantity * item["price"]).quantize(Decimal(".01"), rounding=ROUND_HALF_UP))
 
@@ -170,11 +208,14 @@ def allocate_stock(active):
         -sum(i["amount"] for i in c["items"]), c["name"].casefold(), c["id"]))
 
 
-def allocation_report(customers, today, days):
+def allocation_report(customers, today, days, offers=()):
     start = str(today-timedelta(days=days-1))
     active = [c for c in customers if c["lastSale"] >= start]
-    clients = allocate_stock(active)
+    clients = allocate_stock(active, offers)
+    visible_offers = {i["offerId"] for c in clients for i in c["items"] if i["offerId"]}
     return dict(start=start, through=str(today), active=len(active), clients=clients,
+                offers=[o for o in reversed(offers) if o["status"] in ("offered","reserved") or o["changedAt"][:10] >= start
+                        or o["id"] in visible_offers],
                 offeredClients=sum(any(i["quantity"] > 0 for i in c["items"]) for c in clients))
 
 
@@ -202,4 +243,6 @@ def customer_recommendations(today, days):
                 _history_cache = today, monotonic()+120, rows, (sorted(native_ids), sorted(external_ids))
             _, _, rows, catalog_ids = _history_cache
         catalog = conn.execute(CATALOG, catalog_ids) if any(catalog_ids) else ()
-        return allocation_report(rank_clients(rows, catalog, today), today, days)
+        customers = rank_clients(rows, catalog, today)
+        offers = conn.execute(OFFER_LOG, (today-timedelta(days=729), today-timedelta(days=days))).fetchall()
+        return allocation_report(customers, today, days, offers)

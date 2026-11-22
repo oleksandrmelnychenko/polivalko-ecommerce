@@ -54,6 +54,7 @@ public static class AccountingRegisters
         group.MapPut("/drafts/{id:guid}", AccountingEntry.UpdateDraft).WithName("ConsoleUpdateInvoiceDraft").RequirePermission(PermissionKeys.AccountingEdit);
         InvoiceWorkflow.Map(group);
         SalesOffers.Map(group);
+        RecommendationOfferWorkflow.Map(group);
         InventoryReview.Map(group);
         PartnerOpenings.Map(group);
     }

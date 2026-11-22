@@ -4,7 +4,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from analytics.customer_recommendations import (
-    CATALOG, HISTORY, RETAIL_PLACEHOLDER, allocate_stock, allocation_report, customer_recommendations, rank_clients,
+    CATALOG, HISTORY, OFFER_LOG, RETAIL_PLACEHOLDER, allocate_stock, allocation_report, customer_recommendations, rank_clients,
 )
 
 
@@ -90,10 +90,26 @@ class CustomerRecommendationTests(TestCase):
         with patch("analytics.customer_recommendations._history_cache", None), patch(
                 "analytics.customer_recommendations.production") as production:
             query = production.return_value.__enter__.return_value.execute
-            query.side_effect = [history, [product()], [product(available=Decimal(1), price=Decimal(20))]]
+            empty = MagicMock()
+            empty.fetchall.return_value = []
+            query.side_effect = [history, [product()], empty, [product(available=Decimal(1), price=Decimal(20))], empty]
             first = customer_recommendations(TODAY,30)
             second = customer_recommendations(TODAY,30)
-            self.assertEqual([call.args[0] for call in query.call_args_list], [HISTORY, CATALOG, CATALOG])
-            self.assertEqual(query.call_args_list[-1].args[1], ([], ["dntrade-code:a"]))
+            self.assertEqual([call.args[0] for call in query.call_args_list], [HISTORY, CATALOG, OFFER_LOG, CATALOG, OFFER_LOG])
+            self.assertEqual(query.call_args_list[-2].args[1], ([], ["dntrade-code:a"]))
         self.assertEqual((first["offeredClients"], second["offeredClients"]), (2,1))
         self.assertEqual(second["clients"][0]["items"][0]["amount"], Decimal("20.00"))
+
+    def test_pending_outside_period_holds_stock_and_decline_promotes_next_buyer(self):
+        ranked = rank_clients([line("earlier","A",40,3), line("earlier","A",20,3), line("recent","A",1,3)],
+                              [product()], TODAY)
+        offer = dict(id="offer", client="earlier", product="A", quantity=Decimal(3), price=Decimal(12), status="offered",
+                     last=str(TODAY-timedelta(days=20)), changedAt=str(TODAY))
+        self.assertEqual(allocation_report(ranked,TODAY,7,[offer])["offeredClients"],0)
+        pending = allocation_report(ranked,TODAY,30,[offer])
+        self.assertEqual(sum(i["quantity"] for c in pending["clients"] for i in c["items"]),3)
+        self.assertEqual(pending["clients"][0]["items"][0]["amount"],36)
+        declined = allocation_report(ranked,TODAY,30,[dict(offer,status="declined")])
+        self.assertEqual([(c["id"], c["items"][0]["quantity"]) for c in declined["clients"]], [("recent",3),("earlier",0)])
+        empty = allocation_report([],TODAY,7,[dict(offer,status="reserved")])
+        self.assertEqual(empty["offers"][0]["status"],"reserved")

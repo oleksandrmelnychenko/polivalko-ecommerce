@@ -4735,6 +4735,180 @@
         }
       }
     },
+    "/api/v1/console/accounting/recommendation-offers/{id}": {
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ConsoleIssueRecommendationOffer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecommendationOfferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/accounting/recommendation-offers/{id}/decline": {
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ConsoleDeclineRecommendationOffer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/accounting/recommendation-offers/{id}/accept": {
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ConsoleAcceptRecommendationOffer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/accounting/recommendation-offers/{id}/release": {
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ConsoleReleaseRecommendationReserve",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/console/accounting/inventory-reports/{id}/inactive-products": {
       "get": {
         "tags": [
@@ -21333,6 +21507,47 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "RecommendationOfferRequest": {
+        "required": [
+          "partnerId",
+          "productId",
+          "lastPurchase",
+          "days",
+          "quantity",
+          "unit",
+          "price"
+        ],
+        "type": "object",
+        "properties": {
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lastPurchase": {
+            "type": "string",
+            "format": "date"
+          },
+          "days": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "quantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
           }
         }
       },

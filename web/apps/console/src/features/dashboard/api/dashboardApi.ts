@@ -110,12 +110,18 @@ export const getStockTurnover = (params: URLSearchParams) =>
 export type ClientSuggestion = {
   id: string; name: string; sku: string; unit: string; quantity: number; available: number; price: number; amount: number
   requested: number; rank: number; buyers: number; dueOn: string | null
+  offerId?: string | null; offerStatus?: OfferStatus | null
   purchases: number; last: string; interval: number | null; seasons: number; signal: 'due' | 'repeat' | 'season' | 'single'
 }
 export type SuggestedClient = { id: string; name: string; lastSale: string; items: ClientSuggestion[] }
+export type OfferStatus = 'offered' | 'reserved' | 'declined' | 'released'
+export type RecommendationOffer = {
+  id: string; client: string; customer: string; product: string; name: string; sku: string; last: string
+  quantity: number; unit: string; price: number; status: OfferStatus; offeredAt: string; changedAt: string
+}
 
 export const getClientRecommendations = (days: number) =>
-  readBusiness<{ start: string; through: string; active: number; offeredClients: number; clients: SuggestedClient[] }>(
+  readBusiness<{ start: string; through: string; active: number; offeredClients: number; clients: SuggestedClient[]; offers?: RecommendationOffer[] }>(
     'documents', 'analysis=customer-recommendations&days=' + days)
 
 export type ProductCounts = S['ConsoleProductCountsDto']

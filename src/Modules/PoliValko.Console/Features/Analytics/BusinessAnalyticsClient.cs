@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -11,6 +12,18 @@ namespace PoliValko.Console.Features.Analytics;
 
 internal sealed class BusinessAnalyticsClient(HttpClient http)
 {
+    internal sealed record OfferItem(Guid Id, DateOnly Last, decimal Quantity, string Unit, decimal Price, Guid? OfferId);
+    private sealed record Buyer(Guid Id, List<OfferItem> Items);
+    private sealed record RecommendationReport(List<Buyer> Clients);
+
+    internal async Task<OfferItem?> FindOffer(Guid partner, Guid product, int days, CancellationToken ct)
+    {
+        if (http.BaseAddress is null) throw new HttpRequestException("Analytics unavailable");
+        var report = await http.GetFromJsonAsync<RecommendationReport>(
+            $"documents?analysis=customer-recommendations&days={days}", ct);
+        return report?.Clients.FirstOrDefault(c => c.Id == partner)?.Items.FirstOrDefault(i => i.Id == product);
+    }
+
     public static void Map(RouteGroupBuilder console)
     {
         var group = console.MapGroup("/business-analytics").WithTags("Console").RequireStaff(PermissionKeys.ProductAnalyticsView);
