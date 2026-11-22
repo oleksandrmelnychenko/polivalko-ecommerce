@@ -128,6 +128,11 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
   const lines = orders.flatMap(order => order.lines)
   const missing = lines.filter(line => line.amount === null).length
   const outdated = [...selected.values()].filter(row => !matched.has(row.id))
+  // A saved line can fall out of the sum for two reasons: the product left the queue, or it is still
+  // there under another supplier or unit. Only the first one is "outside the queue".
+  const queued = new Map(groups.flatMap(group => group.items.map(item => [item.id, { group, item }] as const)))
+  const changed = outdated.filter(row => queued.has(row.id))
+  const gone = outdated.filter(row => !queued.has(row.id))
   const allAdded = groups.every(group => group.items.every(item => matched.has(item.id)))
   const matchesPlan = lines.length > 0 && allAdded && outdated.length === 0
     && lines.every(line => line.quantity === line.item.quantity)
@@ -173,8 +178,16 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
       </details>}
       {group.id && <Button size="xs" radius="xl" variant="default" leftSection={<IconDownload size={15} />} onClick={() => download(group, items, through, days, cover, seasonal)}>Завантажити замовлення</Button>}
     </details>)}
-    {outdated.length > 0 && <section className="dash-cart-order"><h4>Поза поточною чергою · виключено із суми</h4>
-      {outdated.map(row => <div className="dash-cart-obsolete" key={row.id}>{row.name} <Button variant="light" color="red" radius="xl" size="compact-xs" onClick={() => basket.remove(row.id)}>Прибрати</Button></div>)}
+    {changed.length > 0 && <section className="dash-cart-order"><h4>Постачальник або одиниця змінилися · виключено із суми</h4>
+      {changed.map(row => {
+        const now = queued.get(row.id)!
+        return <div className="dash-cart-obsolete" key={row.id}>{row.name} <small>Тепер · {now.group.name || 'постачальника слід уточнити'}, {now.item.unit}</small>
+          <Button variant="default" radius="xl" size="compact-xs" onClick={() => basket.add([{ ...now.group, items: [now.item] }])}>Оновити в кошику</Button>
+          <Button variant="light" color="red" radius="xl" size="compact-xs" onClick={() => basket.remove(row.id)}>Прибрати</Button></div>
+      })}
+    </section>}
+    {gone.length > 0 && <section className="dash-cart-order"><h4>Поза поточною чергою · виключено із суми</h4>
+      {gone.map(row => <div className="dash-cart-obsolete" key={row.id}>{row.name} <Button variant="light" color="red" radius="xl" size="compact-xs" onClick={() => basket.remove(row.id)}>Прибрати</Button></div>)}
     </section>}
   </details>
 }
