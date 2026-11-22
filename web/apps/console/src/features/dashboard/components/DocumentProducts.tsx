@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { PurchaseInvoices } from './PurchaseInvoices'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { MetricLabel } from '@/shared/ui/MetricCard'
+import { TableChip } from '@/shared/ui/TableChip'
 import { dateRange, formatAmount, formatPrice } from '@/shared/lib/salesFormat'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PageState } from '@/shared/ui/PageState'
@@ -72,12 +73,13 @@ function PeriodProducts({ data, open }: { data: DocumentSales; open: (p: Product
         <tr className="dash-sales-values">
           <th scope="row">
             {p.code ? <button className="dash-product-link" aria-haspopup="dialog" title="Відкрити звіт про прибуток цього товару" onClick={() => open(p)}>{p.name}</button> : p.name}
-            <div className="dash-product-meta"><span>№ {i + 1}</span>{p.sku && <span className="dash-product-sku">{p.sku}</span>}{p.abc && <span className="dash-abc">Група {p.abc}</span>}</div>
+            <div className="dash-product-meta"><span>№ {i + 1}</span>{p.sku && <span className="dash-product-sku">{p.sku}</span>}{p.abc && <TableChip tone="document" value={`Група ${p.abc}`} />}</div>
           </th>
           <td><span className="dash-mobile-label" aria-hidden="true">Виручка</span>{formatPrice(p.net)}</td>
           <td data-loss={p.profit != null && p.profit < 0 || undefined}><span className="dash-mobile-label" aria-hidden="true">Прибуток</span><strong>{p.profit == null ? "—" : formatPrice(p.profit)}</strong>
             {!!p.purchaseSources?.length && p.profit != null && <small>розрахунковий</small>}</td>
-          <td><span className="dash-mobile-label" aria-hidden="true">Маржа</span>{share(p.margin)}</td>
+          <td><span className="dash-mobile-label" aria-hidden="true">Маржа</span>
+            <TableChip tone={p.margin == null || p.margin === 0 ? 'neutral' : p.margin > 0 ? 'success' : 'danger'} value={share(p.margin)} /></td>
         </tr>
         <tr><td colSpan={4} className="dash-sales-context">
           <dl className="dash-finance-chips">

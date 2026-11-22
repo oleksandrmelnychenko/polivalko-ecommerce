@@ -2,6 +2,7 @@ import { Button } from '@mantine/core'
 import { useEffect, useState } from 'react'
 import { dateLabel, formatPrice } from '@/shared/lib/salesFormat'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
+import { TableChip } from '@/shared/ui/TableChip'
 import type { BudgetItem, PurchaseSeason, SupplierGroup } from '../api/dashboardApi'
 import { numberFormat } from '../lib/insights'
 
@@ -112,7 +113,7 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
   const missing = lines.filter(line => line.amount === null).length
   const outdated = basket.picked.filter(row => !matched.has(row.id))
   return <details className="dash-supplier-cart">
-    <summary>Кошик постачальників · {lines.length} поз. · {formatPrice(subtotal(lines))}
+    <summary>Кошик постачальників <TableChip tone="document" value={`${numberFormat.format(lines.length)} поз.`} /> · {formatPrice(subtotal(lines))}
       {missing > 0 && ' + без ціни: ' + missing}{outdated.length > 0 && ' · перевірити: ' + outdated.length}</summary>
     <p>Чернетка зберігається у цьому браузері для вашого облікового запису. Рекомендовані кількості оновлюються з чергою. Кількість, введена вручну, зберігається.</p>
     <Button variant="default" size="compact-xs" disabled={!groups.some(group => group.items.some(item => !matched.has(item.id)))}

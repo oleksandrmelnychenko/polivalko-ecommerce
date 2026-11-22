@@ -3,6 +3,7 @@ import { Button } from '@mantine/core'
 import { Link } from 'react-router-dom'
 import { dateLabel, formatPrice } from '@/shared/lib/salesFormat'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
+import { TableChip } from '@/shared/ui/TableChip'
 import type { LastPurchase, SupplierBudget } from '../api/dashboardApi'
 import { numberFormat } from '../lib/insights'
 import { SupplierBasket, seasonText, type Basket } from './SupplierBasket'
@@ -20,7 +21,7 @@ export function ReceiptPrice({ purchase, year }: { purchase: LastPurchase | null
   return <div className="dash-last-purchase">
     <div>{purchase.supplier || 'Постачальника слід уточнити'}
       {purchase.unitPrice != null && <> · {priceFormat.format(purchase.unitPrice)} ₴/{purchase.unit}</>}
-      {purchase.unitPrice != null && purchase.day.slice(0, 4) < year && ' · ціна попередніх років'}
+      {purchase.unitPrice != null && purchase.day.slice(0, 4) < year && <> <TableChip tone="warning" value="Ціна попередніх років" /></>}
     </div>
     {purchase.documentId && <PurchaseInvoices invoices={[{ id: purchase.documentId, number: purchase.number, day: purchase.day }]} />}
     {purchase.issue && <span>{issueText[purchase.issue]}</span>}
@@ -61,7 +62,7 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
     </div>
     <p>Оцінено {priced} із {count} позицій за останніми цінами прибуткових накладних.
       {budget.historicalCount > 0 && <> Ціни до {year} року використано для {budget.historicalCount} поз. на {formatPrice(budget.historicalAmount)}.</>}</p>
-    {historical.length > 0 && <details className="dash-price-history"><summary>Товари з цінами попередніх років · {historical.length}</summary>
+    {historical.length > 0 && <details className="dash-price-history"><summary>Товари з цінами попередніх років <TableChip tone="warning" value={historical.length} /></summary>
       <ul>{historical.map(({ item, supplier }) => <li key={item.id}><b>{item.name}</b> · {supplier || 'Уточнити постачальника'}
         <small>{numberFormat.format(item.quantity)} {item.unit} × {priceFormat.format(item.unitPrice!)} ₴ · {formatPrice(item.amount!)}</small>
         {item.receiptId && <DocumentLink id={item.receiptId}>Накладна від {dateLabel(item.priceDay!)}</DocumentLink>}

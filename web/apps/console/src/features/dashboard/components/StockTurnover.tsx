@@ -66,7 +66,7 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
       {report && <div className="dash-product-summary">
         <span>Чистий оборот товарів із малим залишком</span>
         <div className="dash-product-summary-value"><strong>{report.net != null ? formatPrice(report.net) : 'Оборот невідомий'}</strong>
-          {report.share != null && <span className="dash-share" title={'Частка від загального обороту ' + formatPrice(report.periodNet)}>{formatShare(report.share)} обороту</span>}</div>
+          {report.share != null && <TableChip tone="product" title={'Частка від загального обороту ' + formatPrice(report.periodNet)} value={formatShare(report.share) + ' обороту'} />}</div>
         <small>{dateRange(report.start, report.through)}</small>
         {report.periodNet <= 0 && <small>Частка доступна за додатного загального обороту.</small>}
         {report.unknownCount > 0 && <small>Товарів без підтвердженого обороту · {numberFormat.format(report.unknownCount)}. У підсумку враховано лише підтверджені суми.</small>}

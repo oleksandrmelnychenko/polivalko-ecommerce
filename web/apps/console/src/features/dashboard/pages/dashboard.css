@@ -652,14 +652,6 @@ a.dash-queue-item:focus-visible {
   font-size: 12px;
   font-weight: 450;
 }
-.dash-share, .dash-abc {
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 550;
-}
-.dash-share { background: white; }
-.dash-abc { background: var(--app-ground); }
 .dash-product-sku, .dash-product-count b, .dash-product-report .dash-rank-n {
   font-family: var(--font-mono);
 }
