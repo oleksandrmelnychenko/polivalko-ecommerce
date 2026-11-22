@@ -143,12 +143,13 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
               {item.minimumNeed != null && item.need != null && item.minimumNeed < item.need && <span className="app-cell-sub">
                 Потреба · {numberFormat.format(item.minimumNeed)}–{numberFormat.format(item.need)} {item.unit || 'од.'} залежно від підтвердження поставки.</span>}
               {report.supplierBudget && <ReceiptPrice purchase={item.lastPurchase} year={report.through.slice(0, 4)} />}
-              {sources.has(item.id) && <Button size="compact-xs" variant="default"
-                disabled={basket.picked.some(row => row.id === item.id && row.supplier === sources.get(item.id)?.group.id && row.unit === item.unit)}
+              {sources.has(item.id) && (basket.picked.some(row => row.id === item.id && row.supplier === sources.get(item.id)?.group.id && row.unit === item.unit)
+                ? <TableChip tone="success" value="У кошику" />
+                : <Button size="compact-xs" variant="default"
                 onClick={() => {
                   const source = sources.get(item.id)!
                   basket.add([{ ...source.group, items: [source.item] }])
-                }}>До кошика</Button>}
+                }}>Додати до кошика</Button>)}
             </div>
           </li>)}</ul>
         </> : <p className="dash-rank-empty">{report.total === 0 ? 'У каталозі немає товарів із підтвердженим малим або нульовим залишком.' : 'За цими умовами товарів немає.'}</p>}

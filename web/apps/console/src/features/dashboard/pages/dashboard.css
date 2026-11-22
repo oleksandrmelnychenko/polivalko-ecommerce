@@ -1133,6 +1133,10 @@ a.dash-queue-item:focus-visible {
 .dash-budget-group li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: baseline; padding-block: 8px; font-size: 12px; }
 .dash-budget-group li + li { border-top: 1px dashed var(--dash-line); }
 .dash-budget-group li a { overflow-wrap: anywhere; }
+.dash-budget-item { display: grid; justify-items: start; align-content: start; gap: 5px; min-width: 0; }
+.dash-budget-product { color: var(--brand-ink); font-weight: 600; text-decoration: none; }
+.dash-budget-product:hover, .dash-budget-product:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+.dash-budget-group > button { margin: 8px 12px 0; }
 .dash-last-purchase { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: start; gap: 2px; margin-top: 4px; }
 .dash-last-purchase a { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 #zakupivli { scroll-margin-top: 6rem; }

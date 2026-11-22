@@ -1,6 +1,6 @@
 import { IconChevronDown, IconFileInvoice } from '@tabler/icons-react'
 import { Button } from '@mantine/core'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { dateLabel, formatPrice } from '@/shared/lib/salesFormat'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
@@ -33,35 +33,52 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
   budget: SupplierBudget; count: number; through: string; days: number; cover: number; seasonal: boolean; basket: Basket
 }) {
   const [basketOpen, setBasketOpen] = useState(false)
+  const budgetRef = useRef<HTMLElement>(null)
+  function showBasketItem(id: string) {
+    const field = budgetRef.current?.querySelector<HTMLInputElement>(`input[data-basket-item="${CSS.escape(id)}"]`)
+    const order = field?.closest('details')
+    const cart = order?.parentElement?.closest('details')
+    if (!field || !order || !cart) return
+    cart.open = true
+    order.open = true
+    field.focus({ preventScroll: true })
+    field.scrollIntoView({ block: 'center' })
+  }
   const year = through.slice(0, 4)
   const historical = budget.suppliers.flatMap(group => group.items.filter(item => item.priceDay && item.priceDay.slice(0, 4) < year)
     .map(item => ({ item, supplier: group.name })))
   const priced = count - budget.unpriced
   const selected = new Map(basket.picked.map(row => [row.id, row]))
-  const suppliers = basketOpen ? budget.suppliers.filter(group => !group.items.some(item => {
-    const row = selected.get(item.id)
-    return row && row.supplier === group.id && row.unit === item.unit
-  })) : budget.suppliers
-  const groups = suppliers.map(group => <details key={group.id ?? 'unknown'} className="dash-budget-group">
+  const groups = budget.suppliers.flatMap(group => {
+    const isPicked = (item: typeof group.items[number]) => {
+      const row = selected.get(item.id)
+      return row !== undefined && row.supplier === group.id && row.unit === item.unit
+    }
+    const remaining = group.items.filter(item => !isPicked(item))
+    if (basketOpen && remaining.length < group.items.length) return []
+    return <details key={group.id ?? 'unknown'} className="dash-budget-group">
       <summary>
         <span className="dash-budget-supplier">{group.name || 'Уточнити постачальника'}<small>{numberFormat.format(group.items.length)} поз.
           {group.unpriced > 0 && <> · без оцінки {numberFormat.format(group.unpriced)}</>}</small></span>
         <strong>{group.items.length > group.unpriced ? formatPrice(group.subtotal) : 'Сума невідома'}</strong>
         <IconChevronDown size={15} aria-hidden="true" />
       </summary>
-      <Button size="compact-xs" variant="subtle" onClick={() => basket.add([group])}>Додати товари постачальника</Button>
+      {remaining.length > 1 && <Button size="compact-xs" variant="default" onClick={() => basket.add([{ ...group, items: remaining }])}>Додати всі до кошика · {remaining.length}</Button>}
       <ul>{group.items.map(item => <li key={item.id}>
-        <div><Link to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}{item.sku && <small> · {item.sku}</small>}</Link>
-          {item.receiptId && item.priceDay && <small className="app-cell-sub"><DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Ціна від {dateLabel(item.priceDay)}</DocumentLink></small>}
+        <div className="dash-budget-item"><Link className="dash-budget-product" title="Відкрити картку товару" to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}</Link>
+          {item.sku && <small className="app-cell-sub">Артикул {item.sku}</small>}
+          {item.receiptId && item.priceDay && <DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Накладна від {dateLabel(item.priceDay)}</DocumentLink>}
           {seasonal && <div><SeasonIndicator season={item.season} /></div>}
-          <Button size="compact-xs" variant="subtle" disabled={basket.picked.some(row => row.id === item.id && row.supplier === group.id && row.unit === item.unit)}
-            onClick={() => basket.add([{ ...group, items: [item] }])}>До кошика</Button>
+          {isPicked(item)
+            ? <Button size="compact-xs" variant="default" onClick={() => showBasketItem(item.id)}>Переглянути в кошику</Button>
+            : <Button size="compact-xs" onClick={() => basket.add([{ ...group, items: [item] }])}>Додати до кошика</Button>}
         </div>
         <span>{numberFormat.format(item.quantity)} {item.unit}{item.unitPrice != null && ' × ' + priceFormat.format(item.unitPrice) + ' ₴'}</span>
         <strong>{item.amount == null ? 'Ціну уточнити' : formatPrice(item.amount)}</strong>
       </li>)}</ul>
-    </details>)
-  return <section className="dash-supplier-budget" aria-label="Бюджет закупівлі">
+    </details>
+  })
+  return <section ref={budgetRef} className="dash-supplier-budget" aria-label="Бюджет закупівлі">
     <div className="dash-budget-header">
       <h3>Рекомендована закупівля</h3>
       <strong>{priced || !count ? formatPrice(budget.subtotal) : 'Суму ще не визначено'}{budget.unpriced > 0 && ' + без ціни: ' + budget.unpriced}</strong>

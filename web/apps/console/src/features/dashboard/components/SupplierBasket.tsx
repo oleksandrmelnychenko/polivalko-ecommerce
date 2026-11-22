@@ -129,17 +129,17 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal,
       {!matchesPlan && lines.length > 0 && <strong>{lines.length === missing ? 'Сума невідома' : formatPrice(subtotal(lines))}</strong>}
       <IconChevronDown size={16} aria-hidden="true" /></summary>
     <p>Чернетка зберігається у цьому браузері для вашого облікового запису. Рекомендовані кількості оновлюються з чергою. Кількість, введена вручну, зберігається.</p>
-    <Button variant="default" size="compact-xs" disabled={allAdded}
-      onClick={() => basket.add(groups)}>Додати всю чергу</Button>
+    {!allAdded && <Button variant="default" size="compact-xs"
+      onClick={() => basket.add(groups)}>Додати всю чергу</Button>}
     {orders.map(({ group, lines: items, remaining }) => <details className="dash-cart-order" key={group.id ?? 'unknown'}>
       <summary><span>{group.name || 'Уточнити постачальника'}</span><strong>{formatPrice(subtotal(items))}</strong><IconChevronDown size={15} aria-hidden="true" /></summary>
       <ul>{items.map(({ item, quantity, amount }) => <li key={item.id}>
         <strong>{item.name}</strong>
         <div className="dash-cart-meta">{item.sku && <small>Артикул {item.sku}</small>}<TableChip tone="storage" value={`Рекомендовано ${numberFormat.format(item.quantity)} ${item.unit}`} />
           {seasonal && <SeasonIndicator season={item.season} />}</div>
-        {item.priceDay && item.receiptId && <DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Ціна від {dateLabel(item.priceDay)}</DocumentLink>}
+        {item.priceDay && item.receiptId && <DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Накладна від {dateLabel(item.priceDay)}</DocumentLink>}
         <div className="dash-cart-actions">
-          <label>Замовити, {item.unit} <input type="number" aria-label={'Кількість для ' + item.name} key={quantity}
+          <label>Замовити, {item.unit} <input type="number" data-basket-item={item.id} aria-label={'Кількість для ' + item.name} key={quantity}
             min={item.unit === 'шт' ? 1 : 0.001} max={1000000000} step={item.unit === 'шт' ? 1 : 0.001} defaultValue={quantity}
             onBlur={event => {
               const field = event.currentTarget
@@ -157,7 +157,7 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal,
           <strong>{item.name}</strong>
           <div className="dash-cart-actions"><span>{numberFormat.format(item.quantity)} {item.unit}</span>
             <b>{item.amount === null ? 'Ціну уточнити' : formatPrice(item.amount)}</b>
-            <Button variant="default" size="compact-xs" onClick={() => basket.add([{ ...group, items: [item] }])}>До кошика</Button>
+            <Button variant="default" size="compact-xs" onClick={() => basket.add([{ ...group, items: [item] }])}>Додати до кошика</Button>
           </div>
         </li>)}</ul>
         {remaining.length > 1 && <Button variant="default" size="compact-xs" onClick={() => basket.add([group])}>Додати решту товарів постачальника</Button>}
