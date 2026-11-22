@@ -41,7 +41,8 @@ def history(conn, through, days, cover):
         pivot = through - timedelta(weeks=52 * years_ago)
         bounds = pivot - timedelta(days=days - 1), pivot + timedelta(days=cover + 1)
         for row in conn.execute(_HISTORY, bounds * 2):
-            kind = "receipt" if row["entity_type"] == "receipt" else kind_of(row)
+            # A position's code is the product code; kind_of reads that name as the document type code.
+            kind = "receipt" if row["entity_type"] == "receipt" else kind_of({**row, "code": None})
             if (kind not in ("sale", "receipt", "return") or not currency_valid(row)
                     or (kind != "return" and not row["sale_signs"])):
                 continue

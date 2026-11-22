@@ -93,7 +93,8 @@ def rank_clients(rows, catalog, today):
     sales = defaultdict(lambda: defaultdict(Decimal))
     refunds = defaultdict(Decimal)
     for row in rows:
-        kind = "receipt" if row["entity_type"] == "receipt" else kind_of(row)
+        # A position's code is the product code; kind_of reads that name as the document type code.
+        kind = "receipt" if row["entity_type"] == "receipt" else kind_of({**row, "code": None})
         if kind not in ("sale", "return", "receipt") or not currency_valid(row):
             continue
         if kind != "return" and (not row["sale_signs"] or (kind == "receipt" and row["entity_type"] != "receipt")):
