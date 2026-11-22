@@ -39,14 +39,16 @@ const colors = ['#d7ebe7', '#98d0bf', '#56af93', '#238267', '#10553e']
 
 const paths: Record<string, { path: string; bounds: number[] }> = shapes
 
-function bestCoveredSource(data: Markets | undefined, regionCode: string): Source {
+// The source is chosen for the whole country and kept when a region is opened. Choosing again inside
+// the region could switch the source, and the region would then show another total than the map did.
+function bestCoveredSource(data: Markets | undefined): Source {
   const sources: Source[] = ['combined', 'documents', 'registered', 'online']
   let best: Source = 'documents'
   let bestMapped = -1
   let bestKnown = -1
   for (const source of sources) {
     if (!data?.[source]) continue
-    const regions = data[source].regions.filter(r => !regionCode || r.code === regionCode)
+    const regions = data[source].regions
     const known = regions.reduce((sum, r) => sum + r.count, 0)
     const mapped = regions.reduce((sum, r) => sum + (r.settlements ?? []).reduce((n, p) => n + p.count, 0), 0)
     if (mapped > bestMapped || (mapped === bestMapped && known > bestKnown)) {
@@ -178,7 +180,7 @@ function MarketReport({ year, years }: { year: number; years: number[] }) {
   const data = !failed && query.data?.year === year && Boolean(query.data.shipmentLinks?.novaPoshta) === withCarrier ? query.data : undefined
   const carrier = data?.shipmentLinks?.novaPoshta
   const source = (rawSource === 'combined' && data?.combined) || rawSource === 'documents' || rawSource === 'registered' || rawSource === 'online'
-    ? rawSource : bestCoveredSource(data, regionCode)
+    ? rawSource : bestCoveredSource(data)
   const geography = data?.[source]
   return <div className="buyer-markets">
     <section className="pa-card" aria-labelledby="market-map-title">
