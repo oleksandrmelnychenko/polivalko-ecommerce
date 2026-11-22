@@ -8,6 +8,9 @@ from analytics.stock_turnover import exposure, stock_page
 from test_supplier_orders import REPORT, SKU, document
 
 
+TODAY = date(2026, 11, 22)
+
+
 def product(key, **changes):
     return dict(SKU, id=key, external="dntrade-code:" + key, sku=key, name="Товар " + key, **changes)
 
@@ -33,7 +36,7 @@ class StockReasonTests(TestCase):
         self.assertEqual((result["buyCount"], result["supplyReview"]), (1, 1))
         with patch("analytics.stock_turnover.dashboard", return_value=report), patch.dict(
                 "analytics.stock_turnover._cache", {(30, 14): (report, float("inf"), result)}, clear=True):
-            waiting = stock_page(None, 30, 1, "supply-review", "")
+            waiting = stock_page(TODAY, 30, 1, "supply-review", "")
         self.assertEqual([(r["id"], r["minimumNeed"], r["need"]) for r in waiting["rows"]], [("2", 0, 14)])
 
     def test_counters_follow_the_search_while_the_turnover_header_keeps_all_products(self):
@@ -42,8 +45,8 @@ class StockReasonTests(TestCase):
                           [order("2", "undated", 20, eta=None)])
         with patch("analytics.stock_turnover.dashboard", return_value=report), patch.dict(
                 "analytics.stock_turnover._cache", {(30, 14): (report, float("inf"), result)}, clear=True):
-            everything = stock_page(None, 30, 1, "all", "")
-            found = stock_page(None, 30, 1, "all", "Товар 2")
+            everything = stock_page(TODAY, 30, 1, "all", "")
+            found = stock_page(TODAY, 30, 1, "all", "Товар 2")
         self.assertEqual(everything["counts"], dict(all=3, buy=1, supplyReview=1, seasonReview=0, ordered=1, out=2, low=1))
         self.assertEqual(found["counts"], dict(all=1, buy=0, supplyReview=1, seasonReview=0, ordered=1, out=1, low=0))
         self.assertEqual((found["total"], found["buyCount"], found["net"]), (3, 1, everything["net"]))

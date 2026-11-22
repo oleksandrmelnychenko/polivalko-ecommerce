@@ -111,12 +111,16 @@ def dashboard(through, days):
     start = through - timedelta(days=days - 1)
     bounds = start, start - timedelta(days=days), through + timedelta(days=1)
     with _lock:
-        saved = _cache.get(days)
-        if saved and saved[0] == through and saved[1] > monotonic():
-            return saved[2]
+        saved = _cache.get((days, through))
+        if saved and saved[0] > monotonic():
+            return saved[1]
         with production() as conn:
             rows = list(chain(conn.execute(HEADERS, bounds), conn.execute(RECEIPTS, bounds)))
             enrich_costs(conn, rows, start)
             result = summarize(rows, through, days)
-        _cache[days] = through, monotonic() + 120, result
+        # The sales tiles read the period that ends today, the purchase queue the one that ended
+        # yesterday. Both stay; periods that ended earlier are of no use any more.
+        for stale in [key for key in _cache if key[1] < through - timedelta(days=1)]:
+            del _cache[stale]
+        _cache[days, through] = monotonic() + 120, result
         return result

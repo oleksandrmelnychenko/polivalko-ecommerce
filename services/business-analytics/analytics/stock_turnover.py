@@ -1,6 +1,6 @@
 """Turnover of catalog products with little or no stock available to the shop."""
 from collections import defaultdict
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal, ROUND_CEILING
 from threading import Lock
 from time import monotonic
@@ -95,7 +95,8 @@ def purchase_plan(sales, known, stock_unit, available, days, cover_days, arrival
     return dict(plan, purchaseStatus="buy", buyQuantity=minimum, priorityProfit=profit * uncovered / (days * observed))
 
 
-def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), register=None, receipt_prices=(), season_profiles=None):
+def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), register=None, receipt_prices=(), season_profiles=None,
+             today=None):
     catalog = list(catalog)
     by_id = {p["id"]: p for p in catalog}
     by_external = defaultdict(set)
@@ -103,7 +104,8 @@ def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), r
         external = identifier(p["external"])
         if external:
             by_external[external].add(p["id"])
-    today = date.fromisoformat(report["through"])
+    # The sales period ends before the day of the plan; deliveries and prices are judged on that day.
+    today = today or date.fromisoformat(report["through"])
     incoming, source = incoming_by_product(supplier_docs, register or {}, by_external)
     receipts = index_receipts(receipt_prices, by_id, by_external)
     seasons = season_profiles(by_id, by_external) if season_profiles else {}
@@ -157,7 +159,7 @@ def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), r
     known = [r["net"] for r in rows if r["net"] is not None]
     subtotal = sum(known, Decimal(0)) if known or not rows else None
     out = sum(r["available"] <= 0 for r in rows)
-    return dict(start=report["start"], through=report["through"], periodNet=period_net, threshold=THRESHOLD,
+    return dict(start=report["start"], through=report["through"], asOf=str(today), periodNet=period_net, threshold=THRESHOLD,
                 coverDays=cover_days, buyCount=sum(r["purchaseStatus"] == "buy" for r in rows),
                 # Sales documents whose lines do not add up. One of them leaves the sales of every product
                 # unconfirmed, so the queue is empty and has to say why.
@@ -177,7 +179,10 @@ _profiles = {}
 
 
 def stock_page(through, days, page, stock, search, cover_days=DEFAULT_COVER_DAYS, sort="turnover", seasonal=False):
-    report = dashboard(through, days)
+    # Today's sales are not finished. Counted as a whole day they would lower a 7-day rate, and the
+    # purchase need with it, by up to a seventh until closing time.
+    sold_through = through - timedelta(days=1)
+    report = dashboard(sold_through, days)
     cache_key = (days, cover_days, "seasonal") if seasonal else (days, cover_days)
     with _lock:
         cached = _cache.get(cache_key)
@@ -185,10 +190,10 @@ def stock_page(through, days, page, stock, search, cover_days=DEFAULT_COVER_DAYS
             with production() as conn:
                 def load_seasons(by_id, by_external):
                     saved = _profiles.get((days, cover_days))
-                    if saved and saved[0] == through and saved[1] > monotonic():
+                    if saved and saved[0] == sold_through and saved[1] > monotonic():
                         return saved[2]
-                    result = profiles(history(conn, through, days, cover_days), by_id, by_external, days, cover_days)
-                    _profiles[days, cover_days] = through, monotonic() + 1800, result
+                    result = profiles(history(conn, sold_through, days, cover_days), by_id, by_external, days, cover_days)
+                    _profiles[days, cover_days] = sold_through, monotonic() + 1800, result
                     return result
 
                 supplier_docs = list(conn.execute(DOCUMENTS, (through,through)))
@@ -196,7 +201,7 @@ def stock_page(through, days, page, stock, search, cover_days=DEFAULT_COVER_DAYS
                 prices = conn.execute(RECEIPT_PRICES, (through,))
                 result = exposure(report, conn.execute(CATALOG), cover_days, supplier_docs,
                                   register_entries(register["tables"]) if register else {}, prices,
-                                  load_seasons if seasonal else None)
+                                  load_seasons if seasonal else None, today=through)
             _cache[cache_key] = report, monotonic()+120, result
         else:
             result = cached[2]

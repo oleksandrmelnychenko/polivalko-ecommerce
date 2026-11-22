@@ -122,7 +122,7 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
           {counts.supplyReview > 0 && filters.stock !== 'supply-review' && <Button size="compact-xs" variant="subtle" onClick={() => showStock('supply-review')}>
             ще {numberFormat.format(counts.supplyReview)} · уточнити поставку</Button>}
           <CalculationInfo title="Як розраховано потребу в закупівлі">
-            <p>Темп — продана кількість за {days} днів після повернень, поділена на {days}. Від потреби на {report.coverDays} днів віднімаємо доступний залишок після резервів. Штучні товари округлюємо вгору до цілої штуки.</p>
+            <p>Темп — продана кількість за {days} днів після повернень, поділена на {days}. Період закінчується вчора: сьогоднішній день ще триває і занизив би темп. Від потреби на {report.coverDays} днів віднімаємо доступний залишок після резервів. Штучні товари округлюємо вгору до цілої штуки.</p>
             {report.seasonal && <p>Порівнюємо денні продажі до й після цієї календарної межі у відповідні тижні останніх трьох років. Напрям зміни має повторитися щонайменше двічі. Перевагу має історія товару. Для категорії потрібно щонайменше три товари в тих самих одиницях, які продавалися в обох періодах. Її поправка обмежена множниками 0,67–1,5. За браком історії використовуємо поточний темп.</p>}
             <p>Поставку враховуємо з планової дати, після вирахування вже прийнятої кількості. Для товару з прив’язаним складом враховуємо його склад та організацію, для решти — замовлення бізнесу. Замовлення, строк якого минув чи не вказаний або стан якого потребує звірки, у нижній межі потреби вважаємо таким, що надійде: «Докупити» показує цю нижню межу, а поруч — скільки знадобиться без такої поставки. Якщо нижня межа нульова, товар переходить у список «Уточнити поставку». Чергу сортуємо за очікуваним валовим прибутком від кількості, якої бракуватиме навіть у разі надходження цих замовлень.</p>
           </CalculationInfo>
@@ -197,7 +197,7 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
         closeOnEscape={!documentOpen} closeOnClickOutside={!documentOpen} trapFocus={!documentOpen}
         title={<MetricLabel icon={IconShoppingCart}>Закупівлі за постачальниками</MetricLabel>}>
         {report?.supplierBudget ? <BudgetBySupplier basket={basket} budget={report.supplierBudget}
-          count={report.buyCount} through={report.through} cover={report.coverDays} days={days} seasonal={!!report.seasonal} />
+          count={report.buyCount} through={report.asOf ?? report.through} cover={report.coverDays} days={days} seasonal={!!report.seasonal} />
           : <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={reload}
               description={problemMessage(query.problem, 'Розрахунок закупівель недоступний.')} />}
       </AppEditorModal>

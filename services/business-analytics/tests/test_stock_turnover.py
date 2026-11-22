@@ -1,8 +1,12 @@
+from datetime import date
 from decimal import Decimal
 from unittest import TestCase
 from unittest.mock import patch
 
 from analytics.stock_turnover import exposure, purchase_plan, stock_page
+
+
+TODAY = date(2026, 11, 22)
 
 
 def item(key, external, on_hand=0, reserved=0, visible=True):
@@ -47,9 +51,9 @@ class StockTurnoverTests(TestCase):
         result = exposure(sales,[item(str(i),"dntrade-code:"+str(i),int(i%2)) for i in range(65)])
         with patch("analytics.stock_turnover.dashboard",return_value=sales), patch.dict(
                 "analytics.stock_turnover._cache",{(30,14):(sales,float("inf"),result)},clear=True):
-            second = stock_page(None,30,2,"low","")
+            second = stock_page(TODAY,30,2,"low","")
             self.assertEqual((second["total"],second["matches"],len(second["rows"])), (65,32,7))
-            found = stock_page(None,30,1,"out","Назва 64")
+            found = stock_page(TODAY,30,1,"out","Назва 64")
             self.assertEqual((found["total"],found["matches"],found["rows"][0]["sku"]), (65,1,"64"))
 
     def test_buy_queue_prioritizes_profit_from_uncovered_demand_before_pagination(self):
@@ -60,13 +64,13 @@ class StockTurnoverTests(TestCase):
         result = exposure(sales,catalog,14)
         with patch("analytics.stock_turnover.dashboard",return_value=sales), patch.dict(
                 "analytics.stock_turnover._cache",{(30,14):(sales,float("inf"),result)},clear=True):
-            page = stock_page(None,30,1,"buy","",14,"purchase")
+            page = stock_page(TODAY,30,1,"buy","",14,"purchase")
             self.assertEqual((page["buyCount"],page["matches"],[r["id"] for r in page["rows"]]),(2,2,["b","a"]))
             b = page["rows"][0]
             self.assertEqual((b["share"],b["margin"],b["dailyRate"],b["stockDays"],b["buyQuantity"]),
                              (Decimal(".20"),Decimal(".50"),Decimal(25)/30,Decimal("2.4"),10))
             self.assertEqual(b["priorityProfit"], Decimal(580)/3)
-            all_rows = stock_page(None,30,1,"all","",14,"turnover")["rows"]
+            all_rows = stock_page(TODAY,30,1,"all","",14,"turnover")["rows"]
             self.assertEqual((all_rows[0]["id"],all_rows[0]["purchaseStatus"],all_rows[0]["buyQuantity"]),("c","cost",None))
 
     def test_purchase_queue_shows_more_than_25_and_keeps_profit_order_across_pages(self):
@@ -75,9 +79,9 @@ class StockTurnoverTests(TestCase):
         result = exposure(sales, catalog)
         with patch("analytics.stock_turnover.dashboard", return_value=sales), patch.dict(
                 "analytics.stock_turnover._cache", {(30, 14): (sales, float("inf"), result)}, clear=True):
-            first = stock_page(None, 30, 1, "buy", "", sort="purchase")
-            last = stock_page(None, 30, 2, "buy", "", sort="purchase")
-            full_catalog = stock_page(None, 30, 1, "all", "", sort="purchase")
+            first = stock_page(TODAY, 30, 1, "buy", "", sort="purchase")
+            last = stock_page(TODAY, 30, 2, "buy", "", sort="purchase")
+            full_catalog = stock_page(TODAY, 30, 1, "all", "", sort="purchase")
         self.assertEqual((first["matches"], len(first["rows"]), len(last["rows"])), (110, 100, 10))
         self.assertEqual([r["id"] for r in first["rows"] + last["rows"]], [str(i) for i in range(110, 0, -1)])
         self.assertEqual((full_catalog["matches"], len(full_catalog["rows"])), (111, 25))

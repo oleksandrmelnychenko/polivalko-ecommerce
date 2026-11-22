@@ -64,7 +64,9 @@ type StockTurnoverReport = {
   // The same counters for the rows the search leaves.
   counts?: { all: number; buy: number; supplyReview: number; seasonReview: number; ordered: number; out: number; low: number }
   start: string
+  // The last whole day of the sales period; asOf is the day the plan is made, one day later.
   through: string
+  asOf?: string
   periodNet: number
   threshold: number
   coverDays: number
