@@ -238,6 +238,8 @@ def summarize(headers, web, shipments=None, carrier=None):
                         if not previous or previous.region != code:
                             added = carrier_links["addedByRegion"]
                             added["UA"+code] = added.get("UA"+code, 0) + count
+                    # A city without a point on the map still tells the region when the documents give none.
+                    if place or (code and not old_code):
                         delivery = (hit.region, hit.city)
         link = row.get("link") and (row["account"], row["link"])
         if link and kind != "return":
