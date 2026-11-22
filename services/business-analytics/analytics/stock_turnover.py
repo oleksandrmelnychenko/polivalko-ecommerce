@@ -15,6 +15,7 @@ from .supplier_prices import RECEIPT_PRICES, index_receipts, latest_purchase, su
 
 THRESHOLD = 3
 PAGE_SIZE = 25
+PURCHASE_PAGE_SIZE = 100
 DEFAULT_COVER_DAYS = 14
 COVER_OPTIONS = (7, DEFAULT_COVER_DAYS, 30)
 CATALOG = """
@@ -206,6 +207,7 @@ def stock_page(through, days, page, stock, search, cover_days=DEFAULT_COVER_DAYS
                     "units": 4, "sales": 4, "covered": 5, "incoming": 5, "no-demand": 6}
         # The existing turnover order breaks ties and orders positions requiring review.
         filtered.sort(key=lambda r: (priority[r["purchaseStatus"]], -(r["priorityProfit"] or 0)))
-    page = min(page, max(1, (len(filtered) + PAGE_SIZE - 1) // PAGE_SIZE))
-    return dict(result, matches=len(filtered), page=page, pageSize=PAGE_SIZE,
-                rows=filtered[(page-1)*PAGE_SIZE:page*PAGE_SIZE])
+    page_size = PURCHASE_PAGE_SIZE if stock == "buy" else PAGE_SIZE
+    page = min(page, max(1, (len(filtered) + page_size - 1) // page_size))
+    return dict(result, matches=len(filtered), page=page, pageSize=page_size,
+                rows=filtered[(page-1)*page_size:page*page_size])

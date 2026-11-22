@@ -69,6 +69,19 @@ class StockTurnoverTests(TestCase):
             all_rows = stock_page(None,30,1,"all","",14,"turnover")["rows"]
             self.assertEqual((all_rows[0]["id"],all_rows[0]["purchaseStatus"],all_rows[0]["buyQuantity"]),("c","cost",None))
 
+    def test_purchase_queue_shows_more_than_25_and_keeps_profit_order_across_pages(self):
+        sales = report(*(sale("valko-dntrade", str(i), str(i), 200, 30, i) for i in range(1, 111)))
+        catalog = [item(str(i), "dntrade-code:" + str(i)) for i in range(111)]
+        result = exposure(sales, catalog)
+        with patch("analytics.stock_turnover.dashboard", return_value=sales), patch.dict(
+                "analytics.stock_turnover._cache", {(30, 14): (sales, float("inf"), result)}, clear=True):
+            first = stock_page(None, 30, 1, "buy", "", sort="purchase")
+            last = stock_page(None, 30, 2, "buy", "", sort="purchase")
+            full_catalog = stock_page(None, 30, 1, "all", "", sort="purchase")
+        self.assertEqual((first["matches"], len(first["rows"]), len(last["rows"])), (110, 100, 10))
+        self.assertEqual([r["id"] for r in first["rows"] + last["rows"]], [str(i) for i in range(110, 0, -1)])
+        self.assertEqual((full_catalog["matches"], len(full_catalog["rows"])), (111, 25))
+
     def test_horizon_rounding_negative_reserves_and_unreliable_inputs(self):
         product = sale("valko-dntrade","a","one",100,7,20)
         def plan(days=7, cover=7, stock=0, unit="шт"):

@@ -23,6 +23,7 @@ import { BudgetBySupplier, ReceiptPrice } from './SupplierPurchases'
 import { useSupplierBasket } from './SupplierBasket'
 
 const percent = new Intl.NumberFormat('uk-UA', { style: 'percent', maximumFractionDigits: 2 })
+const defaultStock = 'buy'
 const decisionText = {
   covered: 'Докупити 0 · запасу вистачає', 'no-demand': 'Докупити 0 · немає додатних продажів після повернень',
   sales: 'Бракує підтверджених продажів', units: 'Звірити одиниці продажу й залишку',
@@ -50,8 +51,8 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
   const [draft, setDraft] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const filterPanel = useId()
-  const [filters, setFilters] = useState({ page: 1, pageDays: days, stock: 'all', search: '', cover: '14', sort: 'purchase', seasonal: true })
-  const changedFilters = [filters.stock !== 'all', filters.cover !== '14', filters.sort !== 'purchase', !filters.seasonal].filter(Boolean).length
+  const [filters, setFilters] = useState({ page: 1, pageDays: days, stock: defaultStock, search: '', cover: '14', sort: 'purchase', seasonal: true })
+  const changedFilters = [filters.stock !== defaultStock, filters.cover !== '14', filters.sort !== 'purchase', !filters.seasonal].filter(Boolean).length
   const search = useDebouncedCallback((value: string) => {
     setFilters(current => ({ ...current, search: value.trim(), page: 1 }))
   }, 300)
@@ -68,9 +69,9 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
   return (
     <DashboardCard title={<><IconPackage aria-hidden="true" /><span id="zakupivli">Закінчуються</span></>} className="dash-product-report dash-stock-impact" flush>
       {report && <div className="dash-product-summary">
-        <span className="dash-with-info">Чистий оборот товарів із малим залишком
+        <span className="dash-with-info">Чистий оборот усіх товарів із малим залишком
           <CalculationInfo title="Які товари враховано в обороті">
-            <p>До списку входять товари, для яких доступно до {numberFormat.format(report.threshold)} од. після резервів. У підсумку враховано лише підтверджені суми.</p>
+            <p>Оборот охоплює всі товари, для яких доступно до {numberFormat.format(report.threshold)} од. після резервів, незалежно від вибраного фільтра. У підсумку враховано лише підтверджені суми.</p>
             {report.share != null && <p>Частка від загального обороту за період · {formatPrice(report.periodNet)}.</p>}
           </CalculationInfo>
         </span>
@@ -89,23 +90,23 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
       <div className="dash-product-tools dash-stock-filters" id={filterPanel} hidden={!filtersOpen}>
         <Select size="sm" radius="xl" label="Доступність" aria-label="Доступність товарів" allowDeselect={false} value={filters.stock}
           data={[
-            { value: 'all', label: report ? `Усі · ${numberFormat.format(report.total)}` : 'Усі' },
             { value: 'buy', label: report ? `До закупівлі · ${numberFormat.format(report.buyCount)}` : 'До закупівлі' },
+            { value: 'all', label: report ? `Усі · ${numberFormat.format(report.total)}` : 'Усі' },
             ...(filters.seasonal ? [{ value: 'season-review', label: 'Перевірити перед сезоном' + (report ? ' · ' + (report.seasonalReview ?? 0) : '') }] : []),
             { value: 'ordered', label: report ? `Із замовленнями · ${numberFormat.format(report.withOrders)}` : 'Із замовленнями' },
             { value: 'out', label: report ? `Немає · ${numberFormat.format(report.outCount)}` : 'Немає' },
             { value: 'low', label: report ? `Мало · ${numberFormat.format(report.lowCount)}` : 'Мало' },
           ]}
-          onChange={value => setFilters(current => ({ ...current, stock: value ?? 'all', page: 1 }))} />
+          onChange={value => setFilters(current => ({ ...current, stock: value ?? defaultStock, page: 1 }))} />
         <Select size="sm" radius="xl" label="Запас на" allowDeselect={false} value={filters.cover}
           data={[{ value: '7', label: '7 днів' }, { value: '14', label: '14 днів' }, { value: '30', label: '30 днів' }]}
           onChange={value => setFilters(current => ({ ...current, cover: value ?? '14', page: 1 }))} />
         <Select size="sm" radius="xl" label="Сортування" allowDeselect={false} value={filters.sort}
-          data={[{ value: 'purchase', label: 'Черга закупівель' }, { value: 'turnover', label: 'За оборотом' }]}
+          data={[{ value: 'purchase', label: 'За валовим прибутком' }, { value: 'turnover', label: 'За оборотом' }]}
           onChange={value => setFilters(current => ({ ...current, sort: value ?? 'purchase', page: 1 }))} />
         <Select size="sm" radius="xl" label="План попиту" allowDeselect={false} value={filters.seasonal ? 'season' : 'rate'}
           data={[{ value: 'season', label: 'З урахуванням сезону' }, { value: 'rate', label: 'За поточним темпом' }]}
-          onChange={value => setFilters(current => ({ ...current, seasonal: value === 'season', stock: current.stock === 'season-review' ? 'all' : current.stock, page: 1 }))} />
+          onChange={value => setFilters(current => ({ ...current, seasonal: value === 'season', stock: current.stock === 'season-review' ? defaultStock : current.stock, page: 1 }))} />
       </div>
       {report ? <>
         <div className="dash-product-count dash-stock-count">
@@ -130,6 +131,7 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
             <div className="dash-stock-decision">
               {item.purchaseStatus === 'buy'
                 ? <div><strong>Докупити {numberFormat.format(item.buyQuantity)} {item.unit}{item.lastPurchase?.amount != null && ' · ' + formatPrice(item.lastPurchase.amount)}</strong>
+                  <div className="app-cell-sub">Очікуваний валовий прибуток · <b>{formatPrice(item.priorityProfit)}</b></div>
                   {report.supplierBudget && <ReceiptPrice purchase={item.lastPurchase} />}
                 </div>
                 : <span>{decisionText[item.purchaseStatus]}</span>}
@@ -154,7 +156,6 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
                   {item.dailyRate !== 0 && <div data-margin={item.margin ? (item.margin > 0 ? 'positive' : 'negative') : undefined}>
                     <dt>Маржа</dt><dd>{item.margin == null ? 'невідома' : formatShare(item.margin)}</dd>
                   </div>}
-                  {item.purchaseStatus === 'buy' && <div><dt>Очікуваний валовий прибуток від поповнення</dt><dd>{formatPrice(item.priorityProfit)}</dd></div>}
                 </dl>
                 {report.seasonal && item.dailyRate != null && item.dailyRate > 0 && <p className="dash-stock-season">{item.season
                   ? `Сезонна поправка за історією ${item.season.source === 'product' ? 'товару' : 'категорії'} × ${numberFormat.format(item.season.factor)}. Враховано сезонів · ${numberFormat.format(item.season.years)}.`
