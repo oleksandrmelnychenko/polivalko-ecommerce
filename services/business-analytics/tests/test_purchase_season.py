@@ -8,13 +8,14 @@ from test_stock_turnover import item, report, sale
 
 class PurchaseSeasonTests(TestCase):
     def test_compares_equal_weeks_across_years_in_units_and_handles_sparse_products(self):
-        catalog = {k: dict(item(k, "dntrade-code:" + k), category="garden") for k in ("a", "b", "c")}
+        catalog = {k: dict(item(k, "dntrade-code:" + k, on_hand=12 if k in ("d", "e") else 0),
+                           category="garden") for k in ("a", "b", "c", "d", "e")}
         external = {p["external"]: {k} for k, p in catalog.items()}
         facts = []
         for year in (1, 2):
             for offset in range(-6, 8):
                 for product, qty in (("a", 2 if offset <= 0 else 4), ("b", 1 if offset == 1 else 0),
-                                     ("c", 3 if offset > 0 else 0)):
+                                     ("c", 3 if offset > 0 else 0), ("d", 1), ("e", 1)):
                     if qty:
                         facts.append((year, offset, dict(account="valko-dntrade", code=product, ref="", unit="2009"), Decimal(qty)))
         def load(catalog, ids):
@@ -31,6 +32,19 @@ class PurchaseSeasonTests(TestCase):
         self.assertEqual((c["purchaseStatus"], c["historicalDemand"], result["seasonalReview"]), ("season-review", 21, 1))
         self.assertNotIn(("product", "a", "шт"), profiles([f for f in facts if f[0] == 1], catalog, external, 7, 7))
         self.assertFalse(profiles([f for f in facts if f[1] >= 0], catalog, external, 7, 7))
+        thin = profiles([f for f in facts if f[2]["code"] not in ("d","e")], catalog, external, 7, 7)
+        self.assertNotIn(("category", "garden", "шт"), thin)
+
+    def test_exceptional_category_season_does_not_quadruple_a_sku_order(self):
+        catalog = {k: dict(item(k, ""), category="garden") for k in ("x","y","z")}
+        def factor(multipliers):
+            observations = [(year, day, dict(account="polivalko-native", ref=k, unit="catalog-base"),
+                             Decimal(multiplier if day > 0 else 1))
+                            for year, multiplier in enumerate(multipliers, 1) for k in catalog for day in range(-6, 8)]
+            return profiles(observations, catalog, {}, 7, 7)
+        self.assertEqual(factor([12, 18])["category","garden","шт"]["factor"], Decimal("1.5"))
+        self.assertEqual(factor([1, 18])["product","x","шт"]["factor"], 1)
+        self.assertNotIn(("product","x","шт"), factor(["0.5", 18]))
 
     def test_seasonal_adjustment_precedes_arrivals_and_rounding(self):
         sales = [sale("polivalko-native", None, "a", 70, 7, 35, "catalog-base")]
