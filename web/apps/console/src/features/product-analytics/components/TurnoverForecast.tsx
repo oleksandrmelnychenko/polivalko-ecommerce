@@ -31,6 +31,7 @@ const modelNames: Record<Model, string> = {
 }
 const monthLabel = new Intl.DateTimeFormat('uk-UA', { month: 'short', year: 'numeric', timeZone: 'UTC' })
 const dayLabel = new Intl.DateTimeFormat('uk-UA', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+const longMonth = new Intl.DateTimeFormat('uk-UA', { month: 'long', year: 'numeric', timeZone: 'UTC' })
 const label = (day: string) => monthLabel.format(new Date(day + 'T00:00:00Z'))
 const money = (n: number) => formatValue(n) + ' ₴'
 const percent = (n: number | null) => n == null ? '—' : formatValue(n * 100) + '%'
@@ -70,6 +71,10 @@ export function TurnoverForecast() {
   const future = report?.projection ?? []
   const first = future.at(0)
   const last = future.at(-1)
+  const lastHistory = report?.history.at(-1)?.month
+  // The month of the newest document stays out of the history until a document shows that it reached its last day.
+  const openMonth = report?.lastDocument && lastHistory && report.lastDocument.slice(0, 7) > lastHistory.slice(0, 7)
+    ? report.lastDocument.slice(0, 7) + '-01' : null
 
   return <div className="turnover-report">
     <AnalyticsCard title={<MetricLabel icon={IconCalendarStats}>Прогноз чистого обороту</MetricLabel>}
@@ -85,7 +90,9 @@ export function TurnoverForecast() {
         <span>Історія для прогнозу <b>{report.trainingMonths} міс.</b></span>
       </div>}
       {report && report.staleMonths > 0 && <p className="turnover-state" role="status"><IconHistory size={17} />
-        Історія відстає на {report.staleMonths} міс. Прогноз починається після останнього повного місяця з даними.</p>}
+        Історія відстає на {report.staleMonths} міс.{report.lastDocument && openMonth && <> Останній документ — {dayLabel.format(new Date(report.lastDocument + 'T00:00:00Z'))},
+          тому {longMonth.format(new Date(openMonth + 'T00:00:00Z'))} ще не вважаємо повним місяцем: для цього потрібен документ за його останній день або пізніший.</>}
+        {' '}Прогноз починається після останнього повного місяця з даними.</p>}
       {failed ? <div className="turnover-state" role="alert"><IconAlertCircle size={18} />{result.problem?.title ?? 'Не вдалося отримати прогноз.'}
         <Button size="xs" radius="xl" variant="default" leftSection={<IconRefresh size={14} />} onClick={result.reload}>Повторити</Button></div>
         : !report ? <p className="turnover-state" role="status"><Loader size={16} />Розраховуємо прогноз на {horizon} міс.…</p>
