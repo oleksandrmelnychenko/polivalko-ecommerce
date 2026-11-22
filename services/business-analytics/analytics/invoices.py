@@ -2,8 +2,10 @@
 from datetime import date, timedelta
 from decimal import Decimal
 from itertools import chain
+from threading import Lock
+from time import monotonic
 
-from .register import business_day, identifier, kind_of, number, sale_line
+from .register import INACTIVE, business_day, identifier, kind_of, number, sale_line
 from .source import ARCHIVE_SQL, archived_rows, production
 
 
@@ -31,19 +33,28 @@ PARENT_REF = """coalesce(nullif(d.parent_ref,''), CASE jsonb_typeof(d.details->'
     WHEN 'string' THEN nullif(d.details->>'parent_document','') WHEN 'number' THEN d.details->>'parent_document'
     WHEN 'object' THEN nullif(d.details#>>'{parent_document,id}','') END)"""
 
-# Sum the cash register in PostgreSQL so annual charts do not need to transfer
-# every receipt or wait for the assortment and forecast models to finish.
-INDEPENDENT_RECEIPTS = """
+# The register's status and currency come from the import envelope. A sales invoice is also checked
+# against its own body (kind_of, currency_valid), so a receipt gets the same two checks.
+BODY_ACTIVE = ("lower(btrim(coalesce(d.details->>'status',''))) NOT IN ("
+               + ",".join(f"'{status}'" for status in sorted(INACTIVE)) + ")")
+BODY_IN_HRYVNIA = "lower(btrim(coalesce(d.details->>'currency_iso',''))) IN ('','0','uah','980')"
+
+# Receipts that are sales of their own. A reader that reports what it leaves out checks the body
+# currency of each row itself (body_in_hryvnia); every other reader takes INDEPENDENT_RECEIPTS.
+INDEPENDENT_RECEIPT_ROWS = """
 WHERE d.entity_type='receipt' AND lower(d.kind) IN ('cash','6','receipt','salereceipt','salebyreceipt')
   AND lower(d.status) IN ('active','активна','активний','posted') AND lower(d.currency) IN ('uah','980')
-  AND d.day >= %s AND d.day < %s
+  AND d.day >= %s AND d.day < %s AND BODY_ACTIVE
   AND NOT EXISTS (
       SELECT 1 FROM accounting.documents i
       WHERE i.source_account=d.source_account AND lower(i.source_id)=lower(PARENT_REF)
         AND i.entity_type='invoice' AND lower(i.kind) IN ('out','3','sale','salesinvoice','outgoinginvoice')
         AND lower(i.status) IN ('active','активна','активний','posted')
   )
-""".replace("PARENT_REF", PARENT_REF)
+""".replace("PARENT_REF", PARENT_REF).replace("BODY_ACTIVE", BODY_ACTIVE)
+# Sum the cash register in PostgreSQL so annual charts do not need to transfer
+# every receipt or wait for the assortment and forecast models to finish.
+INDEPENDENT_RECEIPTS = INDEPENDENT_RECEIPT_ROWS + "  AND " + BODY_IN_HRYVNIA + "\n"
 CASH_MONTHS = """
 SELECT extract(month FROM d.day)::int AS month, count(*) AS documents,
        sum(abs(d.total)) AS amount, sum(s.amount) AS lines,
@@ -73,7 +84,25 @@ def currency_valid(doc):
     return bool(values) and values <= {"uah", "980"}
 
 
+def body_in_hryvnia(doc):
+    """The register row of an independent receipt is in hryvnia; its body must not name another currency."""
+    return identifier(doc.get("raw_currency")) in ("", "uah", "980")
+
+
+_years_lock = Lock()
+_years = None
+
+
 def report_years(today):
+    """Years that have sales. Finding them checks the body of every receipt, so the answer is kept for 15 minutes."""
+    global _years
+    with _years_lock:
+        if _years is None or _years[0] != today or monotonic() >= _years[1]:
+            _years = today, monotonic() + 900, read_years(today)
+        return _years[2]
+
+
+def read_years(today):
     bounds = date(1900, 1, 1), today + timedelta(days=1)
     with production() as conn:
         headers = conn.execute("""

@@ -5,7 +5,7 @@ from itertools import chain
 from threading import Lock
 from time import monotonic
 
-from .invoices import INDEPENDENT_RECEIPTS, PARENT_REF, currency_valid
+from .invoices import INDEPENDENT_RECEIPT_ROWS, PARENT_REF, body_in_hryvnia, currency_valid
 from .product_contribution import turnover_ranking
 from .purchase_cost import LINES, ORG, enrich_costs
 from .register import kind_of, number, sale_line
@@ -20,7 +20,7 @@ SELECT d.day, d.entity_type, d.source_account AS account, d.kind, d.status, d.cu
 FROM accounting.documents d
 """
 HEADERS = FIELDS + "WHERE d.entity_type IN ('invoice','customerReturn') AND d.day >= %s AND d.day < %s"
-RECEIPTS = FIELDS + INDEPENDENT_RECEIPTS
+RECEIPTS = FIELDS + INDEPENDENT_RECEIPT_ROWS
 
 
 def totals():
@@ -40,7 +40,7 @@ def summarize(rows, through, days):
             continue
         amount = number(row["total"])
         day = row["day"]
-        if kind == "invalid" or amount is None or (kind != "receipt" and not currency_valid(row)):
+        if kind == "invalid" or amount is None or not (body_in_hryvnia if kind == "receipt" else currency_valid)(row):
             excluded += int(day >= start)
             continue
         amount = abs(amount)
