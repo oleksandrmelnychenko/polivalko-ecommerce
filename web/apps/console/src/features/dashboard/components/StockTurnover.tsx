@@ -112,66 +112,61 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
         <div className="dash-product-count" aria-live="polite"><span>Показано <b>{report.rows.length ? numberFormat.format((report.page - 1) * report.pageSize + 1) + '–' + numberFormat.format((report.page - 1) * report.pageSize + report.rows.length) : '0'} із {numberFormat.format(report.matches)}</b></span>
         </div>
         {report.rows.length > 0 ? <>
-          <ul className="dash-rank">{report.rows.map(item => <li key={item.id}>
-            <div className="dash-rank-main">
-              <Link to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}</Link>
-              <div className="dash-product-meta">{item.sku && <span className="dash-product-sku">{item.sku}</span>}
-                <TableChip tone={item.available <= 0 ? 'danger' : 'warning'} value={`Доступно ${numberFormat.format(item.available)}`} /></div>
-            </div>
-            <div className="dash-rank-side">
-              {item.net == null ? <span className="app-cell-sub">Оборот невідомий</span> : <div className="dash-product-result">
-                <span>Чистий оборот</span>
-                <strong className="app-money">{formatPrice(item.net)}</strong>
-              </div>}
-            </div>
-            <div className="dash-stock-details">
-              {item.stockDays != null && report.coverDays > 0 && <div className="dash-stock-cover">
-                <div><span>Запас на <b>{item.stockDays > 0 && item.stockDays < 0.1 ? '< 0,1' : numberFormat.format(Math.round(item.stockDays * 10) / 10)} дн.</b></span>
-                  <span>Ціль · {report.coverDays} дн.</span></div>
-                <div className="dash-stock-cover-track" aria-hidden="true" data-covered={item.stockDays >= report.coverDays}>
-                  <span style={{ width: Math.min(100, item.stockDays / report.coverDays * 100) + '%' }} />
-                </div>
-              </div>}
-              <div className="dash-stock-decision">
-                {item.purchaseStatus === 'buy'
-                  ? <strong>Докупити {numberFormat.format(item.buyQuantity)} {item.unit}{item.lastPurchase?.amount != null && ' · ' + formatPrice(item.lastPurchase.amount)}</strong>
-                  : <span>{decisionText[item.purchaseStatus]}</span>}
-                {sources.has(item.id) && (basket.picked.some(row => row.id === item.id && row.supplier === sources.get(item.id)?.group.id && row.unit === item.unit)
-                  ? <TableChip tone="success" value="У кошику" />
-                  : <Button size="compact-xs" radius="xl" color="dark" leftSection={<IconShoppingCart size={14} aria-hidden="true" />}
-                    onClick={() => {
-                      const source = sources.get(item.id)!
-                      basket.add([{ ...source.group, items: [source.item] }])
-                    }}>Додати до кошика</Button>)}
+          <ul className="dash-stock-tiles">{report.rows.map(item => <li key={item.id} className="dash-stock-tile">
+            <header className="dash-stock-tile-head">
+              <h3><Link to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}</Link></h3>
+              <div className="dash-product-meta">
+                <TableChip tone={item.available <= 0 ? 'danger' : 'warning'} value={`Доступно ${numberFormat.format(item.available)}`} />
+                {item.sku && <span className="dash-product-sku">Арт. {item.sku}</span>}
               </div>
-              <SupplierOrders supply={item.supply} unit={item.unit} />
-              <details className="dash-stock-breakdown">
-                <summary>Деталі закупівлі <IconChevronDown size={14} aria-hidden="true" /></summary>
-                <div className="dash-stock-breakdown-body">
-                  <dl className="dash-finance-chips">
-                    <div><dt>Залишок</dt><dd>{numberFormat.format(item.onHand)}</dd></div>
-                    <div className="dash-reserve-chip"><dt>Резерв</dt><dd>{numberFormat.format(item.reserved)}</dd></div>
-                    <div className="dash-turnover-share-chip">
-                      <dt><IconChartPie size={13} aria-hidden="true" />Частка обороту</dt>
-                      <dd>{item.share == null ? '—' : formatShare(item.share)}</dd>
-                </div>
-                {item.dailyRate != null && <div><dt>Темп</dt><dd>{item.dailyRate > 0 && item.dailyRate < 0.001 ? '< 0,001' : numberFormat.format(item.dailyRate)} {item.unit || 'од.'}/день</dd></div>}
-                {item.dailyRate !== 0 && <div data-margin={item.margin ? (item.margin > 0 ? 'positive' : 'negative') : undefined}>
-                  <dt>Маржа</dt><dd>{item.margin == null ? 'невідома' : formatShare(item.margin)}</dd>
-                </div>}
-              </dl>
-              {report.seasonal && item.dailyRate != null && item.dailyRate > 0 && <SeasonIndicator season={item.season} />}
-              {item.historicalDemand != null && <span className="app-cell-sub">У відповідні тижні попередніх сезонів ({item.historicalSeasons}) продавалося близько {numberFormat.format(item.historicalDemand)} {item.unit} за {report.coverDays} дн.</span>}
-              {item.supply.within > 0 && <span className="app-cell-sub">Надійде в межах плану · {numberFormat.format(item.supply.within)} {item.unit}
-                {item.needBeforeIncoming != null && ' · потреба до поставок ' + numberFormat.format(item.needBeforeIncoming) + ' ' + (item.unit || '')}</span>}
-              {item.purchaseStatus === 'buy' && <span className="app-cell-sub">Очікуваний валовий прибуток від поповнення · {formatPrice(item.priorityProfit)}</span>}
-              {item.purchaseStatus !== 'buy' && item.need != null && item.need > 0 && item.minimumNeed === item.need && <span className="app-cell-sub">Розрахункова потреба · {numberFormat.format(item.need)} {item.unit || 'од.'}</span>}
-              {item.minimumNeed != null && item.need != null && item.minimumNeed < item.need && <span className="app-cell-sub">
-                Потреба · {numberFormat.format(item.minimumNeed)}–{numberFormat.format(item.need)} {item.unit || 'од.'} залежно від підтвердження поставки.</span>}
-              {report.supplierBudget && <ReceiptPrice purchase={item.lastPurchase} year={report.through.slice(0, 4)} />}
-                </div>
-              </details>
+            </header>
+            <div className="dash-stock-decision">
+              {item.purchaseStatus === 'buy'
+                ? <strong>Докупити {numberFormat.format(item.buyQuantity)} {item.unit}{item.lastPurchase?.amount != null && ' · ' + formatPrice(item.lastPurchase.amount)}</strong>
+                : <span>{decisionText[item.purchaseStatus]}</span>}
+              {sources.has(item.id) && (basket.picked.some(row => row.id === item.id && row.supplier === sources.get(item.id)?.group.id && row.unit === item.unit)
+                ? <TableChip tone="success" value="У кошику" />
+                : <Button size="compact-xs" radius="xl" color="dark" leftSection={<IconShoppingCart size={14} aria-hidden="true" />}
+                  onClick={() => {
+                    const source = sources.get(item.id)!
+                    basket.add([{ ...source.group, items: [source.item] }])
+                  }}>Додати до кошика</Button>)}
             </div>
+            <SupplierOrders supply={item.supply} unit={item.unit} />
+            <details className="dash-stock-breakdown">
+              <summary aria-label={`Деталі закупівлі · ${item.name}`} title="Деталі закупівлі"><IconChevronDown size={17} aria-hidden="true" /></summary>
+              <div className="dash-stock-breakdown-body">
+                <div className="dash-stock-turnover">Чистий оборот <strong>{item.net == null ? 'Невідомий' : formatPrice(item.net)}</strong></div>
+                {item.stockDays != null && report.coverDays > 0 && <div className="dash-stock-cover">
+                  <div><span>Запас на <b>{item.stockDays > 0 && item.stockDays < 0.1 ? '< 0,1' : numberFormat.format(Math.round(item.stockDays * 10) / 10)} дн.</b></span>
+                    <span>Ціль · {report.coverDays} дн.</span></div>
+                  <div className="dash-stock-cover-track" aria-hidden="true" data-covered={item.stockDays >= report.coverDays}>
+                    <span style={{ width: Math.min(100, item.stockDays / report.coverDays * 100) + '%' }} />
+                  </div>
+                </div>}
+                <dl className="dash-finance-chips">
+                  <div><dt>Залишок</dt><dd>{numberFormat.format(item.onHand)}</dd></div>
+                  <div className="dash-reserve-chip"><dt>Резерв</dt><dd>{numberFormat.format(item.reserved)}</dd></div>
+                  <div className="dash-turnover-share-chip">
+                    <dt><IconChartPie size={13} aria-hidden="true" />Частка обороту</dt>
+                    <dd>{item.share == null ? '—' : formatShare(item.share)}</dd>
+                  </div>
+                  {item.dailyRate != null && <div><dt>Темп</dt><dd>{item.dailyRate > 0 && item.dailyRate < 0.001 ? '< 0,001' : numberFormat.format(item.dailyRate)} {item.unit || 'од.'}/день</dd></div>}
+                  {item.dailyRate !== 0 && <div data-margin={item.margin ? (item.margin > 0 ? 'positive' : 'negative') : undefined}>
+                    <dt>Маржа</dt><dd>{item.margin == null ? 'невідома' : formatShare(item.margin)}</dd>
+                  </div>}
+                </dl>
+                {report.seasonal && item.dailyRate != null && item.dailyRate > 0 && <SeasonIndicator season={item.season} />}
+                {item.historicalDemand != null && <span className="app-cell-sub">У відповідні тижні попередніх сезонів ({item.historicalSeasons}) продавалося близько {numberFormat.format(item.historicalDemand)} {item.unit} за {report.coverDays} дн.</span>}
+                {item.supply.within > 0 && <span className="app-cell-sub">Надійде в межах плану · {numberFormat.format(item.supply.within)} {item.unit}
+                  {item.needBeforeIncoming != null && ' · потреба до поставок ' + numberFormat.format(item.needBeforeIncoming) + ' ' + (item.unit || '')}</span>}
+                {item.purchaseStatus === 'buy' && <span className="app-cell-sub">Очікуваний валовий прибуток від поповнення · {formatPrice(item.priorityProfit)}</span>}
+                {item.purchaseStatus !== 'buy' && item.need != null && item.need > 0 && item.minimumNeed === item.need && <span className="app-cell-sub">Розрахункова потреба · {numberFormat.format(item.need)} {item.unit || 'од.'}</span>}
+                {item.minimumNeed != null && item.need != null && item.minimumNeed < item.need && <span className="app-cell-sub">
+                  Потреба · {numberFormat.format(item.minimumNeed)}–{numberFormat.format(item.need)} {item.unit || 'од.'} залежно від підтвердження поставки.</span>}
+                {report.supplierBudget && <ReceiptPrice purchase={item.lastPurchase} year={report.through.slice(0, 4)} />}
+              </div>
+            </details>
           </li>)}</ul>
         </> : <p className="dash-rank-empty">{report.total === 0 ? 'У каталозі немає товарів із підтвердженим малим або нульовим залишком.' : 'За цими умовами товарів немає.'}</p>}
         {report.matches > report.pageSize && <div className="dash-product-tools">
