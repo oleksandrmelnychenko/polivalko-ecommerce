@@ -10,11 +10,12 @@ TODAY = date(2026, 11, 22)
 D = Decimal
 
 
-def row(age, decision, invoice=None, sale_age=0, cost=None):
+def row(age, decision, invoice=None, sale_age=0, cost=None, client="client", product="sku"):
     return dict(offered_day=TODAY-timedelta(days=age), decision=decision, invoice_id=invoice, number=invoice,
-                day=TODAY-timedelta(days=sale_age) if invoice else None, total=D("15.00"), product="sku", unit="кг",
+                day=TODAY-timedelta(days=sale_age) if invoice else None, total=D("15.00"), product=product.lower(), unit="кг",
+                client=client, client_name="Покупець", product_name="Товар", sku=product,
                 org="org",store="store",external="dntrade-code:101",external_org="o",external_store="s",
-                lines=[dict(product=dict(id="sku"), quantity="1.5", total="15.00", cogs_total=cost)] if invoice else None)
+                lines=[dict(product=dict(id=product.lower()), quantity="1.5", total="15.00", cogs_total=cost)] if invoice else None)
 
 
 class RecommendationResultsTests(unittest.TestCase):
@@ -42,6 +43,34 @@ class RecommendationResultsTests(unittest.TestCase):
     def test_no_posted_sales_means_zero_profit(self):
         for p in self.report([row(6,"released"),row(1,"reserved")])["periods"]:
             self.assertEqual((p["accepted"],p["sold"],p["turnover"],p["profit"]),(2,0,0,0))
+
+    def test_rankings_by_identity_reconcile_to_each_period_even_for_older_offers(self):
+        report = self.report([
+            row(1,"fulfilled","a-x",0,"5","A","X"), row(2,"declined",client="A",product="X"),
+            row(15,"fulfilled","a-y",6,"22","A","Y"), row(4,"fulfilled","b-x",0,None,"B","X"),
+            row(100,"fulfilled","c-y",2,"0","C","Y"), row(45,"offered",client="B",product="Y"),
+            row(8,"declined",client="B",product="X"),
+        ])
+        week, month, quarter = report["periods"]
+        customers = {r["id"]: r for r in week["customers"]}
+        products = {r["id"]: r for r in week["products"]}
+        self.assertEqual((customers["A"]["conversionRate"],customers["A"]["turnover"],customers["A"]["profit"]),
+                         (D(".5"),30,3))
+        self.assertEqual((customers["B"]["conversionRate"],customers["B"]["profit"]), (1,None))
+        self.assertEqual((customers["C"]["conversionRate"],customers["C"]["turnover"]), (None,15))
+        self.assertEqual((products["x"]["sku"],products["x"]["sold"],products["x"]["offered"]), ("X",2,3))
+        self.assertEqual((products["x"]["profit"],products["x"]["coveredProfit"]), (None,10))
+        self.assertEqual((products["y"]["conversionRate"],products["y"]["profit"]), (None,8))
+        self.assertEqual(next(r for r in month["customers"] if r["id"]=="A")["conversionRate"], D(2)/3)
+        self.assertEqual(next(r for r in quarter["customers"] if r["id"]=="B")["conversionRate"], D(1)/3)
+        for period in report["periods"]:
+            for dimension in ("customers","products"):
+                for field in ("offered","accepted","sold","invoices","turnover","coveredProfit","priced","estimated"):
+                    self.assertEqual(sum(r[field] for r in period[dimension]), period[field])
+
+    def test_empty_journal_has_no_ranked_entities(self):
+        for period in self.report([])["periods"]:
+            self.assertEqual((period["customers"], period["products"], period["conversionRate"]), ([],[],None))
 
     def test_prior_purchase_same_warehouse_and_unit_only_and_direct_cost_precedes_estimate(self):
         receipts = [dict(a="valko-dntrade",org="org",store="store",product="sku",u="0301",day=TODAY-timedelta(days=2),
