@@ -1,13 +1,16 @@
 import { Button, Select, TextInput } from '@mantine/core'
-import { IconChartPie, IconPackage, IconSearch } from '@tabler/icons-react'
+import { IconChartPie, IconPackage, IconSearch, IconShoppingCart } from '@tabler/icons-react'
 import { useDebouncedCallback } from '@mantine/hooks'
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/features/auth'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { problemMessage } from '@/shared/api/problem'
 import { onConsoleEvent } from '@/shared/lib/events'
 import { dateRange, formatPrice } from '@/shared/lib/salesFormat'
+import { AppEditorModal } from '@/shared/ui/AppEditorModal'
+import { DocumentOverlayContext } from '@/shared/ui/DocumentLink'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { PageState } from '@/shared/ui/PageState'
 import { TableChip } from '@/shared/ui/TableChip'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
@@ -33,12 +36,15 @@ function formatShare(value: number) {
   return percent.format(value)
 }
 
-export function StockTurnover({ days }: { days: number }) {
+type StockTurnoverProps = { days: number; purchasesOpen: boolean; closePurchases: () => void }
+
+export function StockTurnover(props: StockTurnoverProps) {
   const { me } = useAuth()
-  return me ? <StockReport key={me.email} account={me.email} days={days} /> : null
+  return me ? <StockReport key={me.email} account={me.email} {...props} /> : null
 }
 
-function StockReport({ days, account }: { days: number; account: string }) {
+function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurnoverProps & { account: string }) {
+  const documentOpen = useContext(DocumentOverlayContext)
   const basket = useSupplierBasket(account)
   const [draft, setDraft] = useState('')
   const [filters, setFilters] = useState({ page: 1, pageDays: days, stock: 'all', search: '', cover: '14', sort: 'purchase', seasonal: true })
@@ -89,8 +95,6 @@ function StockReport({ days, account }: { days: number; account: string }) {
           onChange={value => setFilters(current => ({ ...current, seasonal: value === 'season', stock: current.stock === 'season-review' ? 'all' : current.stock, page: 1 }))} />
       </div>
       {report ? <>
-        {report.supplierBudget && <BudgetBySupplier basket={basket} budget={report.supplierBudget}
-          count={report.buyCount} through={report.through} cover={report.coverDays} days={days} seasonal={!!report.seasonal} />}
         <details className="dash-report-note">
           <summary>Позицій до закупівлі · {numberFormat.format(report.buyCount)}. Як розраховано</summary>
           <p>Темп — продана кількість за {days} днів після повернень, поділена на {days}. Від потреби на {report.coverDays} днів віднімаємо доступний залишок після резервів. Штучні товари округлюємо вгору до цілої штуки.</p>
@@ -154,6 +158,14 @@ function StockReport({ days, account }: { days: number; account: string }) {
         </div>}
       </> : <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={reload}
         description={problemMessage(query.problem, 'Не вдалося завантажити залишки й оборот товарів.')} />}
+      <AppEditorModal opened={purchasesOpen} onClose={closePurchases} size="standard"
+        closeOnEscape={!documentOpen} closeOnClickOutside={!documentOpen} trapFocus={!documentOpen}
+        title={<MetricLabel icon={IconShoppingCart}>Закупівлі за постачальниками</MetricLabel>}>
+        {report?.supplierBudget ? <BudgetBySupplier basket={basket} budget={report.supplierBudget}
+          count={report.buyCount} through={report.through} cover={report.coverDays} days={days} seasonal={!!report.seasonal} />
+          : <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={reload}
+              description={problemMessage(query.problem, 'Розрахунок закупівель недоступний.')} />}
+      </AppEditorModal>
     </DashboardCard>
   )
 }

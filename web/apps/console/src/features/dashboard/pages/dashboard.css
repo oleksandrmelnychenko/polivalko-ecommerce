@@ -1093,7 +1093,7 @@ a.dash-queue-item:focus-visible {
   font-family: var(--font-money);
 }
 
-.dash-source .mantine-Button-label { gap: 6px; }
+.dash-source .mantine-Button-label, .dash-purchases-trigger .mantine-Button-label { gap: 6px; }
 .dash-report-note { padding: 8px var(--dash-pad); margin: 0; font-size: 13px; color: var(--mantine-color-gray-7); }
 .dash-stock-filters {
   display: grid;
@@ -1103,8 +1103,10 @@ a.dash-queue-item:focus-visible {
   padding-block: 8px 14px;
 }
 .dash-stock-filters .mantine-InputWrapper-label { color: var(--mantine-color-gray-7); font-size: 12px; }
-.dash-supplier-budget { padding: 14px var(--dash-pad); border-block: 1px solid var(--dash-line); }
+.dash-supplier-budget { --dash-line: var(--mantine-color-gray-3); }
+.dash-budget-context { font-size: .8125rem; color: var(--mantine-color-gray-7); margin-bottom: 10px; }
 .dash-budget-header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; }
+.dash-budget-header > strong { font: 600 1.25rem/1.4 var(--font-money); }
 .dash-budget-header h3, .dash-supplier-budget p { margin: 0; }
 .dash-budget-header h3 { font-size: 1rem; }
 .dash-budget-header strong, .dash-budget-group li > span, .dash-budget-group li > strong { font-variant-numeric: tabular-nums; }
@@ -1155,6 +1157,6 @@ a.dash-queue-item:focus-visible {
 }
 .dash-period > .dash-link { align-self: start; margin-block: 4px 12px; }
 @media (max-width: 68em) {
-  .dash-toolbar-actions .dash-source { width: 34px; height: 34px; padding: 0; }
-  .dash-source .mantine-Button-label span { display: none; }
+  .dash-toolbar-actions :is(.dash-source, .dash-purchases-trigger) { width: 34px; height: 34px; padding: 0; }
+  :is(.dash-source, .dash-purchases-trigger) .mantine-Button-label span { display: none; }
 }

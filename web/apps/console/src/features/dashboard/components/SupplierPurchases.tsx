@@ -53,9 +53,10 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
         <strong>{item.amount == null ? 'Ціну уточнити' : formatPrice(item.amount)}</strong>
       </li>)}</ul>
     </details>)
-  return <section className="dash-supplier-budget" aria-label="Закупівлі за постачальниками">
+  return <section className="dash-supplier-budget" aria-label="Бюджет закупівлі">
+    <div className="dash-budget-context">Продажі за {days} днів · запас на {cover} днів · {seasonal ? 'з урахуванням сезону' : 'за поточним темпом'}</div>
     <div className="dash-budget-header">
-      <h3>Закупівлі за постачальниками</h3>
+      <h3>До закупівлі</h3>
       <strong>{priced || !count ? formatPrice(budget.subtotal) : 'Суму ще не визначено'}{budget.unpriced > 0 && ' + без ціни: ' + budget.unpriced}</strong>
     </div>
     <p>Оцінено {priced} із {count} позицій за останніми цінами прибуткових накладних.
@@ -67,12 +68,12 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
       </li>)}</ul></details>}
     <SupplierBasket basket={basket} groups={budget.suppliers} days={days} cover={cover} through={through} seasonal={seasonal} />
     {basket.error && <p role="alert">{basket.error}</p>}
-    <div className="dash-budget-list">
+    {groups.length > 0 && <div className="dash-budget-list">
       {groups.slice(0, 3)}
       {groups.length > 3 && <details className="dash-budget-more">
         <summary>Інші постачальники · {groups.length - 3}<IconChevronDown size={15} aria-hidden="true" /></summary>
         {groups.slice(3)}
       </details>}
-    </div>
+    </div>}
   </section>
 }

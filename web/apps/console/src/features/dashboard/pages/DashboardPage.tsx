@@ -1,5 +1,5 @@
 import { ActionIcon, Button, Menu, SegmentedControl, Skeleton, Tooltip } from '@mantine/core'
-import { IconCheck, IconDatabase, IconRefresh } from '@tabler/icons-react'
+import { IconCheck, IconDatabase, IconRefresh, IconShoppingCart } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
@@ -79,10 +79,25 @@ export function DashboardPage() {
     notifySummaryStale()
   }
 
+  function setPurchasesOpen(open: boolean) {
+    setParams(current => {
+      const next = new URLSearchParams(current)
+      if (open) next.set('purchases', '1')
+      else next.delete('purchases')
+      return next
+    }, { replace: true, preventScrollReset: true })
+  }
+
   return (
     <div className="dash-page">
       <PageHeader title="Дашборд" actions={
         <div className="dash-toolbar-actions">
+          {documents && canCatalog && <Tooltip label="Закупівлі за постачальниками">
+            <Button className="dash-purchases-trigger" size="xs" radius="xl" variant="default"
+              aria-label="Закупівлі за постачальниками" aria-haspopup="dialog" onClick={() => setPurchasesOpen(true)}>
+              <IconShoppingCart size={16} aria-hidden="true" /><span>Закупівлі</span>
+            </Button>
+          </Tooltip>}
           {canDocuments && <Menu position="bottom-start">
             <Menu.Target>
               <Button className="dash-source" size="xs" radius="xl" variant="default"
@@ -144,7 +159,7 @@ export function DashboardPage() {
         />}
         {documents && <div className="dash-grid is-even">
           {report && <DocumentProducts key={report.start} data={report} />}
-          {canCatalog && <StockTurnover days={days} />}
+          {canCatalog && <StockTurnover days={days} purchasesOpen={params.get('purchases') === '1'} closePurchases={() => setPurchasesOpen(false)} />}
         </div>}
         {report && report.excluded > 0 && <p className="dash-muted" role="status">Документів із непідтвердженою сумою або статусом · {report.excluded.toLocaleString('uk-UA')}.</p>}
 
