@@ -3,7 +3,7 @@ from decimal import Decimal
 from unittest import TestCase
 from unittest.mock import patch
 
-from analytics.customer_recommendations import customer_recommendations, rank_clients
+from analytics.customer_recommendations import RETAIL_PLACEHOLDER, customer_recommendations, rank_clients
 
 
 TODAY = date(2026, 11, 22)
@@ -22,6 +22,11 @@ def line(client, code, days, qty, refund=False, **changes):
 
 
 class CustomerRecommendationTests(TestCase):
+    def test_shared_retail_cards_with_qualifiers_are_not_personal_customers(self):
+        for label in ("Основеий роздрібний покупець", "Роздрібний покупець (Буча)", "Роздрібні покупці", "Розничный покупатель"):
+            self.assertRegex(label.lower(), RETAIL_PLACEHOLDER)
+        self.assertNotRegex('тов роздрібна торгівля', RETAIL_PLACEHOLDER)
+
     def test_deduplicates_product_within_invoice_caps_quantity_and_subtracts_returns(self):
         rows = [line("One","A",35,2), line("One","A",35,3), line("One","A",15,4), line("One","A",4,1,True),
                 line("One","B",1,2), line("One","B",0,2,True), line("Two","B",1,1)]

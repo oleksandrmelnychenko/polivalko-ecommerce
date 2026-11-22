@@ -16,6 +16,8 @@ from .supplier_orders import unit_label
 _HEAD = """SELECT d.* FROM accounting.documents d """
 _SALES = _HEAD + """WHERE d.day >= %s AND d.day < %s AND d.entity_type IN ('invoice','customerReturn')
     AND d.kind NOT IN ('in','order') UNION ALL """ + _HEAD + INDEPENDENT_RECEIPTS
+RETAIL_PLACEHOLDER = (r"(^| )(роздрібний покупець|роздрібні покупці|розничный покупатель|розничные покупатели)"
+                      r"( *[(].*[)])?$")
 HISTORY = f"""
 WITH identities AS (
     SELECT source_account,lower(source_id) AS ref,min(id::text)::uuid AS id FROM accounting.partners
@@ -24,8 +26,8 @@ WITH identities AS (
     SELECT DISTINCT r.partner_id AS client,p.title AS name FROM accounting.document_register r
     JOIN accounting.partners p ON p.id=r.partner_id
     WHERE r.day BETWEEN %s AND %s AND r.entity_type IN ('invoice','receipt') AND trim(p.title)<>''
-      AND lower(trim(p.title)) NOT IN
-        ('роздрібний покупець','розничный покупатель','кінцевий споживач','покупець','роздріб','розница','анонімний покупець')
+      AND lower(trim(p.title)) !~ '{RETAIL_PLACEHOLDER}'
+      AND lower(trim(p.title)) NOT IN ('кінцевий споживач','покупець','роздріб','розница','анонімний покупець')
 ), positions AS (
     SELECT d.id,r.client::text,r.name,d.source_account AS account,d.entity_type,d.kind,d.status,d.day,d.currency,
         d.details->>'type' AS raw_kind,d.details->>'status' AS raw_status,d.details->>'currency_iso' AS raw_currency,
