@@ -60,8 +60,6 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
       <h3>До закупівлі</h3>
       <strong>{priced || !count ? formatPrice(budget.subtotal) : 'Суму ще не визначено'}{budget.unpriced > 0 && ' + без ціни: ' + budget.unpriced}</strong>
     </div>
-    <p>Оцінено {priced} із {count} позицій за останніми цінами прибуткових накладних.
-      {budget.historicalCount > 0 && <> Ціни до {year} року використано для {budget.historicalCount} поз. на {formatPrice(budget.historicalAmount)}.</>}</p>
     {historical.length > 0 && <details className="dash-price-history"><summary>Товари з цінами попередніх років <TableChip tone="warning" value={historical.length} /></summary>
       <ul>{historical.map(({ item, supplier }) => <li key={item.id}><b>{item.name}</b> · {supplier || 'Уточнити постачальника'}
         <small>{numberFormat.format(item.quantity)} {item.unit} × {priceFormat.format(item.unitPrice!)} ₴ · {formatPrice(item.amount!)}</small>
