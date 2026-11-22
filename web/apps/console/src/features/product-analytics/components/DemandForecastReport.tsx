@@ -25,7 +25,11 @@ export function DemandForecastReport({ forecast, kind, loading, error, edit, rel
   const [opened, setOpened] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [busy, setBusy] = useState(false)
-  const selected = picked && (forecast.rows.find((row) => keyOf(row) === keyOf(picked)) ?? picked)
+  const current = picked && forecast.rows.find((row) => keyOf(row) === keyOf(picked))
+  const selected = current ?? picked
+  // Saving terms re-sorts the list, and the row can leave this page. The copy taken at the click
+  // is then out of date: its purchase line is the old one and its revision would fail the next save.
+  const moved = !!picked && !current && !loading
   const { coverage, total, page } = forecast
   const pages = Math.max(1, Math.ceil(total / 40))
   const orgs = new Map(forecast.options.org.map((o) => [o.value, o.label]))
@@ -84,7 +88,8 @@ export function DemandForecastReport({ forecast, kind, loading, error, edit, rel
       >
         {selected && <div className="ba-demand-detail">
           <p className="ba-demand-context">{[orgs.get(selected.org) ?? selected.org, stores.get(selected.store) ?? selected.store, selected.unit || 'од. товару'].join(' · ')}</p>
-          <ForecastDetail key={keyOf(selected)} row={selected} start={forecast.start} edit={edit} saved={reload} onDirty={setDirty} onBusy={setBusy} />
+          {moved && <p role="status">Список оновлено, і цей рядок перейшов на іншу сторінку. Розрахунок у вікні застарів: закрийте його й відкрийте товар зі списку.</p>}
+          <ForecastDetail key={keyOf(selected)} row={selected} start={forecast.start} edit={edit && !moved} saved={reload} onDirty={setDirty} onBusy={setBusy} />
           {selected.kind === 'sku' && selected.reason && <Button variant="default" disabled={busy || dirty} onClick={() => {
             setOpened(false)
             update({ kind: 'category', category: selected.category, org: selected.org, store: selected.store, product: '', search: '' })
