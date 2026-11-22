@@ -122,14 +122,16 @@ function InvoiceReport({ year, years }: { year: number; years: number[] }) {
             <tfoot><PeriodRow period={total} name={partial ? 'Від початку року' : 'За рік'} /></tfoot>
           </table></div>
         </section>
-        {report.issues.length > 0 && <section className="pa-card">
-          <header><h3><MetricLabel icon={IconChartBar}>Документи для перевірки</MetricLabel></h3><span>Показано {formatValue(report.issues.length)}</span></header>
-          <ul className="annual-issues">{report.issues.map(item => <li key={item.id}>
+        {(report.issues.length > 0 || total.cashDiscrepancies > 0) && <section className="pa-card">
+          <header><h3><MetricLabel icon={IconChartBar}>Документи для перевірки</MetricLabel></h3><span>Показано {formatValue(report.issues.length)} із {formatValue(issues)}</span></header>
+          {/* Receipts are checked in the database and only counted, so the list below cannot show them. */}
+          {total.cashDiscrepancies > 0 && <p>Касових чеків із розбіжностями — {formatValue(total.cashDiscrepancies)}. У списку наведено лише видаткові накладні та повернення; чеки тут не перелічуються.</p>}
+          {report.issues.length > 0 && <ul className="annual-issues">{report.issues.map(item => <li key={item.id}>
             <div>{item.inRegister ? <Button component={DocumentLink} id={item.id} size="xs" variant="default" rightSection={<IconArrowUpRight size={14} />}>{item.number}</Button> : <strong>{item.number}</strong>}
               <time dateTime={item.day}>{item.day}</time></div>
             <div><span>У реєстрі <b>{formatValue(item.header)} грн</b></span><span>За рядками <b>{formatValue(item.lines)} грн</b></span></div>
             <p>{item.reason}</p>
-          </li>)}</ul>
+          </li>)}</ul>}
         </section>}
       </>}
     </div>
