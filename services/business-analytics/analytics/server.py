@@ -317,7 +317,7 @@ def dispatch(env):
         if (set(q) - {"analysis","days","page","stock","search","sort","coverDays","seasonal"} or days not in (7,30,90)
                 or q.get("seasonal", "0") not in ("0", "1")
                 or cover_days not in COVER_OPTIONS or sort not in ("purchase","turnover") or not 1 <= page <= 1000000
-                or stock not in ("all","out","low","buy","ordered","season-review") or len(search) > 160):
+                or stock not in ("all","out","low","buy","ordered","season-review","supply-review") or len(search) > 160):
             raise ValueError("Перевірте період, стан залишку та параметри списку")
         try:
             return 200, stock_page(now().date(), days, page, stock, search, cover_days, sort, q.get("seasonal") == "1")

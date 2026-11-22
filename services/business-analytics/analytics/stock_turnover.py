@@ -159,6 +159,10 @@ def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), r
     out = sum(r["available"] <= 0 for r in rows)
     return dict(start=report["start"], through=report["through"], periodNet=period_net, threshold=THRESHOLD,
                 coverDays=cover_days, buyCount=sum(r["purchaseStatus"] == "buy" for r in rows),
+                # Sales documents whose lines do not add up. One of them leaves the sales of every product
+                # unconfirmed, so the queue is empty and has to say why.
+                incompleteSales=report["incompleteProducts"],
+                supplyReview=sum(r["purchaseStatus"] == "supply-review" for r in rows),
                 seasonal=season_profiles is not None, seasonalReview=sum(r["purchaseStatus"] == "season-review" for r in rows),
                 supplierSource=source, supplierBudget=supplier_budget(rows, today),
                 withOrders=sum(bool(r["supply"]["orders"]) for r in rows),
@@ -197,11 +201,17 @@ def stock_page(through, days, page, stock, search, cover_days=DEFAULT_COVER_DAYS
         else:
             result = cached[2]
     term = search.casefold().strip()
-    filtered = [r for r in result["rows"]
-                if (stock == "all" or (stock in ("buy", "season-review") and r["purchaseStatus"] == stock)
-                    or (stock == "ordered" and r["supply"]["orders"])
-                    or (stock == "low" and r["available"] > 0) or (stock == "out" and r["available"] <= 0))
-                and (term in r["name"].casefold() or term in r["sku"].casefold())]
+    searched = [r for r in result["rows"] if term in r["name"].casefold() or term in r["sku"].casefold()]
+    # The filter labels count what the search leaves; the turnover header above them keeps every product.
+    counts = dict(all=len(searched), buy=sum(r["purchaseStatus"] == "buy" for r in searched),
+                  supplyReview=sum(r["purchaseStatus"] == "supply-review" for r in searched),
+                  seasonReview=sum(r["purchaseStatus"] == "season-review" for r in searched),
+                  ordered=sum(bool(r["supply"]["orders"]) for r in searched),
+                  out=sum(r["available"] <= 0 for r in searched), low=sum(r["available"] > 0 for r in searched))
+    filtered = [r for r in searched
+                if stock == "all" or (stock in ("buy", "season-review", "supply-review") and r["purchaseStatus"] == stock)
+                or (stock == "ordered" and r["supply"]["orders"])
+                or (stock == "low" and r["available"] > 0) or (stock == "out" and r["available"] <= 0)]
     if sort == "purchase":
         priority = {"buy": 0, "supply-review": 1, "season-review": 1, "reserves": 1, "cost": 2, "price": 3,
                     "units": 4, "sales": 4, "covered": 5, "incoming": 5, "no-demand": 6}
@@ -209,5 +219,5 @@ def stock_page(through, days, page, stock, search, cover_days=DEFAULT_COVER_DAYS
         filtered.sort(key=lambda r: (priority[r["purchaseStatus"]], -(r["priorityProfit"] or 0)))
     page_size = PURCHASE_PAGE_SIZE if stock == "buy" else PAGE_SIZE
     page = min(page, max(1, (len(filtered) + page_size - 1) // page_size))
-    return dict(result, matches=len(filtered), page=page, pageSize=page_size,
+    return dict(result, counts=counts, matches=len(filtered), page=page, pageSize=page_size,
                 rows=filtered[(page-1)*page_size:page*page_size])

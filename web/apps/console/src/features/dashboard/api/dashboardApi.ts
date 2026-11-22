@@ -58,6 +58,11 @@ export type SupplierBudget = {
 type StockTurnoverReport = {
   seasonal?: boolean
   seasonalReview?: number
+  // Sales documents of the period whose lines do not add up; any of them leaves every product without confirmed sales.
+  incompleteSales?: number
+  supplyReview?: number
+  // The same counters for the rows the search leaves.
+  counts?: { all: number; buy: number; supplyReview: number; seasonReview: number; ordered: number; out: number; low: number }
   start: string
   through: string
   periodNet: number

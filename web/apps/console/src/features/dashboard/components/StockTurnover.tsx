@@ -65,6 +65,10 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
   const { reload } = query
   useEffect(() => onConsoleEvent('summary-stale', reload), [reload])
   const report = query.status === 'ready' ? query.data : undefined
+  // Counters follow the search; an older service sends only the totals of all products.
+  const counts = report && (report.counts ?? { all: report.total, buy: report.buyCount, supplyReview: report.supplyReview ?? 0,
+    seasonReview: report.seasonalReview ?? 0, ordered: report.withOrders, out: report.outCount, low: report.lowCount })
+  const showStock = (stock: string) => setFilters(current => ({ ...current, stock, page: 1 }))
   const sources = new Map(report?.supplierBudget?.suppliers.flatMap(group => group.items.map(item => [item.id, { group, item }] as const)))
   return (
     <DashboardCard title={<><IconPackage aria-hidden="true" /><span id="zakupivli">Закінчуються</span></>} className="dash-product-report dash-stock-impact" flush>
@@ -90,14 +94,15 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
       <div className="dash-product-tools dash-stock-filters" id={filterPanel} hidden={!filtersOpen}>
         <Select size="sm" radius="xl" label="Доступність" aria-label="Доступність товарів" allowDeselect={false} value={filters.stock}
           data={[
-            { value: 'buy', label: report ? `До закупівлі · ${numberFormat.format(report.buyCount)}` : 'До закупівлі' },
-            { value: 'all', label: report ? `Усі · ${numberFormat.format(report.total)}` : 'Усі' },
-            ...(filters.seasonal ? [{ value: 'season-review', label: 'Перевірити перед сезоном' + (report ? ' · ' + (report.seasonalReview ?? 0) : '') }] : []),
-            { value: 'ordered', label: report ? `Із замовленнями · ${numberFormat.format(report.withOrders)}` : 'Із замовленнями' },
-            { value: 'out', label: report ? `Немає · ${numberFormat.format(report.outCount)}` : 'Немає' },
-            { value: 'low', label: report ? `Мало · ${numberFormat.format(report.lowCount)}` : 'Мало' },
+            { value: 'buy', label: counts ? `До закупівлі · ${numberFormat.format(counts.buy)}` : 'До закупівлі' },
+            { value: 'supply-review', label: counts ? `Уточнити поставку · ${numberFormat.format(counts.supplyReview)}` : 'Уточнити поставку' },
+            { value: 'all', label: counts ? `Усі · ${numberFormat.format(counts.all)}` : 'Усі' },
+            ...(filters.seasonal ? [{ value: 'season-review', label: 'Перевірити перед сезоном' + (counts ? ' · ' + counts.seasonReview : '') }] : []),
+            { value: 'ordered', label: counts ? `Із замовленнями · ${numberFormat.format(counts.ordered)}` : 'Із замовленнями' },
+            { value: 'out', label: counts ? `Немає · ${numberFormat.format(counts.out)}` : 'Немає' },
+            { value: 'low', label: counts ? `Мало · ${numberFormat.format(counts.low)}` : 'Мало' },
           ]}
-          onChange={value => setFilters(current => ({ ...current, stock: value ?? defaultStock, page: 1 }))} />
+          onChange={value => showStock(value ?? defaultStock)} />
         <Select size="sm" radius="xl" label="Запас на" allowDeselect={false} value={filters.cover}
           data={[{ value: '7', label: '7 днів' }, { value: '14', label: '14 днів' }, { value: '30', label: '30 днів' }]}
           onChange={value => setFilters(current => ({ ...current, cover: value ?? '14', page: 1 }))} />
@@ -108,13 +113,18 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
           data={[{ value: 'season', label: 'З урахуванням сезону' }, { value: 'rate', label: 'За поточним темпом' }]}
           onChange={value => setFilters(current => ({ ...current, seasonal: value === 'season', stock: current.stock === 'season-review' ? defaultStock : current.stock, page: 1 }))} />
       </div>
-      {report ? <>
+      {report && counts ? <>
+        {(report.incompleteSales ?? 0) > 0 && <p className="dash-report-note" role="status">Потребу в закупівлі не розраховано. У документах продажу
+          за період ({numberFormat.format(report.incompleteSales ?? 0)}) товарні рядки не сходяться із сумою документа або їх немає, тому продажі
+          за товарами не підтверджено і черга «До закупівлі» порожня. Ці документи пораховано в картці продажів за документами.</p>}
         <div className="dash-product-count dash-stock-count">
-          <span className="dash-with-info">До закупівлі · <b>{numberFormat.format(report.buyCount)}</b>
+          <span className="dash-with-info">До закупівлі · <b>{numberFormat.format(counts.buy)}</b>
+          {counts.supplyReview > 0 && filters.stock !== 'supply-review' && <Button size="compact-xs" variant="subtle" onClick={() => showStock('supply-review')}>
+            ще {numberFormat.format(counts.supplyReview)} · уточнити поставку</Button>}
           <CalculationInfo title="Як розраховано потребу в закупівлі">
             <p>Темп — продана кількість за {days} днів після повернень, поділена на {days}. Від потреби на {report.coverDays} днів віднімаємо доступний залишок після резервів. Штучні товари округлюємо вгору до цілої штуки.</p>
             {report.seasonal && <p>Порівнюємо денні продажі до й після цієї календарної межі у відповідні тижні останніх трьох років. Напрям зміни має повторитися щонайменше двічі. Перевагу має історія товару. Для категорії потрібно щонайменше три товари в тих самих одиницях, які продавалися в обох періодах. Її поправка обмежена множниками 0,67–1,5. За браком історії використовуємо поточний темп.</p>}
-            <p>Поставку враховуємо з планової дати, після вирахування вже прийнятої кількості. Для товару з прив’язаним складом враховуємо його склад та організацію, для решти — замовлення бізнесу. Якщо строк або стан потребує уточнення, показуємо діапазон потреби. Чергу сортуємо за очікуваним валовим прибутком від кількості, якої бракуватиме навіть у разі надходження цих замовлень.</p>
+            <p>Поставку враховуємо з планової дати, після вирахування вже прийнятої кількості. Для товару з прив’язаним складом враховуємо його склад та організацію, для решти — замовлення бізнесу. Замовлення, строк якого минув чи не вказаний або стан якого потребує звірки, у нижній межі потреби вважаємо таким, що надійде: «Докупити» показує цю нижню межу, а поруч — скільки знадобиться без такої поставки. Якщо нижня межа нульова, товар переходить у список «Уточнити поставку». Чергу сортуємо за очікуваним валовим прибутком від кількості, якої бракуватиме навіть у разі надходження цих замовлень.</p>
           </CalculationInfo>
           </span>
           <span aria-live="polite">Показано <b>{report.rows.length ? numberFormat.format((report.page - 1) * report.pageSize + 1) + '–' + numberFormat.format((report.page - 1) * report.pageSize + report.rows.length) : '0'} із {numberFormat.format(report.matches)}</b></span>
@@ -131,10 +141,13 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
             <div className="dash-stock-decision">
               {item.purchaseStatus === 'buy'
                 ? <div><strong>Докупити {numberFormat.format(item.buyQuantity)} {item.unit}{item.lastPurchase?.amount != null && ' · ' + formatPrice(item.lastPurchase.amount)}</strong>
+                  {item.need != null && item.minimumNeed != null && item.minimumNeed < item.need && <div className="app-cell-sub">
+                    Це нижня межа. Без поставки, яку слід уточнити, знадобиться <b>{numberFormat.format(item.need)} {item.unit}</b>.</div>}
                   <div className="app-cell-sub">Очікуваний валовий прибуток · <b>{formatPrice(item.priorityProfit)}</b></div>
                   {report.supplierBudget && <ReceiptPrice purchase={item.lastPurchase} />}
                 </div>
-                : <span>{decisionText[item.purchaseStatus]}</span>}
+                : <span>{decisionText[item.purchaseStatus]}{item.purchaseStatus === 'supply-review' && item.need != null &&
+                  <span className="app-cell-sub"> Без цієї поставки знадобиться <b>{numberFormat.format(item.need)} {item.unit || 'од.'}</b>.</span>}</span>}
               {sources.has(item.id) && (basket.picked.some(row => row.id === item.id && row.supplier === sources.get(item.id)?.group.id && row.unit === item.unit)
                 ? <TableChip tone="success" value="У кошику" />
                 : <Button size="compact-xs" radius="xl" color="dark" leftSection={<IconShoppingCart size={14} aria-hidden="true" />}
@@ -149,7 +162,9 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
               <div className="dash-stock-breakdown-body">
                 <dl className="dash-stock-facts">
                   <div><dt>На складі / у резерві</dt><dd>{numberFormat.format(item.onHand)} / {numberFormat.format(item.reserved)} {item.unit || 'од.'}</dd></div>
-                  {item.stockDays != null && <div><dt>Запас / ціль, днів</dt><dd>{item.stockDays > 0 && item.stockDays < 0.1 ? '< 0,1' : numberFormat.format(Math.round(item.stockDays * 10) / 10)} / {report.coverDays}</dd></div>}
+                  {item.season && item.season.factor !== 1 && item.dailyRate != null && item.dailyRate > 0 && <div><dt>Очікуваний попит на день · із сезонною поправкою</dt>
+                    <dd>{numberFormat.format(item.dailyRate * item.season.factor)} {item.unit || 'од.'}</dd></div>}
+                  {item.stockDays != null && <div><dt>{item.season && item.season.factor !== 1 ? 'Запас за очікуваним попитом / ціль, днів' : 'Запас / ціль, днів'}</dt><dd>{item.stockDays > 0 && item.stockDays < 0.1 ? '< 0,1' : numberFormat.format(Math.round(item.stockDays * 10) / 10)} / {report.coverDays}</dd></div>}
                   {item.dailyRate != null && <div><dt>Продажі на день</dt><dd>{item.dailyRate > 0 && item.dailyRate < 0.001 ? '< 0,001' : numberFormat.format(item.dailyRate)} {item.unit || 'од.'}</dd></div>}
                   <div><dt>Чистий оборот</dt><dd>{item.net == null ? 'Невідомий' : formatPrice(item.net)}</dd></div>
                   <div><dt>Частка обороту</dt><dd>{item.share == null ? '—' : formatShare(item.share)}</dd></div>
