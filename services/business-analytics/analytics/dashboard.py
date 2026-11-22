@@ -5,7 +5,7 @@ from itertools import chain
 from threading import Lock
 from time import monotonic
 
-from .invoices import INDEPENDENT_RECEIPTS, currency_valid
+from .invoices import INDEPENDENT_RECEIPTS, PARENT_REF, currency_valid
 from .product_contribution import turnover_ranking
 from .purchase_cost import LINES, ORG, enrich_costs
 from .register import kind_of, number, sale_line
@@ -14,7 +14,7 @@ from .source import production
 
 FIELDS = f"""
 SELECT d.day, d.entity_type, d.source_account AS account, d.kind, d.status, d.currency, d.total,
-       {ORG} AS org, d.details->>'date' AS stamp, d.parent_ref AS parent,d.parent_kind,
+       {ORG} AS org, d.details->>'date' AS stamp, {PARENT_REF} AS parent,d.parent_kind,
        d.details->>'type' AS raw_kind, d.details->>'status' AS raw_status, d.details->>'currency_iso' AS raw_currency,
        CASE WHEN d.day >= %s THEN {LINES} END AS lines
 FROM accounting.documents d

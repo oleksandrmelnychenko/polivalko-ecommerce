@@ -23,6 +23,14 @@ FROM accounting.documents WHERE native_partner_id IS NOT NULL AND kind='out' AND
 ARCHIVE_LINES = ARCHIVE_SQL.replace("DAY_FILTER", """r.source_day BETWEEN %s AND %s
   AND r.entity_type IN ('invoice','customerReturn')""")
 
+# The accounting projection fills parent_ref only from parent_document.external_id. The parent
+# also arrives as a plain identifier or as an object with only an id; the archive reader and the
+# overview register accept those forms. Without them a receipt issued for a posted invoice would
+# count as a second sale.
+PARENT_REF = """coalesce(nullif(d.parent_ref,''), CASE jsonb_typeof(d.details->'parent_document')
+    WHEN 'string' THEN nullif(d.details->>'parent_document','') WHEN 'number' THEN d.details->>'parent_document'
+    WHEN 'object' THEN nullif(d.details#>>'{parent_document,id}','') END)"""
+
 # Sum the cash register in PostgreSQL so annual charts do not need to transfer
 # every receipt or wait for the assortment and forecast models to finish.
 INDEPENDENT_RECEIPTS = """
@@ -31,11 +39,11 @@ WHERE d.entity_type='receipt' AND lower(d.kind) IN ('cash','6','receipt','salere
   AND d.day >= %s AND d.day < %s
   AND NOT EXISTS (
       SELECT 1 FROM accounting.documents i
-      WHERE i.source_account=d.source_account AND lower(i.source_id)=lower(d.parent_ref)
+      WHERE i.source_account=d.source_account AND lower(i.source_id)=lower(PARENT_REF)
         AND i.entity_type='invoice' AND lower(i.kind) IN ('out','3','sale','salesinvoice','outgoinginvoice')
         AND lower(i.status) IN ('active','активна','активний','posted')
   )
-"""
+""".replace("PARENT_REF", PARENT_REF)
 CASH_MONTHS = """
 SELECT extract(month FROM d.day)::int AS month, count(*) AS documents,
        sum(abs(d.total)) AS amount, sum(s.amount) AS lines,

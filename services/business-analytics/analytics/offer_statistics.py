@@ -2,6 +2,8 @@
 from collections import Counter
 from datetime import timedelta
 
+from .invoices import PARENT_REF
+
 
 # A receipt attached to a posted sales invoice describes the same sale.
 SALES = """
@@ -9,9 +11,9 @@ SALES = """
     AND ((d.entity_type='invoice' AND d.kind='out') OR
         (d.entity_type='receipt' AND d.kind='cash' AND NOT EXISTS (
             SELECT 1 FROM accounting.documents i WHERE i.source_account=d.source_account
-              AND lower(i.source_id)=lower(d.parent_ref) AND i.entity_type='invoice'
+              AND lower(i.source_id)=lower(PARENT_REF) AND i.entity_type='invoice'
               AND i.kind='out' AND i.status IN ('active','posted'))))
-"""
+""".replace("PARENT_REF", PARENT_REF)
 HISTORY = """
 WITH documents AS (
     SELECT d.id,d.source_account,d.details,d.day,true AS personal
