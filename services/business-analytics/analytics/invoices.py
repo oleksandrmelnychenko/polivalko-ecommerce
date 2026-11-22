@@ -55,15 +55,12 @@ WHERE d.entity_type='receipt' AND lower(d.kind) IN ('cash','6','receipt','salere
 # Sum the cash register in PostgreSQL so annual charts do not need to transfer
 # every receipt or wait for the assortment and forecast models to finish.
 INDEPENDENT_RECEIPTS = INDEPENDENT_RECEIPT_ROWS + "  AND " + BODY_IN_HRYVNIA + "\n"
-CASH_MONTHS = """
-SELECT extract(month FROM d.day)::int AS month, count(*) AS documents,
-       sum(abs(d.total)) AS amount, sum(s.amount) AS lines,
-       count(*) FILTER (WHERE d.total IS NULL OR s.amount IS NULL OR abs(d.total) <> s.amount
-                           OR a.status IS DISTINCT FROM d.status OR a.source_day IS DISTINCT FROM d.day
-                           OR CASE WHEN a.source_date ~ '(Z|[+-][0-9]{2}:[0-9]{2})$'
-                                   THEN (a.source_date::timestamptz AT TIME ZONE 'Europe/Kyiv')::date <> d.day
-                                   ELSE false END
-                           OR s.invalid > 0) AS discrepancies
+KYIV_DAY = """CASE WHEN a.source_date ~ '(Z|[+-][0-9]{2}:[0-9]{2})$'
+            THEN (a.source_date::timestamptz AT TIME ZONE 'Europe/Kyiv')::date END"""
+CASH_DISCREPANCY = """(d.total IS NULL OR s.amount IS NULL OR abs(d.total) <> s.amount
+        OR a.status IS DISTINCT FROM d.status OR a.source_day IS DISTINCT FROM d.day
+        OR coalesce(KYIV_DAY <> d.day, false) OR s.invalid > 0)""".replace("KYIV_DAY", KYIV_DAY)
+CASH_FROM = """
 FROM accounting.documents d LEFT JOIN integration.dntrade_archive_records a ON a.id=d.id
 LEFT JOIN LATERAL (
     SELECT sum(abs(CASE WHEN p->>'total' ~ '^[+-]?[0-9]+([.][0-9]+)?$'
@@ -76,7 +73,17 @@ LEFT JOIN LATERAL (
     FROM jsonb_array_elements(CASE WHEN jsonb_typeof(a.payload::jsonb#>'{raw,products}')='array'
                                    THEN a.payload::jsonb#>'{raw,products}' ELSE '[]'::jsonb END) p
 ) s ON true
-""" + INDEPENDENT_RECEIPTS + " GROUP BY 1"
+""" + INDEPENDENT_RECEIPTS
+CASH_MONTHS = """
+SELECT extract(month FROM d.day)::int AS month, count(*) AS documents,
+       sum(abs(d.total)) AS amount, sum(s.amount) AS lines,
+       count(*) FILTER (WHERE CASH_DISCREPANCY) AS discrepancies""".replace("CASH_DISCREPANCY", CASH_DISCREPANCY) + CASH_FROM + " GROUP BY 1"
+# The receipts behind that count, with what the count looked at, so each can be named with its reason.
+CASH_ISSUES = """
+SELECT d.id::text, coalesce(nullif(d.number,''), d.source_id) AS number, d.day, abs(d.total) AS header, s.amount AS lines,
+       a.id IS NOT NULL AS archived, a.status IS DISTINCT FROM d.status AS status_differs, a.source_day,
+       KYIV_DAY AS kyiv_day, s.invalid""".replace("KYIV_DAY", KYIV_DAY) + CASH_FROM + "  AND " + CASH_DISCREPANCY + """
+ORDER BY d.day, d.id LIMIT 50"""
 
 
 def currency_valid(doc):
@@ -220,6 +227,30 @@ def add_cash(report, cash):
     return report
 
 
+def cash_issue(row):
+    """Name a receipt that the monthly count treats as a discrepancy, in the shape of an invoice issue."""
+    reasons = []
+    if not row["archived"]:
+        reasons.append("Відсутній запис джерела в архіві")
+    else:
+        if row["lines"] is None:
+            reasons.append("Відсутні товарні рядки джерела")
+        if row["status_differs"]:
+            reasons.append("Статус у реєстрі відрізняється від статусу в архіві")
+        if row["source_day"] != row["day"]:
+            reasons.append(f"Дата в реєстрі {row['day']}, дата в архіві {row['source_day']}")
+        elif row["kyiv_day"] and row["kyiv_day"] != row["day"]:
+            reasons.append(f"Дата в реєстрі {row['day']}, дата джерела за Києвом {row['kyiv_day']}")
+    if row["header"] is None:
+        reasons.append("Недостатньо даних для звірки суми")
+    elif row["lines"] is not None and row["header"] != row["lines"]:
+        reasons.append("Суми відрізняються")
+    if row["invalid"]:
+        reasons.append("Є некоректні товарні рядки")
+    return dict(id=row["id"], number=row["number"], day=str(row["day"]), header=row["header"], lines=row["lines"],
+                inRegister=True, receipt=True, reason=". ".join(reasons))
+
+
 def read_year(year, through=None):
     last = min(through or date(year, 12, 31), date(year, 12, 31))
     start, end = date(year, 1, 1), last + timedelta(days=1)
@@ -229,4 +260,7 @@ def read_year(year, through=None):
         archive = archived_rows(conn, ARCHIVE_LINES, (start - timedelta(days=1), end))
         report = compare(year, headers, chain(archive, native), last)
         add_cash(report, conn.execute(CASH_MONTHS, (start, end)))
+        # Listing repeats the pass over the archived bodies, so it runs only when the monthly count found something.
+        found = report["total"]["cashDiscrepancies"]
+        report["cashIssues"] = [cash_issue(r) for r in conn.execute(CASH_ISSUES, (start, end))] if found else []
     return dict(report, through=str(last), months=report["months"][:last.month])
