@@ -1,4 +1,4 @@
-import { IconChevronDown } from '@tabler/icons-react'
+import { IconChevronDown, IconFileInvoice } from '@tabler/icons-react'
 import { Button } from '@mantine/core'
 import { Link } from 'react-router-dom'
 import { dateLabel, formatPrice } from '@/shared/lib/salesFormat'
@@ -45,7 +45,7 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
       <Button size="compact-xs" variant="subtle" onClick={() => basket.add([group])}>Додати товари постачальника</Button>
       <ul>{group.items.map(item => <li key={item.id}>
         <div><Link to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}{item.sku && <small> · {item.sku}</small>}</Link>
-          {item.receiptId && item.priceDay && <small className="app-cell-sub"><DocumentLink id={item.receiptId}>Ціна від {dateLabel(item.priceDay)}</DocumentLink></small>}
+          {item.receiptId && item.priceDay && <small className="app-cell-sub"><DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Ціна від {dateLabel(item.priceDay)}</DocumentLink></small>}
           {seasonal && <small className="app-cell-sub">{seasonText(item.season)}</small>}
           <Button size="compact-xs" variant="subtle" disabled={basket.picked.some(row => row.id === item.id && row.supplier === group.id && row.unit === item.unit)}
             onClick={() => basket.add([{ ...group, items: [item] }])}>До кошика</Button>
@@ -55,15 +55,16 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
       </li>)}</ul>
     </details>)
   return <section className="dash-supplier-budget" aria-label="Бюджет закупівлі">
-    <div className="dash-budget-context">Продажі за {days} днів · запас на {cover} днів · {seasonal ? 'з урахуванням сезону' : 'за поточним темпом'}</div>
     <div className="dash-budget-header">
       <h3>До закупівлі</h3>
       <strong>{priced || !count ? formatPrice(budget.subtotal) : 'Суму ще не визначено'}{budget.unpriced > 0 && ' + без ціни: ' + budget.unpriced}</strong>
+      <div className="dash-budget-context"><TableChip value={`Продажі за ${days} днів`} /><TableChip value={`Запас на ${cover} днів`} />
+        <TableChip tone="source" value={seasonal ? 'З урахуванням сезону' : 'За поточним темпом'} /></div>
     </div>
-    {historical.length > 0 && <details className="dash-price-history"><summary>Товари з цінами попередніх років <TableChip tone="warning" value={historical.length} /></summary>
+    {historical.length > 0 && <details className="dash-price-history"><summary>Товари з цінами попередніх років <TableChip tone="warning" value={historical.length} /><IconChevronDown size={16} aria-hidden="true" /></summary>
       <ul>{historical.map(({ item, supplier }) => <li key={item.id}><b>{item.name}</b> · {supplier || 'Уточнити постачальника'}
         <small>{numberFormat.format(item.quantity)} {item.unit} × {priceFormat.format(item.unitPrice!)} ₴ · {formatPrice(item.amount!)}</small>
-        {item.receiptId && <DocumentLink id={item.receiptId}>Накладна від {dateLabel(item.priceDay!)}</DocumentLink>}
+        {item.receiptId && <DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Накладна від {dateLabel(item.priceDay!)}</DocumentLink>}
       </li>)}</ul></details>}
     <SupplierBasket basket={basket} groups={budget.suppliers} days={days} cover={cover} through={through} seasonal={seasonal} />
     {basket.error && <p role="alert">{basket.error}</p>}

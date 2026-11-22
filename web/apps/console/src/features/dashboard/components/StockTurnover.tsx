@@ -158,7 +158,7 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
         </div>}
       </> : <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={reload}
         description={problemMessage(query.problem, 'Не вдалося завантажити залишки й оборот товарів.')} />}
-      <AppEditorModal opened={purchasesOpen} onClose={closePurchases} size="standard"
+      <AppEditorModal opened={purchasesOpen} onClose={closePurchases} size="standard" className="dash-purchases-modal"
         closeOnEscape={!documentOpen} closeOnClickOutside={!documentOpen} trapFocus={!documentOpen}
         title={<MetricLabel icon={IconShoppingCart}>Закупівлі за постачальниками</MetricLabel>}>
         {report?.supplierBudget ? <BudgetBySupplier basket={basket} budget={report.supplierBudget}

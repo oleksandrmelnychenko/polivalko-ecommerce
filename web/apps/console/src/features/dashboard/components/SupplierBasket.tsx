@@ -1,4 +1,5 @@
 import { Button } from '@mantine/core'
+import { IconChevronDown, IconDownload, IconFileInvoice, IconTrash } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import { dateLabel, formatPrice } from '@/shared/lib/salesFormat'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
@@ -113,17 +114,19 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
   const missing = lines.filter(line => line.amount === null).length
   const outdated = basket.picked.filter(row => !matched.has(row.id))
   return <details className="dash-supplier-cart">
-    <summary>Кошик постачальників <TableChip tone="document" value={`${numberFormat.format(lines.length)} поз.`} /> · {formatPrice(subtotal(lines))}
-      {missing > 0 && ' + без ціни: ' + missing}{outdated.length > 0 && ' · перевірити: ' + outdated.length}</summary>
+    <summary>Кошик постачальників <TableChip tone="document" value={`${numberFormat.format(lines.length)} поз.`} />
+      {missing > 0 && <TableChip tone="warning" value={`Без ціни · ${missing}`} />}{outdated.length > 0 && <TableChip tone="warning" value={`Перевірити · ${outdated.length}`} />}
+      <strong>{formatPrice(subtotal(lines))}</strong><IconChevronDown size={16} aria-hidden="true" /></summary>
     <p>Чернетка зберігається у цьому браузері для вашого облікового запису. Рекомендовані кількості оновлюються з чергою. Кількість, введена вручну, зберігається.</p>
     <Button variant="default" size="compact-xs" disabled={!groups.some(group => group.items.some(item => !matched.has(item.id)))}
       onClick={() => basket.add(groups)}>Додати всю чергу</Button>
     {orders.map(({ group, lines: items }) => <section className="dash-cart-order" key={group.id ?? 'unknown'}>
-      <h4>{group.name || 'Уточнити постачальника'} · {formatPrice(subtotal(items))}</h4>
+      <header><h4>{group.name || 'Уточнити постачальника'}</h4><strong>{formatPrice(subtotal(items))}</strong></header>
       <ul>{items.map(({ item, quantity, amount }) => <li key={item.id}>
         <strong>{item.name}</strong>
-        <small>{item.sku} · Рекомендовано {numberFormat.format(item.quantity)} {item.unit}{seasonal && ' · ' + seasonText(item.season)}</small>
-        {item.priceDay && item.receiptId && <small><DocumentLink id={item.receiptId}>Ціна від {dateLabel(item.priceDay)}</DocumentLink></small>}
+        <div className="dash-cart-meta">{item.sku && <small>Артикул {item.sku}</small>}<TableChip tone="storage" value={`Рекомендовано ${numberFormat.format(item.quantity)} ${item.unit}`} />
+          {seasonal && <small>{seasonText(item.season)}</small>}</div>
+        {item.priceDay && item.receiptId && <DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Ціна від {dateLabel(item.priceDay)}</DocumentLink>}
         <div className="dash-cart-actions">
           <label>Замовити, {item.unit} <input type="number" aria-label={'Кількість для ' + item.name} key={quantity}
             min={item.unit === 'шт' ? 1 : 0.001} max={1000000000} step={item.unit === 'шт' ? 1 : 0.001} defaultValue={quantity}
@@ -133,14 +136,14 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
               else field.value = String(quantity)
             }} onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur() }} /></label>
           <b>{amount === null ? 'Ціну уточнити' : formatPrice(amount)}</b>
-          {selected.get(item.id)?.quantity != null && <button type="button" onClick={() => basket.setQuantity(item.id, null)}>За рекомендацією</button>}
-          <button type="button" onClick={() => basket.remove(item.id)}>Прибрати</button>
+          {selected.get(item.id)?.quantity != null && <Button variant="default" radius="xl" size="compact-xs" onClick={() => basket.setQuantity(item.id, null)}>За рекомендацією</Button>}
+          <Button variant="light" color="red" radius="xl" size="compact-xs" leftSection={<IconTrash size={14} />} onClick={() => basket.remove(item.id)}>Прибрати</Button>
         </div>
       </li>)}</ul>
-      {group.id && <Button size="compact-xs" variant="default" onClick={() => download(group, items, through, days, cover, seasonal)}>Завантажити замовлення</Button>}
+      {group.id && <Button size="xs" radius="xl" variant="default" leftSection={<IconDownload size={15} />} onClick={() => download(group, items, through, days, cover, seasonal)}>Завантажити замовлення</Button>}
     </section>)}
     {outdated.length > 0 && <section className="dash-cart-order"><h4>Поза поточною чергою · виключено із суми</h4>
-      {outdated.map(row => <div key={row.id}>{row.name} <button type="button" onClick={() => basket.remove(row.id)}>Прибрати</button></div>)}
+      {outdated.map(row => <div className="dash-cart-obsolete" key={row.id}>{row.name} <Button variant="light" color="red" radius="xl" size="compact-xs" onClick={() => basket.remove(row.id)}>Прибрати</Button></div>)}
     </section>}
   </details>
 }
