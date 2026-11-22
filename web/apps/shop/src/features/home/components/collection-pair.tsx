@@ -13,16 +13,21 @@ function flattenCategories(categories: CategoryNode[]): CategoryNode[] {
 
 export async function CollectionPairs() {
   await connection();
-  const [collections, bestsellers, categories, result] = await Promise.all([
-    getCollections().catch(() => []),
+  const [bestsellers, categories, result] = await Promise.all([
     getBestsellers(5).catch(() => null),
     getCategoryTree().catch(() => []),
     searchProducts({ inStock: true, pageSize: 48 }).catch(() => null),
   ]);
   const popular = bestsellers?.items.map(item => item.product) ?? [];
   const ranked = result?.items ?? [];
-  const recommended = [...new Map([...ranked.slice(0, 3), ...collections.flatMap(collection => collection.items), ...ranked, ...popular]
-    .filter(product => product.inStock).map(product => [product.id, product])).values()].slice(0, 5);
+  const recommended = ranked.filter(product => product.inStock).slice(0, 5);
+  if (recommended.length < 5) {
+    const collections = await getCollections().catch(() => []);
+    for (const product of [...collections.flatMap(collection => collection.items), ...popular]) {
+      if (product.inStock && !recommended.some(item => item.id === product.id)) recommended.push(product);
+      if (recommended.length === 5) break;
+    }
+  }
   const byId = new Map(flattenCategories(categories).map(category => [category.id, category]));
   const shown = new Set(recommended.map(product => product.id));
   const remaining = ranked.filter(product => !shown.has(product.id));

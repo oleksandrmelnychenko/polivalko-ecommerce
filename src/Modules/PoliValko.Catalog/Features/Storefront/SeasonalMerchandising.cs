@@ -21,19 +21,23 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
     };
 
     public async Task<IQueryable<Product>> SortAsync(IQueryable<Product> products, IReadOnlyList<Category> categories,
-        string? term, PoliValkoDbContext db, DateOnly today, CancellationToken ct, string mode = ProductSort.Seasonal)
+        string? term, PoliValkoDbContext db, DateOnly today, CancellationToken ct, string mode = ProductSort.Seasonal,
+        bool acrossCategories = true)
     {
         var priority = PriorityCategories(today);
         var byParent = categories.ToLookup(c => c.ParentId);
-        var seasonal = categories.Where(c => priority.Contains(c.Slug) || priority.Contains(c.Name))
-            .SelectMany(c => CategoryQueries.Descendants(c.Id, byParent).Prepend(c.Id)).Distinct().ToArray();
+        var families = priority.Select(key => categories.Where(c => c.Slug == key || c.Name == key)
+            .SelectMany(c => CategoryQueries.Descendants(c.Id, byParent).Prepend(c.Id)).Distinct().ToArray())
+            .Where(family => family.Length > 0).ToArray();
+        var seasonal = families.SelectMany(family => family).Distinct().ToArray();
         var signals = await DemandAsync(db, today, ct);
         var ids = signals.Select(s => s.ProductId).ToArray();
         var trends = signals.Select(s => Math.Max(0, s.Week - s.Previous / 3m) * s.Week / (s.Week + 3m)).ToArray();
         var units = signals.Select(s => s.Units).ToArray();
+        var demandScores = signals.Select(s => s.Demand).ToArray();
         var ranks = db.Database.SqlQuery<DemandRank>($"""
-            SELECT id AS product_id, position AS rank, trend, units
-            FROM unnest({ids}::uuid[], {trends}::numeric[], {units}::numeric[]) WITH ORDINALITY AS r(id,trend,units,position)
+            SELECT id AS product_id, demand, trend, units
+            FROM unnest({ids}::uuid[], {demandScores}::bigint[], {trends}::numeric[], {units}::numeric[]) AS r(id,demand,trend,units)
             """);
         var measuredSince = KyivTime.StartOfDay(today.AddDays(-28));
         var scored = from p in products
@@ -45,7 +49,16 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
                let cover = sold > 0 ? 28m * available / sold :
                    ((rank.ProductId == null || sold == 0) && available >= 3 && p.CreatedAt < measuredSince ? 3650m : 0m)
                select new { p, available, trend = (decimal?)rank.Trend ?? 0m, cover,
-                   seasonal = seasonal.Contains(p.CategoryId), rank = (long?)rank.Rank ?? long.MaxValue };
+                   seasonal = seasonal.Contains(p.CategoryId), demand = (long?)rank.Demand ?? 0L };
+        Guid[] leaders = [];
+        if (mode == ProductSort.Seasonal && acrossCategories && string.IsNullOrWhiteSpace(term) && families.Length > 1)
+        {
+            var candidates = scored.Where(s => s.seasonal && s.available >= 1 && s.p.Price.Amount > 0)
+                .OrderByDescending(s => s.demand).ThenByDescending(s => s.p.Images.Any())
+                .ThenBy(s => s.p.DisplayName ?? s.p.Name).ThenBy(s => s.p.Id)
+                .Select(s => new Candidate(s.p.Id, s.p.CategoryId));
+            leaders = await LeadingProductsAsync(candidates, families, ct);
+        }
         var first = scored.OrderByDescending(s => term != null && s.p.Sku == term)
             .ThenByDescending(s => s.available >= 1 && s.p.Price.Amount > 0);
         var ordered = mode switch
@@ -53,14 +66,53 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
             ProductSort.Trending => first.ThenByDescending(s => s.trend).ThenByDescending(s => s.seasonal),
             ProductSort.StockCover => first.ThenByDescending(s => s.cover >= 56).ThenByDescending(s => s.seasonal)
                 .ThenByDescending(s => s.cover),
+            ProductSort.Seasonal when leaders.Length > 0 => first.ThenByDescending(s => leaders.Contains(s.p.Id))
+                .ThenBy(s => Array.IndexOf(leaders, s.p.Id)).ThenByDescending(s => s.seasonal),
             _ => first.ThenByDescending(s => s.seasonal),
         };
-        return ordered.ThenBy(s => s.rank).ThenByDescending(s => s.p.Images.Any())
+        return ordered.ThenByDescending(s => s.demand).ThenByDescending(s => s.p.Images.Any())
             .ThenBy(s => s.p.DisplayName ?? s.p.Name).ThenBy(s => s.p.Id).Select(s => s.p);
     }
 
-    private sealed record DemandRank(Guid? ProductId, long Rank, decimal Trend, decimal? Units);
-    private sealed record ProductSignal(Guid ProductId, int Week, int Previous, decimal? Units);
+    private sealed record Candidate(Guid Id, Guid CategoryId);
+    private sealed record DemandRank(Guid? ProductId, long Demand, decimal Trend, decimal? Units);
+    private sealed record ProductSignal(Guid ProductId, long Demand, int Week, int Previous, decimal? Units);
+
+    private static async Task<Guid[]> LeadingProductsAsync(IQueryable<Candidate> candidates, Guid[][] families, CancellationToken ct)
+    {
+        const int slots = 12;
+        var categoryToFamily = new Dictionary<Guid, int>();
+        var heads = families.Select(_ => new Queue<(Guid Id, int Position)>()).ToArray();
+        for (var i = 0; i < families.Length; i++)
+            foreach (var category in families[i]) categoryToFamily.TryAdd(category, i);
+
+        // Keep only the products that can enter the first twelve, even when a family is sold out.
+        var position = 0;
+        await foreach (var product in candidates.AsAsyncEnumerable().WithCancellation(ct))
+        {
+            var family = heads[categoryToFamily[product.CategoryId]];
+            if (family.Count < slots) family.Enqueue((product.Id, position));
+            position++;
+            if (heads.All(group => group.Count == slots)) break;
+        }
+        // Introduce each in-stock family, then follow demand while alternating families when possible.
+        var leaders = new List<Guid>(slots);
+        Queue<(Guid Id, int Position)>? previous = null;
+        foreach (var group in heads.Where(group => group.Count > 0).Take(slots))
+        {
+            leaders.Add(group.Dequeue().Id);
+            previous = group;
+        }
+        while (leaders.Count < slots)
+        {
+            var next = heads.Where(group => group.Count > 0).OrderBy(group => group == previous)
+                .ThenBy(group => group.Peek().Position).FirstOrDefault();
+            if (next is null) break;
+            leaders.Add(next.Dequeue().Id);
+            previous = next;
+        }
+        return leaders.ToArray();
+    }
 
     private async Task<ProductSignal[]> DemandAsync(PoliValkoDbContext db, DateOnly today, CancellationToken ct)
     {
@@ -112,11 +164,11 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
                         AND o.status IN ('Confirmed','Paid','Shipped','ReadyForPickup','Completed')
                     GROUP BY i.product_id,o.id,o.created_at
                 )
-                SELECT id AS product_id, count(*) FILTER (WHERE day >= {week})::int AS week,
+                SELECT id AS product_id, sum(weight)::bigint AS demand, count(*) FILTER (WHERE day >= {week})::int AS week,
                     count(*) FILTER (WHERE day >= {recent} AND day < {week})::int AS previous,
                     CASE WHEN bool_and(comparable OR day < {recent})
                         THEN coalesce(sum(qty) FILTER (WHERE day >= {recent}),0) END AS units
-                FROM signals GROUP BY id ORDER BY sum(weight) DESC, id
+                FROM signals GROUP BY id
                 """).ToArrayAsync(ct);
             return cache.Set(key, signals, TimeSpan.FromMinutes(10));
         }

@@ -15,6 +15,35 @@ public sealed class StorefrontModeTests(ApiFactory api)
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
+    public async Task Seasonal_leaders_rotate_available_families_before_pagination_and_fill_empty_slots()
+    {
+        var irrigation = new List<Product>();
+        for (var i = 0; i < 14; i++)
+            irrigation.Add(await api.AddProductAsync("vse-dlia-polyvu", $"A{i:D2}", 100));
+        var garden = await api.AddProductAsync("vse-dlia-vidpochynku", "Z1", 100);
+        var nextGarden = await api.AddProductAsync("vse-dlia-vidpochynku", "Z2", 100);
+        var unavailable = await api.AddProductAsync("vse-dlia-vidpochynku", "A", 100, stock: 0);
+        var other = await api.AddProductAsync("novyi-rik", "0", 100);
+        var ids = irrigation.Select(p => p.Id).Concat([garden.Id, nextGarden.Id, unavailable.Id, other.Id]).ToArray();
+        await api.WithScopeAsync(async services =>
+        {
+            var db = services.GetRequiredService<PoliValkoDbContext>();
+            var products = db.Set<Product>().Where(p => ids.Contains(p.Id));
+            var merchandising = services.GetRequiredService<SeasonalMerchandising>();
+            var categories = await CategoryQueries.LoadVisibleCategoriesAsync(db, Ct);
+            var day = new DateOnly(2032, 7, 14);
+            var ranked = await merchandising.SortAsync(products, categories, null, db, day, Ct);
+            Guid[] expected = [irrigation[0].Id, garden.Id, irrigation[1].Id, nextGarden.Id,
+                .. irrigation.Skip(2).Select(p => p.Id), other.Id, unavailable.Id];
+            (await ranked.Take(12).Select(p => p.Id).ToArrayAsync(Ct)).ShouldBe(expected[..12]);
+            (await ranked.Skip(12).Select(p => p.Id).ToArrayAsync(Ct)).ShouldBe(expected[12..]);
+            var exact = await merchandising.SortAsync(products, categories, unavailable.Sku, db, day, Ct);
+            (await exact.Select(p => p.Id).FirstAsync(Ct)).ShouldBe(unavailable.Id);
+            return true;
+        });
+    }
+
+    [Fact]
     public async Task Recent_demand_and_stock_cover_prioritize_different_products()
     {
         var recent = await api.AddProductAsync("vse-dlia-polyvu", "Популярний шланг", 50, stock: 3);

@@ -127,7 +127,8 @@ internal static class SearchProducts
         products = sort switch
         {
             ProductSort.Seasonal or ProductSort.Trending or ProductSort.StockCover =>
-                await merchandising.SortAsync(products, categories, query.Q?.Trim(), db, today, ct, sort),
+                await merchandising.SortAsync(products, categories, query.Q?.Trim(), db, today, ct, sort,
+                    acrossCategories: string.IsNullOrWhiteSpace(query.Category)),
             ProductSort.PriceAsc => products.OrderBy(p => p.Price.Amount).ThenBy(p => p.Id),
             ProductSort.PriceDesc => products.OrderByDescending(p => p.Price.Amount).ThenBy(p => p.Id),
             ProductSort.NameDesc => products.OrderByDescending(p => p.DisplayName ?? p.Name).ThenBy(p => p.Id),
