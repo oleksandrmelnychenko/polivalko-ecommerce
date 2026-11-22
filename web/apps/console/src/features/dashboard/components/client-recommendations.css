@@ -25,6 +25,26 @@
 .client-rec-quantity { font-size: .875rem; }
 .client-rec-profile { display: inline-block; margin: 0 14px 12px; font-size: .875rem; }
 .client-rec-method summary { cursor: pointer; font-size: .875rem; }
+.client-rec-stock { border: 1px solid var(--mantine-color-gray-3); border-radius: 14px; overflow: clip; }
+.client-rec-stock summary {
+  display: flex; align-items: center; gap: 8px; padding: 12px 14px; cursor: pointer; list-style: none;
+}
+.client-rec-stock summary::-webkit-details-marker { display: none; }
+.client-rec-stock summary > span:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.client-rec-stock summary svg { flex: none; }
+.client-rec-stock[open] summary { background: var(--app-ground); }
+.client-rec-stock[open] summary svg { transform: rotate(180deg); }
+.client-rec-stock summary:focus-visible { outline: 2px solid var(--brand-accent); outline-offset: -2px; }
+.client-rec-stock small { display: block; font-size: .78rem; color: var(--mantine-color-gray-7); }
+.client-rec-stock-body { padding: 12px 14px; }
+.client-rec-stock dl { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 0; }
+.client-rec-stock dt { font-size: .78rem; color: var(--mantine-color-gray-7); }
+.client-rec-stock dd { margin: 0; font-weight: 600; }
+.client-rec-stock ol { margin: 10px 0 0; padding-inline-start: 1.6rem; }
+.client-rec-stock li { padding: 8px 0; border-top: 1px solid var(--mantine-color-gray-2); }
+.client-rec-stock li::marker { font-weight: 600; }
+.client-rec-stock li div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; }
+.client-rec-stock li a { overflow-wrap: anywhere; }
 @media (max-width: 30em) {
   .client-rec-card h3 button { gap: 6px; padding: 10px; }
   .client-rec-total { font-size: .875rem; }

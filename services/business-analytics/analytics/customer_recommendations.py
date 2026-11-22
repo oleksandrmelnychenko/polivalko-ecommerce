@@ -1,6 +1,6 @@
 """Suggestions for identified customers based on their own completed sales."""
 from collections import defaultdict
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal, ROUND_DOWN, ROUND_HALF_UP
 from statistics import median
 from threading import Lock
@@ -13,6 +13,7 @@ from .source import INVENTORY_UNITS, production
 from .supplier_orders import unit_label
 
 
+SIGNAL_PRIORITY = {"due": 0, "season": 1, "repeat": 2, "single": 3}
 _HEAD = """SELECT d.* FROM accounting.documents d """
 _SALES = _HEAD + """WHERE d.day >= %s AND d.day < %s AND d.entity_type IN ('invoice','customerReturn')
     AND d.kind NOT IN ('in','order') UNION ALL """ + _HEAD + INDEPENDENT_RECEIPTS
@@ -54,7 +55,9 @@ SELECT p.id::text,p.navkolo_id,p.sku,coalesce(nullif(p.display_name,''),p.name) 
        (s.quantity-s.reserved_quantity)::numeric AS available,price.amount AS price,p.is_archived
 FROM catalog.products p LEFT JOIN catalog.product_prices price ON price.product_id=p.id
 LEFT JOIN catalog.product_stock s ON s.product_id=p.id
-""" + INVENTORY_UNITS
+""" + INVENTORY_UNITS + """
+WHERE p.id::text = ANY(%s::text[]) OR lower(trim(p.navkolo_id)) = ANY(%s::text[])
+"""
 
 
 def suggestion(product, unit, purchases, returned, today):
@@ -65,7 +68,8 @@ def suggestion(product, unit, purchases, returned, today):
     if net <= 0 or available <= 0:
         return None
     typical = (net / len(purchases)).quantize(step, rounding=ROUND_HALF_UP)
-    quantity = min(available, max(step, typical))
+    requested = max(step, typical)
+    quantity = min(available, requested)
     gap = round(median((b-a).days for a, b in zip(days, days[1:]))) if len(days) >= 2 else None
     due = days[-1] + timedelta(days=gap) if gap else None
     seasons = sum(any(start <= d < start+timedelta(days=30) for d in days)
@@ -74,7 +78,8 @@ def suggestion(product, unit, purchases, returned, today):
               else "repeat" if len(days) > 1 else "single")
     return dict(id=product["id"], name=product["name"], sku=product["sku"], unit=unit,
                 purchases=len(purchases), last=str(days[-1]), interval=gap, seasons=seasons, signal=signal,
-                available=available, quantity=quantity, price=product["price"],
+                available=available, requested=requested, quantity=quantity, price=product["price"],
+                dueOn=str(due) if signal == "due" else None,
                 amount=(quantity*product["price"]).quantize(Decimal(".01"), rounding=ROUND_HALF_UP))
 
 
@@ -124,29 +129,77 @@ def rank_clients(rows, catalog, today):
             item = suggestion(products[pid], unit, purchases, refunds[key], today)
             if item:
                 customers[client]["items"].append(item)
-    priority = {"due": 0, "season": 1, "repeat": 2, "single": 3}
     for customer in customers.values():
         items = customer["items"]
-        items.sort(key=lambda i: (priority[i["signal"]], -i["seasons"], -i["purchases"], -i["amount"], i["id"]))
+        items.sort(key=lambda i: (SIGNAL_PRIORITY[i["signal"]], -i["seasons"], -i["purchases"], -i["amount"], i["id"]))
         del items[3:]
-    return sorted(customers.values(), key=lambda c: (
-        priority[c["items"][0]["signal"]] if c["items"] else 4,
+    return list(customers.values())
+
+
+def buyer_priority(entry):
+    client_id, item = entry
+    return (SIGNAL_PRIORITY[item["signal"]], item["dueOn"] or "", -item["seasons"], -item["purchases"],
+            -date.fromisoformat(item["last"]).toordinal(), client_id)
+
+
+def allocate_stock(active):
+    """Allocate one period's shortlist without modifying the cached sales history."""
+    clients = []
+    by_product = defaultdict(list)
+    for customer in active:
+        if not customer["items"]:
+            continue
+        items = [item.copy() for item in customer["items"]]
+        clients.append(dict(customer, items=items))
+        for item in items:
+            by_product[item["id"]].append((customer["id"], item))
+
+    for queue in by_product.values():
+        queue.sort(key=buyer_priority)
+        remaining = queue[0][1]["available"]
+        for rank, (_, item) in enumerate(queue, start=1):
+            quantity = min(item["requested"], remaining)
+            remaining -= quantity
+            item.update(rank=rank, buyers=len(queue), quantity=quantity,
+                        amount=(quantity * item["price"]).quantize(Decimal(".01"), rounding=ROUND_HALF_UP))
+
+    for customer in clients:
+        customer["items"].sort(key=lambda item: item["quantity"] == 0)
+    return sorted(clients, key=lambda c: (
+        c["items"][0]["quantity"] == 0, SIGNAL_PRIORITY[c["items"][0]["signal"]],
         -sum(i["amount"] for i in c["items"]), c["name"].casefold(), c["id"]))
 
 
-_cache = None
+def allocation_report(customers, today, days):
+    start = str(today-timedelta(days=days-1))
+    active = [c for c in customers if c["lastSale"] >= start]
+    clients = allocate_stock(active)
+    return dict(start=start, through=str(today), active=len(active), clients=clients,
+                offeredClients=sum(any(i["quantity"] > 0 for i in c["items"]) for c in clients))
+
+
+_history_cache = None
 _lock = Lock()
 
 
 def customer_recommendations(today, days):
-    global _cache
-    with _lock:
-        if not _cache or _cache[0] != today or _cache[1] <= monotonic():
-            bounds = (today-timedelta(days=729), today+timedelta(days=1))
-            with production() as conn:
+    global _history_cache
+    with production() as conn:
+        with _lock:
+            if not _history_cache or _history_cache[0] != today or _history_cache[1] <= monotonic():
+                bounds = (today-timedelta(days=729), today+timedelta(days=1))
                 rows = conn.execute(HISTORY, (today-timedelta(days=89), today, *bounds, *bounds)).fetchall()
-                customers = rank_clients(rows, conn.execute(CATALOG), today)
-            _cache = today, monotonic()+120, customers
-        start = str(today-timedelta(days=days-1))
-        active = [c for c in _cache[2] if c["lastSale"] >= start]
-    return dict(start=start, through=str(today), active=len(active), clients=[c for c in active if c["items"]])
+                native_ids, external_ids = set(), set()
+                for row in rows:
+                    ref = identifier(row["ref"])
+                    if row["account"] == "polivalko-native" and ref:
+                        native_ids.add(ref)
+                    elif row["account"] == "valko-dntrade":
+                        if ref:
+                            external_ids.add(ref)
+                        if code := identifier(row["code"]):
+                            external_ids.add("dntrade-code:" + code)
+                _history_cache = today, monotonic()+120, rows, (sorted(native_ids), sorted(external_ids))
+            _, _, rows, catalog_ids = _history_cache
+        catalog = conn.execute(CATALOG, catalog_ids) if any(catalog_ids) else ()
+        return allocation_report(rank_clients(rows, catalog, today), today, days)
