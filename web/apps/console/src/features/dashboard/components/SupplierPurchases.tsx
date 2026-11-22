@@ -67,14 +67,18 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
       <ul>{group.items.map(item => <li key={item.id}>
         <div className="dash-budget-item"><Link className="dash-budget-product" title="Відкрити картку товару" to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}</Link>
           {item.sku && <small className="app-cell-sub">Артикул {item.sku}</small>}
+          {seasonal && <SeasonIndicator season={item.season} />}
+        </div>
+        <div className="dash-budget-amount">
+          <strong>{item.amount == null ? 'Ціну уточнити' : formatPrice(item.amount)}</strong>
+          <span>{numberFormat.format(item.quantity)} {item.unit}{item.unitPrice != null && ' × ' + priceFormat.format(item.unitPrice) + ' ₴'}</span>
+        </div>
+        <div className="dash-budget-actions">
           {item.receiptId && item.priceDay && <DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Накладна від {dateLabel(item.priceDay)}</DocumentLink>}
-          {seasonal && <div><SeasonIndicator season={item.season} /></div>}
           {isPicked(item)
             ? <Button size="compact-xs" variant="default" onClick={() => showBasketItem(item.id)}>Переглянути в кошику</Button>
             : <Button size="compact-xs" onClick={() => basket.add([{ ...group, items: [item] }])}>Додати до кошика</Button>}
         </div>
-        <span>{numberFormat.format(item.quantity)} {item.unit}{item.unitPrice != null && ' × ' + priceFormat.format(item.unitPrice) + ' ₴'}</span>
-        <strong>{item.amount == null ? 'Ціну уточнити' : formatPrice(item.amount)}</strong>
       </li>)}</ul>
     </details>
   })
@@ -85,7 +89,7 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
       <div className="dash-budget-context"><TableChip value={`Продажі за ${days} днів`} /><TableChip value={`Запас на ${cover} днів`} />
         <TableChip tone="source" value={seasonal ? 'З урахуванням сезону' : 'За поточним темпом'} /></div>
     </div>
-    {historical.length > 0 && <details className="dash-price-history"><summary>Товари з цінами попередніх років <TableChip tone="warning" value={historical.length} /><IconChevronDown size={16} aria-hidden="true" /></summary>
+    {historical.length > 0 && <details className="dash-price-history"><summary>Товари з цінами попередніх років <TableChip tone="warning" value={numberFormat.format(historical.length) + ' поз.'} /><IconChevronDown size={16} aria-hidden="true" /></summary>
       <ul>{historical.map(({ item, supplier }) => <li key={item.id}>
         <div className="dash-history-item"><strong>{item.name}</strong><span>{supplier || 'Уточнити постачальника'}</span></div>
         <div className="dash-history-amount"><span>{numberFormat.format(item.quantity)} {item.unit}{item.unitPrice != null && <> × {priceFormat.format(item.unitPrice)} ₴</>}</span>
@@ -94,12 +98,10 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
       </li>)}</ul></details>}
     <SupplierBasket basket={basket} groups={budget.suppliers} days={days} cover={cover} through={through} seasonal={seasonal} onOpenChange={setBasketOpen} />
     {basket.error && <p role="alert">{basket.error}</p>}
-    {groups.length > 0 && <div className="dash-budget-list">
-      {groups.slice(0, 3)}
-      {groups.length > 3 && <details className="dash-budget-more">
-        <summary>Інші постачальники · {groups.length - 3}<IconChevronDown size={15} aria-hidden="true" /></summary>
-        {groups.slice(3)}
-      </details>}
-    </div>}
+    {groups.length > 0 && <details className="dash-budget-list">
+      <summary>{basketOpen ? 'Постачальники поза кошиком' : 'Рекомендації за постачальниками'}
+        <TableChip value={numberFormat.format(groups.length)} /><IconChevronDown size={16} aria-hidden="true" /></summary>
+      {groups}
+    </details>}
   </section>
 }

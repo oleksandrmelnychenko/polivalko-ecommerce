@@ -128,7 +128,6 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal,
       {missing > 0 && <TableChip tone="warning" value={`Без ціни · ${missing}`} />}{outdated.length > 0 && <TableChip tone="warning" value={`Перевірити · ${outdated.length}`} />}
       {!matchesPlan && lines.length > 0 && <strong>{lines.length === missing ? 'Сума невідома' : formatPrice(subtotal(lines))}</strong>}
       <IconChevronDown size={16} aria-hidden="true" /></summary>
-    <p>Чернетка зберігається у цьому браузері для вашого облікового запису. Рекомендовані кількості оновлюються з чергою. Кількість, введена вручну, зберігається.</p>
     {!allAdded && <Button variant="default" size="compact-xs"
       onClick={() => basket.add(groups)}>Додати всю чергу</Button>}
     {orders.map(({ group, lines: items, remaining }) => <details className="dash-cart-order" key={group.id ?? 'unknown'}>
