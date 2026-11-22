@@ -9,6 +9,7 @@ import { dateRange, formatAmount, formatPrice } from '@/shared/lib/salesFormat'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PageState } from '@/shared/ui/PageState'
 import { getProductProfit, type DocumentSales } from '../api/dashboardApi'
+import { CalculationInfo } from './CalculationInfo'
 import { DashboardCard } from './DashboardCard'
 
 type Product = DocumentSales['products'][number]
@@ -55,7 +56,18 @@ function PeriodProducts({ data, open }: { data: DocumentSales; open: (p: Product
   })
   const visible = matches.slice(0,limit)
   return <>
-    <p className="dash-products-period">{dateRange(data.start, data.through)}</p>
+    <div className="dash-products-period dash-with-info"><span>{dateRange(data.start, data.through)}</span>
+      <CalculationInfo title="Як розраховано показники продажів">
+        <section><strong>Як розраховано собівартість і прибуток</strong>
+          <p>Беремо собівартість із рядка продажу. Якщо її немає, використовуємо закупівельну ціну останнього дня надходження на цей склад для тієї самої організації, товару й одиниці. Ціна дорівнює сумі товарних рядків у гривнях, поділеній на кількість. У день продажу враховуємо лише накладні з відомим ранішим часом.</p>
+          <p>Повернення сторнує вартість відповідної кількості з первісного продажу. Прибуток дорівнює чистій виручці мінус собівартість, маржа — його частка в додатній чистій виручці. Використано суми товарних рядків із документів. Оцінка за ціною надходження може відрізнятися від облікового списання партій. Товари з неповними даними показано в кінці рейтингу прибутку.</p>
+        </section>
+        <section><strong>Як розраховано частку та групу ABC</strong>
+          <p>Частка дорівнює виручці товару після повернень, поділеній на весь чистий оборот за вибрані дні. За нульового або від’ємного обороту частка невизначена.</p>
+          <p>Для ABC товари впорядковано за додатною виручкою. Група A формує перші 80 %, B — наступні 15 %, C — решту. Товар на межі та товари з однаковою виручкою входять до групи, з якої почали відлік.</p>
+        </section>
+      </CalculationInfo>
+    </div>
     <div className="dash-product-tools">
       <TextInput size="sm" radius="xl" leftSection={<IconSearch size={16} />} aria-label="Пошук товару за період" placeholder="Назва, код або артикул" value={search}
         onChange={e => {setSearch(e.currentTarget.value); setLimit(batch)}} />
@@ -98,15 +110,7 @@ function PeriodProducts({ data, open }: { data: DocumentSales; open: (p: Product
       {visible.length < matches.length && <Button variant="default" size="xs" onClick={() => setLimit(limit + batch)}>Показати ще {Math.min(batch, matches.length-limit)}</Button>}
       {limit > batch && <Button variant="subtle" size="xs" onClick={() => setLimit(batch)}>Згорнути</Button>}
     </div>}
-    <details className="dash-report-note"><summary>Як розраховано собівартість і прибуток</summary>
-      <p>Беремо собівартість із рядка продажу. Якщо її немає, використовуємо закупівельну ціну останнього дня надходження на цей склад для тієї самої організації, товару й одиниці. Ціна дорівнює сумі товарних рядків у гривнях, поділеній на кількість. У день продажу враховуємо лише накладні з відомим ранішим часом.</p>
-      <p>Повернення сторнує вартість відповідної кількості з первісного продажу. Прибуток дорівнює чистій виручці мінус собівартість, маржа — його частка в додатній чистій виручці. Використано суми товарних рядків із документів. Оцінка за ціною надходження може відрізнятися від облікового списання партій. Товари з неповними даними показано в кінці рейтингу прибутку.</p>
-    </details>
     {data.incompleteProducts > 0 && <p className="dash-report-note">Документів із нерозподіленою між товарами сумою · {formatAmount(data.incompleteProducts)}.</p>}
-    <details className="dash-report-note"><summary>Як розраховано частку та групу ABC</summary>
-      <p>Частка дорівнює виручці товару після повернень, поділеній на весь чистий оборот за вибрані дні. За нульового або від’ємного обороту частка невизначена.</p>
-      <p>Для ABC товари впорядковано за додатною виручкою. Група A формує перші 80 %, B — наступні 15 %, C — решту. Товар на межі та товари з однаковою виручкою входять до групи, з якої почали відлік.</p>
-    </details>
   </>
 }
 

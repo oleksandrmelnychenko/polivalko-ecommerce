@@ -17,6 +17,7 @@ import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { getStockTurnover } from '../api/dashboardApi'
 import { numberFormat } from '../lib/insights'
 import { DashboardCard } from './DashboardCard'
+import { CalculationInfo } from './CalculationInfo'
 import { SupplierOrders } from './SupplierOrders'
 import { BudgetBySupplier, ReceiptPrice } from './SupplierPurchases'
 import { SeasonIndicator, useSupplierBasket } from './SupplierBasket'
@@ -95,12 +96,14 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
           onChange={value => setFilters(current => ({ ...current, seasonal: value === 'season', stock: current.stock === 'season-review' ? 'all' : current.stock, page: 1 }))} />
       </div>
       {report ? <>
-        <details className="dash-report-note">
-          <summary>Позицій до закупівлі · {numberFormat.format(report.buyCount)}. Як розраховано</summary>
-          <p>Темп — продана кількість за {days} днів після повернень, поділена на {days}. Від потреби на {report.coverDays} днів віднімаємо доступний залишок після резервів. Штучні товари округлюємо вгору до цілої штуки.</p>
-          {report.seasonal && <p>Порівнюємо денні продажі до й після цієї календарної межі у відповідні тижні останніх трьох років. Напрям зміни має повторитися щонайменше двічі. Перевагу має історія товару. Для категорії потрібно щонайменше три товари в тих самих одиницях, які продавалися в обох періодах. Її поправка обмежена множниками 0,67–1,5. За браком історії використовуємо поточний темп.</p>}
-          <p>Поставку враховуємо з планової дати, після вирахування вже прийнятої кількості. Для товару з прив’язаним складом враховуємо його склад та організацію, для решти — замовлення бізнесу. Якщо строк або стан потребує уточнення, показуємо діапазон потреби. Чергу сортуємо за очікуваним валовим прибутком від кількості, якої бракуватиме навіть у разі надходження цих замовлень.</p>
-        </details>
+        <div className="dash-report-note dash-with-info">
+          <span>Позицій до закупівлі · <b>{numberFormat.format(report.buyCount)}</b></span>
+          <CalculationInfo title="Як розраховано потребу в закупівлі">
+            <p>Темп — продана кількість за {days} днів після повернень, поділена на {days}. Від потреби на {report.coverDays} днів віднімаємо доступний залишок після резервів. Штучні товари округлюємо вгору до цілої штуки.</p>
+            {report.seasonal && <p>Порівнюємо денні продажі до й після цієї календарної межі у відповідні тижні останніх трьох років. Напрям зміни має повторитися щонайменше двічі. Перевагу має історія товару. Для категорії потрібно щонайменше три товари в тих самих одиницях, які продавалися в обох періодах. Її поправка обмежена множниками 0,67–1,5. За браком історії використовуємо поточний темп.</p>}
+            <p>Поставку враховуємо з планової дати, після вирахування вже прийнятої кількості. Для товару з прив’язаним складом враховуємо його склад та організацію, для решти — замовлення бізнесу. Якщо строк або стан потребує уточнення, показуємо діапазон потреби. Чергу сортуємо за очікуваним валовим прибутком від кількості, якої бракуватиме навіть у разі надходження цих замовлень.</p>
+          </CalculationInfo>
+        </div>
         <div className="dash-product-count" aria-live="polite"><span>Показано <b>{report.rows.length ? numberFormat.format((report.page - 1) * report.pageSize + 1) + '–' + numberFormat.format((report.page - 1) * report.pageSize + report.rows.length) : '0'} із {numberFormat.format(report.matches)}</b></span>
           <span>До {numberFormat.format(report.threshold)} од. після резервів</span></div>
         {report.rows.length > 0 ? <>
