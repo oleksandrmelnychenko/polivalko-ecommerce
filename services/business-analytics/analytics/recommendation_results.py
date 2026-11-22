@@ -1,5 +1,6 @@
 """Offer cohorts and revenue from their posted, explicitly linked outgoing invoices."""
 import json
+from collections import defaultdict
 from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -12,6 +13,8 @@ from .supplier_orders import unit_label
 PERIODS = (7, 30, 90)
 JOURNAL = f"""
 SELECT (o.offered_at AT TIME ZONE 'Europe/Kyiv')::date AS offered_day,o.status AS decision,
+       o.partner_id::text AS client,partner.title AS client_name,
+       coalesce(nullif(p.display_name,''),p.name) AS product_name,p.sku,
        o.product_id::text AS product,o.unit,lower(p.navkolo_id) AS external,
        d.id::text AS invoice_id,d.number,d.day,d.total,d.native_org_id::text AS org,d.native_store_id::text AS store,
        lower(org.source_id) AS external_org,lower(store.source_id) AS external_store,
@@ -21,6 +24,7 @@ LEFT JOIN accounting.documents d ON d.id=o.invoice_id AND o.status='fulfilled'
   AND d.native_partner_id=o.partner_id AND d.source_account='polivalko-native'
   AND d.entity_type='invoice' AND d.kind='out' AND d.status='posted' AND d.currency='UAH' AND d.day<=%s
 LEFT JOIN catalog.products p ON p.id=o.product_id
+LEFT JOIN accounting.partners partner ON partner.id=o.partner_id
 LEFT JOIN accounting.references org ON org.id=d.native_org_id AND org.source_account='valko-dntrade' AND org.kind='organization'
 LEFT JOIN accounting.references store ON store.id=d.native_store_id AND store.source_account='valko-dntrade' AND store.kind='store'
 WHERE (o.offered_at >= (%s::date::timestamp AT TIME ZONE 'Europe/Kyiv')
@@ -103,28 +107,48 @@ def invoice_profit(doc, book):
     return (doc["total"]-cost).quantize(Decimal(".01"), rounding=ROUND_HALF_UP), estimated
 
 
+def results_for(cohort, invoices):
+    sold = sum(bool(r["invoice_id"]) for r in cohort)
+    priced = [invoice for invoice in invoices if invoice["profit"] is not None]
+    covered_profit = sum((i["profit"] for i in priced), Decimal(0))
+    return dict(offered=len(cohort), accepted=sum(r["decision"] in ("reserved","released","fulfilled") for r in cohort),
+                sold=sold, conversionRate=Decimal(sold) / len(cohort) if cohort else None,
+                invoices=len(invoices), turnover=sum((i["turnover"] for i in invoices), Decimal(0)),
+                profit=covered_profit if len(priced)==len(invoices) else None,
+                coveredProfit=covered_profit, priced=len(priced), estimated=sum(i["estimated"] for i in priced))
+
+
+def breakdown(cohort, invoices, dimension, labels):
+    offers_by_id = defaultdict(list)
+    invoices_by_id = defaultdict(list)
+    for offer in cohort:
+        offers_by_id[offer[dimension]].append(offer)
+    for invoice in invoices:
+        invoices_by_id[invoice[dimension]].append(invoice)
+    rows = [dict(id=key, **labels[key], **results_for(offers_by_id[key], invoices_by_id[key]))
+            for key in offers_by_id.keys() | invoices_by_id.keys()]
+    return sorted(rows, key=lambda r: (-r["turnover"], r["name"].casefold(), r["id"]))
+
+
 def recommendation_results(today):
     start = today-timedelta(days=89)
     with production() as conn:
         rows = conn.execute(JOURNAL, (start,today,start,today+timedelta(days=1),start)).fetchall()
         sales = [r for r in rows if r["invoice_id"] and start <= r["day"] <= today]
         book = receipt_book(conn, sales)
+    customers = {r["client"]: {"name": r["client_name"] or r["client"]} for r in rows}
+    products = {r["product"]: {"name": r["product_name"] or r["product"], "sku": r["sku"]} for r in rows}
     invoices = []
     for doc in sales:
         profit, estimated = invoice_profit(doc, book)
         invoices.append(dict(id=doc["invoice_id"], number=doc["number"], day=str(doc["day"]), turnover=doc["total"],
-                             profit=profit, estimated=estimated))
+                             profit=profit, estimated=estimated, client=doc["client"], product=doc["product"]))
     periods = []
     for days in PERIODS:
         since = today-timedelta(days=days-1)
         cohort = [r for r in rows if since <= r["offered_day"] <= today]
         sales_period = [i for i in invoices if i["day"] >= str(since)]
-        priced = [i for i in sales_period if i["profit"] is not None]
-        covered_profit = sum((i["profit"] for i in priced), Decimal(0))
-        periods.append(dict(days=days, start=str(since), offered=len(cohort),
-                            accepted=sum(r["decision"] in ("reserved","released","fulfilled") for r in cohort),
-                            sold=sum(bool(r["invoice_id"]) for r in cohort), invoices=len(sales_period),
-                            turnover=sum((i["turnover"] for i in sales_period), Decimal(0)),
-                            profit=covered_profit if len(priced)==len(sales_period) else None,
-                            coveredProfit=covered_profit, priced=len(priced), estimated=sum(i["estimated"] for i in priced)))
+        periods.append(dict(days=days, start=str(since), **results_for(cohort, sales_period),
+                            customers=breakdown(cohort, sales_period, "client", customers),
+                            products=breakdown(cohort, sales_period, "product", products)))
     return dict(through=str(today), periods=periods, invoices=invoices)

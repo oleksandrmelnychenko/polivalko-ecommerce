@@ -125,9 +125,13 @@ export const getClientRecommendations = (days: number) =>
   readBusiness<{ start: string; through: string; active: number; offeredClients: number; clients: SuggestedClient[]; offers?: RecommendationOffer[] }>(
     'documents', 'analysis=customer-recommendations&days=' + days)
 
-export type RecommendationPeriod = {
-  days: number; start: string; offered: number; accepted: number; sold: number; invoices: number
+type RecommendationMetrics = {
+  offered: number; accepted: number; sold: number; invoices: number; conversionRate: number | null
   turnover: number; profit: number | null; coveredProfit: number; priced: number; estimated: number
+}
+export type RecommendationGroup = RecommendationMetrics & { id: string; name: string; sku?: string | null }
+export type RecommendationPeriod = RecommendationMetrics & {
+  days: number; start: string; customers: RecommendationGroup[]; products: RecommendationGroup[]
 }
 export type RecommendationResultsReport = {
   through: string; periods: RecommendationPeriod[]

@@ -17,6 +17,7 @@ import { PageState } from '@/shared/ui/PageState'
 import { TableChip } from '@/shared/ui/TableChip'
 import { getClientRecommendations, getRecommendationResults, type ClientSuggestion, type RecommendationOffer, type SuggestedClient } from '../api/dashboardApi'
 import { RecommendationResults } from './RecommendationResults'
+import { defaultRanking } from './RecommendationRankings'
 import { numberFormat, PERIODS } from '../lib/insights'
 import './client-recommendations.css'
 
@@ -166,6 +167,7 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
   const query = useApiQuery('client-recommendations-' + days, () => getClientRecommendations(days), { enabled: opened })
   const report = query.status === 'ready' ? query.data : undefined
   const [view, setView] = useState('clients')
+  const [ranking, setRanking] = useState(defaultRanking)
   const journal = view === 'offers'
   const results = useApiQuery('recommendation-results', getRecommendationResults, { enabled: opened && journal })
   const { can } = usePermissions()
@@ -259,7 +261,7 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
           <small>{dateRange(report.start, report.through)}</small></div>}
         {(report.clients.length > 0 || offers) && <SegmentedControl aria-label="Перегляд рекомендацій" data={offers ? workflowViews : views} value={view} onChange={setView} />}
         {view === 'offers' && offers ? <section aria-label="Журнал пропозицій">
-          {results.status === 'ready' && results.data ? <RecommendationResults key={days} report={results.data} days={days} /> :
+          {results.status === 'ready' && results.data ? <RecommendationResults key={days} report={results.data} days={days} ranking={ranking} onRanking={setRanking} /> :
             <PageState kind={results.status === 'ready' ? 'loading' : results.status} description="Не вдалося завантажити показники журналу." onRetry={reloadResults} />}
           {offers.length === 0 && <p>Записаних пропозицій за цей період ще немає.</p>}
           {offers.map(offer => <article className="client-rec-journal" key={offer.id}>

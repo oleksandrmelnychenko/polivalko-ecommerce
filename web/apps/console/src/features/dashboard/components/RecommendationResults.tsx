@@ -3,9 +3,12 @@ import { useState } from 'react'
 import { dateLabel, formatPrice } from '@/shared/lib/salesFormat'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
 import type { RecommendationResultsReport } from '../api/dashboardApi'
+import { RecommendationRankings, type RankingOptions } from './RecommendationRankings'
 import { CalculationInfo } from './CalculationInfo'
 
-export function RecommendationResults({ report, days }: { report: RecommendationResultsReport; days: number }) {
+export function RecommendationResults({ report, days, ranking, onRanking }: {
+  report: RecommendationResultsReport; days: number; ranking: RankingOptions; onRanking: (options: RankingOptions) => void
+}) {
   const [limit, setLimit] = useState(20)
   const selected = report.periods.find(p => p.days === days)
   const invoices = selected ? report.invoices.filter(i => i.day >= selected.start) : []
@@ -56,5 +59,6 @@ export function RecommendationResults({ report, days }: { report: Recommendation
         {invoices.length > limit && <Button size="xs" variant="default" onClick={() => setLimit(n => n + 20)}>Показати ще</Button>}
       </details>}
     </section>
+    {selected && <RecommendationRankings period={selected} options={ranking} onChange={onRanking} />}
   </div>
 }
