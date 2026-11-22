@@ -54,6 +54,8 @@ export type Series = {
   baselineWape?: number | null
   bias: number | null
   folds: number
+  seasonFolds?: number
+  staleWeeks?: number
   history: (number | null)[]
   weeks: { value: number; low: number; high: number }[]
   stockoutWeeks: number

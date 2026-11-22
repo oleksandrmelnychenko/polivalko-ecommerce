@@ -10,6 +10,7 @@ const weeklyModelNames: Record<string, string> = {
   ridge: 'регресія за недавнім та торішнім попитом', mean4: 'середнє за 4 тижні',
   ridgeRecent: 'регресія за останнім тижнем і середнім попитом за чотири тижні',
   mean8: 'середнє за 8 тижнів', season52: 'відповідні тижні торік', intermittent: 'частота та обсяг нерегулярних продажів',
+  seasonScaled: 'відповідні тижні торік із поправкою на річну зміну продажів',
 }
 const shift = (s: string, days: number) =>
   new Date(Date.parse(s + 'T12:00:00Z') + days * 86400000).toISOString().slice(0, 10)
@@ -153,11 +154,12 @@ export function ForecastDetail({
       {row.reason ? <p>{row.reason}</p> : (
         <dl className="ba-model-facts">
           <div><dt>Модель</dt><dd>{weeklyModelNames[row.model ?? ''] ?? row.model ?? '—'}</dd></div>
-          <div><dt>Контрольних періодів</dt><dd>{formatValue(row.folds)}</dd></div>
+          <div><dt>Контрольних періодів</dt><dd>{formatValue(row.folds)}{row.seasonFolds ? ` і ще ${row.seasonFolds} у ті самі тижні минулих років` : ''}</dd></div>
           {row.wape != null && <div><dt>Похибка WAPE</dt><dd>{formatValue(row.wape * 100)}%</dd></div>}
           {row.bias != null && <div><dt>Зміщення</dt><dd>{formatValue(row.bias * 100)}%</dd></div>}
         </dl>
       )}
+      {!row.reason && !!row.staleWeeks && <p>Останні {row.staleWeeks} тиж. товару не було на складі або бракує даних. Прогноз спирається на продажі до цієї перерви.</p>}
       {row.baselineWape != null && <p>Похибка найкращої простої моделі на тому самому контрольному періоді · {formatValue(row.baselineWape * 100)}%</p>}
       {row.wape != null && row.wape >= 1 && <p>На останній перевірці сума абсолютних помилок сягнула обсягу фактичних продажів або перевищила його. Прогноз цього ряду має низьку точність.</p>}
       <AnalyticsChart

@@ -213,21 +213,36 @@ SELECT w.org_id::text AS org, w.store_id::text AS store, w.product_id::text AS p
 FROM accounting.warehouse_stock w LEFT JOIN catalog.product_stock s
   ON (s.warehouse_org_id,s.warehouse_store_id,s.product_id)=(w.org_id,w.store_id,w.product_id)
 """
+# The balance stored with a movement is the balance at the moment the document was posted, and a
+# document can be dated earlier than it was posted. Several documents can also move one product on
+# the same day, and their stored balances cannot be put in order. The balance at the end of a day is
+# therefore rebuilt from quantities alone: opening stock plus every change dated up to that day.
+# The rebuilt ledger is trusted only if it ends at the current stock. Otherwise the stored balances
+# decide, as before: a day counts as the start of an outage only if every balance that day was zero.
 OUTAGES = """
 WITH movements AS (
- SELECT d.native_org_id AS org,d.native_store_id AS store,m.product_id AS product,d.day,m.resulting_quantity AS balance
+ SELECT d.native_org_id AS org,d.native_store_id AS store,m.product_id AS product,d.day,
+        m.resulting_quantity AS balance,m.delta AS change
  FROM accounting.stock_movements m JOIN accounting.documents d ON d.id=m.document_id
- UNION ALL SELECT org_id,store_id,product_id,(posted_at AT TIME ZONE 'Europe/Kyiv')::date,balance FROM accounting.order_shipments
- UNION ALL SELECT org_id,store_id,product_id,day,quantity FROM accounting.stock_openings
+ UNION ALL SELECT org_id,store_id,product_id,(posted_at AT TIME ZONE 'Europe/Kyiv')::date,balance,-quantity
+ FROM accounting.order_shipments
+ UNION ALL SELECT org_id,store_id,product_id,day,quantity,quantity FROM accounting.stock_openings
 ), daily AS (
- SELECT org,store,product,day,min(balance) AS minimum,max(balance) AS maximum
- FROM movements WHERE day<=%s GROUP BY org,store,product,day
+ SELECT org,store,product,day,min(balance) AS minimum,max(balance) AS maximum,sum(change) AS change
+ FROM movements GROUP BY org,store,product,day
+), ledger AS (
+ SELECT l.*,sum(l.change) OVER (PARTITION BY l.org,l.store,l.product ORDER BY l.day) AS closing,
+        sum(l.change) OVER (PARTITION BY l.org,l.store,l.product)=w.quantity AS verified
+ FROM daily l LEFT JOIN accounting.warehouse_stock w
+   ON (w.org_id,w.store_id,w.product_id)=(l.org,l.store,l.product)
 ), spans AS (
- SELECT *,lead(day,1,%s::date+1) OVER(PARTITION BY org,store,product ORDER BY day) AS next_day FROM daily
+ SELECT *,lead(day,1,%s::date+1) OVER (PARTITION BY org,store,product ORDER BY day) AS next_day,
+        CASE WHEN verified THEN closing<=0 ELSE maximum=0 END AS sold_out
+ FROM ledger WHERE day<=%s
 )
 SELECT org::text,store::text,product::text,greatest(day,%s::date-1092) AS day,
-       CASE WHEN maximum=0 THEN next_day-1 ELSE day END AS through
-FROM spans WHERE minimum=0 AND (CASE WHEN maximum=0 THEN next_day-1 ELSE day END)>=%s::date-1092
+       CASE WHEN sold_out THEN next_day-1 ELSE day END AS through
+FROM spans WHERE (minimum=0 OR sold_out) AND (CASE WHEN sold_out THEN next_day-1 ELSE day END)>=%s::date-1092
 """
 
 
