@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import Link from "next/link";
 import { formatMoney } from "@polivalko/shared/lib/format";
+import { hasPrice, PRICE_ON_REQUEST } from "@/shared/lib/price";
 import type { CategoryNode } from "@polivalko/shared/api/types";
 import { ProductTiles } from "@/features/catalog";
 import { getBestsellers, getCategoryTree, getCollections, searchProducts } from "@/features/catalog/server";
@@ -38,7 +39,7 @@ export async function CollectionPairs() {
   }).slice(0, 2);
 
   return <>
-    {popular.length > 0 && <section className="mobile-bestsellers container" aria-labelledby="mobile-bestsellers-title"><header><h2 id="mobile-bestsellers-title">Топ продажів</h2><Link href="/catalog">Усі ›</Link></header><ul>{popular.slice(0, 5).map((product) => <li key={product.id}><Link href={`/product/${product.slug}`}>{product.imageUrl && <img src={product.imageUrl} alt="" width={150} height={150} loading="lazy" />}<span>{product.name}</span><strong>{formatMoney(product.price)}</strong></Link></li>)}</ul></section>}
+    {popular.length > 0 && <section className="mobile-bestsellers container" aria-labelledby="mobile-bestsellers-title"><header><h2 id="mobile-bestsellers-title">Топ продажів</h2><Link href="/catalog">Усі ›</Link></header><ul>{popular.slice(0, 5).map((product) => <li key={product.id}><Link href={`/product/${product.slug}`}>{product.imageUrl && <img src={product.imageUrl} alt="" width={150} height={150} loading="lazy" />}<span>{product.name}</span><strong>{hasPrice(product.price) ? formatMoney(product.price) : PRICE_ON_REQUEST}</strong></Link></li>)}</ul></section>}
     {recommended.length > 0 && <HomeSection id="collection-title" title="Рекомендуємо зараз" className="home-recommendations" more={{ href: "/catalog", label: "Увесь каталог" }}>
       <ProductTiles products={recommended} />
     </HomeSection>}

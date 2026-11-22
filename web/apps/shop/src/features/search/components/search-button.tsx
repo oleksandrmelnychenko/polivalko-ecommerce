@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { ProductListItem } from "@polivalko/shared/api/types";
 import { formatMoney } from "@polivalko/shared/lib/format";
+import { hasPrice, PRICE_ON_REQUEST } from "@/shared/lib/price";
 import { CloseIcon, SearchIcon } from "@polivalko/shared/ui/icons";
 
 export function SearchButton() {
@@ -56,7 +57,7 @@ export function SearchButton() {
     </Form>
     {open && <div id="search-suggestions" className="search-suggestions">
       {term.length < 2 ? <p className="search-suggestions__message">Введіть щонайменше 2 символи назви або артикулу.</p> : loading ? <p className="search-suggestions__message" role="status">Шукаємо…</p> : result.failed ? <p className="search-suggestions__message" role="status">Пошук тимчасово недоступний. Спробуйте ще раз.</p> : <>
-        {result.items.length ? <ul>{result.items.map((p) => <li key={p.id}><Link href={`/product/${p.slug}`} onClick={close}>{p.imageUrl && <img src={p.imageUrl} alt="" width={48} height={56} />}<span><span>{p.name}</span><strong>{formatMoney(p.price)}</strong></span></Link></li>)}</ul> : <p className="search-suggestions__message" role="status">Товарів не знайдено.</p>}
+        {result.items.length ? <ul>{result.items.map((p) => <li key={p.id}><Link href={`/product/${p.slug}`} onClick={close}>{p.imageUrl && <img src={p.imageUrl} alt="" width={48} height={56} />}<span><span>{p.name}</span><strong>{hasPrice(p.price) ? formatMoney(p.price) : PRICE_ON_REQUEST}</strong></span></Link></li>)}</ul> : <p className="search-suggestions__message" role="status">Товарів не знайдено.</p>}
         <Link href={`/search?q=${encodeURIComponent(term)}`} className="search-suggestions__all" onClick={close}>Усі результати пошуку</Link>
       </>}
     </div>}

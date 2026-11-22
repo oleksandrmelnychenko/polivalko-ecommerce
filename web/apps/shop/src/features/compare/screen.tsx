@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatMoney } from "@polivalko/shared/lib/format";
+import { hasPrice, PRICE_ON_REQUEST } from "@/shared/lib/price";
 import { CloseIcon } from "@polivalko/shared/ui/icons";
 import { comparisonGroup, comparisonRows, type CompareProduct } from "./model";
 import { clearComparisonGroup, loadComparisonProduct, refreshComparison, removeComparison, useComparison } from "./store";
@@ -72,7 +73,7 @@ export function CompareScreen({ initialGroup = "" }: { initialGroup?: string }) 
           </tr></thead>
           <tbody>
             <tr className="comparison-section"><th scope="row" colSpan={1 + products.length + Number(addSlot)}>Характеристики</th></tr>
-            {visibleRows.map(row => <tr key={row.key} className={row.differs ? "comparison-row--different" : undefined}><th scope="row">{row.name}</th>{row.values.map((value, i) => <td key={products[i].id}>{row.key === "price" ? <div className="comparison-price"><strong>{formatMoney(products[i].price)}</strong>{products[i].oldPrice && Number(products[i].oldPrice!.value) > Number(products[i].price.value) && <s>{formatMoney(products[i].oldPrice!)}</s>}</div> : value}</td>)}{addSlot && <td aria-hidden="true" />}</tr>)}
+            {visibleRows.map(row => <tr key={row.key} className={row.differs ? "comparison-row--different" : undefined}><th scope="row">{row.name}</th>{row.values.map((value, i) => <td key={products[i].id}>{row.key === "price" ? <div className="comparison-price"><strong>{hasPrice(products[i].price) ? formatMoney(products[i].price) : PRICE_ON_REQUEST}</strong>{products[i].oldPrice && Number(products[i].oldPrice!.value) > Number(products[i].price.value) && <s>{formatMoney(products[i].oldPrice!)}</s>}</div> : value}</td>)}{addSlot && <td aria-hidden="true" />}</tr>)}
             {visibleRows.length === 0 && <tr><td colSpan={1 + products.length + Number(addSlot)}>У заповнених характеристиках відмінностей немає.</td></tr>}
           </tbody>
         </table>

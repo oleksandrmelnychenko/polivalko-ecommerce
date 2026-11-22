@@ -72,6 +72,7 @@
 .tile--shop .tile__price { justify-content: flex-start; gap: 0 10px; margin-top: auto; }
 .tile--shop .tile__price strong { color: #111; font: 600 1.125rem/1.5 var(--font-body); letter-spacing: -0.01em; }
 .tile--shop .tile__price strong.price-sale { color: var(--color-price-sale); }
+.tile--shop .tile__price strong.price-ask { font-size: 1rem; font-weight: 500; }
 .tile--shop .tile__price s { color: var(--color-muted); font: 400 0.875rem/1.5 var(--font-body); }
 .tile__buy { position: relative; z-index: var(--z-raised); display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 44px; padding: 0 16px; border: 1px solid var(--color-brand); border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font: 500 0.875rem/1 var(--font-body); text-decoration: none; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), scale var(--dur-micro) var(--ease-out); }
 @media (min-width: 96rem) { .tile__buy { min-height: 48px; } }
