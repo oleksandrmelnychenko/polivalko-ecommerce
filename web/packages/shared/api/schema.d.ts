@@ -5199,6 +5199,8 @@ export interface components {
         ProductListItemDto: {
             /** Format: uuid */
             id: string;
+            /** Format: uuid */
+            categoryId: string;
             slug: string;
             sku: string;
             name: string;
@@ -5947,7 +5949,7 @@ export interface operations {
                 priceMax?: number;
                 /** @description Характеристики у форматі Назва:Значення; кілька значень однієї назви — АБО, різні назви — І */
                 f?: string[];
-                /** @description name_asc | name_desc | price_asc | price_desc */
+                /** @description seasonal (типово) | name_asc | name_desc | price_asc | price_desc */
                 sort?: string;
                 page?: number;
                 pageSize?: number;

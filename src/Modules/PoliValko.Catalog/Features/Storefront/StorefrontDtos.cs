@@ -25,6 +25,7 @@ public sealed record ProductLabelBadgeDto(string Name, LabelTone Tone, LabelKind
 
 public sealed record ProductListItemDto(
     Guid Id,
+    Guid CategoryId,
     string Slug,
     string Sku,
     string Name,
@@ -98,16 +99,17 @@ public sealed record ProductSearchQuery(
     [FromQuery(Name = "priceMin")] decimal? PriceMin,
     [FromQuery(Name = "priceMax")] decimal? PriceMax,
     [property: Description("Характеристики у форматі Назва:Значення; кілька значень однієї назви — АБО, різні назви — І")] [FromQuery(Name = "f")] string[]? F,
-    [property: Description("name_asc | name_desc | price_asc | price_desc")] [FromQuery(Name = "sort")] string? Sort,
+    [property: Description("seasonal (типово) | name_asc | name_desc | price_asc | price_desc")] [FromQuery(Name = "sort")] string? Sort,
     [FromQuery(Name = "page")] int? Page,
     [FromQuery(Name = "pageSize")] int? PageSize);
 
 public static class ProductSort
 {
+    public const string Seasonal = "seasonal";
     public const string NameAsc = "name_asc";
     public const string NameDesc = "name_desc";
     public const string PriceAsc = "price_asc";
     public const string PriceDesc = "price_desc";
 
-    public static readonly string[] All = [NameAsc, NameDesc, PriceAsc, PriceDesc];
+    public static readonly string[] All = [Seasonal, NameAsc, NameDesc, PriceAsc, PriceDesc];
 }

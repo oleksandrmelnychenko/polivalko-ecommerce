@@ -25,6 +25,8 @@ public static class CatalogModule
         services.AddHttpClient<ProductPhotoStorage>(client => client.Timeout = TimeSpan.FromSeconds(30))
             .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         return services
+            .AddMemoryCache()
+            .AddSingleton<SeasonalMerchandising>()
             .AddModelConfigurator<CatalogModelConfigurator>()
             .AddScoped<ICatalogPricing, CatalogPricing>()
             .AddScoped<ICatalogReservations, CatalogReservations>()

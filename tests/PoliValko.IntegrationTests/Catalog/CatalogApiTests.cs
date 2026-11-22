@@ -1,6 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using PoliValko.Catalog.Domain;
 using PoliValko.Catalog.Features.Storefront;
+using PoliValko.Infrastructure.Persistence;
 using PoliValko.SharedKernel;
 
 namespace PoliValko.IntegrationTests;
@@ -27,6 +31,31 @@ public sealed class CatalogApiTests(ApiFactory api)
             "Ручний інструмент",
             "Техніка для саду та городу",
         ]);
+    }
+
+    [Fact]
+    public async Task Seasonal_order_changes_with_the_Kyiv_calendar_and_preserves_exact_SKU_and_stock()
+    {
+        var winter = await api.AddProductAsync("novyi-rik", "Ялинка", 500);
+        var summer = await api.AddProductAsync("vse-dlia-polyvu", "Шланг", 100);
+        var soldOut = await api.AddProductAsync("novyi-rik", "Іграшка", 40, stock: 0);
+        var ids = new[] { winter.Id, summer.Id, soldOut.Id };
+        await api.WithScopeAsync(async services =>
+        {
+            var db = services.GetRequiredService<PoliValkoDbContext>();
+            var merchandising = services.GetRequiredService<SeasonalMerchandising>();
+            var categories = await CategoryQueries.LoadVisibleCategoriesAsync(db, Ct);
+            async Task<Guid[]> Rank(int month, string? term = null)
+            {
+                var ranked = await merchandising.SortAsync(db.Set<Product>().Where(p => ids.Contains(p.Id)),
+                    categories, term, db, new DateOnly(2026, month, 15), Ct);
+                return await ranked.Select(p => p.Id).ToArrayAsync(Ct);
+            }
+            (await Rank(11)).ShouldBe([winter.Id, summer.Id, soldOut.Id]);
+            (await Rank(7)).ShouldBe([summer.Id, winter.Id, soldOut.Id]);
+            (await Rank(11, soldOut.Sku)).First().ShouldBe(soldOut.Id);
+            return true;
+        });
     }
 
     [Fact]

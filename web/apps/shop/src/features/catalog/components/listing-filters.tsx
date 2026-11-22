@@ -134,7 +134,7 @@ export function ListingFilters({
       {Object.entries(fixed).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v} />
       ))}
-      {parsed.sort !== "name_asc" && <input type="hidden" name="sort" value={parsed.sort} />}
+      {parsed.sort !== "seasonal" && <input type="hidden" name="sort" value={parsed.sort} />}
 
       <FacetGroup title="Наявність" options={availability} />
 

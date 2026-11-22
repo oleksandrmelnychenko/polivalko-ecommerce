@@ -9,6 +9,7 @@ internal static class ProductListing
 {
     internal sealed record ListItemRow(
         Guid Id,
+        Guid CategoryId,
         string Slug,
         string Sku,
         string Name,
@@ -22,6 +23,7 @@ internal static class ProductListing
     public static IQueryable<ListItemRow> ListItems(IQueryable<Product> products) =>
         products.Select(p => new ListItemRow(
             p.Id,
+            p.CategoryId,
             p.Slug,
             p.Sku,
             p.DisplayName ?? p.Name,
@@ -44,6 +46,7 @@ internal static class ProductListing
 
     public static ProductListItemDto ToListItem(ListItemRow r, ProductLabelSet labels) => new(
         r.Id,
+        r.CategoryId,
         r.Slug,
         r.Sku,
         r.Name,

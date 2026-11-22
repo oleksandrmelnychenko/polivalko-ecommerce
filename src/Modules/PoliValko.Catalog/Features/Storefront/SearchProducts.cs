@@ -17,10 +17,11 @@ internal static class SearchProducts
     public static async Task<Results<Ok<ProductSearchResponse>, ValidationProblem, ProblemHttpResult>> HandleAsync(
         [AsParameters] ProductSearchQuery query,
         PoliValkoDbContext db,
+        SeasonalMerchandising merchandising,
         TimeProvider time,
         CancellationToken ct)
     {
-        var sort = query.Sort ?? ProductSort.NameAsc;
+        var sort = query.Sort ?? ProductSort.Seasonal;
         if (!ProductSort.All.Contains(sort))
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
@@ -124,6 +125,7 @@ internal static class SearchProducts
 
         products = sort switch
         {
+            ProductSort.Seasonal => await merchandising.SortAsync(products, categories, query.Q?.Trim(), db, KyivTime.Today(time), ct),
             ProductSort.PriceAsc => products.OrderBy(p => p.Price.Amount).ThenBy(p => p.Id),
             ProductSort.PriceDesc => products.OrderByDescending(p => p.Price.Amount).ThenBy(p => p.Id),
             ProductSort.NameDesc => products.OrderByDescending(p => p.DisplayName ?? p.Name).ThenBy(p => p.Id),

@@ -148,7 +148,7 @@
           {
             "name": "sort",
             "in": "query",
-            "description": "name_asc | name_desc | price_asc | price_desc",
+            "description": "seasonal (типово) | name_asc | name_desc | price_asc | price_desc",
             "schema": {
               "type": "string"
             }
@@ -20673,6 +20673,7 @@
       "ProductListItemDto": {
         "required": [
           "id",
+          "categoryId",
           "slug",
           "sku",
           "name",
@@ -20686,6 +20687,10 @@
         "type": "object",
         "properties": {
           "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoryId": {
             "type": "string",
             "format": "uuid"
           },
