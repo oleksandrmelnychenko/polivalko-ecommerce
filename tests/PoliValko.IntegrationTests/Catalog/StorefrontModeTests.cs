@@ -41,6 +41,48 @@ public sealed class StorefrontModeTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Monthly_leaders_balance_sales_across_December_January_and_the_summer_boundaries()
+    {
+        var heaterCategory = new Category { Id = Guid.NewGuid(), Slug = "winter-" + Guid.NewGuid(), Name = "Обігрівачі" };
+        await api.WithDbAsync(db => { db.Add(heaterCategory); return db.SaveChangesAsync(Ct); });
+        var heater = await api.AddProductAsync(heaterCategory.Slug, "Обігрівач", 100);
+        var convector = await api.AddProductAsync(heaterCategory.Slug, "Конвектор", 100);
+        var hose = await api.AddProductAsync("vse-dlia-polyvu", "Шланг", 100);
+        var sprayer = await api.AddProductAsync("vse-dlia-polyvu", "Дощувач", 100);
+        var ids = new[] { heater.Id, convector.Id, hose.Id, sprayer.Id };
+        await api.WithScopeAsync(async services =>
+        {
+            var db = services.GetRequiredService<PoliValkoDbContext>();
+            foreach (var id in ids)
+                await db.Set<Product>().Where(p => p.Id == id)
+                    .ExecuteUpdateAsync(s => s.SetProperty(p => p.NavkoloId, "dntrade-code:" + id.ToString()), Ct);
+            foreach (var (id, month, receipts) in new[] {
+                (heater.Id, 12, 6), (convector.Id, 12, 5), (heater.Id, 1, 10), (convector.Id, 1, 2),
+                (hose.Id, 4, 4), (sprayer.Id, 4, 2), (hose.Id, 5, 3), (sprayer.Id, 6, 2),
+                (hose.Id, 7, 3), (hose.Id, 8, 5), (sprayer.Id, 8, 2) })
+            {
+                await db.Database.ExecuteSqlAsync($"""
+                    INSERT INTO accounting.documents(id,source_account,source_id,entity_type,kind,day,status,store_ids,total,details)
+                    SELECT gen_random_uuid(),'valko-dntrade',gen_random_uuid()::text,'receipt','cash',
+                        make_date(2038,{month},1),'active',ARRAY[]::text[],100,
+                        jsonb_build_object('products',jsonb_build_array(jsonb_build_object('product',
+                            jsonb_build_object('code',{id.ToString()}),'quantity',1))) FROM generate_series(1,{receipts})
+                    """, Ct);
+            }
+            var categories = await CategoryQueries.LoadVisibleCategoriesAsync(db, Ct);
+            var merchandising = services.GetRequiredService<SeasonalMerchandising>();
+            foreach (var (month, expected) in new[] { (1, heater.Id), (12, convector.Id), (8, sprayer.Id),
+                         (4, sprayer.Id), (5, hose.Id), (7, hose.Id) })
+            {
+                var ranked = await merchandising.SortAsync(db.Set<Product>().Where(p => ids.Contains(p.Id)), categories,
+                    null, db, new DateOnly(2039, 1, 1), Ct, seasonDate: new DateOnly(2039, month, 15));
+                (await ranked.Select(p => p.Id).FirstAsync(Ct)).ShouldBe(expected);
+            }
+            return true;
+        });
+    }
+
+    [Fact]
     public async Task Summer_leaders_use_distinct_monthly_receipts_and_rotate_available_seasonal_products()
     {
         var hose = await api.AddProductAsync("vse-dlia-polyvu", "Садовий шланг", 120);
