@@ -24,8 +24,9 @@ export function comparisonRows(products: CompareProduct[]) {
   const attributes = new Map<string, string>();
   products.forEach(p => p.attributes?.forEach(a => attributes.set(normalize(a.name), a.name)));
   const rows = [
-    { key: "price", name: "Ціна", values: products.map(p => String(Number(p.price.value))) },
-    { key: "availability", name: "Наявність", values: products.map(p => p.inStock ? "В наявності" : "Немає в наявності") },
+    // Без залежностей від інших модулів: модель перевіряють тести node:test напряму (див. shared/lib/price.ts).
+    { key: "price", name: "Ціна", values: products.map(p => Number(p.price.value) > 0 ? String(Number(p.price.value)) : "Ціну уточнюйте") },
+    { key: "availability", name: "Наявність", values: products.map(p => p.inStock && Number(p.price.value) > 0 ? "В наявності" : "Немає в наявності") },
     { key: "brand", name: "Бренд", values: products.map(p => p.brand || "—") },
     ...[...attributes].map(([key, name]) => ({ key: `attr:${key}`, name, values: products.map(p => p.attributes?.find(a => normalize(a.name) === key)?.value || "—") })),
   ];

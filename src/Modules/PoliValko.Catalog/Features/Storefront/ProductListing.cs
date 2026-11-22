@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using PoliValko.Catalog.Domain;
 using PoliValko.Catalog.Persistence;
 using PoliValko.Infrastructure.Persistence;
@@ -19,6 +20,15 @@ internal static class ProductListing
         decimal Quantity,
         string? ImageUrl,
         DateTimeOffset CreatedAt);
+
+    /// <summary>
+    /// «В наявності» на вітрині: є хоч одна вільна одиниця й задана ціна. Товар із ціною 0 не продається
+    /// (його так само відхиляє CheckoutCalculator), тож купити його не пропонуємо.
+    /// </summary>
+    public static readonly Expression<Func<Product, bool>> Purchasable =
+        p => (p.Stock.Quantity - p.Stock.ReservedQuantity) >= 1 && p.Price.Amount > 0;
+
+    public static bool IsPurchasable(decimal quantity, decimal amount) => quantity >= 1 && amount > 0;
 
     public static IQueryable<ListItemRow> ListItems(IQueryable<Product> products) =>
         products.Select(p => new ListItemRow(
@@ -53,7 +63,7 @@ internal static class ProductListing
         r.Brand,
         MoneyDto.Hryvnia(r.Amount),
         OldPrice(r.Amount, r.OldAmount),
-        r.Quantity >= 1,
+        IsPurchasable(r.Quantity, r.Amount),
         r.ImageUrl,
         Badges(labels.For(r.Id, r.Amount, r.OldAmount, r.CreatedAt)));
 
