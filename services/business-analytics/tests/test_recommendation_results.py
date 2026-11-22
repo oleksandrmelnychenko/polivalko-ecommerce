@@ -101,3 +101,11 @@ class RecommendationResultsTests(unittest.TestCase):
         self.assertEqual({i["id"]: (i["day"],i["soldDay"]) for i in report["invoices"]}, {
             "picked up later": ("2026-11-12","2026-11-22"), "dated ahead": ("2026-11-25","2026-11-21"),
             "dated today, posted long ago": ("2026-11-22","2026-11-02")})
+
+    def test_a_ranking_row_says_how_many_of_its_invoices_come_from_offers_made_before_the_period(self):
+        report = self.report([row(100,"fulfilled","old offer",sale_age=1,cost="5",client="A"), row(1,"offered",client="A"),
+                              row(2,"fulfilled","fresh",sale_age=0,cost="5",client="B")])
+        week, _, quarter = report["periods"]
+        rows = {r["id"]: (r["offered"],r["sold"],r["invoices"],r["earlierInvoices"]) for r in week["customers"]}
+        self.assertEqual(rows, {"A": (1,0,1,1), "B": (1,1,1,0)})
+        self.assertEqual([(p["invoices"],p["earlierInvoices"]) for p in (week,quarter)], [(2,1),(2,1)])

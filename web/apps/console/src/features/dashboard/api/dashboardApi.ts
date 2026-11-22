@@ -127,6 +127,8 @@ export const getClientRecommendations = (days: number) =>
 
 type RecommendationMetrics = {
   offered: number; accepted: number; sold: number; invoices: number; conversionRate: number | null
+  // Invoices posted in the period whose offer was made before it: they add turnover without adding to the conversion.
+  earlierInvoices?: number
   turnover: number; profit: number | null; coveredProfit: number; priced: number; estimated: number
 }
 export type RecommendationGroup = RecommendationMetrics & { id: string; name: string; sku?: string | null }

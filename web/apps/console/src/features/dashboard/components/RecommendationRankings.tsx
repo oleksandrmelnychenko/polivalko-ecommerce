@@ -44,13 +44,13 @@ export function RecommendationRankings({ period, options, onChange }: {
     {!source ? <p role="status">Показники рейтингу тимчасово недоступні.</p> : !rows.length ?
       <p>За цей період немає пропозицій або проведених накладних з рекомендацій.</p> :
       <div className="rec-results-scroll"><table aria-label={customers ? 'Рейтинг клієнтів' : 'Рейтинг товарів'}>
-        <thead><tr><th>{customers ? 'Клієнт' : 'Товар'}</th><th>Конверсія</th><th>Оборот</th><th>Валовий прибуток</th></tr></thead>
+        <thead><tr><th>{customers ? 'Клієнт' : 'Товар'}</th><th>Конверсія пропозицій періоду</th><th>Оборот проведених накладних</th><th>Валовий прибуток</th></tr></thead>
         <tbody>{rows.slice(0,limit).map(row => <tr key={row.id}>
           <th scope="row"><Link to={(customers ? '/accounting/partners/' : '/catalog/products/') + row.id}>{row.name}</Link>
             {row.sku && <small>{row.sku}</small>}</th>
           <td>{row.conversionRate === null ? '—' : formatPercent(row.conversionRate)}
             <small>{row.offered ? row.sold + ' із ' + row.offered : 'Без нових пропозицій'}</small></td>
-          <td>{formatPrice(row.turnover)}<small>{row.invoices} накл.</small></td>
+          <td>{formatPrice(row.turnover)}<small>{row.invoices} накл.{row.earlierInvoices ? ` · з них за давнішими пропозиціями ${row.earlierInvoices}` : ''}</small></td>
           <td>{row.profit !== null ? formatPrice(row.profit) : row.priced ? 'Неповні дані' : 'Собівартість невідома'}
             {row.profit === null && row.priced > 0 && <small>{formatPrice(row.coveredProfit)} за {row.priced} із {row.invoices} накл.</small>}
             {row.estimated > 0 && <small>За ціною закупівлі · {row.estimated} накл.</small>}</td>

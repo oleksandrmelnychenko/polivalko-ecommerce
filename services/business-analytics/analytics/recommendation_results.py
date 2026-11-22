@@ -113,25 +113,27 @@ def invoice_profit(doc, book):
     return (doc["total"]-cost).quantize(Decimal(".01"), rounding=ROUND_HALF_UP), estimated
 
 
-def results_for(cohort, invoices):
+def results_for(cohort, invoices, since):
+    """Offers made since `since` beside invoices posted since then; some of those come from earlier offers."""
     sold = sum(bool(r["invoice_id"]) for r in cohort)
     priced = [invoice for invoice in invoices if invoice["profit"] is not None]
     covered_profit = sum((i["profit"] for i in priced), Decimal(0))
     return dict(offered=len(cohort), accepted=sum(r["decision"] in ("reserved","released","fulfilled") for r in cohort),
                 sold=sold, conversionRate=Decimal(sold) / len(cohort) if cohort else None,
-                invoices=len(invoices), turnover=sum((i["turnover"] for i in invoices), Decimal(0)),
+                invoices=len(invoices), earlierInvoices=sum(i["offeredDay"] < str(since) for i in invoices),
+                turnover=sum((i["turnover"] for i in invoices), Decimal(0)),
                 profit=covered_profit if len(priced)==len(invoices) else None,
                 coveredProfit=covered_profit, priced=len(priced), estimated=sum(i["estimated"] for i in priced))
 
 
-def breakdown(cohort, invoices, dimension, labels):
+def breakdown(cohort, invoices, dimension, labels, since):
     offers_by_id = defaultdict(list)
     invoices_by_id = defaultdict(list)
     for offer in cohort:
         offers_by_id[offer[dimension]].append(offer)
     for invoice in invoices:
         invoices_by_id[invoice[dimension]].append(invoice)
-    rows = [dict(id=key, **labels[key], **results_for(offers_by_id[key], invoices_by_id[key]))
+    rows = [dict(id=key, **labels[key], **results_for(offers_by_id[key], invoices_by_id[key], since))
             for key in offers_by_id.keys() | invoices_by_id.keys()]
     return sorted(rows, key=lambda r: (-r["turnover"], r["name"].casefold(), r["id"]))
 
@@ -148,6 +150,7 @@ def recommendation_results(today):
     for doc in sales:
         profit, estimated = invoice_profit(doc, book)
         invoices.append(dict(id=doc["invoice_id"], number=doc["number"], day=str(doc["day"]), soldDay=str(doc["sold_day"]),
+                             offeredDay=str(doc["offered_day"]),
                              turnover=doc["total"], profit=profit, estimated=estimated,
                              client=doc["client"], product=doc["product"]))
     periods = []
@@ -155,7 +158,7 @@ def recommendation_results(today):
         since = today-timedelta(days=days-1)
         cohort = [r for r in rows if since <= r["offered_day"] <= today]
         sales_period = [i for i in invoices if i["soldDay"] >= str(since)]
-        periods.append(dict(days=days, start=str(since), **results_for(cohort, sales_period),
-                            customers=breakdown(cohort, sales_period, "client", customers),
-                            products=breakdown(cohort, sales_period, "product", products)))
+        periods.append(dict(days=days, start=str(since), **results_for(cohort, sales_period, since),
+                            customers=breakdown(cohort, sales_period, "client", customers, since),
+                            products=breakdown(cohort, sales_period, "product", products, since)))
     return dict(through=str(today), periods=periods, invoices=invoices)
