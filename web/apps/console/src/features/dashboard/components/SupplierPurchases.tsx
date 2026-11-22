@@ -7,7 +7,6 @@ import { TableChip } from '@/shared/ui/TableChip'
 import type { LastPurchase, SupplierBudget } from '../api/dashboardApi'
 import { numberFormat } from '../lib/insights'
 import { SeasonIndicator, SupplierBasket, type Basket } from './SupplierBasket'
-import { PurchaseInvoices } from './PurchaseInvoices'
 
 const priceFormat = new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 6 })
 const issueText = {
@@ -16,14 +15,12 @@ const issueText = {
   price: 'Ціну в гривнях потрібно уточнити за накладною.',
 }
 
-export function ReceiptPrice({ purchase, year }: { purchase: LastPurchase | null; year: string }) {
-  if (!purchase) return <span className="app-cell-sub">У реєстрі немає отриманої прибуткової накладної для цього товару.</span>
+export function ReceiptPrice({ purchase }: { purchase: LastPurchase | null }) {
+  if (!purchase) return <small className="dash-last-purchase">Закупівельна ціна невідома. Прибуткової накладної для товару немає.</small>
+  const receipt = <>{purchase.number ? 'Накладна № ' + purchase.number : 'Накладна'} від <time dateTime={purchase.day}>{dateLabel(purchase.day)}</time></>
   return <div className="dash-last-purchase">
-    <div>{purchase.supplier || 'Постачальника слід уточнити'}
-      {purchase.unitPrice != null && <> · {priceFormat.format(purchase.unitPrice)} ₴/{purchase.unit}</>}
-      {purchase.unitPrice != null && purchase.day.slice(0, 4) < year && <> <TableChip tone="warning" value="Ціна попередніх років" /></>}
-    </div>
-    {purchase.documentId && <PurchaseInvoices invoices={[{ id: purchase.documentId, number: purchase.number, day: purchase.day }]} />}
+    <div>{purchase.supplier || 'Постачальника слід уточнити'}{purchase.unitPrice != null && <> · {priceFormat.format(purchase.unitPrice)} ₴/{purchase.unit || 'од.'}</>}</div>
+    {purchase.documentId ? <DocumentLink id={purchase.documentId}>{receipt}</DocumentLink> : <span>{receipt}</span>}
     {purchase.issue && <span>{issueText[purchase.issue]}</span>}
   </div>
 }
