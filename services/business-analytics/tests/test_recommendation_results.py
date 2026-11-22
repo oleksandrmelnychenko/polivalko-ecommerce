@@ -109,3 +109,15 @@ class RecommendationResultsTests(unittest.TestCase):
         rows = {r["id"]: (r["offered"],r["sold"],r["invoices"],r["earlierInvoices"]) for r in week["customers"]}
         self.assertEqual(rows, {"A": (1,0,1,1), "B": (1,1,1,0)})
         self.assertEqual([(p["invoices"],p["earlierInvoices"]) for p in (week,quarter)], [(2,1),(2,1)])
+
+    def test_an_offer_made_before_the_product_had_a_unit_does_not_hide_the_purchase_price(self):
+        # "од." stands for a catalog product without a unit. Native quantities are in the product's base
+        # unit whatever it is called, so an offer made later under the real unit describes the same stock.
+        receipt = dict(a="polivalko-native",org="org",store="store",product="sku",u="catalog-base",day=TODAY-timedelta(days=5),
+                       id="in",number="1",stamp=None,qty=D("4"),amount=D("14"))
+        nameless = dict(row(3,"fulfilled","before the unit",sale_age=3), unit="од.")
+        report = self.report([nameless, dict(row(1,"fulfilled","with the unit",sale_age=1), unit="шт")], [receipt])
+        self.assertEqual([(i["id"],i["profit"]) for i in report["invoices"]],
+                         [("before the unit",D("9.75")),("with the unit",D("9.75"))])
+        different = self.report([dict(nameless, unit="кг"), dict(row(1,"fulfilled","pieces",sale_age=1), unit="шт")], [receipt])
+        self.assertEqual([i["profit"] for i in different["invoices"]], [None,None])

@@ -90,9 +90,12 @@ def receipt_book(conn, sales):
     for row in rows:
         native = row["a"] == "polivalko-native"
         labels = units[stock(row)] if native else {unit_label(row["u"])}
+        # "од" stands for a catalog product without a unit, so it names the same base unit as a real label.
+        # Two real labels mean the unit itself changed, and the receipt cannot price either of them.
+        ambiguous = native and len(labels - {"од"}) > 1
         for unit in labels:
             indexed.append(dict(row, a="journal", o=row["org"], s=row["store"], p="id:"+row["product"], u=unit,
-                                amount=None if native and len(labels)>1 else row["amount"]))
+                                amount=None if ambiguous else row["amount"]))
     return PurchaseBook(indexed)
 
 
