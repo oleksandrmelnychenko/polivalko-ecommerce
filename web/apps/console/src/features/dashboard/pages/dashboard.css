@@ -729,12 +729,22 @@ a.dash-queue-item:focus-visible {
 .dash-stock-details {
   display: grid;
   grid-column: 1 / -1;
-  gap: 4px;
+  gap: 10px;
   min-width: 0;
   overflow-wrap: anywhere;
   font-size: 14px;
 }
-.dash-stock-details .dash-finance-chips { margin-bottom: 3px; }
+.dash-stock-cover { display: grid; gap: 5px; }
+.dash-stock-cover > div:first-child, .dash-stock-decision { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+.dash-stock-cover > div:first-child { font-size: .75rem; color: var(--mantine-color-gray-7); }
+.dash-stock-cover b { color: var(--brand-ink); font-variant-numeric: tabular-nums; }
+.dash-stock-cover-track { height: 6px; border-radius: 99px; overflow: hidden; background: var(--mantine-color-gray-2); }
+.dash-stock-cover-track span { display: block; height: 100%; border-radius: inherit; background: var(--mantine-color-yellow-7); }
+.dash-stock-cover-track[data-covered="true"] span { background: var(--mantine-color-green-8); }
+.dash-stock-breakdown > summary { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 2px 12px; list-style: none; border-radius: 99px; background: var(--brand-ink); color: white; font-size: .75rem; font-weight: 600; }
+.dash-stock-breakdown > summary::-webkit-details-marker { display: none; }
+.dash-stock-breakdown[open] > summary svg { transform: rotate(180deg); }
+.dash-stock-breakdown-body { display: grid; justify-items: start; gap: 8px; padding: 12px 0 2px; }
 .dash-product-report .dash-rank-n {
   align-self: start;
   border-radius: 999px;
