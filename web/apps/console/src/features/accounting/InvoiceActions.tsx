@@ -54,6 +54,7 @@ export function InvoiceActions({ doc, lines, refresh, onDialogChange }: { doc: D
     }
   }
   const draft = state.status === 'draft'
+  if (state.status === 'cancelled') return <Text>Чернетку скасовано після зняття резерву клієнта.</Text>
   return (
     <Stack className="invoice-operation" gap="md">
       <Group justify="space-between">
@@ -79,6 +80,9 @@ export function InvoiceActions({ doc, lines, refresh, onDialogChange }: { doc: D
           )}
         </Group>
       </Group>
+      {state.offerReservation && <Text size="sm">
+        {draft ? 'Під час проведення буде списано резерв' : 'Списано резерв'} клієнта {doc.partnerTitle} · {state.offerReservation.quantity.toLocaleString('uk-UA')} {state.offerReservation.unit}
+      </Text>}
       <div className="invoice-totals">
         <div>
           <span>Сума накладної</span>
@@ -156,6 +160,7 @@ export function InvoiceActions({ doc, lines, refresh, onDialogChange }: { doc: D
           kind={doc.kind!}
           initial={{
             id: doc.id,
+            agreed: Boolean(state.offerReservation),
             revision: state.revision,
             number: doc.number ?? '',
             day: doc.day ?? '',

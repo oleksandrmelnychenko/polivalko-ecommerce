@@ -106,12 +106,29 @@ internal static class AccountingEntry
 
     private static async Task<IResult> SaveDraft(NewDraft input,string? revision,PoliValkoDbContext db,IAuditLog audit,CancellationToken ct)
     {
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var result = await SaveDraftInTransaction(input, revision, db, audit, ct);
+        if (result is Microsoft.AspNetCore.Http.HttpResults.Ok<Guid>) await tx.CommitAsync(ct);
+        return result;
+    }
+
+    internal static async Task<IResult> SaveDraftInTransaction(NewDraft input,string? revision,PoliValkoDbContext db,IAuditLog audit,CancellationToken ct)
+    {
         if (input.Id == Guid.Empty || input.Kind is not ("in" or "out") || string.IsNullOrWhiteSpace(input.Number) ||
             input.Number.Length > 80 || input.Day == default || input.Lines is not { Count: > 0 and <= 250 } lines ||
             lines.Any(l => l == null || l.Quantity is <= 0 or > 1000000 || decimal.Round(l.Quantity,3) != l.Quantity ||
                 l.Price is < 0 or > 100000000 || decimal.Round(l.Price,2) != l.Price))
             return Invalid("Вкажіть номер, дату та від 1 до 250 позицій. Кількість — до тисячних, ціна — до копійки.");
-        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        if (revision != null)
+        {
+            var offer = await RecommendationOfferWorkflow.ForInvoice(input.Id, db, ct);
+            if (offer != null && (offer.Status != "reserved" || input.Kind != "out" || input.PartnerId != offer.PartnerId ||
+                lines.Count != 1 || lines[0] != new NewLine(offer.ProductId, offer.Quantity, offer.Price)))
+                return Results.Problem(detail:"Клієнт, товар, кількість і ціна мають відповідати погодженій пропозиції.",statusCode:409);
+            if (offer != null && await RecommendationOfferWorkflow.StockSource(offer.ProductId,db,ct) is { StoreId: not null } source &&
+                (source.OrganizationId.ToString() != input.OrganizationId || source.StoreId.ToString() != input.StoreId))
+                return Results.Problem(detail:"Виберіть організацію та склад, до яких прив’язано залишок товару.",statusCode:409);
+        }
         var partner = await db.Database.SqlQuery<PartnerRow>($"""
             SELECT id,title,kind,source_account,source_id,NULL::text AS category FROM accounting.partners WHERE id={input.PartnerId}
             """).SingleOrDefaultAsync(ct);
@@ -150,7 +167,6 @@ internal static class AccountingEntry
                 """,ct);
             audit.Record("accounting.draft_updated","AccountingDocument",input.Id.ToString(),new { input.Kind,input.PartnerId,total });
             await db.SaveChangesAsync(ct);
-            await tx.CommitAsync(ct);
             return Results.Ok(input.Id);
         }
         var inserted = await db.Database.ExecuteSqlAsync($"""
@@ -170,7 +186,6 @@ internal static class AccountingEntry
         }
         audit.Record("accounting.draft_created","AccountingDocument",input.Id.ToString(),new { input.Kind, input.PartnerId, total });
         await db.SaveChangesAsync(ct);
-        await tx.CommitAsync(ct);
         return Results.Ok(input.Id);
     }
 

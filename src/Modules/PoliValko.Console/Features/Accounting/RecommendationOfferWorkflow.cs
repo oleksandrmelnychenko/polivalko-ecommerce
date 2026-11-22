@@ -14,11 +14,13 @@ namespace PoliValko.Console.Features.Accounting;
 
 public sealed record RecommendationOfferRequest(Guid PartnerId, Guid ProductId, DateOnly LastPurchase, int Days,
     decimal Quantity, string Unit, decimal Price);
+public sealed record OfferInvoiceSource(Guid? OrganizationId, Guid? StoreId);
 
 internal static class RecommendationOfferWorkflow
 {
-    private sealed record Offer(Guid Id, Guid PartnerId, Guid ProductId, DateOnly LastPurchase, decimal Quantity,
-        string Unit, decimal Price, string Status);
+    internal sealed record Offer(Guid Id, Guid PartnerId, Guid ProductId, DateOnly LastPurchase, decimal Quantity,
+        string Unit, decimal Price, string Status, Guid? InvoiceId);
+    private sealed record InvoiceNumber(DateOnly Day, long Number);
 
     internal static void Map(RouteGroupBuilder group)
     {
@@ -27,6 +29,7 @@ internal static class RecommendationOfferWorkflow
             PermissionRequirement.PolicyName([PermissionKeys.ProductsView]),
             PermissionRequirement.PolicyName([PermissionKeys.AccountingEdit]));
         offers.MapPut("/{id:guid}", Issue).WithName("ConsoleIssueRecommendationOffer");
+        offers.MapPut("/{id:guid}/invoice", CreateInvoice).WithName("ConsoleCreateRecommendationInvoice").Produces<Guid>();
         offers.MapPut("/{id:guid}/decline", (Guid id, PoliValkoDbContext db, IAuditLog audit, IOutbox outbox, CancellationToken ct) =>
             Decide(id, "declined", db, audit, outbox, ct)).WithName("ConsoleDeclineRecommendationOffer");
         offers.MapPut("/{id:guid}/accept", (Guid id, PoliValkoDbContext db, IAuditLog audit, IOutbox outbox, CancellationToken ct) =>
@@ -35,11 +38,53 @@ internal static class RecommendationOfferWorkflow
             Decide(id, "released", db, audit, outbox, ct)).RequirePermission(PermissionKeys.AccountingPost).WithName("ConsoleReleaseRecommendationReserve");
     }
 
-    private static Task<Offer?> Find(Guid id, PoliValkoDbContext db, CancellationToken ct) =>
+    private static IQueryable<Offer> Offers(PoliValkoDbContext db) =>
         db.Database.SqlQuery<Offer>($"""
-            SELECT id,partner_id,product_id,last_purchase,quantity,unit,price,status
-            FROM accounting.recommendation_offers WHERE id={id}
+            SELECT id,partner_id,product_id,last_purchase,quantity,unit,price,status,invoice_id
+            FROM accounting.recommendation_offers
+            """);
+
+    private static Task<Offer?> Find(Guid id, PoliValkoDbContext db, CancellationToken ct) =>
+        Offers(db).SingleOrDefaultAsync(o => o.Id == id, ct);
+
+    internal static Task<Offer?> ForInvoice(Guid id, PoliValkoDbContext db, CancellationToken ct) =>
+        Offers(db).SingleOrDefaultAsync(o => o.InvoiceId == id, ct);
+
+    internal static Task<OfferInvoiceSource?> StockSource(Guid productId, PoliValkoDbContext db, CancellationToken ct) =>
+        db.Database.SqlQuery<OfferInvoiceSource>($"""
+            SELECT warehouse_org_id AS organization_id,warehouse_store_id AS store_id FROM catalog.product_stock
+            WHERE product_id={productId}
             """).SingleOrDefaultAsync(ct);
+
+    private static async Task<IResult> CreateInvoice(Guid id, OfferInvoiceSource input, PoliValkoDbContext db,
+        IAuditLog audit, CancellationToken ct)
+    {
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        await db.Database.ExecuteSqlAsync($"SELECT 1 FROM accounting.recommendation_offers WHERE id={id} FOR UPDATE", ct);
+        var offer = await Find(id, db, ct);
+        if (offer == null) return Results.NotFound();
+        if (offer.InvoiceId is Guid existing) return Results.Ok(existing);
+        if (offer.Status != "reserved") return Conflict("Створити накладну можна після погодження і резервування товару.");
+        var source = await StockSource(offer.ProductId, db, ct);
+        var org = source?.OrganizationId ?? input.OrganizationId;
+        var store = source?.StoreId ?? input.StoreId;
+        if (org == null || store == null) return Conflict("Виберіть організацію та склад відвантаження.");
+        if ((input.OrganizationId.HasValue && input.OrganizationId != org) || (input.StoreId.HasValue && input.StoreId != store))
+            return Conflict("Джерело залишку змінилося. Оновіть журнал і перевірте склад.");
+        var invoiceId = Guid.NewGuid();
+        var number = await db.Database.SqlQuery<InvoiceNumber>($"""
+            SELECT (now() AT TIME ZONE 'Europe/Kyiv')::date AS day,nextval('accounting.recommendation_invoice_number') AS number
+            """).SingleAsync(ct);
+        var draft = new NewDraft(invoiceId, offer.PartnerId, "out", $"РП-{number.Day:yyyy}-{number.Number:D6}", number.Day,
+            org.Value.ToString(), store.Value.ToString(), [new(offer.ProductId, offer.Quantity, offer.Price)]);
+        var result = await AccountingEntry.SaveDraftInTransaction(draft, null, db, audit, ct);
+        if (result is not Microsoft.AspNetCore.Http.HttpResults.Ok<Guid>) return result;
+        await db.Database.ExecuteSqlAsync($"UPDATE accounting.recommendation_offers SET invoice_id={invoiceId},changed_at=now() WHERE id={id}",ct);
+        audit.Record("recommendation.invoice_created","RecommendationOffer",id.ToString(), new { invoiceId });
+        await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+        return result;
+    }
 
     private static IResult Conflict(string title) => Results.Conflict(new { title });
 
@@ -99,12 +144,23 @@ internal static class RecommendationOfferWorkflow
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         var offer = await Find(id, db, ct);
         if (offer is null) return Results.NotFound();
+        var linked = offer.InvoiceId;
+        // Posting locks the document before stock. Cancellation follows the same order.
+        if (target == "released" && linked is Guid document)
+            await db.Database.ExecuteSqlAsync($"SELECT 1 FROM accounting.documents WHERE id={document} FOR UPDATE", ct);
         await LockStock(db, offer.ProductId, ct);
         await db.Database.ExecuteSqlAsync($"SELECT 1 FROM accounting.recommendation_offers WHERE id={id} FOR UPDATE", ct);
         offer = (await Find(id, db, ct))!;
         if (offer.Status == target) return Results.Ok(id);
         if (offer.Status != (target == "released" ? "reserved" : "offered"))
             return Conflict("Рішення щодо цієї пропозиції вже змінилося.");
+        if (target == "released" && offer.InvoiceId is Guid draft)
+        {
+            if (linked != draft) return Conflict("Для пропозиції щойно створено накладну. Перевірте чернетку перед зняттям резерву.");
+            if (await db.Database.ExecuteSqlAsync($"UPDATE accounting.documents SET status='cancelled' WHERE id={draft} AND status='draft'",ct) != 1)
+                return Conflict("Перевірте стан накладної перед зняттям резерву.");
+            audit.Record("accounting.draft_cancelled","AccountingDocument",draft.ToString(),new { offerId=id });
+        }
         if (target == "reserved")
         {
             var updated = await db.Database.ExecuteSqlAsync($"""

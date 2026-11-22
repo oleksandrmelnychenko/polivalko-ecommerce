@@ -114,10 +114,11 @@ export type ClientSuggestion = {
   purchases: number; last: string; interval: number | null; seasons: number; signal: 'due' | 'repeat' | 'season' | 'single'
 }
 export type SuggestedClient = { id: string; name: string; lastSale: string; items: ClientSuggestion[] }
-export type OfferStatus = 'offered' | 'reserved' | 'declined' | 'released'
+export type OfferStatus = 'offered' | 'reserved' | 'declined' | 'released' | 'fulfilled'
 export type RecommendationOffer = {
   id: string; client: string; customer: string; product: string; name: string; sku: string; last: string
   quantity: number; unit: string; price: number; status: OfferStatus; offeredAt: string; changedAt: string
+  invoiceId: string | null; hasWarehouseSource: boolean
 }
 
 export const getClientRecommendations = (days: number) =>

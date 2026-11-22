@@ -11,6 +11,7 @@ import { money, save, useRegister, type Page, type Partner, type Ref } from './a
 
 type LineInput = { productId: string; title: string; quantity: string; price: string }
 export type EditableDraft = {
+  agreed?: boolean
   id: string
   revision: string
   number: string
@@ -173,6 +174,7 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
                     required
                     label={outgoing ? 'Покупець' : 'Постачальник'}
                     className="draft-partner"
+                    disabled={initial?.agreed}
                     placeholder={kind === 'in' ? 'Оберіть постачальника' : 'Оберіть покупця'}
                     searchValue={term}
                     onSearchChange={setTerm}
@@ -206,7 +208,7 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
                 label="Додати товар"
                 placeholder="Назва або артикул від двох символів"
                 leftSection={<IconSearch size={16} />}
-                disabled={lines.length >= 250}
+                disabled={initial?.agreed || lines.length >= 250}
                 searchable
                 value={null}
                 searchValue={productTerm}
@@ -232,13 +234,13 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
                   <li key={index}>
                     <strong className="draft-product-name">{line.title}</strong>
                     <TextInput label="Кількість" aria-label={'Кількість ' + line.title} type="number" required
-                      min="0.001" max="1000000" step="0.001" value={line.quantity}
+                      readOnly={initial?.agreed} min="0.001" max="1000000" step="0.001" value={line.quantity}
                       onChange={(e) => updateLine(index, 'quantity', e.currentTarget.value)} />
                     <TextInput label="Ціна, грн" aria-label={'Ціна ' + line.title} type="number" required
-                      min="0" max="100000000" step="0.01" value={line.price}
+                      readOnly={initial?.agreed} min="0" max="100000000" step="0.01" value={line.price}
                       onChange={(e) => updateLine(index, 'price', e.currentTarget.value)} />
                     <div className="draft-line-sum"><span>Сума</span><strong>{draftAmount(amounts[index])}</strong></div>
-                    <ActionIcon className="draft-remove" variant="subtle" color="gray" aria-label={'Прибрати ' + line.title}
+                    <ActionIcon className="draft-remove" disabled={initial?.agreed} variant="subtle" color="gray" aria-label={'Прибрати ' + line.title}
                       onClick={() => setLines((old) => old.filter((_, i) => i !== index))}>
                       <IconTrash size={16} />
                     </ActionIcon>

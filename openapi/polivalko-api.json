@@ -4786,6 +4786,68 @@
         }
       }
     },
+    "/api/v1/console/accounting/recommendation-offers/{id}/invoice": {
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ConsoleCreateRecommendationInvoice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfferInvoiceSource"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/console/accounting/recommendation-offers/{id}/decline": {
       "put": {
         "tags": [
@@ -18422,6 +18484,22 @@
           }
         }
       },
+      "InvoiceOfferReservation": {
+        "required": [
+          "quantity",
+          "unit"
+        ],
+        "type": "object",
+        "properties": {
+          "quantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "unit": {
+            "type": "string"
+          }
+        }
+      },
       "InvoicePayment": {
         "required": [
           "id",
@@ -18471,7 +18549,8 @@
           "paid",
           "due",
           "stock",
-          "payments"
+          "payments",
+          "offerReservation"
         ],
         "type": "object",
         "properties": {
@@ -18515,6 +18594,16 @@
             "items": {
               "$ref": "#/components/schemas/RecordedPayment"
             }
+          },
+          "offerReservation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/InvoiceOfferReservation"
+              }
+            ]
           }
         }
       },
@@ -19240,6 +19329,29 @@
           "amount": {
             "type": "number",
             "format": "double"
+          }
+        }
+      },
+      "OfferInvoiceSource": {
+        "required": [
+          "organizationId",
+          "storeId"
+        ],
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "storeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },

@@ -1,15 +1,16 @@
-import { Button, SegmentedControl, TextInput } from '@mantine/core'
+import { Button, NativeSelect, SegmentedControl, TextInput } from '@mantine/core'
 import { IconChevronDown, IconFileText, IconRefresh, IconSearch, IconUsers } from '@tabler/icons-react'
-import { useRef, useState, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
-import { save } from '@/shared/api/accounting'
+import { ACCOUNTING_DOCUMENT_CHANGED, save, useRegister } from '@/shared/api/accounting'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { notifySummaryStale } from '@/shared/lib/events'
 import { problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { dateLabel, dateRange, formatPrice } from '@/shared/lib/salesFormat'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
+import { DocumentLink } from '@/shared/ui/DocumentLink'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import { PageState } from '@/shared/ui/PageState'
 import { TableChip } from '@/shared/ui/TableChip'
@@ -22,7 +23,7 @@ const periods = PERIODS.map(n => ({ value: String(n), label: n + ' днів' }))
 const quantityLabel = (value: number, unit: string) => numberFormat.format(value) + ' ' + unit
 const views = [{ value: 'clients', label: 'За клієнтами' }, { value: 'stock', label: 'Спільні товари' }]
 const workflowViews = [...views, { value: 'offers', label: 'Журнал пропозицій' }]
-const statusLabels = { offered: 'Вже запропоновано', reserved: 'Зарезервовано', declined: 'Відмовився', released: 'Резерв знято' }
+const statusLabels = { offered: 'Вже запропоновано', reserved: 'Зарезервовано', declined: 'Відмовився', released: 'Резерв знято', fulfilled: 'Відвантажено' }
 
 type Buyer = { client: SuggestedClient; item: ClientSuggestion }
 type ActionProps = { actions: (client: SuggestedClient, item: ClientSuggestion) => ReactNode }
@@ -140,6 +141,23 @@ function ClientList({ clients, actions }: { clients: SuggestedClient[] } & Actio
   </>
 }
 
+function InvoiceWarehouse({ create, cancel, disabled }: {
+  create: (org: string, store: string) => void; cancel: () => void; disabled: boolean
+}) {
+  type Ref = { id: string; title: string }
+  const refs = useRegister<{ organizations: Ref[]; stores: Ref[] }>('references')
+  const [org, setOrg] = useState('')
+  const [store, setStore] = useState('')
+  if (!refs.data) return <PageState kind={refs.status === 'ready' ? 'empty' : refs.status} onRetry={refs.reload} />
+  const options = (rows: Ref[]) => [{ value: '', label: 'Виберіть' }, ...rows.map(r => ({ value: r.id, label: r.title }))]
+  return <div className="client-rec-actions">
+    <NativeSelect label="Організація" value={org} data={options(refs.data.organizations)} onChange={e => setOrg(e.currentTarget.value)} />
+    <NativeSelect label="Склад відвантаження" value={store} data={options(refs.data.stores)} onChange={e => setStore(e.currentTarget.value)} />
+    <Button size="xs" disabled={disabled || !org || !store} onClick={() => create(org, store)}>Створити чернетку</Button>
+    <Button size="xs" variant="default" disabled={disabled} onClick={cancel}>Скасувати</Button>
+  </div>
+}
+
 export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
   opened: boolean; onClose: () => void; days: number; setPeriod: (value: string) => void
 }) {
@@ -153,9 +171,18 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
   const busy = useRef(false)
   const ids = useRef(new Map<string, string>())
   const [notice, setNotice] = useState('')
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [choosingFor, setChoosingFor] = useState<string | null>(null)
   const disabled = saving || query.isFetching
+  const reload = query.reload
+  useEffect(() => {
+    if (!opened) return
+    window.addEventListener(ACCOUNTING_DOCUMENT_CHANGED, reload)
+    return () => window.removeEventListener(ACCOUNTING_DOCUMENT_CHANGED, reload)
+  }, [opened, reload])
 
-  async function record(path: string, body: unknown, success: string) {
+  async function record(path: string, body: unknown, success: string, openInvoice = false) {
     if (busy.current) return
     busy.current = true
     setSaving(true)
@@ -163,7 +190,10 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
     try {
       const result = await save('recommendation-offers/' + path, body, 'PUT')
       setNotice(result.response.ok ? success : problemMessage(result.error, 'Не вдалося зберегти рішення.'))
-      if (result.response.ok) notifySummaryStale()
+      if (result.response.ok) {
+        notifySummaryStale()
+        if (openInvoice && result.data) navigate('/accounting/documents/' + result.data, { state: { documentBackground: location } })
+      }
     } catch { setNotice('Не вдалося підтвердити запис. Перевірте журнал перед повтором.') }
     finally { query.reload(); busy.current = false; setSaving(false) }
   }
@@ -185,7 +215,8 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
         {canEdit && <Button size="xs" variant="default" disabled={disabled} onClick={() => record(offer.id + '/decline', {}, 'Відмову записано. Чергу перераховано.')}>Відмовився</Button>}
       </>}
       {canReserve && offer.status === 'reserved' && <Button size="xs" variant="default" disabled={disabled}
-        onClick={() => record(offer.id + '/release', {}, 'Резерв знято. Кількість повернуто в розподіл.')}>Зняти резерв</Button>}
+        onClick={() => record(offer.id + '/release', {}, 'Резерв знято. Кількість повернуто в розподіл.')}>
+        {offer.invoiceId ? 'Скасувати чернетку і зняти резерв' : 'Зняти резерв'}</Button>}
     </div>
   }
 
@@ -221,7 +252,15 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
           {offers.map(offer => <article className="client-rec-journal" key={offer.id}>
             <strong>{offer.customer}</strong><span>{offer.name}</span>
             <small>Запропоновано {dateLabel(offer.offeredAt.slice(0,10))} · {quantityLabel(offer.quantity, offer.unit)} × {formatPrice(offer.price)}</small>
-            {decisions(offer)}</article>)}</section>
+            {decisions(offer)}
+            {offer.invoiceId ? <DocumentLink id={offer.invoiceId}>
+              {offer.status === 'reserved' ? 'Відкрити чернетку' : offer.status === 'released' ? 'Скасована накладна' : 'Проведена накладна'}</DocumentLink>
+              : canEdit && offer.status === 'reserved' && (choosingFor === offer.id && !offer.hasWarehouseSource
+                ? <InvoiceWarehouse key={offer.id} disabled={disabled} cancel={() => setChoosingFor(null)} create={(organizationId, storeId) =>
+                    record(offer.id + '/invoice', { organizationId, storeId }, 'Чернетку створено.', true)} />
+                : <div><Button size="xs" disabled={disabled} onClick={() => offer.hasWarehouseSource
+                    ? record(offer.id + '/invoice', {}, 'Чернетку створено.', true) : setChoosingFor(offer.id)}>Створити накладну</Button></div>)}
+          </article>)}</section>
           : report.clients.length ? view === 'stock' ? <SharedStock key={days} clients={report.clients} actions={actions} />
           : <ClientList key={days} clients={report.clients} actions={actions} /> : <p role="status">{report.active
           ? 'Для цих клієнтів немає раніше придбаних товарів із підтвердженою ціною та вільним залишком.'

@@ -15,10 +15,99 @@ namespace PoliValko.IntegrationTests;
 public sealed class RecommendationOfferTests(ApiFactory api)
 {
     private const string Route = "/api/v1/console/accounting/recommendation-offers/";
+    private const string Accounting = "/api/v1/console/accounting/";
     private sealed class Report(object payload) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) =>
             Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(payload) });
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Invoice_consumes_only_its_agreed_reservation_once(bool linkedWarehouse)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var staff = await Staff.AdminAsync(api);
+        var product = await api.AddProductAsync("ruchnyi-instrument", "Товар двох клієнтів", 99m, 5m);
+        var a = Guid.NewGuid();
+        var b = Guid.NewGuid();
+        var org = Guid.NewGuid();
+        var store = Guid.NewGuid();
+        var first = Guid.NewGuid();
+        var second = Guid.NewGuid();
+        var last = new DateOnly(2026, 1, 12);
+        await api.WithDbAsync(db => db.Database.ExecuteSqlAsync($"""
+            INSERT INTO accounting.references(id,source_account,kind,source_id,title) VALUES
+              ({org},'test','organization',{org.ToString()},'ФОП'),({store},'test','store',{store.ToString()},'Склад');
+            INSERT INTO accounting.partners(id,source_account,source_id,title,details) VALUES
+              ({a},'test',{a.ToString()},'Клієнт А',jsonb_build_object()),({b},'test',{b.ToString()},'Клієнт Б',jsonb_build_object());
+            INSERT INTO accounting.warehouse_stock(org_id,store_id,product_id,quantity) VALUES ({org},{store},{product.Id},5);
+            UPDATE catalog.product_stock SET warehouse_org_id=CASE WHEN {linkedWarehouse} THEN {org} END,
+              warehouse_store_id=CASE WHEN {linkedWarehouse} THEN {store} END WHERE product_id={product.Id};
+            INSERT INTO accounting.recommendation_offers(id,partner_id,product_id,last_purchase,quantity,unit,price,status)
+            VALUES ({first},{a},{product.Id},{last},1.5,'кг',12.50,'offered'),({second},{b},{product.Id},{last},3.5,'кг',18,'offered')
+            """,ct));
+        Task<HttpResponseMessage> Act(Guid id, string action, object body) => staff.PutAsJsonAsync(Route+id+"/"+action,body,ct);
+        Task<decimal> Reserved() => api.WithDbAsync(db => db.Set<ProductStock>().Where(s=>s.ProductId==product.Id)
+            .Select(s=>s.ReservedQuantity).SingleAsync(ct));
+        async Task<Guid> Draft(Guid id)
+        {
+            var result = await Act(id, "invoice", linkedWarehouse ? new {} : (object)new { organizationId=org,storeId=store });
+            return await result.ReadAsync<Guid>();
+        }
+        (await Act(first,"invoice",new {})).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await Act(first,"accept",new {})).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Act(second,"accept",new {})).StatusCode.ShouldBe(HttpStatusCode.OK);
+        if (!linkedWarehouse) (await Act(first,"invoice",new {})).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        var created = await Task.WhenAll(Draft(first), Draft(first));
+        created[0].ShouldBe(created[1]);
+        var invoice = created[0];
+        var url = Accounting+"documents/"+invoice;
+        var card = await staff.ReadAsync<DocumentCard>(url);
+        card.Document.PartnerId.ShouldBe(a);
+        card.Document.Status.ShouldBe("draft");
+        var line = card.Lines.Single();
+        line.CatalogId.ShouldBe(product.Id);
+        decimal.Parse(line.Price!,System.Globalization.CultureInfo.InvariantCulture).ShouldBe(12.5m);
+        decimal.Parse(line.Quantity!,System.Globalization.CultureInfo.InvariantCulture).ShouldBe(1.5m);
+        (await Reserved()).ShouldBe(5m);
+        var state = await staff.ReadAsync<InvoiceState>(url+"/operations");
+        state.OfferReservation.ShouldBe(new InvoiceOfferReservation(1.5m,"кг"));
+        var confirmation = new PostInvoice(state.Revision);
+        var bad = new NewDraft(invoice,b,"out","Підміна",last,org.ToString(),store.ToString(),[new(product.Id,1.5m,12.5m)]);
+        (await staff.PutAsJsonAsync(Accounting+"drafts/"+invoice,new DraftChange(state.Revision,bad),ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await staff.PutAsJsonAsync(Accounting+"drafts/"+invoice,new DraftChange(state.Revision,bad with {
+            PartnerId=a, Lines=[new(product.Id,1,12.5m)] }),ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        if (linkedWarehouse)
+        {
+            var unrelated = bad with { Id=Guid.NewGuid(), Day=card.Document.Day!.Value, Number="Інша накладна" };
+            (await staff.PostAsJsonAsync(Accounting+"drafts",unrelated,ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+            var unrelatedUrl = Accounting+"documents/"+unrelated.Id;
+            var unrelatedState = await staff.ReadAsync<InvoiceState>(unrelatedUrl+"/operations");
+            (await staff.PostAsJsonAsync(unrelatedUrl+"/post",new PostInvoice(unrelatedState.Revision),ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+            // A later stock guard fails after the offer deduction. Both the deduction and offer transition must roll back.
+            await api.WithDbAsync(db=>db.Database.ExecuteSqlAsync($"UPDATE accounting.warehouse_stock SET quantity=4 WHERE product_id={product.Id}",ct));
+            (await staff.PostAsJsonAsync(url+"/post",confirmation,ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+            (await Reserved()).ShouldBe(5m);
+            await api.WithDbAsync(db=>db.Database.ExecuteSqlAsync($"UPDATE accounting.warehouse_stock SET quantity=5 WHERE product_id={product.Id}",ct));
+        }
+        var posts = await Task.WhenAll(staff.PostAsJsonAsync(url+"/post",confirmation,ct), staff.PostAsJsonAsync(url+"/post",confirmation,ct));
+        posts.ShouldAllBe(r=>r.StatusCode==HttpStatusCode.OK);
+        (await Draft(first)).ShouldBe(invoice);
+        (await Reserved()).ShouldBe(3.5m);
+        (await api.WithDbAsync(db=>db.Set<ProductStock>().Where(s=>s.ProductId==product.Id).Select(s=>s.Quantity).SingleAsync(ct))).ShouldBe(3.5m);
+        (await staff.ReadAsync<InvoiceState>(url+"/operations")).Stock.Single().After.ShouldBe(3.5m);
+        (await api.WithDbAsync(db=>db.Database.SqlQuery<string>($"SELECT status AS \"Value\" FROM accounting.recommendation_offers WHERE id={first}").SingleAsync(ct))).ShouldBe("fulfilled");
+        (await Act(first,"release",new {})).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        var cancelled = await Draft(second);
+        (await Act(second,"release",new {})).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Act(second,"release",new {})).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Reserved()).ShouldBe(0);
+        var cancelledUrl = Accounting+"documents/"+cancelled;
+        var cancelledState = await staff.ReadAsync<InvoiceState>(cancelledUrl+"/operations");
+        cancelledState.Status.ShouldBe("cancelled");
+        (await staff.PostAsJsonAsync(cancelledUrl+"/post",new PostInvoice(cancelledState.Revision),ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 
     [Fact]

@@ -145,11 +145,13 @@ def buyer_priority(entry):
 OFFER_LOG = """
 SELECT o.id::text, o.partner_id::text AS client, p.title AS customer, o.product_id::text AS product,
        coalesce(nullif(c.display_name,''),c.name) AS name,c.sku,
-       o.last_purchase::text AS last,o.quantity,o.unit,o.price,o.status,
+       o.last_purchase::text AS last,o.quantity,o.unit,o.price,o.status,o.invoice_id::text AS "invoiceId",
+       (s.warehouse_store_id IS NOT NULL AND s.warehouse_org_id IS NOT NULL) AS "hasWarehouseSource",
        (o.offered_at AT TIME ZONE 'Europe/Kyiv')::text AS "offeredAt",
        (o.changed_at AT TIME ZONE 'Europe/Kyiv')::text AS "changedAt"
 FROM accounting.recommendation_offers o JOIN accounting.partners p ON p.id=o.partner_id
 JOIN catalog.products c ON c.id=o.product_id
+LEFT JOIN catalog.product_stock s ON s.product_id=o.product_id
 WHERE o.status IN ('offered','reserved') OR o.last_purchase >= %s OR o.changed_at >= %s
 ORDER BY o.offered_at,o.id
 """

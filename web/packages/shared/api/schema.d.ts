@@ -1434,6 +1434,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/accounting/recommendation-offers/{id}/invoice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["ConsoleCreateRecommendationInvoice"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/accounting/recommendation-offers/{id}/decline": {
         parameters: {
             query?: never;
@@ -4614,6 +4630,11 @@ export interface components {
             /** Format: double */
             quantity: number;
         };
+        InvoiceOfferReservation: {
+            /** Format: double */
+            quantity: number;
+            unit: string;
+        };
         InvoicePayment: {
             /** Format: uuid */
             id: string;
@@ -4638,6 +4659,7 @@ export interface components {
             due: null | string;
             stock: components["schemas"]["StockImpact"][];
             payments: components["schemas"]["RecordedPayment"][];
+            offerReservation: null | components["schemas"]["InvoiceOfferReservation"];
         };
         IssuedOffer: {
             /** Format: uuid */
@@ -4828,6 +4850,12 @@ export interface components {
             day: string;
             /** Format: double */
             amount: number;
+        };
+        OfferInvoiceSource: {
+            /** Format: uuid */
+            organizationId: null | string;
+            /** Format: uuid */
+            storeId: null | string;
         };
         OfferRow: {
             /** Format: uuid */
@@ -9643,6 +9671,50 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleCreateRecommendationInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OfferInvoiceSource"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
             /** @description Unauthorized */
             401: {
                 headers: {

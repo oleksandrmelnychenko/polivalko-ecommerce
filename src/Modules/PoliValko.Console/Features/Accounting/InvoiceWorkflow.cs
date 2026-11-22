@@ -18,8 +18,9 @@ public sealed record InvoicePayment(Guid Id, DateOnly Day,
     [property: JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)] decimal Amount,
     string Method, string AccountTitle, string Reference);
 public sealed record RecordedPayment(Guid Id, DateOnly Day, string Amount, string Method, string AccountTitle, string Reference);
+public sealed record InvoiceOfferReservation(decimal Quantity, string Unit);
 public sealed record InvoiceState(string Status, Guid OrgId, Guid StoreId, string Store, string Revision, string Total, string Paid, string? Due,
-    List<StockImpact> Stock, List<RecordedPayment> Payments);
+    List<StockImpact> Stock, List<RecordedPayment> Payments, InvoiceOfferReservation? OfferReservation);
 public sealed record WorkCounts(int Drafts, int Receivable, int Payable, int Settled);
 public sealed record PostInvoice(string Revision);
 public sealed record WarehouseBalance(Guid OrgId, Guid StoreId, string Organization, string Store, Guid ProductId, string Product, string Sku, decimal Quantity, decimal Opening,
@@ -149,9 +150,11 @@ internal static class InvoiceWorkflow
         var paid = payments.Sum(p=>p.Amount);
         var revision=await db.Database.SqlQuery<string>($"SELECT md5((details->'request')::text) AS \"Value\" FROM accounting.documents WHERE id={id}").SingleAsync(ct);
         static string Money(decimal value) => value.ToString("F2", CultureInfo.InvariantCulture);
+        var offer = await RecommendationOfferWorkflow.ForInvoice(id,db,ct);
         return Results.Ok(new InvoiceState(invoice.Status, invoice.OrgId,invoice.StoreId,store,revision,Money(invoice.Total),Money(paid),
             invoice.Status=="posted" ? Money(invoice.Total-paid) : null, await Impact(id,db,ct),
-            payments.Select(p => new RecordedPayment(p.Id,p.Day,Money(p.Amount),p.Method,p.AccountTitle,p.Reference)).ToList()));
+            payments.Select(p => new RecordedPayment(p.Id,p.Day,Money(p.Amount),p.Method,p.AccountTitle,p.Reference)).ToList(),
+            offer == null ? null : new InvoiceOfferReservation(offer.Quantity,offer.Unit)));
     }
 
     private static async Task<NativeInvoice?> Lock(Guid id, PoliValkoDbContext db, CancellationToken ct) =>
@@ -194,6 +197,29 @@ internal static class InvoiceWorkflow
         lines = await Impact(id,db,ct);
         var shortage = lines.FirstOrDefault(l=>l.After < 0);
         if (shortage != null) return Conflict($"Недостатньо товару «{shortage.Title}» на вибраному складі. Доступно {shortage.Before}.");
+        var offer = await RecommendationOfferWorkflow.ForInvoice(id, db, ct);
+        if (offer != null)
+        {
+            if (offer.Status != "reserved" || invoice.Kind != "out" || lines.Count != 1 ||
+                lines[0].ProductId != offer.ProductId || lines[0].Change != -offer.Quantity)
+                return Conflict("Накладна не відповідає чинному резерву цієї пропозиції.");
+            // Stock is locked. For a linked warehouse, the ledger below will synchronize the shop quantity.
+            // An independent shop balance needs the same physical shipment deducted explicitly.
+            var consumed = await db.Database.ExecuteSqlAsync($"""
+                UPDATE catalog.product_stock s SET reserved_quantity=s.reserved_quantity-o.quantity,
+                    quantity=CASE WHEN s.warehouse_store_id IS NULL THEN s.quantity-o.quantity ELSE s.quantity END,updated_at=now()
+                FROM accounting.recommendation_offers o JOIN accounting.documents d ON d.id=o.invoice_id
+                WHERE o.id={offer.Id} AND d.id={id} AND o.status='reserved' AND d.native_partner_id=o.partner_id
+                    AND s.product_id=o.product_id AND s.reserved_quantity>=o.quantity AND s.quantity>=s.reserved_quantity
+                    AND jsonb_array_length(d.details->'products')=1
+                    AND (d.details->'products'->0->>'price')::numeric=o.price
+                    AND ((s.warehouse_store_id IS NULL AND s.warehouse_org_id IS NULL)
+                      OR (s.warehouse_org_id,s.warehouse_store_id)=(d.native_org_id,d.native_store_id))
+                """,ct);
+            if (consumed != 1) return Conflict("Перевірте клієнта, ціну, склад і залишок резерву за цією пропозицією.");
+            await db.Database.ExecuteSqlAsync($"UPDATE accounting.recommendation_offers SET status='fulfilled',changed_at=now() WHERE id={offer.Id}",ct);
+            audit.Record("recommendation.fulfilled","RecommendationOffer",offer.Id.ToString(),new { invoiceId=id,offer.ProductId,offer.Quantity });
+        }
         var deltas = lines.Select(l=>l.Change).ToArray();
         var invalidShopQuantity=await db.Database.SqlQuery<int>($"""
             SELECT 1 AS "Value" FROM catalog.product_stock s
@@ -216,7 +242,7 @@ internal static class InvoiceWorkflow
             FROM accounting.warehouse_stock w WHERE (w.org_id,w.store_id,w.product_id)=(c.warehouse_org_id,c.warehouse_store_id,c.product_id)
                 AND w.org_id={invoice.OrgId} AND w.store_id={invoice.StoreId} AND w.product_id=ANY({ids})
             """,ct);
-        if (synced>0) outbox.Enqueue(new StockAvailabilityChanged());
+        if (synced>0 || offer != null) outbox.Enqueue(new StockAvailabilityChanged());
         await db.Database.ExecuteSqlAsync($"UPDATE accounting.documents SET status='posted' WHERE id={id}",ct);
         audit.Record("accounting.invoice_posted","AccountingDocument",id.ToString(),new {invoice.Kind,invoice.Total,invoice.StoreId});
         await db.SaveChangesAsync(ct);

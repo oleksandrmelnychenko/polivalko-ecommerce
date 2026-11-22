@@ -47,6 +47,7 @@ export const statusNames: Record<string, string> = {
   deleted: 'Видалений',
   draft: 'Чернетка',
   posted: 'Проведено',
+  cancelled: 'Скасовано',
 }
 
 export const paymentNames: Record<string, string> = {
