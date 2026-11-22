@@ -347,7 +347,7 @@ export function BusinessAnalyticsPage() {
                   </div>
                   <AnalyticsCard
                     title={<MetricLabel icon={IconChartLine}>Оборот і прибуток за місяцями</MetricLabel>}
-                    description="Зелений стовпчик показує вибраний період, сірий — ті самі дати попереднього року. Суми у гривнях."
+                    description="Зелений стовпчик показує вибраний період, сірий — ті самі дати попереднього року. Суми у гривнях. Прибуток пораховано лише за рядками з відомою собівартістю; яку частку суми вони становлять у кожному місяці, видно в таблиці."
                   >
                     <SegmentedControl
                       aria-label="Показник графіка"
@@ -369,7 +369,7 @@ export function BusinessAnalyticsPage() {
                         previous: m.previous?.[metric] ?? null,
                       }))}
                     />
-                    <Grid headings={['Місяць', 'Оборот, грн', 'Рік тому, грн', 'Зміна, грн', 'Валовий прибуток, грн']}>
+                    <Grid headings={['Місяць', 'Оборот, грн', 'Рік тому, грн', 'Зміна, грн', 'Валовий прибуток за відомою собівартістю, грн', 'Собівартість відома, % суми']}>
                       {r.months.map((m) => (
                         <tr key={m.month}>
                           <td>{m.month}</td>
@@ -377,6 +377,7 @@ export function BusinessAnalyticsPage() {
                           <td>{fmt(m.previous?.net)}</td>
                           <td>{fmt(m.current && m.previous ? m.current.net - m.previous.net : null)}</td>
                           <td>{fmt(m.current?.profit)}</td>
+                          <td>{fmt(m.current?.coverage == null ? null : m.current.coverage * 100)}</td>
                         </tr>
                       ))}
                     </Grid>

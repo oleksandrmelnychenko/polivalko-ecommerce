@@ -8,7 +8,9 @@ import { formatValue as fmt } from './BusinessForecast'
 import './assortment-report.css'
 
 const months = ['Січ', 'Лют', 'Бер', 'Кві', 'Тра', 'Чер', 'Лип', 'Сер', 'Вер', 'Жов', 'Лис', 'Гру']
-const columns = ['Товар', 'Артикул', 'Одиниця', 'Продано', 'Повернено', 'Середня ціна, грн', 'Оборот, грн', 'Прибуток, грн']
+// Profit covers only lines whose cost is known, so it is always shown next to the share of the amount it covers.
+const columns = ['Товар', 'Артикул', 'Одиниця', 'Продано', 'Повернено', 'Середня ціна, грн', 'Оборот, грн',
+  'Прибуток за відомою собівартістю, грн', 'Собівартість відома, % суми']
 const metrics = [
   { field: 'net', label: 'Чистий оборот', icon: IconCoins },
   { field: 'returns', label: 'Сума повернень', icon: IconReceiptRefund },
@@ -83,6 +85,7 @@ export function AssortmentReport({ report, loading, selectedProduct, selectProdu
             <th scope="row"><button type="button" onClick={() => selectProduct(p.id)}>{cleanProductName(p.name)}</button></th>
             <td>{p.sku || '—'}</td><td>{p.unit || '—'}</td><td>{fmt(p.sold)}</td><td>{fmt(p.returned)}</td>
             <td>{fmt(p.price)}</td><td className="assortment-net">{fmt(p.net)}</td><td>{fmt(p.profit)}</td>
+            <td>{fmt(p.coverage == null ? null : p.coverage * 100)}</td>
           </tr>)}</tbody>
         </table>
       </div> : <p className="assortment-empty">За цими фільтрами товарів немає.</p>}
