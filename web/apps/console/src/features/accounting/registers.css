@@ -112,7 +112,7 @@
 .doc-register .app-filter-bar input { border-radius: 999px; }
 .doc-register input[type=date], .doc-name span, .doc-code, .doc-meta time { font-family: var(--font-mono); }
 .doc-name small { display: block; margin-top: 2px; color: var(--mantine-color-gray-7); }
-.doc-list th:nth-child(5), .doc-lines th:nth-last-child(-n+3), .doc-lines td:nth-last-child(-n+3) { text-align: end; }
+.doc-list:not([data-separate-number]) th:nth-child(5), .doc-list[data-separate-number] th:nth-child(6), .doc-lines th:nth-last-child(-n+3), .doc-lines td:nth-last-child(-n+3) { text-align: end; }
 .doc-status { display: inline-block; padding: 3px 9px; border-radius: 999px; font: 600 12px/1.4 var(--font-sans); background: var(--app-ground); color: var(--brand-ink); }
 .doc-status:is([data-status=posted],[data-status=active]) { background: #e7f5ed; color: #22643c; }
 .doc-summary { padding: clamp(14px, 2vw, 24px); }
@@ -181,7 +181,9 @@
 .document-modal .ledger-note, .document-modal .ledger-document > p { overflow-wrap: anywhere; }
 .document-modal .doc-meta { margin-top: 0; }
 
-.doc-list[data-invoice-icons] .doc-name { position: relative; padding-inline-start: 54px; }
+.doc-list .doc-icon-cell { position: relative; padding-inline-start: 54px; }
+.doc-list[data-separate-number] th:first-child { padding-inline-start: 54px; }
+.doc-invoice-number { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .doc-row-icon { position: absolute; inset-inline-start: 12px; top: 50%; transform: translateY(-50%); padding: 7px; border-radius: 50%; background: var(--app-ground); color: var(--brand-ink); }
 .doc-list [data-payment] { display: inline-block; padding: 3px 9px; border-radius: 99px; background: var(--app-ground); font-size: 12px; }
 .doc-list [data-payment=settled] { background: #e7f5ed; color: #22643c; }
@@ -189,6 +191,7 @@
 .invoice-editor[data-outgoing] .draft-line-list li { padding: 10px; margin-top: 8px; border: 1px solid var(--app-line); border-radius: 14px; background: var(--app-ground); }
 .invoice-editor[data-outgoing] .draft-remove { border-radius: 50%; }
 @media (max-width: 700px) {
-  .doc-list[data-invoice-icons] .doc-name { padding-inline-start: 42px; min-height: 32px; }
+  .doc-list .register-scroll tbody .doc-icon-cell { padding-inline-start: 42px; min-height: 32px; }
+  .doc-invoice-number { grid-column: 1 / -1; display: flex; align-items: center; }
   .doc-row-icon { inset-inline-start: 0; }
 }

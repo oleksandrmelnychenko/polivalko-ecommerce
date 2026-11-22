@@ -21,14 +21,18 @@ export function DocTable({ rows, direction, balanceLabel }: { rows: Doc[]; balan
   const dueLabel = balanceLabel ?? (outgoing ? 'До отримання' : 'До сплати')
   const showIcons = outgoing || Boolean(balanceLabel)
   return (
-    <div className="doc-list" data-invoice-icons={showIcons || undefined}>
-      <Grid columns={['Документ', partnerLabel, 'Дата', 'Стан документа', 'Сума', 'Оплата', ...(direction || balanceLabel ? [dueLabel] : [])]}>
+    <div className="doc-list" data-separate-number={outgoing || undefined}>
+      <Grid columns={[...(outgoing ? ['Номер'] : []), 'Документ', partnerLabel, 'Дата', 'Стан документа', 'Сума', 'Оплата', ...(direction || balanceLabel ? [dueLabel] : [])]}>
         {rows.map((d) => (
           <Table.Tr key={d.id}>
-            <Table.Td className="doc-name">
-              {showIcons && (d.kind === 'in' ? <IconPackageImport className="doc-row-icon" size={32} aria-hidden="true" /> : <IconPackageExport className="doc-row-icon" size={32} aria-hidden="true" />)}
+            {outgoing && <Table.Td className="doc-invoice-number doc-icon-cell">
+              <IconPackageExport className="doc-row-icon" size={32} aria-hidden="true" />
+              <DocumentLink id={d.id} aria-label={`${kindName(d) || 'Документ'} № ${d.number || d.sourceId}`}>№ {d.number || d.sourceId}</DocumentLink>
+            </Table.Td>}
+            <Table.Td className={showIcons && !outgoing ? 'doc-name doc-icon-cell' : 'doc-name'}>
+              {showIcons && !outgoing && (d.kind === 'in' ? <IconPackageImport className="doc-row-icon" size={32} aria-hidden="true" /> : <IconPackageExport className="doc-row-icon" size={32} aria-hidden="true" />)}
               <DocumentLink id={d.id}>
-                {kindName(d) || 'Документ'} № <span>{d.number || d.sourceId}</span>
+                {kindName(d) || 'Документ'}{!outgoing && <> № <span>{d.number || d.sourceId}</span></>}
               </DocumentLink>
               {d.organization && <small>{d.organization}</small>}
             </Table.Td>
