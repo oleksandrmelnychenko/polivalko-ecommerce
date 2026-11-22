@@ -194,17 +194,19 @@ def trend(rows: list[Sale], start: date, end: date, first: date | None, through:
 
     length = (end - start).days + 1
     step = 1 if length <= 30 else 7 if length <= 180 else 14
+    # Count the bars back from the last day. The newest bar is then always a whole step, and the
+    # shorter remainder is the oldest bar instead of looking like a drop in sales at the end.
     buckets: dict[int, list[Sale]] = defaultdict(list)
     for row in rows:
-        buckets[(row.day - start).days // step].append(row)
+        buckets[(end - row.day).days // step].append(row)
 
     result = []
-    for offset in range(0, length, step):
-        visible_from = max(start + timedelta(days=offset), first)
-        visible_to = min(start + timedelta(days=min(length, offset + step) - 1), through)
+    for index in reversed(range(-(-length // step))):
+        visible_from = max(end - timedelta(days=(index + 1) * step - 1), start, first)
+        visible_to = min(end - timedelta(days=index * step), through)
         if visible_from > visible_to:
             continue
-        bucket = buckets[offset // step]
+        bucket = buckets[index]
         result.append({
             "from": visible_from.isoformat(), "to": visible_to.isoformat(),
             "soldUnits": sum((row.sold for row in bucket), ZERO),
