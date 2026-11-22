@@ -1,4 +1,4 @@
-import { ActionIcon, Alert, Button, Group, Radio, Stack, Text, TextInput } from '@mantine/core'
+import { ActionIcon, Alert, Button, Group, NativeSelect, Radio, Stack, Text, TextInput } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
 import { IconArrowDown, IconArrowUp, IconBuildingStore, IconChevronDown, IconGripVertical, IconPackage, IconPlus, IconSearch, IconX } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
@@ -17,7 +17,7 @@ import './storefront-mode.css'
 
 const endpoint = '/api/v1/console/catalog/storefront-mode'
 const modes = [
-  { value: 'seasonal', title: 'Сезон', description: 'Сезонні категорії й попит у цей період минулих років.' },
+  { value: 'seasonal', title: 'Сезон', description: 'Призначення товару та попит у цей період минулих років.' },
   { value: 'trending', title: 'Попит зараз', description: 'За останні 7 днів товар купували частіше, ніж у середньому за тиждень протягом попередніх 21 дня.' },
   { value: 'stock_cover', title: 'Рух запасів', description: 'Запас від восьми тижнів продажів, з пріоритетом сезонних товарів.' },
 ] as const
@@ -36,6 +36,7 @@ function ProductInfo({ product }: { product: Product }) {
 const titleOf = (mode: string) => modes.find(item => item.value === mode)?.title ?? 'Вітрина'
 const dateLabel = (date: string) => new Intl.DateTimeFormat('uk-UA', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(date + 'T00:00:00Z'))
 const kyivDate = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Kyiv', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+const months = ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень']
 
 export function StorefrontModeControl() {
   const state = useApiQuery('storefront-mode', () => api.GET(endpoint, { cache: 'no-store' }))
@@ -66,6 +67,14 @@ export function StorefrontModeControl() {
 function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: () => void; onSaved: (value: Setting) => void }) {
   const [baseline, setBaseline] = useState(initial)
   const [mode, setMode] = useState(initial.mode)
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null)
+  const today = kyivDate()
+  const [year, currentMonth] = today.split('-').map(Number)
+  const month = mode === 'seasonal' ? selectedMonth ?? currentMonth : undefined
+  const monthOptions = months.map((_, offset) => {
+    const index = currentMonth - 1 + offset
+    return { value: String(index % 12 + 1), label: months[index % 12] + ' ' + (year + Math.floor(index / 12)) + (offset === 0 ? ' · поточний' : '') }
+  })
   const [through, setThrough] = useState(initial.through ?? '')
   const [pins, setPins] = useState<string[]>(initial.pinnedProductIds ?? [])
   const [draggedId, setDraggedId] = useState<string | null>(null)
@@ -77,8 +86,8 @@ function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   // Reordering the same pins only changes their positions, not the automatic selections.
-  const preview = useApiQuery('storefront-preview:' + mode + ':' + [...pins].sort().join(','), () =>
-    api.GET('/api/v1/console/catalog/storefront-mode/preview', { params: { query: { mode, pinned: pins } }, cache: 'no-store' }))
+  const preview = useApiQuery(['storefront-preview', today, mode, month, [...pins].sort().join(',')].join(':'), () =>
+    api.GET('/api/v1/console/catalog/storefront-mode/preview', { params: { query: { mode, month, pinned: pins } }, cache: 'no-store' }))
   const end = mode === 'seasonal' || !through ? null : through
   const invalid = Boolean(end && end < kyivDate())
   const dirty = mode !== baseline.mode || end !== (baseline.through ?? null) || pins.join() !== (baseline.pinnedProductIds ?? []).join()
@@ -142,6 +151,9 @@ function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: 
       </section>
       <section className="storefront-mode-card" aria-label="Попередній перегляд каталогу">
         <h3>Перші 12 товарів у каталозі</h3>
+        {mode === 'seasonal' && <NativeSelect mt="xs" label="Місяць перегляду" value={String(month)} data={monthOptions}
+          description={month === currentMonth ? 'Порядок на сьогодні за київським часом.' : 'Прогноз на 15-те число за сьогоднішніми залишками. Місяць змінює лише попередній перегляд.'}
+          onChange={event => { const value = Number(event.currentTarget.value); setSelectedMonth(value === currentMonth ? null : value) }} />}
         {missing.length > 0 && <Alert color="orange">Закріплених товарів поза каталогом · {missing.length}{' '}
           <Button variant="default" size="compact-xs" onClick={() => setPins(pins.filter(id => !missing.includes(id)))}>Зняти закріплення з недоступних</Button></Alert>}
         {preview.status !== 'ready' ? <PageState kind={preview.status} onRetry={preview.reload} /> :

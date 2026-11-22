@@ -11655,6 +11655,7 @@ export interface operations {
         parameters: {
             query: {
                 mode: string;
+                month?: number;
                 pinned?: string[];
             };
             header?: never;

@@ -15,6 +15,32 @@ public sealed class StorefrontModeTests(ApiFactory api)
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
+    public async Task Monthly_preview_changes_the_season_and_preserves_the_live_mode_and_pin_order()
+    {
+        using var shop = api.CreateClient();
+        using var manager = await Staff.ManagerAsync(api);
+        var before = await shop.ReadAsync<StorefrontModeDto>(Public);
+        var today = KyivTime.Today(TimeProvider.System);
+        var pin = await api.AddProductAsync("novyi-rik", "Закріплений для перегляду місяця", 50);
+        await api.AddProductAsync("novyi-rik", "Ялинка для перегляду місяця", 100);
+        await api.AddProductAsync("vse-dlia-vidpochynku", "Гамак для перегляду місяця", 100);
+        var url = $"{Editor}/preview?mode=seasonal&pinned={pin.Id}";
+        var livePreview = await manager.ReadAsync<List<ProductListItemDto>>(url);
+        var current = await manager.ReadAsync<List<ProductListItemDto>>(url + "&month=" + today.Month);
+        current.Select(p => p.Id).ShouldBe(livePreview.Select(p => p.Id));
+        var july = await manager.ReadAsync<List<ProductListItemDto>>(url + "&month=7");
+        var december = await manager.ReadAsync<List<ProductListItemDto>>(url + "&month=12");
+        july.First().Id.ShouldBe(pin.Id);
+        december.First().Id.ShouldBe(pin.Id);
+        july.Select(p => p.Id).SequenceEqual(december.Select(p => p.Id)).ShouldBeFalse();
+        (await manager.GetAsync(url + "&month=0", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await manager.GetAsync(url + "&month=13", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await manager.GetAsync(Editor + "/preview?mode=trending&month=7", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await shop.GetAsync(url + "&month=7", Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await shop.ReadAsync<StorefrontModeDto>(Public)).Revision.ShouldBe(before.Revision);
+    }
+
+    [Fact]
     public async Task Seasonal_leaders_rotate_available_families_before_pagination_and_fill_empty_slots()
     {
         var irrigation = new List<Product>();

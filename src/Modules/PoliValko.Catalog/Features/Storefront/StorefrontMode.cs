@@ -45,15 +45,20 @@ internal static class StorefrontMode
         return CurrentAsync(db, KyivTime.Today(time), ct);
     }
 
-    private static async Task<Results<Ok<List<ProductListItemDto>>, BadRequest>> Preview(string mode,
+    private static async Task<Results<Ok<List<ProductListItemDto>>, BadRequest>> Preview(string mode, int? month,
         [Microsoft.AspNetCore.Mvc.FromQuery] Guid[]? pinned, HttpResponse response,
         PoliValkoDbContext db, SeasonalMerchandising merchandising, TimeProvider time, CancellationToken ct)
     {
-        if (!ProductSort.IsMode(mode) || pinned is { Length: > 12 }) return TypedResults.BadRequest();
+        if (!ProductSort.IsMode(mode) || pinned is { Length: > 12 } ||
+            month is < 1 or > 12 || (month.HasValue && mode != ProductSort.Seasonal)) return TypedResults.BadRequest();
         response.Headers.CacheControl = "private, no-store";
         var categories = await CategoryQueries.LoadVisibleCategoriesAsync(db, ct);
         var products = CatalogVisibility.Products(db, categories.Select(c => c.Id).ToArray());
-        var ranked = await merchandising.SortAsync(products, categories, null, db, KyivTime.Today(time), ct, mode, pinned: pinned);
+        var today = KyivTime.Today(time);
+        var seasonDate = month is { } selected && selected != today.Month
+            ? new DateOnly(today.Year + (selected < today.Month ? 1 : 0), selected, 15)
+            : today;
+        var ranked = await merchandising.SortAsync(products, categories, null, db, today, ct, mode, pinned: pinned, seasonDate: seasonDate);
         var rows = await ProductListing.ListItems(ranked.Take(12)).ToListAsync(ct);
         return TypedResults.Ok(await ProductListing.ToListItemsAsync(db, rows, time, ct));
     }

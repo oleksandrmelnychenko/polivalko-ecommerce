@@ -7470,6 +7470,14 @@
             }
           },
           {
+            "name": "month",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
             "name": "pinned",
             "in": "query",
             "schema": {

@@ -23,16 +23,17 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
 
     public async Task<IQueryable<Product>> SortAsync(IQueryable<Product> products, IReadOnlyList<Category> categories,
         string? term, PoliValkoDbContext db, DateOnly today, CancellationToken ct, string mode = ProductSort.Seasonal,
-        bool acrossCategories = true, Guid[]? pinned = null)
+        bool acrossCategories = true, Guid[]? pinned = null, DateOnly? seasonDate = null)
     {
-        var priority = PriorityCategories(today);
+        var season = seasonDate ?? today;
+        var priority = PriorityCategories(season);
         var byParent = categories.ToLookup(c => c.ParentId);
         Guid[] Family(string key) => categories.Where(c => c.Slug == key || c.Name == key)
             .SelectMany(c => CategoryQueries.Descendants(c.Id, byParent).Prepend(c.Id)).Distinct().ToArray();
         var seasonalMode = mode == ProductSort.Seasonal;
         var seasonal = seasonalMode ? [] : priority.SelectMany(Family).Distinct().ToArray();
-        var purposes = SeasonalPurpose.Query(db, categories, today, seasonalMode);
-        var signals = await DemandAsync(db, today, ct);
+        var purposes = SeasonalPurpose.Query(db, categories, season, seasonalMode);
+        var signals = await DemandAsync(db, today, season, ct);
         var ids = signals.Select(s => s.ProductId).ToArray();
         var trends = signals.Select(s => Math.Max(0, s.Week - s.Previous / 3m) * s.Week / (s.Week + 3m)).ToArray();
         var units = signals.Select(s => s.Units).ToArray();
@@ -119,16 +120,16 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
         return leaders.ToArray();
     }
 
-    private async Task<ProductSignal[]> DemandAsync(PoliValkoDbContext db, DateOnly today, CancellationToken ct)
+    private async Task<ProductSignal[]> DemandAsync(PoliValkoDbContext db, DateOnly today, DateOnly season, CancellationToken ct)
     {
-        var key = ("storefront-seasonal-demand", today);
+        var key = ("storefront-seasonal-demand", today, season);
         if (cache.TryGetValue<ProductSignal[]>(key, out var saved) && saved is not null) return saved;
         await _refresh.WaitAsync(ct);
         try
         {
             if (cache.TryGetValue<ProductSignal[]>(key, out saved) && saved is not null) return saved;
-            var lastYear = today.AddYears(-1);
-            var twoYearsAgo = today.AddYears(-2);
+            var lastYear = season.AddYears(-1);
+            var twoYearsAgo = season.AddYears(-2);
             var recent = today.AddDays(-27);
             // Count distinct purchase occasions, so a bulk purchase or repeated receipt line cannot dominate.
             var week = today.AddDays(-6);
@@ -141,7 +142,7 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
                     CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(d.details->'products')='array'
                         THEN d.details->'products' ELSE '[]'::jsonb END) line
                     WHERE d.entity_type='receipt' AND d.kind='cash' AND d.status='active'
-                        AND d.source_account='valko-dntrade' AND d.total>0
+                        AND d.source_account='valko-dntrade' AND d.total>0 AND d.day <= {today}
                         AND (d.day BETWEEN {recent} AND {today}
                             OR d.day BETWEEN {lastYear.AddDays(-21)} AND {lastYear.AddDays(21)}
                             OR d.day BETWEEN {twoYearsAgo.AddDays(-21)} AND {twoYearsAgo.AddDays(21)})
