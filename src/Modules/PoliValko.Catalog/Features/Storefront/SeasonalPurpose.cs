@@ -6,10 +6,12 @@ namespace PoliValko.Catalog.Features.Storefront;
 
 internal static class SeasonalPurpose
 {
-    internal sealed record Match(Guid ProductId, int? Family);
+    internal sealed record Match(Guid ProductId, int? Family, int MonthMask);
     private sealed record Rule(string Family, int From, int Through, string[] Sections, string Include, string? Exclude = null)
     {
         public bool Applies(int month) => From <= Through ? month >= From && month <= Through : month >= From || month <= Through;
+        public int MonthMask { get; } = Enumerable.Range(From, (Through - From + 12) % 12 + 1)
+            .Sum(month => 1 << ((month - 1) % 12));
     }
 
     private const string Covers = "Укривні матеріали";
@@ -51,8 +53,12 @@ internal static class SeasonalPurpose
         new("Септик/Компост", 9, 11, ["Септик/Компост", "Господарчі товари", "Ручний інструмент"], "компостер|для компост|компостуван"),
         new("Догляд за деревами", 10, 11, ["Засоби захисту рослин"], "побілк|для побілки|фарба для дерев"),
         new("Догляд за деревами", 2, 3, ["Засоби захисту рослин"], "побілк|для побілки|фарба для дерев"),
-        new("Захист рослин у період вегетації", 5, 7, ["Засоби захисту рослин"],
+        new("Захист рослин у період вегетації", 3, 4, ["Засоби захисту рослин"], "фунгіцид|медян екстра", "протруйник|для зберігання|для сховищ"),
+        new("Захист рослин у період вегетації", 5, 9, ["Засоби захисту рослин"],
             "інсектицид|фунгіцид|прилипач", "протруйник|для зберігання|для сховищ"),
+        new("Добрива", 2, 5, ["Засоби захисту рослин", "Добрива"], "стимулятор коренеутворення"),
+        new("Добрива", 9, 11, ["Добрива"], "суперфосфат"),
+        new("Догляд за деревами", 10, 11, ["Засоби захисту рослин"], "залізний купорос"),
         new("vse-dlia-polyvu", 4, 8, ["vse-dlia-polyvu"], "^(набір для поливу|поливальний комплект|система туманоутворення)"),
         new("vse-dlia-polyvu", 4, 8, ["vse-dlia-polyvu"],
             "шланг|зрошувач|дощувач|розбризк|спринклер|крапельна (стрічка|труба)|емітерна.*стрічка|поливальн.*комплект|пістолет.*(полив|розпил)",
@@ -70,8 +76,7 @@ internal static class SeasonalPurpose
     public static (IQueryable<Match> Rows, int Families) Query(PoliValkoDbContext db, IReadOnlyList<Category> categories,
         DateOnly day, bool enabled)
     {
-        if (!enabled) return (db.Database.SqlQuery<Match>($"SELECT NULL::uuid AS product_id, 0 AS family WHERE false"), 0);
-        var byParent = categories.ToLookup(c => c.ParentId);
+        if (!enabled) return (db.Database.SqlQuery<Match>($"SELECT NULL::uuid AS product_id, 0 AS family, 0 AS month_mask WHERE false"), 0);
         string[] leadingTasks = day.Month switch
         {
             1 => ["Обігрівачі", WinterCare, "Годівниці", "Насіння", "Грунти та добавки"],
@@ -84,29 +89,40 @@ internal static class SeasonalPurpose
         var priority = leadingTasks.Select((key, i) => (key, i)).ToDictionary(x => x.key, x => x.i);
         var active = Rules.Where(r => r.Applies(day.Month))
             .OrderBy(r => priority.GetValueOrDefault(r.Family, priority.Count));
+        return MatchRules(db, categories, active);
+    }
+
+    public static IQueryable<Match> Calendar(PoliValkoDbContext db, IReadOnlyList<Category> categories) =>
+        MatchRules(db, categories, Rules).Rows;
+
+    private static (IQueryable<Match> Rows, int Families) MatchRules(PoliValkoDbContext db,
+        IReadOnlyList<Category> categories, IEnumerable<Rule> rules)
+    {
+        var byParent = categories.ToLookup(c => c.ParentId);
         var groups = new List<string>();
-        var rows = new List<(Guid Category, int Family, string Include, string? Exclude)>();
-        foreach (var rule in active)
+        var rows = new List<(Guid Category, int Family, string Include, string? Exclude, int MonthMask)>();
+        foreach (var rule in rules)
         {
             var ids = categories.Where(c => rule.Sections.Contains(c.Name) || rule.Sections.Contains(c.Slug))
                 .SelectMany(c => CategoryQueries.Descendants(c.Id, byParent).Prepend(c.Id)).Distinct().ToArray();
             if (ids.Length == 0) continue;
             if (!groups.Contains(rule.Family)) groups.Add(rule.Family);
-            rows.AddRange(ids.Select(id => (id, groups.IndexOf(rule.Family), rule.Include, rule.Exclude)));
+            rows.AddRange(ids.Select(id => (id, groups.IndexOf(rule.Family), rule.Include, rule.Exclude, rule.MonthMask)));
         }
         var categoryIds = rows.Select(r => r.Category).ToArray();
         var families = rows.Select(r => r.Family).ToArray();
         var include = rows.Select(r => r.Include).ToArray();
         var exclude = rows.Select(r => r.Exclude).ToArray();
+        var masks = rows.Select(r => r.MonthMask).ToArray();
         var matches = db.Database.SqlQuery<Match>($"""
             WITH rules AS (
-                SELECT * FROM unnest({categoryIds}::uuid[], {families}::int[], {include}::text[], {exclude}::text[])
-                    AS r(category_id, family, wanted, unwanted)
+                SELECT * FROM unnest({categoryIds}::uuid[], {families}::int[], {include}::text[], {exclude}::text[], {masks}::int[])
+                    AS r(category_id, family, wanted, unwanted, month_mask)
             ), attributes AS (
                 SELECT a.product_id, array_agg(a.value) AS terms FROM catalog.product_attributes a
                 WHERE lower(a.name) = ANY({Attributes}) GROUP BY a.product_id
             )
-            SELECT p.id AS product_id, min(r.family) AS family
+            SELECT p.id AS product_id, min(r.family) AS family, bit_or(r.month_mask) AS month_mask
             FROM rules r JOIN catalog.products p ON p.category_id=r.category_id
             LEFT JOIN attributes a ON a.product_id=p.id
             WHERE p.is_visible AND NOT p.is_archived

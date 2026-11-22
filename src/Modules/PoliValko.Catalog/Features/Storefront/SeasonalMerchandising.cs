@@ -60,8 +60,8 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
         Guid[] leaders = [];
         Guid? monthlyLeader = null;
         var automaticListing = seasonalMode && acrossCategories && string.IsNullOrWhiteSpace(term);
-        if (automaticListing && season.Month is >= 5 and <= 7)
-            monthlyLeader = await SummerSalesLeader.PickAsync(products, categories, db, cache, today, season, purposes.Rows, ct);
+        if (automaticListing)
+            monthlyLeader = await MonthlySalesLeader.PickAsync(products, categories, db, cache, today, season.Month, ct);
         if (automaticListing && purposes.Families > 1)
         {
             var candidates = scored.Where(s => s.seasonal && s.available >= 1 && s.p.Price.Amount > 0)
