@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { dateLabel, formatPrice } from '@/shared/lib/salesFormat'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
 import type { RecommendationResultsReport } from '../api/dashboardApi'
+import { CalculationInfo } from './CalculationInfo'
 
 export function RecommendationResults({ report, days }: { report: RecommendationResultsReport; days: number }) {
   const [limit, setLimit] = useState(20)
@@ -10,8 +11,11 @@ export function RecommendationResults({ report, days }: { report: Recommendation
   const invoices = selected ? report.invoices.filter(i => i.day >= selected.start) : []
   return <div className="rec-results">
     <section>
-      <h3>Від пропозиції до продажу</h3>
-      <p>Періоди до {dateLabel(report.through)} включно, за датою пропозиції. Погодження враховується і після зняття резерву.</p>
+      <h3 className="dash-with-info">Від пропозиції до продажу
+        <CalculationInfo title="Як рахуються пропозиції та погодження">
+          <p>Періоди до {dateLabel(report.through)} включно, за датою пропозиції. Погодження враховується і після зняття резерву.</p>
+        </CalculationInfo>
+      </h3>
       <div className="rec-results-scroll"><table aria-label="Пропозиції за періодами">
         <thead><tr><th>Період</th><th>Зробили</th><th>Погодили</th><th>Дійшли до продажу</th></tr></thead>
         <tbody>{report.periods.map(p => <tr key={p.days} data-selected={p.days === days}>
@@ -20,10 +24,17 @@ export function RecommendationResults({ report, days }: { report: Recommendation
       </table></div>
     </section>
     <section>
-      <h3>Продажі з рекомендацій</h3>
-      <p>За датою проведеної видаткової накладної, включно з продажами за давнішими пропозиціями.</p>
+      <h3 className="dash-with-info">Продажі з рекомендацій
+        <CalculationInfo title="За якою датою враховано продажі">
+          <p>За датою проведеної видаткової накладної, включно з продажами за давнішими пропозиціями.</p>
+        </CalculationInfo>
+      </h3>
       <div className="rec-results-scroll"><table aria-label="Оборот і валовий прибуток з рекомендацій">
-        <thead><tr><th>Період</th><th>Накладних</th><th>Оборот</th><th>Валовий прибуток</th></tr></thead>
+        <thead><tr><th>Період</th><th>Накладних</th><th>Оборот</th><th>Валовий прибуток{' '}
+          <CalculationInfo title="Як визначено собівартість для валового прибутку">
+            <p>Собівартість беремо з рядка продажу або оцінюємо за прибутковими накладними того самого товару, організації та складу до дати продажу.</p>
+          </CalculationInfo>
+        </th></tr></thead>
         <tbody>{report.periods.map(p => <tr key={p.days} data-selected={p.days === days}>
           <th scope="row">{p.days} днів</th><td>{p.invoices}</td><td>{formatPrice(p.turnover)}</td>
           <td>{p.profit !== null ? formatPrice(p.profit) : 'Неповні дані'}
@@ -32,7 +43,6 @@ export function RecommendationResults({ report, days }: { report: Recommendation
           </td>
         </tr>)}</tbody>
       </table></div>
-      <p>Собівартість беремо з рядка продажу або оцінюємо за прибутковими накладними того самого товару, організації та складу до дати продажу.</p>
       {invoices.length > 0 && <details>
         <summary>Проведені накладні за {days} днів · {invoices.length}</summary>
         <div className="rec-results-scroll"><table aria-label="Накладні з рекомендацій">

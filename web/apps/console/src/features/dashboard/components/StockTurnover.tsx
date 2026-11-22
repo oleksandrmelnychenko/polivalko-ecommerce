@@ -65,12 +65,17 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
   return (
     <DashboardCard title={<><IconPackage aria-hidden="true" /><span id="zakupivli">Закінчуються</span></>} className="dash-product-report dash-stock-impact" flush>
       {report && <div className="dash-product-summary">
-        <span>Чистий оборот товарів із малим залишком</span>
+        <span className="dash-with-info">Чистий оборот товарів із малим залишком
+          <CalculationInfo title="Які товари враховано в обороті">
+            <p>До списку входять товари, для яких доступно до {numberFormat.format(report.threshold)} од. після резервів. У підсумку враховано лише підтверджені суми.</p>
+            {report.share != null && <p>Частка від загального обороту за період · {formatPrice(report.periodNet)}.</p>}
+          </CalculationInfo>
+        </span>
         <div className="dash-product-summary-value"><strong>{report.net != null ? formatPrice(report.net) : 'Оборот невідомий'}</strong>
-          {report.share != null && <TableChip tone="product" title={'Частка від загального обороту ' + formatPrice(report.periodNet)} value={formatShare(report.share) + ' обороту'} />}</div>
+          {report.share != null && <TableChip tone="product" value={formatShare(report.share) + ' обороту'} />}</div>
         <small>{dateRange(report.start, report.through)}</small>
         {report.periodNet <= 0 && <small>Частка доступна за додатного загального обороту.</small>}
-        {report.unknownCount > 0 && <small>Товарів без підтвердженого обороту · {numberFormat.format(report.unknownCount)}. У підсумку враховано лише підтверджені суми.</small>}
+        {report.unknownCount > 0 && <small>Товарів без підтвердженого обороту · {numberFormat.format(report.unknownCount)}.</small>}
       </div>}
       <div className="dash-product-tools dash-stock-filters">
         <TextInput size="sm" radius="xl" label="Пошук товару" leftSection={<IconSearch size={16} />} aria-label="Пошук товарів із малим залишком" placeholder="Назва або артикул" maxLength={120} value={draft}
@@ -105,7 +110,7 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
           </CalculationInfo>
         </div>
         <div className="dash-product-count" aria-live="polite"><span>Показано <b>{report.rows.length ? numberFormat.format((report.page - 1) * report.pageSize + 1) + '–' + numberFormat.format((report.page - 1) * report.pageSize + report.rows.length) : '0'} із {numberFormat.format(report.matches)}</b></span>
-          <span>До {numberFormat.format(report.threshold)} од. після резервів</span></div>
+        </div>
         {report.rows.length > 0 ? <>
           <ul className="dash-rank">{report.rows.map(item => <li key={item.id}>
             <div className="dash-rank-main">
