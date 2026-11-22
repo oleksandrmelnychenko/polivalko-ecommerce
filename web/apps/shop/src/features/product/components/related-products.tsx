@@ -3,7 +3,7 @@ import { ProductTiles } from "@/features/catalog";
 import { searchProducts } from "@/features/catalog/server";
 
 export async function RelatedProducts({ category, exclude }: { category: string; exclude: string }) {
-  const result = await searchProducts({ category, pageSize: 6, inStock: true, sort: "seasonal" });
+  const result = await searchProducts({ category, pageSize: 6, inStock: true });
   const items = (result?.items ?? []).filter((p) => p.id !== exclude).slice(0, 5);
   if (items.length === 0) return null;
   return (

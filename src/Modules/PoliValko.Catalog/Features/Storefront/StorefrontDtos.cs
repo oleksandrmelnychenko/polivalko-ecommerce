@@ -99,17 +99,20 @@ public sealed record ProductSearchQuery(
     [FromQuery(Name = "priceMin")] decimal? PriceMin,
     [FromQuery(Name = "priceMax")] decimal? PriceMax,
     [property: Description("Характеристики у форматі Назва:Значення; кілька значень однієї назви — АБО, різні назви — І")] [FromQuery(Name = "f")] string[]? F,
-    [property: Description("seasonal (типово) | name_asc | name_desc | price_asc | price_desc")] [FromQuery(Name = "sort")] string? Sort,
+    [property: Description("Типово — активний режим вітрини. seasonal | trending | stock_cover | name_asc | name_desc | price_asc | price_desc")] [FromQuery(Name = "sort")] string? Sort,
     [FromQuery(Name = "page")] int? Page,
     [FromQuery(Name = "pageSize")] int? PageSize);
 
 public static class ProductSort
 {
     public const string Seasonal = "seasonal";
+    public const string Trending = "trending";
+    public const string StockCover = "stock_cover";
+    public static bool IsMode(string? mode) => mode is Seasonal or Trending or StockCover;
     public const string NameAsc = "name_asc";
     public const string NameDesc = "name_desc";
     public const string PriceAsc = "price_asc";
     public const string PriceDesc = "price_desc";
 
-    public static readonly string[] All = [Seasonal, NameAsc, NameDesc, PriceAsc, PriceDesc];
+    public static readonly string[] All = [Seasonal, Trending, StockCover, NameAsc, NameDesc, PriceAsc, PriceDesc];
 }

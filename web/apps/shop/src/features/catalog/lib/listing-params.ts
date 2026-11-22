@@ -4,6 +4,7 @@ import type { ProductQuery } from "../api/server";
 export type SearchParams = Record<string, string | string[] | undefined>;
 
 export const SORTS = [
+  { value: "recommended", label: "Рекомендований порядок" },
   { value: "seasonal", label: "Спочатку сезонні" },
   { value: "name_asc", label: "За назвою, від А до Я" },
   { value: "name_desc", label: "За назвою, від Я до А" },
@@ -60,7 +61,7 @@ export function parseListingParams(sp: SearchParams) {
     onSale: first(sp.onSale) === "true",
     priceMin,
     priceMax,
-    sort: SORTS.some((s) => s.value === first(sp.sort)) ? first(sp.sort)! : "seasonal",
+    sort: SORTS.some((s) => s.value === first(sp.sort)) ? first(sp.sort)! : "recommended",
     page: parsePage(sp.page),
     pageSize: PAGE_SIZES.includes(Number(first(sp.pageSize))) ? Number(first(sp.pageSize)) : DEFAULT_PAGE_SIZE,
   };
@@ -77,7 +78,7 @@ export function toQuery(base: ProductQuery, p: Parsed): ProductQuery {
     onSale: p.onSale || base.onSale || undefined,
     priceMin: p.priceMin,
     priceMax: p.priceMax,
-    sort: p.sort,
+    sort: p.sort === "recommended" ? undefined : p.sort,
     page: p.page,
     pageSize: p.pageSize,
   };
@@ -92,7 +93,7 @@ export function hrefFor(basePath: string, fixed: Record<string, string>, p: Pars
   if (next.onSale) qs.set("onSale", "true");
   if (next.priceMin) qs.set("priceMin", String(next.priceMin));
   if (next.priceMax) qs.set("priceMax", String(next.priceMax));
-  if (next.sort !== "seasonal") qs.set("sort", next.sort);
+  if (next.sort !== "recommended") qs.set("sort", next.sort);
   if (next.pageSize !== DEFAULT_PAGE_SIZE) qs.set("pageSize", String(next.pageSize));
   if (next.page > 1) qs.set("page", String(next.page));
   const s = qs.toString();

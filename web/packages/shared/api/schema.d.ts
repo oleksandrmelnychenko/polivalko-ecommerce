@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/catalog/storefront-mode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetStorefrontMode"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/categories": {
         parameters: {
             query?: never;
@@ -1954,6 +1970,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/catalog/storefront-mode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleStorefrontMode"];
+        put: operations["SetStorefrontMode"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/catalog/storefront-mode/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PreviewStorefrontMode"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/catalog/attribute-names": {
         parameters: {
             query?: never;
@@ -3584,6 +3632,13 @@ export interface components {
         };
         ChangeServiceRequestStatusRequest: {
             status: null | components["schemas"]["ServiceRequestStatus"];
+        };
+        ChangeStorefrontMode: {
+            mode: string;
+            /** Format: date */
+            through: null | string;
+            /** Format: uuid */
+            expectedRevision: string;
         };
         CheckNavkoloDto: {
             stores: components["schemas"]["NavkoloStoreDto"][];
@@ -5725,6 +5780,13 @@ export interface components {
             day: string;
             reference: string;
         };
+        StorefrontModeDto: {
+            mode: string;
+            /** Format: date */
+            through: null | string;
+            /** Format: uuid */
+            revision: string;
+        };
         StreetAddressDto: {
             street: string;
             house: string;
@@ -5882,6 +5944,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    GetStorefrontMode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontModeDto"];
+                };
+            };
+        };
+    };
     GetCategoryTree: {
         parameters: {
             query?: never;
@@ -5949,7 +6031,7 @@ export interface operations {
                 priceMax?: number;
                 /** @description Характеристики у форматі Назва:Значення; кілька значень однієї назви — АБО, різні назви — І */
                 f?: string[];
-                /** @description seasonal (типово) | name_asc | name_desc | price_asc | price_desc */
+                /** @description Типово — активний режим вітрини. seasonal | trending | stock_cover | name_asc | name_desc | price_asc | price_desc */
                 sort?: string;
                 page?: number;
                 pageSize?: number;
@@ -11188,6 +11270,149 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdjustUpstreamPriceConflict"];
+                };
+            };
+        };
+    };
+    ConsoleStorefrontMode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontModeDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    SetStorefrontMode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeStorefrontMode"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorefrontModeDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PreviewStorefrontMode: {
+        parameters: {
+            query: {
+                mode: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductListItemDto"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };

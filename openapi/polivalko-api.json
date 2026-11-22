@@ -6,6 +6,26 @@
     "version": "v1"
   },
   "paths": {
+    "/api/v1/catalog/storefront-mode": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "operationId": "GetStorefrontMode",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontModeDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/categories": {
       "get": {
         "tags": [
@@ -148,7 +168,7 @@
           {
             "name": "sort",
             "in": "query",
-            "description": "seasonal (типово) | name_asc | name_desc | price_asc | price_desc",
+            "description": "Типово — активний режим вітрини. seasonal | trending | stock_cover | name_asc | name_desc | price_asc | price_desc",
             "schema": {
               "type": "string"
             }
@@ -7090,6 +7110,163 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AdjustUpstreamPriceConflict"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/catalog/storefront-mode": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "operationId": "ConsoleStorefrontMode",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontModeDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "operationId": "SetStorefrontMode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeStorefrontMode"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontModeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
+    "/api/v1/console/catalog/storefront-mode/preview": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "operationId": "PreviewStorefrontMode",
+        "parameters": [
+          {
+            "name": "mode",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductListItemDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -14238,6 +14415,30 @@
                 "$ref": "#/components/schemas/ServiceRequestStatus"
               }
             ]
+          }
+        }
+      },
+      "ChangeStorefrontMode": {
+        "required": [
+          "mode",
+          "through",
+          "expectedRevision"
+        ],
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string"
+          },
+          "through": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "expectedRevision": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
@@ -22957,6 +23158,30 @@
           },
           "reference": {
             "type": "string"
+          }
+        }
+      },
+      "StorefrontModeDto": {
+        "required": [
+          "mode",
+          "through",
+          "revision"
+        ],
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string"
+          },
+          "through": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "revision": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },

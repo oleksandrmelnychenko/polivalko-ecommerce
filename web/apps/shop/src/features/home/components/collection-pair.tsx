@@ -13,14 +13,14 @@ function flattenCategories(categories: CategoryNode[]): CategoryNode[] {
 
 export async function CollectionPairs() {
   await connection();
-  const [collections, bestsellers, categories, seasonal] = await Promise.all([
+  const [collections, bestsellers, categories, result] = await Promise.all([
     getCollections().catch(() => []),
     getBestsellers(5).catch(() => null),
     getCategoryTree().catch(() => []),
-    searchProducts({ sort: "seasonal", inStock: true, pageSize: 48 }).catch(() => null),
+    searchProducts({ inStock: true, pageSize: 48 }).catch(() => null),
   ]);
   const popular = bestsellers?.items.map(item => item.product) ?? [];
-  const ranked = seasonal?.items ?? [];
+  const ranked = result?.items ?? [];
   const recommended = [...new Map([...ranked.slice(0, 3), ...collections.flatMap(collection => collection.items), ...ranked, ...popular]
     .filter(product => product.inStock).map(product => [product.id, product])).values()].slice(0, 5);
   const byId = new Map(flattenCategories(categories).map(category => [category.id, category]));

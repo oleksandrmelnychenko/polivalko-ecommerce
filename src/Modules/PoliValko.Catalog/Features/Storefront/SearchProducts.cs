@@ -21,7 +21,8 @@ internal static class SearchProducts
         TimeProvider time,
         CancellationToken ct)
     {
-        var sort = query.Sort ?? ProductSort.Seasonal;
+        var today = KyivTime.Today(time);
+        var sort = query.Sort ?? (await StorefrontMode.CurrentAsync(db, today, ct)).Mode;
         if (!ProductSort.All.Contains(sort))
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
@@ -125,7 +126,8 @@ internal static class SearchProducts
 
         products = sort switch
         {
-            ProductSort.Seasonal => await merchandising.SortAsync(products, categories, query.Q?.Trim(), db, KyivTime.Today(time), ct),
+            ProductSort.Seasonal or ProductSort.Trending or ProductSort.StockCover =>
+                await merchandising.SortAsync(products, categories, query.Q?.Trim(), db, today, ct, sort),
             ProductSort.PriceAsc => products.OrderBy(p => p.Price.Amount).ThenBy(p => p.Id),
             ProductSort.PriceDesc => products.OrderByDescending(p => p.Price.Amount).ThenBy(p => p.Id),
             ProductSort.NameDesc => products.OrderByDescending(p => p.DisplayName ?? p.Name).ThenBy(p => p.Id),

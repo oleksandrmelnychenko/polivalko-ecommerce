@@ -9,6 +9,7 @@ internal static class CatalogEndpoints
     public static IEndpointRouteBuilder Map(IEndpointRouteBuilder api)
     {
         var group = api.MapGroup(string.Empty).WithTags("Catalog");
+        group.MapGet("/catalog/storefront-mode", StorefrontMode.Read).WithName("GetStorefrontMode");
 
         group.MapGet("/categories", GetCategoryTree.HandleAsync)
             .WithName("GetCategoryTree")

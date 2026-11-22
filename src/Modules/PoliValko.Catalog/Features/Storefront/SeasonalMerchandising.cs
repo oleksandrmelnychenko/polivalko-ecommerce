@@ -21,43 +21,65 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
     };
 
     public async Task<IQueryable<Product>> SortAsync(IQueryable<Product> products, IReadOnlyList<Category> categories,
-        string? term, PoliValkoDbContext db, DateOnly today, CancellationToken ct)
+        string? term, PoliValkoDbContext db, DateOnly today, CancellationToken ct, string mode = ProductSort.Seasonal)
     {
         var priority = PriorityCategories(today);
         var byParent = categories.ToLookup(c => c.ParentId);
         var seasonal = categories.Where(c => priority.Contains(c.Slug) || priority.Contains(c.Name))
             .SelectMany(c => CategoryQueries.Descendants(c.Id, byParent).Prepend(c.Id)).Distinct().ToArray();
-        var rankedIds = await DemandAsync(db, today, ct);
+        var signals = await DemandAsync(db, today, ct);
+        var ids = signals.Select(s => s.ProductId).ToArray();
+        var trends = signals.Select(s => Math.Max(0, s.Week - s.Previous / 3m) * s.Week / (s.Week + 3m)).ToArray();
+        var units = signals.Select(s => s.Units).ToArray();
         var ranks = db.Database.SqlQuery<DemandRank>($"""
-            SELECT id AS product_id, position AS rank FROM unnest({rankedIds}::uuid[]) WITH ORDINALITY AS r(id,position)
+            SELECT id AS product_id, position AS rank, trend, units
+            FROM unnest({ids}::uuid[], {trends}::numeric[], {units}::numeric[]) WITH ORDINALITY AS r(id,trend,units,position)
             """);
-        return from p in products
+        var measuredSince = KyivTime.StartOfDay(today.AddDays(-28));
+        var scored = from p in products
                join r in ranks on p.Id equals r.ProductId into demand
                from rank in demand.DefaultIfEmpty()
-               orderby (term != null && p.Sku == term) descending,
-                   (p.Stock.Quantity - p.Stock.ReservedQuantity >= 1 && p.Price.Amount > 0) descending,
-                   seasonal.Contains(p.CategoryId) descending, ((long?)rank.Rank ?? long.MaxValue),
-                   p.Images.Any() descending, (p.DisplayName ?? p.Name), p.Id
-               select p;
+               let available = p.Stock.Quantity - p.Stock.ReservedQuantity
+               let sold = (decimal?)rank.Units
+               // Zero sales count as slow movement only for established items with several units available.
+               let cover = sold > 0 ? 28m * available / sold :
+                   ((rank.ProductId == null || sold == 0) && available >= 3 && p.CreatedAt < measuredSince ? 3650m : 0m)
+               select new { p, available, trend = (decimal?)rank.Trend ?? 0m, cover,
+                   seasonal = seasonal.Contains(p.CategoryId), rank = (long?)rank.Rank ?? long.MaxValue };
+        var first = scored.OrderByDescending(s => term != null && s.p.Sku == term)
+            .ThenByDescending(s => s.available >= 1 && s.p.Price.Amount > 0);
+        var ordered = mode switch
+        {
+            ProductSort.Trending => first.ThenByDescending(s => s.trend).ThenByDescending(s => s.seasonal),
+            ProductSort.StockCover => first.ThenByDescending(s => s.cover >= 56).ThenByDescending(s => s.seasonal)
+                .ThenByDescending(s => s.cover),
+            _ => first.ThenByDescending(s => s.seasonal),
+        };
+        return ordered.ThenBy(s => s.rank).ThenByDescending(s => s.p.Images.Any())
+            .ThenBy(s => s.p.DisplayName ?? s.p.Name).ThenBy(s => s.p.Id).Select(s => s.p);
     }
 
-    private sealed record DemandRank(Guid ProductId, long Rank);
+    private sealed record DemandRank(Guid? ProductId, long Rank, decimal Trend, decimal? Units);
+    private sealed record ProductSignal(Guid ProductId, int Week, int Previous, decimal? Units);
 
-    private async Task<Guid[]> DemandAsync(PoliValkoDbContext db, DateOnly today, CancellationToken ct)
+    private async Task<ProductSignal[]> DemandAsync(PoliValkoDbContext db, DateOnly today, CancellationToken ct)
     {
         var key = ("storefront-seasonal-demand", today);
-        if (cache.TryGetValue<Guid[]>(key, out var saved) && saved is not null) return saved;
+        if (cache.TryGetValue<ProductSignal[]>(key, out var saved) && saved is not null) return saved;
         await _refresh.WaitAsync(ct);
         try
         {
-            if (cache.TryGetValue<Guid[]>(key, out saved) && saved is not null) return saved;
+            if (cache.TryGetValue<ProductSignal[]>(key, out saved) && saved is not null) return saved;
             var lastYear = today.AddYears(-1);
             var twoYearsAgo = today.AddYears(-2);
             var recent = today.AddDays(-27);
             // Count distinct purchase occasions, so a bulk purchase or repeated receipt line cannot dominate.
-            var ids = await db.Database.SqlQuery<Guid>($"""
+            var week = today.AddDays(-6);
+            var signals = await db.Database.SqlQuery<ProductSignal>($"""
                 WITH receipts AS (
-                    SELECT DISTINCT d.id, d.day, line->'product'->>'code' AS code
+                    SELECT d.id, d.day, line->'product'->>'code' AS code,
+                        trim(trailing '.' from lower(trim(coalesce(line->'product'->'unit'->>'title',line->'product'->>'unit')))) AS unit,
+                        sum((line->>'quantity')::numeric) AS qty
                     FROM accounting.documents d
                     CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(d.details->'products')='array'
                         THEN d.details->'products' ELSE '[]'::jsonb END) line
@@ -68,19 +90,35 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
                             OR d.day BETWEEN {twoYearsAgo.AddDays(-21)} AND {twoYearsAgo.AddDays(21)})
                         AND CASE WHEN line->>'quantity' ~ '^[0-9]+([.][0-9]+)?$'
                             THEN (line->>'quantity')::numeric > 0 ELSE false END
+                    GROUP BY 1,2,3,4
+                ), base_units AS (
+                    SELECT code, min(trim(trailing '.' from lower(trim(unit)))) AS unit
+                    FROM accounting.inventory_lines l JOIN accounting.inventory_reports r ON r.id=l.report_id
+                    WHERE r.source_account='valko-dntrade' AND nullif(trim(unit),'') IS NOT NULL
+                    GROUP BY code HAVING count(DISTINCT lower(trim(unit)))=1
                 ), signals AS (
                     SELECT p.id, CASE WHEN r.day >= {recent} THEN 1
-                        WHEN r.day >= {lastYear.AddDays(-21)} THEN 3 ELSE 2 END AS weight, r.id AS purchase_id
+                        WHEN r.day >= {lastYear.AddDays(-21)} THEN 3 ELSE 2 END AS weight, r.id AS purchase_id,
+                        r.day, sum(r.qty) AS qty, bool_and(coalesce(u.unit = CASE r.unit
+                            WHEN '2009' THEN 'шт' WHEN '0301' THEN 'кг' WHEN '301' THEN 'кг'
+                            WHEN '0138' THEN 'л' WHEN '138' THEN 'л' ELSE r.unit END,false)) AS comparable
                     FROM receipts r JOIN catalog.products p ON p.navkolo_id='dntrade-code:'||r.code
+                    LEFT JOIN base_units u ON u.code=r.code GROUP BY p.id,r.id,r.day
                     UNION ALL
-                    SELECT DISTINCT i.product_id, 1 AS weight, o.id
+                    SELECT i.product_id, 1 AS weight, o.id, (o.created_at AT TIME ZONE 'Europe/Kyiv')::date,
+                        sum(i.quantity),true
                     FROM ordering.orders o JOIN ordering.order_items i ON i.order_id=o.id
                     WHERE o.created_at >= {KyivTime.StartOfDay(recent)} AND o.created_at < {KyivTime.StartOfDay(today.AddDays(1))}
                         AND o.status IN ('Confirmed','Paid','Shipped','ReadyForPickup','Completed')
+                    GROUP BY i.product_id,o.id,o.created_at
                 )
-                SELECT id AS "Value" FROM signals GROUP BY id ORDER BY sum(weight) DESC, id
+                SELECT id AS product_id, count(*) FILTER (WHERE day >= {week})::int AS week,
+                    count(*) FILTER (WHERE day >= {recent} AND day < {week})::int AS previous,
+                    CASE WHEN bool_and(comparable OR day < {recent})
+                        THEN coalesce(sum(qty) FILTER (WHERE day >= {recent}),0) END AS units
+                FROM signals GROUP BY id ORDER BY sum(weight) DESC, id
                 """).ToArrayAsync(ct);
-            return cache.Set(key, ids, TimeSpan.FromHours(1));
+            return cache.Set(key, signals, TimeSpan.FromMinutes(10));
         }
         finally { _refresh.Release(); }
     }

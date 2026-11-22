@@ -19,6 +19,7 @@ internal static class ConsoleCatalogEndpoints
         var catalog = console.MapGroup("/catalog").WithTags("Console");
 
         ProductEndpoints.Map(catalog);
+        Storefront.StorefrontMode.MapConsole(catalog);
         AttributeNameEndpoints.Map(catalog);
         CategoryEndpoints.Map(catalog);
         CollectionEndpoints.Map(catalog);
