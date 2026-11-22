@@ -8,6 +8,9 @@ import { TableChip } from '@/shared/ui/TableChip'
 import type { BudgetItem, PurchaseSeason, SupplierGroup } from '../api/dashboardApi'
 import { numberFormat } from '../lib/insights'
 
+// The same precision as the unit price on screen, so the downloaded order repeats it exactly.
+const priceFormat = new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 6 })
+
 type Picked = { id: string; supplier: string | null; name: string; unit: string; quantity: number | null }
 type Line = { item: BudgetItem; quantity: number; amount: number | null }
 
@@ -81,12 +84,19 @@ function subtotal(lines: Line[]) {
   return lines.reduce((cents, line) => cents + Math.round((line.amount ?? 0) * 100), 0) / 100
 }
 
+// A line without a price adds nothing to the sum, so the total has to say how many lines it leaves out.
+function orderTotal(lines: Line[]) {
+  const unpriced = lines.filter(line => line.amount === null).length
+  if (unpriced === lines.length) return 'Сума невідома'
+  return formatPrice(subtotal(lines)) + (unpriced ? ' + без ціни: ' + unpriced : '')
+}
+
 function download(group: SupplierGroup, lines: Line[], through: string, days: number, cover: number, seasonal: boolean) {
   const text = [
     'Чернетка замовлення · ' + group.name, dateLabel(through),
     'Продажі за ' + days + ' днів · запас на ' + cover + ' днів · ' + (seasonal ? 'з урахуванням сезону' : 'за поточним темпом'),
     ...lines.map(({ item, quantity, amount }) => [item.sku, item.name, numberFormat.format(quantity) + ' ' + item.unit,
-      item.unitPrice === null ? 'Ціну уточнити' : numberFormat.format(item.unitPrice) + ' грн/' + item.unit,
+      item.unitPrice === null ? 'Ціну уточнити' : priceFormat.format(item.unitPrice) + ' грн/' + item.unit,
       item.priceDay && dateLabel(item.priceDay), amount === null ? '' : formatPrice(amount)].filter(Boolean).join(' · ')),
     'Оцінено на ' + formatPrice(subtotal(lines)) + ' · без ціни ' + lines.filter(line => line.amount === null).length,
   ].join('\r\n')
@@ -129,7 +139,7 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
     {!allAdded && <Button variant="default" size="compact-xs"
       onClick={() => basket.add(groups)}>Додати всю чергу</Button>}
     {orders.map(({ group, lines: items, remaining }) => <details className="dash-cart-order" key={group.id ?? 'unknown'}>
-      <summary><span>{group.name || 'Уточнити постачальника'}</span><strong>{formatPrice(subtotal(items))}</strong><IconChevronDown size={15} aria-hidden="true" /></summary>
+      <summary><span>{group.name || 'Уточнити постачальника'}</span><strong>{orderTotal(items)}</strong><IconChevronDown size={15} aria-hidden="true" /></summary>
       <ul>{items.map(({ item, quantity, amount }) => <li key={item.id}>
         <Link className="dash-budget-product" to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}</Link>
         <div className="dash-cart-meta">{item.sku && <small>Артикул {item.sku}</small>}<TableChip tone="storage" value={`Рекомендовано ${numberFormat.format(item.quantity)} ${item.unit}`} />
