@@ -21,6 +21,12 @@ class AssortmentPeriodTests(TestCase):
         middle = report(snapshot(rows), {"from": "2025-02-01", "to": "2025-02-20"})
         self.assertEqual(middle["previous"]["net"], 100)
 
+    def test_period_asked_past_the_snapshot_ends_with_the_snapshot(self):
+        result = report(snapshot([doc()]), {"from": "2026-11-01", "to": "2026-11-21"})
+        self.assertEqual((result["end"], result["summary"]["net"]), (str(DAY), 100))
+        with self.assertRaises(ValueError):
+            report(snapshot([doc()]), {"from": "2026-11-20", "to": "2026-11-21"})
+
     def test_months_with_data_are_counted_against_the_months_a_year_could_have(self):
         rows = [doc(f"{year}-{month}", day=date(year, month, 5)) for year, months in ((2025, range(4, 13)), (2026, range(1, 12)))
                 for month in months]

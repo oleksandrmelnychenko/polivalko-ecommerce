@@ -329,6 +329,9 @@ export function BusinessAnalyticsPage() {
               </div>
               {tab === 'overview' && r && (
                 <>
+                  {/* The previous figures stay on screen while a new selection loads; say that they are being replaced. */}
+                  {report.isFetching && <section className="pa-card ba-report-feedback">
+                    <div role="status"><Loader size={16} />Оновлюємо показники за новим вибором…</div></section>}
                   <div className="ba-kpis ba-overview-metrics">
                     {kpiDefinitions.map(({ key, title: label, icon }) => {
                       const value = r.summary[key]

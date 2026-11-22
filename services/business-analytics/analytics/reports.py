@@ -9,9 +9,11 @@ from .forecast import replenishment
 
 
 def window(snapshot, query):
-    end = date.fromisoformat(query.get("to") or snapshot["asOf"])
+    # A link built from today's date can ask for a day the snapshot does not cover yet, for example
+    # before the nightly refresh. The report then ends where the data ends and says so in "end".
+    end = min(date.fromisoformat(query.get("to") or snapshot["asOf"]), date.fromisoformat(snapshot["asOf"]))
     start = date.fromisoformat(query.get("from") or str(end.replace(month=1, day=1)))
-    if start > end or str(end) > snapshot["asOf"] or start.year < 1900:
+    if start > end or start.year < 1900:
         raise ValueError("Перевірте дати періоду")
     return start, end
 
