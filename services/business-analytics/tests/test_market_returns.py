@@ -36,3 +36,17 @@ class ReturnPlaceTests(TestCase):
         self.assertEqual(region(alone, "documents", "UA51")["returns"], 1)
         twice = summarize([row(region="Київська", link="sale-2"), row(region="Львівська", link="sale-2"), refund], [])
         self.assertEqual(region(twice, "documents", "UA51")["returns"], 1)
+
+    def test_return_of_a_sale_from_an_earlier_year_is_subtracted_where_that_sale_was_delivered(self):
+        # The query adds the earlier sale only to tell where it went; it is not a purchase of this year.
+        earlier = row(region="Київська", city="м. Буча", link="sale-2025", earlier=True, amount=Decimal(900),
+                      last_day=date(2025, 12, 20))
+        refund = row(entity_type="customerReturn", kind="back", link="sale-2025", amount=Decimal(900))
+        for rows in ([refund, earlier], [earlier, refund]):
+            result = summarize(rows, [])
+            kyiv = region(result, "documents", "UA32")
+            self.assertEqual((kyiv["count"], kyiv["returns"], kyiv["amount"]), (0, 1, -900))
+            self.assertEqual(result["documents"]["unknown"]["amount"], 0)
+            self.assertEqual(result["documentCounts"], dict(invoices=0, receipts=0, returns=1))
+            buyer, = result["partners"]
+            self.assertEqual((buyer["count"], buyer["returns"], buyer["amount"], buyer["lastPurchase"]), (0, 1, -900, None))

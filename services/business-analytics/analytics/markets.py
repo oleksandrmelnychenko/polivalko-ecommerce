@@ -46,18 +46,33 @@ BUYER_CITY, BUYER_REGION = address_fields("buyer_address")
 REFUND = """ (d.entity_type='customerReturn' OR lower(coalesce(d.kind,'')) IN ('back','7','return')
          OR coalesce(d.details->>'type','')='7')"""
 DOCUMENTS = """
-WITH sales AS (
- SELECT d.* FROM accounting.documents d WHERE d.entity_type IN ('invoice','customerReturn')
+WITH returned AS NOT MATERIALIZED (
+ -- Read the few returns of the period directly. Taking them from the located rows would make
+ -- PostgreSQL keep every document of the year in memory to read it twice. The list is used twice;
+ -- kept as one stored result, it was compared with every sale row by row instead of by hash.
+ SELECT DISTINCT d.source_account AS account,lower(""" + PARENT_REF + """) AS ref FROM accounting.documents d
+ WHERE d.entity_type IN ('invoice','customerReturn') AND d.day >= %s AND d.day < %s AND""" + REFUND + """
+   AND """ + PARENT_REF + """ IS NOT NULL
+), sales AS (
+ SELECT d.*,false AS earlier FROM accounting.documents d WHERE d.entity_type IN ('invoice','customerReturn')
    AND d.day >= %s AND d.day < %s
- UNION ALL SELECT d.* FROM accounting.documents d
+ UNION ALL SELECT d.*,false FROM accounting.documents d
 """ + INDEPENDENT_RECEIPTS + """
+ -- A sale made before the period that a return of the period refers to. It is not a purchase of
+ -- the period; it only tells where the returned goods had been delivered.
+ -- OFFSET 0 keeps this a lookup by identifier for each return. Joined freely, PostgreSQL may
+ -- read every earlier document instead.
+ UNION ALL SELECT d.*,true FROM returned r CROSS JOIN LATERAL (
+   SELECT p.* FROM accounting.documents p WHERE p.source_account=r.account AND lower(p.source_id)=r.ref
+     AND p.entity_type IN ('invoice','receipt') AND p.day < %s
+     AND lower(coalesce(p.kind,'')) NOT IN ('back','7','return') OFFSET 0) d
 ), identities AS (
  SELECT source_account,lower(source_id) AS ref,min(id::text)::uuid AS id FROM accounting.partners
  GROUP BY 1,2 HAVING count(*)=1
 ), selected AS (
  SELECT d.source_account AS account,d.entity_type,d.kind,d.status,d.currency,d.details->>'type' AS raw_kind,
         d.details->>'status' AS raw_status,d.details->>'currency_iso' AS raw_currency,
-        p.id::text AS partner,p.title AS name,d.total,d.day,
+        p.id::text AS partner,p.title AS name,d.total,d.day,d.earlier,
         lower(d.source_id) AS ref,lower(""" + PARENT_REF + """) AS parent,""" + REFUND + """ AS refund,
         coalesce(nullif(profile#>>'{address,region,title}',''),nullif(profile#>>'{address,region}',''),
                  nullif(profile#>>'{region,title}',''),nullif(profile->>'region',''),profile->>'oblast') AS partner_region,
@@ -109,12 +124,6 @@ WITH sales AS (
    coalesce(partner_region,""" + BUYER_REGION + """) AS buyer_region,
    coalesce(nullif(partner_city,''),""" + BUYER_CITY + """) AS buyer_city
  FROM addresses a
-), returned AS (
- -- Read the few returns of the period directly. Taking them from the located rows would make
- -- PostgreSQL keep every document of the year in memory to read it twice.
- SELECT DISTINCT d.source_account AS account,lower(""" + PARENT_REF + """) AS ref FROM accounting.documents d
- WHERE d.entity_type IN ('invoice','customerReturn') AND d.day >= %s AND d.day < %s AND""" + REFUND + """
-   AND """ + PARENT_REF + """ IS NOT NULL
 ), linked AS (
  -- A return and the sale it refers to share a link, so the return can leave the place where the sale was counted.
  SELECT l.*,CASE WHEN l.refund THEN l.parent ELSE r.ref END AS link
@@ -123,11 +132,11 @@ WITH sales AS (
 SELECT account,entity_type,kind,status,currency,raw_kind,raw_status,raw_currency,partner,name,region,buyer_region,city,buyer_city,
        nullif(trim(shipping_address),'') IS NOT NULL AS has_delivery_address,
        nullif(trim(buyer_address),'') IS NOT NULL AS has_buyer_address,
-       order_number,waybill,order_ref,link,
+       order_number,waybill,order_ref,link,earlier,
        count(*) AS count,sum(abs(total)) FILTER (WHERE abs(total)<=1e15) AS amount,
        max(day) FILTER (WHERE abs(total)<=1e15) AS last_day,
        count(*) FILTER (WHERE total IS NULL OR abs(total)>1e15) AS invalid
-FROM linked GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
+FROM linked GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21
 """
 WEB = """
 SELECT s.area AS region,s.name AS city,
@@ -143,6 +152,14 @@ GROUP BY 1,2
 
 def bucket():
     return dict(count=0, returns=0, amount=Decimal(0), lastPurchase=None)
+
+
+def placed(row, match):
+    """Where a sale was delivered: the linked shipment when it names a region, otherwise the document itself."""
+    if match.status in ("ttn", "number", "ref") and resolve(region_code(match.region), match.city,
+                                                           not (match.region or "").strip())[0]:
+        return match.region, match.city
+    return row["region"], row.get("city")
 
 
 def add(bucket_, count, amount, refund=False, last=None):
@@ -193,7 +210,12 @@ def summarize(headers, web, shipments=None, carrier=None):
     names, invalid = {}, 0
     # Where each sale that has a return was counted. Sales come first so that a return finds its sale.
     sold = defaultdict(set)
+    for row in headers:
+        if row.get("earlier") and row.get("link"):
+            sold[row["account"], row["link"]].add(placed(row, shipments.match(row)))
     for row in sorted(headers, key=lambda r: r["entity_type"] != "receipt" and kind_of(r) == "return"):
+        if row.get("earlier"):
+            continue
         kind = "receipt" if row["entity_type"] == "receipt" else kind_of(row)
         if kind not in ("sale", "return", "receipt", "invalid") or (kind == "receipt" and row["entity_type"] != "receipt"):
             continue
@@ -304,13 +326,13 @@ def markets(year, today, page=1, search="", include_carrier=False):
         if not item or item[0] <= monotonic() or item[1] != today:
             bounds = date(year, 1, 1), min(date(year+1, 1, 1), today + timedelta(days=1))
             with production() as conn:
-                headers = list(conn.execute(DOCUMENTS, bounds*3))
+                headers = list(conn.execute(DOCUMENTS, bounds*3 + bounds[:1]))
                 shipments = ShipmentIndex.read(conn, headers)
                 web = list(conn.execute(WEB, bounds))
             carrier = None
             if include_carrier:
                 invoices = (r for r in headers if r["entity_type"] == "invoice" and kind_of(r) == "sale"
-                            and currency_valid(r) and r["count"] > r["invalid"])
+                            and not r.get("earlier") and currency_valid(r) and r["count"] > r["invalid"])
                 carrier = read_history(year, today, invoices)
             data = summarize(headers, web, shipments, carrier)
             log_coverage(year, data)
