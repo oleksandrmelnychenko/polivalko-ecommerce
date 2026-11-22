@@ -28,10 +28,12 @@ ARCHIVE_LINES = ARCHIVE_SQL.replace("DAY_FILTER", """r.source_day BETWEEN %s AND
 # The accounting projection fills parent_ref only from parent_document.external_id. The parent
 # also arrives as a plain identifier or as an object with only an id; the archive reader and the
 # overview register accept those forms. Without them a receipt issued for a posted invoice would
-# count as a second sale.
+# count as a second sale. The source can also list a receipt under its invoice without repeating
+# the invoice in the receipt body: then only the import envelope, kept in the archive, names it.
 PARENT_REF = """coalesce(nullif(d.parent_ref,''), CASE jsonb_typeof(d.details->'parent_document')
     WHEN 'string' THEN nullif(d.details->>'parent_document','') WHEN 'number' THEN d.details->>'parent_document'
-    WHEN 'object' THEN nullif(d.details#>>'{parent_document,id}','') END)"""
+    WHEN 'object' THEN nullif(d.details#>>'{parent_document,id}','') END,
+    (SELECT nullif(a.parent_source_id,'') FROM integration.dntrade_archive_records a WHERE a.id=d.id))"""
 
 # The register's status and currency come from the import envelope. A sales invoice is also checked
 # against its own body (kind_of, currency_valid), so a receipt gets the same two checks.

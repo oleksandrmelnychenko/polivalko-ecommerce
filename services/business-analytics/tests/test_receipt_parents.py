@@ -11,6 +11,10 @@ class ReceiptParentTests(TestCase):
         for form in ("d.parent_ref", "WHEN 'string'", "WHEN 'number'", "{parent_document,id}"):
             self.assertIn(form, PARENT_REF)
 
+    def test_parent_known_only_to_the_import_envelope_is_read_from_the_archive(self):
+        # The source can list a receipt under its invoice without repeating the invoice in the receipt body.
+        self.assertIn("SELECT nullif(a.parent_source_id,'') FROM integration.dntrade_archive_records a WHERE a.id=d.id", PARENT_REF)
+
     def test_every_receipt_query_links_invoices_through_that_parent(self):
         queries = dict(
             dashboard=dashboard.RECEIPTS, cash=invoices.CASH_MONTHS, turnover=turnover.RECEIPT_MONTHS,
