@@ -19,10 +19,10 @@ public sealed class StorefrontModeTests(ApiFactory api)
     {
         var irrigation = new List<Product>();
         for (var i = 0; i < 14; i++)
-            irrigation.Add(await api.AddProductAsync("vse-dlia-polyvu", $"A{i:D2}", 100));
-        var garden = await api.AddProductAsync("vse-dlia-vidpochynku", "Z1", 100);
-        var nextGarden = await api.AddProductAsync("vse-dlia-vidpochynku", "Z2", 100);
-        var unavailable = await api.AddProductAsync("vse-dlia-vidpochynku", "A", 100, stock: 0);
+            irrigation.Add(await api.AddProductAsync("vse-dlia-polyvu", $"A{i:D2} Шланг", 100));
+        var garden = await api.AddProductAsync("vse-dlia-vidpochynku", "Z1 Гамак", 100);
+        var nextGarden = await api.AddProductAsync("vse-dlia-vidpochynku", "Z2 Гамак", 100);
+        var unavailable = await api.AddProductAsync("vse-dlia-vidpochynku", "A Гамак", 100, stock: 0);
         var other = await api.AddProductAsync("novyi-rik", "0", 100);
         var ids = irrigation.Select(p => p.Id).Concat([garden.Id, nextGarden.Id, unavailable.Id, other.Id]).ToArray();
         await api.WithScopeAsync(async services =>

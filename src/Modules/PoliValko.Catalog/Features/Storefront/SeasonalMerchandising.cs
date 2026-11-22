@@ -30,12 +30,8 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
         Guid[] Family(string key) => categories.Where(c => c.Slug == key || c.Name == key)
             .SelectMany(c => CategoryQueries.Descendants(c.Id, byParent).Prepend(c.Id)).Distinct().ToArray();
         var seasonalMode = mode == ProductSort.Seasonal;
-        var coverCategories = seasonalMode ? Family(PlantCovers) : [];
-        var familyKeys = seasonalMode ? priority.Append(PlantCovers).Distinct() : priority;
-        var families = familyKeys.Select(key => key == PlantCovers && seasonalMode ? coverCategories : Family(key))
-            .Where(family => family.Length > 0).ToArray();
-        var seasonal = families.SelectMany(family => family).Distinct().ToArray();
-        var shadeSeason = today.Month is >= 5 and <= 8;
+        var seasonal = seasonalMode ? [] : priority.SelectMany(Family).Distinct().ToArray();
+        var purposes = SeasonalPurpose.Query(db, categories, today, seasonalMode);
         var signals = await DemandAsync(db, today, ct);
         var ids = signals.Select(s => s.ProductId).ToArray();
         var trends = signals.Select(s => Math.Max(0, s.Week - s.Previous / 3m) * s.Week / (s.Week + 3m)).ToArray();
@@ -49,28 +45,25 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
         var scored = from p in products
                join r in ranks on p.Id equals r.ProductId into demand
                from rank in demand.DefaultIfEmpty()
+               join m in purposes.Rows on p.Id equals m.ProductId into classified
+               from match in classified.DefaultIfEmpty()
                let available = p.Stock.Quantity - p.Stock.ReservedQuantity
                let sold = (decimal?)rank.Units
-               let title = p.DisplayName ?? p.Name
-               let matchesCoverSeason = shadeSeason
-                   ? EF.Functions.ILike(title, "сіт%затін%") || EF.Functions.ILike(title, "затін%сіт%")
-                   : EF.Functions.ILike(title, "%чох%") && (EF.Functions.ILike(title, "%рослин%") || EF.Functions.ILike(title, "%троянд%"))
-                     || EF.Functions.ILike(title, "%агроволокн%") && EF.Functions.ILike(title, "%біл%") && !EF.Functions.ILike(title, "%чорн%")
-                     || EF.Functions.ILike(title, "%від мороз%") || EF.Functions.ILike(title, "%від замороз%")
                // Zero sales count as slow movement only for established items with several units available.
                let cover = sold > 0 ? 28m * available / sold :
                    ((rank.ProductId == null || sold == 0) && available >= 3 && p.CreatedAt < measuredSince ? 3650m : 0m)
                select new { p, available, trend = (decimal?)rank.Trend ?? 0m, cover,
-                   seasonal = seasonal.Contains(p.CategoryId) && (!coverCategories.Contains(p.CategoryId) || matchesCoverSeason),
+                   seasonal = seasonalMode ? match.Family != null : seasonal.Contains(p.CategoryId),
+                   family = match.Family ?? -1,
                    demand = (long?)rank.Demand ?? 0L };
         Guid[] leaders = [];
-        if (mode == ProductSort.Seasonal && acrossCategories && string.IsNullOrWhiteSpace(term) && families.Length > 1)
+        if (seasonalMode && acrossCategories && string.IsNullOrWhiteSpace(term) && purposes.Families > 1)
         {
             var candidates = scored.Where(s => s.seasonal && s.available >= 1 && s.p.Price.Amount > 0)
                 .OrderByDescending(s => s.demand).ThenByDescending(s => s.p.Images.Any())
                 .ThenBy(s => s.p.DisplayName ?? s.p.Name).ThenBy(s => s.p.Id)
-                .Select(s => new Candidate(s.p.Id, s.p.CategoryId));
-            leaders = await LeadingProductsAsync(candidates, families, ct);
+                .Select(s => new Candidate(s.p.Id, s.family));
+            leaders = await LeadingProductsAsync(candidates, purposes.Families, ct);
         }
         var first = scored.OrderByDescending(s => term != null && s.p.Sku == term);
         if (pinned is { Length: > 0 })
@@ -89,23 +82,20 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
             .ThenBy(s => s.p.DisplayName ?? s.p.Name).ThenBy(s => s.p.Id).Select(s => s.p);
     }
 
-    private sealed record Candidate(Guid Id, Guid CategoryId);
+    private sealed record Candidate(Guid Id, int Family);
     private sealed record DemandRank(Guid? ProductId, long Demand, decimal Trend, decimal? Units);
     private sealed record ProductSignal(Guid ProductId, long Demand, int Week, int Previous, decimal? Units);
 
-    private static async Task<Guid[]> LeadingProductsAsync(IQueryable<Candidate> candidates, Guid[][] families, CancellationToken ct)
+    private static async Task<Guid[]> LeadingProductsAsync(IQueryable<Candidate> candidates, int families, CancellationToken ct)
     {
         const int slots = 12;
-        var categoryToFamily = new Dictionary<Guid, int>();
-        var heads = families.Select(_ => new Queue<(Guid Id, int Position)>()).ToArray();
-        for (var i = 0; i < families.Length; i++)
-            foreach (var category in families[i]) categoryToFamily.TryAdd(category, i);
+        var heads = Enumerable.Range(0, families).Select(_ => new Queue<(Guid Id, int Position)>()).ToArray();
 
         // Keep only the products that can enter the first twelve, even when a family is sold out.
         var position = 0;
         await foreach (var product in candidates.AsAsyncEnumerable().WithCancellation(ct))
         {
-            var family = heads[categoryToFamily[product.CategoryId]];
+            var family = heads[product.Family];
             if (family.Count < slots) family.Enqueue((product.Id, position));
             position++;
             if (heads.All(group => group.Count == slots)) break;
