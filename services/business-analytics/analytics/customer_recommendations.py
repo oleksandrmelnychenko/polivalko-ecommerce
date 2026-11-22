@@ -195,13 +195,23 @@ def allocate_stock(active, offers=()):
                 return (0, offer_order[item["offerId"]])
             return (2 if item["offerId"] else 1, buyer_priority(entry))
         queue.sort(key=priority)
+        # A reserved, declined, released or shipped offer is an answer. Such a buyer stays on the list
+        # with the decision, but no longer waits for stock: the queue, its need and any shortage are
+        # counted from buyers who have not answered or have not been asked yet.
+        waiting = sum(not item["offerId"] or item["offerStatus"] == "offered" for _, item in queue)
+        # Stock kept for offers without an answer, also those made to customers outside this period.
+        held = sum(assigned.values())
         for rank, (_, item) in enumerate(queue, start=1):
             if item["offerId"]:
                 quantity = assigned.get(item["offerId"], 0)
             else:
                 quantity = min(item["requested"], remaining)
                 remaining -= quantity
-            item.update(rank=rank, buyers=len(queue), quantity=quantity,
+            if item["offerId"] and item["offerStatus"] != "offered":
+                item.update(rank=0, buyers=0, requested=Decimal(0))
+            else:
+                item.update(rank=rank, buyers=waiting)
+            item.update(quantity=quantity, held=Decimal(0) if item["offerId"] else held,
                         amount=(quantity * item["price"]).quantize(Decimal(".01"), rounding=ROUND_HALF_UP))
 
     for customer in clients:
@@ -219,7 +229,8 @@ def allocation_report(customers, today, days, offers=()):
     return dict(start=start, through=str(today), active=len(active), clients=clients,
                 offers=[o for o in reversed(offers) if o["status"] in ("offered","reserved") or o["changedAt"][:10] >= start
                         or o["id"] in visible_offers],
-                offeredClients=sum(any(i["quantity"] > 0 for i in c["items"]) for c in clients))
+                # Customers still to be asked: a quantity held by an unanswered offer is already offered.
+                offeredClients=sum(any(i["quantity"] > 0 and not i["offerId"] for i in c["items"]) for c in clients))
 
 
 _history_cache = None
