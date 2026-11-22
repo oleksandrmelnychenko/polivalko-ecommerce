@@ -136,11 +136,10 @@ def rank_products(
         by_product[row.product_key].append(row)
 
     products = []
+    # Products last sold before both periods stay in the ranking. The table leaves them out
+    # (product_page); the signal about stock without recent sales must see them whatever period is shown.
     for key, group in by_product.items():
         latest = max(group, key=lambda row: row.day)
-        if key != selected and latest.day < previous_start:
-            continue
-
         catalog_item = catalog.get(latest.catalog_id)
         current = [row for row in group if row.day >= start]
         positive = [row for row in group if row.sold > 0]
