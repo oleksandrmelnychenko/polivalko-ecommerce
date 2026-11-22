@@ -1,5 +1,15 @@
 [data-section='partners'] .console-frame:has(.partners-workspace) { overflow-y: auto; }
 .partners-workspace, .partners-page { display: grid; align-content: start; min-width: 0; gap: 12px; }
+.partner-directory {
+  --directory-inset: clamp(12px, 1.4vw, 20px);
+  gap: clamp(12px, 1.1vw, 16px);
+  padding: var(--directory-inset) clamp(4px, .6vw, 10px);
+}
+.partner-directory > .app-filter-bar,
+.partner-directory .ledger-card-head {
+  padding: clamp(12px, 1.1vw, 16px) var(--directory-inset);
+  gap: 12px;
+}
 .partners-workspace > .app-filter-bar {
   border: 1px solid var(--app-line);
   border-radius: var(--app-panel-radius);
@@ -10,6 +20,10 @@
 .partner-return { width: fit-content; }
 .partner-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .partner-table :is(th, td) { padding: 10px 16px; text-align: start; }
+@media (min-width: 701px) {
+  .partner-table :is(th, td):first-child { padding-inline-start: var(--directory-inset); }
+  .partner-table :is(th, td):last-child { padding-inline-end: var(--directory-inset); }
+}
 .partner-table th { color: var(--mantine-color-gray-7); background: var(--app-ground); font-size: 12px; font-weight: 600; }
 .partner-table tr + tr td { border-top: 1px dashed var(--app-line); }
 .partner-table tbody tr:is(:hover,:focus-within) { background: var(--app-ground); }
@@ -57,6 +71,7 @@
   .partner-table tbody tr, :is(.partner-block,.partner-payments) .register-scroll tbody tr {
     display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px 12px; padding: 12px;
   }
+  .partner-table tbody tr { padding-inline: var(--directory-inset); }
   .partner-table tr + tr, :is(.partner-block,.partner-payments) .register-scroll tr + tr { border-top: 1px dashed var(--app-line); }
   .partner-table tbody tr td, :is(.partner-block,.partner-payments) .register-scroll tr td {
     display: block; min-width: 0; border: 0; padding: 0; text-align: start; overflow-wrap: anywhere; white-space: normal;
@@ -67,4 +82,9 @@
   }
   .partner-identity, .partner-block { padding: 12px; }
   .partner-meta { gap: 4px; }
+}
+
+@media (max-width: 360px) {
+  .partner-directory .app-paginator-divider,
+  .partner-directory .app-paginator-divider + .app-paginator-label { display: none; }
 }

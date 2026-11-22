@@ -124,7 +124,7 @@ function DirectoryList() {
   }
 
   return (
-    <div className="partners-workspace ledger-workspace">
+    <div className="partners-workspace ledger-workspace partner-directory">
       <PageHeader title="Контрагенти" />
       <FilterBar
         activeCount={Number(Boolean(kind)) + Number(Boolean(category))}
@@ -187,7 +187,7 @@ function DirectoryList() {
         <header className="ledger-card-head">
           <h2><MetricLabel icon={IconUsers}>Довідник контрагентів</MetricLabel></h2>
           {can(PermissionKeys.Accounting.Edit) && (
-            <Button size="compact-sm" radius="xl" leftSection={<IconPlus size={15} />} onClick={() => setAdding(true)}>
+            <Button size="sm" radius="xl" leftSection={<IconPlus size={15} />} onClick={() => setAdding(true)}>
               Додати контрагента
             </Button>
           )}
