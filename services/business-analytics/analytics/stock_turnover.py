@@ -6,6 +6,7 @@ from threading import Lock
 from time import monotonic
 
 from .dashboard import dashboard
+from .purchase_season import history, profiles
 from .register import identifier
 from .source import INVENTORY_UNITS, production
 from .supplier_orders import DOCUMENTS, REGISTER, incoming_by_product, register_entries, schedule, unit_label
@@ -18,6 +19,7 @@ DEFAULT_COVER_DAYS = 14
 COVER_OPTIONS = (7, DEFAULT_COVER_DAYS, 30)
 CATALOG = """
 SELECT p.id::text, p.navkolo_id AS external, p.sku, coalesce(nullif(p.display_name,''),p.name) AS name,
+       p.category_id::text AS category,
        p.is_visible AND NOT p.is_archived AS visible, s.quantity AS on_hand, s.reserved_quantity AS reserved, u.unit,
        (s.warehouse_org_id IS NOT NULL OR s.warehouse_store_id IS NOT NULL) AS bound,
        lower(org.source_id) AS org,lower(store.source_id) AS store,
@@ -38,7 +40,7 @@ def uncovered_gap(demand, available, days, cover_days, arrivals):
     return max(gap, demand * cover_days - balance * days)
 
 
-def purchase_plan(sales, known, stock_unit, available, days, cover_days, arrivals=(), possible=()):
+def purchase_plan(sales, known, stock_unit, available, days, cover_days, arrivals=(), possible=(), factor=1):
     net = sum((p["net"] for p in sales), Decimal(0))
     priced = known and net > 0 and all(p["profit"] is not None for p in sales)
     profit = sum(p["profit"] for p in sales) if priced else None
@@ -58,8 +60,9 @@ def purchase_plan(sales, known, stock_unit, available, days, cover_days, arrival
         if not unit:
             return dict(plan, purchaseStatus="units")
     quantity = sum((p["netQuantity"] for p in sales), Decimal(0))
-    demand = max(0, quantity)
-    plan.update(unit=unit or None, dailyRate=demand / Decimal(days))
+    observed = max(0, quantity)
+    demand = observed * factor
+    plan.update(unit=unit or None, dailyRate=observed / Decimal(days))
     if demand > 0:
         plan["stockDays"] = max(0, available) * days / demand
     # Compare in unit-days before division to keep exact integer boundaries when rounding up.
@@ -88,10 +91,10 @@ def purchase_plan(sales, known, stock_unit, available, days, cover_days, arrival
         return dict(plan, purchaseStatus="cost")
     # At the observed turnover share and margin, value only the demand the stock cannot cover.
     uncovered = min(certain_gap, demand * cover_days)
-    return dict(plan, purchaseStatus="buy", buyQuantity=minimum, priorityProfit=profit * uncovered / (days * demand))
+    return dict(plan, purchaseStatus="buy", buyQuantity=minimum, priorityProfit=profit * uncovered / (days * observed))
 
 
-def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), register=None, receipt_prices=()):
+def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), register=None, receipt_prices=(), season_profiles=None):
     catalog = list(catalog)
     by_id = {p["id"]: p for p in catalog}
     by_external = defaultdict(set)
@@ -102,6 +105,7 @@ def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), r
     today = date.fromisoformat(report["through"])
     incoming, source = incoming_by_product(supplier_docs, register or {}, by_external)
     receipts = index_receipts(receipt_prices, by_id, by_external)
+    seasons = season_profiles(by_id, by_external) if season_profiles else {}
 
     matched = defaultdict(list)
     ambiguous = set()
@@ -134,16 +138,27 @@ def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), r
         sales = matched.get(p["id"], [])
         net = sum((item["net"] for item in sales), Decimal(0)) if known else None
         supply, arrivals, possible = schedule(incoming.get(p["id"], ()), p, today, cover_days)
-        plan = purchase_plan(sales, known, p["unit"], available, report["days"], cover_days, arrivals.items(), possible.items())
+        unit = unit_label(p["unit"])
+        season = seasons.get(("product", p["id"], unit)) or seasons.get(("category", p.get("category"), unit))
+        plan = purchase_plan(sales, known, p["unit"], available, report["days"], cover_days, arrivals.items(), possible.items(),
+                             season["factor"] if season else 1)
+        upcoming = seasons.get(("upcoming", p["id"], unit))
+        if upcoming and plan["purchaseStatus"] == "no-demand":
+            gap = uncovered_gap(upcoming["rate"], available, 1, cover_days, arrivals)
+            if gap > 0:
+                plan.update(purchaseStatus="season-review", historicalDemand=upcoming["rate"] * cover_days,
+                            historicalSeasons=upcoming["years"])
         rows.append(dict(id=p["id"], name=p["name"], sku=p["sku"], onHand=p["on_hand"], reserved=p["reserved"],
                          available=available, net=net, share=net/period_net if net is not None and period_net>0 else None,
-                         supply=supply, lastPurchase=latest_purchase(receipts.get(p["id"]), plan["unit"], plan["buyQuantity"]), **plan))
+                         supply=supply, season=season,
+                         lastPurchase=latest_purchase(receipts.get(p["id"]), plan["unit"], plan["buyQuantity"]), **plan))
     rows.sort(key=lambda r: (r["net"] is None, -(r["net"] or 0), r["available"], r["name"], r["id"]))
     known = [r["net"] for r in rows if r["net"] is not None]
     subtotal = sum(known, Decimal(0)) if known or not rows else None
     out = sum(r["available"] <= 0 for r in rows)
     return dict(start=report["start"], through=report["through"], periodNet=period_net, threshold=THRESHOLD,
                 coverDays=cover_days, buyCount=sum(r["purchaseStatus"] == "buy" for r in rows),
+                seasonal=season_profiles is not None, seasonalReview=sum(r["purchaseStatus"] == "season-review" for r in rows),
                 supplierSource=source, supplierBudget=supplier_budget(rows, today),
                 withOrders=sum(bool(r["supply"]["orders"]) for r in rows),
                 withDatedSupply=sum(r["supply"]["within"] > 0 for r in rows),
@@ -153,30 +168,41 @@ def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), r
 
 _lock = Lock()
 _cache = {}
+_profiles = {}
 
 
-def stock_page(through, days, page, stock, search, cover_days=DEFAULT_COVER_DAYS, sort="turnover"):
+def stock_page(through, days, page, stock, search, cover_days=DEFAULT_COVER_DAYS, sort="turnover", seasonal=False):
     report = dashboard(through, days)
+    cache_key = (days, cover_days, "seasonal") if seasonal else (days, cover_days)
     with _lock:
-        cached = _cache.get((days, cover_days))
+        cached = _cache.get(cache_key)
         if cached is None or cached[0] is not report or cached[1] <= monotonic():
             with production() as conn:
+                def load_seasons(by_id, by_external):
+                    saved = _profiles.get((days, cover_days))
+                    if saved and saved[0] == through and saved[1] > monotonic():
+                        return saved[2]
+                    result = profiles(history(conn, through, days, cover_days), by_id, by_external, days, cover_days)
+                    _profiles[days, cover_days] = through, monotonic() + 1800, result
+                    return result
+
                 supplier_docs = list(conn.execute(DOCUMENTS, (through,through)))
                 register = conn.execute(REGISTER, (through,)).fetchone()
                 prices = conn.execute(RECEIPT_PRICES, (through,))
                 result = exposure(report, conn.execute(CATALOG), cover_days, supplier_docs,
-                                  register_entries(register["tables"]) if register else {}, prices)
-            _cache[days, cover_days] = report, monotonic()+120, result
+                                  register_entries(register["tables"]) if register else {}, prices,
+                                  load_seasons if seasonal else None)
+            _cache[cache_key] = report, monotonic()+120, result
         else:
             result = cached[2]
     term = search.casefold().strip()
     filtered = [r for r in result["rows"]
-                if (stock == "all" or (stock == "buy" and r["purchaseStatus"] == "buy")
+                if (stock == "all" or (stock in ("buy", "season-review") and r["purchaseStatus"] == stock)
                     or (stock == "ordered" and r["supply"]["orders"])
                     or (stock == "low" and r["available"] > 0) or (stock == "out" and r["available"] <= 0))
                 and (term in r["name"].casefold() or term in r["sku"].casefold())]
     if sort == "purchase":
-        priority = {"buy": 0, "supply-review": 1, "reserves": 1, "cost": 2, "price": 3,
+        priority = {"buy": 0, "supply-review": 1, "season-review": 1, "reserves": 1, "cost": 2, "price": 3,
                     "units": 4, "sales": 4, "covered": 5, "incoming": 5, "no-demand": 6}
         # The existing turnover order breaks ties and orders positions requiring review.
         filtered.sort(key=lambda r: (priority[r["purchaseStatus"]], -(r["priorityProfit"] or 0)))

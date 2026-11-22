@@ -44,14 +44,20 @@ export type LastPurchase = {
   day: string; documentId: string | null; number: string | null; supplier: string | null
   unit: string | null; unitPrice: number | null; amount: number | null; issue: 'ambiguous' | 'unit' | 'price' | null
 }
+export type PurchaseSeason = { source: 'product' | 'category'; years: number; factor: number }
+export type BudgetItem = {
+  id: string; sku: string; name: string; quantity: number; unit: string; unitPrice: number | null; amount: number | null
+  priceDay: string | null; receiptId: string | null; season?: PurchaseSeason | null
+}
+export type SupplierGroup = { id: string | null; name: string | null; subtotal: number; unpriced: number; items: BudgetItem[] }
 export type SupplierBudget = {
   subtotal: number; unpriced: number; historicalCount: number; historicalAmount: number
-  suppliers: { id: string | null; name: string | null; subtotal: number; unpriced: number
-    items: { id: string; sku: string; name: string; quantity: number; unit: string; unitPrice: number | null; amount: number | null
-      priceDay: string | null; receiptId: string | null }[] }[]
+  suppliers: SupplierGroup[]
 }
 
 type StockTurnoverReport = {
+  seasonal?: boolean
+  seasonalReview?: number
   start: string
   through: string
   periodNet: number
@@ -82,6 +88,9 @@ type StockTurnoverReport = {
     share: number | null
     unit: string | null
     dailyRate: number | null
+    season?: PurchaseSeason | null
+    historicalDemand?: number
+    historicalSeasons?: number
     stockDays: number | null
     margin: number | null
     need: number | null
@@ -91,7 +100,7 @@ type StockTurnoverReport = {
     lastPurchase: LastPurchase | null
   } & (
     { purchaseStatus: 'buy'; buyQuantity: number; priorityProfit: number } |
-    { purchaseStatus: 'covered' | 'incoming' | 'supply-review' | 'no-demand' | 'sales' | 'units' | 'price' | 'cost' | 'reserves'; buyQuantity: null; priorityProfit: null }
+    { purchaseStatus: 'covered' | 'incoming' | 'supply-review' | 'season-review' | 'no-demand' | 'sales' | 'units' | 'price' | 'cost' | 'reserves'; buyQuantity: null; priorityProfit: null }
   ))[]
 }
 

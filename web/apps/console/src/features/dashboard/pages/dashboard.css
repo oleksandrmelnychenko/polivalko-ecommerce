@@ -1097,6 +1097,18 @@ a.dash-queue-item:focus-visible {
 .dash-budget-group li a { overflow-wrap: anywhere; }
 .dash-last-purchase { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: start; gap: 2px; margin-top: 4px; }
 .dash-last-purchase a { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+#zakupivli { scroll-margin-top: 6rem; }
+.dash-supplier-cart, .dash-price-history { margin-block: 8px; padding: 8px 12px; border: 1px solid var(--dash-line); border-radius: 12px; }
+.dash-supplier-cart > summary, .dash-price-history > summary { cursor: pointer; font-weight: 600; font-size: .875rem; }
+.dash-supplier-cart > p { margin-top: 8px; }
+.dash-cart-order { padding-block: 10px; border-top: 1px solid var(--dash-line); margin-top: 10px; }
+.dash-cart-order h4 { margin: 0; }
+.dash-cart-order ul, .dash-price-history ul { padding: 0; margin: 6px 0; list-style: none; }
+.dash-cart-order li, .dash-price-history li { padding-block: 8px; display: grid; gap: 3px; overflow-wrap: anywhere; font-size: .875rem; }
+.dash-cart-order li + li, .dash-price-history li + li { border-top: 1px dashed var(--dash-line); }
+.dash-cart-actions { display: flex; gap: 6px 12px; align-items: baseline; flex-wrap: wrap; }
+.dash-cart-actions input { width: 7em; padding: 4px; color: inherit; background: var(--app-ground); border: 1px solid var(--dash-line); border-radius: 4px; }
+.dash-cart-order button:not(.mantine-Button-root) { color: var(--brand-accent); text-decoration: underline; cursor: pointer; }
 @container (max-width: 410px) {
   .dash-stock-filters { grid-template-columns: minmax(0, 1fr); }
   .dash-budget-group li { grid-template-columns: 1fr auto; }

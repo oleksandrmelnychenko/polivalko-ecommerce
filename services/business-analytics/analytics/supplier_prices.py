@@ -117,7 +117,7 @@ def supplier_budget(rows, through):
                 historical_amount += amount
         group["items"].append(dict(id=row["id"], sku=row["sku"], name=row["name"], quantity=row["buyQuantity"],
                                    unit=row["unit"], unitPrice=purchase.get("unitPrice") if amount is not None else None,
-                                   amount=amount, priceDay=purchase.get("day") if amount is not None else None,
+                                   amount=amount, season=row.get("season"), priceDay=purchase.get("day") if amount is not None else None,
                                    receiptId=purchase.get("documentId") if amount is not None else None))
     suppliers = sorted(groups.values(), key=lambda g: (not g["id"], -g["subtotal"], g["name"] or "", g["id"] or ""))
     return dict(subtotal=sum((g["subtotal"] for g in suppliers), Decimal(0)),

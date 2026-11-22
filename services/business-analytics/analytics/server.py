@@ -295,12 +295,13 @@ def dispatch(env):
         days, page = int(q.get("days",30)), int(q.get("page",1))
         stock, search = q.get("stock","all"), q.get("search","")
         cover_days, sort = int(q.get("coverDays", DEFAULT_COVER_DAYS)), q.get("sort", "turnover")
-        if (set(q) - {"analysis","days","page","stock","search","sort","coverDays"} or days not in (7,30,90)
+        if (set(q) - {"analysis","days","page","stock","search","sort","coverDays","seasonal"} or days not in (7,30,90)
+                or q.get("seasonal", "0") not in ("0", "1")
                 or cover_days not in COVER_OPTIONS or sort not in ("purchase","turnover") or not 1 <= page <= 1000000
-                or stock not in ("all","out","low","buy","ordered") or len(search) > 160):
+                or stock not in ("all","out","low","buy","ordered","season-review") or len(search) > 160):
             raise ValueError("Перевірте період, стан залишку та параметри списку")
         try:
-            return 200, stock_page(now().date(), days, page, stock, search, cover_days, sort)
+            return 200, stock_page(now().date(), days, page, stock, search, cover_days, sort, q.get("seasonal") == "1")
         except Exception as exc:
             logger.error("Stock turnover unavailable (%s)", type(exc).__name__)
             return 503, {"title": "Не вдалося звірити наявність товарів із продажами"}
