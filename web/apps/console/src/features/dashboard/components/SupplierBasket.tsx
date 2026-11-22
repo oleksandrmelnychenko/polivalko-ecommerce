@@ -97,8 +97,9 @@ function download(group: SupplierGroup, lines: Line[], through: string, days: nu
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-export function SupplierBasket({ basket, groups, days, cover, through, seasonal }: {
+export function SupplierBasket({ basket, groups, days, cover, through, seasonal, onOpenChange }: {
   basket: Basket; groups: SupplierGroup[]; days: number; cover: number; through: string; seasonal: boolean
+  onOpenChange: (open: boolean) => void
 }) {
   const selected = new Map(basket.picked.map(row => [row.id, row]))
   const matched = new Set<string>()
@@ -111,7 +112,8 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
       const quantity = row.quantity ?? item.quantity
       lines.push({ item, quantity, amount: lineAmount(item, quantity) })
     }
-    return { group, lines }
+    const remaining = group.items.filter(item => !matched.has(item.id))
+    return { group, lines, remaining }
   }).filter(order => order.lines.length)
   const lines = orders.flatMap(order => order.lines)
   const missing = lines.filter(line => line.amount === null).length
@@ -119,7 +121,9 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
   const allAdded = groups.every(group => group.items.every(item => matched.has(item.id)))
   const matchesPlan = lines.length > 0 && allAdded && outdated.length === 0
     && lines.every(line => line.quantity === line.item.quantity)
-  return <details className="dash-supplier-cart">
+  return <details className="dash-supplier-cart" onToggle={event => {
+    if (event.target === event.currentTarget) onOpenChange(event.currentTarget.open)
+  }}>
     <summary>Кошик постачальників <TableChip tone="document" value={`${numberFormat.format(lines.length)} поз.${matchesPlan ? ' за рекомендацією' : ''}`} />
       {missing > 0 && <TableChip tone="warning" value={`Без ціни · ${missing}`} />}{outdated.length > 0 && <TableChip tone="warning" value={`Перевірити · ${outdated.length}`} />}
       {!matchesPlan && lines.length > 0 && <strong>{lines.length === missing ? 'Сума невідома' : formatPrice(subtotal(lines))}</strong>}
@@ -127,7 +131,7 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
     <p>Чернетка зберігається у цьому браузері для вашого облікового запису. Рекомендовані кількості оновлюються з чергою. Кількість, введена вручну, зберігається.</p>
     <Button variant="default" size="compact-xs" disabled={allAdded}
       onClick={() => basket.add(groups)}>Додати всю чергу</Button>
-    {orders.map(({ group, lines: items }) => <details className="dash-cart-order" key={group.id ?? 'unknown'}>
+    {orders.map(({ group, lines: items, remaining }) => <details className="dash-cart-order" key={group.id ?? 'unknown'}>
       <summary><span>{group.name || 'Уточнити постачальника'}</span><strong>{formatPrice(subtotal(items))}</strong><IconChevronDown size={15} aria-hidden="true" /></summary>
       <ul>{items.map(({ item, quantity, amount }) => <li key={item.id}>
         <strong>{item.name}</strong>
@@ -147,6 +151,17 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
           <Button variant="light" color="red" radius="xl" size="compact-xs" leftSection={<IconTrash size={14} />} onClick={() => basket.remove(item.id)}>Прибрати</Button>
         </div>
       </li>)}</ul>
+      {remaining.length > 0 && <details className="dash-cart-remaining">
+        <summary>Ще до закупівлі · {numberFormat.format(remaining.length)} поз.<IconChevronDown size={15} aria-hidden="true" /></summary>
+        <ul>{remaining.map(item => <li key={item.id}>
+          <strong>{item.name}</strong>
+          <div className="dash-cart-actions"><span>{numberFormat.format(item.quantity)} {item.unit}</span>
+            <b>{item.amount === null ? 'Ціну уточнити' : formatPrice(item.amount)}</b>
+            <Button variant="default" size="compact-xs" onClick={() => basket.add([{ ...group, items: [item] }])}>До кошика</Button>
+          </div>
+        </li>)}</ul>
+        {remaining.length > 1 && <Button variant="default" size="compact-xs" onClick={() => basket.add([group])}>Додати решту товарів постачальника</Button>}
+      </details>}
       {group.id && <Button size="xs" radius="xl" variant="default" leftSection={<IconDownload size={15} />} onClick={() => download(group, items, through, days, cover, seasonal)}>Завантажити замовлення</Button>}
     </details>)}
     {outdated.length > 0 && <section className="dash-cart-order"><h4>Поза поточною чергою · виключено із суми</h4>

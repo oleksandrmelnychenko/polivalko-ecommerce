@@ -1,5 +1,6 @@
 import { IconChevronDown, IconFileInvoice } from '@tabler/icons-react'
 import { Button } from '@mantine/core'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { dateLabel, formatPrice } from '@/shared/lib/salesFormat'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
@@ -31,11 +32,17 @@ export function ReceiptPrice({ purchase, year }: { purchase: LastPurchase | null
 export function BudgetBySupplier({ budget, count, through, days, cover, seasonal, basket }: {
   budget: SupplierBudget; count: number; through: string; days: number; cover: number; seasonal: boolean; basket: Basket
 }) {
+  const [basketOpen, setBasketOpen] = useState(false)
   const year = through.slice(0, 4)
   const historical = budget.suppliers.flatMap(group => group.items.filter(item => item.priceDay && item.priceDay.slice(0, 4) < year)
     .map(item => ({ item, supplier: group.name })))
   const priced = count - budget.unpriced
-  const groups = budget.suppliers.map(group => <details key={group.id ?? 'unknown'} className="dash-budget-group">
+  const selected = new Map(basket.picked.map(row => [row.id, row]))
+  const suppliers = basketOpen ? budget.suppliers.filter(group => !group.items.some(item => {
+    const row = selected.get(item.id)
+    return row && row.supplier === group.id && row.unit === item.unit
+  })) : budget.suppliers
+  const groups = suppliers.map(group => <details key={group.id ?? 'unknown'} className="dash-budget-group">
       <summary>
         <span className="dash-budget-supplier">{group.name || 'Уточнити постачальника'}<small>{numberFormat.format(group.items.length)} поз.
           {group.unpriced > 0 && <> · без оцінки {numberFormat.format(group.unpriced)}</>}</small></span>
@@ -68,7 +75,7 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
           <strong>{item.amount == null ? 'Ціну уточнити' : formatPrice(item.amount)}</strong></div>
         {item.receiptId && <DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Накладна від {dateLabel(item.priceDay!)}</DocumentLink>}
       </li>)}</ul></details>}
-    <SupplierBasket basket={basket} groups={budget.suppliers} days={days} cover={cover} through={through} seasonal={seasonal} />
+    <SupplierBasket basket={basket} groups={budget.suppliers} days={days} cover={cover} through={through} seasonal={seasonal} onOpenChange={setBasketOpen} />
     {basket.error && <p role="alert">{basket.error}</p>}
     {groups.length > 0 && <div className="dash-budget-list">
       {groups.slice(0, 3)}

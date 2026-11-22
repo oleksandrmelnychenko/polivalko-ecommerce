@@ -1158,6 +1158,8 @@ a.dash-queue-item:focus-visible {
 .dash-supplier-budget a.dash-receipt-pill { display: inline-flex; align-items: center; gap: 5px; justify-self: start; max-width: 100%; width: fit-content; padding: 3px 9px; border: 1px solid var(--app-chip-document-border); border-radius: 999px; color: var(--app-chip-document-text); background: var(--app-chip-document-bg); text-decoration: none; font-size: 12px; }
 .dash-receipt-pill:hover { text-decoration: underline; }
 .dash-cart-order h4 { margin: 0; }
+.dash-cart-remaining { border-top: 1px dashed var(--dash-line); padding-block: 8px; }
+.dash-cart-remaining > summary { display: flex; align-items: center; gap: 6px; width: fit-content; padding-block: 4px; cursor: pointer; font-size: .875rem; font-weight: 600; }
 .dash-cart-order ul, .dash-price-history ul { padding: 0; margin: 6px 0; list-style: none; }
 .dash-cart-order li, .dash-price-history li { padding-block: 8px; display: grid; gap: 3px; overflow-wrap: anywhere; font-size: .875rem; }
 .dash-cart-order li + li, .dash-price-history li + li { border-top: 1px dashed var(--dash-line); }
