@@ -7406,6 +7406,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "pinned",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
           }
         ],
         "responses": {
@@ -14613,6 +14624,16 @@
           "expectedRevision": {
             "type": "string",
             "format": "uuid"
+          },
+          "pinnedProductIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         }
       },
@@ -23397,6 +23418,16 @@
           "revision": {
             "type": "string",
             "format": "uuid"
+          },
+          "pinnedProductIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         }
       },

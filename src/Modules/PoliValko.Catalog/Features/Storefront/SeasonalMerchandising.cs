@@ -22,7 +22,7 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
 
     public async Task<IQueryable<Product>> SortAsync(IQueryable<Product> products, IReadOnlyList<Category> categories,
         string? term, PoliValkoDbContext db, DateOnly today, CancellationToken ct, string mode = ProductSort.Seasonal,
-        bool acrossCategories = true)
+        bool acrossCategories = true, Guid[]? pinned = null)
     {
         var priority = PriorityCategories(today);
         var byParent = categories.ToLookup(c => c.ParentId);
@@ -59,8 +59,10 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
                 .Select(s => new Candidate(s.p.Id, s.p.CategoryId));
             leaders = await LeadingProductsAsync(candidates, families, ct);
         }
-        var first = scored.OrderByDescending(s => term != null && s.p.Sku == term)
-            .ThenByDescending(s => s.available >= 1 && s.p.Price.Amount > 0);
+        var first = scored.OrderByDescending(s => term != null && s.p.Sku == term);
+        if (pinned is { Length: > 0 })
+            first = first.ThenByDescending(s => pinned.Contains(s.p.Id)).ThenBy(s => Array.IndexOf(pinned, s.p.Id));
+        first = first.ThenByDescending(s => s.available >= 1 && s.p.Price.Amount > 0);
         var ordered = mode switch
         {
             ProductSort.Trending => first.ThenByDescending(s => s.trend).ThenByDescending(s => s.seasonal),

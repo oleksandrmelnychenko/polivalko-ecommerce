@@ -42,15 +42,15 @@ export const PAGE_SIZE = 24;
 const currentMode = cache(async () => {
   const { data } = await api.GET("/api/v1/catalog/storefront-mode", { cache: "no-store" });
   if (!data) throw new Error("Не вдалося завантажити режим вітрини");
-  return data.mode;
+  return data.mode + "/" + data.revision;
 });
 
 export async function searchProducts(query: ProductQuery) {
-  const sort = query.sort || await currentMode();
-  return searchSortedProducts({ ...query, sort });
+  return searchSortedProducts({ query, modeRevision: query.sort ? undefined : await currentMode() });
 }
 
-async function searchSortedProducts(query: ProductQuery) {
+// Include the effective mode and revision in the cache key, including after a scheduled expiry.
+async function searchSortedProducts({ query }: { query: ProductQuery; modeRevision?: string }) {
   "use cache";
   cacheLife("minutes");
   cacheTag("catalog", "products");

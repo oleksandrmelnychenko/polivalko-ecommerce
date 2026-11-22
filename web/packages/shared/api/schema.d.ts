@@ -3703,6 +3703,7 @@ export interface components {
             through: null | string;
             /** Format: uuid */
             expectedRevision: string;
+            pinnedProductIds?: null | string[];
         };
         CheckNavkoloDto: {
             stores: components["schemas"]["NavkoloStoreDto"][];
@@ -5865,6 +5866,7 @@ export interface components {
             through: null | string;
             /** Format: uuid */
             revision: string;
+            pinnedProductIds?: null | string[];
         };
         StreetAddressDto: {
             street: string;
@@ -11581,6 +11583,7 @@ export interface operations {
         parameters: {
             query: {
                 mode: string;
+                pinned?: string[];
             };
             header?: never;
             path?: never;

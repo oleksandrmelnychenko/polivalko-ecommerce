@@ -68,6 +68,39 @@ public sealed class StorefrontModeTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Manual_selection_leads_the_default_catalog_in_preview_order_without_duplicates()
+    {
+        using var shop = api.CreateClient();
+        using var manager = await Staff.ManagerAsync(api);
+        var first = await api.AddProductAsync("novyi-rik", "Вітрина Z", 500);
+        var second = await api.AddProductAsync("novyi-rik", "Вітрина A", 10);
+        var original = await manager.ReadAsync<StorefrontModeDto>(Editor);
+        Guid[] ids = [first.Id, second.Id];
+        var change = new ChangeStorefrontMode("seasonal", null, original.Revision, ids);
+        var preview = await manager.ReadAsync<List<ProductListItemDto>>(
+            $"{Editor}/preview?mode=seasonal&pinned={first.Id}&pinned={second.Id}");
+        preview.Take(2).Select(p => p.Id).ShouldBe(ids);
+        (await manager.PutJsonAsync(Editor, change with { PinnedProductIds = [first.Id, first.Id] })).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var edited = await (await manager.PutJsonAsync(Editor, change)).ReadAsync<StorefrontModeDto>();
+        try
+        {
+            edited.PinnedProductIds.ShouldBe(ids);
+            var page = await shop.ReadAsync<ProductSearchResponse>("/api/v1/products?pageSize=12");
+            page.Items.Select(p => p.Id).ShouldBe(preview.Select(p => p.Id));
+            page.Items.Select(p => p.Id).Distinct().Count().ShouldBe(page.Items.Count);
+            var next = await shop.ReadAsync<ProductSearchResponse>("/api/v1/products?page=2&pageSize=1");
+            next.Items.Single().Id.ShouldBe(second.Id);
+            var search = await shop.ReadAsync<ProductSearchResponse>("/api/v1/products?q=" + second.Sku);
+            search.Items.First().Id.ShouldBe(second.Id);
+        }
+        finally
+        {
+            (await manager.PutJsonAsync(Editor, new ChangeStorefrontMode(original.Mode, original.Through, edited.Revision,
+                original.PinnedProductIds ?? []))).StatusCode.ShouldBe(HttpStatusCode.OK);
+        }
+    }
+
+    [Fact]
     public async Task Preview_does_not_publish_and_activation_is_versioned_and_expires_after_the_Kyiv_day()
     {
         using var shop = api.CreateClient();
