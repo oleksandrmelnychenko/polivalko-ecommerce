@@ -51,16 +51,16 @@ export function StockTurnover({ days }: { days: number }) {
         <div className="dash-product-summary-value"><strong>{report.net != null ? formatPrice(report.net) : 'Оборот невідомий'}</strong>
           {report.share != null && <span className="dash-share" title={'Частка від загального обороту ' + formatPrice(report.periodNet)}>{formatShare(report.share)} обороту</span>}</div>
         <small>{dateRange(report.start, report.through)} · загалом {formatPrice(report.periodNet)}</small>
-        <small>Активних документів замовлення постачальникам · {report.supplierSource.documents}
-          {report.supplierSource.latest && ' · найновіший від ' + dateLabel(report.supplierSource.latest)}.
-          {' '}Товарів із підтвердженим надходженням на {report.coverDays} дн. · {report.withDatedSupply}.</small>
+        <small>Замовлення постачальникам · {report.supplierSource.documents} активних
+          {report.supplierSource.latest && ', останнє від ' + dateLabel(report.supplierSource.latest)}.
+          {' '}Підтверджене надходження за {report.coverDays} дн. · {report.withDatedSupply} тов.</small>
         {report.periodNet <= 0 && <small>Частка доступна за додатного загального обороту.</small>}
         {report.unknownCount > 0 && <small>Товарів без підтвердженого обороту · {numberFormat.format(report.unknownCount)}. У підсумку враховано лише підтверджені суми.</small>}
       </div>}
-      <div className="dash-product-tools">
-        <TextInput size="sm" radius="xl" leftSection={<IconSearch size={16} />} aria-label="Пошук товарів із малим залишком" placeholder="Назва або артикул" maxLength={120} value={draft}
+      <div className="dash-product-tools dash-stock-filters">
+        <TextInput size="sm" radius="xl" label="Пошук товару" leftSection={<IconSearch size={16} />} aria-label="Пошук товарів із малим залишком" placeholder="Назва або артикул" maxLength={120} value={draft}
           onChange={event => { const value = event.currentTarget.value; setDraft(value); search(value) }} />
-        <Select size="sm" radius="xl" aria-label="Доступність товарів" allowDeselect={false} value={filters.stock}
+        <Select size="sm" radius="xl" label="Доступність" aria-label="Доступність товарів" allowDeselect={false} value={filters.stock}
           data={[
             { value: 'all', label: report ? `Усі · ${numberFormat.format(report.total)}` : 'Усі' },
             { value: 'buy', label: report ? `До закупівлі · ${numberFormat.format(report.buyCount)}` : 'До закупівлі' },
@@ -91,6 +91,14 @@ export function StockTurnover({ days }: { days: number }) {
               <Link to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}</Link>
               <div className="dash-product-meta">{item.sku && <span className="dash-product-sku">{item.sku}</span>}
                 <TableChip tone={item.available <= 0 ? 'danger' : 'warning'} value={`Доступно ${numberFormat.format(item.available)}`} /></div>
+            </div>
+            <div className="dash-rank-side">
+              {item.net == null ? <span className="app-cell-sub">Оборот невідомий</span> : <div className="dash-product-result">
+                <span>Чистий оборот</span>
+                <strong className="app-money">{formatPrice(item.net)}</strong>
+              </div>}
+            </div>
+            <div className="dash-stock-details">
               <dl className="dash-finance-chips">
                 <div><dt>Залишок</dt><dd>{numberFormat.format(item.onHand)}</dd></div>
                 <div className="dash-reserve-chip"><dt>Резерв</dt><dd>{numberFormat.format(item.reserved)}</dd></div>
@@ -115,12 +123,6 @@ export function StockTurnover({ days }: { days: number }) {
               {item.minimumNeed != null && item.need != null && item.minimumNeed < item.need && <span className="app-cell-sub">
                 Потреба · {numberFormat.format(item.minimumNeed)}–{numberFormat.format(item.need)} {item.unit || 'од.'} залежно від підтвердження поставки.</span>}
               {report.supplierBudget && <ReceiptPrice purchase={item.lastPurchase} year={report.through.slice(0, 4)} />}
-            </div>
-            <div className="dash-rank-side">
-              {item.net == null ? <span className="app-cell-sub">Оборот невідомий</span> : <div className="dash-product-result">
-                <span>Чистий оборот</span>
-                <strong className="app-money">{formatPrice(item.net)}</strong>
-              </div>}
             </div>
           </li>)}</ul>
         </> : <p className="dash-rank-empty">{report.total === 0 ? 'У каталозі немає товарів із підтвердженим малим або нульовим залишком.' : 'За цими умовами товарів немає.'}</p>}

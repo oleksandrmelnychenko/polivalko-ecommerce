@@ -1,3 +1,4 @@
+import { IconChevronDown } from '@tabler/icons-react'
 import { Link } from 'react-router-dom'
 import { dateLabel, formatPrice } from '@/shared/lib/salesFormat'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
@@ -27,9 +28,12 @@ export function BudgetBySupplier({ budget, count, year }: { budget: SupplierBudg
   if (!count) return null
   const priced = count - budget.unpriced
   const groups = budget.suppliers.map(group => <details key={group.id ?? 'unknown'} className="dash-budget-group">
-      <summary>{group.name || 'Уточнити постачальника'} · {group.items.length} поз.
-        {' · '}{group.items.length > group.unpriced ? formatPrice(group.subtotal) : 'сума невідома'}
-        {group.unpriced > 0 && group.items.length > group.unpriced && ' + без оцінки ' + group.unpriced + ' поз.'}</summary>
+      <summary>
+        <span className="dash-budget-supplier">{group.name || 'Уточнити постачальника'}<small>{numberFormat.format(group.items.length)} поз.
+          {group.unpriced > 0 && <> · без оцінки {numberFormat.format(group.unpriced)}</>}</small></span>
+        <strong>{group.items.length > group.unpriced ? formatPrice(group.subtotal) : 'Сума невідома'}</strong>
+        <IconChevronDown size={15} aria-hidden="true" />
+      </summary>
       <ul>{group.items.map(item => <li key={item.id}>
         <div><Link to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}{item.sku && <small> · {item.sku}</small>}</Link>
           {item.receiptId && item.priceDay && <small className="app-cell-sub"><DocumentLink id={item.receiptId}>Ціна від {dateLabel(item.priceDay)}</DocumentLink></small>}
@@ -45,9 +49,12 @@ export function BudgetBySupplier({ budget, count, year }: { budget: SupplierBudg
     </div>
     <p>Оцінено {priced} із {count} позицій за останніми цінами прибуткових накладних.
       {budget.historicalCount > 0 && <> Ціни до {year} року використано для {budget.historicalCount} поз. на {formatPrice(budget.historicalAmount)}.</>}</p>
-    {groups.slice(0, 3)}
-    {groups.length > 3 && <details className="dash-budget-group">
-      <summary>Показати решту · {groups.length - 3}</summary>{groups.slice(3)}
-    </details>}
+    <div className="dash-budget-list">
+      {groups.slice(0, 3)}
+      {groups.length > 3 && <details className="dash-budget-more">
+        <summary>Інші постачальники · {groups.length - 3}<IconChevronDown size={15} aria-hidden="true" /></summary>
+        {groups.slice(3)}
+      </details>}
+    </div>
   </section>
 }
