@@ -1,6 +1,7 @@
 import { Button } from '@mantine/core'
 import { IconChevronDown, IconDownload, IconFileInvoice, IconTrash } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { dateLabel, formatPrice } from '@/shared/lib/salesFormat'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
 import { TableChip } from '@/shared/ui/TableChip'
@@ -97,9 +98,8 @@ function download(group: SupplierGroup, lines: Line[], through: string, days: nu
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-export function SupplierBasket({ basket, groups, days, cover, through, seasonal, onOpenChange }: {
+export function SupplierBasket({ basket, groups, days, cover, through, seasonal }: {
   basket: Basket; groups: SupplierGroup[]; days: number; cover: number; through: string; seasonal: boolean
-  onOpenChange: (open: boolean) => void
 }) {
   const selected = new Map(basket.picked.map(row => [row.id, row]))
   const matched = new Set<string>()
@@ -121,9 +121,7 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal,
   const allAdded = groups.every(group => group.items.every(item => matched.has(item.id)))
   const matchesPlan = lines.length > 0 && allAdded && outdated.length === 0
     && lines.every(line => line.quantity === line.item.quantity)
-  return <details className="dash-supplier-cart" onToggle={event => {
-    if (event.target === event.currentTarget) onOpenChange(event.currentTarget.open)
-  }}>
+  return <details className="dash-supplier-cart">
     <summary>Кошик постачальників <TableChip tone="document" value={`${numberFormat.format(lines.length)} поз.${matchesPlan ? ' за рекомендацією' : ''}`} />
       {missing > 0 && <TableChip tone="warning" value={`Без ціни · ${missing}`} />}{outdated.length > 0 && <TableChip tone="warning" value={`Перевірити · ${outdated.length}`} />}
       {!matchesPlan && lines.length > 0 && <strong>{lines.length === missing ? 'Сума невідома' : formatPrice(subtotal(lines))}</strong>}
@@ -133,7 +131,7 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal,
     {orders.map(({ group, lines: items, remaining }) => <details className="dash-cart-order" key={group.id ?? 'unknown'}>
       <summary><span>{group.name || 'Уточнити постачальника'}</span><strong>{formatPrice(subtotal(items))}</strong><IconChevronDown size={15} aria-hidden="true" /></summary>
       <ul>{items.map(({ item, quantity, amount }) => <li key={item.id}>
-        <strong>{item.name}</strong>
+        <Link className="dash-budget-product" to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}</Link>
         <div className="dash-cart-meta">{item.sku && <small>Артикул {item.sku}</small>}<TableChip tone="storage" value={`Рекомендовано ${numberFormat.format(item.quantity)} ${item.unit}`} />
           {seasonal && <SeasonIndicator season={item.season} />}</div>
         {item.priceDay && item.receiptId && <DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Накладна від {dateLabel(item.priceDay)}</DocumentLink>}
@@ -153,7 +151,9 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal,
       {remaining.length > 0 && <details className="dash-cart-remaining">
         <summary>Ще до закупівлі · {numberFormat.format(remaining.length)} поз.<IconChevronDown size={15} aria-hidden="true" /></summary>
         <ul>{remaining.map(item => <li key={item.id}>
-          <strong>{item.name}</strong>
+          <Link className="dash-budget-product" to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}</Link>
+          {item.receiptId && item.priceDay && <DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Накладна від {dateLabel(item.priceDay)}</DocumentLink>}
+          {seasonal && <SeasonIndicator season={item.season} />}
           <div className="dash-cart-actions"><span>{numberFormat.format(item.quantity)} {item.unit}</span>
             <b>{item.amount === null ? 'Ціну уточнити' : formatPrice(item.amount)}</b>
             <Button variant="default" size="compact-xs" onClick={() => basket.add([{ ...group, items: [item] }])}>Додати до кошика</Button>

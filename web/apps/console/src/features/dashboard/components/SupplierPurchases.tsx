@@ -1,6 +1,5 @@
 import { IconChevronDown, IconFileInvoice } from '@tabler/icons-react'
 import { Button } from '@mantine/core'
-import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { dateLabel, formatPrice } from '@/shared/lib/salesFormat'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
@@ -32,30 +31,15 @@ export function ReceiptPrice({ purchase, year }: { purchase: LastPurchase | null
 export function BudgetBySupplier({ budget, count, through, days, cover, seasonal, basket }: {
   budget: SupplierBudget; count: number; through: string; days: number; cover: number; seasonal: boolean; basket: Basket
 }) {
-  const [basketOpen, setBasketOpen] = useState(false)
-  const budgetRef = useRef<HTMLElement>(null)
-  function showBasketItem(id: string) {
-    const field = budgetRef.current?.querySelector<HTMLInputElement>(`input[data-basket-item="${CSS.escape(id)}"]`)
-    const order = field?.closest('details')
-    const cart = order?.parentElement?.closest('details')
-    if (!field || !order || !cart) return
-    cart.open = true
-    order.open = true
-    field.focus({ preventScroll: true })
-    field.scrollIntoView({ block: 'center' })
-  }
   const year = through.slice(0, 4)
   const historical = budget.suppliers.flatMap(group => group.items.filter(item => item.priceDay && item.priceDay.slice(0, 4) < year)
     .map(item => ({ item, supplier: group.name })))
   const priced = count - budget.unpriced
   const selected = new Map(basket.picked.map(row => [row.id, row]))
-  const groups = budget.suppliers.flatMap(group => {
-    const isPicked = (item: typeof group.items[number]) => {
-      const row = selected.get(item.id)
-      return row !== undefined && row.supplier === group.id && row.unit === item.unit
-    }
-    const remaining = group.items.filter(item => !isPicked(item))
-    if (basketOpen && remaining.length < group.items.length) return []
+  const groups = budget.suppliers.filter(group => group.items.length > 0 && !group.items.some(item => {
+    const row = selected.get(item.id)
+    return row !== undefined && row.supplier === group.id && row.unit === item.unit
+  })).map(group => {
     return <details key={group.id ?? 'unknown'} className="dash-budget-group">
       <summary>
         <span className="dash-budget-supplier">{group.name || 'Уточнити постачальника'}<small>{numberFormat.format(group.items.length)} поз.
@@ -63,7 +47,7 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
         <strong>{group.items.length > group.unpriced ? formatPrice(group.subtotal) : 'Сума невідома'}</strong>
         <IconChevronDown size={15} aria-hidden="true" />
       </summary>
-      {remaining.length > 1 && <Button size="compact-xs" variant="default" onClick={() => basket.add([{ ...group, items: remaining }])}>Додати всі до кошика · {remaining.length}</Button>}
+      {group.items.length > 1 && <Button size="compact-xs" variant="default" onClick={() => basket.add([group])}>Додати всі до кошика · {group.items.length}</Button>}
       <ul>{group.items.map(item => <li key={item.id}>
         <div className="dash-budget-item"><Link className="dash-budget-product" title="Відкрити картку товару" to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}</Link>
           {item.sku && <small className="app-cell-sub">Артикул {item.sku}</small>}
@@ -75,14 +59,12 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
         </div>
         <div className="dash-budget-actions">
           {item.receiptId && item.priceDay && <DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Накладна від {dateLabel(item.priceDay)}</DocumentLink>}
-          {isPicked(item)
-            ? <Button size="compact-xs" variant="default" onClick={() => showBasketItem(item.id)}>Переглянути в кошику</Button>
-            : <Button size="compact-xs" onClick={() => basket.add([{ ...group, items: [item] }])}>Додати до кошика</Button>}
+          <Button size="compact-xs" onClick={() => basket.add([{ ...group, items: [item] }])}>Додати до кошика</Button>
         </div>
       </li>)}</ul>
     </details>
   })
-  return <section ref={budgetRef} className="dash-supplier-budget" aria-label="Бюджет закупівлі">
+  return <section className="dash-supplier-budget" aria-label="Бюджет закупівлі">
     <div className="dash-budget-header">
       <h3>Рекомендована закупівля</h3>
       <strong>{priced || !count ? formatPrice(budget.subtotal) : 'Суму ще не визначено'}{budget.unpriced > 0 && ' + без ціни: ' + budget.unpriced}</strong>
@@ -96,10 +78,10 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
           <strong>{item.amount == null ? 'Ціну уточнити' : formatPrice(item.amount)}</strong></div>
         {item.receiptId && <DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Накладна від {dateLabel(item.priceDay!)}</DocumentLink>}
       </li>)}</ul></details>}
-    <SupplierBasket basket={basket} groups={budget.suppliers} days={days} cover={cover} through={through} seasonal={seasonal} onOpenChange={setBasketOpen} />
+    <SupplierBasket basket={basket} groups={budget.suppliers} days={days} cover={cover} through={through} seasonal={seasonal} />
     {basket.error && <p role="alert">{basket.error}</p>}
     {groups.length > 0 && <details className="dash-budget-list">
-      <summary>{basketOpen ? 'Постачальники поза кошиком' : 'Рекомендації за постачальниками'}
+      <summary>Додати постачальників
         <TableChip value={numberFormat.format(groups.length)} /><IconChevronDown size={16} aria-hidden="true" /></summary>
       {groups}
     </details>}
