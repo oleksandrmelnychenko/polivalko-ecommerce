@@ -6,7 +6,7 @@ import { DocumentLink } from '@/shared/ui/DocumentLink'
 import { TableChip } from '@/shared/ui/TableChip'
 import type { LastPurchase, SupplierBudget } from '../api/dashboardApi'
 import { numberFormat } from '../lib/insights'
-import { SupplierBasket, seasonText, type Basket } from './SupplierBasket'
+import { SeasonIndicator, SupplierBasket, type Basket } from './SupplierBasket'
 import { PurchaseInvoices } from './PurchaseInvoices'
 
 const priceFormat = new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 6 })
@@ -46,7 +46,7 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
       <ul>{group.items.map(item => <li key={item.id}>
         <div><Link to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}{item.sku && <small> · {item.sku}</small>}</Link>
           {item.receiptId && item.priceDay && <small className="app-cell-sub"><DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Ціна від {dateLabel(item.priceDay)}</DocumentLink></small>}
-          {seasonal && <small className="app-cell-sub">{seasonText(item.season)}</small>}
+          {seasonal && <div><SeasonIndicator season={item.season} /></div>}
           <Button size="compact-xs" variant="subtle" disabled={basket.picked.some(row => row.id === item.id && row.supplier === group.id && row.unit === item.unit)}
             onClick={() => basket.add([{ ...group, items: [item] }])}>До кошика</Button>
         </div>
@@ -62,8 +62,10 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
         <TableChip tone="source" value={seasonal ? 'З урахуванням сезону' : 'За поточним темпом'} /></div>
     </div>
     {historical.length > 0 && <details className="dash-price-history"><summary>Товари з цінами попередніх років <TableChip tone="warning" value={historical.length} /><IconChevronDown size={16} aria-hidden="true" /></summary>
-      <ul>{historical.map(({ item, supplier }) => <li key={item.id}><b>{item.name}</b> · {supplier || 'Уточнити постачальника'}
-        <small>{numberFormat.format(item.quantity)} {item.unit} × {priceFormat.format(item.unitPrice!)} ₴ · {formatPrice(item.amount!)}</small>
+      <ul>{historical.map(({ item, supplier }) => <li key={item.id}>
+        <div className="dash-history-item"><strong>{item.name}</strong><span>{supplier || 'Уточнити постачальника'}</span></div>
+        <div className="dash-history-amount"><span>{numberFormat.format(item.quantity)} {item.unit}{item.unitPrice != null && <> × {priceFormat.format(item.unitPrice)} ₴</>}</span>
+          <strong>{item.amount == null ? 'Ціну уточнити' : formatPrice(item.amount)}</strong></div>
         {item.receiptId && <DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Накладна від {dateLabel(item.priceDay!)}</DocumentLink>}
       </li>)}</ul></details>}
     <SupplierBasket basket={basket} groups={budget.suppliers} days={days} cover={cover} through={through} seasonal={seasonal} />

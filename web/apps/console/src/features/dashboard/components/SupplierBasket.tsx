@@ -10,10 +10,13 @@ import { numberFormat } from '../lib/insights'
 type Picked = { id: string; supplier: string | null; name: string; unit: string; quantity: number | null }
 type Line = { item: BudgetItem; quantity: number; amount: number | null }
 
-export function seasonText(season?: PurchaseSeason | null) {
-  if (!season) return 'Поточний темп · недостатньо сезонної історії'
-  const basis = season.source === 'product' ? 'товару' : 'категорії'
-  return 'Сезонність ' + basis + ' × ' + numberFormat.format(season.factor) + ' · сезони: ' + season.years
+export function SeasonIndicator({ season }: { season?: PurchaseSeason | null }) {
+  if (!season) return <span className="dash-season-indicator"><TableChip value="Поточний темп" /><small>Недостатньо сезонної історії</small></span>
+  const product = season.source === 'product'
+  return <span className="dash-season-indicator">
+    <TableChip tone={product ? 'product' : 'source'} value={`Сезонність ${product ? 'товару' : 'категорії'} × ${numberFormat.format(season.factor)}`} />
+    <small>Сезонів · {numberFormat.format(season.years)}</small>
+  </span>
 }
 
 function readCart(key: string): Picked[] {
@@ -120,12 +123,12 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
     <p>Чернетка зберігається у цьому браузері для вашого облікового запису. Рекомендовані кількості оновлюються з чергою. Кількість, введена вручну, зберігається.</p>
     <Button variant="default" size="compact-xs" disabled={!groups.some(group => group.items.some(item => !matched.has(item.id)))}
       onClick={() => basket.add(groups)}>Додати всю чергу</Button>
-    {orders.map(({ group, lines: items }) => <section className="dash-cart-order" key={group.id ?? 'unknown'}>
-      <header><h4>{group.name || 'Уточнити постачальника'}</h4><strong>{formatPrice(subtotal(items))}</strong></header>
+    {orders.map(({ group, lines: items }) => <details className="dash-cart-order" key={group.id ?? 'unknown'}>
+      <summary><span>{group.name || 'Уточнити постачальника'}</span><strong>{formatPrice(subtotal(items))}</strong><IconChevronDown size={15} aria-hidden="true" /></summary>
       <ul>{items.map(({ item, quantity, amount }) => <li key={item.id}>
         <strong>{item.name}</strong>
         <div className="dash-cart-meta">{item.sku && <small>Артикул {item.sku}</small>}<TableChip tone="storage" value={`Рекомендовано ${numberFormat.format(item.quantity)} ${item.unit}`} />
-          {seasonal && <small>{seasonText(item.season)}</small>}</div>
+          {seasonal && <SeasonIndicator season={item.season} />}</div>
         {item.priceDay && item.receiptId && <DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Ціна від {dateLabel(item.priceDay)}</DocumentLink>}
         <div className="dash-cart-actions">
           <label>Замовити, {item.unit} <input type="number" aria-label={'Кількість для ' + item.name} key={quantity}
@@ -141,7 +144,7 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
         </div>
       </li>)}</ul>
       {group.id && <Button size="xs" radius="xl" variant="default" leftSection={<IconDownload size={15} />} onClick={() => download(group, items, through, days, cover, seasonal)}>Завантажити замовлення</Button>}
-    </section>)}
+    </details>)}
     {outdated.length > 0 && <section className="dash-cart-order"><h4>Поза поточною чергою · виключено із суми</h4>
       {outdated.map(row => <div className="dash-cart-obsolete" key={row.id}>{row.name} <Button variant="light" color="red" radius="xl" size="compact-xs" onClick={() => basket.remove(row.id)}>Прибрати</Button></div>)}
     </section>}

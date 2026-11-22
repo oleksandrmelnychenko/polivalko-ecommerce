@@ -19,7 +19,7 @@ import { numberFormat } from '../lib/insights'
 import { DashboardCard } from './DashboardCard'
 import { SupplierOrders } from './SupplierOrders'
 import { BudgetBySupplier, ReceiptPrice } from './SupplierPurchases'
-import { seasonText, useSupplierBasket } from './SupplierBasket'
+import { SeasonIndicator, useSupplierBasket } from './SupplierBasket'
 
 const percent = new Intl.NumberFormat('uk-UA', { style: 'percent', maximumFractionDigits: 2 })
 const decisionText = {
@@ -131,7 +131,7 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
                 </div>}
               </dl>
               <SupplierOrders supply={item.supply} unit={item.unit} />
-              {report.seasonal && item.dailyRate != null && item.dailyRate > 0 && <span className="app-cell-sub">{seasonText(item.season)}</span>}
+              {report.seasonal && item.dailyRate != null && item.dailyRate > 0 && <SeasonIndicator season={item.season} />}
               {item.historicalDemand != null && <span className="app-cell-sub">У відповідні тижні попередніх сезонів ({item.historicalSeasons}) продавалося близько {numberFormat.format(item.historicalDemand)} {item.unit} за {report.coverDays} дн.</span>}
               {item.supply.within > 0 && <span className="app-cell-sub">Надійде в межах плану · {numberFormat.format(item.supply.within)} {item.unit}
                 {item.needBeforeIncoming != null && ' · потреба до поставок ' + numberFormat.format(item.needBeforeIncoming) + ' ' + (item.unit || '')}</span>}
@@ -159,6 +159,7 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
       </> : <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={reload}
         description={problemMessage(query.problem, 'Не вдалося завантажити залишки й оборот товарів.')} />}
       <AppEditorModal opened={purchasesOpen} onClose={closePurchases} size="standard" className="dash-purchases-modal"
+        overlayProps={{ backgroundOpacity: 0.25, blur: 0, style: { backdropFilter: 'none' } }}
         closeOnEscape={!documentOpen} closeOnClickOutside={!documentOpen} trapFocus={!documentOpen}
         title={<MetricLabel icon={IconShoppingCart}>Закупівлі за постачальниками</MetricLabel>}>
         {report?.supplierBudget ? <BudgetBySupplier basket={basket} budget={report.supplierBudget}
