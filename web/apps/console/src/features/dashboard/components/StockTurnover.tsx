@@ -172,6 +172,7 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
                     <dt>Маржа</dt><dd>{item.margin == null ? 'невідома' : formatShare(item.margin)}</dd>
                   </div>}
                 </dl>
+                {item.unitSource === 'sales' && <span className="app-cell-sub">Одиницю «{item.unit}» взято з документів продажу: у звіті про залишки одиниці для цього товару немає.</span>}
                 {report.seasonal && item.dailyRate != null && item.dailyRate > 0 && <p className="dash-stock-season">{item.season
                   ? `Сезонна поправка за історією ${item.season.source === 'product' ? 'товару' : 'категорії'} × ${numberFormat.format(item.season.factor)}. Враховано сезонів · ${numberFormat.format(item.season.years)}.`
                   : `Потребу визначено за продажами за ${days} днів. Історії зіставних сезонів бракує для поправки.`}</p>}

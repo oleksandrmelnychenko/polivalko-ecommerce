@@ -46,12 +46,18 @@ def purchase_plan(sales, known, stock_unit, available, days, cover_days, arrival
     priced = known and net > 0 and all(p["profit"] is not None for p in sales)
     profit = sum(p["profit"] for p in sales) if priced else None
     unit = unit_label(stock_unit)
-    plan = dict(unit=unit or None, dailyRate=None, stockDays=None, needBeforeIncoming=None, need=None, minimumNeed=None, buyQuantity=None,
-                priorityProfit=None, margin=profit / net if priced else None, purchaseStatus="sales")
+    plan = dict(unit=unit or None, unitSource=None, dailyRate=None, stockDays=None, needBeforeIncoming=None, need=None, minimumNeed=None,
+                buyQuantity=None, priorityProfit=None, margin=profit / net if priced else None, purchaseStatus="sales")
     if not known:
         return plan
     if sales:
         units = {unit_label(p["salesUnit"]) for p in sales}
+        named = units - {"catalog-base", ""}
+        if not unit and len(named) == 1:
+            # The stock report carries no unit for this product, and every sale names the same one.
+            # The demand forecast already treats a product with one sales unit as stocked in it.
+            unit = next(iter(named))
+            plan["unitSource"] = "sales"
         if "catalog-base" in units:
             units.remove("catalog-base")
             units.add(unit or "од")
@@ -70,7 +76,8 @@ def purchase_plan(sales, known, stock_unit, available, days, cover_days, arrival
     gross_gap = max(Decimal(0), demand * cover_days - available * days)
     scheduled = dict(arrivals)
     gap = uncovered_gap(demand, available, days, cover_days, scheduled)
-    step = Decimal(1) if unit == "шт" else Decimal(".001")
+    # "од" stands for a unit that neither the stock report nor a sale names: order it in whole units.
+    step = Decimal(1) if unit in ("шт", "од") else Decimal(".001")
     need = (gap / (days * step)).to_integral_value(rounding=ROUND_CEILING) * step
     plan["needBeforeIncoming"] = (gross_gap / (days * step)).to_integral_value(rounding=ROUND_CEILING) * step
     plan["need"] = need

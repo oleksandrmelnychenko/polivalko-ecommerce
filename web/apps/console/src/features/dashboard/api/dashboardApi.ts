@@ -94,6 +94,8 @@ type StockTurnoverReport = {
     net: number | null
     share: number | null
     unit: string | null
+    // 'sales' when the stock report names no unit and the unit of the sales documents is used instead.
+    unitSource?: 'sales' | null
     dailyRate: number | null
     season?: PurchaseSeason | null
     historicalDemand?: number

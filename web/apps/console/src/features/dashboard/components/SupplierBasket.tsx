@@ -74,6 +74,9 @@ export function useSupplierBasket(account: string) {
 
 export type Basket = ReturnType<typeof useSupplierBasket>
 
+// Pieces, and the placeholder for a unit nobody names, are ordered whole; the plan rounds them the same way.
+const wholeUnits = (unit: string) => unit === 'шт' || unit === 'од'
+
 function lineAmount(item: BudgetItem, quantity: number) {
   if (item.quantity === quantity) return item.amount
   if (item.unitPrice === null) return null
@@ -152,7 +155,7 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
         {item.priceDay && item.receiptId && <DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Накладна від {dateLabel(item.priceDay)}</DocumentLink>}
         <div className="dash-cart-actions">
           <label>Замовити, {item.unit} <input type="number" data-basket-item={item.id} aria-label={'Кількість для ' + item.name} key={quantity}
-            min={item.unit === 'шт' ? 1 : 0.001} max={1000000000} step={item.unit === 'шт' ? 1 : 0.001} defaultValue={quantity}
+            min={wholeUnits(item.unit) ? 1 : 0.001} max={1000000000} step={wholeUnits(item.unit) ? 1 : 0.001} defaultValue={quantity}
             onBlur={event => {
               const field = event.currentTarget
               if (field.value && field.validity.valid && field.valueAsNumber !== quantity) basket.setQuantity(item.id, field.valueAsNumber)
