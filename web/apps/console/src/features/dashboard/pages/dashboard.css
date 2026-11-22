@@ -575,6 +575,45 @@ a.dash-queue-item:focus-visible {
   background: white;
   overflow-wrap: anywhere;
 }
+.dash-profit-product-head, .dash-profit-totals header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+.dash-profit-product-head { padding: 12px var(--dash-pad); border-bottom: 1px solid var(--dash-line); }
+.dash-profit-product-head > div { flex: 1 1 200px; min-width: 0; }
+.dash-profit-product-head h3 { margin: 0; font-size: 18px; line-height: 1.3; }
+.dash-profit-panel small, .dash-profit-amount span, .dash-profit-totals header span, .dash-profit-totals dt {
+  display: block;
+  color: var(--mantine-color-gray-7);
+  font-size: 12px;
+}
+.dash-profit-panel small { margin-top: 3px; }
+.dash-profit-rows { list-style: none; margin: 0; padding: 0; }
+.dash-profit-rows li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 12px var(--dash-pad);
+}
+.dash-profit-rows li + li { border-top: 1px dashed var(--dash-line); }
+.dash-profit-identity { display: flex; gap: 8px; align-items: baseline; flex: 1 1 210px; font-size: 14px; }
+.dash-profit-rows .dash-finance-chips { flex-basis: 100%; }
+.dash-profit-amount strong { color: var(--brand-ink); font: 600 17px/1.4 var(--font-money); }
+.dash-profit-amount strong[data-loss] { color: var(--mantine-color-red-8); }
+.dash-profit-rows[data-selected] { padding-block: 4px; }
+.dash-profit-rows[data-selected] .dash-profit-amount strong { font-size: clamp(24px, 5cqi, 34px); }
+.dash-profit-totals { margin: 8px var(--dash-pad); padding: 12px; border-radius: 14px; background: var(--app-ground); }
+.dash-profit-totals h3 { margin: 0; font-size: 14px; }
+.dash-profit-totals dl { display: grid; grid-template-columns: 1.5fr 1.5fr 1fr 1fr; gap: 12px; margin: 12px 0 0; }
+.dash-profit-totals dd { margin: 3px 0 0; font: 550 14px/1.4 var(--font-money); }
+@container (max-width: 600px) {
+  .dash-profit-totals dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .dash-product-report .dash-card-head {
   min-height: 62px;
   padding-block: 12px;

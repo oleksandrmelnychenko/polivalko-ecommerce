@@ -1,5 +1,5 @@
-import { Button, Group, Pagination, Select, TextInput } from '@mantine/core'
-import { IconChartBar, IconChartPie, IconSearch } from '@tabler/icons-react'
+import { Button, Pagination, Select, TextInput } from '@mantine/core'
+import { IconArrowLeft, IconChartBar, IconChartPie, IconSearch } from '@tabler/icons-react'
 import { useState } from 'react'
 import { PurchaseInvoices } from './PurchaseInvoices'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
@@ -116,8 +116,20 @@ function HistoricalProfit({ picked, clear }: { picked: Product | null; clear: ()
   if (picked?.code) {params.set('code',picked.code); params.set('account',picked.account)}
   const query = useApiQuery('product-profit?' + params, () => getProductProfit(params))
   const report = query.data
+  const totals = report?.available && <section className="dash-profit-totals">
+    <header><h3>Загалом у звіті DNTrade</h3><span>{dateRange(report.start, report.through)}</span></header>
+    <dl>
+      <div><dt>Продажі</dt><dd>{formatPrice(report.net)}</dd></div>
+      <div><dt>Валовий прибуток</dt><dd>{formatPrice(report.profit)}</dd></div>
+      <div><dt>Товарів</dt><dd>{formatAmount(report.total)}</dd></div>
+      <div><dt>Збиткових товарів</dt><dd>{formatAmount(report.lossCount)}</dd></div>
+    </dl>
+  </section>
   return <>
-    {picked && <Group className="dash-product-tools" gap="sm"><strong>{picked.name}</strong><Button size="xs" radius="xl" variant="default" onClick={clear}>Усі товари</Button></Group>}
+    {picked && <header className="dash-profit-product-head">
+      <div><h3>{picked.name}</h3><small>Код {picked.code}</small></div>
+      <Button size="xs" radius="xl" variant="default" leftSection={<IconArrowLeft size={14} />} onClick={clear}>Усі товари</Button>
+    </header>}
     {!picked && <div className="dash-product-tools">
       <TextInput size="sm" radius="xl" leftSection={<IconSearch size={16} />} aria-label="Пошук у звіті про прибуток" placeholder="Назва або код" maxLength={160} value={search}
         onChange={e => {setSearch(e.currentTarget.value); setPage(1)}} />
@@ -127,17 +139,26 @@ function HistoricalProfit({ picked, clear }: { picked: Product | null; clear: ()
         onChange={v => {setSort(v ?? 'profit'); setPage(1)}} />
     </div>}
     {query.status !== 'ready' ? <PageState kind={query.status} onRetry={query.reload} /> :
-      !report?.available ? <p className="dash-rank-empty">У прод-БД поки немає зведеного звіту DNTrade про валовий прибуток.</p> : <>
-        <p className="dash-report-note"><b>Загалом у звіті DNTrade · {dateRange(report.start,report.through)}</b><br />
-          Продажі {formatPrice(report.net)} · валовий прибуток {formatPrice(report.profit)}. Товарів {formatAmount(report.total)}, з них збиткових {formatAmount(report.lossCount)}.</p>
-        <ol className="dash-rank">{report.rows.map((p,i) => <li key={p.code}><span className="dash-rank-n">{(page-1)*25+i+1}</span>
-          <div className="dash-rank-main"><strong>{p.name}</strong><span className="app-cell-sub">Код {p.code} · {share(p.share)} продажів</span>
-            <span className="app-cell-sub">Продажі {formatPrice(p.net)} · закупівля {formatPrice(p.cost)}</span></div>
-          <div className="dash-rank-side"><b className="app-money" data-loss={p.profit < 0 || undefined}>{formatPrice(p.profit)}</b>
-            <span className="app-cell-sub">Маржа {share(p.margin)}</span></div></li>)}</ol>
+      !report?.available ? <p className="dash-rank-empty">Звіт DNTrade про валовий прибуток ще недоступний.</p> : <>
+        {!picked && totals}
+        {report.rows.length > 0 && <ol className="dash-profit-rows" data-selected={picked ? true : undefined}>
+          {report.rows.map((p,i) => <li key={p.code}>
+            {!picked && <div className="dash-profit-identity"><span className="dash-invoice-count">{(page-1)*25+i+1}</span>
+              <div><strong>{p.name}</strong><small>Код {p.code}</small></div></div>}
+            <div className="dash-profit-amount"><span>Валовий прибуток</span>
+              <strong data-loss={p.profit < 0 || undefined}>{formatPrice(p.profit)}</strong></div>
+            <dl className="dash-finance-chips">
+              <div className="dash-revenue-chip"><dt>Продажі</dt><dd>{formatPrice(p.net)}</dd></div>
+              <div><dt>Закупівля</dt><dd>{formatPrice(p.cost)}</dd></div>
+              <div data-margin={p.margin ? (p.margin > 0 ? 'positive' : 'negative') : undefined}><dt>Маржа</dt><dd>{share(p.margin)}</dd></div>
+              <div className="dash-turnover-share-chip"><dt><IconChartPie size={13} aria-hidden="true" />Частка продажів</dt><dd>{share(p.share)}</dd></div>
+            </dl>
+          </li>)}</ol>}
         {report.matches === 0 && <p className="dash-rank-empty">{picked ? 'У цьому звіті немає рядка з таким кодом товару й джерелом обліку.' : 'За пошуком товарів немає.'}</p>}
-        {report.matches > 25 && <div className="dash-product-tools"><Pagination size="sm" total={Math.ceil(report.matches/25)} value={page} onChange={setPage} /></div>}
-        <p className="dash-report-note">Маржа — валовий прибуток у відсотках від продажів товару за дати звіту. Операційні витрати бізнесу обліковуються окремо.</p>
+        {picked && totals}
+        {report.matches > 25 && <div className="dash-product-tools"><Pagination size="sm" siblings={0} total={Math.ceil(report.matches/25)} value={page} onChange={setPage} /></div>}
+        <details className="dash-report-note"><summary>Як розраховано маржу</summary>
+          <p>Маржа — валовий прибуток у відсотках від продажів товару за період звіту. Операційні витрати обліковуються окремо.</p></details>
       </>}
   </>
 }
