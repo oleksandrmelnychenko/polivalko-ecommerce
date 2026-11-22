@@ -27,6 +27,9 @@ const quantityLabel = (value: number, unit: string) => numberFormat.format(value
 const views = [{ value: 'clients', label: 'За клієнтами' }, { value: 'stock', label: 'Спільні товари' }]
 const workflowViews = [...views, { value: 'offers', label: 'Журнал пропозицій' }]
 const statusLabels = { offered: 'Вже запропоновано', reserved: 'Зарезервовано', declined: 'Відмовився', released: 'Резерв знято', fulfilled: 'Відвантажено' }
+// Stock kept for an offer without an answer is not a shortage: it is free again as soon as that customer declines.
+const waitingReason = (item: ClientSuggestion) => item.held
+  ? 'Утримано до відповіді на пропозицію · ' + quantityLabel(item.held, item.unit) : 'Очікує поповнення'
 
 type Buyer = { client: SuggestedClient; item: ClientSuggestion }
 type ActionProps = { actions: (client: SuggestedClient, item: ClientSuggestion) => ReactNode }
@@ -79,7 +82,7 @@ function SharedStock({ clients, actions }: { clients: SuggestedClient[] } & Acti
                 <TableChip tone="document" value={'Документів · ' + item.purchases} />
               </div>
               <small>Остання покупка {dateLabel(item.last)}</small>
-              {!item.offerId && item.quantity < item.requested && <small>{item.quantity ? 'Покрито частково' : 'Очікує поповнення'} · потреба {quantityLabel(item.requested, item.unit)}</small>}
+              {!item.offerId && item.quantity < item.requested && <small>{item.quantity ? 'Покрито частково' : waitingReason(item)} · потреба {quantityLabel(item.requested, item.unit)}</small>}
               {actions(client, item)}
             </li>)}</ol>
         </div>
@@ -106,7 +109,7 @@ function Suggestion({ item, children }: { item: ClientSuggestion; children: Reac
     </div>
     <div className="client-rec-quantity">
       {item.quantity > 0 ? <><span>{item.offerId ? 'Розподілено' : 'До пропозиції'} <b>{quantityLabel(item.quantity, item.unit)}</b> × {formatPrice(item.price)}</span>
-        <strong>{formatPrice(item.amount)}</strong></> : !item.offerId && <strong>Очікує поповнення · до пропозиції 0 {item.unit}</strong>}
+        <strong>{formatPrice(item.amount)}</strong></> : !item.offerId && <strong>{waitingReason(item)} · до пропозиції 0 {item.unit}</strong>}
     </div>
     {children}
   </li>
@@ -130,7 +133,7 @@ function ClientList({ clients, actions }: { clients: SuggestedClient[] } & Actio
           onClick={() => setSelected(expanded ? null : c.id)}>
           <span>{c.name}<small>Остання покупка {dateLabel(c.lastSale)}</small></span>
           <span className="client-rec-total">{c.items.some(i => i.quantity > 0)
-            ? formatPrice(c.items.reduce((sum, item) => sum + Math.round(item.amount * 100), 0) / 100) : c.items.some(i => i.offerId) ? 'Є запис у журналі' : 'Очікує поповнення'}</span>
+            ? formatPrice(c.items.reduce((sum, item) => sum + Math.round(item.amount * 100), 0) / 100) : c.items.some(i => i.offerId) ? 'Є запис у журналі' : c.items.some(i => i.held) ? 'Утримано до відповіді' : 'Очікує поповнення'}</span>
           <IconChevronDown size={16} aria-hidden="true" />
         </button></h3>
         <div hidden={!expanded} id={'client-rec-' + c.id}>
@@ -234,7 +237,10 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
     if (!offers) return null
     if (item.offerId) {
       const offer = byId.get(item.offerId)
-      return offer ? decisions(offer) : null
+      if (!offer) return null
+      // One offer is kept per purchase, so a closed one cannot be repeated until the customer buys the product again.
+      return offer.status === 'declined' || offer.status === 'released'
+        ? <>{decisions(offer)}<small>Нова пропозиція буде можлива після наступної покупки цього товару.</small></> : decisions(offer)
     }
     return canEdit && item.quantity > 0 && <div className="client-rec-actions"><Button size="xs" disabled={disabled}
       onClick={() => issue(client, item)}>Запропонувати</Button></div>
@@ -266,7 +272,8 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
           {offers.length === 0 && <p>Записаних пропозицій за цей період ще немає.</p>}
           {offers.map(offer => <article className="client-rec-journal" key={offer.id}>
             <strong>{offer.customer}</strong><span>{offer.name}</span>
-            <small>Запропоновано {dateLabel(offer.offeredAt.slice(0,10))} · {quantityLabel(offer.quantity, offer.unit)} × {formatPrice(offer.price)}</small>
+            <small>Запропоновано {dateLabel(offer.offeredAt.slice(0,10))} · {quantityLabel(offer.quantity, offer.unit)} × {formatPrice(offer.price)}
+              {offer.status !== 'offered' && <> · стан змінено {dateLabel(offer.changedAt.slice(0,10))}</>}</small>
             {decisions(offer)}
             {offer.invoiceId ? <DocumentLink id={offer.invoiceId}>
               {offer.status === 'reserved' ? 'Відкрити чернетку' : offer.status === 'released' ? 'Скасована накладна' : 'Проведена накладна'}</DocumentLink>

@@ -109,7 +109,7 @@ export const getStockTurnover = (params: URLSearchParams) =>
 
 export type ClientSuggestion = {
   id: string; name: string; sku: string; unit: string; quantity: number; available: number; price: number; amount: number
-  requested: number; rank: number; buyers: number; dueOn: string | null
+  requested: number; rank: number; buyers: number; dueOn: string | null; held?: number
   offerId?: string | null; offerStatus?: OfferStatus | null
   purchases: number; last: string; interval: number | null; seasons: number; signal: 'due' | 'repeat' | 'season' | 'single'
 }
