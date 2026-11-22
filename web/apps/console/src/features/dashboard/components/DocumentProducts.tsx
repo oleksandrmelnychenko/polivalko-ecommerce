@@ -157,8 +157,6 @@ function HistoricalProfit({ picked, clear }: { picked: Product | null; clear: ()
         {report.matches === 0 && <p className="dash-rank-empty">{picked ? 'У цьому звіті немає рядка з таким кодом товару й джерелом обліку.' : 'За пошуком товарів немає.'}</p>}
         {picked && totals}
         {report.matches > 25 && <div className="dash-product-tools"><Pagination size="sm" siblings={0} total={Math.ceil(report.matches/25)} value={page} onChange={setPage} /></div>}
-        <details className="dash-report-note"><summary>Як розраховано маржу</summary>
-          <p>Маржа — валовий прибуток у відсотках від продажів товару за період звіту. Операційні витрати обліковуються окремо.</p></details>
       </>}
   </>
 }
