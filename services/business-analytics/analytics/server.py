@@ -10,6 +10,7 @@ from urllib.parse import parse_qs
 
 import simplejson as json
 from .customer_recommendations import customer_recommendations
+from .recommendation_results import recommendation_results
 
 from .forecast import VERSION, build_models
 from .register import KYIV
@@ -281,6 +282,14 @@ def dispatch(env):
     if route[0] != "GET" or route[1] not in (*handlers, "/forecast"):
         return 404, {"title": "Операцію не знайдено"}
     q = {k: v[-1] for k, v in parse_qs(env.get("QUERY_STRING", ""), max_num_fields=20).items()}
+    if route[1] == "/documents" and q.get("analysis") == "recommendation-results":
+        if set(q) != {"analysis"}:
+            raise ValueError("Звіт охоплює 7, 30 і 90 днів")
+        try:
+            return 200, recommendation_results(now().date())
+        except Exception as exc:
+            logger.error("Recommendation results unavailable (%s, SQLSTATE %s)", type(exc).__name__, getattr(exc, "sqlstate", None))
+            return 503, {"title": "Не вдалося звірити пропозиції з проведеними накладними"}
     if route[1] == "/documents" and q.get("analysis") == "customer-recommendations":
         days = int(q.get("days", 30))
         if set(q) - {"analysis", "days"} or days not in (7, 30, 90):

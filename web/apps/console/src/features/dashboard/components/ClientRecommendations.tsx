@@ -1,6 +1,6 @@
 import { Button, NativeSelect, SegmentedControl, TextInput } from '@mantine/core'
 import { IconChevronDown, IconFileText, IconRefresh, IconSearch, IconUsers } from '@tabler/icons-react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
 import { ACCOUNTING_DOCUMENT_CHANGED, save, useRegister } from '@/shared/api/accounting'
@@ -14,7 +14,8 @@ import { DocumentLink } from '@/shared/ui/DocumentLink'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import { PageState } from '@/shared/ui/PageState'
 import { TableChip } from '@/shared/ui/TableChip'
-import { getClientRecommendations, type ClientSuggestion, type RecommendationOffer, type SuggestedClient } from '../api/dashboardApi'
+import { getClientRecommendations, getRecommendationResults, type ClientSuggestion, type RecommendationOffer, type SuggestedClient } from '../api/dashboardApi'
+import { RecommendationResults } from './RecommendationResults'
 import { numberFormat, PERIODS } from '../lib/insights'
 import './client-recommendations.css'
 
@@ -164,6 +165,8 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
   const query = useApiQuery('client-recommendations-' + days, () => getClientRecommendations(days), { enabled: opened })
   const report = query.status === 'ready' ? query.data : undefined
   const [view, setView] = useState('clients')
+  const journal = view === 'offers'
+  const results = useApiQuery('recommendation-results', getRecommendationResults, { enabled: opened && journal })
   const { can } = usePermissions()
   const canEdit = can(PermissionKeys.Accounting.Edit)
   const canReserve = canEdit && can(PermissionKeys.Accounting.Post)
@@ -175,7 +178,9 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
   const location = useLocation()
   const [choosingFor, setChoosingFor] = useState<string | null>(null)
   const disabled = saving || query.isFetching
-  const reload = query.reload
+  const reloadOffers = query.reload
+  const reloadResults = results.reload
+  const reload = useCallback(() => { reloadOffers(); reloadResults() }, [reloadOffers, reloadResults])
   useEffect(() => {
     if (!opened) return
     window.addEventListener(ACCOUNTING_DOCUMENT_CHANGED, reload)
@@ -195,7 +200,7 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
         if (openInvoice && result.data) navigate('/accounting/documents/' + result.data, { state: { documentBackground: location } })
       }
     } catch { setNotice('Не вдалося підтвердити запис. Перевірте журнал перед повтором.') }
-    finally { query.reload(); busy.current = false; setSaving(false) }
+    finally { reload(); busy.current = false; setSaving(false) }
   }
 
   function issue(client: SuggestedClient, item: ClientSuggestion) {
@@ -234,20 +239,22 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
   return <AppEditorModal opened={opened} onClose={onClose} size="standard" className="client-rec-modal"
     title={<MetricLabel icon={IconUsers}>Рекомендації клієнтам</MetricLabel>}>
     <div className="client-rec-panel">
-      <div className="client-rec-toolbar"><div className="client-rec-period"><span>Клієнти з покупкою за</span>
-        <SegmentedControl aria-label="Період активності клієнтів" value={String(days)} data={periods} onChange={setPeriod} /></div>
+      <div className="client-rec-toolbar"><div className="client-rec-period"><span>{journal ? 'Записи журналу за' : 'Клієнти з покупкою за'}</span>
+        <SegmentedControl aria-label={journal ? 'Період журналу' : 'Період активності клієнтів'} value={String(days)} data={periods} onChange={setPeriod} /></div>
         {report && <Button variant="default" size="xs" radius="xl" leftSection={<IconRefresh size={14} />}
-          loading={query.isFetching} onClick={query.reload}>Оновити залишки</Button>}
+          loading={query.isFetching || (journal && results.isFetching)} onClick={reload}>{journal ? 'Оновити журнал' : 'Оновити залишки'}</Button>}
       </div>
       {notice && <p role="status" className="client-rec-notice">{notice}</p>}
       {report && typeof report.offeredClients !== 'number' ? <p role="status">Оновлюється розрахунок спільного залишку.</p> : report ? <>
-        <div className="client-rec-summary"><h3>Кому запропонувати товар</h3>
+        {!journal && <div className="client-rec-summary"><h3>Кому запропонувати товар</h3>
           <div><strong>{numberFormat.format(report.offeredClients)}</strong><span> із {numberFormat.format(report.active)} активних клієнтів</span></div>
-          <small>{dateRange(report.start, report.through)}</small></div>
+          <small>{dateRange(report.start, report.through)}</small></div>}
         {(report.clients.length > 0 || offers) && <SegmentedControl aria-label="Перегляд рекомендацій" data={offers ? workflowViews : views} value={view} onChange={setView} />}
         {canEdit && offers && report.clients.length > 0 && view !== 'offers' &&
           <small>Після розмови натисніть «Запропонувати», щоб записати клієнта й кількість.</small>}
         {view === 'offers' && offers ? <section aria-label="Журнал пропозицій">
+          {results.status === 'ready' && results.data ? <RecommendationResults key={days} report={results.data} days={days} /> :
+            <PageState kind={results.status === 'ready' ? 'loading' : results.status} description="Не вдалося завантажити показники журналу." onRetry={reloadResults} />}
           {offers.length === 0 && <p>Записаних пропозицій за цей період ще немає.</p>}
           {offers.map(offer => <article className="client-rec-journal" key={offer.id}>
             <strong>{offer.customer}</strong><span>{offer.name}</span>

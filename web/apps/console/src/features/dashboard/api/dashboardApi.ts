@@ -125,6 +125,16 @@ export const getClientRecommendations = (days: number) =>
   readBusiness<{ start: string; through: string; active: number; offeredClients: number; clients: SuggestedClient[]; offers?: RecommendationOffer[] }>(
     'documents', 'analysis=customer-recommendations&days=' + days)
 
+export type RecommendationPeriod = {
+  days: number; start: string; offered: number; accepted: number; sold: number; invoices: number
+  turnover: number; profit: number | null; coveredProfit: number; priced: number; estimated: number
+}
+export type RecommendationResultsReport = {
+  through: string; periods: RecommendationPeriod[]
+  invoices: { id: string; number: string; day: string; turnover: number; profit: number | null; estimated: boolean }[]
+}
+export const getRecommendationResults = () => readBusiness<RecommendationResultsReport>('documents', 'analysis=recommendation-results')
+
 export type ProductCounts = S['ConsoleProductCountsDto']
 
 export function getDashboard(days: number) {

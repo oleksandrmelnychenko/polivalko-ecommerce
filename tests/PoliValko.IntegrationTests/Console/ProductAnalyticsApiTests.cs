@@ -19,6 +19,7 @@ public sealed class ProductAnalyticsApiTests(ApiFactory api)
     [Theory]
     [InlineData("stock-turnover")]
     [InlineData("customer-recommendations")]
+    [InlineData("recommendation-results")]
     public async Task Reports_with_stock_require_catalog_read_access_in_addition_to_document_analytics(string analysis)
     {
         using var admin = await Staff.AdminAsync(api);

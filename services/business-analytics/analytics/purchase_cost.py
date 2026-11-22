@@ -26,14 +26,13 @@ FROM jsonb_to_recordset(%s::jsonb) n(a text,r text) JOIN accounting.documents d
 """
 # Only transfer invoices for requested products and dates. Keep one previous buying day
 # per stock key as the opening price, including an unpriced day if its checks failed.
-PURCHASES = f"""
-WITH needed AS (
-  SELECT * FROM jsonb_to_recordset(%s::jsonb) AS n(a text,o text,s text,p text,u text,first_day date,last_day date)
-), positions AS (
+def checked_purchases(document_filter=""):
+    return f"""positions AS (
   SELECT d.id,d.number,d.day,d.source_account AS a,{ORG} AS o,{STORE} AS s,
     CASE WHEN nullif(l#>>'{{product,id}}','') IS NOT NULL THEN 'id:'||lower(l#>>'{{product,id}}')
          ELSE 'code:'||lower(l#>>'{{product,code}}') END AS p,{UNIT} AS u,d.details->>'date' AS stamp,
-    d.total,accounting.stock_number(l->>'quantity') AS qty,accounting.stock_number(l->>'total') AS amount,
+    lower(l#>>'{{product,code}}') AS external_code,d.total,
+    accounting.stock_number(l->>'quantity') AS qty,accounting.stock_number(l->>'total') AS amount,
     d.details->>'extra_costs' AS extras
   FROM accounting.documents d CROSS JOIN LATERAL jsonb_array_elements(
     CASE WHEN jsonb_typeof(d.details->'products')='array' THEN d.details->'products' ELSE '[]'::jsonb END) l
@@ -43,12 +42,19 @@ WITH needed AS (
          AND coalesce(lower(d.details->>'status'),'active') IN ('active','активний','активна','posted')
          AND coalesce(lower(d.details->>'type'),'in') IN ('in','2')))
     AND lower(d.currency) IN ('uah','980') AND coalesce(lower(d.details->>'currency_iso'),'uah') IN ('uah','980')
+    {document_filter}
 ), checked AS (
   SELECT positions.*, round(sum(amount) OVER doc,2)=round(total,2)
     AND bool_and(qty IS NOT NULL AND qty>0 AND amount IS NOT NULL AND amount>=0) OVER doc
     AND (extras IS NULL OR extras IN ('[]','{{}}') OR accounting.stock_number(extras)=0) AS ok
   FROM positions WINDOW doc AS (PARTITION BY id)
-), matched AS (
+)"""
+
+
+PURCHASES = """
+WITH needed AS (
+  SELECT * FROM jsonb_to_recordset(%s::jsonb) AS n(a text,o text,s text,p text,u text,first_day date,last_day date)
+), """ + checked_purchases() + """, matched AS (
   SELECT c.*,n.first_day,max(day) FILTER (WHERE day<n.first_day) OVER (PARTITION BY a,o,s,p,u) AS prior_day
   FROM checked c JOIN needed n USING(a,o,s,p,u) WHERE c.day<=n.last_day
 )

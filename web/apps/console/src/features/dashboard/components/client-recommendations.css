@@ -76,6 +76,17 @@
 .client-rec-journal + .client-rec-journal { margin-top: 8px; }
 .client-rec-journal small { color: var(--mantine-color-dimmed); }
 .client-rec-notice { margin: 0; padding: 8px 12px; border-radius: 8px; background: var(--app-ground); }
+.rec-results { display: grid; gap: 10px; margin-bottom: 12px; }
+.rec-results section { min-width: 0; padding: 12px 14px; background: white; border: 1px solid var(--app-line); border-radius: 16px; }
+.rec-results h3 { margin: 0; font-size: 1rem; }
+.rec-results p, .rec-results small { color: var(--mantine-color-dimmed); font-size: .8rem; }
+.rec-results small { display: block; font-weight: 400; }
+.rec-results-scroll { overflow-x: auto; }
+.rec-results table { width: 100%; border-collapse: collapse; font-size: .84rem; font-variant-numeric: tabular-nums; }
+.rec-results th, .rec-results td { padding: 6px; border-bottom: 1px solid var(--app-line); text-align: right; }
+.rec-results th:first-child { text-align: left; }
+.rec-results tr[data-selected="true"] { background: var(--app-ground); }
+.rec-results summary { cursor: pointer; font-weight: 600; }
 @media (max-width: 32em) {
   .client-rec-panel .mantine-SegmentedControl-label { white-space: normal; }
 }

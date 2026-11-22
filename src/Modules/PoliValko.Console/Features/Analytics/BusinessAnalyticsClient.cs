@@ -37,7 +37,7 @@ internal sealed class BusinessAnalyticsClient(HttpClient http)
                     .AddEndpointFilter(async (invocation, next) =>
                     {
                         var context = invocation.HttpContext;
-                        if (context.Request.Query["analysis"].Any(value => value is "stock-turnover" or "customer-recommendations"))
+                        if (context.Request.Query["analysis"].Any(value => value is "stock-turnover" or "customer-recommendations" or "recommendation-results"))
                         {
                             var authorization = context.RequestServices.GetRequiredService<IAuthorizationService>();
                             var check = await authorization.AuthorizeAsync(context.User, context,
