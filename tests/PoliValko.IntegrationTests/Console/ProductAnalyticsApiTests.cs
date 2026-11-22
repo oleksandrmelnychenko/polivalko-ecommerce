@@ -16,12 +16,14 @@ public sealed class ProductAnalyticsApiTests(ApiFactory api)
     private const string Url = "/api/v1/console/product-analytics";
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    [Fact]
-    public async Task Stock_turnover_requires_catalog_read_access_in_addition_to_document_analytics()
+    [Theory]
+    [InlineData("stock-turnover")]
+    [InlineData("customer-recommendations")]
+    public async Task Reports_with_stock_require_catalog_read_access_in_addition_to_document_analytics(string analysis)
     {
         using var admin = await Staff.AdminAsync(api);
         using var reader = await TestRoles.LoginWithPermissionsAsync(api, admin, PermissionKeys.ProductAnalyticsView, PermissionKeys.AccountingView);
-        using var response = await reader.GetAsync("/api/v1/console/business-analytics/documents?analysis=stock-turnover&days=30", Ct);
+        using var response = await reader.GetAsync($"/api/v1/console/business-analytics/documents?analysis={analysis}&days=30", Ct);
         response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 

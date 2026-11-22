@@ -1085,7 +1085,7 @@ a.dash-queue-item:focus-visible {
   font-family: var(--font-money);
 }
 
-.dash-source .mantine-Button-label, .dash-purchases-trigger .mantine-Button-label { gap: 6px; }
+:is(.dash-source, .dash-purchases-trigger, .dash-recommendations-trigger) .mantine-Button-label { gap: 6px; }
 .dash-report-note { padding: 8px var(--dash-pad); margin: 0; font-size: 13px; color: var(--mantine-color-gray-7); }
 .dash-stock-filters {
   display: grid;
@@ -1180,6 +1180,6 @@ a.dash-queue-item:focus-visible {
 }
 .dash-period > .dash-link { align-self: start; margin-block: 4px 12px; }
 @media (max-width: 68em) {
-  .dash-toolbar-actions :is(.dash-source, .dash-purchases-trigger) { width: 34px; height: 34px; padding: 0; }
-  :is(.dash-source, .dash-purchases-trigger) .mantine-Button-label span { display: none; }
+  .dash-toolbar-actions :is(.dash-source, .dash-purchases-trigger, .dash-recommendations-trigger) { width: 34px; height: 34px; padding: 0; }
+  :is(.dash-source, .dash-purchases-trigger, .dash-recommendations-trigger) .mantine-Button-label span { display: none; }
 }

@@ -1,5 +1,5 @@
 import { ActionIcon, Button, Menu, SegmentedControl, Skeleton, Tooltip } from '@mantine/core'
-import { IconCheck, IconDatabase, IconRefresh, IconShoppingCart } from '@tabler/icons-react'
+import { IconCheck, IconDatabase, IconRefresh, IconShoppingCart, IconUsers } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
@@ -19,6 +19,7 @@ import { LatestOrders } from '../components/LatestOrders'
 import { PeriodSummary } from '../components/PeriodSummary'
 import { LowStock, TopProducts } from '../components/Rankings'
 import { StockTurnover } from '../components/StockTurnover'
+import { ClientRecommendations } from '../components/ClientRecommendations'
 import { SalesChartCard } from '../components/SalesChartCard'
 import { WorkQueue } from '../components/WorkQueue'
 import { QueueTile } from '../components/QueueTile'
@@ -79,11 +80,12 @@ export function DashboardPage() {
     notifySummaryStale()
   }
 
-  function setPurchasesOpen(open: boolean) {
+  function setHeaderDialog(dialog: 'purchases' | 'recommendations' | null) {
     setParams(current => {
       const next = new URLSearchParams(current)
-      if (open) next.set('purchases', '1')
-      else next.delete('purchases')
+      next.delete('purchases')
+      next.delete('recommendations')
+      if (dialog) next.set(dialog, '1')
       return next
     }, { replace: true, preventScrollReset: true })
   }
@@ -94,8 +96,14 @@ export function DashboardPage() {
         <div className="dash-toolbar-actions">
           {documents && canCatalog && <Tooltip label="Закупівлі за постачальниками">
             <Button className="dash-purchases-trigger" size="xs" radius="xl" variant="default"
-              aria-label="Закупівлі за постачальниками" aria-haspopup="dialog" onClick={() => setPurchasesOpen(true)}>
+              aria-label="Закупівлі за постачальниками" aria-haspopup="dialog" onClick={() => setHeaderDialog('purchases')}>
               <IconShoppingCart size={16} aria-hidden="true" /><span>Закупівлі</span>
+            </Button>
+          </Tooltip>}
+          {canDocuments && canCatalog && <Tooltip label="Рекомендації клієнтам">
+            <Button className="dash-recommendations-trigger" size="xs" radius="xl" variant="default"
+              aria-label="Рекомендації клієнтам" aria-haspopup="dialog" onClick={() => setHeaderDialog('recommendations')}>
+              <IconUsers size={16} aria-hidden="true" /><span>Рекомендації клієнтам</span>
             </Button>
           </Tooltip>}
           {canDocuments && <Menu position="bottom-start">
@@ -124,6 +132,8 @@ export function DashboardPage() {
           </Tooltip>
         </div>
       } />
+      {canDocuments && canCatalog && <ClientRecommendations opened={params.get('recommendations') === '1'}
+        onClose={() => setHeaderDialog(null)} days={days} setPeriod={setPeriod} />}
 
       <div className="dash-body">
         {report && <DocumentKpis data={report} />}
@@ -159,7 +169,7 @@ export function DashboardPage() {
         />}
         {documents && <div className="dash-grid is-even">
           {report && <DocumentProducts key={report.start} data={report} />}
-          {canCatalog && <StockTurnover days={days} purchasesOpen={params.get('purchases') === '1'} closePurchases={() => setPurchasesOpen(false)} />}
+          {canCatalog && <StockTurnover days={days} purchasesOpen={params.get('purchases') === '1' && params.get('recommendations') !== '1'} closePurchases={() => setHeaderDialog(null)} />}
         </div>}
         {report && report.excluded > 0 && <p className="dash-muted" role="status">Документів із непідтвердженою сумою або статусом · {report.excluded.toLocaleString('uk-UA')}.</p>}
 

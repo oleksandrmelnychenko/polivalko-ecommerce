@@ -9,6 +9,7 @@ from time import monotonic
 from urllib.parse import parse_qs
 
 import simplejson as json
+from .customer_recommendations import customer_recommendations
 
 from .forecast import VERSION, build_models
 from .register import KYIV
@@ -280,6 +281,15 @@ def dispatch(env):
     if route[0] != "GET" or route[1] not in (*handlers, "/forecast"):
         return 404, {"title": "Операцію не знайдено"}
     q = {k: v[-1] for k, v in parse_qs(env.get("QUERY_STRING", ""), max_num_fields=20).items()}
+    if route[1] == "/documents" and q.get("analysis") == "customer-recommendations":
+        days = int(q.get("days", 30))
+        if set(q) - {"analysis", "days"} or days not in (7, 30, 90):
+            raise ValueError("Виберіть 7, 30 або 90 днів")
+        try:
+            return 200, customer_recommendations(now().date(), days)
+        except Exception as exc:
+            logger.error("Customer recommendations unavailable (%s, SQLSTATE %s)", type(exc).__name__, getattr(exc, "sqlstate", None))
+            return 503, {"title": "Не вдалося прочитати історію покупок клієнтів"}
     if route[1] == "/documents" and q.get("analysis") == "product-profit":
         page, sort = int(q.get("page", 1)), q.get("sort", "profit")
         if (set(q) - {"analysis", "page", "sort", "search", "account", "code"} or not 1 <= page <= 1000000

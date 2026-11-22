@@ -107,6 +107,16 @@ type StockTurnoverReport = {
 export const getStockTurnover = (params: URLSearchParams) =>
   readBusiness<StockTurnoverReport>('documents', 'analysis=stock-turnover&' + params)
 
+export type ClientSuggestion = {
+  id: string; name: string; sku: string; unit: string; quantity: number; available: number; price: number; amount: number
+  purchases: number; last: string; interval: number | null; seasons: number; signal: 'due' | 'repeat' | 'season' | 'single'
+}
+export type SuggestedClient = { id: string; name: string; lastSale: string; items: ClientSuggestion[] }
+
+export const getClientRecommendations = (days: number) =>
+  readBusiness<{ start: string; through: string; active: number; clients: SuggestedClient[] }>(
+    'documents', 'analysis=customer-recommendations&days=' + days)
+
 export type ProductCounts = S['ConsoleProductCountsDto']
 
 export function getDashboard(days: number) {
