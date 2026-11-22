@@ -42,6 +42,9 @@ DELIVERY_CITY, DELIVERY_REGION = address_fields("shipping_address")
 BUYER_CITY, BUYER_REGION = address_fields("buyer_address")
 
 
+# A customer return, however the source names it. kind_of decides the same in Python.
+REFUND = """ (d.entity_type='customerReturn' OR lower(coalesce(d.kind,'')) IN ('back','7','return')
+         OR coalesce(d.details->>'type','')='7')"""
 DOCUMENTS = """
 WITH sales AS (
  SELECT d.* FROM accounting.documents d WHERE d.entity_type IN ('invoice','customerReturn')
@@ -55,9 +58,7 @@ WITH sales AS (
  SELECT d.source_account AS account,d.entity_type,d.kind,d.status,d.currency,d.details->>'type' AS raw_kind,
         d.details->>'status' AS raw_status,d.details->>'currency_iso' AS raw_currency,
         p.id::text AS partner,p.title AS name,d.total,d.day,
-        lower(d.source_id) AS ref,lower(""" + PARENT_REF + """) AS parent,
-        (d.entity_type='customerReturn' OR lower(coalesce(d.kind,'')) IN ('back','7','return')
-         OR coalesce(d.details->>'type','')='7') AS refund,
+        lower(d.source_id) AS ref,lower(""" + PARENT_REF + """) AS parent,""" + REFUND + """ AS refund,
         coalesce(nullif(profile#>>'{address,region,title}',''),nullif(profile#>>'{address,region}',''),
                  nullif(profile#>>'{region,title}',''),nullif(profile->>'region',''),profile->>'oblast') AS partner_region,
         coalesce(nullif(profile#>>'{address,katottg}',''),nullif(profile#>>'{address,city,title}',''),
@@ -109,7 +110,11 @@ WITH sales AS (
    coalesce(nullif(partner_city,''),""" + BUYER_CITY + """) AS buyer_city
  FROM addresses a
 ), returned AS (
- SELECT DISTINCT account,parent AS ref FROM located WHERE refund AND parent IS NOT NULL
+ -- Read the few returns of the period directly. Taking them from the located rows would make
+ -- PostgreSQL keep every document of the year in memory to read it twice.
+ SELECT DISTINCT d.source_account AS account,lower(""" + PARENT_REF + """) AS ref FROM accounting.documents d
+ WHERE d.entity_type IN ('invoice','customerReturn') AND d.day >= %s AND d.day < %s AND""" + REFUND + """
+   AND """ + PARENT_REF + """ IS NOT NULL
 ), linked AS (
  -- A return and the sale it refers to share a link, so the return can leave the place where the sale was counted.
  SELECT l.*,CASE WHEN l.refund THEN l.parent ELSE r.ref END AS link
@@ -299,7 +304,7 @@ def markets(year, today, page=1, search="", include_carrier=False):
         if not item or item[0] <= monotonic() or item[1] != today:
             bounds = date(year, 1, 1), min(date(year+1, 1, 1), today + timedelta(days=1))
             with production() as conn:
-                headers = list(conn.execute(DOCUMENTS, bounds*2))
+                headers = list(conn.execute(DOCUMENTS, bounds*3))
                 shipments = ShipmentIndex.read(conn, headers)
                 web = list(conn.execute(WEB, bounds))
             carrier = None
