@@ -1140,7 +1140,8 @@ a.dash-queue-item:focus-visible {
 .dash-supplier-cart[open], .dash-price-history[open] { padding-bottom: 12px; }
 .dash-supplier-cart > summary, .dash-price-history > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-block: 12px; list-style: none; cursor: pointer; font-weight: 600; font-size: .875rem; }
 .dash-supplier-budget summary::-webkit-details-marker { display: none; }
-.dash-supplier-cart > summary strong, .dash-price-history > summary svg { margin-inline-start: auto; }
+.dash-supplier-cart > summary strong, .dash-supplier-cart > summary:not(:has(> strong)) > svg,
+.dash-price-history > summary svg { margin-inline-start: auto; }
 .dash-supplier-budget details[open] > summary > svg { transform: rotate(180deg); }
 .dash-supplier-budget :is(summary, a, input):focus-visible { outline: 2px solid var(--brand-accent); outline-offset: 1px; }
 .dash-supplier-cart > p { margin-top: 8px; }

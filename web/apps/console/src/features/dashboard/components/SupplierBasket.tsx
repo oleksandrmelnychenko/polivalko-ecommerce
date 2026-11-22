@@ -106,7 +106,7 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
     const lines: Line[] = []
     for (const item of group.items) {
       const row = selected.get(item.id)
-      if (!row || row.supplier !== group.id || row.unit !== item.unit) continue
+      if (!row || row.supplier !== group.id || row.unit !== item.unit || matched.has(item.id)) continue
       matched.add(item.id)
       const quantity = row.quantity ?? item.quantity
       lines.push({ item, quantity, amount: lineAmount(item, quantity) })
@@ -115,13 +115,17 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
   }).filter(order => order.lines.length)
   const lines = orders.flatMap(order => order.lines)
   const missing = lines.filter(line => line.amount === null).length
-  const outdated = basket.picked.filter(row => !matched.has(row.id))
+  const outdated = [...selected.values()].filter(row => !matched.has(row.id))
+  const allAdded = groups.every(group => group.items.every(item => matched.has(item.id)))
+  const matchesPlan = lines.length > 0 && allAdded && outdated.length === 0
+    && lines.every(line => line.quantity === line.item.quantity)
   return <details className="dash-supplier-cart">
-    <summary>Кошик постачальників <TableChip tone="document" value={`${numberFormat.format(lines.length)} поз.`} />
+    <summary>Кошик постачальників <TableChip tone="document" value={`${numberFormat.format(lines.length)} поз.${matchesPlan ? ' за рекомендацією' : ''}`} />
       {missing > 0 && <TableChip tone="warning" value={`Без ціни · ${missing}`} />}{outdated.length > 0 && <TableChip tone="warning" value={`Перевірити · ${outdated.length}`} />}
-      <strong>{formatPrice(subtotal(lines))}</strong><IconChevronDown size={16} aria-hidden="true" /></summary>
+      {!matchesPlan && lines.length > 0 && <strong>{lines.length === missing ? 'Сума невідома' : formatPrice(subtotal(lines))}</strong>}
+      <IconChevronDown size={16} aria-hidden="true" /></summary>
     <p>Чернетка зберігається у цьому браузері для вашого облікового запису. Рекомендовані кількості оновлюються з чергою. Кількість, введена вручну, зберігається.</p>
-    <Button variant="default" size="compact-xs" disabled={!groups.some(group => group.items.some(item => !matched.has(item.id)))}
+    <Button variant="default" size="compact-xs" disabled={allAdded}
       onClick={() => basket.add(groups)}>Додати всю чергу</Button>
     {orders.map(({ group, lines: items }) => <details className="dash-cart-order" key={group.id ?? 'unknown'}>
       <summary><span>{group.name || 'Уточнити постачальника'}</span><strong>{formatPrice(subtotal(items))}</strong><IconChevronDown size={15} aria-hidden="true" /></summary>

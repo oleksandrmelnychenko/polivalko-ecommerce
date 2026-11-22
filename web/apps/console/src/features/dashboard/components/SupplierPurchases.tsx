@@ -56,7 +56,7 @@ export function BudgetBySupplier({ budget, count, through, days, cover, seasonal
     </details>)
   return <section className="dash-supplier-budget" aria-label="Бюджет закупівлі">
     <div className="dash-budget-header">
-      <h3>До закупівлі</h3>
+      <h3>Рекомендована закупівля</h3>
       <strong>{priced || !count ? formatPrice(budget.subtotal) : 'Суму ще не визначено'}{budget.unpriced > 0 && ' + без ціни: ' + budget.unpriced}</strong>
       <div className="dash-budget-context"><TableChip value={`Продажі за ${days} днів`} /><TableChip value={`Запас на ${cover} днів`} />
         <TableChip tone="source" value={seasonal ? 'З урахуванням сезону' : 'За поточним темпом'} /></div>
