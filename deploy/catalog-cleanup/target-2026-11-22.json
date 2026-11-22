@@ -98,42 +98,72 @@
 },
 {
 "isVisible": true,
-"name": "Розпилювачі й пістолети",
-"navkoloRef": "Розпилювачі й пістолети",
-"parent": "vse-dlia-polyvu",
+"name": "Басейни",
+"navkoloRef": "Басейни",
+"parent": "vse-dlia-vidpochynku",
 "path": [
-"Все для поливу",
-"Розпилювачі й пістолети"
+"Все для відпочинку",
+"Басейни"
 ],
 "previousNames": [],
-"slug": "rozpyliuvachi-i-pistolety",
-"sortOrder": 2
+"slug": "baseiny",
+"sortOrder": 10
 },
 {
 "isVisible": true,
-"name": "Дощувачі",
-"navkoloRef": "Дощувачі",
-"parent": "vse-dlia-polyvu",
+"name": "Бордюри й огорожі",
+"navkoloRef": "dntrade-0d10e0b900a3f5",
+"parent": "landshaftnyi-dyzain",
 "path": [
-"Все для поливу",
-"Дощувачі"
+"Ландшафтний дизайн",
+"Бордюри й огорожі"
 ],
-"previousNames": [],
-"slug": "doshchuvachi",
-"sortOrder": 3
+"previousNames": [
+"Бордюрні стрічки"
+],
+"slug": "bordiury-i-ohorozhi",
+"sortOrder": 10
 },
 {
 "isVisible": true,
-"name": "Добрива",
-"navkoloRef": "Добрива",
-"parent": "vse-dlia-roslyn",
+"name": "Великий ручний інструмент",
+"navkoloRef": "dntrade-1763e49b2e196f",
+"parent": "ruchnyi-instrument",
 "path": [
-"Все для рослин",
-"Добрива"
+"Ручний інструмент",
+"Великий ручний інструмент"
+],
+"previousNames": [
+"Великий ручн. інстр."
+],
+"slug": "velykyi-ruchnyi-instrument",
+"sortOrder": 10
+},
+{
+"isVisible": true,
+"name": "Все для прибирання",
+"navkoloRef": "dntrade-671ce45a2f6879",
+"parent": "hospodarchi-tovary",
+"path": [
+"Господарчі товари",
+"Все для прибирання"
 ],
 "previousNames": [],
-"slug": "dobryva",
-"sortOrder": 7
+"slug": "vse-dlia-prybyrannia",
+"sortOrder": 10
+},
+{
+"isVisible": true,
+"name": "Наземний полив",
+"navkoloRef": "dntrade-732960d037d085",
+"parent": "vse-dlia-polyvu",
+"path": [
+"Все для поливу",
+"Наземний полив"
+],
+"previousNames": [],
+"slug": "nazemnyi-polyv",
+"sortOrder": 10
 },
 {
 "isVisible": true,
@@ -146,33 +176,20 @@
 ],
 "previousNames": [],
 "slug": "nasinnia",
-"sortOrder": 8
+"sortOrder": 10
 },
 {
 "isVisible": true,
-"name": "Басейни",
-"navkoloRef": "Басейни",
-"parent": "vse-dlia-vidpochynku",
+"name": "Техніка",
+"navkoloRef": "dntrade-d584a0ca2ce098",
+"parent": "tekhnika-dlia-sadu-ta-horodu",
 "path": [
-"Все для відпочинку",
-"Басейни"
+"Техніка для саду та городу",
+"Техніка"
 ],
 "previousNames": [],
-"slug": "baseiny",
-"sortOrder": 23
-},
-{
-"isVisible": true,
-"name": "Господарські дрібниці",
-"navkoloRef": "Господарські дрібниці",
-"parent": "hospodarchi-tovary",
-"path": [
-"Господарчі товари",
-"Господарські дрібниці"
-],
-"previousNames": [],
-"slug": "hospodarski-dribnytsi",
-"sortOrder": 26
+"slug": "tekhnika",
+"sortOrder": 10
 },
 {
 "isVisible": true,
@@ -185,7 +202,20 @@
 ],
 "previousNames": [],
 "slug": "ialynky",
-"sortOrder": 30
+"sortOrder": 10
+},
+{
+"isVisible": true,
+"name": "Витратні матеріали",
+"navkoloRef": "dntrade-83f86737df1c6f",
+"parent": "tekhnika-dlia-sadu-ta-horodu",
+"path": [
+"Техніка для саду та городу",
+"Витратні матеріали"
+],
+"previousNames": [],
+"slug": "vytratni-materialy",
+"sortOrder": 20
 },
 {
 "isVisible": true,
@@ -198,7 +228,130 @@
 ],
 "previousNames": [],
 "slug": "hirliandy",
-"sortOrder": 31
+"sortOrder": 20
+},
+{
+"isVisible": true,
+"name": "Дрібний ручний інструмент",
+"navkoloRef": "dntrade-c0a39c515686fc",
+"parent": "ruchnyi-instrument",
+"path": [
+"Ручний інструмент",
+"Дрібний ручний інструмент"
+],
+"previousNames": [
+"Дрібний ручн. інстр."
+],
+"slug": "dribnyi-ruchnyi-instrument",
+"sortOrder": 20
+},
+{
+"isVisible": true,
+"name": "Опори для рослин",
+"navkoloRef": "dntrade-31fb6ff8371004",
+"parent": "landshaftnyi-dyzain",
+"path": [
+"Ландшафтний дизайн",
+"Опори для рослин"
+],
+"previousNames": [],
+"slug": "opory-dlia-roslyn",
+"sortOrder": 20
+},
+{
+"isVisible": true,
+"name": "Оприскувачі, лійки й відра",
+"navkoloRef": "dntrade-a8130a3e173a17",
+"parent": "hospodarchi-tovary",
+"path": [
+"Господарчі товари",
+"Оприскувачі, лійки й відра"
+],
+"previousNames": [
+"Оприскувачі/Лійки/Відра"
+],
+"slug": "opryskuvachi-liiky-y-vidra",
+"sortOrder": 20
+},
+{
+"isVisible": true,
+"name": "Підземний полив",
+"navkoloRef": "dntrade-2a661a7b0d4d6c",
+"parent": "vse-dlia-polyvu",
+"path": [
+"Все для поливу",
+"Підземний полив"
+],
+"previousNames": [],
+"slug": "pidzemnyi-polyv",
+"sortOrder": 20
+},
+{
+"isVisible": true,
+"name": "Рослини",
+"navkoloRef": "dntrade-f922f87612a169",
+"parent": "vse-dlia-roslyn",
+"path": [
+"Все для рослин",
+"Рослини"
+],
+"previousNames": [],
+"slug": "roslyny",
+"sortOrder": 20
+},
+{
+"isVisible": true,
+"name": "Хімія для басейнів",
+"navkoloRef": "dntrade-0a31a47a88ac2f",
+"parent": "vse-dlia-vidpochynku",
+"path": [
+"Все для відпочинку",
+"Хімія для басейнів"
+],
+"previousNames": [],
+"slug": "khimiia-dlia-baseiniv",
+"sortOrder": 20
+},
+{
+"isVisible": true,
+"name": "Добрива",
+"navkoloRef": "Добрива",
+"parent": "vse-dlia-roslyn",
+"path": [
+"Все для рослин",
+"Добрива"
+],
+"previousNames": [],
+"slug": "dobryva",
+"sortOrder": 30
+},
+{
+"isVisible": true,
+"name": "Засоби захисту людей",
+"navkoloRef": "dntrade-1f3e4a95a0f9ce",
+"parent": "hospodarchi-tovary",
+"path": [
+"Господарчі товари",
+"Засоби захисту людей"
+],
+"previousNames": [],
+"slug": "zasoby-zakhystu-liudei",
+"sortOrder": 30
+},
+{
+"isVisible": true,
+"name": "Крапельний полив",
+"navkoloRef": "dntrade-46373eb255692b",
+"parent": "vse-dlia-polyvu",
+"path": [
+"Все для поливу",
+"Крапельний полив"
+],
+"previousNames": [
+"Капельний полив"
+],
+"slug": "krapelnyi-polyv",
+"sortOrder": 30
 },
 {
 "isVisible": true,
@@ -211,7 +364,50 @@
 ],
 "previousNames": [],
 "slug": "prykrasy",
-"sortOrder": 32
+"sortOrder": 30
+},
+{
+"isVisible": true,
+"name": "Приладдя для приготування їжі",
+"navkoloRef": "dntrade-098952de603b03",
+"parent": "vse-dlia-vidpochynku",
+"path": [
+"Все для відпочинку",
+"Приладдя для приготування їжі"
+],
+"previousNames": [
+"Предм. пригот. їжі"
+],
+"slug": "pryladdia-dlia-pryhotuvannia-yizhi",
+"sortOrder": 30
+},
+{
+"isVisible": true,
+"name": "Секатори, сучкорізи й ножиці",
+"navkoloRef": "dntrade-70f01d48161bf9",
+"parent": "ruchnyi-instrument",
+"path": [
+"Ручний інструмент",
+"Секатори, сучкорізи й ножиці"
+],
+"previousNames": [
+"Гілкорізи/Сучкорізи/Секатори/Ножиці"
+],
+"slug": "sekatory-suchkorizy-y-nozhytsi",
+"sortOrder": 30
+},
+{
+"isVisible": true,
+"name": "Укривні матеріали",
+"navkoloRef": "dntrade-75b5a7f524b480",
+"parent": "landshaftnyi-dyzain",
+"path": [
+"Ландшафтний дизайн",
+"Укривні матеріали"
+],
+"previousNames": [],
+"slug": "ukryvni-materialy",
+"sortOrder": 30
 },
 {
 "isVisible": true,
@@ -224,7 +420,143 @@
 ],
 "previousNames": [],
 "slug": "vinky",
-"sortOrder": 33
+"sortOrder": 40
+},
+{
+"isVisible": true,
+"name": "Вугілля, брикети й розпалювачі",
+"navkoloRef": "dntrade-df0d2c7a752afd",
+"parent": "vse-dlia-vidpochynku",
+"path": [
+"Все для відпочинку",
+"Вугілля, брикети й розпалювачі"
+],
+"previousNames": [
+"Брикети/Вугілля/Розпал."
+],
+"slug": "vuhillia-brykety-y-rozpaliuvachi",
+"sortOrder": 40
+},
+{
+"isVisible": true,
+"name": "Грунти та добавки",
+"navkoloRef": "dntrade-cfaf77100d8e62",
+"parent": "vse-dlia-roslyn",
+"path": [
+"Все для рослин",
+"Грунти та добавки"
+],
+"previousNames": [],
+"slug": "hrunty-ta-dobavky",
+"sortOrder": 40
+},
+{
+"isVisible": true,
+"name": "Дощувачі",
+"navkoloRef": "Дощувачі",
+"parent": "vse-dlia-polyvu",
+"path": [
+"Все для поливу",
+"Дощувачі"
+],
+"previousNames": [],
+"slug": "doshchuvachi",
+"sortOrder": 40
+},
+{
+"isVisible": true,
+"name": "Насіння газонних трав",
+"navkoloRef": "dntrade-9b7ae138ccdfeb",
+"parent": "landshaftnyi-dyzain",
+"path": [
+"Ландшафтний дизайн",
+"Насіння газонних трав"
+],
+"previousNames": [],
+"slug": "nasinnia-hazonnykh-trav",
+"sortOrder": 40
+},
+{
+"isVisible": true,
+"name": "Септики й компост",
+"navkoloRef": "dntrade-40560236d95330",
+"parent": "hospodarchi-tovary",
+"path": [
+"Господарчі товари",
+"Септики й компост"
+],
+"previousNames": [
+"Септик/Компост"
+],
+"slug": "septyky-y-kompost",
+"sortOrder": 40
+},
+{
+"isVisible": true,
+"name": "Сокири, пили й ножі",
+"navkoloRef": "dntrade-b90f8d3a90ca1a",
+"parent": "ruchnyi-instrument",
+"path": [
+"Ручний інструмент",
+"Сокири, пили й ножі"
+],
+"previousNames": [
+"Сокири/Пили/Ножі"
+],
+"slug": "sokyry-pyly-y-nozhi",
+"sortOrder": 40
+},
+{
+"isVisible": true,
+"name": "Газова продукція",
+"navkoloRef": "dntrade-0d3dac570ca1a1",
+"parent": "vse-dlia-vidpochynku",
+"path": [
+"Все для відпочинку",
+"Газова продукція"
+],
+"previousNames": [],
+"slug": "hazova-produktsiia",
+"sortOrder": 50
+},
+{
+"isVisible": true,
+"name": "Горщики",
+"navkoloRef": "dntrade-2cf04ef214db70",
+"parent": "vse-dlia-roslyn",
+"path": [
+"Все для рослин",
+"Горщики"
+],
+"previousNames": [],
+"slug": "horshchyky",
+"sortOrder": 50
+},
+{
+"isVisible": true,
+"name": "Матеріали для пакування",
+"navkoloRef": "dntrade-4458b89cefd432",
+"parent": "hospodarchi-tovary",
+"path": [
+"Господарчі товари",
+"Матеріали для пакування"
+],
+"previousNames": [],
+"slug": "materialy-dlia-pakuvannia",
+"sortOrder": 50
+},
+{
+"isVisible": true,
+"name": "Розпилювачі й пістолети",
+"navkoloRef": "Розпилювачі й пістолети",
+"parent": "vse-dlia-polyvu",
+"path": [
+"Все для поливу",
+"Розпилювачі й пістолети"
+],
+"previousNames": [],
+"slug": "rozpyliuvachi-i-pistolety",
+"sortOrder": 50
 },
 {
 "isVisible": true,
@@ -237,7 +569,165 @@
 ],
 "previousNames": [],
 "slug": "fihury-i-suveniry",
-"sortOrder": 34
+"sortOrder": 50
+},
+{
+"isVisible": true,
+"name": "Штучне покриття",
+"navkoloRef": "dntrade-373adbcb0b02f7",
+"parent": "landshaftnyi-dyzain",
+"path": [
+"Ландшафтний дизайн",
+"Штучне покриття"
+],
+"previousNames": [],
+"slug": "shtuchne-pokryttia",
+"sortOrder": 50
+},
+{
+"isVisible": true,
+"name": "Автотовари",
+"navkoloRef": "dntrade-3f2fdb451d61c8",
+"parent": "hospodarchi-tovary",
+"path": [
+"Господарчі товари",
+"Автотовари"
+],
+"previousNames": [],
+"slug": "avtotovary",
+"sortOrder": 60
+},
+{
+"isVisible": true,
+"name": "Елементи освітлення",
+"navkoloRef": "dntrade-6b8467e4550529",
+"parent": "landshaftnyi-dyzain",
+"path": [
+"Ландшафтний дизайн",
+"Елементи освітлення"
+],
+"previousNames": [],
+"slug": "elementy-osvitlennia",
+"sortOrder": 60
+},
+{
+"isVisible": true,
+"name": "Засоби захисту рослин",
+"navkoloRef": "dntrade-7adcc5d57f28a7",
+"parent": "vse-dlia-roslyn",
+"path": [
+"Все для рослин",
+"Засоби захисту рослин"
+],
+"previousNames": [],
+"slug": "zasoby-zakhystu-roslyn",
+"sortOrder": 60
+},
+{
+"isVisible": true,
+"name": "Ізотермічна продукція",
+"navkoloRef": "dntrade-2d2412a3a978e9",
+"parent": "vse-dlia-vidpochynku",
+"path": [
+"Все для відпочинку",
+"Ізотермічна продукція"
+],
+"previousNames": [],
+"slug": "izotermichna-produktsiia",
+"sortOrder": 60
+},
+{
+"isVisible": true,
+"name": "Труби, крани й фум-стрічка",
+"navkoloRef": "dntrade-21491f5facd5e3",
+"parent": "vse-dlia-polyvu",
+"path": [
+"Все для поливу",
+"Труби, крани й фум-стрічка"
+],
+"previousNames": [
+"Труби/Фумка/Крани"
+],
+"slug": "truby-krany-y-fum-strichka",
+"sortOrder": 60
+},
+{
+"isVisible": true,
+"name": "Годівниці",
+"navkoloRef": "dntrade-ea7e85a5a546bf",
+"parent": "landshaftnyi-dyzain",
+"path": [
+"Ландшафтний дизайн",
+"Годівниці"
+],
+"previousNames": [],
+"slug": "hodivnytsi",
+"sortOrder": 70
+},
+{
+"isVisible": true,
+"name": "Обігрівачі",
+"navkoloRef": "dntrade-17cd70a80684a3",
+"parent": "hospodarchi-tovary",
+"path": [
+"Господарчі товари",
+"Обігрівачі"
+],
+"previousNames": [],
+"slug": "obihrivachi",
+"sortOrder": 70
+},
+{
+"isVisible": true,
+"name": "Товари для відпочинку",
+"navkoloRef": "dntrade-640303d931aeb4",
+"parent": "vse-dlia-vidpochynku",
+"path": [
+"Все для відпочинку",
+"Товари для відпочинку"
+],
+"previousNames": [],
+"slug": "tovary-dlia-vidpochynku",
+"sortOrder": 70
+},
+{
+"isVisible": true,
+"name": "Шкідники",
+"navkoloRef": "dntrade-e0db741799f689",
+"parent": "vse-dlia-roslyn",
+"path": [
+"Все для рослин",
+"Шкідники"
+],
+"previousNames": [],
+"slug": "shkidnyky",
+"sortOrder": 70
+},
+{
+"isVisible": true,
+"name": "Господарські дрібниці",
+"navkoloRef": "Господарські дрібниці",
+"parent": "hospodarchi-tovary",
+"path": [
+"Господарчі товари",
+"Господарські дрібниці"
+],
+"previousNames": [],
+"slug": "hospodarski-dribnytsi",
+"sortOrder": 80
+},
+{
+"isVisible": true,
+"name": "Композитні грядки",
+"navkoloRef": "dntrade-5ad0aac40c1b4b",
+"parent": "vse-dlia-roslyn",
+"path": [
+"Все для рослин",
+"Композитні грядки"
+],
+"previousNames": [],
+"slug": "kompozytni-hriadky",
+"sortOrder": 80
 },
 {
 "isVisible": false,
@@ -254,19 +744,6 @@
 },
 {
 "isVisible": false,
-"name": "Хлам DNTrade",
-"navkoloRef": "Хлам",
-"parent": "hospodarchi-tovary",
-"path": [
-"Господарчі товари",
-"Хлам DNTrade"
-],
-"previousNames": [],
-"slug": "dntrade-archive",
-"sortOrder": 1001
-},
-{
-"isVisible": false,
 "name": "Вагові товари DNTrade",
 "navkoloRef": "dntrade-weighted",
 "parent": "hospodarchi-tovary",
@@ -276,525 +753,62 @@
 ],
 "previousNames": [],
 "slug": "dntrade-weighted",
+"sortOrder": 1001
+},
+{
+"isVisible": false,
+"name": "Хлам DNTrade",
+"navkoloRef": "Хлам",
+"parent": "hospodarchi-tovary",
+"path": [
+"Господарчі товари",
+"Хлам DNTrade"
+],
+"previousNames": [],
+"slug": "dntrade-archive",
 "sortOrder": 1002
 },
 {
 "isVisible": true,
-"name": "Вугілля, брикети й розпалювачі",
-"navkoloRef": "dntrade-df0d2c7a752afd",
-"parent": "vse-dlia-vidpochynku",
-"path": [
-"Все для відпочинку",
-"Вугілля, брикети й розпалювачі"
-],
-"previousNames": [
-"Брикети/Вугілля/Розпал."
-],
-"slug": "vuhillia-brykety-y-rozpaliuvachi",
-"sortOrder": 1003
-},
-{
-"isVisible": true,
-"name": "Газова продукція",
-"navkoloRef": "dntrade-0d3dac570ca1a1",
-"parent": "vse-dlia-vidpochynku",
-"path": [
-"Все для відпочинку",
-"Газова продукція"
-],
-"previousNames": [],
-"slug": "hazova-produktsiia",
-"sortOrder": 1004
-},
-{
-"isVisible": true,
-"name": "Ізотермічна продукція",
-"navkoloRef": "dntrade-2d2412a3a978e9",
-"parent": "vse-dlia-vidpochynku",
-"path": [
-"Все для відпочинку",
-"Ізотермічна продукція"
-],
-"previousNames": [],
-"slug": "izotermichna-produktsiia",
-"sortOrder": 1005
-},
-{
-"isVisible": true,
-"name": "Приладдя для приготування їжі",
-"navkoloRef": "dntrade-098952de603b03",
-"parent": "vse-dlia-vidpochynku",
-"path": [
-"Все для відпочинку",
-"Приладдя для приготування їжі"
-],
-"previousNames": [
-"Предм. пригот. їжі"
-],
-"slug": "pryladdia-dlia-pryhotuvannia-yizhi",
-"sortOrder": 1006
-},
-{
-"isVisible": true,
-"name": "Товари для відпочинку",
-"navkoloRef": "dntrade-640303d931aeb4",
-"parent": "vse-dlia-vidpochynku",
-"path": [
-"Все для відпочинку",
-"Товари для відпочинку"
-],
-"previousNames": [],
-"slug": "tovary-dlia-vidpochynku",
-"sortOrder": 1007
-},
-{
-"isVisible": true,
-"name": "Хімія для басейнів",
-"navkoloRef": "dntrade-0a31a47a88ac2f",
-"parent": "vse-dlia-vidpochynku",
-"path": [
-"Все для відпочинку",
-"Хімія для басейнів"
-],
-"previousNames": [],
-"slug": "khimiia-dlia-baseiniv",
-"sortOrder": 1008
-},
-{
-"isVisible": true,
-"name": "Крапельний полив",
-"navkoloRef": "dntrade-46373eb255692b",
-"parent": "vse-dlia-polyvu",
-"path": [
-"Все для поливу",
-"Крапельний полив"
-],
-"previousNames": [
-"Капельний полив"
-],
-"slug": "krapelnyi-polyv",
-"sortOrder": 1009
-},
-{
-"isVisible": true,
-"name": "Наземний полив",
-"navkoloRef": "dntrade-732960d037d085",
-"parent": "vse-dlia-polyvu",
-"path": [
-"Все для поливу",
-"Наземний полив"
-],
-"previousNames": [],
-"slug": "nazemnyi-polyv",
-"sortOrder": 1010
-},
-{
-"isVisible": true,
-"name": "Підземний полив",
-"navkoloRef": "dntrade-2a661a7b0d4d6c",
-"parent": "vse-dlia-polyvu",
-"path": [
-"Все для поливу",
-"Підземний полив"
-],
-"previousNames": [],
-"slug": "pidzemnyi-polyv",
-"sortOrder": 1011
-},
-{
-"isVisible": true,
-"name": "Труби, крани й фум-стрічка",
-"navkoloRef": "dntrade-21491f5facd5e3",
-"parent": "vse-dlia-polyvu",
-"path": [
-"Все для поливу",
-"Труби, крани й фум-стрічка"
-],
-"previousNames": [
-"Труби/Фумка/Крани"
-],
-"slug": "truby-krany-y-fum-strichka",
-"sortOrder": 1012
-},
-{
-"isVisible": true,
-"name": "Горщики",
-"navkoloRef": "dntrade-2cf04ef214db70",
-"parent": "vse-dlia-roslyn",
-"path": [
-"Все для рослин",
-"Горщики"
-],
-"previousNames": [],
-"slug": "horshchyky",
-"sortOrder": 1013
-},
-{
-"isVisible": true,
-"name": "Грунти та добавки",
-"navkoloRef": "dntrade-cfaf77100d8e62",
-"parent": "vse-dlia-roslyn",
-"path": [
-"Все для рослин",
-"Грунти та добавки"
-],
-"previousNames": [],
-"slug": "hrunty-ta-dobavky",
-"sortOrder": 1014
-},
-{
-"isVisible": true,
-"name": "Засоби захисту рослин",
-"navkoloRef": "dntrade-7adcc5d57f28a7",
-"parent": "vse-dlia-roslyn",
-"path": [
-"Все для рослин",
-"Засоби захисту рослин"
-],
-"previousNames": [],
-"slug": "zasoby-zakhystu-roslyn",
-"sortOrder": 1015
-},
-{
-"isVisible": true,
-"name": "Композитні грядки",
-"navkoloRef": "dntrade-5ad0aac40c1b4b",
-"parent": "vse-dlia-roslyn",
-"path": [
-"Все для рослин",
-"Композитні грядки"
-],
-"previousNames": [],
-"slug": "kompozytni-hriadky",
-"sortOrder": 1016
-},
-{
-"isVisible": true,
-"name": "Рослини",
-"navkoloRef": "dntrade-f922f87612a169",
-"parent": "vse-dlia-roslyn",
-"path": [
-"Все для рослин",
-"Рослини"
-],
-"previousNames": [],
-"slug": "roslyny",
-"sortOrder": 1017
-},
-{
-"isVisible": true,
-"name": "Шкідники",
-"navkoloRef": "dntrade-e0db741799f689",
-"parent": "vse-dlia-roslyn",
-"path": [
-"Все для рослин",
-"Шкідники"
-],
-"previousNames": [],
-"slug": "shkidnyky",
-"sortOrder": 1018
-},
-{
-"isVisible": true,
-"name": "Автотовари",
-"navkoloRef": "dntrade-3f2fdb451d61c8",
-"parent": "hospodarchi-tovary",
-"path": [
-"Господарчі товари",
-"Автотовари"
-],
-"previousNames": [],
-"slug": "avtotovary",
-"sortOrder": 1019
-},
-{
-"isVisible": true,
-"name": "Все для прибирання",
-"navkoloRef": "dntrade-671ce45a2f6879",
-"parent": "hospodarchi-tovary",
-"path": [
-"Господарчі товари",
-"Все для прибирання"
-],
-"previousNames": [],
-"slug": "vse-dlia-prybyrannia",
-"sortOrder": 1020
-},
-{
-"isVisible": true,
-"name": "Засоби захисту людей",
-"navkoloRef": "dntrade-1f3e4a95a0f9ce",
-"parent": "hospodarchi-tovary",
-"path": [
-"Господарчі товари",
-"Засоби захисту людей"
-],
-"previousNames": [],
-"slug": "zasoby-zakhystu-liudei",
-"sortOrder": 1021
-},
-{
-"isVisible": true,
-"name": "Матеріали для пакування",
-"navkoloRef": "dntrade-4458b89cefd432",
-"parent": "hospodarchi-tovary",
-"path": [
-"Господарчі товари",
-"Матеріали для пакування"
-],
-"previousNames": [],
-"slug": "materialy-dlia-pakuvannia",
-"sortOrder": 1022
-},
-{
-"isVisible": true,
-"name": "Обігрівачі",
-"navkoloRef": "dntrade-17cd70a80684a3",
-"parent": "hospodarchi-tovary",
-"path": [
-"Господарчі товари",
-"Обігрівачі"
-],
-"previousNames": [],
-"slug": "obihrivachi",
-"sortOrder": 1023
-},
-{
-"isVisible": true,
-"name": "Оприскувачі, лійки й відра",
-"navkoloRef": "dntrade-a8130a3e173a17",
-"parent": "hospodarchi-tovary",
-"path": [
-"Господарчі товари",
-"Оприскувачі, лійки й відра"
-],
-"previousNames": [
-"Оприскувачі/Лійки/Відра"
-],
-"slug": "opryskuvachi-liiky-y-vidra",
-"sortOrder": 1024
-},
-{
-"isVisible": true,
-"name": "Септики й компост",
-"navkoloRef": "dntrade-40560236d95330",
-"parent": "hospodarchi-tovary",
-"path": [
-"Господарчі товари",
-"Септики й компост"
-],
-"previousNames": [
-"Септик/Компост"
-],
-"slug": "septyky-y-kompost",
-"sortOrder": 1025
-},
-{
-"isVisible": true,
-"name": "Бордюри й огорожі",
-"navkoloRef": "dntrade-0d10e0b900a3f5",
-"parent": "landshaftnyi-dyzain",
-"path": [
-"Ландшафтний дизайн",
-"Бордюри й огорожі"
-],
-"previousNames": [
-"Бордюрні стрічки"
-],
-"slug": "bordiury-i-ohorozhi",
-"sortOrder": 1026
-},
-{
-"isVisible": true,
-"name": "Годівниці",
-"navkoloRef": "dntrade-ea7e85a5a546bf",
-"parent": "landshaftnyi-dyzain",
-"path": [
-"Ландшафтний дизайн",
-"Годівниці"
-],
-"previousNames": [],
-"slug": "hodivnytsi",
-"sortOrder": 1027
-},
-{
-"isVisible": true,
-"name": "Елементи освітлення",
-"navkoloRef": "dntrade-6b8467e4550529",
-"parent": "landshaftnyi-dyzain",
-"path": [
-"Ландшафтний дизайн",
-"Елементи освітлення"
-],
-"previousNames": [],
-"slug": "elementy-osvitlennia",
-"sortOrder": 1028
-},
-{
-"isVisible": true,
-"name": "Насіння газонних трав",
-"navkoloRef": "dntrade-9b7ae138ccdfeb",
-"parent": "landshaftnyi-dyzain",
-"path": [
-"Ландшафтний дизайн",
-"Насіння газонних трав"
-],
-"previousNames": [],
-"slug": "nasinnia-hazonnykh-trav",
-"sortOrder": 1029
-},
-{
-"isVisible": true,
-"name": "Опори для рослин",
-"navkoloRef": "dntrade-31fb6ff8371004",
-"parent": "landshaftnyi-dyzain",
-"path": [
-"Ландшафтний дизайн",
-"Опори для рослин"
-],
-"previousNames": [],
-"slug": "opory-dlia-roslyn",
-"sortOrder": 1030
-},
-{
-"isVisible": true,
-"name": "Укривні матеріали",
-"navkoloRef": "dntrade-75b5a7f524b480",
-"parent": "landshaftnyi-dyzain",
-"path": [
-"Ландшафтний дизайн",
-"Укривні матеріали"
-],
-"previousNames": [],
-"slug": "ukryvni-materialy",
-"sortOrder": 1031
-},
-{
-"isVisible": true,
-"name": "Штучне покриття",
-"navkoloRef": "dntrade-373adbcb0b02f7",
-"parent": "landshaftnyi-dyzain",
-"path": [
-"Ландшафтний дизайн",
-"Штучне покриття"
-],
-"previousNames": [],
-"slug": "shtuchne-pokryttia",
-"sortOrder": 1032
-},
-{
-"isVisible": true,
-"name": "Великий ручний інструмент",
-"navkoloRef": "dntrade-1763e49b2e196f",
-"parent": "ruchnyi-instrument",
-"path": [
-"Ручний інструмент",
-"Великий ручний інструмент"
-],
-"previousNames": [
-"Великий ручн. інстр."
-],
-"slug": "velykyi-ruchnyi-instrument",
-"sortOrder": 1033
-},
-{
-"isVisible": true,
-"name": "Секатори, сучкорізи й ножиці",
-"navkoloRef": "dntrade-70f01d48161bf9",
-"parent": "ruchnyi-instrument",
-"path": [
-"Ручний інструмент",
-"Секатори, сучкорізи й ножиці"
-],
-"previousNames": [
-"Гілкорізи/Сучкорізи/Секатори/Ножиці"
-],
-"slug": "sekatory-suchkorizy-y-nozhytsi",
-"sortOrder": 1034
-},
-{
-"isVisible": true,
-"name": "Дрібний ручний інструмент",
-"navkoloRef": "dntrade-c0a39c515686fc",
-"parent": "ruchnyi-instrument",
-"path": [
-"Ручний інструмент",
-"Дрібний ручний інструмент"
-],
-"previousNames": [
-"Дрібний ручн. інстр."
-],
-"slug": "dribnyi-ruchnyi-instrument",
-"sortOrder": 1035
-},
-{
-"isVisible": true,
-"name": "Сокири, пили й ножі",
-"navkoloRef": "dntrade-b90f8d3a90ca1a",
-"parent": "ruchnyi-instrument",
-"path": [
-"Ручний інструмент",
-"Сокири, пили й ножі"
-],
-"previousNames": [
-"Сокири/Пили/Ножі"
-],
-"slug": "sokyry-pyly-y-nozhi",
-"sortOrder": 1036
-},
-{
-"isVisible": true,
-"name": "Витратні матеріали",
-"navkoloRef": "dntrade-83f86737df1c6f",
-"parent": "tekhnika-dlia-sadu-ta-horodu",
-"path": [
-"Техніка для саду та городу",
-"Витратні матеріали"
-],
-"previousNames": [],
-"slug": "vytratni-materialy",
-"sortOrder": 1037
-},
-{
-"isVisible": true,
-"name": "Техніка",
-"navkoloRef": "dntrade-d584a0ca2ce098",
-"parent": "tekhnika-dlia-sadu-ta-horodu",
-"path": [
-"Техніка для саду та городу",
-"Техніка"
-],
-"previousNames": [],
-"slug": "tekhnika",
-"sortOrder": 1038
-},
-{
-"isVisible": true,
-"name": "Інші бренди",
-"navkoloRef": null,
+"name": "Hunter",
+"navkoloRef": "dntrade-d7ab13bd807a18",
 "parent": "pidzemnyi-polyv",
 "path": [
 "Все для поливу",
 "Підземний полив",
-"Інші бренди"
+"Hunter"
 ],
 "previousNames": [],
-"slug": "inshi-brendy-pidzemnoho-polyvu",
-"sortOrder": 3
+"slug": "hunter",
+"sortOrder": 10
 },
 {
 "isVisible": true,
-"name": "Візки для шлангу",
-"navkoloRef": "dntrade-1e1924e6237e4f",
+"name": "Шланги",
+"navkoloRef": "dntrade-f355def9bf7bce",
 "parent": "nazemnyi-polyv",
 "path": [
 "Все для поливу",
 "Наземний полив",
-"Візки для шлангу"
+"Шланги"
 ],
 "previousNames": [],
-"slug": "vizky-dlia-shlanhu",
-"sortOrder": 1039
+"slug": "shlanhy",
+"sortOrder": 10
+},
+{
+"isVisible": true,
+"name": "Irritec",
+"navkoloRef": "dntrade-677d361471fc41",
+"parent": "pidzemnyi-polyv",
+"path": [
+"Все для поливу",
+"Підземний полив",
+"Irritec"
+],
+"previousNames": [],
+"slug": "irritec",
+"sortOrder": 20
 },
 {
 "isVisible": true,
@@ -810,49 +824,35 @@
 "З'єднувачі/Конектори/Перехідники/Розгалуджувачі"
 ],
 "slug": "ziednuvachi-y-perekhidnyky",
-"sortOrder": 1040
+"sortOrder": 20
 },
 {
 "isVisible": true,
-"name": "Шланги",
-"navkoloRef": "dntrade-f355def9bf7bce",
+"name": "Візки для шлангу",
+"navkoloRef": "dntrade-1e1924e6237e4f",
 "parent": "nazemnyi-polyv",
 "path": [
 "Все для поливу",
 "Наземний полив",
-"Шланги"
+"Візки для шлангу"
 ],
 "previousNames": [],
-"slug": "shlanhy",
-"sortOrder": 1041
+"slug": "vizky-dlia-shlanhu",
+"sortOrder": 30
 },
 {
 "isVisible": true,
-"name": "Hunter",
-"navkoloRef": "dntrade-d7ab13bd807a18",
+"name": "Інші бренди",
+"navkoloRef": null,
 "parent": "pidzemnyi-polyv",
 "path": [
 "Все для поливу",
 "Підземний полив",
-"Hunter"
+"Інші бренди"
 ],
 "previousNames": [],
-"slug": "hunter",
-"sortOrder": 1042
-},
-{
-"isVisible": true,
-"name": "Irritec",
-"navkoloRef": "dntrade-677d361471fc41",
-"parent": "pidzemnyi-polyv",
-"path": [
-"Все для поливу",
-"Підземний полив",
-"Irritec"
-],
-"previousNames": [],
-"slug": "irritec",
-"sortOrder": 1043
+"slug": "inshi-brendy-pidzemnoho-polyvu",
+"sortOrder": 30
 }
 ],
 "collections": {
