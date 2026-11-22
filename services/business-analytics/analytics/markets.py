@@ -6,7 +6,7 @@ import logging
 from threading import Lock
 from time import monotonic
 
-from .invoices import INDEPENDENT_RECEIPTS, currency_valid
+from .invoices import INDEPENDENT_RECEIPTS, PARENT_REF, currency_valid
 from .nova_poshta import read_history, sender_api_key
 from .register import kind_of
 from .settlements import address_fields, resolve
@@ -55,6 +55,9 @@ WITH sales AS (
  SELECT d.source_account AS account,d.entity_type,d.kind,d.status,d.currency,d.details->>'type' AS raw_kind,
         d.details->>'status' AS raw_status,d.details->>'currency_iso' AS raw_currency,
         p.id::text AS partner,p.title AS name,d.total,d.day,
+        lower(d.source_id) AS ref,lower(""" + PARENT_REF + """) AS parent,
+        (d.entity_type='customerReturn' OR lower(coalesce(d.kind,'')) IN ('back','7','return')
+         OR coalesce(d.details->>'type','')='7') AS refund,
         coalesce(nullif(profile#>>'{address,region,title}',''),nullif(profile#>>'{address,region}',''),
                  nullif(profile#>>'{region,title}',''),nullif(profile->>'region',''),profile->>'oblast') AS partner_region,
         coalesce(nullif(profile#>>'{address,katottg}',''),nullif(profile#>>'{address,city,title}',''),
@@ -105,15 +108,21 @@ WITH sales AS (
    coalesce(partner_region,""" + BUYER_REGION + """) AS buyer_region,
    coalesce(nullif(partner_city,''),""" + BUYER_CITY + """) AS buyer_city
  FROM addresses a
+), returned AS (
+ SELECT DISTINCT account,parent AS ref FROM located WHERE refund AND parent IS NOT NULL
+), linked AS (
+ -- A return and the sale it refers to share a link, so the return can leave the place where the sale was counted.
+ SELECT l.*,CASE WHEN l.refund THEN l.parent ELSE r.ref END AS link
+ FROM located l LEFT JOIN returned r ON NOT l.refund AND r.account=l.account AND r.ref=l.ref
 )
 SELECT account,entity_type,kind,status,currency,raw_kind,raw_status,raw_currency,partner,name,region,buyer_region,city,buyer_city,
        nullif(trim(shipping_address),'') IS NOT NULL AS has_delivery_address,
        nullif(trim(buyer_address),'') IS NOT NULL AS has_buyer_address,
-       order_number,waybill,order_ref,
+       order_number,waybill,order_ref,link,
        count(*) AS count,sum(abs(total)) FILTER (WHERE abs(total)<=1e15) AS amount,
        max(day) FILTER (WHERE abs(total)<=1e15) AS last_day,
        count(*) FILTER (WHERE total IS NULL OR abs(total)>1e15) AS invalid
-FROM located GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19
+FROM linked GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
 """
 WEB = """
 SELECT s.area AS region,s.name AS city,
@@ -177,7 +186,9 @@ def summarize(headers, web, shipments=None, carrier=None):
     purchases_with_key = 0
     breakdown = dict(invoices=0, receipts=0, returns=0)
     names, invalid = {}, 0
-    for row in headers:
+    # Where each sale that has a return was counted. Sales come first so that a return finds its sale.
+    sold = defaultdict(set)
+    for row in sorted(headers, key=lambda r: r["entity_type"] != "receipt" and kind_of(r) == "return"):
         kind = "receipt" if row["entity_type"] == "receipt" else kind_of(row)
         if kind not in ("sale", "return", "receipt", "invalid") or (kind == "receipt" and row["entity_type"] != "receipt"):
             continue
@@ -228,6 +239,13 @@ def summarize(headers, web, shipments=None, carrier=None):
                             added = carrier_links["addedByRegion"]
                             added["UA"+code] = added.get("UA"+code, 0) + count
                         delivery = (hit.region, hit.city)
+        link = row.get("link") and (row["account"], row["link"])
+        if link and kind != "return":
+            sold[link].add(delivery)
+        elif link and len(sold[link]) == 1:
+            # A return rarely repeats the delivery address. Subtract it where its sale was added,
+            # otherwise the region keeps the returned amount and "region unknown" goes negative.
+            delivery, = sold[link]
         known, _ = regions.record(*delivery, *values, has_address=row.get("has_delivery_address"))
         registered.record(*buyer, *values, has_address=row.get("has_buyer_address"))
         combined.record(*(delivery if known else buyer), *values,
