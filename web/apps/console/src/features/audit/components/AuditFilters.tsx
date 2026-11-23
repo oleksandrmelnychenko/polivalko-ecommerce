@@ -51,7 +51,7 @@ export function AuditFilters({ state, update, reset, actions }: AuditFiltersProp
               </Tooltip>
             </span>
           }
-          placeholder="PV-100001, ім'я або user.locked"
+          placeholder="Код об’єкта, ім’я або дія"
           value={text}
           leftSection={<IconSearch size={16} stroke={1.7} />}
           rightSection={text ? <CloseButton size="sm" aria-label="Очистити пошук" onClick={() => changeText('')} /> : null}

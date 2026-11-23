@@ -4,8 +4,11 @@
   padding: 8px 10px;
 }
 
+.dntrade-work-form-views .mantine-Button-root { color: var(--brand-ink); border-radius: 999px; }
+.dntrade-work-form-views [aria-current='page'] { background: var(--brand-ink); color: white; }
+
 .dntrade-work-form-body {
-  background: #f4f6f4;
+  background: var(--app-ground);
   flex: 1 1 auto;
   min-width: 0;
   overflow: auto;

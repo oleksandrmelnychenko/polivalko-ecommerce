@@ -1,3 +1,4 @@
+import { IconCreditCard } from '@tabler/icons-react'
 import { Table } from '@mantine/core'
 import { formatDateTime, formatMoney } from '@polivalko/shared/lib/format'
 import { useApiQuery } from '@/shared/api/useApiQuery'
@@ -11,7 +12,7 @@ export function OrderPaymentsCard({ number, version }: { number: string; version
   const rows = payments.data ?? []
 
   return (
-    <OrderCard className="order-area-payments order-no-print" title="Онлайн-оплата">
+    <OrderCard icon={IconCreditCard} className="order-area-payments order-no-print" title="Онлайн-оплата">
       <OrderLoadState state={payments} empty={payments.status === 'ready' && rows.length === 0 ? 'Спроб онлайн-оплати не було.' : undefined}>
         <Table.ScrollContainer minWidth={620} type="native">
           <Table className="order-table" verticalSpacing={8} horizontalSpacing={14}>

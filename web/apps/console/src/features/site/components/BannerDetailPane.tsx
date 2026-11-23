@@ -53,7 +53,7 @@ export function BannerDetailPane({ banner, index, count, busy, onEdit, onDelete,
             </h2>
           </div>
           <div className="app-split-actions">
-            <Button variant="default" leftSection={<IconPencil size={16} stroke={1.7} />} onClick={() => onEdit(banner)}>
+            <Button leftSection={<IconPencil size={16} stroke={1.7} />} onClick={() => onEdit(banner)}>
               Змінити
             </Button>
             <Tooltip label="Видалити банер">

@@ -11,7 +11,7 @@ import { dateRange, formatPrice } from '@/shared/lib/salesFormat'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { DocumentOverlayContext } from '@/shared/ui/DocumentLink'
 import { MetricLabel } from '@/shared/ui/MetricCard'
-import { PageState } from '@/shared/ui/PageState'
+import { DashboardSkeleton, DashboardState } from './DashboardSkeleton'
 import { TableChip } from '@/shared/ui/TableChip'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { getStockTurnover } from '../api/dashboardApi'
@@ -25,6 +25,14 @@ import { useSupplierBasket } from './SupplierBasket'
 
 const percent = new Intl.NumberFormat('uk-UA', { style: 'percent', maximumFractionDigits: 2 })
 const defaultStock = 'buy'
+const daysWithUnit = new Intl.NumberFormat('uk-UA', { style: 'unit', unit: 'day', unitDisplay: 'long', maximumFractionDigits: 1 })
+
+function stockCoverageLabel(available: number, days: number | null) {
+  if (available <= 0) return 'Запас вичерпано'
+  if (days == null) return 'Малий залишок'
+  if (days < 0.1) return 'Запас менш ніж на 0,1 дня'
+  return 'Вистачить на ' + daysWithUnit.format(days)
+}
 const decisionText = {
   covered: 'Докупити 0 · запасу вистачає', 'no-demand': 'Докупити 0 · немає додатних продажів після повернень',
   sales: 'Бракує підтверджених продажів', units: 'Звірити одиниці продажу й залишку',
@@ -79,7 +87,8 @@ function StockReport({ days, account, purchasesOpen, openPurchases, closePurchas
         label={report.incompleteSales ? 'Бракує даних для розрахунку закупівлі' : 'Товарних позицій до закупівлі'}
         period={dateRange(report.start, report.through)}
         groups={[{ label: 'Немає в наявності', count: report.outCount }, { label: 'Малий залишок', count: report.lowCount }]} />
-        : <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={reload}
+        : query.isLoading ? <DashboardSkeleton inset label="Завантаження залишків" />
+        : <DashboardState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={reload}
             description={problemMessage(query.problem, 'Не вдалося завантажити залишки й оборот товарів.')} />}
       <ProductReportDetails label="Залишки та закупівлі">
       {report && <div className="dash-product-summary">
@@ -145,23 +154,35 @@ function StockReport({ days, account, purchasesOpen, openPurchases, closePurchas
               <h3><Link to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}</Link></h3>
               {item.sku && <div className="report-tile-meta">Арт. {item.sku}</div>}
             </header>
-            <dl className="report-stock-level">
-              <div><dt>Доступно після резервів</dt><dd>{numberFormat.format(item.available)} {item.unit || 'од.'}</dd></div>
-              {item.stockDays != null && report.coverDays > 0 && <div><dt>{item.season && item.season.factor !== 1 ? 'Запас за очікуваним попитом, днів' : 'Запас у днях'}</dt>
-                <dd>{item.stockDays > 0 && item.stockDays < .1 ? '< 0,1' : numberFormat.format(Math.round(item.stockDays * 10) / 10)} із {report.coverDays}</dd>
-                <dd className="report-stock-meter" aria-hidden="true"><i style={{ width: Math.min(100, Math.max(0, item.stockDays / report.coverDays * 100)) + '%' }} /></dd>
-              </div>}
-            </dl>
+            <div className="report-tile-metric">
+              <span className="report-metric-label">{item.purchaseStatus === 'buy' ? 'Докупити' : 'Доступно після резервів'}</span>
+              <div className="report-metric-line">
+                <strong>{numberFormat.format(item.purchaseStatus === 'buy' ? item.buyQuantity : item.available)} {item.unit || 'од.'}</strong>
+                <TableChip tone="product" value={stockCoverageLabel(item.available, item.stockDays)} />
+              </div>
+              <div className="stock-metric-context">
+                {item.purchaseStatus === 'buy' && <span>Доступно після резервів · {numberFormat.format(item.available)} {item.unit || 'од.'}</span>}
+                <span>Ціль · {daysWithUnit.format(report.coverDays)}</span>
+                {item.stockDays != null && item.season && item.season.factor !== 1 && <TableChip tone="success" value="З урахуванням сезону" />}
+              </div>
+              {item.available > 0 && item.stockDays != null && item.stockDays > 0 && report.coverDays > 0 &&
+                <div className="report-stock-meter" aria-hidden="true"><i style={{ width: Math.min(100, item.stockDays / report.coverDays * 100) + '%' }} /></div>}
+            </div>
             <div className="dash-stock-decision">
               {item.purchaseStatus === 'buy'
-                ? <div><strong>Докупити {numberFormat.format(item.buyQuantity)} {item.unit}{item.lastPurchase?.amount != null && ' · ' + formatPrice(item.lastPurchase.amount)}</strong>
+                ? <div className="stock-purchase-costs">
+                  <dl className="report-tile-facts">
+                    {item.lastPurchase?.amount != null && <div><dt>Сума закупівлі</dt><dd>{formatPrice(item.lastPurchase.amount)}</dd></div>}
+                    <div><dt>Очікуваний валовий прибуток</dt><dd>{formatPrice(item.priorityProfit)}</dd></div>
+                  </dl>
                   {item.need != null && item.minimumNeed != null && item.minimumNeed < item.need && <div className="app-cell-sub">
                     Це нижня межа. Без поставки, яку слід уточнити, знадобиться <b>{numberFormat.format(item.need)} {item.unit}</b>.</div>}
-                  <div className="app-cell-sub">Очікуваний валовий прибуток · <b>{formatPrice(item.priorityProfit)}</b></div>
-                  {report.supplierBudget && <ReceiptPrice purchase={item.lastPurchase} />}
                 </div>
                 : <span>{decisionText[item.purchaseStatus]}{item.purchaseStatus === 'supply-review' && item.need != null &&
                   <span className="app-cell-sub"> Без цієї поставки знадобиться <b>{numberFormat.format(item.need)} {item.unit || 'од.'}</b>.</span>}</span>}
+            </div>
+            {((report.supplierBudget && item.purchaseStatus === 'buy') || sources.has(item.id)) && <footer className="stock-purchase-footer">
+              {report.supplierBudget && item.purchaseStatus === 'buy' && <ReceiptPrice purchase={item.lastPurchase} />}
               {sources.has(item.id) && (basket.picked.some(row => row.id === item.id && row.supplier === sources.get(item.id)?.group.id && row.unit === item.unit)
                 ? <TableChip tone="success" value="У кошику" />
                 : <Button size="compact-xs" radius="xl" color="dark" leftSection={<IconShoppingCart size={14} aria-hidden="true" />}
@@ -169,9 +190,9 @@ function StockReport({ days, account, purchasesOpen, openPurchases, closePurchas
                     const source = sources.get(item.id)!
                     basket.add([{ ...source.group, items: [source.item] }])
                   }}>Додати до кошика</Button>)}
-            </div>
+            </footer>}
             <SupplierOrders supply={item.supply} unit={item.unit} />
-            <details className="dash-stock-breakdown">
+            <details className="report-tile-details">
               <summary aria-label={`Деталі закупівлі · ${item.name}`} title="Деталі закупівлі"><IconChevronDown size={17} aria-hidden="true" /></summary>
               <div className="dash-stock-breakdown-body">
                 <dl className="dash-stock-facts">
@@ -204,7 +225,7 @@ function StockReport({ days, account, purchasesOpen, openPurchases, closePurchas
           <Paginator page={report.page} pageSize={report.pageSize} totalPages={Math.ceil(report.matches / report.pageSize)}
             onPageChange={page => setFilters(current => ({ ...current, page, pageDays: days }))} />
         </div>}
-      </> : null}
+      </> : query.isLoading && <DashboardSkeleton inset label="Завантаження товарів до закупівлі" />}
       </ProductReportDetails>
       <AppEditorModal opened={purchasesOpen} onClose={closePurchases} size="standard" className="dash-purchases-modal"
         overlayProps={{ backgroundOpacity: 0.25, blur: 0, style: { backdropFilter: 'none' } }}
@@ -212,7 +233,7 @@ function StockReport({ days, account, purchasesOpen, openPurchases, closePurchas
         title={<MetricLabel icon={IconShoppingCart}>Закупівлі за постачальниками</MetricLabel>}>
         {report?.supplierBudget ? <BudgetBySupplier basket={basket} budget={report.supplierBudget}
           count={report.buyCount} through={report.asOf ?? report.through} cover={report.coverDays} days={days} seasonal={!!report.seasonal} />
-          : <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={reload}
+          : <DashboardState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={reload}
               description={problemMessage(query.problem, 'Розрахунок закупівель недоступний.')} />}
       </AppEditorModal>
     </DashboardCard>

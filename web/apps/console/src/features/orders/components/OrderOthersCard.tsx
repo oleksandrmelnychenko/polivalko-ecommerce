@@ -1,3 +1,4 @@
+import { IconShoppingBag } from '@tabler/icons-react'
 import { Anchor } from '@mantine/core'
 import { Link } from 'react-router-dom'
 import { formatDateTime, formatMoney } from '@polivalko/shared/lib/format'
@@ -15,6 +16,7 @@ export function OrderOthersCard({ phone, current }: { phone: string; current: st
 
   return (
     <OrderCard
+      icon={IconShoppingBag}
       className="order-area-others order-no-print"
       title="Інші замовлення"
       aside={

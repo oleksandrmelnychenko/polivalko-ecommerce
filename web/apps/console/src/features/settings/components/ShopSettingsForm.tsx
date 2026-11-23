@@ -1,6 +1,6 @@
-import { Button, NativeSelect, Textarea, TextInput } from '@mantine/core'
+import { Button, Textarea, TextInput } from '@mantine/core'
 import { useHotkeys } from '@mantine/hooks'
-import { IconChevronRight, IconCalendarEvent, IconDeviceFloppy, IconFileCertificate, IconMapPin, IconPhone, IconShare } from '@tabler/icons-react'
+import { IconCalendarEvent, IconDeviceFloppy, IconFileCertificate, IconMapPin, IconPhone, IconShare } from '@tabler/icons-react'
 import { useRef, useState, type FormEvent } from 'react'
 import { LeaveGuard } from '@/shared/ui/LeaveGuard'
 import { PageHeader } from '@/shared/ui/PageHeader'
@@ -20,7 +20,7 @@ import {
 } from '../lib/shopForm'
 import { fieldError, useSaveForm, type SaveStep } from '../lib/useSaveForm'
 import { FormAlert } from './FormAlert'
-import { FillState, SettingsDirty, useErrorSections, useJumpToErrors, useSettingsSection, type SettingsSection } from './SettingsSplit'
+import { FillState, SettingsDirty, SettingsSectionList, useErrorSections, useJumpToErrors, useSettingsSection, type SettingsSection } from './SettingsSplit'
 import { SpecialDaysEditor } from './SpecialDaysEditor'
 
 const FORM_ID = 'settings-shop-form'
@@ -211,30 +211,12 @@ export function ShopSettingsForm({ contacts, shop, onSaved }: ShopSettingsFormPr
         }
       />
       <form id={FORM_ID} ref={formRef} className="home-workspace shop-workspace settings-form" onSubmit={onSubmit} noValidate aria-label="Налаштування магазину">
-        <nav className="home-block-list shop-section-nav" aria-label="Розділи магазину">
-          <header><h2>Налаштування магазину</h2></header>
-          <ol>{sections.map(item => {
-            const Icon = item.icon
-            return (
-              <li key={item.key}>
-                <button type="button" className="home-block" onClick={() => select(item.key)} aria-current={active === item.key ? 'true' : undefined}>
-                  <span className="home-block-icon"><Icon size={17} aria-hidden="true" /></span>
-                  <span className="home-block-name">{item.name}
-                    {invalid.has(item.key) ? <TableChip dot tone="danger" value="Перевірте поля" /> : item.state}
-                  </span>
-                  <IconChevronRight size={15} aria-hidden="true" />
-                </button>
-              </li>
-            )
-          })}</ol>
-        </nav>
-        <NativeSelect className="shop-section-select" aria-label="Розділ магазину"
-          value={active} data={sections.map(item => ({ value: item.key, label: item.name + (invalid.has(item.key) ? ' · Перевірте поля' : '') }))}
-          onChange={event => select(event.currentTarget.value as ShopSectionKey)} />
+        <SettingsSectionList label="Налаштування магазину" active={active} onSelect={select}
+          sections={sections.map((item) => ({ ...item, invalid: invalid.has(item.key) }))} />
         <section className="app-split-card shop-section" aria-labelledby="shop-section-title">
           <header className="shop-section-heading">
             <span className="home-block-icon"><ActiveIcon size={18} aria-hidden="true" /></span>
-            <div><h2 id="shop-section-title">{section.name}</h2><p>{section.hint}</p></div>
+            <div><h2 id="shop-section-title">{section.name}{section.state}</h2><p>{section.hint}</p></div>
           </header>
           <FormAlert error={form.error} />
           <fieldset className="shop-section-fields" disabled={form.busy}>

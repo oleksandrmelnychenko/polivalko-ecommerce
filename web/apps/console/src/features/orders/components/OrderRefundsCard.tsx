@@ -45,7 +45,7 @@ export function OrderRefundsCard({ order, onChange }: { order: ConsoleOrder; onC
   )
 
   return (
-    <OrderCard className="order-area-refunds order-no-print" title="Повернення" aside={aside}>
+    <OrderCard icon={IconReceiptRefund} className="order-area-refunds order-no-print" title="Повернення" aside={aside}>
       {hasRefunds ? (
         <ul className="order-refunds">
           {order.refunds.map((row) => (

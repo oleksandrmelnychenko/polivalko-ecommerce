@@ -92,11 +92,10 @@ export function JobDetailPane(props: JobDetailPaneProps) {
       <header className="app-split-hero">
         <div className="app-split-hero-top">
           <div className="app-split-head">
-            <span className={`integration-job-icon is-${state.tone}`} aria-hidden="true">
-              <JobIcon job={job.job} size={28} />
+            <span className="integration-job-icon" aria-hidden="true">
+              <JobIcon job={job.job} size={19} />
             </span>
             <div className="app-split-hero-main">
-              <p className="app-split-hero-kicker app-split-mono">{job.job}</p>
               <h2 id="integration-job-title">
                 {job.title}
                 <TableChip dot tone={state.tone} value={state.label} />

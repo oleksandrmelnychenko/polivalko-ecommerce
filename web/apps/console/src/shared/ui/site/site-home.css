@@ -6,7 +6,7 @@
 }
 [data-site-workspace] .console-page-toolbar { padding-top: 8px; }
 .home-workspace {
-  --home-gap: clamp(10px, 1.15vw, 18px);
+  --home-gap: 12px;
   align-items: start;
   display: grid;
   grid-template-columns: minmax(248px, .78fr) minmax(0, 1.55fr);
@@ -22,10 +22,10 @@
 }
 .home-block-list { padding: 8px; }
 .home-block-list header, .home-block, .home-block-icon { display: flex; align-items: center; }
-.home-block-list header { justify-content: space-between; padding: 8px 10px 12px; }
+.home-block-list header { justify-content: space-between; gap: 8px; padding: 10px 8px 8px; }
+.home-block-list header:has(> .app-table-chip) { justify-content: flex-start; }
 .home-block-list h2 { font-size: 16px; font-weight: 600; margin: 0; }
-.home-count, .home-position, .home-workspace .site-item-index, .home-workspace .mantine-DateInput-input { font-family: var(--font-mono); }
-.home-count { font-size: 12px; color: var(--mantine-color-gray-7); }
+.home-position, .home-workspace .site-item-index, .home-workspace .mantine-DateInput-input { font-family: var(--font-mono); }
 .home-block-list ol { list-style: none; margin: 0; padding: 0; }
 .home-block {
   background: transparent;
@@ -51,24 +51,24 @@
   width: 34px;
   height: 34px;
 }
-.home-block[aria-current] .home-block-icon { color: white; background: var(--brand-ink); }
-.home-block > svg { flex: none; margin-left: auto; color: var(--mantine-color-gray-6); }
-.home-block-name { display: grid; gap: 2px; font-size: 14px; font-weight: 550; }
-.home-block-name small { align-items: center; display: flex; gap: 5px; color: var(--mantine-color-gray-7); font-size: 11px; font-weight: 400; }
-.home-block-name small::before { background: var(--mantine-color-gray-5); border-radius: 50%; content: ''; width: 6px; height: 6px; }
-.home-block-name [data-state='live']::before { background: var(--brand-accent); }
-.home-block-name [data-state='error']::before { background: var(--mantine-color-red-7); }
+.home-block[aria-current] .home-block-icon, .home-block[aria-current] > svg { background: white; }
+.home-block > svg { flex: none; width: 26px; height: 26px; padding: 6px; border-radius: 50%; background: var(--app-ground); margin-left: auto; color: var(--brand-ink); }
+.home-block-name { display: grid; justify-items: start; min-width: 0; gap: 4px; font-size: 14px; font-weight: 550; overflow-wrap: anywhere; }
+.home-workspace .app-table-chip-label { white-space: normal; overflow-wrap: anywhere; }
+.home-workspace .is-warning { --app-chip-warning-bg: var(--mantine-color-orange-0); --app-chip-warning-border: var(--mantine-color-orange-3); --app-chip-warning-text: color-mix(in srgb, var(--mantine-color-orange-9) 75%, black); }
 .home-block-editor { min-width: 0; }
 .home-block-editor .home-back { display: none; }
 .home-workspace .app-split-detail { background: transparent; gap: var(--home-gap); padding: 0; overflow: visible; }
 .home-workspace .app-split-head, .home-workspace .app-split-hero-top { align-items: center; }
-.home-workspace .app-split-card, .home-workspace .app-split-hero-top { padding: clamp(14px, 1.35vw, 20px); }
+.home-workspace .app-split-card, .home-workspace .app-split-hero-top { padding: 14px 16px; }
+.site-form.home-workspace .app-split-hero-top { background: var(--app-ground); border-radius: 12px; margin: 8px; }
+.site-form.home-workspace .site-home-icon { background: white; }
 .home-workspace .app-split-hero-top, .home-workspace .app-split-card-head { flex-wrap: wrap; }
 .home-workspace .app-split-hero h2 { font-size: clamp(18px, 1.6vw, 24px); margin: 0; font-weight: 600; }
 .home-workspace .app-split-description { color: var(--mantine-color-gray-7); margin-top: 4px; }
 .home-workspace .mantine-Input-input { border-radius: 12px; }
 .home-workspace :is(.mantine-Button-root, .mantine-ActionIcon-root) { border-radius: 999px; }
-.home-workspace .site-item { border-radius: 14px; }
+.home-workspace .site-item { border-radius: 12px; background: var(--app-ground); }
 .home-workspace .site-announcement-preview { border-radius: 12px; overflow-wrap: anywhere; }
 .home-workspace .site-home-slides { grid-template-columns: repeat(auto-fill, minmax(min(100%, 155px), 1fr)); }
 @media (max-width: 52em) {

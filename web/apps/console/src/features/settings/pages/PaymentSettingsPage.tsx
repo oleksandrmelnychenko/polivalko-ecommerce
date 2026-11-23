@@ -23,7 +23,7 @@ export function PaymentSettingsPage() {
   const payments = useApiQuery('settings-payments', () => getPaymentSettings())
 
   return (
-    <ListPage>
+    <ListPage className="settings-page">
       <PageHeader
         title="Оплата й чеки"
         actions={
@@ -68,7 +68,7 @@ function PaymentStatus({ value }: { value: PaymentSettings }) {
 
   return (
     <ListPageBody>
-      <div className="app-split-layout settings-form">
+      <div className="home-workspace settings-form">
         <SettingsSectionList label="Оплата й чеки" sections={sections} active={active} onSelect={select} top={<p className="settings-list-note">Сторінка лише для перегляду. {CONFIG_NOTE}</p>} />
 
         <section key={active} className="app-split-detail" aria-label={section.name}>

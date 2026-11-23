@@ -1,7 +1,8 @@
 import { DocumentLink } from '@/shared/ui/DocumentLink'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
-import { kindName, money, paymentNames, statusNames, type Doc } from './api'
+import { DocumentStatus } from './DocumentTable'
+import { kindName, money, paymentNames, type Doc } from './api'
 
 const columns: DataTableColumn<Doc>[] = [
   {
@@ -18,7 +19,7 @@ const columns: DataTableColumn<Doc>[] = [
   },
   { id: 'date', header: 'Дата', width: 100, cell: (doc) => doc.day ?? '—' },
   { id: 'amount', header: 'Сума', width: 120, align: 'right', numeric: true, cell: (doc) => money(doc.amount, doc.currency) },
-  { id: 'status', header: 'Стан документа', width: 120, cell: (doc) => statusNames[doc.status ?? ''] ?? doc.status ?? '—' },
+  { id: 'status', header: 'Стан документа', width: 120, cell: (doc) => <DocumentStatus doc={doc} /> },
   { id: 'payment', header: 'Оплата', width: 152, cell: (doc) => paymentNames[doc.paymentStatus ?? ''] ?? doc.paymentStatus ?? '—' },
 ]
 

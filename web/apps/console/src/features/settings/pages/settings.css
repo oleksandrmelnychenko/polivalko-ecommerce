@@ -39,10 +39,28 @@
   white-space: nowrap;
 }
 
-.settings-list-top {
-  border-bottom: 1px solid var(--mantine-color-gray-2);
-  flex: 0 0 auto;
+.console-list-page.settings-page { flex: none; height: auto; overflow: visible; }
+.settings-navigation { display: grid; gap: 8px; min-width: 0; }
+.settings-section-select { display: none; }
+.settings-form .app-split-hero-top {
+  background: var(--app-ground);
+  margin: 8px;
+  border-radius: 12px;
+}
+.settings-form .app-split-hero-top .home-block-icon { background: white; }
+.settings-form .app-split-hero-top .app-split-actions { max-width: 100%; flex-wrap: wrap; }
+.settings-list-top:has(.settings-list-note) {
+  background: white;
+  border: 1px solid var(--app-line);
+  border-radius: 14px;
   padding: 12px 16px;
+}
+
+@media (max-width: 52em) {
+  .settings-navigation nav { display: none; }
+  .settings-section-select { display: block; }
+  .settings-navigation .settings-section-select select { border-radius: 999px; }
+  .settings-form .app-split-fields > div { grid-template-columns: minmax(0, 1fr); }
 }
 
 .settings-list-note {
@@ -50,11 +68,6 @@
   font-size: 13px;
   line-height: 1.5;
   margin: 0;
-}
-
-.app-split-row-sub.settings-row-invalid {
-  color: var(--mantine-color-red-7);
-  font-weight: 600;
 }
 
 .settings-dirty {

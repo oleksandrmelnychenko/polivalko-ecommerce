@@ -1,3 +1,4 @@
+import { IconHistory } from '@tabler/icons-react'
 import { formatDateTime } from '@polivalko/shared/lib/format'
 import { orderStatusLabel } from '@polivalko/shared/lib/labels'
 import type { ConsoleOrder } from '../api/orderDetailApi'
@@ -6,7 +7,7 @@ import { OrderCard, OrderCardBody } from './OrderCard'
 export function OrderHistoryCard({ order }: { order: ConsoleOrder }) {
   const entries = [...order.history].reverse()
   return (
-    <OrderCard className="order-area-history" title="Історія">
+    <OrderCard icon={IconHistory} className="order-area-history" title="Історія">
       <OrderCardBody>
         <ol className="order-timeline">
           {entries.map((entry, index) => {

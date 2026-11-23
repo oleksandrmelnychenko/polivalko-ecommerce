@@ -48,7 +48,7 @@ export function OrdersFilters({ state, filtered, update, reset, actions }: Order
       search={
         <TextInput
           className="app-filter-wide"
-          label="Пошук"
+          aria-label="Пошук замовлень"
           placeholder="Номер замовлення або телефон…"
           value={text}
           leftSection={<IconSearch size={16} stroke={1.7} />}

@@ -1,3 +1,4 @@
+import { IconReceipt } from '@tabler/icons-react'
 import { Table } from '@mantine/core'
 import { formatDateTime, formatMoney } from '@polivalko/shared/lib/format'
 import { receiptKindLabel } from '@polivalko/shared/lib/labels'
@@ -12,7 +13,7 @@ export function OrderReceiptsCard({ number, version }: { number: string; version
   const rows = receipts.data ?? []
 
   return (
-    <OrderCard className="order-area-receipts order-no-print" title="Фіскальні чеки">
+    <OrderCard icon={IconReceipt} className="order-area-receipts order-no-print" title="Фіскальні чеки">
       <OrderLoadState
         state={receipts}
         empty={receipts.status === 'ready' && rows.length === 0 ? 'Чеків ще немає. ПРРО видає їх за правилами з розділу «Оплата й чеки».' : undefined}

@@ -73,7 +73,7 @@ export function AuditPage() {
   )
 
   return (
-    <ListPage>
+    <ListPage className="audit-page">
       <PageHeader title="Журнал змін" />
 
       <AuditFilters

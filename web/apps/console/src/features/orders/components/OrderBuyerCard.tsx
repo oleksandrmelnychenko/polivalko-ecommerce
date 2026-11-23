@@ -28,7 +28,7 @@ export function OrderBuyerCard({ order }: { order: ConsoleOrder }) {
   )
 
   return (
-    <OrderCard className="order-area-buyer" title="Покупець" aside={aside}>
+    <OrderCard icon={IconUserCircle} className="order-area-buyer" title="Покупець" aside={aside}>
       <div className="order-buyer">
         <div className="order-buyer-person">
           <p className="order-buyer-name">{order.customerName}</p>

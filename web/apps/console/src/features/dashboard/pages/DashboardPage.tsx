@@ -1,4 +1,4 @@
-import { ActionIcon, Button, Menu, SegmentedControl, Skeleton, Tooltip } from '@mantine/core'
+import { ActionIcon, Button, Menu, SegmentedControl, Tooltip } from '@mantine/core'
 import { IconCheck, IconDatabase, IconRefresh, IconShoppingCart, IconUsers } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -12,6 +12,7 @@ import { PageState } from '@/shared/ui/PageState'
 import { getDashboard, getDashboardCustomers, getDashboardRequests, getDashboardSummary, getDocumentSales, getLatestOrders, getProductCounts, type Dashboard } from '../api/dashboardApi'
 import { DocumentKpis, DocumentPeriodSummary, DocumentSalesFeatures } from '../components/DocumentSalesReport'
 import { DocumentProducts } from '../components/DocumentProducts'
+import { DashboardSkeleton } from '../components/DashboardSkeleton'
 import { DeliveryBreakdown, StatusBreakdown } from '../components/Breakdowns'
 import { CompletionCard } from '../components/CompletionCard'
 import { KpiList } from '../components/KpiList'
@@ -43,6 +44,7 @@ export function DashboardPage() {
   const report = documents && sales.status === 'ready' ? sales.data : undefined
 
   const dashboard = useApiQuery(`dashboard:${days}`, () => getDashboard(days), { keepPrevious: true })
+  const loadingPeriod = documents ? sales.isLoading : dashboard.isLoading
   const summary = useApiQuery('dashboard-summary', () => getDashboardSummary())
   const latest = useApiQuery('dashboard-latest', () => getLatestOrders(), { enabled: canOrders })
   const productCounts = useApiQuery('dashboard-product-counts', () => getProductCounts(), { enabled: canCatalog })
@@ -136,20 +138,28 @@ export function DashboardPage() {
         onClose={() => setHeaderDialog(null)} days={days} setPeriod={setPeriod} />}
 
       <div className="dash-body">
+        {loadingPeriod && <div className="dash-kpis">
+          {[1, 2, 3, 4].map(index => <DashboardSkeleton key={index} shape="metric" label="Завантаження показника за період" />)}
+        </div>}
         {report && <DocumentKpis data={report} />}
         {!documents && dashboard.status === 'ready' && dashboard.data && <KpiList data={dashboard.data} />}
         {documents && (sales.status === 'error' || sales.status === 'forbidden'
           ? <PageState kind={sales.status} description={problemMessage(sales.problem, 'Не вдалося завантажити продажі за документами.')} onRetry={sales.reload} />
-          : report ? <DocumentSalesFeatures data={report} metric={metric} onMetric={setMetric} /> : <Skeleton height={220} radius={12} role="status" aria-label="Завантаження продажів за документами" />)}
+          : report ? <DocumentSalesFeatures data={report} metric={metric} onMetric={setMetric} /> : sales.isLoading && <DashboardSkeleton shape="chart" label="Завантаження продажів за документами" />)}
+        {!documents && dashboard.isLoading && <div className="dash-feature-row">
+          <DashboardSkeleton shape="chart" label="Завантаження графіка продажів" />
+          <DashboardSkeleton label="Завантаження показників замовлень" />
+        </div>}
         {!documents && dashboard.status === 'ready' && dashboard.data &&
           <div className="dash-feature-row">
             <SalesChartCard data={dashboard.data} metric={metric} onMetric={setMetric} />
             <CompletionCard statuses={dashboard.data.byStatus} />
           </div>}
         <div className="dash-overview-row">
+          {loadingPeriod && <DashboardSkeleton label="Завантаження підсумку періоду" />}
           {report && <DocumentPeriodSummary data={report} />}
           {!documents && dashboard.status === 'ready' && dashboard.data && <PeriodSummary data={dashboard.data} />}
-          {summary.data && <WorkQueue summary={summary.data} canOrders={canOrders} canRequests={canRequests} />}
+          {(summary.isLoading || summary.data) && <WorkQueue summary={summary.data} canOrders={canOrders} canRequests={canRequests} />}
         {totals.length > 0 && <section className="dash-card dash-work" aria-labelledby="dash-totals-title">
           <header className="dash-card-head"><h2 className="dash-card-title" id="dash-totals-title">У системі за весь час</h2></header>
           <ul className="dash-queue">
@@ -168,6 +178,7 @@ export function DashboardPage() {
           canCatalog={canCatalog}
         />}
         {documents && <div className="dash-grid is-even">
+          {sales.isLoading && <DashboardSkeleton shape="report" label="Завантаження продажів товарів" />}
           {report && <DocumentProducts key={report.start} data={report} />}
           {canCatalog && <StockTurnover days={days} purchasesOpen={params.get('purchases') === '1' && params.get('recommendations') !== '1'}
             openPurchases={() => setHeaderDialog('purchases')} closePurchases={() => setHeaderDialog(null)} />}
@@ -202,18 +213,11 @@ type InsightsProps = {
 function DashboardInsights({ data, status, problem, dimmed, onRetry, canOrders, canCatalog }: InsightsProps) {
   if (status === 'forbidden') return <PageState kind="forbidden" description={problemMessage(problem, 'Недостатньо прав для перегляду показників.')} />
   if (status === 'error') return <PageState kind="error" description={problemMessage(problem, 'Не вдалося завантажити показники.')} onRetry={onRetry} />
-  if (!data) {
-    return (
-      <div className="dash-skeleton" aria-busy="true" aria-label="Завантаження показників">
-        <div className="dash-kpis">
-          {[0, 1, 2, 3].map((item) => (
-            <Skeleton key={item} height={112} radius={12} />
-          ))}
-        </div>
-        <Skeleton height={380} radius={12} />
-      </div>
-    )
-  }
+  if (status === 'loading') return <div className="dash-insights">
+    <div className="dash-grid is-even"><DashboardSkeleton label="Завантаження статусів замовлень" /><DashboardSkeleton label="Завантаження способів доставки" /></div>
+    <div className="dash-grid is-even"><DashboardSkeleton label="Завантаження рейтингу товарів" /><DashboardSkeleton label="Завантаження залишків" /></div>
+  </div>
+  if (!data) return <PageState kind="empty" />
 
   return (
     <div className="dash-insights" data-fetching={dimmed || undefined}>

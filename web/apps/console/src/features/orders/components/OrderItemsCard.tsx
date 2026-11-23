@@ -1,3 +1,4 @@
+import { IconPackage } from '@tabler/icons-react'
 import { Table } from '@mantine/core'
 import { formatMoney } from '@polivalko/shared/lib/format'
 import { thumb } from '@polivalko/shared/lib/images'
@@ -11,6 +12,7 @@ export function OrderItemsCard({ order }: { order: ConsoleOrder }) {
 
   return (
     <OrderCard
+      icon={IconPackage}
       className="order-area-items"
       title="Склад"
       aside={

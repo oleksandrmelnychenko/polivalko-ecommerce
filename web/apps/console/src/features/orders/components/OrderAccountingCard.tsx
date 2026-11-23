@@ -1,3 +1,4 @@
+import { IconScale } from '@tabler/icons-react'
 import { formatDateTime } from '@polivalko/shared/lib/format'
 import type { ConsoleOrder } from '../api/orderDetailApi'
 import { OrderCard, OrderCardBody } from './OrderCard'
@@ -8,7 +9,7 @@ export function OrderAccountingCard({ order }: { order: ConsoleOrder }) {
   const refundRequired = order.navkoloCancelledAt && order.status === 'cancelled'
     && (order.paymentStatus === 'succeeded' || order.paymentStatus === 'partiallyRefunded')
   return (
-    <OrderCard className="order-area-accounting" title="Облік">
+    <OrderCard icon={IconScale} className="order-area-accounting" title="Облік">
       <OrderCardBody>
         <dl className="order-facts">
           <div>

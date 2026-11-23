@@ -54,8 +54,13 @@ export function IntegrationPage() {
   const [retrying, setRetrying] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
 
-  const jobs = useMemo(() => status.data?.jobs ?? [], [status.data])
-  const titles = useMemo(() => new Map(jobs.map((item) => [item.job, item.title])), [jobs])
+  const jobs = useMemo(() => {
+    const data = status.data
+    if (!data) return []
+    if (data.navkoloMode !== 'Disabled') return data.jobs
+    return data.jobs.filter(({ job }) => job !== 'navkolo.price-stock' && job !== 'navkolo.catalog')
+  }, [status.data])
+  const titles = useMemo(() => new Map(status.data?.jobs.map((item) => [item.job, item.title])), [status.data])
   const selected = jobs.find((item) => item.job === job) ?? jobs[0] ?? null
   const selectedId = selected?.job ?? null
   const rowClassName = useCallback((row: SyncJob) => (row.job === selectedId ? 'app-split-row-active' : undefined), [selectedId])
@@ -124,7 +129,7 @@ export function IntegrationPage() {
 
   const jobOptions = useMemo(() => {
     const options = jobs.map((item) => ({ value: item.job, label: item.title }))
-    if (job && !titles.has(job)) options.push({ value: job, label: job })
+    if (job && !options.some((item) => item.value === job)) options.push({ value: job, label: titles.get(job) ?? job })
     return options
   }, [jobs, job, titles])
 
@@ -142,7 +147,7 @@ export function IntegrationPage() {
               Оновити
             </Button>
             <Can permission={PermissionKeys.Catalog.RunImport}>
-              <Button component={Link} to="/catalog/import" variant="default" leftSection={<IconFileImport size={16} stroke={1.8} />}>
+              <Button component={Link} to="/catalog/import" leftSection={<IconFileImport size={16} stroke={1.8} />}>
                 Імпорт каталогу з файлу
               </Button>
             </Can>
@@ -150,7 +155,7 @@ export function IntegrationPage() {
         }
       />
 
-      {status.data ? <IntegrationSummary status={status.data} onOpenJob={selectJob} onOpenOutbox={canManageOutbox ? openOutbox : undefined} /> : null}
+      {status.data ? <IntegrationSummary status={status.data} jobs={jobs} onOpenJob={selectJob} onOpenOutbox={canManageOutbox ? openOutbox : undefined} /> : null}
 
       <ScreenTabs tabs={tabs} value={tab} label="Розділи інтеграцій" onChange={setTab} />
 

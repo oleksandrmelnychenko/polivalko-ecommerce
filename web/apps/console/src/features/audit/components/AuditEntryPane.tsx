@@ -6,10 +6,11 @@ import { formatDateTime, plural } from '@polivalko/shared/lib/format'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { getAudit, type AuditEntry } from '@/shared/audit/auditApi'
 import { AuditEntityIcon } from '@/shared/audit/AuditEntityIcon'
-import { actionText, actionTone, entityHref, entityText } from '@/shared/audit/auditLabels'
+import { actionText, entityHref, entityText } from '@/shared/audit/auditLabels'
 import { AuditTimeline } from '@/shared/audit/AuditTimeline'
 import type { PermissionKey } from '@/shared/auth/permissionKeys'
 import { moment } from '@/shared/lib/when'
+import { TableChip } from '@/shared/ui/TableChip'
 import { readChanges, type AuditValue } from '../lib/auditChanges'
 import { readRoleChange, type PermissionName, type RoleChange } from '../lib/auditDetails'
 
@@ -30,29 +31,28 @@ export function AuditEntryPane({ entry, can, permissionName, onShowObject }: Aud
   const object = entityText(entry.entityType)
 
   return (
-    <section key={entry.id} className="app-split-detail" aria-labelledby="audit-entry-title">
+    <section key={entry.id} className="app-split-detail audit-entry" aria-labelledby="audit-entry-title">
       <header className="app-split-hero">
         <div className="app-split-hero-top">
           <div className="app-split-head">
-            <span className={`audit-entity-icon is-${actionTone(entry.action)}`} aria-hidden="true">
-              <AuditEntityIcon entityType={entry.entityType} size={28} />
+            <span className="audit-entity-icon" aria-hidden="true">
+              <AuditEntityIcon entityType={entry.entityType} size={19} />
             </span>
             <div className="app-split-hero-main">
               <p className="app-split-hero-kicker">{object}</p>
               <h2 id="audit-entry-title">{actionText(entry.action)}</h2>
-              <p className="app-split-hero-aliases app-split-mono">{entry.action}</p>
             </div>
           </div>
           {href ? (
             <div className="app-split-actions">
-              <Button component={Link} to={href} variant="default" rightSection={<IconArrowRight size={16} stroke={1.7} />}>
+              <Button component={Link} to={href} rightSection={<IconArrowRight size={16} stroke={1.7} />}>
                 Відкрити
               </Button>
             </div>
           ) : null}
         </div>
 
-        <dl className="app-split-stats audit-stats">
+        <dl className="audit-stats">
           <div>
             <dt>Хто</dt>
             <dd>{entry.actor}</dd>
@@ -78,9 +78,7 @@ export function AuditEntryPane({ entry, can, permissionName, onShowObject }: Aud
           <header className="app-split-card-head">
             <h3 id="audit-changes-title">{changes.diff.length || changes.unchanged ? 'Що змінилось' : 'Подробиці'}</h3>
             {changes.diff.length && changes.unchanged ? (
-              <span>
-                ще {changes.unchanged} {plural(changes.unchanged, 'поле', 'поля', 'полів')} без змін
-              </span>
+              <TableChip value={`${changes.unchanged} ${plural(changes.unchanged, 'поле', 'поля', 'полів')} без змін`} />
             ) : null}
           </header>
           {!changes.diff.length && !changes.fields.length ? (
@@ -99,9 +97,11 @@ export function AuditEntryPane({ entry, can, permissionName, onShowObject }: Aud
                     {row.label}
                   </span>
                   <span role="cell" className="audit-diff-before">
+                    <span className="audit-mobile-label" aria-hidden="true">Було</span>
                     <Value value={row.before} />
                   </span>
                   <span role="cell" className="audit-diff-after">
+                    <span className="audit-mobile-label" aria-hidden="true">Стало</span>
                     <Value value={row.after} />
                   </span>
                 </div>
@@ -128,6 +128,7 @@ export function AuditEntryPane({ entry, can, permissionName, onShowObject }: Aud
       <section className="app-split-card" aria-label="Технічні деталі">
         <details className="audit-raw">
           <summary>Технічні деталі</summary>
+          <dl className="audit-fields"><div><dt>Код дії</dt><dd><code>{entry.action}</code></dd></div></dl>
           {entry.details == null ? <p className="app-split-blank">Подія без деталей.</p> : <pre className="audit-pre">{JSON.stringify(entry.details, null, 2)}</pre>}
         </details>
       </section>

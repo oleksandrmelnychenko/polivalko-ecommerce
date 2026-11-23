@@ -5,7 +5,9 @@
   font-size: 12px;
 }
 .warehouse-list .wh-name a { display: inline-flex; align-items: center; gap: 8px; }
-.wh-name svg { flex: none; padding: 6px; box-sizing: content-box; border-radius: 50%; background: var(--app-ground); }
+.warehouse-page .warehouse-list :is(th:first-child, .wh-code) { padding-inline-start: 54px; }
+.warehouse-page .wh-code { position: relative; font-weight: 550; }
+.warehouse-page .wh-quantity { font-variant-numeric: tabular-nums; font-weight: 550; }
 .wh-quantity, .wh-online small b, .wh-amounts dd,
 .wh-movements td:is(:first-child,:nth-last-child(2),:last-child) { font-family: var(--font-mono); }
 .warehouse-list .wh-quantity, .warehouse-list th:is(:nth-child(4),:nth-child(5)),
@@ -30,6 +32,7 @@
   .warehouse-list .register-scroll td { display: block; min-width: 0; padding: 0; border: 0; text-align: start; overflow-wrap: anywhere; white-space: normal; }
   .warehouse-list td[data-label]::before { content: attr(data-label); display: block; color: var(--mantine-color-gray-7); font: 12px/1.4 var(--font-sans); margin-bottom: 2px; }
   .warehouse-list :is(.wh-name,.wh-online,.wh-actions) { grid-column: 1 / -1; }
+  .warehouse-page .warehouse-list .wh-code { grid-column: 1 / -1; padding-inline-start: 42px; min-height: 32px; }
   .warehouse-list .wh-name a { font-size: 14px; }
   .warehouse-list .wh-online small { display: inline-block; margin: 2px 0 0 8px; }
   .warehouse-page .ledger-filters { gap: 8px; padding: 12px; }

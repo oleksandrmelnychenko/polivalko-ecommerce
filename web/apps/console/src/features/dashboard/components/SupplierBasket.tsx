@@ -1,9 +1,9 @@
 import { Button } from '@mantine/core'
-import { IconChevronDown, IconDownload, IconFileInvoice, IconTrash } from '@tabler/icons-react'
+import { IconChevronDown, IconDownload, IconTrash } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { dateLabel, formatPrice } from '@/shared/lib/salesFormat'
-import { DocumentLink } from '@/shared/ui/DocumentLink'
+import { PurchaseInvoice } from './PurchaseInvoices'
 import { TableChip } from '@/shared/ui/TableChip'
 import type { BudgetItem, PurchaseSeason, SupplierGroup } from '../api/dashboardApi'
 import { numberFormat } from '../lib/insights'
@@ -15,10 +15,13 @@ type Picked = { id: string; supplier: string | null; name: string; unit: string;
 type Line = { item: BudgetItem; quantity: number; amount: number | null }
 
 export function SeasonIndicator({ season }: { season?: PurchaseSeason | null }) {
-  if (!season) return <span className="dash-season-indicator"><TableChip value="Поточний темп" /><small>Недостатньо сезонної історії</small></span>
+  if (!season) return <span className="dash-season-indicator">
+    <TableChip value="Поточний темп" />
+    <TableChip tone="warning" value="Недостатньо сезонної історії" />
+  </span>
   const product = season.source === 'product'
   return <span className="dash-season-indicator">
-    <TableChip tone={product ? 'product' : 'source'} value={`Сезонність ${product ? 'товару' : 'категорії'} × ${numberFormat.format(season.factor)}`} />
+    <TableChip tone="success" value={`Сезонність ${product ? 'товару' : 'категорії'} × ${numberFormat.format(season.factor)}`} />
     <small>Сезонів · {numberFormat.format(season.years)}</small>
   </span>
 }
@@ -144,15 +147,15 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
       {missing > 0 && <TableChip tone="warning" value={`Без ціни · ${missing}`} />}{outdated.length > 0 && <TableChip tone="warning" value={`Перевірити · ${outdated.length}`} />}
       {!matchesPlan && lines.length > 0 && <strong>{lines.length === missing ? 'Сума невідома' : formatPrice(subtotal(lines))}</strong>}
       <IconChevronDown size={16} aria-hidden="true" /></summary>
-    {!allAdded && <Button variant="default" size="compact-xs"
+    {!allAdded && <Button color="var(--brand-ink)" size="compact-xs"
       onClick={() => basket.add(groups)}>Додати всю чергу</Button>}
     {orders.map(({ group, lines: items, remaining }) => <details className="dash-cart-order" key={group.id ?? 'unknown'}>
-      <summary><span>{group.name || 'Уточнити постачальника'}</span><strong>{orderTotal(items)}</strong><IconChevronDown size={15} aria-hidden="true" /></summary>
+      <summary><TableChip tone={group.name ? 'document' : 'neutral'} value={group.name || 'Уточнити постачальника'} /><strong>{orderTotal(items)}</strong><IconChevronDown size={15} aria-hidden="true" /></summary>
       <ul>{items.map(({ item, quantity, amount }) => <li key={item.id}>
         <Link className="dash-budget-product" to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}</Link>
         <div className="dash-cart-meta">{item.sku && <small>Артикул {item.sku}</small>}<TableChip tone="storage" value={`Рекомендовано ${numberFormat.format(item.quantity)} ${item.unit}`} />
           {seasonal && <SeasonIndicator season={item.season} />}</div>
-        {item.priceDay && item.receiptId && <DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Накладна від {dateLabel(item.priceDay)}</DocumentLink>}
+        <PurchaseInvoice id={item.receiptId} day={item.priceDay} />
         <div className="dash-cart-actions">
           <label>Замовити, {item.unit} <input type="number" data-basket-item={item.id} aria-label={'Кількість для ' + item.name} key={quantity}
             min={wholeUnits(item.unit) ? 1 : 0.001} max={1000000000} step={wholeUnits(item.unit) ? 1 : 0.001} defaultValue={quantity}
@@ -170,14 +173,14 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
         <summary>Ще до закупівлі · {numberFormat.format(remaining.length)} поз.<IconChevronDown size={15} aria-hidden="true" /></summary>
         <ul>{remaining.map(item => <li key={item.id}>
           <Link className="dash-budget-product" to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}</Link>
-          {item.receiptId && item.priceDay && <DocumentLink className="dash-receipt-pill" id={item.receiptId}><IconFileInvoice size={14} aria-hidden="true" />Накладна від {dateLabel(item.priceDay)}</DocumentLink>}
+          <PurchaseInvoice id={item.receiptId} day={item.priceDay} />
           {seasonal && <SeasonIndicator season={item.season} />}
           <div className="dash-cart-actions"><span>{numberFormat.format(item.quantity)} {item.unit}</span>
             <b>{item.amount === null ? 'Ціну уточнити' : formatPrice(item.amount)}</b>
-            <Button variant="default" size="compact-xs" onClick={() => basket.add([{ ...group, items: [item] }])}>Додати до кошика</Button>
+            <Button color="var(--brand-ink)" size="compact-xs" onClick={() => basket.add([{ ...group, items: [item] }])}>Додати до кошика</Button>
           </div>
         </li>)}</ul>
-        {remaining.length > 1 && <Button variant="default" size="compact-xs" onClick={() => basket.add([group])}>Додати решту товарів постачальника</Button>}
+        {remaining.length > 1 && <Button color="var(--brand-ink)" size="compact-xs" onClick={() => basket.add([group])}>Додати решту товарів постачальника</Button>}
       </details>}
       {group.id && <Button size="xs" radius="xl" variant="default" leftSection={<IconDownload size={15} />} onClick={() => download(group, items, through, days, cover, seasonal)}>Завантажити замовлення</Button>}
     </details>)}
@@ -185,7 +188,7 @@ export function SupplierBasket({ basket, groups, days, cover, through, seasonal 
       {changed.map(row => {
         const now = queued.get(row.id)!
         return <div className="dash-cart-obsolete" key={row.id}>{row.name} <small>Тепер · {now.group.name || 'постачальника слід уточнити'}, {now.item.unit}</small>
-          <Button variant="default" radius="xl" size="compact-xs" onClick={() => basket.add([{ ...now.group, items: [now.item] }])}>Оновити в кошику</Button>
+          <Button color="var(--brand-ink)" radius="xl" size="compact-xs" onClick={() => basket.add([{ ...now.group, items: [now.item] }])}>Оновити в кошику</Button>
           <Button variant="light" color="red" radius="xl" size="compact-xs" onClick={() => basket.remove(row.id)}>Прибрати</Button></div>
       })}
     </section>}

@@ -9,17 +9,18 @@ import { consoleRedirects, consoleRoutes, sectionRedirects } from './routes/cons
 export function App() {
   const location = useLocation()
   const { isAuthenticated, hasPermission } = useAuth()
-  const documentRoute = isAuthenticated && consoleRoutes.find(route =>
-    route.path === '/accounting/documents/:id' && matchPath(route.path, location.pathname) && hasPermission(route.permissionKey))
-  const background = documentRoute ? location.state?.documentBackground ?? '/accounting/documents' : location
+  const overlayRoute = isAuthenticated && consoleRoutes.find(route =>
+    (route.path === '/accounting/documents/:id' || route.path === '/accounting/partners/:id') &&
+    matchPath(route.path, location.pathname) && hasPermission(route.permissionKey))
+  const background = overlayRoute ? location.state?.documentBackground ?? overlayRoute.path.replace('/:id', '') : location
   return (
-    <DocumentOverlayContext.Provider value={Boolean(documentRoute)}>
+    <DocumentOverlayContext.Provider value={Boolean(overlayRoute)}>
       <Routes location={background}>
         <Route path="/login" element={<LoginPage />} />
         <Route element={<ProtectedRoute />}>
-          <Route element={<ConsoleLayout overlay={documentRoute && (
+          <Route element={<ConsoleLayout overlay={overlayRoute && (
             <Routes location={location}>
-              <Route path={documentRoute.path} element={<ConsoleRouteElement route={documentRoute} />} />
+              <Route path={overlayRoute.path} element={<ConsoleRouteElement route={overlayRoute} />} />
             </Routes>
           )} />}>
             {consoleRoutes.map((route) => (

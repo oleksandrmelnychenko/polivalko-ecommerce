@@ -15,7 +15,9 @@ export function QueueTile({ count, label, href, hot, busy }: QueueTileProps) {
   const content = (
     <>
       <span className="dash-queue-label">{label}</span>
-      <strong>{count == null ? '—' : numberFormat.format(count)}</strong>
+      {busy && count == null
+        ? <span className="dash-shimmer dash-queue-count-placeholder" role="status" aria-label="Завантаження кількості" />
+        : <strong>{count == null ? '—' : numberFormat.format(count)}</strong>}
       {href && <IconArrowUpRight className="dash-queue-arrow" size={18} stroke={1.6} aria-hidden="true" />}
     </>
   )

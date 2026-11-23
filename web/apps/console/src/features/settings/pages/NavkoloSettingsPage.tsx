@@ -162,7 +162,7 @@ function ConnectionForm({ initial, onSaved }: { initial: NavkoloConnection; onSa
   const section = sections.find((item) => item.key === active) ?? sections[0]
 
   return (
-    <ListPage>
+    <ListPage className="settings-page">
       <PageHeader
         title="Навколо"
         actions={
@@ -172,7 +172,7 @@ function ConnectionForm({ initial, onSaved }: { initial: NavkoloConnection; onSa
         }
       />
       <ListPageBody>
-        <form id={FORM_ID} className="app-split-layout settings-form" onSubmit={submit} aria-label="Налаштування Навколо">
+        <form id={FORM_ID} className="home-workspace settings-form" onSubmit={submit} aria-label="Налаштування Навколо">
           <SettingsSectionList
             label="Розділи підключення Навколо"
             sections={sections}

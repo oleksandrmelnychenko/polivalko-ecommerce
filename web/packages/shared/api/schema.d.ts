@@ -5932,6 +5932,24 @@ export interface components {
             revision: string;
             pinnedProductIds?: null | string[];
         };
+        StorefrontPreviewCountsDto: {
+            /** Format: int32 */
+            inSeason: number;
+            /** Format: int32 */
+            allYear: number;
+            /** Format: int32 */
+            offSeason: number;
+        };
+        StorefrontPreviewDto: {
+            items: components["schemas"]["StorefrontPreviewItemDto"][];
+            counts: null | components["schemas"]["StorefrontPreviewCountsDto"];
+            missingSections: string[];
+        };
+        StorefrontPreviewItemDto: {
+            product: components["schemas"]["ProductListItemDto"];
+            season: string;
+            source: string;
+        };
         StreetAddressDto: {
             street: string;
             house: string;
@@ -11763,6 +11781,7 @@ export interface operations {
                 mode: string;
                 month?: number;
                 pinned?: string[];
+                q?: string;
             };
             header?: never;
             path?: never;
@@ -11776,7 +11795,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProductListItemDto"][];
+                    "application/json": components["schemas"]["StorefrontPreviewDto"];
                 };
             };
             /** @description Bad Request */

@@ -1,10 +1,19 @@
 import { Button } from '@mantine/core'
+import { IconChevronDown, IconFileText } from '@tabler/icons-react'
 import { useState } from 'react'
 import { dateLabel, formatPrice } from '@/shared/lib/salesFormat'
 import { DocumentLink } from '@/shared/ui/DocumentLink'
-import type { RecommendationResultsReport } from '../api/dashboardApi'
+import { TableChip } from '@/shared/ui/TableChip'
+import type { RecommendationPeriod, RecommendationResultsReport } from '../api/dashboardApi'
 import { RecommendationRankings, type RankingOptions } from './RecommendationRankings'
 import { CalculationInfo } from './CalculationInfo'
+
+function ProfitNotes({ period }: { period: RecommendationPeriod }) {
+  return <>
+    {period.profit === null && <small>{period.priced ? formatPrice(period.coveredProfit) + ' за ' + period.priced + ' із ' + period.invoices + ' накл.' : 'Собівартість невідома'}</small>}
+    {period.estimated > 0 && <small>За ціною закупівлі · {period.estimated} накл.</small>}
+  </>
+}
 
 export function RecommendationResults({ report, days, ranking, onRanking }: {
   report: RecommendationResultsReport; days: number; ranking: RankingOptions; onRanking: (options: RankingOptions) => void
@@ -18,20 +27,34 @@ export function RecommendationResults({ report, days, ranking, onRanking }: {
         <CalculationInfo title="Як рахуються пропозиції та погодження">
           <p>Періоди до {dateLabel(report.through)} включно, за датою пропозиції. Погодження враховується і після зняття резерву.</p>
         </CalculationInfo>
+        {selected && <TableChip value={days + ' днів'} />}
       </h3>
+      {selected && <dl className="rec-result-metrics">
+        <div><dt>Зроблено пропозицій</dt><dd>{selected.offered}</dd></div>
+        <div><dt>Погоджено</dt><dd>{selected.accepted}</dd></div>
+        <div><dt>Дійшли до продажу</dt><dd>{selected.sold}</dd></div>
+      </dl>}
+      <details open={!selected}><summary>Порівняти періоди <IconChevronDown size={16} aria-hidden="true" /></summary>
       <div className="rec-results-scroll"><table aria-label="Пропозиції за періодами">
         <thead><tr><th>Період</th><th>Зробили</th><th>Погодили</th><th>Дійшли до продажу</th></tr></thead>
         <tbody>{report.periods.map(p => <tr key={p.days} data-selected={p.days === days}>
           <th scope="row">{p.days} днів</th><td>{p.offered}</td><td>{p.accepted}</td><td>{p.sold}</td>
         </tr>)}</tbody>
-      </table></div>
+      </table></div></details>
     </section>
     <section>
       <h3 className="dash-with-info">Продажі з рекомендацій
         <CalculationInfo title="За якою датою враховано продажі">
           <p>За днем проведення видаткової накладної, включно з продажами за давнішими пропозиціями. Дата на самій накладній може бути іншою: чернетку створюють під час погодження, а проводять під час відвантаження.</p>
         </CalculationInfo>
+        {selected && <TableChip value={days + ' днів'} />}
       </h3>
+      {selected && <dl className="rec-result-metrics">
+        <div><dt>Накладних</dt><dd>{selected.invoices}</dd></div>
+        <div><dt>Оборот</dt><dd>{formatPrice(selected.turnover)}</dd></div>
+        <div><dt>Валовий прибуток</dt><dd>{selected.profit !== null ? formatPrice(selected.profit) : 'Неповні дані'}<ProfitNotes period={selected} /></dd></div>
+      </dl>}
+      <details open={!selected}><summary>Порівняти періоди <IconChevronDown size={16} aria-hidden="true" /></summary>
       <div className="rec-results-scroll"><table aria-label="Оборот і валовий прибуток з рекомендацій">
         <thead><tr><th>Період</th><th>Накладних</th><th>Оборот</th><th>Валовий прибуток{' '}
           <CalculationInfo title="Як визначено собівартість для валового прибутку">
@@ -41,13 +64,12 @@ export function RecommendationResults({ report, days, ranking, onRanking }: {
         <tbody>{report.periods.map(p => <tr key={p.days} data-selected={p.days === days}>
           <th scope="row">{p.days} днів</th><td>{p.invoices}</td><td>{formatPrice(p.turnover)}</td>
           <td>{p.profit !== null ? formatPrice(p.profit) : 'Неповні дані'}
-            {p.profit === null && <small>{p.priced ? formatPrice(p.coveredProfit) + ' за ' + p.priced + ' із ' + p.invoices + ' накл.' : 'Собівартість невідома'}</small>}
-            {p.estimated > 0 && <small>За ціною закупівлі · {p.estimated} накл.</small>}
+            <ProfitNotes period={p} />
           </td>
         </tr>)}</tbody>
-      </table></div>
+      </table></div></details>
       {invoices.length > 0 && <details>
-        <summary>Проведені накладні за {days} днів · {invoices.length}</summary>
+        <summary><IconFileText size={15} aria-hidden="true" />Проведені накладні за {days} днів <TableChip value={invoices.length} /><IconChevronDown size={16} aria-hidden="true" /></summary>
         <div className="rec-results-scroll"><table aria-label="Накладні з рекомендацій">
           <thead><tr><th>Накладна</th><th>Оборот</th><th>Валовий прибуток</th></tr></thead>
           <tbody>{invoices.slice(0,limit).map(i => <tr key={i.id}>

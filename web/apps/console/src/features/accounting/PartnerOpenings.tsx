@@ -1,5 +1,5 @@
 import { Alert, Button, Checkbox, Group, Select, Stack, Table, Text, Title } from '@mantine/core'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { IconBuildingStore, IconClipboardCheck, IconHistory, IconScale } from '@tabler/icons-react'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
@@ -146,10 +146,17 @@ function OpeningPayments({ opening, close }: { opening: Opening; close: () => vo
   )
 }
 
-export function PartnerOpeningList({ partnerId, refresh }: { partnerId: string; refresh: () => void }) {
+export function PartnerOpeningList({ partnerId, refresh, onDialogChange }: {
+  partnerId: string; refresh: () => void; onDialogChange: (open: boolean) => void
+}) {
   const query = useRegister<Opening[]>('partners/' + partnerId + '/openings')
   const [history, setHistory] = useState<Opening | null>(null)
   const [pay, setPay] = useState<Opening | null>(null)
+  const dialogOpen = Boolean(history || pay)
+  useEffect(() => {
+    onDialogChange(dialogOpen)
+    return () => onDialogChange(false)
+  }, [dialogOpen, onDialogChange])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const { can } = usePermissions()
@@ -173,13 +180,11 @@ export function PartnerOpeningList({ partnerId, refresh }: { partnerId: string; 
   }
   return (
     <Stack gap="xs">
-      <Title order={2}><MetricLabel icon={IconScale}>Початкові борги</MetricLabel></Title>
+      <Title order={2}><MetricLabel icon={IconHistory}>Початкові борги</MetricLabel></Title>
       {!query.data ? (
         <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
       ) : !query.data.length ? (
-        <Text size="sm" c="dimmed">
-          Для цього контрагента ще не підтверджували початкового боргу.
-        </Text>
+        <p className="partner-balance-empty">Початковий борг ще не підтверджено.</p>
       ) : (
         <Grid columns={['Джерело', 'Організація', 'Напрям', 'Початкова сума', 'Залишилось', 'Операції']}>
           {query.data.map((o) => (
@@ -196,12 +201,11 @@ export function PartnerOpeningList({ partnerId, refresh }: { partnerId: string; 
               <Table.Td data-label="Залишилось" className="register-money">{money(o.due, 'UAH')}</Table.Td>
               <Table.Td>
                 <Group gap="xs">
-                  <Button variant="subtle" size="compact-xs" onClick={() => setHistory(o)}>
+                  <Button variant="default" size="compact-xs" onClick={() => setHistory(o)}>
                     Історія оплат
                   </Button>
                   {can(PermissionKeys.Accounting.Pay) && Number(o.due) > 0 && (
                     <Button
-                      variant="default"
                       size="compact-xs"
                       onClick={() => {
                         setPay(o)

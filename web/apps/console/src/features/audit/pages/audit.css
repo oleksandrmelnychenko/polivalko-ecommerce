@@ -1,3 +1,19 @@
+.audit-page .app-filter-fields .mantine-Input-input { border-radius: 999px; }
+.audit-page .app-split-list .data-table-row.app-split-row-active > .data-table-cell,
+.audit-page .app-split-list .data-table-row.app-split-row-active:hover > .data-table-cell {
+  --data-table-cell-bg: var(--app-ground);
+  background: var(--app-ground);
+}
+.audit-page .app-split-list .data-table-row.app-split-row-active > .data-table-cell:first-child {
+  box-shadow: inset 3px 0 var(--brand-ink);
+}
+.audit-entry { container-type: inline-size; }
+.audit-entry .app-split-card-head { align-items: center; flex-wrap: wrap; }
+.audit-entry .app-split-head { align-items: center; overflow-wrap: anywhere; }
+.audit-entry .audit-timeline-row { padding-block: 5px; }
+.audit-entry .audit-timeline-item.is-active .audit-timeline-action { color: var(--brand-ink); }
+.audit-entry .audit-timeline-item.is-active .audit-timeline-dot { background: var(--brand-ink); }
+
 .audit-search-label {
   align-items: center;
   display: inline-flex;
@@ -37,32 +53,40 @@
 
 .audit-entity-icon {
   align-items: center;
-  background: var(--app-chip-neutral-bg);
-  border: 1px solid var(--app-chip-neutral-border);
-  border-radius: 14px;
-  color: var(--app-chip-neutral-text);
+  background: var(--app-ground);
+  border-radius: 50%;
+  color: var(--brand-ink);
   display: inline-flex;
   flex: 0 0 auto;
-  height: 64px;
+  height: 36px;
   justify-content: center;
-  width: 64px;
+  width: 36px;
 }
 
-.audit-entity-icon.is-success {
-  background: var(--app-chip-success-bg);
-  border-color: var(--app-chip-success-border);
-  color: var(--app-chip-success-text);
+.audit-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0 12px 12px;
 }
 
-.audit-entity-icon.is-danger {
-  background: var(--app-chip-danger-bg);
-  border-color: var(--app-chip-danger-border);
-  color: var(--app-chip-danger-text);
+.audit-stats > div {
+  background: var(--app-ground);
+  border-radius: 12px;
+  padding: 9px 12px;
+  min-width: 0;
 }
+.audit-stats dt { font-size: 12px; color: var(--mantine-color-gray-7); }
 
 .audit-stats dd {
+  margin: 4px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 6px;
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0;
   min-width: 0;
@@ -87,8 +111,8 @@
 }
 
 .audit-stat-time {
-  font-size: 22px;
-  font-weight: 400;
+  font-size: 14px;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 
@@ -257,16 +281,17 @@
 
 .audit-card-link {
   align-items: center;
-  background: none;
+  background: var(--app-ground);
+  border-radius: 999px;
   border: 0;
-  color: var(--brand-accent-hover);
+  color: var(--brand-ink);
   cursor: pointer;
   display: inline-flex;
   font: inherit;
   font-size: 12.5px;
   font-weight: 600;
   gap: 4px;
-  padding: 0;
+  padding: 5px 10px;
 }
 
 .audit-card-link:hover {
@@ -287,7 +312,7 @@
 }
 
 .audit-raw summary:hover {
-  color: var(--brand-accent-hover);
+  color: var(--brand-ink);
 }
 
 .audit-raw[open] summary {
@@ -295,7 +320,7 @@
 }
 
 .audit-pre {
-  background: #fafbfa;
+  background: var(--app-ground);
   border: 1px solid var(--mantine-color-gray-2);
   border-radius: 8px;
   font-family: ui-monospace, 'Cascadia Mono', Consolas, 'Courier New', monospace;
@@ -307,4 +332,16 @@
   padding: 10px 12px;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.audit-mobile-label { display: none; }
+@container (max-width: 480px) {
+  .audit-stats { grid-template-columns: minmax(0, 1fr); }
+  .audit-stats > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .audit-stats dd { justify-content: flex-end; margin: 0; }
+  .audit-diff-head { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
+  .audit-diff-row { grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 10px 12px; }
+  .audit-diff-before, .audit-diff-after { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 6px; }
+  .audit-mobile-label { display: inline; font-size: 12px; color: var(--mantine-color-gray-7); }
+  .audit-fields > div { grid-template-columns: minmax(0, 1fr); }
 }

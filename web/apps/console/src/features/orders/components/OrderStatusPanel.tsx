@@ -1,5 +1,5 @@
 import { Alert, Button, Group, Text, Textarea } from '@mantine/core'
-import { IconAlertTriangle, IconCheck, IconX } from '@tabler/icons-react'
+import { IconClipboardCheck, IconAlertTriangle, IconCheck, IconX } from '@tabler/icons-react'
 import { useState } from 'react'
 import type { OrderStatus } from '@polivalko/shared/api/types'
 import { orderStatusLabel } from '@polivalko/shared/lib/labels'
@@ -63,7 +63,7 @@ export function OrderStatusPanel({ order, status }: { order: ConsoleOrder; statu
   }
 
   return (
-    <OrderCard className="order-area-status order-status-panel order-no-print" title="Статус замовлення">
+    <OrderCard icon={IconClipboardCheck} className="order-area-status order-status-panel order-no-print" title="Статус замовлення">
       <OrderCardBody>
         <Group gap={8} mb="sm">
           <Text size="sm" c="dimmed">

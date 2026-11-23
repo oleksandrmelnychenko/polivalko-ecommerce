@@ -48,6 +48,7 @@
 }
 
 .order-hero {
+  background: white;
   border: 1px solid var(--mantine-color-gray-2);
   border-radius: var(--app-panel-radius);
   display: grid;
@@ -106,6 +107,9 @@
 
 .order-metric {
   min-width: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--app-ground);
 }
 
 .order-metric dt {
@@ -116,16 +120,6 @@
   white-space: nowrap;
 }
 
-.order-metric dt::before {
-  background: var(--brand-accent);
-  border-radius: 999px;
-  content: '';
-  display: inline-block;
-  height: 6px;
-  margin-right: 6px;
-  vertical-align: 1px;
-  width: 6px;
-}
 
 .order-metric dd {
   color: var(--brand-ink);
@@ -137,9 +131,6 @@
   white-space: nowrap;
 }
 
-.order-metric.is-refund dt::before {
-  background: var(--mantine-color-red-6);
-}
 
 .order-metric.is-refund dd {
   color: var(--mantine-color-red-8);
@@ -169,13 +160,14 @@
 
 .order-card-head {
   align-items: center;
-  background: var(--app-ground);
+  background: white;
   border-bottom: 1px solid var(--mantine-color-gray-2);
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   justify-content: space-between;
   min-height: 42px;
-  padding: 6px 14px;
+  padding: 10px 14px;
 }
 
 .order-card-title {
@@ -187,16 +179,6 @@
   margin: 0;
 }
 
-.order-card-title::before {
-  background: var(--brand-accent);
-  border-radius: 999px;
-  content: '';
-  display: inline-block;
-  height: 7px;
-  margin-right: 8px;
-  vertical-align: 1px;
-  width: 7px;
-}
 
 .order-card-aside {
   align-items: center;
@@ -220,7 +202,10 @@
 }
 
 .order-card-note {
-  padding: 14px;
+  margin: 10px 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--app-ground);
 }
 
 .order-table {
@@ -228,6 +213,7 @@
 }
 
 .order-table thead th {
+  background: var(--app-ground);
   color: var(--mantine-color-gray-7);
   font-size: 12px;
   font-weight: 600;
@@ -238,6 +224,8 @@
   color: var(--mantine-color-gray-8);
   vertical-align: middle;
 }
+.order-table tbody tr:nth-child(odd) { background: var(--mantine-color-gray-0); }
+.order-page .mantine-Button-root { border-radius: 999px; }
 
 .order-table .is-num {
   font-variant-numeric: tabular-nums;
@@ -731,7 +719,7 @@
 }
 
 .order-status-action .mantine-Button-root {
-  border-radius: 8px;
+  border-radius: 999px;
   font-size: 13.5px;
   font-weight: 600;
 }

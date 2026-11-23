@@ -26,6 +26,8 @@
 }
 .banner-workspace .site-banner-stage img { border-radius: 14px; }
 .banner-workspace .app-split-stats dd { font-size: 13px; }
+.banner-workspace .app-split-stats { padding: 12px 16px; gap: 8px; }
+.banner-workspace .app-split-stats > div { border: 0; padding: 8px 12px; border-radius: 12px; background: var(--app-ground); min-width: 0; }
 .banner-workspace .app-split-stats > div:last-child dd,
 .banner-workspace .app-split-mono,
 .banner-editor-modal .mantine-DateInput-input { font-family: var(--font-mono); }

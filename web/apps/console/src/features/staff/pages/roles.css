@@ -17,7 +17,7 @@
 }
 
 .roles-aside {
-  background: var(--app-ground);
+  background: white;
   border-right: 1px solid var(--mantine-color-gray-2);
   display: flex;
   flex-direction: column;
@@ -31,9 +31,11 @@
   align-items: center;
   display: flex;
   gap: 8px;
-  justify-content: space-between;
-  padding: 2px 4px 10px;
+  padding: 8px 10px 12px;
 }
+
+.roles-aside-head h2 { margin: 0; font-size: 16px; font-weight: 600; }
+.roles-item-check { align-self: flex-start; flex: none; margin-top: 2px; color: var(--brand-ink); }
 
 .roles-aside-count {
   background: var(--mantine-color-gray-1);
@@ -80,16 +82,15 @@
 }
 
 .roles-item.is-selected {
-  background: var(--brand-accent-soft);
-  border-color: rgba(var(--brand-accent-rgb), 0.55);
-  box-shadow: inset 3px 0 0 var(--brand-accent);
+  background: var(--app-ground);
+  border-color: var(--mantine-color-gray-4);
 }
 
 .roles-item-icon {
   align-items: center;
   background: var(--mantine-color-gray-1);
-  border-radius: 8px;
-  color: var(--mantine-color-gray-7);
+  border-radius: 50%;
+  color: var(--brand-ink);
   display: inline-flex;
   flex: 0 0 30px;
   height: 30px;
@@ -98,7 +99,7 @@
 
 .roles-item.is-selected .roles-item-icon {
   background: var(--mantine-color-white);
-  color: var(--brand-accent-hover);
+  color: var(--brand-ink);
 }
 
 .roles-item-main {
@@ -154,7 +155,9 @@
 
 .roles-summary {
   align-items: flex-start;
-  border-bottom: 1px solid var(--mantine-color-gray-2);
+  background: var(--app-ground);
+  border-radius: 14px;
+  margin: 10px 12px 0;
   display: flex;
   flex: 0 0 auto;
   flex-wrap: wrap;
@@ -212,12 +215,28 @@
 
 .roles-summary-actions {
   display: flex;
-  flex: 0 0 auto;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
 .roles-summary-actions .mantine-Button-root {
-  border-radius: 8px;
+  border-radius: 999px;
+}
+
+.roles-read-only {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: white;
+  color: var(--brand-ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.roles-editor .app-filter-bar :is(.mantine-Input-input, .mantine-Button-root, .mantine-ActionIcon-root) {
+  border-radius: 999px;
 }
 
 .roles-editor-scroll {
@@ -271,24 +290,25 @@
 .roles-tree {
   display: flex;
   flex-direction: column;
-  padding: 6px 12px 12px;
+  gap: 8px;
+  padding: 10px 12px 12px;
 }
 
 .roles-section {
-  border-bottom: 1px solid var(--mantine-color-gray-2);
-}
-
-.roles-section:last-child {
-  border-bottom: 0;
+  border: 1px solid var(--app-line);
+  border-radius: 14px;
+  min-width: 0;
 }
 
 .roles-section-head {
   align-items: center;
   display: grid;
   gap: 8px;
-  grid-template-columns: 26px 22px 24px minmax(0, 1fr) auto;
+  grid-template-columns: 26px 22px 30px minmax(0, 1fr) auto;
+  background: var(--app-ground);
+  border-radius: 13px;
   min-height: 46px;
-  padding: 4px 6px;
+  padding: 6px 10px;
 }
 
 .roles-section-head:hover {
@@ -301,7 +321,11 @@
 
 .roles-section-icon {
   align-items: center;
-  color: var(--brand-accent-hover);
+  color: var(--brand-ink);
+  background: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   display: inline-flex;
   justify-content: center;
 }
@@ -326,7 +350,7 @@
 }
 
 .roles-section-body {
-  padding: 0 0 6px;
+  padding: 2px 10px 4px;
 }
 
 .roles-perm {
@@ -336,7 +360,7 @@
   display: grid;
   gap: 10px;
   grid-template-columns: 20px minmax(0, 1fr) auto;
-  margin-left: 56px;
+  margin-left: 34px;
   min-height: 48px;
   padding: 6px 8px;
   position: relative;
@@ -407,7 +431,8 @@
 
 .roles-perm-key {
   color: var(--mantine-color-gray-7);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
   font-size: 11px;
 }
 
@@ -461,7 +486,12 @@
 
 .roles-check:disabled {
   cursor: default;
-  opacity: 0.5;
+}
+
+.roles-check.is-checked:disabled, .roles-check.is-mixed:disabled {
+  background: var(--mantine-color-gray-2);
+  color: var(--brand-ink);
+  border-color: var(--mantine-color-gray-3);
 }
 
 .roles-footer {
@@ -506,7 +536,7 @@
 }
 
 .roles-footer-actions .mantine-Button-root {
-  border-radius: 8px;
+  border-radius: 999px;
 }
 
 @media (max-width: 62em) {
@@ -563,7 +593,7 @@
     width: 100%;
   }
 
-  .roles-summary-actions > span {
+  .roles-summary-actions > * {
     flex: 1 1 0;
   }
 
@@ -572,7 +602,7 @@
   }
 
   .roles-tree {
-    padding: 4px 6px 10px;
+    padding: 8px 10px 10px;
   }
 
   .roles-section-head {
@@ -586,7 +616,7 @@
 
   .roles-perm {
     grid-template-columns: 18px minmax(0, 1fr);
-    margin-left: 22px;
+    margin-left: 0;
   }
 
   .roles-perm-side {

@@ -1,5 +1,5 @@
 import { Skeleton } from '@mantine/core'
-import { IconShield, IconShieldLock } from '@tabler/icons-react'
+import { IconCheck, IconShield, IconShieldLock } from '@tabler/icons-react'
 import type { StaffRole } from '@/shared/auth/permissionsApi'
 import { TableChip } from '@/shared/ui/TableChip'
 import { rightsText, usersText } from '../lib/roleText'
@@ -46,7 +46,7 @@ export function RoleList({ roles, selectedId, dirty, isLoading, myRoleId, onSele
                 {selected && dirty ? <span className="roles-item-dirty" title="Є незбережені зміни" aria-label="Є незбережені зміни" /> : null}
               </span>
               <span className="roles-item-meta">
-                {usersText(role.userCount)} · {role.isSuperuser ? 'усі права' : rightsText(role.permissionCount)}
+                {usersText(role.userCount)}{role.isSuperuser ? '' : ` · ${rightsText(role.permissionCount)}`}
               </span>
               <span className="roles-item-badges">
                 {role.isSystem ? <TableChip value="Системна" /> : null}
@@ -54,6 +54,7 @@ export function RoleList({ roles, selectedId, dirty, isLoading, myRoleId, onSele
                 {role.id === myRoleId ? <TableChip tone="success" value="Ваша роль" /> : null}
               </span>
             </span>
+            {selected && <IconCheck className="roles-item-check" size={16} aria-hidden="true" />}
           </button>
         )
       })}

@@ -8,6 +8,7 @@ import { AuditTimeline } from '@/shared/audit/AuditTimeline'
 import { getPermissionCatalog, getRolePermissions, type StaffRole } from '@/shared/auth/permissionsApi'
 import type { StaffUser } from '../api/staffApi'
 import { rightsText } from '../lib/roleText'
+import { TableChip } from '@/shared/ui/TableChip'
 import { StaffAvatar } from './StaffAvatar'
 
 const HISTORY_SIZE = 8
@@ -30,7 +31,7 @@ export function StaffDetailPane(props: StaffDetailPaneProps) {
   if (!user) return <section className="app-split-detail app-split-detail-empty">Оберіть працівника зліва.</section>
 
   return (
-    <section key={user.id} className="app-split-detail" aria-labelledby="staff-detail-title">
+    <section key={user.id} className="app-split-detail staff-detail" aria-labelledby="staff-detail-title">
       <header className="app-split-hero">
         <div className="app-split-hero-top">
           <div className="app-split-head">
@@ -46,7 +47,7 @@ export function StaffDetailPane(props: StaffDetailPaneProps) {
             </div>
           </div>
           <div className="app-split-actions staff-actions">
-            <Button variant="default" leftSection={<IconPencil size={16} stroke={1.7} />} onClick={() => props.onEdit(user)}>
+            <Button leftSection={<IconPencil size={16} stroke={1.7} />} onClick={() => props.onEdit(user)}>
               Змінити
             </Button>
             <Button variant="default" leftSection={<IconKey size={16} stroke={1.7} />} onClick={() => props.onPassword(user)}>
@@ -55,20 +56,14 @@ export function StaffDetailPane(props: StaffDetailPaneProps) {
           </div>
         </div>
 
-        <dl className="app-split-stats staff-stats">
+        <dl className="staff-stats">
           <div>
             <dt>Доступ</dt>
-            <dd className={user.lockedOut ? 'is-bad' : 'is-good'}>
-              {user.lockedOut ? 'Заблоковано' : 'Активний'}
-              <small>{user.lockedOut ? 'вхід закрито' : 'може входити'}</small>
-            </dd>
+            <dd><TableChip dot tone={user.lockedOut ? 'danger' : 'success'} value={user.lockedOut ? 'Заблоковано' : 'Активний'} /></dd>
           </div>
           <div>
             <dt>Двофакторна перевірка</dt>
-            <dd className={user.twoFactorEnabled ? 'is-good' : undefined}>
-              {user.twoFactorEnabled ? 'Увімкнено' : 'Вимкнено'}
-              <small>{user.twoFactorEnabled ? 'пароль і код' : 'лише пароль'}</small>
-            </dd>
+            <dd><TableChip dot tone={user.twoFactorEnabled ? 'success' : 'neutral'} value={user.twoFactorEnabled ? 'Увімкнено' : 'Вимкнено'} /></dd>
           </div>
           <div>
             <dt>Роль</dt>
@@ -138,7 +133,7 @@ function RoleCard({ user, role, canOpenRoles }: { user: StaffUser; role: StaffRo
       </header>
       {role?.description ? <p className="staff-role-description">{role.description}</p> : null}
       {role?.isSuperuser ? (
-        <p className="app-split-blank">Роль має всі права консолі.</p>
+        role.description ? null : <p className="app-split-blank">Роль має всі права консолі.</p>
       ) : !canOpenRoles ? (
         <p className="app-split-blank">{role ? `${rightsText(role.permissionCount)}. Перелік бачать ті, хто має право «Ролі та права».` : 'Перелік прав бачать ті, хто має право «Ролі та права».'}</p>
       ) : permissions.isLoading || catalog.isLoading ? (

@@ -50,6 +50,7 @@ export function OrderNoteCard({ order, onSaved }: OrderNoteCardProps) {
 
   return (
     <OrderCard
+      icon={IconPencil}
       className="order-area-note order-no-print"
       title="Нотатка для працівників"
       aside={

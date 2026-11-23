@@ -134,7 +134,7 @@ export function DeliverySettingsForm({ initial, points, onSaved, onEditPoint }: 
   ) : null
 
   return (
-    <ListPage>
+    <ListPage className="settings-page">
       <PageHeader
         title="Доставка"
         actions={
@@ -147,7 +147,7 @@ export function DeliverySettingsForm({ initial, points, onSaved, onEditPoint }: 
         }
       />
       <ListPageBody>
-        <form id={FORM_ID} className="app-split-layout settings-form" onSubmit={onSubmit} noValidate aria-label="Способи доставки">
+        <form id={FORM_ID} className="home-workspace settings-form" onSubmit={onSubmit} noValidate aria-label="Способи доставки">
           <SettingsSectionList label="Способи отримання" sections={sections} active={active} onSelect={select} top={top} />
 
           <section key={active} className="app-split-detail" aria-label={section.name}>

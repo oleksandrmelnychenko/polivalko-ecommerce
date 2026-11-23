@@ -1,43 +1,50 @@
 [data-section='partners'] .console-frame:has(.partners-workspace) { overflow-y: auto; }
 .partners-workspace, .partners-page { display: grid; align-content: start; min-width: 0; gap: 12px; }
 .partner-directory {
-  --directory-inset: clamp(12px, 1.4vw, 20px);
-  gap: clamp(12px, 1.1vw, 16px);
-  padding: var(--directory-inset) clamp(4px, .6vw, 10px);
+  --directory-inset: 16px;
+  padding: 12px;
 }
-.partner-directory > .app-filter-bar,
 .partner-directory .ledger-card-head {
-  padding: clamp(12px, 1.1vw, 16px) var(--directory-inset);
-  gap: 12px;
+  padding: 12px var(--directory-inset) 6px;
 }
-.partners-workspace > .app-filter-bar {
-  border: 1px solid var(--app-line);
-  border-radius: var(--app-panel-radius);
-  box-shadow: var(--app-card-shadow);
+.partner-directory .app-filter-bar {
+  padding: 6px var(--directory-inset) 12px;
 }
 .partners-workspace .app-filter-bar input { border-radius: 999px; }
 .partners-workspace .app-filter-summary, .partner-code, .partner-id code { font-family: var(--font-mono); }
 .partner-return { width: fit-content; }
 .partner-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.partner-table :is(th, td) { padding: 10px 16px; text-align: start; }
+.partner-table :is(th, td) { padding: 9px 12px; text-align: start; }
 @media (min-width: 701px) {
   .partner-table :is(th, td):first-child { padding-inline-start: var(--directory-inset); }
   .partner-table :is(th, td):last-child { padding-inline-end: var(--directory-inset); }
 }
 .partner-table th { color: var(--mantine-color-gray-7); background: var(--app-ground); font-size: 12px; font-weight: 600; }
-.partner-table tr + tr td { border-top: 1px dashed var(--app-line); }
+.partner-table tr + tr td { border-top: 1px solid var(--app-line); }
+.partner-table tbody tr:nth-child(odd) { background: var(--mantine-color-gray-0); }
+.partner-table .partner-code { overflow-wrap: anywhere; font-size: .8125rem; }
 .partner-table tbody tr:is(:hover,:focus-within) { background: var(--app-ground); }
 .partner-person { display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; overflow-wrap: anywhere; }
 .partner-person:is(:hover,:focus-visible) strong { text-decoration: underline; }
 .partner-mark { display: inline-grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 50%; background: var(--app-ground); }
 .partner-identity { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 16px; }
-.partner-identity .partner-mark { width: 44px; height: 44px; }
+.partner-identity .partner-mark { width: 32px; height: 32px; }
 .partner-identity h2 { margin: 0; font-size: clamp(18px, 2vw, 26px); line-height: 1.2; overflow-wrap: anywhere; }
 .partner-meta, .partner-id { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--mantine-color-gray-7); font-size: 13px; }
-.partner-meta { margin-top: 4px; }
 .partner-category, .partner-id { background: var(--app-ground); border-radius: 99px; padding: 3px 9px; }
 .partner-id { margin-inline-start: auto; max-width: 100%; overflow-wrap: anywhere; }
 .partner-id code { color: var(--brand-ink); }
+.partner-modal .partner-identity > div, .partner-modal .partner-id { min-width: 0; }
+.partner-modal .partner-block { overflow: hidden; }
+.partner-modal.app-editor-modal .mantine-Modal-body { padding: 0; }
+.partner-balance-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; }
+.partner-block .partner-balance-empty {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--app-ground);
+  color: var(--mantine-color-gray-7);
+  font-size: 14px;
+}
 .partners-workspace:has(.partners-page) { padding-block: 10px 16px; }
 .partner-sections {
   display: flex; flex-wrap: wrap; gap: 2px; width: fit-content; max-width: 100%;
@@ -64,6 +71,7 @@
 .partner-doc-name small { color: var(--mantine-color-gray-7); font-size: 12px; }
 
 @media (max-width: 700px) {
+  .partner-directory { --directory-inset: 12px; padding: 8px; }
   .partner-table, .partner-table tbody, :is(.partner-block,.partner-payments) .register-scroll :is(table,tbody) { display: block; }
   .partner-table thead, :is(.partner-block,.partner-payments) .register-scroll thead {
     position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);

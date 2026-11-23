@@ -1,11 +1,8 @@
-import { ActionIcon, AppShell, Burger, Tooltip } from '@mantine/core'
+import { AppShell, Burger } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { IconExternalLink } from '@tabler/icons-react'
-import { SearchButton } from '@/features/search'
 import { Can } from '@/features/auth'
 import { StorefrontModeControl } from '@/features/storefront-mode'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
-import { siteUrl } from '@/shared/lib/siteUrl'
 import { PageHeaderActionsSlot } from '@/shared/ui/page-header-actions/PageHeaderActions'
 import { ConsoleBrand } from './ConsoleBrand'
 import { KyivClock } from './KyivClock'
@@ -27,12 +24,6 @@ export function ConsoleHeader({ dashboard }: { dashboard: boolean }) {
         {dashboard && <PageHeaderActionsSlot className="console-period-slot" />}
         <div className="console-header-tools">
           <Can permission={PermissionKeys.Catalog.ManageCollections}><StorefrontModeControl /></Can>
-          <SearchButton compact />
-          <Tooltip label="Відкрити вітрину в новій вкладці">
-            <ActionIcon component="a" href={siteUrl('/')} target="_blank" rel="noopener noreferrer" variant="subtle" color="gray" size={36} aria-label="Відкрити вітрину в новій вкладці">
-              <IconExternalLink size={18} stroke={1.7} />
-            </ActionIcon>
-          </Tooltip>
         </div>
       </div>
       <ConsoleMobileNav opened={menuOpened} onClose={menu.close} />

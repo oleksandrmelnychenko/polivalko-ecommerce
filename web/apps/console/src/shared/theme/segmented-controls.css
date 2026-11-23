@@ -10,7 +10,7 @@
 
 .mantine-SegmentedControl-root .mantine-SegmentedControl-indicator,
 .mantine-SegmentedControl-root .mantine-SegmentedControl-label[data-active]::before {
-  background: var(--brand-ink) !important;
+  background: var(--segmented-active-background, var(--brand-ink)) !important;
   border-radius: 999px !important;
   box-shadow: none !important;
 }

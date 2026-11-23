@@ -35,14 +35,15 @@ export function RecommendationRankings({ period, options, onChange }: {
         <p>Оборот і валовий прибуток враховують пов’язані накладні за днем їх проведення. Продаж за давнішою пропозицією може дати оборот навіть за відсутності нових пропозицій.</p>
       </CalculationInfo>
     </h3>
-    <Group gap="sm" my="xs">
+    {(period.customers?.length !== 0 || period.products?.length !== 0) && <Group gap="sm" my="xs">
       <SegmentedControl aria-label="Групування рейтингу" data={dimensions} value={dimension}
         onChange={value => { setLimit(20); onChange({ ...options, dimension: value === 'products' ? 'products' : 'customers' }) }} />
       <NativeSelect aria-label="Сортування рейтингу" data={metrics} value={metric}
+        disabled={!rows.length}
         onChange={event => { setLimit(20); onChange({ ...options, metric: event.currentTarget.value as RankingOptions['metric'] }) }} />
-    </Group>
-    {!source ? <p role="status">Показники рейтингу тимчасово недоступні.</p> : !rows.length ?
-      <p>За цей період немає пропозицій або проведених накладних з рекомендацій.</p> :
+    </Group>}
+    {!source ? <p role="status" className="rec-journal-empty">Показники рейтингу тимчасово недоступні.</p> : !rows.length ?
+      <p className="rec-journal-empty">{customers ? 'У рейтингу клієнтів за цей період немає записів.' : 'У рейтингу товарів за цей період немає записів.'}</p> :
       <div className="rec-results-scroll"><table aria-label={customers ? 'Рейтинг клієнтів' : 'Рейтинг товарів'}>
         <thead><tr><th>{customers ? 'Клієнт' : 'Товар'}</th><th>Конверсія пропозицій періоду</th><th>Оборот проведених накладних</th><th>Валовий прибуток</th></tr></thead>
         <tbody>{rows.slice(0,limit).map(row => <tr key={row.id}>

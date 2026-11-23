@@ -4,6 +4,11 @@
   --app-filter-label-height: 17px;
 }
 
+header:has(+ .app-filter-bar) > *,
+:is(h1, h2, h3):has(+ .app-filter-bar) {
+  translate: 0 6px;
+}
+
 .app-filter-bar {
   align-items: flex-end;
   background: white;

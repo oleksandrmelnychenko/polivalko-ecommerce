@@ -1,4 +1,6 @@
 import { Accordion, Group, Stack, Text } from '@mantine/core'
+import { IconShoppingCart } from '@tabler/icons-react'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { formatDateTime, formatMoney } from '@polivalko/shared/lib/format'
 import { useState } from 'react'
 import { api } from '@/shared/api/client'
@@ -16,15 +18,15 @@ export function OpenCarts({ onClose }: { onClose: () => void }) {
   useSalesRefresh(() => { if (!carts.isFetching) carts.reload() })
   const data = carts.data
   return (
-    <AppEditorModal opened onClose={onClose} title="Відкриті кошики покупців" size="standard">
+    <AppEditorModal opened onClose={onClose} className="orders-carts" title={<MetricLabel icon={IconShoppingCart}>Відкриті кошики покупців</MetricLabel>} size="standard">
       <Stack gap="sm">
-        <Group justify="space-between">
+        <Group justify="space-between" className="orders-carts-toolbar">
           <Text size="sm">{data && `Кошиків: ${data.totalItems}`}</Text>
           <Paginator page={page} pageSize={20} totalPages={data?.totalPages} isLoading={carts.isFetching}
             onPageChange={setPage} onRefresh={carts.reload} />
         </Group>
         {carts.status !== 'ready' ? <PageState kind={carts.status} onRetry={carts.reload} /> :
-          !data?.items.length ? <Text size="sm">{page === 1 ? 'Відкритих кошиків поки немає.' : 'На цій сторінці вже немає кошиків.'}</Text> :
+          !data?.items.length ? <Text className="orders-carts-empty" size="sm">{page === 1 ? 'Відкритих кошиків поки немає.' : 'На цій сторінці вже немає кошиків.'}</Text> :
           <Accordion variant="separated">
             {data.items.map(cart => (
               <Accordion.Item key={cart.id} value={cart.id}>
@@ -40,7 +42,7 @@ export function OpenCarts({ onClose }: { onClose: () => void }) {
                 <Accordion.Panel>
                   <Stack gap="xs">
                     {cart.items.map(line => (
-                      <Group key={line.productId} justify="space-between">
+                      <Group key={line.productId} justify="space-between" className="orders-cart-product">
                         <Stack gap={0}>
                           <Text size="sm" fw={500}>{line.name}</Text>
                           <Text size="xs" c="dimmed">{line.sku || line.productId} · Доступно {line.availableQuantity} шт.</Text>

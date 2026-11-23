@@ -17,7 +17,7 @@ import { Link } from 'react-router-dom'
 import { TableChip } from '@/shared/ui/TableChip'
 import type { Banner, HomeBlockKey } from '../api/siteApi'
 import { blockHint, blockName, DEFAULT_PERKS, DEFAULT_STEPS, DEFAULT_VISIT, itemRows, LIMITS, type HomeForm } from '../lib/homeSettings'
-import { periodEnd, periodLabel, periodStart, periodState } from '../lib/period'
+import { periodLabel, periodState } from '../lib/period'
 import { fieldError, type FieldErrors } from '../lib/useSaveForm'
 import { AnnouncementFields } from './AnnouncementFields'
 import { ItemsEditor } from './ItemsEditor'
@@ -37,11 +37,11 @@ export const SECTION_ICONS: Record<HomeSectionKey, typeof IconSlideshow> = {
   visit: IconBuildingStore,
 }
 
-const ANNOUNCEMENT_STATUS = {
+export const HOME_STATUS = {
   off: { tone: 'neutral', label: 'Приховано' },
   scheduled: { tone: 'warning', label: 'Заплановано' },
   ended: { tone: 'neutral', label: 'Період минув' },
-  live: { tone: 'success', label: 'Показується зараз' },
+  live: { tone: 'success', label: 'Показується' },
 } as const
 
 const ABOUT: Partial<Record<HomeBlockKey, { text: string; link: { to: string; label: string } }>> = {
@@ -65,6 +65,7 @@ const ABOUT: Partial<Record<HomeBlockKey, { text: string; link: { to: string; la
 
 type HomeSectionPaneProps = {
   section: HomeSectionKey
+  state: keyof typeof HOME_STATUS
   values: HomeForm
   errors: FieldErrors
   banners: Banner[] | null
@@ -72,11 +73,10 @@ type HomeSectionPaneProps = {
   onClearField: (...path: (string | number)[]) => void
 }
 
-export function HomeSectionPane({ section, values, errors, banners, patch, onClearField }: HomeSectionPaneProps) {
+export function HomeSectionPane({ section, state, values, errors, banners, patch, onClearField }: HomeSectionPaneProps) {
   const Icon = SECTION_ICONS[section]
   const blockIndex = values.blocks.findIndex((block) => block.key === section)
   const block = blockIndex >= 0 ? values.blocks[blockIndex] : null
-  const announcementState = periodState(values.announcement.isActive && Boolean(values.announcement.text.trim()), periodStart(values.announcement.from), periodEnd(values.announcement.to))
 
   function moveBlock(delta: number) {
     const target = blockIndex + delta
@@ -92,8 +92,7 @@ export function HomeSectionPane({ section, values, errors, banners, patch, onCle
   }
 
   const title = section === 'announcement' ? 'Смуга оголошення' : blockName(section)
-  const status = section === 'announcement' ? ANNOUNCEMENT_STATUS[announcementState]
-    : block?.visible ? { tone: 'success', label: 'Показується' } as const : { tone: 'neutral', label: 'Приховано' } as const
+  const status = HOME_STATUS[state]
 
   return (
     <section key={section} className="app-split-detail" aria-labelledby="site-home-section-title">

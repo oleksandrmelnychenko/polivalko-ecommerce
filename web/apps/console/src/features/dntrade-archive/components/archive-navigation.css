@@ -13,22 +13,24 @@
 }
 
 .dntrade-archive-view {
-  border-bottom: 2px solid transparent;
+  border-radius: 999px;
   color: var(--mantine-color-gray-7);
   font-size: 14px;
   font-weight: 600;
-  padding: 10px 12px 8px;
+  padding: 6px 12px;
   text-decoration: none;
   white-space: nowrap;
 }
 
-.dntrade-archive-view:hover,
-.dntrade-archive-view[aria-current='page'] {
-  color: var(--brand-accent);
+.dntrade-archive-views { gap: 4px; padding-block: 8px; }
+
+.dntrade-archive-view:hover {
+  background: var(--app-ground);
 }
 
 .dntrade-archive-view[aria-current='page'] {
-  border-bottom-color: currentColor;
+  background: var(--brand-ink);
+  color: white;
 }
 
 .dntrade-archive-view:focus-visible {

@@ -6,12 +6,13 @@ import { useSearchParams } from 'react-router-dom'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { LeaveGuard } from '@/shared/ui/LeaveGuard'
 import { PageHeader } from '@/shared/ui/PageHeader'
+import { TableChip } from '@/shared/ui/TableChip'
 import { getBanners, saveHome, type HomeSettings } from '../api/siteApi'
 import { blockName, toHomeBody, toHomeForm, validateHome, type HomeForm } from '../lib/homeSettings'
 import { periodEnd, periodStart, periodState } from '../lib/period'
 import { useSaveForm } from '../lib/useSaveForm'
 import { FormAlert } from './FormAlert'
-import { HomeSectionPane, SECTION_ICONS, type HomeSectionKey } from './HomeSectionPane'
+import { HomeSectionPane, HOME_STATUS, SECTION_ICONS, type HomeSectionKey } from './HomeSectionPane'
 
 const FORM_ID = 'site-home-form'
 
@@ -23,7 +24,7 @@ type HomeSettingsFormProps = {
 type SectionRow = {
   key: HomeSectionKey
   name: string
-  visible: boolean
+  state: keyof typeof HOME_STATUS
   invalid: boolean
 }
 
@@ -98,12 +99,12 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
       {
         key: 'announcement',
         name: 'Смуга оголошення',
-        visible: periodState(announcement.isActive && Boolean(announcement.text.trim()), periodStart(announcement.from), periodEnd(announcement.to)) === 'live',
+        state: periodState(announcement.isActive && Boolean(announcement.text.trim()), periodStart(announcement.from), periodEnd(announcement.to)),
         invalid: invalid.has('announcement'),
       },
-      ...blocks.map((block) => {
+      ...blocks.map((block): SectionRow => {
         const key = block.key as HomeSectionKey
-        return { key, name: blockName(key), visible: block.visible, invalid: invalid.has(key) }
+        return { key, name: blockName(key), state: block.visible ? 'live' : 'off', invalid: invalid.has(key) }
       }),
     ]
   }, [announcement, blocks, errorKeys])
@@ -126,7 +127,7 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
         onSubmit={onSubmit} noValidate aria-label="Налаштування головної сторінки">
         {form.error && <div className="home-form-error"><FormAlert error={form.error} /></div>}
         <section className="home-block-list" aria-labelledby="home-list-title">
-          <header><h2 id="home-list-title">Блоки головної</h2><span className="home-count">{rows.length}</span></header>
+          <header><h2 id="home-list-title">Блоки головної</h2><TableChip value={rows.length} /></header>
           <ol>
             {rows.map(row => {
               const Icon = SECTION_ICONS[row.key]
@@ -138,9 +139,8 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
                     }) }}>
                     <span className="home-block-icon"><Icon size={17} stroke={1.7} /></span>
                     <span className="home-block-name">{row.name}
-                      <small data-state={row.invalid ? 'error' : row.visible ? 'live' : 'off'}>
-                        {row.invalid ? 'Є помилки в полях' : row.visible ? 'Показується' : 'Приховано'}
-                      </small>
+                      <TableChip tone={row.invalid ? 'danger' : HOME_STATUS[row.state].tone}
+                        value={row.invalid ? 'Є помилки в полях' : HOME_STATUS[row.state].label} />
                     </span>
                     <IconChevronRight size={14} aria-hidden="true" />
                   </button>
@@ -155,7 +155,7 @@ export function HomeSettingsForm({ initial, onSaved }: HomeSettingsFormProps) {
               select(null)
               requestAnimationFrame(() => formRef.current?.querySelector<HTMLButtonElement>(`[data-block-key="${section}"]`)?.focus())
             }}>Усі блоки</Button>
-          <HomeSectionPane section={section} values={values} errors={form.errors} banners={banners.data ?? null} patch={patch} onClearField={form.clearField} />
+          <HomeSectionPane section={section} state={rows.find(row => row.key === section)?.state ?? 'off'} values={values} errors={form.errors} banners={banners.data ?? null} patch={patch} onClearField={form.clearField} />
         </div>
       </form>
       <LeaveGuard when={dirty} />

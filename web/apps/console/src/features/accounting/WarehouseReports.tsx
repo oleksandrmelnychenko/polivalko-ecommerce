@@ -90,15 +90,15 @@ export function WarehouseReports() {
               </FilterBar>
               {!rows.data ? <PageState kind={rows.status === 'ready' ? 'empty' : rows.status} onRetry={rows.reload} />
                 : rows.data.items.length === 0 ? <PageState kind="empty" title="За цими умовами товарів немає" /> : (
-                  <Grid columns={['Товар', 'Код товару', 'Одиниця', 'Залишок на дату звіту', 'Резерв у звіті']}>
+                  <Grid columns={['Код товару', 'Товар', 'Одиниця', 'Залишок на дату звіту', 'Резерв у звіті']}>
                     {rows.data.items.map(r => {
                       const name = r.title || r.productName || r.code || '—'
                       return (
                         <Table.Tr key={r.position}>
-                          <Table.Td className="wh-name"><div className="wh-report-name"><IconPackage size={16} aria-hidden="true" />
+                          <Table.Td className="wh-code ledger-number" data-label="Код товару"><IconPackage className="doc-row-icon" size={32} aria-hidden="true" />{r.code || '—'}</Table.Td>
+                          <Table.Td className="wh-name"><div className="wh-report-name">
                             {r.productId ? <Link to={'/catalog/products/' + r.productId}>{name}</Link> : <span>{name}</span>}
                           </div></Table.Td>
-                          <Table.Td className="ledger-number" data-label="Код товару">{r.code || '—'}</Table.Td>
                           <Table.Td data-label="Одиниця">{r.unit || '—'}</Table.Td>
                           <Table.Td data-label="Залишок на дату звіту" className="wh-quantity" data-negative={(r.quantity ?? 0) < 0 || undefined}>
                             {r.quantityText || count(r.quantity)}

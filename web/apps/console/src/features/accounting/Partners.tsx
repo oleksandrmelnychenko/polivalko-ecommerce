@@ -1,6 +1,5 @@
 import { Button, Select, Table, TextInput } from '@mantine/core'
 import {
-  IconArrowLeft,
   IconBuilding,
   IconChevronRight,
   IconFileDescription,
@@ -21,6 +20,9 @@ import { FilterBar } from '@/shared/ui/FilterBar'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { PageState } from '@/shared/ui/PageState'
+import { AppEditorModal } from '@/shared/ui/AppEditorModal'
+import { PartnerDetailLink } from '@/shared/ui/DocumentLink'
+import { TableChip } from '@/shared/ui/TableChip'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { normalizePageSize } from '@/shared/ui/paginator/pageSize'
 import { EditRegister } from './EditRegister'
@@ -65,25 +67,7 @@ function PartnerMark({ kind }: { kind: Partner['kind'] }) {
 }
 
 export function PartnersDirectory({ id }: { id?: string }) {
-  const location = useLocation()
-  if (!id) return <DirectoryList />
-  let back = { pathname: directory, search: location.state?.directorySearch ?? '', label: 'До списку контрагентів' }
-  if (typeof location.state?.marketSearch === 'string') {
-    back = { pathname: '/sales/business-analytics', search: location.state.marketSearch, label: 'До аналітики контрагентів' }
-  } else if (typeof location.state?.balanceSearch === 'string') {
-    back = { pathname: '/accounting/balances', search: location.state.balanceSearch, label: 'До взаєморозрахунків' }
-  }
-  return (
-    <div className="partners-workspace ledger-workspace">
-      <PageHeader title="Картка контрагента" />
-      <Button component={Link} variant="default" radius="xl" className="partner-return"
-        leftSection={<IconArrowLeft size={16} />}
-        to={{ pathname: back.pathname, search: back.search }}>
-        {back.label}
-      </Button>
-      <PartnerProfile key={id} id={id} />
-    </div>
-  )
+  return id ? <PartnerProfile key={id} id={id} /> : <DirectoryList />
 }
 
 function DirectoryList() {
@@ -124,15 +108,24 @@ function DirectoryList() {
   }
 
   return (
-    <div className="partners-workspace ledger-workspace partner-directory">
+    <div className="partners-workspace ledger-workspace partner-directory doc-register">
       <PageHeader title="Контрагенти" />
+      <section className="ledger-card partner-list" aria-label="Список контрагентів">
+        <header className="ledger-card-head">
+          <h2><MetricLabel icon={IconUsers}>Довідник контрагентів</MetricLabel></h2>
+          {can(PermissionKeys.Accounting.Edit) && (
+            <Button size="sm" radius="xl" leftSection={<IconPlus size={15} />} onClick={() => setAdding(true)}>
+              Додати контрагента
+            </Button>
+          )}
+        </header>
       <FilterBar
         activeCount={Number(Boolean(kind)) + Number(Boolean(category))}
         search={
           <TextInput
             className="app-filter-wide"
             type="search"
-            label="Пошук"
+            aria-label="Пошук контрагента"
             placeholder="Назва або код…"
             value={search}
             leftSection={<IconSearch size={16} stroke={1.7} />}
@@ -183,15 +176,6 @@ function DirectoryList() {
           onChange={(value) => update({ category: value ?? '' })}
         />
       </FilterBar>
-      <section className="ledger-card partner-list" aria-label="Список контрагентів">
-        <header className="ledger-card-head">
-          <h2><MetricLabel icon={IconUsers}>Довідник контрагентів</MetricLabel></h2>
-          {can(PermissionKeys.Accounting.Edit) && (
-            <Button size="sm" radius="xl" leftSection={<IconPlus size={15} />} onClick={() => setAdding(true)}>
-              Додати контрагента
-            </Button>
-          )}
-        </header>
         {query.status !== 'ready' ? (
           <PageState kind={query.status} onRetry={query.reload} />
         ) : !visible.length ? (
@@ -210,17 +194,16 @@ function DirectoryList() {
               {visible.map((row) => (
                 <tr key={row.id}>
                   <td>
-                    <Link
+                    <PartnerDetailLink
                       className="partner-person"
-                      to={directory + '/' + row.id}
-                      state={{ directorySearch: list.toString() }}
+                      id={row.id}
                     >
                       <PartnerMark kind={row.kind} />
                       <strong>{row.title}</strong>
-                    </Link>
+                    </PartnerDetailLink>
                   </td>
                   <td data-label="Код" className="partner-code">{row.sourceId}</td>
-                  <td data-label="Категорія">{row.category || 'Без категорії'}</td>
+                  <td data-label="Категорія"><TableChip tone={row.category === 'Постачальники' ? 'document' : 'neutral'} value={row.category || 'Без категорії'} /></td>
                   <td data-label="Вид">{kindLabel(row.kind)}</td>
                 </tr>
               ))}
@@ -245,6 +228,9 @@ function DirectoryList() {
 function PartnerProfile({ id }: { id: string }) {
   const { can } = usePermissions()
   const location = useLocation()
+  const navigate = useNavigate()
+  const [opened, setOpened] = useState(true)
+  const [operationOpen, setOperationOpen] = useState(false)
   const [params] = useSearchParams()
   const section = params.get('section')
   const active = section === 'balances' || section === 'agreements' ? section : 'documents'
@@ -252,40 +238,46 @@ function PartnerProfile({ id }: { id: string }) {
   const positions = useRegister<components['schemas']['PartnerPosition'][]>('partners/' + id + '/positions', active === 'balances')
   const partner = detail.data?.partner
   return (
-    <div className="partners-page">
+    <AppEditorModal opened={opened} onClose={() => setOpened(false)} size="wide" className="ledger-editor partner-modal"
+      closeOnEscape={!operationOpen} closeOnClickOutside={!operationOpen} trapFocus={!operationOpen}
+      title={<MetricLabel icon={IconUsers}>{partner?.title || 'Картка контрагента'}</MetricLabel>}
+      onExitTransitionEnd={() => {
+        if (location.state?.documentBackground || location.state?.marketSearch != null || location.state?.balanceSearch != null) navigate(-1)
+        else navigate(directory, { replace: true })
+      }}>
+    <div className="partners-page ledger-workspace">
       {!detail.data || !partner ? (
         <PageState kind={detail.status === 'ready' ? 'empty' : detail.status} onRetry={detail.reload} />
       ) : (
         <>
           <header className="ledger-card partner-identity">
             <PartnerMark kind={partner.kind} />
-            <div>
-              <h2>{partner.title}</h2>
-              {can(PermissionKeys.Analytics.ViewProducts) && can(PermissionKeys.Accounting.Edit) &&
-                <Link to={'/sales/business-analytics?tab=offers&partner=' + id}>Підготувати пропозицію</Link>}
-              <div className="partner-meta">
-                <span>{kindLabel(partner.kind)}</span>
-                <span className="partner-category">{partner.category || 'Без категорії'}</span>
-              </div>
+            <div className="partner-meta">
+              <span>{kindLabel(partner.kind)}</span>
+              <TableChip tone={partner.category === 'Постачальники' ? 'document' : 'neutral'} value={partner.category || 'Без категорії'} />
             </div>
             <span className="partner-id">Код <code>{partner.sourceId}</code></span>
+            {can(PermissionKeys.Analytics.ViewProducts) && can(PermissionKeys.Accounting.Edit) &&
+              <Button component={Link} size="xs" to={'/sales/business-analytics?tab=offers&partner=' + id}>Підготувати пропозицію</Button>}
           </header>
           <nav className="partner-sections" aria-label="Розділи картки контрагента">
             {Object.entries({ documents: 'Документи', balances: 'Взаєморозрахунки', agreements: 'Договори' }).map(([key, label]) => {
               const next = new URLSearchParams(params)
               if (key === 'documents') next.delete('section')
               else next.set('section', key)
-              return <Link key={key} to={{ search: next.toString() }} state={location.state}
+              return <Link key={key} replace to={{ search: next.toString() }} state={location.state}
                 aria-current={active === key ? 'page' : undefined}>{label}</Link>
             })}
           </nav>
           {active === 'documents' && <section className="ledger-card partner-block"><PartnerDocuments id={id} /></section>}
           {active === 'balances' && <>
-
             <section className="ledger-card partner-block">
-              <h2>
-                <MetricLabel icon={IconScale}>Взаєморозрахунки</MetricLabel>
-              </h2>
+              <header className="partner-balance-heading">
+                <h2><MetricLabel icon={IconScale}>Взаєморозрахунки</MetricLabel></h2>
+                <Button component={Link} size="xs" rightSection={<IconChevronRight size={15} />} to={balancesLink(partner.title)}>
+                  Перейти до звірки
+                </Button>
+              </header>
               {!positions.data ? (
                 <PageState
                   kind={positions.status === 'ready' ? 'empty' : positions.status}
@@ -302,14 +294,11 @@ function PartnerProfile({ id }: { id: string }) {
                   ))}
                 </Grid>
               ) : (
-                <p>Облікових залишків немає.</p>
+                <p className="partner-balance-empty">Облікових залишків немає.</p>
               )}
-              <Button component={Link} size="compact-sm" radius="xl" variant="default" className="partner-return" rightSection={<IconChevronRight size={15} />} to={balancesLink(partner.title)}>
-                Перейти до звірки
-              </Button>
             </section>
             <section className="ledger-card partner-block">
-              <PartnerOpeningList partnerId={id} refresh={positions.reload} />
+              <PartnerOpeningList partnerId={id} refresh={positions.reload} onDialogChange={setOperationOpen} />
             </section>
           </>}
           {active === 'agreements' && (
@@ -335,5 +324,6 @@ function PartnerProfile({ id }: { id: string }) {
         </>
       )}
     </div>
+    </AppEditorModal>
   )
 }

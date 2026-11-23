@@ -1,7 +1,8 @@
-import { DocTable, DocumentStatus, PartnerLink } from './DocumentTable'
+import { DocTable, DocumentStatus, PartnerLink, documentIcon } from './DocumentTable'
+import { TableChip } from '@/shared/ui/TableChip'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { Button, Select, Stack, Table, Text, TextInput } from '@mantine/core'
-import { IconBox, IconFileInvoice, IconFiles, IconLink, IconPackageExport, IconPackageImport, IconPlus, IconSearch } from '@tabler/icons-react'
+import { IconArrowBackUp, IconBox, IconChevronDown, IconFileInvoice, IconFiles, IconLink, IconPackageExport, IconPackageImport, IconPlus, IconSearch } from '@tabler/icons-react'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { MetricLabel } from '@/shared/ui/MetricCard'
@@ -46,7 +47,7 @@ function Document({ id }: { id: string }) {
         if (state?.documentBackground) navigate(-1)
         else navigate('/accounting/documents', { replace: true })
       }}
-      title={<MetricLabel icon={IconFileInvoice}>{title}</MetricLabel>}>
+      title={<MetricLabel icon={card ? documentIcon(card.document) : IconFileInvoice}>{title}</MetricLabel>}>
       {card ? <DocumentDetails card={card} onDialogChange={setOperationOpen} reload={() => {
         result.reload()
         window.dispatchEvent(new Event(ACCOUNTING_DOCUMENT_CHANGED))
@@ -58,15 +59,17 @@ function Document({ id }: { id: string }) {
 
 function DocumentDetails({ card, reload, onDialogChange }: { card: Card; reload: () => void; onDialogChange: (opened: boolean) => void }) {
   const { document: d, lines, parents, related } = card
+  const partnerLabel = d.entityType === 'invoice' && d.kind === 'in' ? 'Постачальник'
+    : d.entityType === 'invoice' && d.kind === 'out' ? 'Покупець' : 'Контрагент'
   return (
     <Stack gap="sm" className="ledger-workspace ledger-document">
       <section className="ledger-card doc-summary">
         <div className="doc-heading">
-          <div className="doc-meta"><time>{d.day ?? '—'}</time><DocumentStatus doc={d} /></div>
-          <div className="doc-amount"><span>Сума документа</span><strong>{money(d.amount, d.currency)}</strong></div>
+          <div className="doc-amount"><span>Сума документа</span><div className="doc-value"><strong>{money(d.amount, d.currency)}</strong><DocumentStatus doc={d} /></div></div>
+          <time dateTime={d.day ?? undefined}>{d.day ?? '—'}</time>
         </div>
         <dl className="doc-facts">
-          <div><dt>Контрагент</dt><dd><PartnerLink doc={d} /></dd></div>
+          <div><dt>{partnerLabel}</dt><dd><PartnerLink doc={d} chip /></dd></div>
           <div><dt>Організація</dt><dd>{d.organization || '—'}</dd></div>
           <div><dt>Договір</dt><dd>{d.agreement || '—'}</dd></div>
           <div><dt>Оплата</dt><dd>{paymentNames[d.paymentStatus ?? ''] ?? d.paymentStatus ?? '—'}</dd></div>
@@ -81,7 +84,7 @@ function DocumentDetails({ card, reload, onDialogChange }: { card: Card; reload:
       )}
       {lines.length > 0 && (
         <section className="ledger-card doc-lines">
-          <header className="ledger-card-head"><h2><MetricLabel icon={IconBox}>Товари</MetricLabel></h2><span className="ledger-count">{lines.length}</span></header>
+          <header className="ledger-card-head"><h2><MetricLabel icon={IconBox}>Товари</MetricLabel></h2><TableChip value={lines.length} /></header>
           <Grid columns={['№', 'Товар', 'Артикул', 'Склад', 'Кількість', 'Ціна', 'Сума']}>
             {lines.map((l) => (
               <Table.Tr key={l.position}>
@@ -99,7 +102,7 @@ function DocumentDetails({ card, reload, onDialogChange }: { card: Card; reload:
                   ) : (
                     l.product || '—'
                   )}
-                  <Text c="dimmed" size="xs">
+                  <Text c="dimmed" size="xs" className="doc-line-catalog">
                     {l.catalogId ? (
                       <Link to={'/catalog/products/' + l.catalogId}>Картка в каталозі</Link>
                     ) : (
@@ -118,19 +121,20 @@ function DocumentDetails({ card, reload, onDialogChange }: { card: Card; reload:
         </section>
       )}
       {d.parentRef && (
-        <section className="ledger-card">
-          <header className="ledger-card-head"><h2><MetricLabel icon={IconFileInvoice}>Документ-підстава</MetricLabel></h2></header>
-          {parents.length === 1 ? <DocTable rows={parents} /> : <Text className="ledger-note">Потребує звірки · {d.parentRef}</Text>}
-        </section>
+        <details className="ledger-card doc-disclosure">
+          <summary><MetricLabel icon={IconFileInvoice}>Документ-підстава</MetricLabel>
+            {parents.length !== 1 && <TableChip tone="warning" value="Потребує звірки" />}<IconChevronDown size={16} /></summary>
+          {parents.length === 1 ? <DocTable rows={parents} separateNumber /> : <Text className="ledger-note">Код документа-підстави · {d.parentRef}</Text>}
+        </details>
       )}
-      <section className="ledger-card">
-        <header className="ledger-card-head"><h2><MetricLabel icon={IconLink}>Пов’язані документи й оплати</MetricLabel></h2></header>
+      <details className="ledger-card doc-disclosure">
+        <summary><MetricLabel icon={IconLink}>Пов’язані документи й оплати</MetricLabel><TableChip value={related.length} /><IconChevronDown size={16} /></summary>
         {related.length ? (
-          <DocTable rows={related} />
+          <DocTable rows={related} separateNumber />
         ) : (
           <Text className="ledger-note" c="dimmed">Документів із посиланням на цей запис немає.</Text>
         )}
-      </section>
+      </details>
     </Stack>
   )
 }
@@ -162,8 +166,8 @@ function Register({ section, sourceSwitch }: { section: string; sourceSwitch?: R
       <PageHeader title={title} actions={sourceSwitch ?? (direction && can(PermissionKeys.Accounting.Edit) && (
         <Button radius="xl" leftSection={<IconPlus size={16} />} onClick={() => setEdit(true)}>Створити накладну</Button>
       ))} />
-      <section className="ledger-card">
-        <header className="ledger-card-head"><h2><MetricLabel icon={direction === 'out' ? IconPackageExport : direction === 'in' ? IconPackageImport : IconFiles}>{returns ? 'Повернення від покупців' : direction === 'in' ? 'Надходження від постачальників' : direction ? 'Відвантаження покупцям' : 'Реєстр документів'}</MetricLabel></h2>
+      <section className={section === 'documents' ? 'ledger-card document-register-list' : 'ledger-card'}>
+        <header className="ledger-card-head"><h2><MetricLabel icon={returns ? IconArrowBackUp : direction === 'out' ? IconPackageExport : direction === 'in' ? IconPackageImport : IconFiles}>{returns ? 'Повернення від покупців' : direction === 'in' ? 'Надходження від постачальників' : direction ? 'Відвантаження покупцям' : 'Реєстр документів'}</MetricLabel></h2>
           {query.data && <span className="ledger-count">Записів · {query.data.total.toLocaleString('uk-UA')}</span>}
         </header>
         <FilterBar label="Фільтри документів" activeCount={['from', 'to', 'status'].filter((key) => params.has(key)).length}
@@ -206,7 +210,7 @@ function Register({ section, sourceSwitch }: { section: string; sourceSwitch?: R
         </FilterBar>
         {query.data ? (
           query.data.total
-            ? <DocTable rows={query.data.items} direction={direction} />
+            ? <DocTable rows={query.data.items} direction={direction} separateNumber />
             : <PageState kind="empty" title="Записів за цими умовами немає" />
         ) : (
           <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />

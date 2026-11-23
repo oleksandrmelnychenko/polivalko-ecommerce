@@ -1,5 +1,5 @@
 import { Alert, Button, Skeleton, Stack, Text } from '@mantine/core'
-import { IconAlertTriangle, IconDeviceFloppy, IconInfoCircle, IconLock, IconPlus, IconRefresh } from '@tabler/icons-react'
+import { IconAlertTriangle, IconDeviceFloppy, IconInfoCircle, IconPlus, IconRefresh } from '@tabler/icons-react'
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth, usePermissions } from '@/features/auth'
@@ -253,7 +253,7 @@ export function RolesPage() {
       <div className="roles-layout">
         <aside className="roles-aside">
           <div className="roles-aside-head">
-            <span className="app-section-title">Ролі</span>
+            <h2>Ролі</h2>
             <span className="roles-aside-count">{roleList.length}</span>
           </div>
           <RoleList roles={roleList} selectedId={selectedId} dirty={dirty} isLoading={roles.isLoading} myRoleId={myRoleId} onSelect={selectRole} />
@@ -297,11 +297,6 @@ export function RolesPage() {
               onRetry={reloadAll}
             >
               <div className="roles-alerts">
-                {selectedRole?.isSuperuser ? (
-                  <Alert color="gray" variant="light" icon={<IconLock size={18} />} title="Роль «Адміністратор» не редагується">
-                    Адміністратор завжди має всі права. Зняти їх, перейменувати чи видалити роль не можна.
-                  </Alert>
-                ) : null}
                 {catalogMismatch ? (
                   <Alert color="yellow" variant="light" icon={<IconAlertTriangle size={18} />} title="Каталог прав оновився">
                     <Stack gap={6} align="flex-start">

@@ -146,7 +146,7 @@ export function NotificationSettingsForm({ initial, onSaved }: NotificationSetti
   const section = sections.find((item) => item.key === active) ?? sections[0]
 
   return (
-    <ListPage>
+    <ListPage className="settings-page">
       <PageHeader
         title="Сповіщення"
         actions={
@@ -159,7 +159,7 @@ export function NotificationSettingsForm({ initial, onSaved }: NotificationSetti
         }
       />
       <ListPageBody>
-        <form id={FORM_ID} className="app-split-layout settings-form" onSubmit={onSubmit} noValidate aria-label="Налаштування сповіщень">
+        <form id={FORM_ID} className="home-workspace settings-form" onSubmit={onSubmit} noValidate aria-label="Налаштування сповіщень">
           <SettingsSectionList label="Канали й події сповіщень" sections={sections} active={active} onSelect={select} top={form.error ? <FormAlert error={form.error} /> : null} />
 
           <section key={active} className="app-split-detail" aria-label={section.name}>

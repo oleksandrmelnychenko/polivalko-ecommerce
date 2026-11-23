@@ -1,21 +1,23 @@
 import { Alert, Button, Skeleton, Text } from '@mantine/core'
-import { IconAlertTriangle } from '@tabler/icons-react'
+import { IconAlertTriangle, type Icon } from '@tabler/icons-react'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { useId, type ReactNode } from 'react'
 
 type OrderCardProps = {
+  icon: Icon
   title: ReactNode
   aside?: ReactNode
   className?: string
   children: ReactNode
 }
 
-export function OrderCard({ title, aside, className, children }: OrderCardProps) {
+export function OrderCard({ title, icon, aside, className, children }: OrderCardProps) {
   const headingId = useId()
   return (
     <section className={['order-card', className].filter(Boolean).join(' ')} aria-labelledby={headingId}>
       <header className="order-card-head">
         <h2 id={headingId} className="order-card-title">
-          {title}
+          <MetricLabel icon={icon}>{title}</MetricLabel>
         </h2>
         {aside ? <div className="order-card-aside">{aside}</div> : null}
       </header>

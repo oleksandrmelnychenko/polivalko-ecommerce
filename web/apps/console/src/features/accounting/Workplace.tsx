@@ -189,12 +189,11 @@ function WarehouseBalances() {
             isLoading={result.isFetching} onPageChange={p => filter('page', String(p))} onRefresh={result.reload} />} />
         {refs.status === 'error' && <Button variant="subtle" onClick={refs.reload}>Повторити завантаження складів</Button>}
         {result.data ? result.data.total ? (
-          <Grid columns={['Товар', 'Артикул', 'Склад', 'На початок', 'Залишок', 'Інтернет-магазин', 'Операції']}>
+          <Grid columns={['Артикул', 'Товар', 'Склад', 'На початок', 'Залишок', 'Інтернет-магазин', 'Операції']}>
             {result.data.items.map(r => (
               <Table.Tr key={[r.orgId, r.storeId, r.productId].join(':')}>
-                <Table.Td className="wh-name"><Link to={'/catalog/products/' + r.productId}>
-                  <IconPackage size={16} aria-hidden="true" />{r.product}</Link></Table.Td>
-                <Table.Td data-label="Артикул" className="ledger-number">{r.sku}</Table.Td>
+                <Table.Td className="wh-code ledger-number" data-label="Артикул"><IconPackage className="doc-row-icon" size={32} aria-hidden="true" />{r.sku || '—'}</Table.Td>
+                <Table.Td className="wh-name"><Link to={'/catalog/products/' + r.productId}>{r.product}</Link></Table.Td>
                 <Table.Td data-label="Склад">{r.store}<small>{r.organization}</small></Table.Td>
                 <Table.Td data-label="На початок" className="wh-quantity">{count(r.opening)}</Table.Td>
                 <Table.Td data-label="Залишок" className="wh-quantity"><strong className="wh-stock-value" data-direction={Math.sign(r.quantity)}>{count(r.quantity)}</strong></Table.Td>

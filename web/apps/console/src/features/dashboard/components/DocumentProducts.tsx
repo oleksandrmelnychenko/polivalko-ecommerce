@@ -1,16 +1,17 @@
 import { Button, Pagination, Select, TextInput } from '@mantine/core'
-import { IconArrowLeft, IconChartBar, IconChartPie, IconSearch } from '@tabler/icons-react'
+import { IconArrowLeft, IconChartBar, IconChartPie, IconChevronDown, IconSearch } from '@tabler/icons-react'
 import { useState } from 'react'
 import { PurchaseInvoices } from './PurchaseInvoices'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { MetricLabel } from '@/shared/ui/MetricCard'
+import { TableChip } from '@/shared/ui/TableChip'
 import { dateRange, formatAmount, formatPrice } from '@/shared/lib/salesFormat'
 import { useApiQuery } from '@/shared/api/useApiQuery'
-import { PageState } from '@/shared/ui/PageState'
+import { DashboardState } from './DashboardSkeleton'
 import { getProductProfit, type DocumentSales } from '../api/dashboardApi'
 import { CalculationInfo } from './CalculationInfo'
 import { DashboardCard } from './DashboardCard'
-import { DotNumber, ProductReportDetails, ProductReportOverview } from './ProductReportOverview'
+import { ProductReportDetails, ProductReportOverview } from './ProductReportOverview'
 
 type Product = DocumentSales['products'][number]
 const batch = 10
@@ -92,21 +93,30 @@ function PeriodProducts({ data, open }: { data: DocumentSales; open: (p: Product
           <h3>{p.code ? <button className="dash-product-link" aria-haspopup="dialog" title="Відкрити звіт про прибуток цього товару" onClick={() => open(p)}>{p.name}</button> : p.name}</h3>
           <div className="report-tile-meta"><span>№ {i + 1}</span>{p.sku && <span>Арт. {p.sku}</span>}{p.abc && <span>Група {p.abc}</span>}</div>
         </header>
-        <dl className="report-tile-amount"><dt>Виручка</dt><dd><DotNumber value={formatPrice(p.net)} /></dd></dl>
-        <div className="report-tile-body">
-          <dl className="report-tile-facts">
-            <div><dt>Прибуток</dt><dd data-loss={p.profit != null && p.profit < 0 || undefined}>{p.profit == null ? '—' : formatPrice(p.profit)}</dd>
-              {!!p.purchaseSources?.length && p.profit != null && <dd className="app-cell-sub">розрахунковий</dd>}</div>
-            <div><dt>Маржа</dt><dd data-loss={p.margin != null && p.margin < 0 || undefined}>{share(p.margin)}</dd></div>
-            {p.cost != null && <div><dt>Собівартість</dt><dd>{formatPrice(p.cost)}</dd></div>}
-            <div><dt>Частка обороту</dt><dd>{share(p.share)}</dd></div>
-          </dl>
-          {!!p.purchaseSources?.length && <PurchaseInvoices invoices={p.purchaseSources} />}
-          {p.profit == null && p.lines != null && <span className="app-cell-sub">
-            Бракує собівартості · рядків {formatAmount(p.lines - p.costedLines)} із {formatAmount(p.lines)}.
-            {p.costedLines > 0 && <> Прибуток лише за оціненими рядками {formatPrice(p.coveredNet - p.coveredCost)}.</>}
-          </span>}
+        <div className="report-tile-metric">
+          <span className="report-metric-label">Виручка</span>
+          <div className="report-metric-line">
+            <strong>{formatPrice(p.net)}</strong>
+            {p.share != null && <TableChip tone="product" value={share(p.share) + ' обороту'} />}
+          </div>
         </div>
+        <details className="report-tile-details">
+          <summary aria-label={`Деталі продажів · ${p.name}`} title="Деталі продажів"><IconChevronDown size={17} aria-hidden="true" /></summary>
+          <div className="report-tile-body">
+            <dl className="report-tile-facts">
+              <div><dt>Прибуток</dt><dd data-loss={p.profit != null && p.profit < 0 || undefined}>{p.profit == null ? '—' : formatPrice(p.profit)}</dd>
+                {!!p.purchaseSources?.length && p.profit != null && <dd className="app-cell-sub">розрахунковий</dd>}</div>
+              <div><dt>Маржа</dt><dd data-loss={p.margin != null && p.margin < 0 || undefined}>{share(p.margin)}</dd></div>
+              {p.cost != null && <div><dt>Собівартість</dt><dd>{formatPrice(p.cost)}</dd></div>}
+              {p.share == null && <div><dt>Частка обороту</dt><dd>—</dd></div>}
+            </dl>
+            {!!p.purchaseSources?.length && <PurchaseInvoices invoices={p.purchaseSources} />}
+            {p.profit == null && p.lines != null && <span className="app-cell-sub">
+              Бракує собівартості · рядків {formatAmount(p.lines - p.costedLines)} із {formatAmount(p.lines)}.
+              {p.costedLines > 0 && <> Прибуток лише за оціненими рядками {formatPrice(p.coveredNet - p.coveredCost)}.</>}
+            </span>}
+          </div>
+        </details>
       </li>)}
     </ol> : <p className="dash-rank-empty">Товарів за цими умовами немає.</p>}
     {matches.length > batch && <div className="dash-rank-actions">
@@ -148,7 +158,7 @@ function HistoricalProfit({ picked, clear }: { picked: Product | null; clear: ()
           {value:'margin',label:'Найвища маржа'}, {value:'sales',label:'Найбільші продажі'}]}
         onChange={v => {setSort(v ?? 'profit'); setPage(1)}} />
     </div>}
-    {query.status !== 'ready' ? <PageState kind={query.status} onRetry={query.reload} /> :
+    {query.status !== 'ready' ? <DashboardState kind={query.status} onRetry={query.reload} /> :
       !report?.available ? <p className="dash-rank-empty">Звіт DNTrade про валовий прибуток ще недоступний.</p> : <>
         {!picked && totals}
         {report.rows.length > 0 && <ol className="dash-profit-rows" data-selected={picked ? true : undefined}>

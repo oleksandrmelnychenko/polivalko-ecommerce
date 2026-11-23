@@ -1,5 +1,5 @@
 import { Button, Stack, Text } from '@mantine/core'
-import { IconDownload, IconShoppingCart } from '@tabler/icons-react'
+import { IconDownload, IconShoppingBag, IconShoppingCart } from '@tabler/icons-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { OrderStatus } from '@polivalko/shared/api/types'
@@ -14,6 +14,7 @@ import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableSortingState } from '@/shared/ui/data-table/types'
 import { usePageSelection } from '@/shared/ui/data-table/usePageSelection'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
+import { MetricLabel } from '@/shared/ui/MetricCard'
 import { notifyError, notifySuccess } from '@/shared/ui/notify'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
@@ -140,24 +141,23 @@ export function OrdersPage() {
 
   return (
     <ListPage className="sales-list-page orders-list-page">
-      <PageHeader
-        title="Замовлення"
-        actions={
-          <>
-          <Button variant="default" radius="xl" leftSection={<IconShoppingCart size={16} />} onClick={() => setShowCarts(true)}>
+      <PageHeader title="Замовлення" />
+      {showCarts && <OpenCarts onClose={() => setShowCarts(false)} />}
+      <OrdersStatusTabs status={state.status} counts={counts.status === 'ready' ? counts.data : undefined} onChange={(status) => update({ status })} />
+      <section className="orders-register" aria-labelledby="orders-register-title">
+        <header className="orders-register-head">
+          <h2 id="orders-register-title"><MetricLabel icon={IconShoppingBag}>Замовлення</MetricLabel></h2>
+          <div className="orders-register-actions">
+          <Button size="xs" radius="xl" leftSection={<IconShoppingCart size={16} />} onClick={() => setShowCarts(true)}>
             Відкриті кошики
           </Button>
           <Can permission={PermissionKeys.Orders.Export}>
-            <Button variant="default" radius="xl" leftSection={<IconDownload size={16} stroke={1.8} />} loading={exporting} onClick={exportCsv}>
+            <Button size="xs" variant="default" radius="xl" leftSection={<IconDownload size={16} stroke={1.8} />} loading={exporting} onClick={exportCsv}>
               Експорт CSV
             </Button>
           </Can>
-          </>
-        }
-      />
-
-      {showCarts && <OpenCarts onClose={() => setShowCarts(false)} />}
-      <OrdersStatusTabs status={state.status} counts={counts.status === 'ready' ? counts.data : undefined} onChange={(status) => update({ status })} />
+          </div>
+        </header>
 
       <OrdersFilters
         state={state}
@@ -210,6 +210,7 @@ export function OrdersPage() {
         />
       ) : null}
 
+      </section>
       <OrdersBulkConfirm
         opened={confirming && selected.size > 0}
         status={bulkStatus}

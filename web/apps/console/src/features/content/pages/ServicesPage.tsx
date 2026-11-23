@@ -2,6 +2,7 @@ import { IconEye, IconPhoto, IconTools } from '@tabler/icons-react'
 import { useMemo, useState } from 'react'
 import { SiteMetrics } from '@/shared/ui/site/SiteMetrics'
 import { SiteRecordWorkspace } from '@/shared/ui/site/SiteRecordWorkspace'
+import { TableChip } from '@/shared/ui/TableChip'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { getServices, type ServiceDirection } from '../api/contentApi'
@@ -32,7 +33,7 @@ export function ServicesPage() {
         rows={rows.map(row => ({
           id: row.code, name: row.name,
           icon: row.imageUrl ? <img src={row.imageUrl} alt="" loading="lazy" /> : <IconTools size={16} />,
-          detail: <small data-state={row.isVisible ? 'live' : 'off'}>{row.isVisible ? 'Показується' : 'Приховано'}</small>,
+          detail: <TableChip tone={row.isVisible ? 'success' : 'neutral'} value={row.isVisible ? 'Показується' : 'Приховано'} />,
           sortValues: { name: row.name, order: row.sortOrder, visible: Number(row.isVisible) },
         }))}
         sortOptions={[{ key: 'order', label: 'Порядок на сайті' }, { key: 'name', label: 'Назва' }, { key: 'visible', label: 'Видимість', descending: true }]}

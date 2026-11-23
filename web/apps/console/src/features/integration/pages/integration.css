@@ -15,11 +15,10 @@
 .integration-tiles {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
 }
 
 .integration-tile {
-  --tile-bg: var(--app-chip-neutral-bg);
   --tile-border: var(--app-chip-neutral-border);
   --tile-text: var(--app-chip-neutral-text);
   align-items: center;
@@ -36,13 +35,11 @@
 }
 
 .integration-tile.is-good {
-  --tile-bg: var(--app-chip-success-bg);
   --tile-border: var(--app-chip-success-border);
   --tile-text: var(--app-chip-success-text);
 }
 
 .integration-tile.is-bad {
-  --tile-bg: var(--app-chip-danger-bg);
   --tile-border: var(--app-chip-danger-border);
   --tile-text: var(--app-chip-danger-text);
   border-color: var(--app-chip-danger-border);
@@ -65,10 +62,9 @@
 
 .integration-tile-icon {
   align-items: center;
-  background: var(--tile-bg);
-  border: 1px solid var(--tile-border);
-  border-radius: 10px;
-  color: var(--tile-text);
+  background: var(--app-ground);
+  border-radius: 50%;
+  color: var(--brand-ink);
   display: inline-flex;
   flex: 0 0 auto;
   height: 40px;
@@ -111,33 +107,13 @@
 
 .integration-job-icon {
   align-items: center;
-  background: var(--app-chip-neutral-bg);
-  border: 1px solid var(--app-chip-neutral-border);
-  border-radius: var(--app-panel-radius);
-  color: var(--app-chip-neutral-text);
+  background: var(--app-ground);
+  border-radius: 50%;
+  color: var(--brand-ink);
   display: inline-flex;
-  flex: 0 0 auto;
-  height: 64px;
+  flex: 0 0 36px;
+  height: 36px;
   justify-content: center;
-  width: 64px;
-}
-
-.integration-job-icon.is-success {
-  background: var(--app-chip-success-bg);
-  border-color: var(--app-chip-success-border);
-  color: var(--app-chip-success-text);
-}
-
-.integration-job-icon.is-danger {
-  background: var(--app-chip-danger-bg);
-  border-color: var(--app-chip-danger-border);
-  color: var(--app-chip-danger-text);
-}
-
-.integration-job-icon.is-source {
-  background: var(--app-chip-source-bg);
-  border-color: var(--app-chip-source-border);
-  color: var(--app-chip-source-text);
 }
 
 .integration-hero-note {

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { IconShoppingBag } from '@tabler/icons-react'
 import { formatDateTime } from '@polivalko/shared/lib/format'
 import { deliveryMethodLabel } from '@polivalko/shared/lib/labels'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
@@ -11,9 +12,10 @@ export const ordersColumns: DataTableColumn<OrderRow>[] = [
   {
     id: 'number',
     header: 'Номер',
-    width: 120,
+    width: 160,
     cell: (row) => (
-      <Link className="app-cell-code" to={orderHref(row.number)}>
+      <Link className="orders-number app-cell-code" to={orderHref(row.number)}>
+        <IconShoppingBag size={16} stroke={1.7} aria-hidden="true" />
         {row.number}
       </Link>
     ),

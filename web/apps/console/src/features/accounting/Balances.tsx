@@ -3,6 +3,7 @@ import type { components } from '@polivalko/shared/api/schema'
 import { IconArrowsExchange, IconBuildingStore, IconFileCheck, IconLink, IconSearch, IconWallet } from '@tabler/icons-react'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { MetricLabel } from '@/shared/ui/MetricCard'
+import { TableChip } from '@/shared/ui/TableChip'
 import './balances.css'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useState } from 'react'
@@ -17,11 +18,29 @@ import { money, read, useRegister, type Balance, type Report, type Page, type Pa
 
 const columns = ['Контрагент', 'Аналітичний рахунок', 'На початок', 'Прихід', 'Розхід', 'Залишок', 'Розбіжність']
 const amounts = ['opening', 'incoming', 'outgoing', 'closing', 'difference'] as const
+const reportTime = new Intl.DateTimeFormat('uk-UA', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Kyiv' })
+const reportDay = new Intl.DateTimeFormat('uk-UA', { dateStyle: 'medium', timeZone: 'Europe/Kyiv' })
+
+function reportLabel(report: Report) {
+  const raw = report.capturedAt || report.day
+  if (!raw) return report.sourceId
+  const date = new Date(raw)
+  if (Number.isNaN(date.getTime())) return raw
+  return (raw.includes('T') ? reportTime : reportDay).format(date)
+}
+
+const zero = (value: string | null) => value != null && /^[-+]?0([.]0+)?$/.test(value)
+
+function Difference({ value }: { value: string | null }) {
+  const label = money(value)
+  return value !== null && !zero(value) ? <TableChip tone="warning" value={label} title="Є розбіжність" /> : label
+}
+
 function Amounts({ row }: { row: Balance }) {
   return amounts.map((k, i) => (
     <Table.Td key={k} data-label={columns[i + 2]} className="register-money">
       {k === 'difference'
-        ? money(row[k])
+        ? <Difference value={row[k]} />
         : (row.sourceAmounts[i]?.split('\n').map((line, n) => <div key={n}>{line}</div>) ?? '—')}
     </Table.Td>
   ))
@@ -165,7 +184,6 @@ function BalanceReports() {
   const term = (params.get('q') ?? '').trim().toLocaleLowerCase('uk')
   const mode = params.get('mode') || 'all'
   const position = params.get('position')
-  const zero = (v: string | null) => v != null && /^[-+]?0([.]0+)?$/.test(v)
   const eligible = (r: Balance) =>
     !!report?.day &&
     (!report.openingReportId || report.openingReportId === id) &&
@@ -196,7 +214,14 @@ function BalanceReports() {
           <Select
             label="Звіт на дату"
             value={id}
-            data={reports.data.map((r) => ({ value: r.id, label: (r.capturedAt || r.day || '') + ' · ' + r.sourceId }))}
+            data={reports.data.map((r) => ({ value: r.id, label: reportLabel(r) }))}
+            renderOption={({ option }) => (
+              <span className="balance-report-option">
+                {option.label}
+                <small>{reports.data?.find((r) => r.id === option.value)?.sourceId}</small>
+              </span>
+            )}
+            title={report?.sourceId}
             onChange={(v) => change('report', v || '')}
           />
           <TextInput
@@ -245,7 +270,9 @@ function BalanceReports() {
               <header className="ledger-card-head"><h2><MetricLabel icon={IconArrowsExchange}>Підсумок усього звіту</MetricLabel></h2></header>
               <dl>{amounts.map((key, index) => (
                 <div key={key}><dt>{columns[index + 2]}</dt>
-                  <dd>{key === 'difference' ? money(footer.difference) : footer.sourceAmounts[index] || '—'}</dd>
+                  <dd>{key === 'difference'
+                    ? <Difference value={footer.difference} />
+                    : (footer.sourceAmounts[index] || '—').split('\n').map((line, i) => <span key={i}>{line}</span>)}</dd>
                 </div>
               ))}</dl>
             </section>
@@ -264,7 +291,7 @@ function BalanceReports() {
           <section className="ledger-card balance-list">
             <header className="ledger-card-head">
               <h2><MetricLabel icon={IconFileCheck}>Рядки звіту</MetricLabel></h2>
-              <Group gap="xs"><span className="ledger-count">Рядків · {selected.length}</span>
+              <Group gap="xs"><TableChip value={`Рядків · ${selected.length}`} />
               {position && (
                 <Button size="compact-xs" variant="subtle" onClick={() => change('position', '')}>
                   Показати весь звіт
@@ -282,30 +309,28 @@ function BalanceReports() {
                       ) : (
                         r.partnerTitle || 'Без назви'
                       )}
-                      {!r.linkedPartner && (
-                        <Text c="dimmed" size="xs">
-                          {r.candidateCount === 1
-                            ? 'Один збіг за назвою'
-                            : r.candidateCount > 1
-                              ? 'Кілька збігів за назвою'
-                              : 'Без зв’язку з довідником'}
-                        </Text>
-                      )}
-                      {r.headingPosition && !r.headingConfirmed && can(PermissionKeys.Accounting.Edit) && (
-                        <Button size="compact-xs" variant="default" onClick={() => setLinking(r)}>
-                          {r.linkedPartner ? 'Змінити прив’язку' : 'Прив’язати'}
-                        </Button>
-                      )}
-                      {r.openingId && (
-                        <Text size="xs" c="teal">
-                          Початковий борг підтверджено
-                        </Text>
-                      )}
-                      {eligible(r) && can(PermissionKeys.Accounting.BalanceOpening) && (
-                        <Button size="compact-xs" variant="default" onClick={() => setConfirming(r)}>
-                          Підтвердити борг
-                        </Button>
-                      )}
+                      <div className="balance-row-actions">
+                        {!r.linkedPartner && (
+                          <TableChip tone={r.candidateCount > 1 ? 'warning' : 'neutral'} value={r.candidateCount === 1
+                              ? 'Один збіг за назвою'
+                              : r.candidateCount > 1
+                                ? 'Кілька збігів за назвою'
+                                : 'Без зв’язку з довідником'} />
+                        )}
+                        {r.headingPosition && !r.headingConfirmed && can(PermissionKeys.Accounting.Edit) && (
+                          <Button size="compact-xs" onClick={() => setLinking(r)}>
+                            {r.linkedPartner ? 'Змінити прив’язку' : 'Прив’язати'}
+                          </Button>
+                        )}
+                        {r.openingId && (
+                          <TableChip tone="success" value="Початковий борг підтверджено" />
+                        )}
+                        {eligible(r) && can(PermissionKeys.Accounting.BalanceOpening) && (
+                          <Button size="compact-xs" onClick={() => setConfirming(r)}>
+                            Підтвердити борг
+                          </Button>
+                        )}
+                      </div>
                     </Table.Td>
                     <Table.Td data-label="Аналітичний рахунок">{r.account || '—'}</Table.Td>
                     <Amounts row={r} />
