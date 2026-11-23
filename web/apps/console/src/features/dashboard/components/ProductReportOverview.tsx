@@ -19,7 +19,7 @@ const glyphs: Record<string, string[]> = {
   ' ': ['00'],
 }
 
-function DotNumber({ value }: { value: string }) {
+export function DotNumber({ value }: { value: string }) {
   const currency = value.endsWith('₴')
   const digits = currency ? value.slice(0, -1).trimEnd() : value
   const characters = Array.from(digits.replace(/\s/g, ' '))

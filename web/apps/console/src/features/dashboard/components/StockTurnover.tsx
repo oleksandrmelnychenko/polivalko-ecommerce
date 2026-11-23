@@ -140,14 +140,18 @@ function StockReport({ days, account, purchasesOpen, openPurchases, closePurchas
           <span aria-live="polite">Показано <b>{report.rows.length ? numberFormat.format((report.page - 1) * report.pageSize + 1) + '–' + numberFormat.format((report.page - 1) * report.pageSize + report.rows.length) : '0'} із {numberFormat.format(report.matches)}</b></span>
         </div>
         {report.rows.length > 0 ? <>
-          <ul className="dash-stock-tiles">{report.rows.map(item => <li key={item.id} className="dash-stock-tile">
-            <header className="dash-stock-tile-head">
+          <ul className="report-tiles" aria-label="Залишки товарів">{report.rows.map(item => <li key={item.id} className="report-tile">
+            <header className="report-tile-head">
               <h3><Link to={'/catalog/products/' + encodeURIComponent(item.id)}>{item.name}</Link></h3>
-              <div className="dash-product-meta">
-                <TableChip tone={item.available <= 0 ? 'danger' : 'warning'} value={`Доступно ${numberFormat.format(item.available)}`} />
-                {item.sku && <span className="dash-product-sku">Арт. {item.sku}</span>}
-              </div>
+              {item.sku && <div className="report-tile-meta">Арт. {item.sku}</div>}
             </header>
+            <dl className="report-stock-level">
+              <div><dt>Доступно після резервів</dt><dd>{numberFormat.format(item.available)} {item.unit || 'од.'}</dd></div>
+              {item.stockDays != null && report.coverDays > 0 && <div><dt>{item.season && item.season.factor !== 1 ? 'Запас за очікуваним попитом, днів' : 'Запас у днях'}</dt>
+                <dd>{item.stockDays > 0 && item.stockDays < .1 ? '< 0,1' : numberFormat.format(Math.round(item.stockDays * 10) / 10)} із {report.coverDays}</dd>
+                <dd className="report-stock-meter" aria-hidden="true"><i style={{ width: Math.min(100, Math.max(0, item.stockDays / report.coverDays * 100)) + '%' }} /></dd>
+              </div>}
+            </dl>
             <div className="dash-stock-decision">
               {item.purchaseStatus === 'buy'
                 ? <div><strong>Докупити {numberFormat.format(item.buyQuantity)} {item.unit}{item.lastPurchase?.amount != null && ' · ' + formatPrice(item.lastPurchase.amount)}</strong>
@@ -174,7 +178,6 @@ function StockReport({ days, account, purchasesOpen, openPurchases, closePurchas
                   <div><dt>На складі / у резерві</dt><dd>{numberFormat.format(item.onHand)} / {numberFormat.format(item.reserved)} {item.unit || 'од.'}</dd></div>
                   {item.season && item.season.factor !== 1 && item.dailyRate != null && item.dailyRate > 0 && <div><dt>Очікуваний попит на день · із сезонною поправкою</dt>
                     <dd>{numberFormat.format(item.dailyRate * item.season.factor)} {item.unit || 'од.'}</dd></div>}
-                  {item.stockDays != null && <div><dt>{item.season && item.season.factor !== 1 ? 'Запас за очікуваним попитом / ціль, днів' : 'Запас / ціль, днів'}</dt><dd>{item.stockDays > 0 && item.stockDays < 0.1 ? '< 0,1' : numberFormat.format(Math.round(item.stockDays * 10) / 10)} / {report.coverDays}</dd></div>}
                   {item.dailyRate != null && <div><dt>Продажі на день</dt><dd>{item.dailyRate > 0 && item.dailyRate < 0.001 ? '< 0,001' : numberFormat.format(item.dailyRate)} {item.unit || 'од.'}</dd></div>}
                   <div><dt>Чистий оборот</dt><dd>{item.net == null ? 'Невідомий' : formatPrice(item.net)}</dd></div>
                   <div><dt>Частка обороту</dt><dd>{item.share == null ? '—' : formatShare(item.share)}</dd></div>

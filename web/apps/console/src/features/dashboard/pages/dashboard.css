@@ -729,47 +729,43 @@ a.dash-queue-item:focus-visible {
 .dash-document-counts { font-size: 14px; margin: 0 0 12px; }
 .dash-products-period { color: var(--mantine-color-gray-7); font-size: 13px; margin: 0 var(--dash-pad) 4px; }
 
-.dash-sales-table {
-  width: 100%;
-  table-layout: fixed;
-  border-collapse: collapse;
-  color: var(--brand-ink);
-  font-size: 14px;
+.report-tiles {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 12px var(--dash-pad);
+  list-style: none;
+  background: #faf7f5;
 }
-.dash-sales-table thead { background: var(--app-ground); }
-.dash-sales-table th, .dash-sales-table td { padding: 9px 6px; text-align: end; }
-.dash-sales-table thead th { color: var(--mantine-color-gray-7); font-size: 13px; font-weight: 550; }
-.dash-sales-table thead th:first-child { width: 42%; }
-.dash-sales-table thead th:last-child { width: 15%; }
-.dash-sales-table tr > :where(:first-child) { text-align: start; padding-inline-start: var(--dash-pad); }
-.dash-sales-table tr > :where(:last-child) { padding-inline-end: var(--dash-pad); }
-.dash-sales-table tbody { border-bottom: 1px solid var(--dash-line); }
-.dash-sales-values > * { vertical-align: top; overflow-wrap: anywhere; }
-.dash-sales-values th { font-weight: 600; }
-.dash-sales-values td { font-family: var(--font-money); font-variant-numeric: tabular-nums; }
-.dash-sales-values td[data-loss] { color: var(--mantine-color-red-8); }
-.dash-sales-values small, .dash-sales-values .dash-product-meta, .dash-mobile-label {
-  color: var(--mantine-color-gray-7);
-  font: 400 12px/1.4 var(--font-sans);
+.report-tile {
+  position: relative;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  border: 1px solid #eee9e6;
+  border-radius: 18px;
+  background: white;
 }
-.dash-sales-values small { display: block; }
-.dash-sales-values .dash-product-meta { margin-top: 4px; }
-.dash-sales-table .dash-sales-context { padding-block: 0 10px; }
-.dash-sales-context .dash-cost-sources { margin-top: 4px; }
-.dash-sales-context > .app-cell-sub { display: block; margin-top: 4px; }
-.dash-mobile-label { display: none; }
-
-@container (max-width: 540px) {
-  .dash-sales-table, .dash-sales-table tbody { display: block; }
-  .dash-sales-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  .dash-sales-table tbody { padding: 12px var(--dash-pad); }
-  .dash-sales-values { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-  .dash-sales-values th { grid-column: 1 / -1; }
-  .dash-sales-table tr > :is(th, td) { padding: 0; text-align: start; }
-  .dash-sales-table .dash-sales-context { display: block; padding-top: 8px; }
-  .dash-sales-table tbody tr:last-child { display: block; }
-  .dash-mobile-label { display: block; margin-bottom: 2px; }
+.report-tile-head { display: grid; gap: 5px; padding: 16px 18px 0; }
+.dash-stock-impact .report-tile-head { padding-right: 60px; }
+.report-tile-head h3 { margin: 0; font-size: 1rem; font-weight: 600; line-height: 1.35; }
+.report-card .report-tile-head :is(button, a) { color: inherit; font: inherit; text-decoration: none; overflow-wrap: anywhere; }
+.report-card .report-tile-head :is(button, a):is(:hover, :focus-visible) { text-decoration: underline; }
+.report-tile-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--report-muted); font-size: .8125rem; }
+.report-tile-amount, .report-stock-level { margin: 16px 18px; }
+.report-tile-amount dt, .report-tile-facts dt, .report-stock-level dt { color: var(--report-muted); font-size: .8125rem; }
+.report-tile-amount dd { display: flex; align-items: flex-end; height: 27px; margin: 6px 0 0; }
+.report-tile-amount .report-currency { font-size: 17px; }
+.report-tile-body { display: grid; gap: 8px; padding: 12px 18px 16px; border-top: 1px solid #eee9e6; }
+.report-tile-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 90px), 1fr)); gap: 8px 12px; margin: 0; }
+.report-tile-facts dd, .report-stock-level dd { margin: 2px 0 0; font-variant-numeric: tabular-nums; font-weight: 550; }
+.report-tile-facts dd[data-loss] { color: #a73824; }
+.report-stock-level { display: grid; gap: 8px; }
+.report-stock-level > div { display: flex; align-items: baseline; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; }
+.report-stock-level .report-stock-meter {
+  width: 100%; height: 8px; margin: 1px 0 0; background: #e1ddda;
+  mask: radial-gradient(circle, #000 2.3px, transparent 2.8px) 0 0 / 8px 8px repeat;
 }
+.report-stock-meter i { display: block; height: 100%; background: #ee7142; }
 
 
 .dash-product-report .dash-rank { border-block-start: 1px solid var(--dash-line); }
@@ -781,30 +777,9 @@ a.dash-queue-item:focus-visible {
   padding-block: 12px;
   border-bottom-style: dashed;
 }
-.dash-stock-tiles {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 12px;
-  list-style: none;
-  margin: 0;
-  padding: 12px var(--dash-pad);
-  background: var(--app-ground);
-}
-.dash-stock-tile {
-  position: relative;
-  background: white;
-  border: 1px solid var(--dash-line);
-  border-radius: 16px;
-  box-shadow: 0 2px 5px rgb(24 24 40 / 4%);
-  overflow-wrap: anywhere;
-}
-.dash-stock-tile-head { display: grid; gap: 6px; padding: 13px 58px 11px 16px; }
-.dash-stock-tile-head h3 { margin: 0; font-size: 1.0625rem; line-height: 1.3; }
-.dash-stock-tile-head h3 a { color: var(--brand-ink); text-decoration: none; }
-.dash-stock-tile-head h3 a:is(:hover, :focus-visible) { text-decoration: underline; }
 .dash-stock-decision { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; border-top: 1px solid var(--dash-line); padding: 9px 16px; font-size: .875rem; }
 .dash-stock-decision > div { min-width: 0; }
-.dash-stock-tile > .app-cell-sub { padding: 0 16px 10px; }
+.report-tile > .app-cell-sub { padding: 0 18px 10px; }
 .dash-stock-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 135px), 1fr)); gap: 10px 16px; width: 100%; margin: 0; }
 .dash-stock-facts dt, .dash-stock-season { color: var(--mantine-color-gray-7); font-size: .8125rem; }
 .dash-stock-facts dd { margin: 2px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; }
