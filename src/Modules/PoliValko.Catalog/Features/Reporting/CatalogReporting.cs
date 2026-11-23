@@ -43,14 +43,17 @@ internal sealed class CatalogReporting(PoliValkoDbContext db) : ICatalogReportin
                 p.Images.OrderBy(i => i.SortOrder).Select(i => i.Url).FirstOrDefault()))
             .ToListAsync(ct);
 
+    // "Running out" means a few units are still left to sell: the same band as the low-stock count of
+    // product analytics and the "low" filter of the product list. Sold-out products are the "out" filter.
     public async Task<IReadOnlyList<LowStockProduct>> GetLowStockAsync(int take, CancellationToken ct) =>
         await db.Set<Product>().AsNoTracking()
-            .Where(p => p.IsVisible && p.Stock.Quantity <= ProductStockFilters.LowStockThreshold)
-            .OrderBy(p => p.Stock.Quantity)
+            .Where(p => p.IsVisible && p.Stock.Quantity - p.Stock.ReservedQuantity > 0
+                && p.Stock.Quantity - p.Stock.ReservedQuantity <= ProductStockFilters.LowStockThreshold)
+            .OrderBy(p => p.Stock.Quantity - p.Stock.ReservedQuantity)
             .ThenBy(p => p.DisplayName ?? p.Name)
             .ThenBy(p => p.Id)
             .Take(take)
-            .Select(p => new LowStockProduct(p.Id, p.DisplayName ?? p.Name, p.Sku, p.Stock.Quantity))
+            .Select(p => new LowStockProduct(p.Id, p.DisplayName ?? p.Name, p.Sku, p.Stock.Quantity - p.Stock.ReservedQuantity))
             .ToListAsync(ct);
 
     public async Task<IReadOnlyList<ProductSearchHit>> SearchProductsAsync(string term, int limit, CancellationToken ct)

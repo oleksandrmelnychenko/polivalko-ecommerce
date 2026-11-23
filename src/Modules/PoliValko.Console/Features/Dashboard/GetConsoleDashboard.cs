@@ -46,7 +46,10 @@ internal static class GetConsoleDashboard
         var current = rows.Where(r => r.CreatedAt >= currentFrom).ToList();
         var previous = rows.Where(r => r.CreatedAt < currentFrom).ToList();
 
-        var perDay = current.ToLookup(r => KyivTime.DateOf(r.CreatedAt));
+        // A cancelled order brings no revenue, so it is not an order, a buyer or a delivery of the period
+        // either. It is reported on its own: in the totals and in the breakdown by status.
+        var counted = current.Where(r => r.Counts).ToList();
+        var perDay = counted.ToLookup(r => KyivTime.DateOf(r.CreatedAt));
         var byDay = Enumerable.Range(0, n)
             .Select(i => firstDay.AddDays(i))
             .Select(day => new DashboardDayDto(day, perDay[day].Count(), MoneyDto.Hryvnia(perDay[day].Sum(r => r.Revenue))))
@@ -54,7 +57,7 @@ internal static class GetConsoleDashboard
 
         var byStatus = OrderStatusCounts.From(current.GroupBy(r => r.Status).Select(g => (g.Key, g.Count())));
 
-        var byDelivery = current
+        var byDelivery = counted
             .GroupBy(r => DeliveryCodes.From(r.DeliveryMethod))
             .Select(g => new DashboardDeliveryDto(g.Key, g.Count()))
             .OrderByDescending(d => d.Count)
@@ -74,14 +77,14 @@ internal static class GetConsoleDashboard
 
     private static DashboardTotalsDto Totals(IReadOnlyCollection<OrderRow> rows)
     {
-        var revenue = rows.Sum(r => r.Revenue);
-        var counted = rows.Count(r => r.Counts);
+        var counted = rows.Where(r => r.Counts).ToList();
+        var revenue = counted.Sum(r => r.Revenue);
         return new DashboardTotalsDto(
             MoneyDto.Hryvnia(revenue),
-            rows.Count,
-            MoneyDto.Hryvnia(counted == 0 ? 0m : revenue / counted),
-            rows.Select(r => r.Phone).Distinct(StringComparer.Ordinal).Count(),
-            rows.Count - counted);
+            counted.Count,
+            MoneyDto.Hryvnia(counted.Count == 0 ? 0m : revenue / counted.Count),
+            counted.Select(r => r.Phone).Distinct(StringComparer.Ordinal).Count(),
+            rows.Count - counted.Count);
     }
 
     private static async Task<List<DashboardTopProductDto>> TopProductsAsync(

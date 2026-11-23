@@ -17,17 +17,35 @@ internal sealed class OrderReporting(PoliValkoDbContext db) : IOrderReporting
 
     public async Task<IReadOnlyList<ProductSalesRow>> TopProductsAsync(DateTimeOffset from, DateTimeOffset to, int take, CancellationToken ct)
     {
-        var top = await db.Set<Order>().AsNoTracking()
-            .Where(o => o.CreatedAt >= from && o.CreatedAt < to && o.Status != OrderStatus.Cancelled)
+        var orders = db.Set<Order>().AsNoTracking()
+            .Where(o => o.CreatedAt >= from && o.CreatedAt < to && o.Status != OrderStatus.Cancelled);
+        var sold = await orders
             .SelectMany(o => o.Items)
             .GroupBy(i => i.ProductId)
             .Select(g => new { ProductId = g.Key, Quantity = g.Sum(i => i.Quantity), Revenue = g.Sum(i => i.LineTotal) })
-            .OrderByDescending(x => x.Revenue)
-            .ThenByDescending(x => x.Quantity)
-            .ThenBy(x => x.ProductId)
-            .Take(take)
             .ToListAsync(ct);
-        return top.Select(t => new ProductSalesRow(t.ProductId, t.Quantity, t.Revenue)).ToList();
+
+        // The revenue of the period is net of refunds, so the ranking is too. A refund recorded without
+        // product lines cannot be assigned to a product and stays out of the ranking.
+        var refunded = await orders
+            .SelectMany(o => o.Refunds)
+            .Where(r => r.Status == RefundStatus.Succeeded)
+            .SelectMany(r => r.Lines)
+            .Join(db.Set<OrderItem>().AsNoTracking(), l => l.OrderItemId, i => i.Id, (l, i) => new { i.ProductId, l.Quantity, l.Amount })
+            .GroupBy(l => l.ProductId)
+            .Select(g => new { ProductId = g.Key, Quantity = g.Sum(l => l.Quantity), Amount = g.Sum(l => l.Amount) })
+            .ToDictionaryAsync(g => g.ProductId, ct);
+
+        return sold
+            .Select(s => refunded.TryGetValue(s.ProductId, out var back)
+                ? new ProductSalesRow(s.ProductId, s.Quantity - back.Quantity, s.Revenue - back.Amount)
+                : new ProductSalesRow(s.ProductId, s.Quantity, s.Revenue))
+            .Where(row => row.Quantity > 0 || row.Revenue > 0)
+            .OrderByDescending(row => row.Revenue)
+            .ThenByDescending(row => row.Quantity)
+            .ThenBy(row => row.ProductId)
+            .Take(take)
+            .ToList();
     }
 
     public async Task<IReadOnlyList<OrderedProductSnapshot>> OrderedProductSnapshotsAsync(IReadOnlyCollection<Guid> productIds, CancellationToken ct) =>

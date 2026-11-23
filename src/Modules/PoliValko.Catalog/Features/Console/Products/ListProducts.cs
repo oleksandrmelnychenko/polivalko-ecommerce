@@ -22,14 +22,16 @@ internal static class ListProducts
         {
             case null or "":
                 break;
+            // What can still be sold: stock on hand minus reservations, as the storefront and the reports count it.
             case ProductStockFilters.In:
-                products = products.Where(p => p.Stock.Quantity > 0);
+                products = products.Where(p => p.Stock.Quantity - p.Stock.ReservedQuantity > 0);
                 break;
             case ProductStockFilters.Low:
-                products = products.Where(p => p.Stock.Quantity > 0 && p.Stock.Quantity <= ProductStockFilters.LowStockThreshold);
+                products = products.Where(p => p.Stock.Quantity - p.Stock.ReservedQuantity > 0
+                    && p.Stock.Quantity - p.Stock.ReservedQuantity <= ProductStockFilters.LowStockThreshold);
                 break;
             case ProductStockFilters.Out:
-                products = products.Where(p => p.Stock.Quantity <= 0);
+                products = products.Where(p => p.Stock.Quantity - p.Stock.ReservedQuantity <= 0);
                 break;
             default:
                 errors["stock"] = [$"Допустимі значення: {string.Join(", ", ProductStockFilters.All)}."];

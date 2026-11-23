@@ -16,6 +16,6 @@ internal static class CountProducts
             await products.NeedsFilling().CountAsync(ct),
             await products.CreatedSince(time.GetUtcNow(), ProductFillFilters.RecentDays).CountAsync(ct),
             await products.HiddenWithStock().CountAsync(ct),
-            await products.CountAsync(p => p.Stock.Quantity <= 0, ct)));
+            await products.CountAsync(p => p.Stock.Quantity - p.Stock.ReservedQuantity <= 0, ct)));
     }
 }
