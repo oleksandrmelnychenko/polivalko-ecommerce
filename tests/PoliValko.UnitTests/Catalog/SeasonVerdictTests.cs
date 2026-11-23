@@ -10,9 +10,11 @@ public sealed class SeasonVerdictTests
     [InlineData(4, 1, Season.In)]
     [InlineData(12, 6, Season.In)]
     [InlineData(30, 16, Season.In)]
+    [InlineData(24, 16, Season.In)]   // exactly one and a half times an even spread, and more than chance
     // Sold at other times of the year: the window is empty or nearly so, and the history is long enough to say it.
     [InlineData(0, 4, Season.Off)]
     [InlineData(2, 16, Season.Off)]
+    [InlineData(8, 16, Season.Off)]   // exactly half of an even spread, and more than chance
     // Sold evenly through the year.
     [InlineData(8, 8, Season.AllYear)]
     [InlineData(9, 16, Season.AllYear)]
@@ -25,8 +27,8 @@ public sealed class SeasonVerdictTests
     [InlineData(0, 3.9)]   // too little history to call an empty window off season
     [InlineData(1, 4)]     // one purchase where four were expected is not yet evidence
     [InlineData(6, 4)]     // above an even spread, but within the noise of so few purchases
-    [InlineData(4, 8)]     // exactly half is neither off season nor all-year
-    [InlineData(12, 8)]    // exactly one and a half is neither in season nor all-year
+    [InlineData(4, 8)]     // half of an even spread, but a gap of four purchases can be chance
+    [InlineData(12, 8)]    // one and a half times an even spread, but four purchases more can be chance
     public void Thin_or_borderline_history_is_left_undecided(double observed, double expected) =>
         SeasonVerdict.Judge((decimal)observed, (decimal)expected).ShouldBeNull();
 
@@ -102,6 +104,25 @@ public sealed class SeasonVerdictTests
         verdicts[heaters.Id].ShouldBe((Season.Off, true));
         verdicts[orphan.Id].ShouldBe((Season.In, true));
         verdicts.ContainsKey(silent.Id).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task A_tree_that_loops_back_on_itself_is_left_without_a_verdict_instead_of_hanging()
+    {
+        var first = Category(null);
+        var second = Category(first.Id);
+        first.ParentId = second.Id;
+        var alone = Category(null);
+        alone.ParentId = alone.Id;
+        var healthy = Category(null);
+        var work = Task.Run(() => SeasonVerdict.ByCategory([first, second, alone, healthy], new Dictionary<Guid, (decimal, decimal)>
+        {
+            [first.Id] = (0, 9), [alone.Id] = (0, 9), [healthy.Id] = (0, 9),
+        }), TestContext.Current.CancellationToken);
+
+        var verdicts = await work.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+
+        verdicts.Keys.ShouldBe([healthy.Id]);
     }
 
     private static Category Category(Guid? parent) =>

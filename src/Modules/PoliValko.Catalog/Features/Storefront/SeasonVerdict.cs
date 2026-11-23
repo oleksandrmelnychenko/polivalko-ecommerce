@@ -64,12 +64,17 @@ internal static class SeasonVerdict
         var result = new Dictionary<Guid, (Season, bool)>();
         foreach (var category in categories)
         {
-            for (var current = category; current is not null;
-                 current = current.ParentId is { } parent ? known.GetValueOrDefault(parent) : null)
+            var current = category;
+            // A branch is never deeper than the tree is large: categories that name each other as parents
+            // have no top to take a verdict from, and must not keep the catalog waiting.
+            for (var step = 0; current is not null && step < categories.Count; step++)
             {
-                if (own.GetValueOrDefault(current.Id) is not { } verdict) continue;
-                result[category.Id] = (verdict, current.ParentId is not { } above || !known.ContainsKey(above));
-                break;
+                if (own.GetValueOrDefault(current.Id) is { } verdict)
+                {
+                    result[category.Id] = (verdict, current.ParentId is not { } above || !known.ContainsKey(above));
+                    break;
+                }
+                current = current.ParentId is { } parent ? known.GetValueOrDefault(parent) : null;
             }
         }
         return result;
