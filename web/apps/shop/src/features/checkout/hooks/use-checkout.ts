@@ -179,6 +179,8 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
       return point.chooseSettlement(next);
     },
     warehouses: point.warehouses,
+    warehouseStatus: point.warehouseStatus,
+    retryWarehouses: point.retryWarehouses,
     warehouseRef: point.warehouseRef,
     setWarehouseRef: (ref: string) => {
       point.setWarehouseRef(ref);

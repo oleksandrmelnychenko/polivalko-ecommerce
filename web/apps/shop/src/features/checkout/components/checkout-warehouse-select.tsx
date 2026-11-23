@@ -1,6 +1,7 @@
 import type { Settlement, Warehouse } from "@polivalko/shared/api/types";
 import { DropdownSelect } from "@/shared/ui/dropdown-select";
 import type { FieldProps } from "../lib/field-props";
+import type { WarehouseStatus } from "../hooks/use-delivery-point";
 
 const GROUPS = [
   { type: "branch", label: "Відділення" },
@@ -10,6 +11,8 @@ const GROUPS = [
 export function CheckoutWarehouseSelect({
   settlement,
   warehouses,
+  warehouseStatus,
+  retryWarehouses,
   warehouseRef,
   setWarehouseRef,
   field,
@@ -17,6 +20,8 @@ export function CheckoutWarehouseSelect({
 }: FieldProps & {
   settlement: Settlement | null;
   warehouses: Warehouse[];
+  warehouseStatus: WarehouseStatus;
+  retryWarehouses: () => void;
   warehouseRef: string;
   setWarehouseRef: (ref: string) => void;
 }) {
@@ -33,13 +38,20 @@ export function CheckoutWarehouseSelect({
         value={warehouseRef}
         options={options}
         onChange={setWarehouseRef}
-        placeholder={settlement ? "Оберіть зі списку" : "Спершу оберіть місто"}
+        placeholder={!settlement ? "Спершу оберіть місто" : warehouseStatus === "loading" ? "Завантажуємо відділення…" : "Оберіть зі списку"}
         searchable={options.length > 8}
         searchPlaceholder="Номер або вулиця"
-        disabled={!settlement}
+        disabled={!settlement || !options.length}
         {...field("delivery.warehouseRef")}
       />
       {fieldError("delivery.warehouseRef")}
+      {warehouseStatus === "error" && <p role="alert" className="field__error">
+        Не вдалося завантажити відділення.{" "}
+        <button type="button" className="link" onClick={retryWarehouses}>Повторити завантаження відділень</button>
+      </p>}
+      {warehouseStatus === "ready" && options.length === 0 && <p role="status" className="field__help">
+        У цьому населеному пункті немає доступних відділень або поштоматів.
+      </p>}
     </div>
   );
 }

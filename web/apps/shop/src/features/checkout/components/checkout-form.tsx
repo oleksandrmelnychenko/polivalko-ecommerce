@@ -53,6 +53,8 @@ function CheckoutFields({ mailDelivers, phone, pickupPoint }: CheckoutFormProps)
           settlement={checkout.settlement}
           chooseSettlement={checkout.chooseSettlement}
           warehouses={checkout.warehouses}
+          warehouseStatus={checkout.warehouseStatus}
+          retryWarehouses={checkout.retryWarehouses}
           warehouseRef={checkout.warehouseRef}
           setWarehouseRef={checkout.setWarehouseRef}
           errors={checkout.errors}

@@ -84,6 +84,8 @@ export function AddressForm({
           <CheckoutWarehouseSelect
             settlement={point.settlement}
             warehouses={point.warehouses}
+            warehouseStatus={point.warehouseStatus}
+            retryWarehouses={point.retryWarehouses}
             warehouseRef={point.warehouseRef}
             setWarehouseRef={point.setWarehouseRef}
             field={field}

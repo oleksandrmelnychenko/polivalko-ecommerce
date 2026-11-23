@@ -10,6 +10,7 @@ import { CheckoutOptions } from "./checkout-options";
 import { CheckoutStep } from "./checkout-step";
 import { CheckoutWarehouseSelect } from "./checkout-warehouse-select";
 import { SettlementPicker } from "./settlement-picker";
+import type { WarehouseStatus } from "../hooks/use-delivery-point";
 
 const ICONS: Record<string, ReactNode> = { nova_poshta: <TruckIcon />, nova_poshta_courier: <PinIcon />, pickup: <StoreIcon /> };
 
@@ -28,6 +29,8 @@ export function CheckoutDelivery({
   settlement,
   chooseSettlement,
   warehouses,
+  warehouseStatus,
+  retryWarehouses,
   warehouseRef,
   setWarehouseRef,
   errors,
@@ -45,6 +48,8 @@ export function CheckoutDelivery({
   settlement: Settlement | null;
   chooseSettlement: (next: Settlement | null) => void;
   warehouses: Warehouse[];
+  warehouseStatus: WarehouseStatus;
+  retryWarehouses: () => void;
   warehouseRef: string;
   setWarehouseRef: (ref: string) => void;
   errors: Errors;
@@ -99,6 +104,8 @@ export function CheckoutDelivery({
           <CheckoutWarehouseSelect
             settlement={settlement}
             warehouses={warehouses}
+            warehouseStatus={warehouseStatus}
+            retryWarehouses={retryWarehouses}
             warehouseRef={warehouseRef}
             setWarehouseRef={setWarehouseRef}
             field={field}

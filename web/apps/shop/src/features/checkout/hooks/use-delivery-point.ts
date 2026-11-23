@@ -5,6 +5,7 @@ import type { Settlement, Warehouse } from "@polivalko/shared/api/types";
 import { getWarehouses } from "../api/client";
 
 export type SavedPoint = { settlementRef: string; settlementName: string; warehouseRef: string | null };
+export type WarehouseStatus = "idle" | "loading" | "ready" | "error";
 
 const toSettlement = (point: SavedPoint): Settlement => ({ ref: point.settlementRef, name: point.settlementName, area: "" });
 
@@ -13,22 +14,28 @@ export function useDeliveryPoint(initial?: SavedPoint) {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [warehouseRef, setWarehouseRef] = useState(initial?.warehouseRef ?? "");
   const request = useRef<AbortController | null>(null);
+  const [warehouseStatus, setWarehouseStatus] = useState<WarehouseStatus>("idle");
+  const retrySelection = useRef("");
   const start = useRef(initial);
 
   async function load(next: Settlement, keep: string) {
     request.current?.abort();
     const controller = new AbortController();
     request.current = controller;
+    retrySelection.current = keep;
+    setWarehouseStatus("loading");
     try {
-      const { data } = await getWarehouses(next.ref, controller.signal);
+      const { data } = await getWarehouses(next.ref, AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]));
       if (controller.signal.aborted) return;
-      const available = data ?? [];
-      setWarehouses(available);
-      setWarehouseRef(available.some((warehouse) => warehouse.ref === keep) ? keep : "");
+      if (!data) throw new Error("Не вдалося завантажити відділення");
+      setWarehouses(data);
+      setWarehouseRef(data.some((warehouse) => warehouse.ref === keep) ? keep : "");
+      setWarehouseStatus("ready");
     } catch {
       if (!controller.signal.aborted) {
         setWarehouses([]);
         setWarehouseRef("");
+        setWarehouseStatus("error");
       }
     }
   }
@@ -45,6 +52,7 @@ export function useDeliveryPoint(initial?: SavedPoint) {
     setWarehouses([]);
     if (!next) {
       request.current?.abort();
+      setWarehouseStatus("idle");
       return;
     }
     await load(next, "");
@@ -58,5 +66,9 @@ export function useDeliveryPoint(initial?: SavedPoint) {
     await load(next, point.warehouseRef ?? "");
   }
 
-  return { settlement, chooseSettlement, warehouses, warehouseRef, setWarehouseRef, applyPoint };
+  function retryWarehouses() {
+    if (settlement) void load(settlement, retrySelection.current);
+  }
+
+  return { settlement, chooseSettlement, warehouses, warehouseStatus, retryWarehouses, warehouseRef, setWarehouseRef, applyPoint };
 }
