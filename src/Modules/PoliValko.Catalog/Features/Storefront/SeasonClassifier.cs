@@ -47,7 +47,7 @@ internal static class SeasonClassifier
             SELECT id AS category_id, verdict, root
             FROM unnest({shelfIds}::uuid[], {shelfVerdicts}::int[], {shelfRoots}::bool[]) AS c(id, verdict, root)
             """);
-        var rules = SeasonalPurpose.Matches(db, categories, anchor).Rows;
+        var rules = SeasonalPurpose.Matches(db, await SeasonalPurpose.LoadAsync(db, cache, categories, ct), categories, anchor);
         if (only is not null)
         {
             // Matching every rule against the whole catalog is most of the cost: here the rules meet these products alone.

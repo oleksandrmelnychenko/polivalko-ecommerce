@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Catalog.Domain;
 using PoliValko.Catalog.Features.Storefront;
+using PoliValko.Infrastructure.Persistence;
 
 namespace PoliValko.IntegrationTests;
 
@@ -104,10 +107,12 @@ public sealed class SeasonalPurposeTests(ApiFactory api)
         await api.WithDbAsync(db => { db.Add(pool); return db.SaveChangesAsync(ct); });
         var chlorine = await api.AddProductAsync(pool.Slug, "Хлор у гранулах", 100);
         var bucket = await api.AddProductAsync(pool.Slug, "Відро", 100);
-        await api.WithDbAsync(async db =>
+        await api.WithScopeAsync(async services =>
         {
-            var summer = await SeasonalPurpose.Matches(db, [pool], new DateOnly(2034, 7, 15)).Rows.ToListAsync(ct);
-            var winter = await SeasonalPurpose.Matches(db, [pool], new DateOnly(2034, 1, 15)).Rows.ToListAsync(ct);
+            var db = services.GetRequiredService<PoliValkoDbContext>();
+            var matches = await SeasonalPurpose.LoadAsync(db, services.GetRequiredService<IMemoryCache>(), [pool], ct);
+            var summer = await SeasonalPurpose.Matches(db, matches, [pool], new DateOnly(2034, 7, 15)).ToListAsync(ct);
+            var winter = await SeasonalPurpose.Matches(db, matches, [pool], new DateOnly(2034, 1, 15)).ToListAsync(ct);
             // May to August.
             const int months = 0b0000_1111_0000;
             summer.Single().ShouldBe(new SeasonalPurpose.Match(chlorine.Id, 0, months));
@@ -157,12 +162,14 @@ public sealed class SeasonalPurposeTests(ApiFactory api)
                 });
             }
         }
-        await api.WithDbAsync(async db =>
+        await api.WithScopeAsync(async services =>
         {
+            var db = services.GetRequiredService<PoliValkoDbContext>();
+            var matches = await SeasonalPurpose.LoadAsync(db, services.GetRequiredService<IMemoryCache>(), categories, ct);
             foreach (var month in months)
             {
-                var matches = SeasonalPurpose.Query(db, categories, new DateOnly(2034, month, 15), true).Rows;
-                var actual = await matches.Select(m => m.ProductId).ToListAsync(ct);
+                var inForce = SeasonalPurpose.Query(db, matches, categories, new DateOnly(2034, month, 15)).Rows;
+                var actual = await inForce.Select(m => m.ProductId).ToListAsync(ct);
                 actual.Order().ShouldBe(expected.Where(kv => kv.Value.Contains(month)).Select(kv => kv.Key).Order());
             }
             return true;
