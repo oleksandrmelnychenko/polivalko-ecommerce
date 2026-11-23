@@ -169,7 +169,8 @@ export function DashboardPage() {
         />}
         {documents && <div className="dash-grid is-even">
           {report && <DocumentProducts key={report.start} data={report} />}
-          {canCatalog && <StockTurnover days={days} purchasesOpen={params.get('purchases') === '1' && params.get('recommendations') !== '1'} closePurchases={() => setHeaderDialog(null)} />}
+          {canCatalog && <StockTurnover days={days} purchasesOpen={params.get('purchases') === '1' && params.get('recommendations') !== '1'}
+            openPurchases={() => setHeaderDialog('purchases')} closePurchases={() => setHeaderDialog(null)} />}
         </div>}
         {report && report.excluded > 0 && <p className="dash-muted" role="status">Документів із непідтвердженою сумою або статусом · {report.excluded.toLocaleString('uk-UA')}.</p>}
 

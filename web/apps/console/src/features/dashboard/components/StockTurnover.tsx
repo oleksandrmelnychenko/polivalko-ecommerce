@@ -1,5 +1,5 @@
 import { Button, Select, TextInput } from '@mantine/core'
-import { IconChevronDown, IconAdjustmentsHorizontal, IconPackage, IconSearch, IconShoppingCart } from '@tabler/icons-react'
+import { IconChevronDown, IconAdjustmentsHorizontal, IconSearch, IconShoppingCart } from '@tabler/icons-react'
 import { useDebouncedCallback } from '@mantine/hooks'
 import { useContext, useEffect, useId, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -17,6 +17,7 @@ import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { getStockTurnover } from '../api/dashboardApi'
 import { numberFormat } from '../lib/insights'
 import { DashboardCard } from './DashboardCard'
+import { ProductReportDetails, ProductReportOverview } from './ProductReportOverview'
 import { CalculationInfo } from './CalculationInfo'
 import { SupplierOrders } from './SupplierOrders'
 import { BudgetBySupplier, ReceiptPrice } from './SupplierPurchases'
@@ -38,14 +39,14 @@ function formatShare(value: number) {
   return percent.format(value)
 }
 
-type StockTurnoverProps = { days: number; purchasesOpen: boolean; closePurchases: () => void }
+type StockTurnoverProps = { days: number; purchasesOpen: boolean; openPurchases: () => void; closePurchases: () => void }
 
 export function StockTurnover(props: StockTurnoverProps) {
   const { me } = useAuth()
   return me ? <StockReport key={me.email} account={me.email} {...props} /> : null
 }
 
-function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurnoverProps & { account: string }) {
+function StockReport({ days, account, purchasesOpen, openPurchases, closePurchases }: StockTurnoverProps & { account: string }) {
   const documentOpen = useContext(DocumentOverlayContext)
   const basket = useSupplierBasket(account)
   const [draft, setDraft] = useState('')
@@ -71,7 +72,16 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
   const showStock = (stock: string) => setFilters(current => ({ ...current, stock, page: 1 }))
   const sources = new Map(report?.supplierBudget?.suppliers.flatMap(group => group.items.map(item => [item.id, { group, item }] as const)))
   return (
-    <DashboardCard title={<><IconPackage aria-hidden="true" /><span id="zakupivli">Закінчуються</span></>} className="dash-product-report dash-stock-impact" flush>
+    <DashboardCard title={<span id="zakupivli">Закінчуються</span>} className="dash-product-report dash-stock-impact report-card" flush
+      aside={<button type="button" className="report-action" title="Закупівлі за постачальниками"
+        aria-label="Закупівлі за постачальниками" aria-haspopup="dialog" onClick={openPurchases}><IconShoppingCart size={19} aria-hidden="true" /></button>}>
+      {report ? <ProductReportOverview value={report.incompleteSales ? '—' : numberFormat.format(report.buyCount)}
+        label={report.incompleteSales ? 'Бракує даних для розрахунку закупівлі' : 'Товарних позицій до закупівлі'}
+        period={dateRange(report.start, report.through)}
+        groups={[{ label: 'Немає в наявності', count: report.outCount }, { label: 'Малий залишок', count: report.lowCount }]} />
+        : <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={reload}
+            description={problemMessage(query.problem, 'Не вдалося завантажити залишки й оборот товарів.')} />}
+      <ProductReportDetails label="Залишки та закупівлі">
       {report && <div className="dash-product-summary">
         <span className="dash-with-info">Чистий оборот усіх товарів із малим залишком
           <CalculationInfo title="Які товари враховано в обороті">
@@ -191,8 +201,8 @@ function StockReport({ days, account, purchasesOpen, closePurchases }: StockTurn
           <Paginator page={report.page} pageSize={report.pageSize} totalPages={Math.ceil(report.matches / report.pageSize)}
             onPageChange={page => setFilters(current => ({ ...current, page, pageDays: days }))} />
         </div>}
-      </> : <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={reload}
-        description={problemMessage(query.problem, 'Не вдалося завантажити залишки й оборот товарів.')} />}
+      </> : null}
+      </ProductReportDetails>
       <AppEditorModal opened={purchasesOpen} onClose={closePurchases} size="standard" className="dash-purchases-modal"
         overlayProps={{ backgroundOpacity: 0.25, blur: 0, style: { backdropFilter: 'none' } }}
         closeOnEscape={!documentOpen} closeOnClickOutside={!documentOpen} trapFocus={!documentOpen}

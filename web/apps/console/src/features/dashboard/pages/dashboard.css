@@ -561,6 +561,62 @@ a.dash-queue-item:focus-visible {
 }
 
 .dash-grid:has(.dash-stock-impact) { align-items: start; }
+.dash-grid.is-even:has(> .report-card) {
+  align-items: start;
+  padding: clamp(8px, 1.3vw, 18px);
+  border-radius: 30px;
+  background: linear-gradient(155deg, #faf9fa 0%, #fff3ed 58%, #ffdfd2 100%);
+}
+.report-card {
+  --report-ink: #161514;
+  --report-muted: #696561;
+  --report-first: var(--report-ink);
+  --report-second: #fc7144;
+  --report-inset: clamp(18px, 2vw, 34px);
+  color: var(--report-ink);
+  background: #fff;
+  border-color: rgb(35 25 20 / 5%);
+  border-radius: 24px;
+  box-shadow: 0 2px 4px rgb(50 30 20 / 4%);
+}
+.report-card.dash-stock-impact { --report-first: #fc7144; --report-second: #696561; }
+.report-card.dash-card > .dash-card-head { padding: 20px var(--report-inset) 0; min-height: 58px; }
+.report-card .dash-card-title { color: var(--report-ink); font-size: 1.16rem; font-weight: 550; }
+.report-action {
+  width: 38px; height: 38px; display: grid; place-items: center;
+  border: 0; border-radius: 50%; background: var(--report-ink); color: #ffa484; cursor: pointer;
+}
+.report-action:hover { background: #35312e; }
+.report-action:focus-visible, .report-details > summary:focus-visible { outline: 2px solid #ad3b19; outline-offset: 3px; }
+.report-overview { display: grid; gap: 24px; padding: 20px var(--report-inset) 16px; }
+.report-lead { display: grid; gap: 10px; color: var(--report-muted); font-size: .94rem; }
+.report-value {
+  display: flex; align-items: end; min-width: 0;
+  height: clamp(44px, 10cqi, 60px); color: var(--report-ink); font-size: 2.4rem;
+}
+.report-dot-number { display: block; width: auto; height: auto; min-width: 0; max-width: 100%; max-height: 100%; }
+.report-currency { margin-inline-start: .3em; font: 450 clamp(22px, 5cqi, 32px)/1 var(--font-money); }
+.report-distribution { display: grid; gap: 10px; }
+.report-dot-track {
+  height: 14px; background: var(--report-second);
+  mask: radial-gradient(circle at center, #000 2.55px, transparent 2.95px) 0 0 / 7px 7px repeat;
+}
+.report-dot-track[data-empty] { background: #ddd9d6; }
+.report-dot-track i { display: block; height: 100%; background: var(--report-first); }
+.report-legend { display: flex; flex-wrap: wrap; gap: 5px 16px; margin: 0; font-size: .83rem; color: var(--report-muted); }
+.report-legend > div, .report-legend dt { display: inline-flex; align-items: baseline; gap: 5px; }
+.report-legend dt::before { content: ''; align-self: center; width: 7px; height: 7px; border-radius: 50%; background: var(--report-first); }
+.report-legend > div:last-child dt::before { background: var(--report-second); }
+.report-legend dd { margin: 0; color: var(--report-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.report-period { font-size: .83rem; color: var(--report-muted); }
+.report-details > summary {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 0 var(--report-inset); padding: 14px 0 16px;
+  border-top: 1px solid #ece9e6; list-style: none; font-size: .9rem; font-weight: 550; cursor: pointer;
+}
+.report-details > summary::-webkit-details-marker { display: none; }
+.report-details[open] > summary svg { transform: rotate(180deg); }
+.report-details[open] { padding-bottom: 10px; }
 .dash-product-report {
   container-type: inline-size;
 }

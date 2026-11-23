@@ -11,6 +11,7 @@ import { PageState } from '@/shared/ui/PageState'
 import { getProductProfit, type DocumentSales } from '../api/dashboardApi'
 import { CalculationInfo } from './CalculationInfo'
 import { DashboardCard } from './DashboardCard'
+import { ProductReportDetails, ProductReportOverview } from './ProductReportOverview'
 
 type Product = DocumentSales['products'][number]
 const batch = 10
@@ -28,8 +29,9 @@ export function DocumentProducts({ data }: { data: DocumentSales }) {
     setPicked(product)
     setOpened(true)
   }
-  return <DashboardCard flush className="dash-product-report" title={<><IconChartBar aria-hidden="true" />Продажі товарів</>}
-    aside={<Button size="xs" radius="xl" variant="default" aria-haspopup="dialog" onClick={() => openProfit(null)}>Звіт про прибуток</Button>}>
+  return <DashboardCard flush className="dash-product-report report-card" title="Продажі товарів"
+    aside={<button type="button" className="report-action" aria-label="Звіт про прибуток" title="Звіт про прибуток"
+      aria-haspopup="dialog" onClick={() => openProfit(null)}><IconChartBar size={19} aria-hidden="true" /></button>}>
     <PeriodProducts data={data} open={openProfit} />
     <AppEditorModal opened={opened} onClose={() => setOpened(false)} size="standard" className="dash-profit-modal"
       title={<MetricLabel icon={IconChartBar}>Валовий прибуток за товарами</MetricLabel>}>
@@ -56,6 +58,12 @@ function PeriodProducts({ data, open }: { data: DocumentSales; open: (p: Product
   })
   const visible = matches.slice(0,limit)
   return <>
+    <ProductReportOverview value={formatPrice(data.products.reduce((net, product) => net + product.net, 0))}
+      label={data.incompleteProducts ? 'Чиста виручка за підтвердженими товарними рядками' : 'Чиста виручка від продажу товарів'}
+      period={dateRange(data.start, data.through)}
+      groups={[{ label: 'З відомим прибутком', count: withProfit },
+        { label: 'Без оцінки прибутку', count: data.products.length - withProfit }]} />
+    <ProductReportDetails label="Продажі за товарами">
     <div className="dash-products-period dash-with-info"><span>{dateRange(data.start, data.through)}</span>
       <CalculationInfo title="Як розраховано показники продажів">
         <section><strong>Як розраховано собівартість і прибуток</strong>
@@ -111,6 +119,7 @@ function PeriodProducts({ data, open }: { data: DocumentSales; open: (p: Product
       {limit > batch && <Button variant="subtle" size="xs" onClick={() => setLimit(batch)}>Згорнути</Button>}
     </div>}
     {data.incompleteProducts > 0 && <p className="dash-report-note">Документів із нерозподіленою між товарами сумою · {formatAmount(data.incompleteProducts)}.</p>}
+    </ProductReportDetails>
   </>
 }
 
