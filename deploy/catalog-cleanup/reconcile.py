@@ -1,15 +1,17 @@
 """Bring a shop's catalog categories and DNTrade products to a reviewed target state.
 
     python reconcile.py export --base http://127.0.0.1:8081 --host console.localhost:8081 --out target.json
-    python reconcile.py plan   --base https://console.example.ua --target target.json
+    python reconcile.py plan   --base https://console.example.ua --target target.json --report plan.tsv
     python reconcile.py apply  --base https://console.example.ua --target target.json
 
 Credentials come from CONSOLE_EMAIL and CONSOLE_PASSWORD. Everything goes through the console API,
 so the change log, storefront cache invalidation and slug redirects work as for manual edits.
 `plan` only reads. `apply` never deletes anything and never changes a category's Navkolo reference.
-A category's SEO description is written only where the environment has none, so text written there stays.
+A category's SEO description, a product's brand and its site name are written only where the environment has
+none, so values set there by hand stay.
 """
 import argparse
+import csv
 import http.client
 import json
 import os
@@ -129,7 +131,7 @@ def export(console, out):
     print(f"exported {len(target['categories'])} categories and {len(target['products'])} DNTrade products to {out}")
 
 
-def reconcile(console, target, apply):
+def reconcile(console, target, apply, report_path=None, keep_visible=frozenset()):
     changes = defaultdict(int)
     say = lambda line: print(("APPLY " if apply else "PLAN  ") + line)
     existing = console.call("GET", "/catalog/categories")
@@ -181,6 +183,8 @@ def reconcile(console, target, apply):
     known_ids = {c["id"] for c in existing}
 
     brands = {norm(b["name"]): b["name"] for b in console.call("GET", "/catalog/brands")}
+    slug_by_id = {c["id"]: c["slug"] for c in existing}
+    report = []  # (change, sku, name on the site now, current value, wanted value)
     moves, visibility, brand_sets, names, hide = defaultdict(list), defaultdict(list), defaultdict(list), [], []
     found = set()
     items = console.products()
@@ -198,15 +202,35 @@ def reconcile(console, target, apply):
         if want is None:
             continue
         found.add(sku)
+        shown_name = detail.get("displayName") or detail["navkolo"]["name"]
+        note = lambda field, now, then: report.append((field, sku, shown_name, now, then))
         category = resolved.get(want["category"])
         if category and category != detail["categoryId"]:
             moves[category].append(item["id"])
+            note("category", slug_by_id.get(detail["categoryId"], detail["categoryId"]), want["category"])
         if want["isVisible"] != detail["isVisible"]:
-            visibility[want["isVisible"]].append(item["id"])
-        if want["brand"] and norm(want["brand"]) != norm(detail.get("brand")):
-            brand_sets[want["brand"]].append(item["id"])
-        if want["displayName"] and want["displayName"] != detail.get("displayName"):
-            names.append((item["id"], want["displayName"], detail))
+            change = "show" if want["isVisible"] else "hide"
+            stock = f"stock {detail['navkolo']['stock']:g}"
+            if sku in keep_visible and not want["isVisible"]:
+                note("keep visible", stock, "left visible (--keep-visible)")
+            else:
+                visibility[want["isVisible"]].append(item["id"])
+                note(change, stock, change)
+        # Brand and site name only fill an empty field: a value someone set in that environment stays.
+        current_brand = (detail.get("brand") or "").strip()
+        if want["brand"] and norm(want["brand"]) != norm(current_brand):
+            if current_brand:
+                note("keep brand", current_brand, want["brand"])
+            else:
+                brand_sets[want["brand"]].append(item["id"])
+                note("brand", "", want["brand"])
+        current_name = (detail.get("displayName") or "").strip()
+        if want["displayName"] and want["displayName"] != current_name:
+            if current_name:
+                note("keep site name", current_name, want["displayName"])
+            else:
+                names.append((item["id"], want["displayName"], detail))
+                note("site name", "", want["displayName"])
     missing = len(target["products"]) - len(found)
     say(f"products: {len(found)} matched, {missing} from the target are not in this environment")
     for category, ids in moves.items():
@@ -262,8 +286,17 @@ def reconcile(console, target, apply):
     target_slugs = {t["slug"] for t in target["categories"]}
     extra = [c["slug"] for c in existing if c["id"] in known_ids and c["id"] not in resolved.values() and c["slug"] not in target_slugs]
     if extra:
-        say(f"categories not in the target (left untouched): {', '.join(sorted(extra))}")
+        by_slug_now = {c["slug"]: c for c in console.call("GET", "/catalog/categories")} if apply else by_slug
+        described = [f"{s} ({'visible' if by_slug_now[s]['isVisible'] else 'hidden'}, {by_slug_now[s].get('productCount', '?')} products)"
+                     for s in sorted(extra) if s in by_slug_now]
+        say(f"categories not in the target (left untouched): {', '.join(described)}")
     print("summary:", dict(changes) or "nothing to change")
+    if report_path:
+        with open(report_path, "w", encoding="utf-8", newline="") as file:
+            writer = csv.writer(file, delimiter="\t")
+            writer.writerow(["change", "sku", "name now", "current", "wanted"])
+            writer.writerows(sorted(report, key=lambda r: (r[0], r[1])))
+        print(f"{len(report)} product changes listed in {report_path}")
 
 
 def main():
@@ -273,6 +306,8 @@ def main():
     parser.add_argument("--host", help="Host header when it differs from --base, e.g. console.localhost:8081")
     parser.add_argument("--target", default="target.json")
     parser.add_argument("--out", default="target.json")
+    parser.add_argument("--report", help="plan/apply: write every product change (current and wanted value) to this TSV file")
+    parser.add_argument("--keep-visible", default="", help="plan/apply: comma-separated DNTrade codes the target hides but this run leaves visible")
     args = parser.parse_args()
     console = Console(args.base, args.host)
     console.login()
@@ -280,7 +315,8 @@ def main():
         export(console, args.out)
     else:
         with open(args.target, encoding="utf-8") as file:
-            reconcile(console, json.load(file), args.mode == "apply")
+            keep = {s.strip() for s in args.keep_visible.split(",") if s.strip()}
+            reconcile(console, json.load(file), args.mode == "apply", args.report, keep)
 
 
 if __name__ == "__main__":
