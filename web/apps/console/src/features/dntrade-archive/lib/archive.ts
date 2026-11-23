@@ -34,11 +34,13 @@ export function archiveEntityLabel(entityType: string): string {
   return Object.hasOwn(entityLabels, entityType) ? entityLabels[entityType] : entityType
 }
 
+// DNTrade marks the shop's own clock time as UTC. The mark is left out: with it the time reads as
+// two or three hours earlier than it was. Any other offset is shown as written.
 export function archiveSourceDate(value: string | null, showTime = false): string {
   if (!value) return '—'
   const [day, time] = value.split(/[T ]/, 2)
   const date = day.split('-').reverse().join('.')
-  return showTime && time ? `${date} ${time.replace(/Z$/, ' UTC')}` : date
+  return showTime && time ? `${date} ${time.replace(/(\.\d+)?(Z|[+-]00:00)$/, '')}` : date
 }
 
 const amountFormat = new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 20 })
