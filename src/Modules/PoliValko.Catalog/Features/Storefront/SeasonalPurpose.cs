@@ -95,20 +95,17 @@ internal static class SeasonalPurpose
         new("Захист від гризунів", 8, 11, ["Шкідники"], "миш|щур|гризун|пацюк|родентицид|щелкунчик|шах і мат", "крот|кріт"),
     ];
 
-    /// <summary>The products that a rule in force on this day names, each with the place of its family among the first twelve.</summary>
-    public static (IQueryable<Match> Rows, int Families) Query(PoliValkoDbContext db, RuleMatches matches,
+    /// <summary>
+    /// Every product a rule names for any month. Family is set while one of its rules is in force and is the place
+    /// of that family among the first twelve; MonthMask holds all its months, so a product whose season is another
+    /// time of the year can be told from one without a season. Families counts the families in force.
+    /// </summary>
+    public static (IQueryable<Match> Rows, int Families) Matches(PoliValkoDbContext db, RuleMatches matches,
         IReadOnlyList<Category> categories, DateOnly day)
     {
         var (rows, families) = Read(matches, categories, day);
-        return (Rows(db, rows.Where(row => row.Family is not null).ToArray()), families);
+        return (Rows(db, rows), families);
     }
-
-    /// <summary>
-    /// Every product a rule names for any month. Family is set while one of its rules is in force; MonthMask holds
-    /// all its months, so a product whose season is another time of the year can be told from one without a season.
-    /// </summary>
-    public static IQueryable<Match> Matches(PoliValkoDbContext db, RuleMatches matches, IReadOnlyList<Category> categories,
-        DateOnly day) => Rows(db, Read(matches, categories, day).Rows);
 
     /// <summary>The months of every product a rule names. No day and no tree: families play no part in it.</summary>
     public static IQueryable<Match> Calendar(PoliValkoDbContext db, RuleMatches matches) =>
@@ -173,7 +170,7 @@ internal static class SeasonalPurpose
             8 => ["Збирання врожаю", "vse-dlia-polyvu", Covers, "Насіння"],
             9 => ["Збирання врожаю", "Насіння газонних трав", "Добрива", "Насіння", "Септик/Компост"],
             10 => [Covers, "Все для прибирання", "Консервація поливу", "Збирання врожаю", "Догляд за деревами"],
-            _ => SeasonalMerchandising.PriorityCategories(day),
+            _ => SeasonalMerchandising.LeadingFamilies(day),
         };
         var priority = leadingTasks.Select((key, i) => (key, i)).ToDictionary(x => x.key, x => x.i);
         return Enumerable.Range(0, Rules.Length).Where(rule => Rules[rule].Applies(day.Month))
@@ -216,6 +213,7 @@ internal static class SeasonalPurpose
         return db.Database.SqlQuery<Match>($"""
             SELECT id AS product_id, family, month_mask
             FROM unnest({ids}::uuid[], {families}::int[], {masks}::int[]) AS m(id, family, month_mask)
+            WHERE {RowSets.Rules} IS NOT NULL
             """);
     }
 

@@ -5,7 +5,10 @@ using PoliValko.Infrastructure.Persistence;
 namespace PoliValko.Catalog.Features.Storefront;
 
 /// <summary>What three years of receipts say about each product, and the sums its category can fall back on.</summary>
-internal sealed record SeasonHistory(Guid[] ProductIds, int[] Verdicts,
+/// <param name="Demand">
+/// Purchases in the weeks looked at: last year's count three times, the year before twice, the one before that once.
+/// </param>
+internal sealed record SeasonHistory(Guid[] ProductIds, int[] Verdicts, long[] Demand,
     IReadOnlyDictionary<Guid, (decimal Observed, decimal Expected)> ByCategory)
 {
     public const int Undecided = -1;
@@ -82,6 +85,8 @@ internal static class SeasonalHistory
             var sum = byCategory.GetValueOrDefault(row.CategoryId);
             byCategory[row.CategoryId] = (sum.Observed + observed, sum.Expected + expected);
         }
-        return new SeasonHistory(sold.Select(row => row.ProductId).ToArray(), verdicts, byCategory);
+        // A launch counts as a purchase like any other: this ranks products, it does not judge their season.
+        var demand = sold.Select(row => 3L * row.W1 + 2L * row.W2 + row.W3).ToArray();
+        return new SeasonHistory(sold.Select(row => row.ProductId).ToArray(), verdicts, demand, byCategory);
     }
 }

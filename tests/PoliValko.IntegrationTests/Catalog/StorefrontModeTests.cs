@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Catalog.Domain;
 using PoliValko.Catalog.Features.Storefront;
 using PoliValko.Infrastructure.Persistence;
+using PoliValko.Infrastructure.Settings;
 using PoliValko.SharedKernel;
 
 namespace PoliValko.IntegrationTests;
@@ -157,27 +158,62 @@ public sealed class StorefrontModeTests(ApiFactory api)
     }
 
     [Fact]
-    public async Task Recent_demand_and_stock_cover_prioritize_different_products()
+    public async Task Purchases_and_stock_cover_put_different_products_first()
     {
-        var recent = await api.AddProductAsync("vse-dlia-polyvu", "Популярний шланг", 50, stock: 3);
+        // Both are hoses in July, so both are in season; by name the one with the large stock would come first.
+        var popular = await api.AddProductAsync("vse-dlia-polyvu", "Шланг ходовий", 50, stock: 5);
         var surplus = await api.AddProductAsync("vse-dlia-polyvu", "Шланг із запасом", 50, stock: 20);
-        var latest = await TestOrders.PlaceAsync(api, recent.Id, 2, 50, CheckoutApiTests.UniquePhone());
+        var latest = await TestOrders.PlaceAsync(api, popular.Id, 1, 50, CheckoutApiTests.UniquePhone());
+        var earlier = await TestOrders.PlaceAsync(api, popular.Id, 1, 50, CheckoutApiTests.UniquePhone());
         var older = await TestOrders.PlaceAsync(api, surplus.Id, 2, 50, CheckoutApiTests.UniquePhone());
         var day = new DateOnly(2033, 7, 12);
         await api.WithScopeAsync(async services =>
         {
             var db = services.GetRequiredService<PoliValkoDbContext>();
             await db.Database.ExecuteSqlAsync($"UPDATE ordering.orders SET status='Confirmed', created_at={KyivTime.StartOfDay(day)} WHERE number={latest.Number}", Ct);
+            await db.Database.ExecuteSqlAsync($"UPDATE ordering.orders SET status='Confirmed', created_at={KyivTime.StartOfDay(day.AddDays(-3))} WHERE number={earlier.Number}", Ct);
             await db.Database.ExecuteSqlAsync($"UPDATE ordering.orders SET status='Confirmed', created_at={KyivTime.StartOfDay(day.AddDays(-10))} WHERE number={older.Number}", Ct);
             var merchandising = services.GetRequiredService<SeasonalMerchandising>();
-            var products = db.Set<Product>().Where(p => p.Id == recent.Id || p.Id == surplus.Id);
+            var products = db.Set<Product>().Where(p => p.Id == popular.Id || p.Id == surplus.Id);
             var categories = await CategoryQueries.LoadVisibleCategoriesAsync(db, Ct);
-            var trending = await merchandising.SortAsync(products, categories, null, db, day, Ct, "trending");
-            (await trending.Select(p => p.Id).ToArrayAsync(Ct)).ShouldBe([recent.Id, surplus.Id]);
+            // Two orders against one.
+            var seasonal = await merchandising.SortAsync(products, categories, null, db, day, Ct, "seasonal");
+            (await seasonal.Select(p => p.Id).ToArrayAsync(Ct)).ShouldBe([popular.Id, surplus.Id]);
+            // Two units sold in four weeks from a stock of twenty against two from five.
             var cover = await merchandising.SortAsync(products, categories, null, db, day, Ct, "stock_cover");
-            (await cover.Select(p => p.Id).ToArrayAsync(Ct)).ShouldBe([surplus.Id, recent.Id]);
+            (await cover.Select(p => p.Id).ToArrayAsync(Ct)).ShouldBe([surplus.Id, popular.Id]);
             return true;
         });
+    }
+
+    [Fact]
+    public async Task There_are_two_modes_and_a_saved_trending_mode_reads_as_seasonal()
+    {
+        using var shop = api.CreateClient();
+        using var manager = await Staff.ManagerAsync(api);
+        (await shop.GetAsync("/api/v1/products?sort=trending", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await manager.GetAsync(Editor + "/preview?mode=trending", Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        // Another month can be looked at in either mode.
+        (await manager.GetAsync(Editor + "/preview?mode=stock_cover&month=7", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var original = await manager.ReadAsync<StorefrontModeDto>(Editor);
+        (await manager.PutJsonAsync(Editor, new ChangeStorefrontMode("trending", null, original.Revision))).StatusCode
+            .ShouldBe(HttpStatusCode.BadRequest);
+        // A setting saved while the third mode still existed.
+        var retired = new StorefrontModeDto("trending", KyivTime.Today(TimeProvider.System).AddDays(3), Guid.NewGuid());
+        Task SaveAsync(StorefrontModeDto setting) => api.WithScopeAsync(async services =>
+        {
+            await services.GetRequiredService<ISettingsStore>().SaveAsync("catalog.storefront_mode", setting, "test", Ct);
+            return true;
+        });
+        await SaveAsync(retired);
+        try
+        {
+            (await shop.ReadAsync<StorefrontModeDto>(Public)).ShouldBe(new StorefrontModeDto("seasonal", null, retired.Revision));
+            var listed = await shop.ReadAsync<ProductSearchResponse>("/api/v1/products?pageSize=12");
+            var seasonal = await shop.ReadAsync<ProductSearchResponse>("/api/v1/products?pageSize=12&sort=seasonal");
+            listed.Items.Select(p => p.Id).ShouldBe(seasonal.Items.Select(p => p.Id));
+        }
+        finally { await SaveAsync(original); }
     }
 
     [Fact]
@@ -219,8 +255,8 @@ public sealed class StorefrontModeTests(ApiFactory api)
         using var manager = await Staff.ManagerAsync(api);
         var today = KyivTime.Today(TimeProvider.System);
         var original = await shop.ReadAsync<StorefrontModeDto>(Public);
-        (await shop.GetAsync(Editor + "/preview?mode=trending", Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
-        foreach (var mode in new[] { "seasonal", "trending", "stock_cover" })
+        (await shop.GetAsync(Editor + "/preview?mode=stock_cover", Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        foreach (var mode in new[] { "seasonal", "stock_cover" })
         {
             var preview = await PreviewAsync(manager, Editor + "/preview?mode=" + mode);
             var page = await shop.ReadAsync<ProductSearchResponse>("/api/v1/products?pageSize=48&sort=" + mode);

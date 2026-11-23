@@ -111,8 +111,8 @@ public sealed class SeasonalPurposeTests(ApiFactory api)
         {
             var db = services.GetRequiredService<PoliValkoDbContext>();
             var matches = await SeasonalPurpose.LoadAsync(db, services.GetRequiredService<IMemoryCache>(), [pool], ct);
-            var summer = await SeasonalPurpose.Matches(db, matches, [pool], new DateOnly(2034, 7, 15)).ToListAsync(ct);
-            var winter = await SeasonalPurpose.Matches(db, matches, [pool], new DateOnly(2034, 1, 15)).ToListAsync(ct);
+            var summer = await SeasonalPurpose.Matches(db, matches, [pool], new DateOnly(2034, 7, 15)).Rows.ToListAsync(ct);
+            var winter = await SeasonalPurpose.Matches(db, matches, [pool], new DateOnly(2034, 1, 15)).Rows.ToListAsync(ct);
             // May to August.
             const int months = 0b0000_1111_0000;
             summer.Single().ShouldBe(new SeasonalPurpose.Match(chlorine.Id, 0, months));
@@ -169,8 +169,8 @@ public sealed class SeasonalPurposeTests(ApiFactory api)
             var matches = await SeasonalPurpose.LoadAsync(db, services.GetRequiredService<IMemoryCache>(), categories, ct);
             foreach (var month in months)
             {
-                var inForce = SeasonalPurpose.Query(db, matches, categories, new DateOnly(2034, month, 15)).Rows;
-                var actual = await inForce.Select(m => m.ProductId).ToListAsync(ct);
+                var inForce = SeasonalPurpose.Matches(db, matches, categories, new DateOnly(2034, month, 15)).Rows;
+                var actual = await inForce.Where(m => m.Family != null).Select(m => m.ProductId).ToListAsync(ct);
                 actual.Order().ShouldBe(expected.Where(kv => kv.Value.Contains(month)).Select(kv => kv.Key).Order());
             }
             return true;

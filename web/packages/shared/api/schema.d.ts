@@ -6220,7 +6220,7 @@ export interface operations {
                 priceMax?: number;
                 /** @description Характеристики у форматі Назва:Значення; кілька значень однієї назви — АБО, різні назви — І */
                 f?: string[];
-                /** @description Типово — активний режим вітрини. seasonal | trending | stock_cover | name_asc | name_desc | price_asc | price_desc */
+                /** @description Типово — активний режим вітрини. seasonal | stock_cover | name_asc | name_desc | price_asc | price_desc */
                 sort?: string;
                 page?: number;
                 pageSize?: number;

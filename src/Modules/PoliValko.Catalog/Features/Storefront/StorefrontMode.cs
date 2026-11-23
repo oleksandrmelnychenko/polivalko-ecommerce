@@ -39,7 +39,8 @@ internal static class StorefrontMode
         var value = await db.Set<PlatformSetting>().Where(s => s.Key == Key).Select(s => s.Value).SingleOrDefaultAsync(ct);
         if (value is null) return Default;
         var saved = JsonSerializer.Deserialize<StorefrontModeDto>(value, JsonSerializerOptions.Web)!;
-        return saved.Through < today ? saved with { Mode = ProductSort.Seasonal, Through = null } : saved;
+        // A third mode, by the purchases of the last week, was retired: a setting saved with it reads as the default.
+        return saved.Through < today || !ProductSort.IsMode(saved.Mode) ? saved with { Mode = ProductSort.Seasonal, Through = null } : saved;
     }
 
     public static void MapConsole(RouteGroupBuilder catalog)
@@ -63,7 +64,7 @@ internal static class StorefrontMode
         PoliValkoDbContext db, SeasonalMerchandising merchandising, IMemoryCache cache, TimeProvider time, CancellationToken ct)
     {
         if (!ProductSort.IsMode(mode) || pinned is { Length: > 12 } ||
-            month is < 1 or > 12 || (month.HasValue && mode != ProductSort.Seasonal) ||
+            month is < 1 or > 12 ||
             q is { Length: > 128 } || q?.Any(char.IsControl) == true) return TypedResults.BadRequest();
         response.Headers.CacheControl = "private, no-store";
         var categories = await CategoryQueries.LoadVisibleCategoriesAsync(db, ct);

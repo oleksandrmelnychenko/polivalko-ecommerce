@@ -127,7 +127,7 @@ internal static class SearchProducts
 
         products = sort switch
         {
-            ProductSort.Seasonal or ProductSort.Trending or ProductSort.StockCover =>
+            ProductSort.Seasonal or ProductSort.StockCover =>
                 await merchandising.SortAsync(products, categories, query.Q?.Trim(), db, today, ct, sort,
                     acrossCategories: string.IsNullOrWhiteSpace(query.Category),
                     pinned: string.IsNullOrWhiteSpace(query.Q) && string.IsNullOrWhiteSpace(query.Category) ? setting?.PinnedProductIds : null),

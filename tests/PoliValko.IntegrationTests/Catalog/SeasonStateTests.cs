@@ -188,32 +188,8 @@ public sealed class SeasonStateTests(ApiFactory api)
         SeasonalHistory.LoadAsync(services.GetRequiredService<PoliValkoDbContext>(),
             services.GetRequiredService<IMemoryCache>(), today, anchor, Ct));
 
-    private async Task<Category> AddCategoryAsync(Guid? parent = null, string name = "Полиця сезону")
-    {
-        var category = new Category { Id = Guid.NewGuid(), ParentId = parent, Slug = "season-" + Guid.NewGuid(), Name = name, IsVisible = false };
-        await api.WithDbAsync(db => { db.Add(category); return db.SaveChangesAsync(Ct); });
-        return category;
-    }
-
-    private async Task<Product> AddSoldProductAsync(Category category, string name)
-    {
-        var product = await api.AddProductAsync(category.Slug, name, 100);
-        await api.WithDbAsync(db => db.Set<Product>().Where(p => p.Id == product.Id)
-            .ExecuteUpdateAsync(s => s.SetProperty(p => p.NavkoloId, "dntrade-code:" + product.Id), Ct));
-        return product;
-    }
-
-    private Task AddReceiptsAsync(Product product, DateOnly day, int count) => AddDailyReceiptsAsync(product, day, day, count);
-
-    private Task AddDailyReceiptsAsync(Product product, DateOnly from, DateOnly to, int perDay = 1)
-    {
-        var code = product.Id.ToString();
-        return api.WithDbAsync(db => db.Database.ExecuteSqlAsync($"""
-            INSERT INTO accounting.documents(id,source_account,source_id,entity_type,kind,day,status,store_ids,total,details)
-            SELECT gen_random_uuid(),'valko-dntrade',gen_random_uuid()::text,'receipt','cash',day::date,'active',ARRAY[]::text[],100,
-                jsonb_build_object('products',jsonb_build_array(jsonb_build_object('product',
-                    jsonb_build_object('code',{code}),'quantity',1)))
-            FROM generate_series({from}::timestamp,{to}::timestamp,interval '1 day') day CROSS JOIN generate_series(1,{perDay})
-            """, Ct));
-    }
+    private Task<Category> AddCategoryAsync(Guid? parent = null, string name = "Полиця сезону") => api.AddCategoryAsync(parent, name);
+    private Task<Product> AddSoldProductAsync(Category category, string name) => api.AddSoldProductAsync(category, name);
+    private Task AddReceiptsAsync(Product product, DateOnly day, int count) => api.AddReceiptsAsync(product, day, count);
+    private Task AddDailyReceiptsAsync(Product product, DateOnly from, DateOnly to) => api.AddDailyReceiptsAsync(product, from, to);
 }

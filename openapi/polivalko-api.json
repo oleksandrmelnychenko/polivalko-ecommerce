@@ -168,7 +168,7 @@
           {
             "name": "sort",
             "in": "query",
-            "description": "Типово — активний режим вітрини. seasonal | trending | stock_cover | name_asc | name_desc | price_asc | price_desc",
+            "description": "Типово — активний режим вітрини. seasonal | stock_cover | name_asc | name_desc | price_asc | price_desc",
             "schema": {
               "type": "string"
             }
