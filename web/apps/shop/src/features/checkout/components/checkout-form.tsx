@@ -26,7 +26,14 @@ function CheckoutFields({ mailDelivers, phone, pickupPoint }: CheckoutFormProps)
   const formRef = useRef<HTMLFormElement>(null);
   const checkout = useCheckout(formRef, phone);
 
-  if (!checkout.ready || checkout.recovering) return <p role="status">{checkout.cartError ?? "Завантажуємо кошик…"}</p>;
+  const cartError = checkout.cartError && (
+    <p role="alert" className="notice notice--error">
+      {checkout.cartError}{" "}
+      <button type="button" className="link" onClick={() => void checkout.refreshCart()}>Спробувати ще раз</button>
+    </p>
+  );
+  if (!checkout.ready || checkout.recovering) return cartError || <p role="status">Завантажуємо кошик…</p>;
+  if (!checkout.lines.length && cartError) return cartError;
   if (checkout.lines.length === 0) return <CheckoutEmpty />;
 
   const { field, fieldError } = fieldProps(checkout.errors);
@@ -35,7 +42,7 @@ function CheckoutFields({ mailDelivers, phone, pickupPoint }: CheckoutFormProps)
   return (
     <form ref={formRef} className="checkout" onSubmit={checkout.onSubmit} noValidate>
       <div className="checkout__form">
-        {checkout.cartError && <p role="alert" className="notice notice--error">{checkout.cartError}</p>}
+        {cartError}
         {checkout.notice && <CheckoutNotice notice={checkout.notice} />}
         <CheckoutContacts field={field} fieldError={fieldError} mailDelivers={mailDelivers} />
         <CheckoutComment field={field} fieldError={fieldError} />

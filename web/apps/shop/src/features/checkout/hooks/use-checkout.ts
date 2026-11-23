@@ -154,6 +154,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
   return {
     ready: cartState.ready,
     cartError: cartState.error,
+    refreshCart: cartState.refresh,
     recovering: !!recoveredOrder,
     lines,
     quantities,
