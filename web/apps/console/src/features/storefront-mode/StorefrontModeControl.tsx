@@ -18,9 +18,8 @@ import './storefront-mode.css'
 
 const endpoint = '/api/v1/console/catalog/storefront-mode'
 const modes = [
-  { value: 'seasonal', title: 'Сезон', description: 'Призначення товару та попит у цей період минулих років.' },
-  { value: 'trending', title: 'Попит зараз', description: 'За останні 7 днів товар купували частіше, ніж у середньому за тиждень протягом попередніх 21 дня.' },
-  { value: 'stock_cover', title: 'Рух запасів', description: 'Запас від восьми тижнів продажів, з пріоритетом сезонних товарів.' },
+  { value: 'seasonal', title: 'Сезон', description: 'Спершу товари в сезоні, далі цілорічні, далі не сезон. У кожній групі — за покупками в ці самі тижні минулих років і за останні чотири тижні.' },
+  { value: 'stock_cover', title: 'Рух запасів', description: 'Ті самі групи за сезоном, а в кожній спершу товари, запасу яких вистачить на вісім тижнів продажів і довше.' },
 ] as const
 type Setting = components['schemas']['StorefrontModeDto']
 type Product = components['schemas']['ProductListItemDto']
@@ -78,7 +77,7 @@ function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: 
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null)
   const today = kyivDate()
   const [year, currentMonth] = today.split('-').map(Number)
-  const month = mode === 'seasonal' ? selectedMonth ?? currentMonth : undefined
+  const month = selectedMonth ?? currentMonth
   const monthOptions = months.map((_, offset) => {
     const index = currentMonth - 1 + offset
     return { value: String(index % 12 + 1), label: months[index % 12] + ' ' + (year + Math.floor(index / 12)) + (offset === 0 ? ' · поточний' : '') }
@@ -182,9 +181,9 @@ function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: 
             <TableChip tone={seasonTone('off_season')} value={seasonLabel('off_season') + ' · ' + count.format(counts.offSeason)} />
           </span>}</Group>
         <div className="storefront-preview-tools">
-        {mode === 'seasonal' && <NativeSelect label="Місяць перегляду" value={String(month)} data={monthOptions}
+        <NativeSelect label="Місяць перегляду" value={String(month)} data={monthOptions}
           description={month === currentMonth ? undefined : 'Прогноз на 15-те число за сьогоднішніми залишками. Місяць змінює лише попередній перегляд.'}
-          onChange={event => { const value = Number(event.currentTarget.value); setSelectedMonth(value === currentMonth ? null : value) }} />}
+          onChange={event => { const value = Number(event.currentTarget.value); setSelectedMonth(value === currentMonth ? null : value) }} />
         <TextInput label="Пошук у каталозі" aria-label="Пошук товару в перегляді" placeholder="Назва або артикул товару" radius="xl"
           leftSection={<IconSearch size={16} />} value={lookup} maxLength={128} onChange={event => setLookup(event.currentTarget.value)} />
         </div>
