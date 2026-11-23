@@ -10,6 +10,9 @@ using PoliValko.Infrastructure.Security.Permissions;
 
 namespace PoliValko.Console.Features.Analytics;
 
+internal sealed record OrderWaybillDto(string Number, DateOnly Date);
+internal sealed record OrderWaybillsDto(string Status, IReadOnlyList<OrderWaybillDto>? Waybills);
+
 internal sealed class BusinessAnalyticsClient(HttpClient http)
 {
     internal sealed record OfferItem(Guid Id, DateOnly Last, decimal Quantity, string Unit, decimal Price, Guid? OfferId);
@@ -26,6 +29,15 @@ internal sealed class BusinessAnalyticsClient(HttpClient http)
 
     public static void Map(RouteGroupBuilder console)
     {
+        var orders = console.MapGroup("/orders").WithTags("Console").RequireStaff(PermissionKeys.OrdersView);
+        orders.MapGet("/{number}/waybills", (string number, bool? refresh, BusinessAnalyticsClient client, HttpContext context, CancellationToken ct) =>
+        {
+            if (number.Length is < 4 or > 22 || !number.StartsWith("PV-", StringComparison.Ordinal)
+                || !number[3..].All(char.IsAsciiDigit))
+                return Task.FromResult<IResult>(Results.NotFound());
+            return client.Send("order-waybills/" + number, context, ct, refresh == true ? "?refresh=true" : "");
+        }).WithName("ConsoleOrderWaybills").WithSummary("ТТН з реєстру відправника за номером замовлення магазину")
+            .Produces<OrderWaybillsDto>().Produces(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status503ServiceUnavailable);
         var group = console.MapGroup("/business-analytics").WithTags("Console").RequireStaff(PermissionKeys.ProductAnalyticsView);
         foreach (var operation in new[] { "status", "report", "forecast", "documents" })
         {
@@ -59,11 +71,11 @@ internal sealed class BusinessAnalyticsClient(HttpClient http)
             client.Send("policy", context, ct)).RequirePermission(PermissionKeys.AccountingEdit).WithName("BusinessAnalyticsPolicy");
     }
 
-    private async Task<IResult> Send(string path, HttpContext context, CancellationToken ct)
+    private async Task<IResult> Send(string path, HttpContext context, CancellationToken ct, string? query = null)
     {
         context.Response.Headers.CacheControl = "private, no-store";
         if (http.BaseAddress is null) return Unavailable();
-        using var request = new HttpRequestMessage(new HttpMethod(context.Request.Method), path + context.Request.QueryString);
+        using var request = new HttpRequestMessage(new HttpMethod(context.Request.Method), path + (query ?? context.Request.QueryString.Value));
         try
         {
             if (path == "policy")

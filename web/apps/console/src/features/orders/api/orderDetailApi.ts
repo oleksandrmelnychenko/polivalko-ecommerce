@@ -13,6 +13,12 @@ export function getOrder(number: string) {
   return api.GET('/api/v1/console/orders/{number}', { params: { path: { number } } })
 }
 
+export function getOrderWaybills(number: string, refresh: boolean) {
+  return api.GET('/api/v1/console/orders/{number}/waybills', {
+    params: { path: { number }, query: { refresh } }, cache: 'no-store',
+  })
+}
+
 export function createRefund(headers: CsrfHeaders, number: string, idempotencyKey: string, body: CreateRefundRequest) {
   return api.POST('/api/v1/console/orders/{number}/refunds', {
     params: { path: { number }, header: { 'Idempotency-Key': idempotencyKey } },

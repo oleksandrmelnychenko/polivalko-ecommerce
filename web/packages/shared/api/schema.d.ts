@@ -1562,6 +1562,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/orders/{number}/waybills": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ТТН з реєстру відправника за номером замовлення магазину */
+        get: operations["ConsoleOrderWaybills"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/business-analytics/status": {
         parameters: {
             query?: never;
@@ -4971,6 +4988,15 @@ export interface components {
             status: components["schemas"]["OrderStatus"];
             /** Format: int32 */
             count: number;
+        };
+        OrderWaybillDto: {
+            number: string;
+            /** Format: date */
+            date: string;
+        };
+        OrderWaybillsDto: {
+            status: string;
+            waybills: null | components["schemas"]["OrderWaybillDto"][];
         };
         OutboxMessageDto: {
             /** Format: uuid */
@@ -10010,6 +10036,64 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleOrderWaybills: {
+        parameters: {
+            query?: {
+                refresh?: boolean;
+            };
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderWaybillsDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Service Unavailable */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

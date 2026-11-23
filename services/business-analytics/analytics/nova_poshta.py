@@ -5,7 +5,7 @@ import json
 import os
 import re
 from collections import Counter, defaultdict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from time import monotonic, sleep
 
 from .shipments import Match, keys
@@ -50,6 +50,12 @@ def _read_page(key, first, last, page, deadline):
             return result
         except RateLimited as exc:
             delay = max(exc.delay, 2 ** (attempt + 1))
+            if attempt == 3 or monotonic() + delay + 1 >= deadline:
+                raise
+            sleep(delay)
+        except (ConnectionResetError, TimeoutError, http.client.IncompleteRead):
+            # The sender register is read-only; retry the same page after a dropped connection.
+            delay = 2 ** attempt
             if attempt == 3 or monotonic() + delay + 1 >= deadline:
                 raise
             sleep(delay)
@@ -140,18 +146,19 @@ def read_history(year, today, invoices):
     if not key:
         history.status = "not_configured"
         return history
+    return read_register(key, date(year, 1, 1), min(today, date(year, 12, 31)), history, monotonic() + 55)
+
+
+def read_register(key, first, through, history, deadline):
+    """Keep partial pages out of the results used to match an order."""
     seen = set()
-    deadline = monotonic() + 55
     try:
-        for month in range(1, 13):
-            first = date(year, month, 1)
-            if first > today:
-                break
-            last = min(date(year, month, calendar.monthrange(year, month)[1]), today)
+        while first <= through:
+            last = min(date(first.year, first.month, calendar.monthrange(first.year, first.month)[1]), through)
             page, month_count = 1, 0
             month_total = None
             while True:
-                if page > 1 or month > 1:
+                if page > 1 or history.months > 0:
                     sleep(2)
                 result = _read_page(key, first, last, page, deadline)
                 if not isinstance(result, dict) or result.get("success") is not True or result.get("errors"):
@@ -188,6 +195,7 @@ def read_history(year, today, invoices):
                 page += 1
             history.months += 1
             history.documents = len(seen)
+            first = last + timedelta(days=1)
         history.status = "complete"
     except RateLimited:
         history.status = "rate_limited"

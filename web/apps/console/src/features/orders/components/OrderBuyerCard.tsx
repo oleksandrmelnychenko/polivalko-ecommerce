@@ -8,6 +8,7 @@ import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import type { ConsoleOrder } from '../api/orderDetailApi'
 import { formatPhone } from '../lib/orderDetail'
 import { OrderCard } from './OrderCard'
+import { OrderWaybills } from './OrderWaybills'
 
 export function OrderBuyerCard({ order }: { order: ConsoleOrder }) {
   const { can } = usePermissions()
@@ -55,6 +56,8 @@ export function OrderBuyerCard({ order }: { order: ConsoleOrder }) {
               ))}
             </dd>
           </div>
+          {(order.deliveryMethod === 'nova_poshta' || order.deliveryMethod === 'nova_poshta_courier') &&
+            <OrderWaybills number={order.number} />}
           <div>
             <dt>Оплата</dt>
             <dd>
