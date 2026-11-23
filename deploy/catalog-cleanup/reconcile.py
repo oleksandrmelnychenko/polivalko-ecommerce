@@ -3,12 +3,14 @@
     python reconcile.py export --base http://127.0.0.1:8081 --host console.localhost:8081 --out target.json
     python reconcile.py plan   --base https://console.example.ua --target target.json --report plan.tsv
     python reconcile.py apply  --base https://console.example.ua --target target.json
+    python reconcile.py audit  --base https://console.example.ua --target target.json --report audit.tsv
+    python reconcile.py adopt-plan --base https://console.example.ua --keep dntrade-0d3dac570ca1a1 --replace hazova-produktsiia
 
 Credentials come from CONSOLE_EMAIL and CONSOLE_PASSWORD. Everything goes through the console API,
 so the change log, storefront cache invalidation and slug redirects work as for manual edits.
 `plan` only reads. `apply` never deletes anything and never changes a category's Navkolo reference.
 A category's SEO description, a product's brand and its site name are written only where the environment has
-none, so values set there by hand stay.
+none, or (with --previous-target) still holds what an earlier run wrote, so values set there by hand stay.
 """
 import argparse
 import csv
@@ -53,9 +55,9 @@ class Console:
         self.host = host or parts.netloc
         self.cookies = {}
         self.csrf = {}
+        self.conn = None  # one kept-alive connection: thousands of fresh ones exhaust local ports on Windows
 
     def call(self, method, route, payload=None):
-        conn = (http.client.HTTPSConnection if self.secure else http.client.HTTPConnection)(self.netloc, timeout=120)
         headers = {"Host": self.host, "Accept": "application/json", **self.csrf}
         if self.cookies:
             headers["Cookie"] = "; ".join(f"{k}={v}" for k, v in self.cookies.items())
@@ -63,10 +65,24 @@ class Console:
         if payload is not None:
             headers["Content-Type"] = "application/json"
             body = json.dumps(payload, ensure_ascii=False).encode()
-        try:
-            conn.request(method, API + route, body=body, headers=headers)
-            response = conn.getresponse()
-            data = response.read()
+        # Creating a category or a brand is not repeatable; every other call sets values and can be sent again.
+        repeatable = not (method == "POST" and route in ("/catalog/categories", "/catalog/brands"))
+        for attempt in range(3 if repeatable else 1):
+            if self.conn is None:
+                self.conn = (http.client.HTTPSConnection if self.secure else http.client.HTTPConnection)(self.netloc, timeout=120)
+            try:
+                self.conn.request(method, API + route, body=body, headers=headers)
+                response = self.conn.getresponse()
+                data = response.read()
+            except (http.client.HTTPException, OSError):
+                self.conn.close()
+                self.conn = None
+                if attempt == (2 if repeatable else 0):
+                    raise
+                continue
+            if response.getheader("Connection", "").lower() == "close":
+                self.conn.close()
+                self.conn = None
             for key, value in response.getheaders():
                 if key.lower() == "set-cookie":
                     parsed = SimpleCookie()
@@ -75,8 +91,6 @@ class Console:
             if not 200 <= response.status < 300:
                 raise RuntimeError(f"{method} {route}: HTTP {response.status} {data[:400].decode(errors='replace')}")
             return json.loads(data) if data else None
-        finally:
-            conn.close()
 
     def login(self):
         email, password = os.environ.get("CONSOLE_EMAIL"), os.environ.get("CONSOLE_PASSWORD")
@@ -131,7 +145,8 @@ def export(console, out):
     print(f"exported {len(target['categories'])} categories and {len(target['products'])} DNTrade products to {out}")
 
 
-def reconcile(console, target, apply, report_path=None, keep_visible=frozenset()):
+def reconcile(console, target, apply, report_path=None, keep_visible=frozenset(), previous=None):
+    previous = previous or {}
     changes = defaultdict(int)
     say = lambda line: print(("APPLY " if apply else "PLAN  ") + line)
     existing = console.call("GET", "/catalog/categories")
@@ -217,20 +232,21 @@ def reconcile(console, target, apply, report_path=None, keep_visible=frozenset()
                 visibility[want["isVisible"]].append(item["id"])
                 note(change, stock, change)
         # Brand and site name only fill an empty field: a value someone set in that environment stays.
+        before = previous.get(sku, {})  # what an earlier run of this script wrote: still ours to update
         current_brand = (detail.get("brand") or "").strip()
         if want["brand"] and norm(want["brand"]) != norm(current_brand):
-            if current_brand:
+            if current_brand and norm(current_brand) != norm(before.get("brand")):
                 note("keep brand", current_brand, want["brand"])
             else:
                 brand_sets[want["brand"]].append(item["id"])
-                note("brand", "", want["brand"])
+                note("brand", current_brand, want["brand"])
         current_name = (detail.get("displayName") or "").strip()
         if want["displayName"] and want["displayName"] != current_name:
-            if current_name:
+            if current_name and current_name != (before.get("displayName") or "").strip():
                 note("keep site name", current_name, want["displayName"])
             else:
                 names.append((item["id"], want["displayName"], detail))
-                note("site name", "", want["displayName"])
+                note("site name", current_name, want["displayName"])
     missing = len(target["products"]) - len(found)
     say(f"products: {len(found)} matched, {missing} from the target are not in this environment")
     for category, ids in moves.items():
@@ -299,24 +315,160 @@ def reconcile(console, target, apply, report_path=None, keep_visible=frozenset()
         print(f"{len(report)} product changes listed in {report_path}")
 
 
+# Misspellings and Russian words fixed in the 23.11.2026 pass; a name containing one needs a look.
+KNOWN_BAD = ["садовый", "распредел", "канальный", "внутренней", "нарезк", "ловушк", "катушк", "сплошн", "полумахров",
+             "резинов", "цвєтн", "черенок", "черенком", "металічн", "польша", "мятлик", "персидск", "л/ч", "сочащ",
+             " струй", "шомпур", "вугловий", "віззок", "акамулят", "акумулярор", "сікатор", "секкатор", "пильщик",
+             "пильник", "турисичн", "комфорк", "бітобакс", "бітоксицил", "магнкур", "макнікур", "прилиач", "амінокисот",
+             "тагранів", "шкідиків", "хризонтем", "драцент", "свагнум", "трациційн", " мерів", "велетнь", "засібвід",
+             "відкомарів", "дляцибул", "кімнатих", "руглий", "садоий", "садоого", "самозволожуюий", "глянць",
+             "гідррзетк", "керамзіт", "коннектр", "контроллер", "презиційн", "перехдник", "універальн", "універсальнй",
+             "щіітка", "янголч", "інсектициж", "емність", "двохсторон", "поліестр "]
+
+
+def name_problems(name):
+    import re
+    low = name.casefold()
+    found = [w.strip() for w in KNOWN_BAD if re.search(r"(?<![\w'’])" + re.escape(w.strip()), low)]
+    if re.search(r"[ыэъёЫЭЪЁ]", name): found.append("Russian letter")
+    if "  " in name or name != name.strip(): found.append("extra space")
+    if name.count("(") != name.count(")"): found.append("unbalanced bracket")
+    if name[:1].islower() and not name.startswith("pH"): found.append("lowercase start")
+    if re.search(r"\d(мм|см|л|г|кг)[а-яіїєґ]{2,}", name): found.append("glued unit")
+    for token in re.split(r"[\s\-,()*+/.\"«»„“:;№]+", name):
+        if re.search("[а-яіїєґ]", token, re.I) and re.search("[a-z]", token, re.I) and not re.fullmatch(r"[A-Za-z]+\d+[а-яіїєґ]+", token):
+            found.append(f"mixed alphabets: {token}")
+    return found
+
+
+def audit(console, target, report_path):
+    """Read-only look at an environment after a reconcile: what the target did not cover and what still looks wrong."""
+    categories = console.call("GET", "/catalog/categories")
+    paths = category_paths(categories)
+    slug_of = {c["id"]: c["slug"] for c in categories}
+    rows = []
+    for c in sorted(categories, key=lambda c: paths[c["id"]]):
+        rows.append(("category", c["slug"], " / ".join(paths[c["id"]]),
+                     f"{'visible' if c['isVisible'] else 'hidden'}, {c.get('productCount', '?')} products",
+                     f"navkoloRef={c.get('navkoloRef') or ''}"))
+    hidden_ids = set()
+    by_id = {c["id"]: c for c in categories}
+    for c in categories:  # a category is hidden on the storefront when it or any parent is hidden
+        node = c
+        while node:
+            if not node["isVisible"]:
+                hidden_ids.add(c["id"])
+                break
+            node = by_id.get(node["parentId"])
+    children = {c["parentId"] for c in categories if c["parentId"]}
+    where = {}
+    for c in sorted(categories, key=lambda c: len(paths[c["id"]])):  # the deepest category wins
+        page = 1
+        while True:
+            result = console.call("GET", f"/catalog/products?categoryId={c['id']}&page={page}&pageSize=100")
+            for item in result["items"]:
+                where[item["id"]] = (c["id"], item)
+            if page >= result["totalPages"]:
+                break
+            page += 1
+    shown = defaultdict(int)
+    for category_id, item in where.values():
+        visible = item["isVisible"] and category_id not in hidden_ids
+        name = item.get("displayName") or item["name"]
+        place = slug_of[category_id]
+        if visible:
+            shown[category_id] += 1
+            if category_id in children:
+                rows.append(("visible on a parent category", item["sku"], name, place, ""))
+            for problem in name_problems(name):
+                rows.append(("name", item["sku"], name, place, problem))
+        if item["sku"] not in target["products"] and not any(item["sku"].lower().startswith(p) for p in target["hideNavkoloPrefixes"]):
+            rows.append(("not in the target", item["sku"], name, place,
+                         f"{'visible' if visible else 'hidden'}, stock {item['stock']:g}"))
+    for c in categories:
+        if c["isVisible"] and c["id"] not in hidden_ids and c["id"] not in children and not shown[c["id"]]:
+            rows.append(("visible empty category", c["slug"], " / ".join(paths[c["id"]]), "", ""))
+    counts = defaultdict(int)
+    for row in rows:
+        counts[row[0]] += 1
+    print("audit:", dict(counts))
+    with open(report_path or "audit.tsv", "w", encoding="utf-8", newline="") as file:
+        writer = csv.writer(file, delimiter="\t")
+        writer.writerow(["kind", "slug or sku", "name", "where / state", "note"])
+        writer.writerows(rows)
+    print(f"details in {report_path or 'audit.tsv'}")
+
+
+def adopt(console, keep_slug, replace_slug, apply):
+    """Let the category the DNTrade import feeds (keep) take the place and products of a hand-made duplicate (replace).
+
+    The duplicate is hidden under '<slug>-dubl', so its address is free; the redirect that renaming writes is removed
+    again when the kept category takes the address over.
+    """
+    say = lambda line: print(("APPLY " if apply else "PLAN  ") + line)
+    by_slug = {c["slug"]: c for c in console.call("GET", "/catalog/categories")}
+    keep, dup = by_slug.get(keep_slug), by_slug.get(replace_slug)
+    if keep is None or dup is None:
+        sys.exit(f"category not found: {keep_slug if keep is None else replace_slug}")
+    if not keep.get("navkoloRef"):
+        sys.exit(f"{keep_slug} has no Navkolo reference, so the import does not feed it; nothing to gain")
+    ids, page = [], 1
+    while True:
+        result = console.call("GET", f"/catalog/products?categoryId={dup['id']}&page={page}&pageSize=100")
+        ids += [i["id"] for i in result["items"]]
+        if page >= result["totalPages"]:
+            break
+        page += 1
+    fields = ("parentId", "name", "slug", "sortOrder", "isVisible", "navkoloRef", "seoTitle", "seoDescription", "imageUrl", "description")
+    body = lambda c: {**{k: c.get(k) for k in fields}, "filterAttributes": c.get("filterAttributes") or []}
+    say(f"hide {replace_slug} as {replace_slug}-dubl")
+    say(f"move {len(ids)} products from {replace_slug} to {keep_slug}")
+    say(f"{keep_slug} becomes '{dup['name']}' at /catalog/{replace_slug}, "
+        f"{'visible' if dup['isVisible'] else 'hidden'}, sort {dup['sortOrder']}, same parent as the duplicate")
+    if not apply:
+        return
+    console.call("PUT", f"/catalog/categories/{dup['id']}", {**body(dup), "slug": f"{replace_slug}-dubl", "isVisible": False})
+    for i in range(0, len(ids), BATCH):
+        console.call("POST", "/catalog/products/bulk", {"productIds": ids[i:i + BATCH], "categoryId": keep["id"]})
+    taken = body(keep)
+    taken.update(name=dup["name"], slug=replace_slug, parentId=dup["parentId"], sortOrder=dup["sortOrder"], isVisible=dup["isVisible"])
+    for k in ("seoTitle", "seoDescription", "imageUrl", "description"):
+        taken[k] = keep.get(k) or dup.get(k)
+    taken["filterAttributes"] = keep.get("filterAttributes") or dup.get("filterAttributes") or []
+    console.call("PUT", f"/catalog/categories/{keep['id']}", taken)
+    print("done")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("mode", choices=["export", "plan", "apply"])
+    parser.add_argument("mode", choices=["export", "plan", "apply", "audit", "adopt-plan", "adopt-apply"])
     parser.add_argument("--base", required=True, help="console origin, e.g. https://console.example.ua")
     parser.add_argument("--host", help="Host header when it differs from --base, e.g. console.localhost:8081")
     parser.add_argument("--target", default="target.json")
     parser.add_argument("--out", default="target.json")
     parser.add_argument("--report", help="plan/apply: write every product change (current and wanted value) to this TSV file")
+    parser.add_argument("--keep", help="adopt: slug of the category the DNTrade import feeds")
+    parser.add_argument("--replace", help="adopt: slug of the hand-made duplicate whose place it takes")
+    parser.add_argument("--previous-target", help="plan/apply: target file of an earlier run; values it wrote may be updated")
     parser.add_argument("--keep-visible", default="", help="plan/apply: comma-separated DNTrade codes the target hides but this run leaves visible")
     args = parser.parse_args()
     console = Console(args.base, args.host)
     console.login()
     if args.mode == "export":
         export(console, args.out)
+    elif args.mode.startswith("adopt"):
+        adopt(console, args.keep, args.replace, args.mode == "adopt-apply")
+    elif args.mode == "audit":
+        with open(args.target, encoding="utf-8") as file:
+            audit(console, json.load(file), args.report)
     else:
         with open(args.target, encoding="utf-8") as file:
             keep = {s.strip() for s in args.keep_visible.split(",") if s.strip()}
-            reconcile(console, json.load(file), args.mode == "apply", args.report, keep)
+            previous = {}
+            if args.previous_target:
+                with open(args.previous_target, encoding="utf-8") as before:
+                    previous = json.load(before)["products"]
+            reconcile(console, json.load(file), args.mode == "apply", args.report, keep, previous)
 
 
 if __name__ == "__main__":
