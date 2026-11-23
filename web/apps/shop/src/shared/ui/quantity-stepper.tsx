@@ -43,6 +43,7 @@ export function QuantityStepper({
       </button>
       <input
         type="number"
+        required
         name="quantity"
         inputMode="numeric"
         autoComplete="off"
