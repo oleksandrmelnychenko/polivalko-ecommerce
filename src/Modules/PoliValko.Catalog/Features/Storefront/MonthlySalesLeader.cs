@@ -10,7 +10,7 @@ internal static class MonthlySalesLeader
     private sealed record MonthlySales(Guid ProductId, int Month, long Score);
     private sealed record Plan(Guid? Last, int Repeats, long Score, Guid? Requested);
 
-    internal static async Task<Guid?> PickAsync(IQueryable<Product> products, IReadOnlyList<Category> categories,
+    internal static async Task<Guid?> PickAsync(IQueryable<Product> products, SeasonalPurpose.RuleMatches matches,
         PoliValkoDbContext db, IMemoryCache cache, DateOnly today, int requestedMonth, CancellationToken ct)
     {
         var cutoff = new DateOnly(today.Year, today.Month, 1);
@@ -21,7 +21,7 @@ internal static class MonthlySalesLeader
         }) ?? [];
         if (sales.Length == 0) return null;
         var eligible = from p in products
-                       join m in SeasonalPurpose.Calendar(db, categories) on p.Id equals m.ProductId
+                       join m in SeasonalPurpose.Calendar(db, matches) on p.Id equals m.ProductId
                        where p.Stock.Quantity - p.Stock.ReservedQuantity >= 1 && p.Price.Amount > 0
                        select new { p.Id, m.MonthMask };
         var masks = await eligible.ToDictionaryAsync(p => p.Id, p => p.MonthMask, ct);

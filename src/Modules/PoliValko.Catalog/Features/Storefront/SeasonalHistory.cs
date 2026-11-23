@@ -13,18 +13,16 @@ internal sealed record SeasonHistory(Guid[] ProductIds, int[] Verdicts,
 
 internal static class SeasonalHistory
 {
+    private static readonly SemaphoreSlim Reading = new(1, 1);
     private sealed record Sold(Guid ProductId, Guid CategoryId, int W1, int W2, int W3, int Total, DateOnly FirstDay);
 
     /// <param name="today">The last day that can have receipts.</param>
     /// <param name="anchor">The day asked about: today on the storefront, the 15th of a month in a preview.</param>
-    public static async Task<SeasonHistory> LoadAsync(PoliValkoDbContext db, IMemoryCache cache, DateOnly today, DateOnly anchor,
+    public static Task<SeasonHistory> LoadAsync(PoliValkoDbContext db, IMemoryCache cache, DateOnly today, DateOnly anchor,
         CancellationToken ct) =>
-        (await cache.GetOrCreateAsync(("storefront-season-history", today, anchor), entry =>
-        {
-            // Receipts arrive with an import, a few times a day at most.
-            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30);
-            return ReadAsync(db, today, anchor, ct);
-        }))!;
+        // Receipts arrive with an import, a few times a day at most.
+        CachedLoad.GetAsync(cache, ("storefront-season-history", today, anchor), Reading, TimeSpan.FromMinutes(30),
+            async () => (await ReadAsync(db, today, anchor, ct), true), ct);
 
     private static async Task<SeasonHistory> ReadAsync(PoliValkoDbContext db, DateOnly today, DateOnly anchor, CancellationToken ct)
     {

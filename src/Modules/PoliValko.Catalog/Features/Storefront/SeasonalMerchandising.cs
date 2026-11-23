@@ -32,7 +32,9 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
             .SelectMany(c => CategoryQueries.Descendants(c.Id, byParent).Prepend(c.Id)).Distinct().ToArray();
         var seasonalMode = mode == ProductSort.Seasonal;
         var seasonal = seasonalMode ? [] : priority.SelectMany(Family).Distinct().ToArray();
-        var purposes = SeasonalPurpose.Query(db, categories, season, seasonalMode);
+        // The other two modes rank by section, not by rule.
+        var matches = seasonalMode ? await SeasonalPurpose.LoadAsync(db, cache, categories, ct) : new SeasonalPurpose.RuleMatches([], []);
+        var purposes = SeasonalPurpose.Query(db, matches, categories, season);
         var signals = await DemandAsync(db, today, season, ct);
         var ids = signals.Select(s => s.ProductId).ToArray();
         var trends = signals.Select(s => Math.Max(0, s.Week - s.Previous / 3m) * s.Week / (s.Week + 3m)).ToArray();
@@ -61,7 +63,7 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
         Guid? monthlyLeader = null;
         var automaticListing = seasonalMode && acrossCategories && string.IsNullOrWhiteSpace(term);
         if (automaticListing)
-            monthlyLeader = await MonthlySalesLeader.PickAsync(products, categories, db, cache, today, season.Month, ct);
+            monthlyLeader = await MonthlySalesLeader.PickAsync(products, matches, db, cache, today, season.Month, ct);
         if (automaticListing && purposes.Families > 1)
         {
             var candidates = scored.Where(s => s.seasonal && s.available >= 1 && s.p.Price.Amount > 0)

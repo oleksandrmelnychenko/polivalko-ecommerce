@@ -36,6 +36,7 @@ internal static class SeasonVerdict
     /// now can leave it neutral or put it out of season, but not in season. Rules name promotion months, not a
     /// product's whole season, so they do not overrule a category that sells evenly or not at all.
     /// </summary>
+    /// <param name="ruleOff">A rule names the product, but only for months that the weeks looked at do not reach.</param>
     /// <param name="own">What the product's own receipts say.</param>
     /// <param name="category">What its category says, from the nearest level that has a verdict.</param>
     public static Season Combine(bool ruleIn, bool ruleOff, Season? own, Season? category)

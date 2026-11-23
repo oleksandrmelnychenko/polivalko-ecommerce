@@ -1,4 +1,8 @@
+using System.Numerics;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using PoliValko.Catalog.Domain;
 using PoliValko.Infrastructure.Persistence;
 
@@ -7,6 +11,9 @@ namespace PoliValko.Catalog.Features.Storefront;
 internal static class SeasonalPurpose
 {
     internal sealed record Match(Guid ProductId, int? Family, int MonthMask);
+    /// <summary>Which rules name each product: bit i stands for rule i of the table. It does not depend on the day.</summary>
+    internal sealed record RuleMatches(Guid[] ProductIds, long[] Rules);
+    private sealed record Found(Guid ProductId, long Rules);
     private sealed record Rule(string Family, int From, int Through, string[] Sections, string Include, string? Exclude = null)
     {
         public bool Applies(int month) => From <= Through ? month >= From && month <= Through : month >= From || month <= Through;
@@ -26,6 +33,7 @@ internal static class SeasonalPurpose
         ["Оприскувачі/Лійки/Відра"] = "Оприскувачі, лійки й відра",
         ["Бордюрні стрічки"] = "Бордюри й огорожі",
     };
+    private static readonly SemaphoreSlim Matching = new(1, 1);
     private static readonly string[] Attributes = ["тип", "тип товару", "призначення", "тематика", "культура", "сезон", "сезонність", "період застосування", "сезон застосування"];
 
     // Inclusive months describe storefront priorities. Match only inside the named catalog branches.
@@ -87,23 +95,57 @@ internal static class SeasonalPurpose
         new("Захист від гризунів", 8, 11, ["Шкідники"], "миш|щур|гризун|пацюк|родентицид|щелкунчик|шах і мат", "крот|кріт"),
     ];
 
-    public static (IQueryable<Match> Rows, int Families) Query(PoliValkoDbContext db, IReadOnlyList<Category> categories,
-        DateOnly day, bool enabled)
+    /// <summary>The products that a rule in force on this day names, each with the place of its family among the first twelve.</summary>
+    public static (IQueryable<Match> Rows, int Families) Query(PoliValkoDbContext db, RuleMatches matches,
+        IReadOnlyList<Category> categories, DateOnly day)
     {
-        if (!enabled) return (db.Database.SqlQuery<Match>($"SELECT NULL::uuid AS product_id, 0 AS family, 0 AS month_mask WHERE false"), 0);
-        return MatchRules(db, categories, InForce(day), []);
+        var (rows, families) = Read(matches, categories, day);
+        return (Rows(db, rows.Where(row => row.Family is not null).ToArray()), families);
     }
 
     /// <summary>
     /// Every product a rule names for any month. Family is set while one of its rules is in force; MonthMask holds
     /// all its months, so a product whose season is another time of the year can be told from one without a season.
     /// </summary>
-    public static (IQueryable<Match> Rows, int Families) Matches(PoliValkoDbContext db, IReadOnlyList<Category> categories,
-        DateOnly day)
+    public static IQueryable<Match> Matches(PoliValkoDbContext db, RuleMatches matches, IReadOnlyList<Category> categories,
+        DateOnly day) => Rows(db, Read(matches, categories, day).Rows);
+
+    /// <summary>The months of every product a rule names. No day and no tree: families play no part in it.</summary>
+    public static IQueryable<Match> Calendar(PoliValkoDbContext db, RuleMatches matches) =>
+        Rows(db, Read(matches, [], default).Rows);
+
+    /// <summary>
+    /// Which rules name each product. Matching the whole rule table against the catalog is costly, and the answer
+    /// changes only with the catalog, so it is kept until a name, a section, an attribute or the tree changes.
+    /// </summary>
+    public static async Task<RuleMatches> LoadAsync(PoliValkoDbContext db, IMemoryCache cache,
+        IReadOnlyList<Category> categories, CancellationToken ct)
     {
-        var active = InForce(day);
-        return MatchRules(db, categories, active, Rules.Except(active));
+        var catalog = await CatalogStateAsync(db, ct);
+        return await CachedLoad.GetAsync(cache, ("storefront-rule-matches", Signature(categories), catalog), Matching,
+            TimeSpan.FromMinutes(30), async () =>
+            {
+                var matches = await MatchAsync(db, categories, ct);
+                // A catalog that changed while the rules were being matched may have given these matches.
+                // They serve this request; the next one matches again.
+                return (matches, await CatalogStateAsync(db, ct) == catalog);
+            }, ct);
     }
+
+    /// <summary>
+    /// Everything the matching reads, in one cheap pass over the catalog: published products with their names
+    /// and sections, and the attributes the rules look at.
+    /// </summary>
+    private static Task<string> CatalogStateAsync(PoliValkoDbContext db, CancellationToken ct) =>
+        db.Database.SqlQuery<string>($"""
+            SELECT (SELECT count(*)::text || ':' || coalesce(sum(hashtextextended(
+                        p.id::text || p.category_id::text || coalesce(p.display_name,p.name), 0)), 0)::text
+                    FROM catalog.products p WHERE p.is_visible AND NOT p.is_archived)
+                || '|' ||
+                   (SELECT count(*)::text || ':' || coalesce(sum(hashtextextended(
+                        a.product_id::text || lower(a.name) || '=' || a.value, 0)), 0)::text
+                    FROM catalog.product_attributes a WHERE lower(a.name) = ANY({Attributes})) AS "Value"
+            """).SingleAsync(ct);
 
     /// <summary>
     /// Sections the rules name that the catalog does not have, for instance after a section was renamed.
@@ -119,7 +161,10 @@ internal static class SeasonalPurpose
         category.Name == section || category.Slug == section
         || (Renamed.TryGetValue(section, out var now) && category.Name == now);
 
-    private static Rule[] InForce(DateOnly day)
+    private static string Signature(IReadOnlyList<Category> categories) => Convert.ToHexString(SHA256.HashData(
+        Encoding.UTF8.GetBytes(string.Join("\n", categories.Select(c => $"{c.Id}|{c.ParentId}|{c.Slug}|{c.Name}")))));
+
+    private static int[] InForce(DateOnly day)
     {
         string[] leadingTasks = day.Month switch
         {
@@ -131,46 +176,71 @@ internal static class SeasonalPurpose
             _ => SeasonalMerchandising.PriorityCategories(day),
         };
         var priority = leadingTasks.Select((key, i) => (key, i)).ToDictionary(x => x.key, x => x.i);
-        return Rules.Where(r => r.Applies(day.Month))
-            .OrderBy(r => priority.GetValueOrDefault(r.Family, priority.Count)).ToArray();
+        return Enumerable.Range(0, Rules.Length).Where(rule => Rules[rule].Applies(day.Month))
+            .OrderBy(rule => priority.GetValueOrDefault(Rules[rule].Family, priority.Count)).ToArray();
     }
 
-    public static IQueryable<Match> Calendar(PoliValkoDbContext db, IReadOnlyList<Category> categories) =>
-        MatchRules(db, categories, Rules, []).Rows;
+    /// <summary>What the kept matches mean on one day: the family of each product among the rules in force, and all its months.</summary>
+    private static (Match[] Rows, int Families) Read(RuleMatches matches, IReadOnlyList<Category> categories, DateOnly day)
+    {
+        // Families enter the first twelve in this order. A rule whose sections the catalog lacks brings no family.
+        var groups = new List<string>();
+        var family = new int?[Rules.Length];
+        foreach (var rule in InForce(day))
+        {
+            if (!categories.Any(category => Rules[rule].Sections.Any(section => Named(category, section)))) continue;
+            if (!groups.Contains(Rules[rule].Family)) groups.Add(Rules[rule].Family);
+            family[rule] = groups.IndexOf(Rules[rule].Family);
+        }
+        var rows = new Match[matches.ProductIds.Length];
+        for (var i = 0; i < rows.Length; i++)
+        {
+            int? first = null;
+            var months = 0;
+            for (var left = matches.Rules[i]; left != 0; left &= left - 1)
+            {
+                var rule = BitOperations.TrailingZeroCount(left);
+                months |= Rules[rule].MonthMask;
+                if (family[rule] is { } place && (first is null || place < first)) first = place;
+            }
+            rows[i] = new Match(matches.ProductIds[i], first, months);
+        }
+        return (rows, groups.Count);
+    }
 
-    /// <param name="rules">Rules that give a product its family, in the order of their families.</param>
-    /// <param name="dormant">Rules that only add their months.</param>
-    private static (IQueryable<Match> Rows, int Families) MatchRules(PoliValkoDbContext db,
-        IReadOnlyList<Category> categories, IEnumerable<Rule> rules, IEnumerable<Rule> dormant)
+    private static IQueryable<Match> Rows(PoliValkoDbContext db, IReadOnlyCollection<Match> rows)
+    {
+        var ids = rows.Select(row => row.ProductId).ToArray();
+        var families = rows.Select(row => row.Family).ToArray();
+        var masks = rows.Select(row => row.MonthMask).ToArray();
+        return db.Database.SqlQuery<Match>($"""
+            SELECT id AS product_id, family, month_mask
+            FROM unnest({ids}::uuid[], {families}::int[], {masks}::int[]) AS m(id, family, month_mask)
+            """);
+    }
+
+    private static async Task<RuleMatches> MatchAsync(PoliValkoDbContext db, IReadOnlyList<Category> categories, CancellationToken ct)
     {
         var byParent = categories.ToLookup(c => c.ParentId);
-        Guid[] Sections(Rule rule) => categories.Where(c => rule.Sections.Any(section => Named(c, section)))
-            .SelectMany(c => CategoryQueries.Descendants(c.Id, byParent).Prepend(c.Id)).Distinct().ToArray();
-        var groups = new List<string>();
-        var rows = new List<(Guid Category, int? Family, string Include, string? Exclude, int MonthMask)>();
-        foreach (var rule in rules)
-        {
-            var ids = Sections(rule);
-            if (ids.Length == 0) continue;
-            if (!groups.Contains(rule.Family)) groups.Add(rule.Family);
-            rows.AddRange(ids.Select(id => (id, (int?)groups.IndexOf(rule.Family), rule.Include, rule.Exclude, rule.MonthMask)));
-        }
-        foreach (var rule in dormant)
-            rows.AddRange(Sections(rule).Select(id => (id, (int?)null, rule.Include, rule.Exclude, rule.MonthMask)));
+        var rows = Rules.SelectMany((rule, index) => categories
+            .Where(c => rule.Sections.Any(section => Named(c, section)))
+            .SelectMany(c => CategoryQueries.Descendants(c.Id, byParent).Prepend(c.Id)).Distinct()
+            .Select(category => (Category: category, Rule: index, rule.Include, rule.Exclude))).ToArray();
+        // One bit of a 64-bit number for each rule.
+        if (Rules.Length > 63) throw new InvalidOperationException("The seasonal rule table has outgrown its matches.");
         var categoryIds = rows.Select(r => r.Category).ToArray();
-        var families = rows.Select(r => r.Family).ToArray();
+        var rules = rows.Select(r => r.Rule).ToArray();
         var include = rows.Select(r => r.Include).ToArray();
         var exclude = rows.Select(r => r.Exclude).ToArray();
-        var masks = rows.Select(r => r.MonthMask).ToArray();
-        var matches = db.Database.SqlQuery<Match>($"""
+        var found = await db.Database.SqlQuery<Found>($"""
             WITH rules AS (
-                SELECT * FROM unnest({categoryIds}::uuid[], {families}::int[], {include}::text[], {exclude}::text[], {masks}::int[])
-                    AS r(category_id, family, wanted, unwanted, month_mask)
+                SELECT * FROM unnest({categoryIds}::uuid[], {rules}::int[], {include}::text[], {exclude}::text[])
+                    AS r(category_id, rule, wanted, unwanted)
             ), attributes AS (
                 SELECT a.product_id, array_agg(a.value) AS terms FROM catalog.product_attributes a
                 WHERE lower(a.name) = ANY({Attributes}) GROUP BY a.product_id
             )
-            SELECT p.id AS product_id, min(r.family) AS family, bit_or(r.month_mask) AS month_mask
+            SELECT p.id AS product_id, bit_or(1::bigint << r.rule) AS rules
             FROM rules r JOIN catalog.products p ON p.category_id=r.category_id
             LEFT JOIN attributes a ON a.product_id=p.id
             WHERE p.is_visible AND NOT p.is_archived
@@ -179,7 +249,7 @@ internal static class SeasonalPurpose
               AND (r.unwanted IS NULL OR (coalesce(p.display_name,p.name) !~* r.unwanted
                    AND NOT EXISTS (SELECT FROM unnest(a.terms) term WHERE term ~* r.unwanted)))
             GROUP BY p.id
-            """);
-        return (matches, groups.Count);
+            """).ToArrayAsync(ct);
+        return new RuleMatches(found.Select(row => row.ProductId).ToArray(), found.Select(row => row.Rules).ToArray());
     }
 }

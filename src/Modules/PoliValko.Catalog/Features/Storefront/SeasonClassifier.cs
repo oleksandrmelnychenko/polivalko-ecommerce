@@ -12,7 +12,7 @@ internal sealed class SeasonRow
     /// <summary>A <see cref="Season"/> as a number, so that it sorts in the database.</summary>
     public int State { get; init; }
     public bool RuleIn { get; init; }
-    /// <summary>A rule names the product, but for other months.</summary>
+    /// <summary>A rule names the product, but for months that the four weeks ahead do not reach.</summary>
     public bool RuleOff { get; init; }
     /// <summary>The verdict of the product's own receipts, if they are enough for one.</summary>
     public int? Product { get; init; }
@@ -47,7 +47,9 @@ internal static class SeasonClassifier
             SELECT id AS category_id, verdict, root
             FROM unnest({shelfIds}::uuid[], {shelfVerdicts}::int[], {shelfRoots}::bool[]) AS c(id, verdict, root)
             """);
-        var rules = SeasonalPurpose.Matches(db, categories, anchor).Rows;
+        var rules = SeasonalPurpose.Matches(db, await SeasonalPurpose.LoadAsync(db, cache, categories, ct), categories, anchor);
+        // The month in which the four weeks looked at end. A rule that starts by then is about to be in force.
+        var soon = 1 << (anchor.AddDays(SeasonVerdict.WindowDays - 1).Month - 1);
         if (only is not null)
         {
             // Matching every rule against the whole catalog is most of the cost: here the rules meet these products alone.
@@ -62,8 +64,9 @@ internal static class SeasonClassifier
                join c in byCategory on p.CategoryId equals c.CategoryId into placed
                from shelf in placed.DefaultIfEmpty()
                let ruleIn = rule.Family != null
-               // A rule names the product, but for other months. Without a rule there are no months to compare.
-               let ruleOff = rule.MonthMask > 0 && rule.Family == null
+               // A rule names the product, but for months the four weeks ahead do not reach: only then does it
+               // speak against the season. Without a rule there are no months to compare.
+               let ruleOff = rule.MonthMask > 0 && rule.Family == null && (rule.MonthMask & soon) == 0
                let sales = (int?)receipts.Verdict
                let verdict = sales ?? (int?)shelf.Verdict
                select new SeasonRow
