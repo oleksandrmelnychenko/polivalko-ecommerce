@@ -80,6 +80,9 @@ public sealed class StorefrontModeTests(ApiFactory api)
             }
             return true;
         });
+        // Do not leave an extra visible root in the shared fixture.
+        await api.WithDbAsync(db => db.Set<Category>().Where(c => c.Id == heaterCategory.Id)
+            .ExecuteUpdateAsync(set => set.SetProperty(c => c.IsVisible, false), Ct));
     }
 
     [Fact]
@@ -250,27 +253,42 @@ public sealed class StorefrontModeTests(ApiFactory api)
         using var shop = api.CreateClient();
         using var manager = await Staff.ManagerAsync(api);
         var token = Guid.NewGuid().ToString("N")[..10];
-        var garland = await api.AddProductAsync("novyi-rik", $"Гірлянда {token}", 100);
-        var hose = await api.AddProductAsync("vse-dlia-polyvu", $"Шланг {token}", 100);
-        var url = $"{Editor}/preview?mode=seasonal&q={token}";
+        // A department of its own: receipts that other tests leave in the shared ones cannot speak for its products.
+        var pool = new Category { Id = Guid.NewGuid(), Slug = "preview-" + Guid.NewGuid(), Name = "Хімія для басейнів" };
+        await api.WithDbAsync(db => { db.Add(pool); return db.SaveChangesAsync(Ct); });
+        try
+        {
+            var garland = await api.AddProductAsync("novyi-rik", $"Гірлянда {token}", 100);
+            var chlorine = await api.AddProductAsync(pool.Slug, $"Хлор у гранулах {token}", 100);
+            var url = $"{Editor}/preview?mode=seasonal&q={token}";
 
-        var december = await manager.ReadAsync<StorefrontPreviewDto>(url + "&month=12");
+            var december = await manager.ReadAsync<StorefrontPreviewDto>(url + "&month=12");
 
-        var winter = december.Items.ToDictionary(item => item.Product.Id, item => (item.Season, item.Source));
-        winter.Keys.Order().ShouldBe(new[] { garland.Id, hose.Id }.Order());
-        winter[garland.Id].ShouldBe(("in_season", "rule"));
-        winter[hose.Id].ShouldBe(("off_season", "rule"));
-        var july = (await manager.ReadAsync<StorefrontPreviewDto>(url + "&month=7")).Items
-            .ToDictionary(item => item.Product.Id, item => item.Season);
-        july[garland.Id].ShouldBe("off_season");
-        july[hose.Id].ShouldBe("in_season");
-        // The counts cover the whole catalog, not the products found.
-        var catalog = await shop.ReadAsync<ProductSearchResponse>("/api/v1/products?pageSize=12");
-        (december.Counts.InSeason + december.Counts.AllYear + december.Counts.OffSeason).ShouldBe(catalog.TotalItems);
-        december.Counts.InSeason.ShouldBeGreaterThan(0);
-        december.RulesWithoutCategory.ShouldNotBeNull();
-        (await manager.GetAsync($"{Editor}/preview?mode=seasonal&q={new string((char)1093, 129)}", Ct)).StatusCode
-            .ShouldBe(HttpStatusCode.BadRequest);
+            var winter = december.Items.ToDictionary(item => item.Product.Id, item => (item.Season, item.Source));
+            winter.Keys.Order().ShouldBe(new[] { garland.Id, chlorine.Id }.Order());
+            winter[garland.Id].ShouldBe(("in_season", "rule"));
+            winter[chlorine.Id].ShouldBe(("off_season", "rule"));
+            var july = (await manager.ReadAsync<StorefrontPreviewDto>(url + "&month=7")).Items
+                .ToDictionary(item => item.Product.Id, item => (item.Season, item.Source));
+            july[chlorine.Id].ShouldBe(("in_season", "rule"));
+            // A lookup tells the season of what it found. The counts belong to the catalog as a whole.
+            december.Counts.ShouldBeNull();
+            var whole = await manager.ReadAsync<StorefrontPreviewDto>($"{Editor}/preview?mode=seasonal&month=12");
+            var catalog = await shop.ReadAsync<ProductSearchResponse>("/api/v1/products?pageSize=12");
+            var counts = whole.Counts.ShouldNotBeNull();
+            (counts.InSeason + counts.AllYear + counts.OffSeason).ShouldBe(catalog.TotalItems);
+            counts.InSeason.ShouldBeGreaterThan(0);
+            whole.MissingSections.ShouldNotBeNull();
+            foreach (var unreadable in new[] { new string((char)1093, 129), "a%07b" })
+                (await manager.GetAsync($"{Editor}/preview?mode=seasonal&q={unreadable}", Ct)).StatusCode
+                    .ShouldBe(HttpStatusCode.BadRequest);
+        }
+        finally
+        {
+            // Do not leave an extra visible root in the shared fixture.
+            await api.WithDbAsync(db => db.Set<Category>().Where(c => c.Id == pool.Id)
+                .ExecuteUpdateAsync(set => set.SetProperty(c => c.IsVisible, false), Ct));
+        }
     }
 
     private static async Task<Guid[]> PreviewAsync(HttpClient manager, string url) =>

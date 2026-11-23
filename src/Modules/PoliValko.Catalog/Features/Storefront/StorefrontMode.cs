@@ -24,8 +24,10 @@ public sealed record ChangeStorefrontMode(string Mode, DateOnly? Through, Guid E
 /// <param name="Source">rule | product | category | department | none</param>
 public sealed record StorefrontPreviewItemDto(ProductListItemDto Product, string Season, string Source);
 public sealed record StorefrontPreviewCountsDto(int InSeason, int AllYear, int OffSeason);
-public sealed record StorefrontPreviewDto(IReadOnlyList<StorefrontPreviewItemDto> Items, StorefrontPreviewCountsDto Counts,
-    IReadOnlyList<string> RulesWithoutCategory);
+/// <param name="Counts">The whole catalog by season. Absent when the preview looks products up by name.</param>
+/// <param name="MissingSections">Sections named by seasonal rules that the catalog does not have.</param>
+public sealed record StorefrontPreviewDto(IReadOnlyList<StorefrontPreviewItemDto> Items, StorefrontPreviewCountsDto? Counts,
+    IReadOnlyList<string> MissingSections);
 
 internal static class StorefrontMode
 {
@@ -77,9 +79,10 @@ internal static class StorefrontMode
             pinned: term is null ? pinned : null, seasonDate: seasonDate);
         var rows = await ProductListing.ListItems(ranked.Take(PreviewSize)).ToListAsync(ct);
         var items = await ProductListing.ToListItemsAsync(db, rows, time, ct);
-        // Read once for the whole catalog: matching every rule against every product is the costly part
-        // (0.6 s on 4 900 products), and both the counts and the products shown come from the same rows.
-        var seasons = await (await SeasonClassifier.QueryAsync(products, categories, db, cache, today, seasonDate, ct)).ToListAsync(ct);
+        // Matching every rule against every product is the costly part (0.6 s on 4 900 products). The catalog is
+        // read once, for the counts and the products shown alike; a lookup asks about the products it found only.
+        var seasons = await (await SeasonClassifier.QueryAsync(products, categories, db, cache, today, seasonDate, ct,
+            only: term is null ? null : items.Select(item => item.Id).ToArray())).ToListAsync(ct);
         var states = seasons.ToDictionary(row => row.ProductId);
         var counts = seasons.CountBy(row => row.State).ToDictionary();
         // A product that became visible between the two reads has no row and is shown as one nothing is known about.
@@ -90,9 +93,11 @@ internal static class StorefrontMode
                 var state = states.GetValueOrDefault(item.Id, unknown);
                 return new StorefrontPreviewItemDto(item, SeasonClassifier.Name(state.State), SeasonClassifier.Source(state));
             }).ToList(),
-            new StorefrontPreviewCountsDto(counts.GetValueOrDefault((int)Season.In), counts.GetValueOrDefault((int)Season.AllYear),
-                counts.GetValueOrDefault((int)Season.Off)),
-            SeasonalPurpose.RulesWithoutCategory(categories)));
+            term is null
+                ? new StorefrontPreviewCountsDto(counts.GetValueOrDefault((int)Season.In),
+                    counts.GetValueOrDefault((int)Season.AllYear), counts.GetValueOrDefault((int)Season.Off))
+                : null,
+            SeasonalPurpose.MissingSections(categories)));
     }
 
     private static async Task<Results<Ok<StorefrontModeDto>, ValidationProblem, Conflict>> Save(

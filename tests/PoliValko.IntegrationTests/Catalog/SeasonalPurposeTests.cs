@@ -75,7 +75,8 @@ public sealed class SeasonalPurposeTests(ApiFactory api)
     public async Task A_rule_for_other_months_is_known_while_it_is_not_in_force()
     {
         var ct = TestContext.Current.CancellationToken;
-        var pool = new Category { Id = Guid.NewGuid(), Slug = "purpose-" + Guid.NewGuid(), Name = "Хімія для басейнів" };
+        // Hidden: the rules are given this section directly, and the shop must not gain a department.
+        var pool = new Category { Id = Guid.NewGuid(), Slug = "purpose-" + Guid.NewGuid(), Name = "Хімія для басейнів", IsVisible = false };
         await api.WithDbAsync(db => { db.Add(pool); return db.SaveChangesAsync(ct); });
         var chlorine = await api.AddProductAsync(pool.Slug, "Хлор у гранулах", 100);
         var bucket = await api.AddProductAsync(pool.Slug, "Відро", 100);
@@ -93,15 +94,21 @@ public sealed class SeasonalPurposeTests(ApiFactory api)
     }
 
     [Fact]
-    public void Rules_whose_sections_are_no_longer_in_the_catalog_are_named()
+    public void Sections_the_rules_name_but_the_catalog_lacks_are_listed()
     {
-        var seeds = new Category { Id = Guid.NewGuid(), Slug = "nasinnia", Name = "Насіння" };
-        var missing = SeasonalPurpose.RulesWithoutCategory([seeds]);
-        missing.ShouldContain("Хімія для басейнів (5–8)");
-        missing.ShouldNotContain(rule => rule.StartsWith("Насіння ("));
+        static Category Section(string name, string slug = "section") => new() { Id = Guid.NewGuid(), Slug = slug, Name = name };
+
+        var missing = SeasonalPurpose.MissingSections([Section("Насіння"), Section("Все для поливу", "vse-dlia-polyvu")]);
+        missing.ShouldContain("Хімія для басейнів");
+        missing.ShouldNotContain("Насіння");
+        // A section may be named by its address instead of its title.
+        missing.ShouldNotContain("vse-dlia-polyvu");
+        missing.ShouldBeUnique();
+        // A rule that still finds one of its sections has lost the goods of the other one all the same.
+        SeasonalPurpose.MissingSections([Section("Рослини")]).ShouldContain("Бордюрні стрічки / Бордюри й огорожі");
         // Either the old or the new name of a renamed section is enough.
-        var tools = new Category { Id = Guid.NewGuid(), Slug = "sekatory", Name = "Секатори, сучкорізи й ножиці" };
-        SeasonalPurpose.RulesWithoutCategory([tools]).ShouldNotContain(rule => rule.Contains("Секатори"));
+        SeasonalPurpose.MissingSections([Section("Бордюри й огорожі")]).ShouldNotContain(section => section.Contains("Бордюр"));
+        SeasonalPurpose.MissingSections([Section("Бордюрні стрічки")]).ShouldNotContain(section => section.Contains("Бордюр"));
     }
 
     private async Task CheckMonthsAsync((string Section, string Title, string? Attribute, int[] Months)[] cases, int[] months, CancellationToken ct)

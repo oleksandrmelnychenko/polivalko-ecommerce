@@ -18,9 +18,14 @@ internal static class SeasonalPurpose
     private const string Pruning = "Гілкорізи/Сучкорізи/Секатори/Ножиці";
     private const string WinterCare = "Прибирання снігу й льоду";
     // The catalog renamed these sections on 23.11.2026. A rule finds its section under either name.
-    private static readonly string[] PruningSections = [Pruning, "Секатори, сучкорізи й ножиці", "Сокири/Пили/Ножі", "Сокири, пили й ножі"];
-    private static readonly string[] CompostSections = ["Септик/Компост", "Септики й компост", "Господарчі товари", "Ручний інструмент"];
-    private static readonly string[] PlantCareSections = ["Опори для рослин", "Оприскувачі/Лійки/Відра", "Оприскувачі, лійки й відра"];
+    private static readonly Dictionary<string, string> Renamed = new()
+    {
+        [Pruning] = "Секатори, сучкорізи й ножиці",
+        ["Сокири/Пили/Ножі"] = "Сокири, пили й ножі",
+        ["Септик/Компост"] = "Септики й компост",
+        ["Оприскувачі/Лійки/Відра"] = "Оприскувачі, лійки й відра",
+        ["Бордюрні стрічки"] = "Бордюри й огорожі",
+    };
     private static readonly string[] Attributes = ["тип", "тип товару", "призначення", "тематика", "культура", "сезон", "сезонність", "період застосування", "сезон застосування"];
 
     // Inclusive months describe storefront priorities. Match only inside the named catalog branches.
@@ -50,12 +55,12 @@ internal static class SeasonalPurpose
         new("Композитні грядки", 3, 5, ["Композитні грядки"], "грядк"),
         new("Посадка", 3, 5, ["Ручний інструмент"], "сіялк|саджалк|для (ви)?сад(жування|ки)|для посадки|лопатка садова|садова лопатка"),
         new("Посадка", 9, 10, ["Ручний інструмент"], "для (висад(ки|жування)|посадки) цибул|саджалка.*цибул"),
-        new("Облаштування саду", 4, 6, ["Бордюрні стрічки", "Бордюри й огорожі", "Рослини"], "садовий бордюр|бордюр садовий|газонне огородження|рулонний газон"),
-        new(Pruning, 2, 3, PruningSections, "секатор|сучкоріз|гілкоріз|обріз(к|у)|пил[ак].*садов|садов.*пил"),
-        new(Pruning, 9, 10, PruningSections, "секатор|сучкоріз|гілкоріз|обріз(к|у)|пил[ак].*садов|садов.*пил"),
+        new("Облаштування саду", 4, 6, ["Бордюрні стрічки", "Рослини"], "садовий бордюр|бордюр садовий|газонне огородження|рулонний газон"),
+        new(Pruning, 2, 3, [Pruning, "Сокири/Пили/Ножі"], "секатор|сучкоріз|гілкоріз|обріз(к|у)|пил[ак].*садов|садов.*пил"),
+        new(Pruning, 9, 10, [Pruning, "Сокири/Пили/Ножі"], "секатор|сучкоріз|гілкоріз|обріз(к|у)|пил[ак].*садов|садов.*пил"),
         new("Все для прибирання", 9, 11, ["Все для прибирання", "Ручний інструмент"], "для листя|віялов.*грабл|граблі.*віял|збирання листя"),
         new("Збирання врожаю", 8, 10, ["Матеріали для пакування", "Ручний інструмент"], "мішок овочев|овочева сітка|сітка для овочів|плодознімач"),
-        new("Септик/Компост", 9, 11, CompostSections, "компостер|для компост|компостуван"),
+        new("Септик/Компост", 9, 11, ["Септик/Компост", "Господарчі товари", "Ручний інструмент"], "компостер|для компост|компостуван"),
         new("Догляд за деревами", 10, 11, ["Засоби захисту рослин"], "побілк|для побілки|фарба для дерев"),
         new("Догляд за деревами", 2, 3, ["Засоби захисту рослин"], "побілк|для побілки|фарба для дерев"),
         new("Захист рослин у період вегетації", 3, 4, ["Засоби захисту рослин"], "фунгіцид|медян екстра", "протруйник|для зберігання|для сховищ"),
@@ -73,7 +78,7 @@ internal static class SeasonalPurpose
         new("Хімія для басейнів", 5, 8, ["Хімія для басейнів"], "басейн|хлор|альгекс|флокер|коагул|тест.*води", "консервац|зимівл|зимов"),
         new("Хімія для басейнів", 9, 10, ["Хімія для басейнів"], "консервац|зимівл|зимов"),
         new("Догляд за газоном", 4, 9, ["Техніка для саду та городу", "Ручний інструмент"], "газонокос|мотокос|тример|ножиці для трав|аератор.*газон", "ліска|волосін|корд для|котушк|шпул|головка для|ніж для|запасн"),
-        new("Догляд за рослинами", 4, 8, PlantCareSections, "шпалер|опор.*(рослин|бамбук)|підв.яз|обприскувач|оприскувач|лійка.*садов"),
+        new("Догляд за рослинами", 4, 8, ["Опори для рослин", "Оприскувачі/Лійки/Відра"], "шпалер|опор.*(рослин|бамбук)|підв.яз|обприскувач|оприскувач|лійка.*садов"),
         new("Захист від комах", 5, 9, ["Засоби захисту людей"], "комар|кліщ|москіт|репелент"),
         new("Садове освітлення", 4, 8, ["Елементи освітлення"], "світильник.*сонячн|сонячн.*світильник|освітлення садов.*доріж"),
     ];
@@ -96,10 +101,19 @@ internal static class SeasonalPurpose
         return MatchRules(db, categories, active, Rules.Except(active));
     }
 
-    /// <summary>Rules that find no section in the catalog, for instance after a section was renamed.</summary>
-    public static IReadOnlyList<string> RulesWithoutCategory(IReadOnlyList<Category> categories) =>
-        Rules.Where(rule => !categories.Any(c => rule.Sections.Contains(c.Name) || rule.Sections.Contains(c.Slug)))
-            .Select(rule => $"{string.Join(" / ", rule.Sections)} ({rule.From}–{rule.Through})").Distinct().ToArray();
+    /// <summary>
+    /// Sections the rules name that the catalog does not have, for instance after a section was renamed.
+    /// Their goods have lost those rules, even when the rule still finds another of its sections.
+    /// </summary>
+    public static IReadOnlyList<string> MissingSections(IReadOnlyList<Category> categories) =>
+        Rules.SelectMany(rule => rule.Sections).Distinct()
+            .Where(section => !categories.Any(category => Named(category, section)))
+            .Select(section => Renamed.TryGetValue(section, out var now) ? $"{section} / {now}" : section).ToArray();
+
+    /// <summary>A rule names a section by its title or its address; a renamed section answers to both titles.</summary>
+    private static bool Named(Category category, string section) =>
+        category.Name == section || category.Slug == section
+        || (Renamed.TryGetValue(section, out var now) && category.Name == now);
 
     private static Rule[] InForce(DateOnly day)
     {
@@ -126,7 +140,7 @@ internal static class SeasonalPurpose
         IReadOnlyList<Category> categories, IEnumerable<Rule> rules, IEnumerable<Rule> dormant)
     {
         var byParent = categories.ToLookup(c => c.ParentId);
-        Guid[] Sections(Rule rule) => categories.Where(c => rule.Sections.Contains(c.Name) || rule.Sections.Contains(c.Slug))
+        Guid[] Sections(Rule rule) => categories.Where(c => rule.Sections.Any(section => Named(c, section)))
             .SelectMany(c => CategoryQueries.Descendants(c.Id, byParent).Prepend(c.Id)).Distinct().ToArray();
         var groups = new List<string>();
         var rows = new List<(Guid Category, int? Family, string Include, string? Exclude, int MonthMask)>();

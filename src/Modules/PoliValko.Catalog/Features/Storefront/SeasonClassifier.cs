@@ -27,8 +27,9 @@ internal static class SeasonClassifier
 
     /// <param name="today">The last day that can have receipts.</param>
     /// <param name="anchor">The day the season is asked about.</param>
+    /// <param name="only">The few products asked about, when it is not the whole catalog.</param>
     public static async Task<IQueryable<SeasonRow>> QueryAsync(IQueryable<Product> products, IReadOnlyList<Category> categories,
-        PoliValkoDbContext db, IMemoryCache cache, DateOnly today, DateOnly anchor, CancellationToken ct)
+        PoliValkoDbContext db, IMemoryCache cache, DateOnly today, DateOnly anchor, CancellationToken ct, Guid[]? only = null)
     {
         var history = await SeasonalHistory.LoadAsync(db, cache, today, anchor, ct);
         // The tree is read now, not when the history was cached: sections are renamed and moved while the shop runs.
@@ -45,6 +46,12 @@ internal static class SeasonClassifier
             FROM unnest({shelfIds}::uuid[], {shelfVerdicts}::int[], {shelfRoots}::bool[]) AS c(id, verdict, root)
             """);
         var rules = SeasonalPurpose.Matches(db, categories, anchor).Rows;
+        if (only is not null)
+        {
+            // Matching every rule against the whole catalog is most of the cost: here the rules meet these products alone.
+            products = products.Where(p => only.Contains(p.Id));
+            rules = rules.Where(match => only.Contains(match.ProductId));
+        }
         return from p in products
                join r in rules on p.Id equals r.ProductId into ruled
                from rule in ruled.DefaultIfEmpty()

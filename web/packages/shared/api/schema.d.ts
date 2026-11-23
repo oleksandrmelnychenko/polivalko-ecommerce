@@ -5942,8 +5942,8 @@ export interface components {
         };
         StorefrontPreviewDto: {
             items: components["schemas"]["StorefrontPreviewItemDto"][];
-            counts: components["schemas"]["StorefrontPreviewCountsDto"];
-            rulesWithoutCategory: string[];
+            counts: null | components["schemas"]["StorefrontPreviewCountsDto"];
+            missingSections: string[];
         };
         StorefrontPreviewItemDto: {
             product: components["schemas"]["ProductListItemDto"];

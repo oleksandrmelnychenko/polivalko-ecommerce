@@ -98,8 +98,10 @@ function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: 
     { enabled: Boolean(found) })
   const searching = Boolean(lookup.trim())
   const shown = searching ? lookedUp : preview
+  // Saving waits for the catalog preview, so its failure is shown even while a search is open.
+  const failed = preview.status === 'error' || preview.status === 'forbidden'
   // Until the typed words reach the request, the list on screen answers the previous ones.
-  const listStatus = searching && found !== lookup.trim() ? 'loading' : shown.status
+  const listStatus = failed ? preview.status : searching && found !== lookup.trim() ? 'loading' : shown.status
   const end = mode === 'seasonal' || !through ? null : through
   const invalid = Boolean(end && end < kyivDate())
   const dirty = mode !== baseline.mode || end !== (baseline.through ?? null) || pins.join() !== (baseline.pinnedProductIds ?? []).join()
@@ -110,7 +112,7 @@ function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: 
     : [...pins.flatMap(id => byId.get(id) ?? []), ...items.filter(item => !pins.includes(item.product.id))]
   const missing = preview.status === 'ready' ? pins.filter(id => !byId.has(id)) : []
   const counts = preview.data?.counts
-  const lostRules = preview.data?.rulesWithoutCategory ?? []
+  const missingSections = preview.data?.missingSections ?? []
   function movePin(index: number, destination: number) {
     if (busy || index < 0 || destination < 0 || destination >= pins.length || destination === index) return
     const next = pins.slice()
@@ -177,12 +179,12 @@ function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: 
           description={month === currentMonth ? 'Порядок на сьогодні за київським часом.' : 'Прогноз на 15-те число за сьогоднішніми залишками. Місяць змінює лише попередній перегляд.'}
           onChange={event => { const value = Number(event.currentTarget.value); setSelectedMonth(value === currentMonth ? null : value) }} />}
         <TextInput mt="xs" aria-label="Пошук товару в перегляді" placeholder="Знайти товар і побачити його сезон" radius="xl"
-          leftSection={<IconSearch size={16} />} value={lookup} onChange={event => setLookup(event.currentTarget.value)} />
-        {lostRules.length > 0 && <Alert color="orange" mt="xs" title={'Сезонні правила без розділу в каталозі · ' + lostRules.length}>
-          Розділ перейменовано або прибрано, тож правило не знаходить товарів: {lostRules.join('; ')}.</Alert>}
+          leftSection={<IconSearch size={16} />} value={lookup} maxLength={128} onChange={event => setLookup(event.currentTarget.value)} />
+        {missingSections.length > 0 && <Alert color="orange" mt="xs" title={'Розділів із сезонних правил немає в каталозі · ' + missingSections.length}>
+          {missingSections.join('; ')}. Розділ перейменовано або прибрано, тож його товари лишилися без сезонних правил — правила треба оновити.</Alert>}
         {missing.length > 0 && <Alert color="orange" mt="xs">Закріплених товарів поза каталогом · {missing.length}{' '}
           <Button variant="default" size="compact-xs" onClick={() => setPins(pins.filter(id => !missing.includes(id)))}>Зняти закріплення з недоступних</Button></Alert>}
-        {listStatus !== 'ready' ? <PageState kind={listStatus} onRetry={shown.reload} /> :
+        {listStatus !== 'ready' ? <PageState kind={listStatus} onRetry={failed ? preview.reload : shown.reload} /> :
           rows.length ? <ol className="storefront-mode-products">{rows.map(({ product, season, source }, index) => {
             const pinIndex = searching ? -1 : pins.indexOf(product.id)
             const canDrop = !busy && draggedId !== null && draggedId !== product.id && pinIndex >= 0

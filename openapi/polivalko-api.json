@@ -23695,7 +23695,7 @@
         "required": [
           "items",
           "counts",
-          "rulesWithoutCategory"
+          "missingSections"
         ],
         "type": "object",
         "properties": {
@@ -23706,9 +23706,16 @@
             }
           },
           "counts": {
-            "$ref": "#/components/schemas/StorefrontPreviewCountsDto"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StorefrontPreviewCountsDto"
+              }
+            ]
           },
-          "rulesWithoutCategory": {
+          "missingSections": {
             "type": "array",
             "items": {
               "type": "string"
