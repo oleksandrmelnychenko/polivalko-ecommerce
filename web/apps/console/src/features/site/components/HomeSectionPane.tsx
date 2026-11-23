@@ -44,22 +44,24 @@ const ANNOUNCEMENT_STATUS = {
   live: { tone: 'success', label: 'Показується зараз' },
 } as const
 
-const ABOUT: Partial<Record<HomeBlockKey, { text: string; link: { to: string; label: string } }>> = {
+type HomeLinkProps = { to: string; section: string; label: string }
+
+const ABOUT: Partial<Record<HomeBlockKey, { text: string; link: HomeLinkProps }>> = {
   offers: {
     text: 'Сайт сам добирає товари в наявності зі справжньою знижкою: стара ціна вища за поточну. Якщо таких товарів немає, блок не показується.',
-    link: { to: '/catalog/products', label: 'Товари в каталозі' },
+    link: { to: '/catalog/products', section: 'Каталог', label: 'Товари' },
   },
   collections: {
     text: 'Видимі добірки з товарами, у їхньому порядку. Перша показується великою секцією з фото й стрічкою товарів, решта стрічками.',
-    link: { to: '/catalog/collections', label: 'Каталог → Добірки' },
+    link: { to: '/catalog/collections', section: 'Каталог', label: 'Добірки' },
   },
   categories: {
     text: 'Перші шість категорій верхнього рівня плитками з фото, нижче стрічка з усіма. Фото й порядок задаються в категоріях.',
-    link: { to: '/catalog/categories', label: 'Каталог → Категорії' },
+    link: { to: '/catalog/categories', section: 'Каталог', label: 'Категорії' },
   },
   services: {
     text: 'Напрямки з вкладки «Послуги» з назвою й описом і кнопка «Залишити заявку».',
-    link: { to: '/site/services', label: 'Сайт → Послуги' },
+    link: { to: '/site/services', section: 'Сайт', label: 'Послуги' },
   },
 }
 
@@ -206,13 +208,20 @@ export function HomeSectionPane({ section, values, errors, banners, patch, onCle
       {section !== 'announcement' && ABOUT[section] ? (
         <Card title="Звідки дані">
           <p className="site-home-about">{ABOUT[section].text}</p>
-          <Link className="app-split-link" to={ABOUT[section].link.to}>
-            {ABOUT[section].link.label}
-            <IconArrowRight size={14} stroke={2} aria-hidden="true" />
-          </Link>
+          <HomeLink {...ABOUT[section].link} icon={Icon} />
         </Card>
       ) : null}
     </section>
+  )
+}
+
+function HomeLink({ to, section, label, icon: Icon }: HomeLinkProps & { icon: typeof IconSlideshow }) {
+  return (
+    <Link className="site-home-path" to={to} aria-label={`${section} → ${label}`}>
+      <Icon className="site-path-icon" size={20} stroke={1.6} aria-hidden="true" />
+      <span className="site-path-copy"><small>{section}</small><strong>{label}</strong></span>
+      <IconArrowRight className="site-path-arrow" size={21} stroke={1.7} aria-hidden="true" />
+    </Link>
   )
 }
 
@@ -237,10 +246,7 @@ function HeroCard({ banners }: { banners: Banner[] | null }) {
     <Card
       title="Слайди"
       aside={
-        <Link className="app-split-link site-home-aside-link" to="/site/banners">
-          Сайт → Банери
-          <IconArrowRight size={14} stroke={2} aria-hidden="true" />
-        </Link>
+        <HomeLink to="/site/banners" section="Сайт" label="Банери" icon={IconSlideshow} />
       }
       note={banners === null ? null : live.length === 0 ? <span className="site-warning-text">Зараз не показується жоден банер, слайдер на головній порожній.</span> : `Показується ${live.length} з ${sorted.length}, у цьому порядку.`}
     >
