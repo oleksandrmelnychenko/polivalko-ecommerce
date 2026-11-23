@@ -145,8 +145,9 @@ def export(console, out):
     print(f"exported {len(target['categories'])} categories and {len(target['products'])} DNTrade products to {out}")
 
 
-def reconcile(console, target, apply, report_path=None, keep_visible=frozenset(), previous=None):
+def reconcile(console, target, apply, report_path=None, keep_visible=frozenset(), previous=None, name_fixes=None):
     previous = previous or {}
+    name_fixes = name_fixes or {}
     changes = defaultdict(int)
     say = lambda line: print(("APPLY " if apply else "PLAN  ") + line)
     existing = console.call("GET", "/catalog/categories")
@@ -241,7 +242,13 @@ def reconcile(console, target, apply, report_path=None, keep_visible=frozenset()
                 brand_sets[want["brand"]].append(item["id"])
                 note("brand", current_brand, want["brand"])
         current_name = (detail.get("displayName") or "").strip()
-        if want["displayName"] and want["displayName"] != current_name:
+        fix = name_fixes.get(sku)
+        if fix and shown_name.strip() == fix["from"]:  # a reviewed correction of exactly the name seen there
+            names.append((item["id"], fix["to"], detail))
+            note("fixed site name", shown_name, fix["to"])
+        elif fix:
+            note("fix skipped", shown_name, f"expected «{fix['from']}», left as it is")
+        elif want["displayName"] and want["displayName"] != current_name:
             if current_name and current_name != (before.get("displayName") or "").strip():
                 note("keep site name", current_name, want["displayName"])
             else:
@@ -450,6 +457,7 @@ def main():
     parser.add_argument("--keep", help="adopt: slug of the category the DNTrade import feeds")
     parser.add_argument("--replace", help="adopt: slug of the hand-made duplicate whose place it takes")
     parser.add_argument("--previous-target", help="plan/apply: target file of an earlier run; values it wrote may be updated")
+    parser.add_argument("--fix-names", help='plan/apply: JSON {"sku": {"from": name now, "to": new name}}; replaces a site name only if it is exactly "from"')
     parser.add_argument("--keep-visible", default="", help="plan/apply: comma-separated DNTrade codes the target hides but this run leaves visible")
     args = parser.parse_args()
     console = Console(args.base, args.host)
@@ -468,7 +476,11 @@ def main():
             if args.previous_target:
                 with open(args.previous_target, encoding="utf-8") as before:
                     previous = json.load(before)["products"]
-            reconcile(console, json.load(file), args.mode == "apply", args.report, keep, previous)
+            fixes = {}
+            if args.fix_names:
+                with open(args.fix_names, encoding="utf-8") as fixes_file:
+                    fixes = json.load(fixes_file)
+            reconcile(console, json.load(file), args.mode == "apply", args.report, keep, previous, fixes)
 
 
 if __name__ == "__main__":
