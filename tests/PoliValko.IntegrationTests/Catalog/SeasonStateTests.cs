@@ -9,6 +9,7 @@ namespace PoliValko.IntegrationTests;
 
 // Each test has its own top-level category, its own years and its own pair of dates: the history spans three years,
 // sums up whole categories and is cached by date, so shared categories or dates would leak between tests.
+// The categories are hidden, so the shop the other tests look at gains neither departments nor products.
 public sealed class SeasonStateTests(ApiFactory api)
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
@@ -64,6 +65,29 @@ public sealed class SeasonStateTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task A_burst_right_after_the_first_sale_is_not_a_season_and_an_old_product_keeps_all_three_windows()
+    {
+        var today = new DateOnly(2056, 11, 23);
+        var shelf = await AddCategoryAsync();
+        var oldShelf = await AddCategoryAsync();
+        var launched = await AddSoldProductAsync(shelf, "Новинка минулого грудня");
+        var old = await AddSoldProductAsync(oldShelf, "Давній товар");
+        // First sold inside last year's window: six purchases in six days, then one a month.
+        await AddDailyReceiptsAsync(launched, new DateOnly(2055, 12, 10), new DateOnly(2055, 12, 15));
+        for (var month = 1; month <= 10; month++) await AddReceiptsAsync(launched, new DateOnly(2056, month, 15), 1);
+        // One purchase a day since ten days before the oldest window began.
+        await AddDailyReceiptsAsync(old, new DateOnly(2053, 11, 13), today.AddDays(-1));
+
+        var history = await LoadAsync(today, today);
+
+        // The window had begun before the product was first sold, so it cannot be compared with the rest of its life.
+        Verdict(history, launched).ShouldBe(SeasonHistory.Undecided);
+        history.ByCategory[shelf.Id].ShouldBe((0m, 0m));
+        Verdict(history, old).ShouldBe((int)Season.AllYear);
+        history.ByCategory[oldShelf.Id].ShouldBe((84m, 84m));
+    }
+
+    [Fact]
     public async Task Rules_and_history_give_every_product_a_state_and_its_reason()
     {
         var today = new DateOnly(2051, 12, 10);
@@ -73,6 +97,7 @@ public sealed class SeasonStateTests(ApiFactory api)
         var pool = await AddCategoryAsync(name: "Хімія для басейнів");
         var summerShelf = await AddCategoryAsync();
         var emptyShelf = await AddCategoryAsync();
+        var fair = await AddCategoryAsync(name: "novyi-rik");
         var garland = await api.AddProductAsync(newYear.Slug, "Гірлянда", 100);
         var sold = await AddSoldProductAsync(shelf, "Продається зараз");
         var sparse = await AddSoldProductAsync(shelf, "Мало чеків");
@@ -80,14 +105,20 @@ public sealed class SeasonStateTests(ApiFactory api)
         var chlorine = await AddSoldProductAsync(pool, "Хлор у гранулах");
         var summer = await AddSoldProductAsync(summerShelf, "Літній товар");
         var unknown = await api.AddProductAsync(emptyShelf.Slug, "Без історії", 100);
+        var autumnToy = await AddSoldProductAsync(fair, "Іграшка, яку купують восени");
+        var shock = await AddSoldProductAsync(pool, "Хлор шок");
         await AddReceiptsAsync(sold, new DateOnly(2050, 12, 15), 6);
         await AddReceiptsAsync(sold, new DateOnly(2050, 6, 1), 2);
         await AddReceiptsAsync(sparse, new DateOnly(2050, 6, 1), 1);
         await AddDailyReceiptsAsync(chlorine, new DateOnly(2050, 1, 1), today.AddDays(-1));
         await AddReceiptsAsync(summer, new DateOnly(2049, 9, 1), 60);
         await AddReceiptsAsync(summer, new DateOnly(2050, 9, 1), 60);
-        Category[] categories = [department, shelf, newYear, pool, summerShelf, emptyShelf];
-        Product[] products = [garland, sold, sparse, topLevel, chlorine, summer, unknown];
+        await AddReceiptsAsync(autumnToy, new DateOnly(2049, 9, 1), 60);
+        await AddReceiptsAsync(autumnToy, new DateOnly(2050, 9, 1), 60);
+        await AddReceiptsAsync(shock, new DateOnly(2050, 12, 15), 6);
+        await AddReceiptsAsync(shock, new DateOnly(2050, 6, 1), 2);
+        Category[] categories = [department, shelf, newYear, pool, summerShelf, emptyShelf, fair];
+        Product[] products = [garland, sold, sparse, topLevel, chlorine, summer, unknown, autumnToy, shock];
 
         var december = await ClassifyAsync(products, categories, today, today);
 
@@ -99,10 +130,20 @@ public sealed class SeasonStateTests(ApiFactory api)
         december[chlorine.Id].ShouldBe(("all_year", "product"));
         december[summer.Id].ShouldBe(("off_season", "product"));
         december[unknown.Id].ShouldBe(("all_year", "none"));
+        // A rule for this month outranks receipts that say the opposite.
+        december[autumnToy.Id].ShouldBe(("in_season", "rule"));
+        // Receipts now outrank a rule written for the summer.
+        december[shock.Id].ShouldBe(("in_season", "product"));
 
         // Looked at for January: the garland rule is over and nothing else speaks for it.
         var january = await ClassifyAsync(products, categories, today, new DateOnly(2052, 1, 15));
         january[garland.Id].ShouldBe(("off_season", "rule"));
+
+        // The shelf leaves its department while the history is still cached: the next look follows the new tree.
+        var moved = new Category { Id = shelf.Id, Slug = shelf.Slug, Name = shelf.Name, IsVisible = false };
+        var afterMove = await ClassifyAsync(products, [department, moved, newYear, pool, summerShelf, emptyShelf, fair], today, today);
+        afterMove[topLevel.Id].ShouldBe(("all_year", "none"));
+        afterMove[sparse.Id].ShouldBe(("in_season", "department"));
     }
 
     private Task<Dictionary<Guid, (string Season, string Source)>> ClassifyAsync(Product[] products, Category[] categories,
@@ -128,7 +169,7 @@ public sealed class SeasonStateTests(ApiFactory api)
 
     private async Task<Category> AddCategoryAsync(Guid? parent = null, string name = "Полиця сезону")
     {
-        var category = new Category { Id = Guid.NewGuid(), ParentId = parent, Slug = "season-" + Guid.NewGuid(), Name = name };
+        var category = new Category { Id = Guid.NewGuid(), ParentId = parent, Slug = "season-" + Guid.NewGuid(), Name = name, IsVisible = false };
         await api.WithDbAsync(db => { db.Add(category); return db.SaveChangesAsync(Ct); });
         return category;
     }

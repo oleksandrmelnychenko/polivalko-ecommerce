@@ -28,11 +28,14 @@ internal static class SeasonalHistory
 
     private static async Task<SeasonHistory> ReadAsync(PoliValkoDbContext db, DateOnly today, DateOnly anchor, CancellationToken ct)
     {
-        var first = anchor.AddYears(-SeasonVerdict.Years);
         // A month looked at ahead has last year's window partly in the future: days that have not come hold no receipts.
         var last = anchor.AddDays(-1) < today ? anchor.AddDays(-1) : today;
         var windows = Enumerable.Range(1, SeasonVerdict.Years).Select(year => anchor.AddYears(-year))
             .Select(start => (Start: start, End: start.AddDays(SeasonVerdict.WindowDays - 1))).ToArray();
+        // The receipts start one window before the oldest window: that tells a product already selling
+        // when the window began from one first sold inside it.
+        var first = windows[^1].Start.AddDays(-SeasonVerdict.WindowDays);
+        // Hidden products count too: what a section sold in past years tells its season even if those goods are gone.
         // One receipt is one purchase, however many lines or units of the product it holds. Receipts are counted
         // by product code before the catalog is joined: reading the receipt bodies is then nearly the whole cost
         // (0.5 s for 60 000 receipts; joining the catalog to every line first took 1.4 s).
@@ -61,15 +64,21 @@ internal static class SeasonalHistory
         for (var i = 0; i < sold.Length; i++)
         {
             var row = sold[i];
-            decimal observed = row.W1 + row.W2 + row.W3;
-            // An even spread over the product's own life: windows before its first sale say nothing about its season.
-            var life = last.DayNumber - row.FirstDay.DayNumber + 1;
-            var open = windows.Sum(window =>
+            int[] bought = [row.W1, row.W2, row.W3];
+            decimal observed = 0;
+            var open = 0;
+            for (var w = 0; w < windows.Length; w++)
             {
-                var from = window.Start > row.FirstDay ? window.Start : row.FirstDay;
-                var to = window.End < last ? window.End : last;
-                return to < from ? 0 : to.DayNumber - from.DayNumber + 1;
-            });
+                // A window that had begun before the product was first sold holds its launch, not its season:
+                // a few purchases right after it appeared would outweigh the rest of a short life.
+                if (windows[w].Start <= row.FirstDay) continue;
+                var to = windows[w].End < last ? windows[w].End : last;
+                if (to < windows[w].Start) continue;
+                observed += bought[w];
+                open += to.DayNumber - windows[w].Start.DayNumber + 1;
+            }
+            // An even spread over the product's own life.
+            var life = last.DayNumber - row.FirstDay.DayNumber + 1;
             var expected = (decimal)row.Total * open / life;
             verdicts[i] = SeasonVerdict.Judge(observed, expected) is { } verdict ? (int)verdict : SeasonHistory.Undecided;
             var sum = byCategory.GetValueOrDefault(row.CategoryId);
