@@ -98,7 +98,7 @@ export function ListingFilters({
     const next = { ...selection, ...patch, page: 1 };
     setSelection(next);
     const href = hrefFor(basePath, fixed, next, {});
-    if (href === current) return;
+    if (href === hrefFor(basePath, fixed, selection, {})) return;
     startTransition(() => router.push(href, { scroll: false }));
   }
 
