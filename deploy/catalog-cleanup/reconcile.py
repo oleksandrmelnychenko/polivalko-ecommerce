@@ -349,7 +349,8 @@ def name_problems(name):
 
 
 def audit(console, target, report_path):
-    """Read-only look at an environment after a reconcile: what the target did not cover and what still looks wrong."""
+    """Read-only look at an environment after a reconcile: what the target did not cover and what still looks wrong,
+    including visible products that share a name."""
     categories = console.call("GET", "/catalog/categories")
     paths = category_paths(categories)
     slug_of = {c["id"]: c["slug"] for c in categories}
@@ -389,9 +390,20 @@ def audit(console, target, report_path):
                 rows.append(("visible on a parent category", item["sku"], name, place, ""))
             for problem in name_problems(name):
                 rows.append(("name", item["sku"], name, place, problem))
+        if not visible and item["stock"] > 0 and item["sku"] in target["products"]:
+            rows.append(("hidden in stock", item["sku"], name, place, f"stock {item['stock']:g}"))
         if item["sku"] not in target["products"] and not any(item["sku"].lower().startswith(p) for p in target["hideNavkoloPrefixes"]):
             rows.append(("not in the target", item["sku"], name, place,
                          f"{'visible' if visible else 'hidden'}, stock {item['stock']:g}"))
+    same = defaultdict(list)
+    for category_id, item in where.values():
+        if item["isVisible"] and category_id not in hidden_ids:
+            same[" ".join(norm(item.get("displayName") or item["name"]).replace(".", " ").replace(",", " ").split())].append(item)
+    for items in same.values():
+        if len(items) > 1:
+            for item in items:
+                rows.append(("same name", item["sku"], item.get("displayName") or item["name"], slug_of[where[item["id"]][0]],
+                             f"{(item.get('price') or {}).get('value')} грн, stock {item['stock']:g}"))
     for c in categories:
         if c["isVisible"] and c["id"] not in hidden_ids and c["id"] not in children and not shown[c["id"]]:
             rows.append(("visible empty category", c["slug"], " / ".join(paths[c["id"]]), "", ""))

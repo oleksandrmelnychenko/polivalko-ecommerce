@@ -37,7 +37,12 @@ internal static class InventoryReview
             """).ToListAsync(ct);
 
     private static IQueryable<InventoryRow> Review(PoliValkoDbContext db,Guid id,Guid? org) =>
-        db.Database.SqlQuery<InventoryRow>($"SELECT * FROM accounting.inventory_review({id},{org}::uuid)");
+        // The site name the catalog shows, not the DNTrade text the product was imported under.
+        db.Database.SqlQuery<InventoryRow>($"""
+            SELECT r."position",r.code,r.title,r.unit,r.quantity_text,r.quantity,r.booked,r.product_id,
+                coalesce(nullif(p.display_name,''),r.product_name) AS product_name,r.store_id,r.status,r.opening_id,r.opening_org_id
+            FROM accounting.inventory_review({id},{org}::uuid) r LEFT JOIN catalog.products p ON p.id=r.product_id
+            """);
 
     private static async Task<IResult> Rows(Guid id,Guid? org,string? q,string? status,string? amount,PoliValkoDbContext db,int page=1,CancellationToken ct=default)
     {
@@ -49,7 +54,8 @@ internal static class InventoryReview
         if (!string.IsNullOrWhiteSpace(q))
         {
             var term=q.Trim().ToLowerInvariant();
-            rows=rows.Where(r=>(r.Code!=null && r.Code.ToLower().Contains(term)) || (r.Title!=null && r.Title.ToLower().Contains(term)));
+            rows=rows.Where(r=>(r.Code!=null && r.Code.ToLower().Contains(term)) || (r.Title!=null && r.Title.ToLower().Contains(term))
+                || (r.ProductName!=null && r.ProductName.ToLower().Contains(term)));
         }
         var counts=await rows.GroupBy(r=>r.Status).Select(g=>new InventoryCount(g.Key,g.Count())).ToListAsync(ct);
         if (status=="review") rows=rows.Where(r=>r.Status!="ready" && r.Status!="confirmed" && r.Status!="reference");

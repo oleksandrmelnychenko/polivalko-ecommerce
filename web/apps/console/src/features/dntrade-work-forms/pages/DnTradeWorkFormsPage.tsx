@@ -1,9 +1,10 @@
-import { Anchor, Button, Group, Select, TextInput } from '@mantine/core'
+import { Anchor, Button, Select, TextInput } from '@mantine/core'
 import { useDebouncedCallback } from '@mantine/hooks'
 import { IconPlus, IconSearch } from '@tabler/icons-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ARCHIVE_PATH } from '@/features/dntrade-archive/lib/archive'
+import '@/features/dntrade-archive/components/archive-navigation.css'
 import { fieldErrors, problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
@@ -125,20 +126,17 @@ export function DnTradeWorkFormsPage() {
           Нова форма
         </Button>
       )} />
-      <Group component="nav" gap="xs" className="dntrade-work-form-views" aria-label="Розділи робочих форм">
+      <nav className="dntrade-section-tabs" aria-label="Розділи робочих форм">
         {[{ value: null, label: 'Усі форми' }, ...WORK_FORM_SECTIONS].map((view) => (
-          <Button
+          <Link
             key={view.label}
-            component={Link}
             to={{ pathname: WORK_FORMS_PATH, search: sectionSearch(view.value) }}
-            size="compact-sm"
-            variant={(section ?? null) === view.value ? 'light' : 'subtle'}
             aria-current={(section ?? null) === view.value ? 'page' : undefined}
           >
             {view.label}
-          </Button>
+          </Link>
         ))}
-      </Group>
+      </nav>
       <FilterBar
         label="Пошук робочих форм"
         search={(

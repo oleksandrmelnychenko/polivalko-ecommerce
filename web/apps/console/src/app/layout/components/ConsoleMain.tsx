@@ -6,7 +6,7 @@ import { PageHeaderActionsSlot, PageHeaderTitleSlot } from '@/shared/ui/page-hea
 import { ConsoleSectionTabs } from './ConsoleSectionTabs'
 
 export function ConsoleMain({ children, dashboard }: PropsWithChildren<{ dashboard: boolean }>) {
-  const { activeItem, activeSection } = useNavigation()
+  const { activeItem, activeSection, activeSectionItems } = useNavigation()
   const matchesItem = useMatch(activeItem?.path ?? '/')
   const productDialog = useMatch('/catalog/products/:id')
   const catalogImport = useMatch('/catalog/import')
@@ -14,8 +14,8 @@ export function ConsoleMain({ children, dashboard }: PropsWithChildren<{ dashboa
   const siteWorkspace = Boolean(useMatch('/site/*'))
   const pageEditor = useMatch('/site/pages/:slug')
   const settingsWorkspace = useMatch('/settings/*')
-  const systemList = activeSection?.id === 'system' && Boolean(matchesItem)
-  const compactHeader = systemList || Boolean(settingsWorkspace) || isCatalogList || activeSection?.id === 'partners' || (siteWorkspace && !pageEditor)
+  const hasTabHeading = activeSectionItems.length > 1 && Boolean(matchesItem) && (activeSection?.id === 'settings' || activeSection?.id === 'system')
+  const compactHeader = hasTabHeading || isCatalogList || activeSection?.id === 'partners' || (siteWorkspace && !pageEditor)
   return (
     <AppShell.Main id="main" data-section={activeSection?.id} data-site-workspace={siteWorkspace || Boolean(settingsWorkspace) || undefined}>
       <div className="console-content">

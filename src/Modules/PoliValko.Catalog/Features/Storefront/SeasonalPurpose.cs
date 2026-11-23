@@ -17,19 +17,30 @@ internal static class SeasonalPurpose
     private const string Covers = "Укривні матеріали";
     private const string Pruning = "Гілкорізи/Сучкорізи/Секатори/Ножиці";
     private const string WinterCare = "Прибирання снігу й льоду";
+    // The catalog renamed these sections on 23.11.2026. A rule finds its section under either name.
+    private static readonly Dictionary<string, string> Renamed = new()
+    {
+        [Pruning] = "Секатори, сучкорізи й ножиці",
+        ["Сокири/Пили/Ножі"] = "Сокири, пили й ножі",
+        ["Септик/Компост"] = "Септики й компост",
+        ["Оприскувачі/Лійки/Відра"] = "Оприскувачі, лійки й відра",
+        ["Бордюрні стрічки"] = "Бордюри й огорожі",
+    };
     private static readonly string[] Attributes = ["тип", "тип товару", "призначення", "тематика", "культура", "сезон", "сезонність", "період застосування", "сезон застосування"];
 
     // Inclusive months describe storefront priorities. Match only inside the named catalog branches.
     private static readonly Rule[] Rules =
     [
-        new("novyi-rik", 11, 12, ["novyi-rik"], "новоріч|новий рік|різдв|ялин|гірлянд|мішур|санта|дід мороз|сніговик|верхівк|віно(к|ч)|бородань"),
+        // Everything in the New Year department, whatever it is called: its goods have no other season.
+        new("novyi-rik", 11, 12, ["novyi-rik"], "."),
         new("Обігрівачі", 10, 3, ["Обігрівачі"], "обігрів|обігрівач|нагрівач|конвектор|тепловентилятор"),
         new("Годівниці", 10, 3, ["Годівниці"], "годівниц|годівл.*птах|годуван.*птах"),
         new("Годівниці", 2, 4, ["Годівниці"], "шпаківн|синичник|гніздівл|будиночок для птах"),
         new(Covers, 9, 4, [Covers], "чох.*(рослин|троянд)|агроволокн.*біл|біл.*агроволокн|від (за)?мороз", "чорн.*біл|біл.*чорн"),
         new(Covers, 5, 8, [Covers], "^(сіт.*затін|затін.*сіт)", "кліпс|затискач"),
         new(WinterCare, 11, 2, ["Ручний інструмент", "Все для прибирання", "Автотовари"],
-            "для снігу|снігоприб|снігов(а|і|ий) (лопат|скрепер)|антилід|ожелед|зимов.*омивач|омивач.*зимов|скребок.*льод"),
+            // In these sections anything about snow is a tool for it, however the name is worded.
+            "сніг|антилід|протилід|ожелед|для доріг|зимов.*омивач|омивач.*зимов|скребок.*льод"),
         new("Насіння", 1, 3, ["Насіння"], "перець|баклажан|селер|петуні|лобелі", "томат|помідор"),
         new("Насіння", 2, 4, ["Насіння"], "розсад|томат|помідор"),
         new("Насіння", 3, 5, ["Насіння"], "огірок|огірк|моркв|редис|буряк|кабачок|гарбуз|кавун|капуст|горох|квасол|салат|кріп|петрушк|шпинат"),
@@ -71,12 +82,45 @@ internal static class SeasonalPurpose
         new("Догляд за рослинами", 4, 8, ["Опори для рослин", "Оприскувачі/Лійки/Відра"], "шпалер|опор.*(рослин|бамбук)|підв.яз|обприскувач|оприскувач|лійка.*садов"),
         new("Захист від комах", 5, 9, ["Засоби захисту людей"], "комар|кліщ|москіт|репелент"),
         new("Садове освітлення", 4, 8, ["Елементи освітлення"], "світильник.*сонячн|сонячн.*світильник|освітлення садов.*доріж"),
+        // Three years of receipts: traps and poison sell 1.7–2.2 times their monthly average from August to November.
+        // The section is mostly insect control with a summer season, so its history cannot speak for them.
+        new("Захист від гризунів", 8, 11, ["Шкідники"], "миш|щур|гризун|пацюк|родентицид|щелкунчик|шах і мат", "крот|кріт"),
     ];
 
     public static (IQueryable<Match> Rows, int Families) Query(PoliValkoDbContext db, IReadOnlyList<Category> categories,
         DateOnly day, bool enabled)
     {
         if (!enabled) return (db.Database.SqlQuery<Match>($"SELECT NULL::uuid AS product_id, 0 AS family, 0 AS month_mask WHERE false"), 0);
+        return MatchRules(db, categories, InForce(day), []);
+    }
+
+    /// <summary>
+    /// Every product a rule names for any month. Family is set while one of its rules is in force; MonthMask holds
+    /// all its months, so a product whose season is another time of the year can be told from one without a season.
+    /// </summary>
+    public static (IQueryable<Match> Rows, int Families) Matches(PoliValkoDbContext db, IReadOnlyList<Category> categories,
+        DateOnly day)
+    {
+        var active = InForce(day);
+        return MatchRules(db, categories, active, Rules.Except(active));
+    }
+
+    /// <summary>
+    /// Sections the rules name that the catalog does not have, for instance after a section was renamed.
+    /// Their goods have lost those rules, even when the rule still finds another of its sections.
+    /// </summary>
+    public static IReadOnlyList<string> MissingSections(IReadOnlyList<Category> categories) =>
+        Rules.SelectMany(rule => rule.Sections).Distinct()
+            .Where(section => !categories.Any(category => Named(category, section)))
+            .Select(section => Renamed.TryGetValue(section, out var now) ? $"{section} / {now}" : section).ToArray();
+
+    /// <summary>A rule names a section by its title or its address; a renamed section answers to both titles.</summary>
+    private static bool Named(Category category, string section) =>
+        category.Name == section || category.Slug == section
+        || (Renamed.TryGetValue(section, out var now) && category.Name == now);
+
+    private static Rule[] InForce(DateOnly day)
+    {
         string[] leadingTasks = day.Month switch
         {
             1 => ["Обігрівачі", WinterCare, "Годівниці", "Насіння", "Грунти та добавки"],
@@ -87,28 +131,32 @@ internal static class SeasonalPurpose
             _ => SeasonalMerchandising.PriorityCategories(day),
         };
         var priority = leadingTasks.Select((key, i) => (key, i)).ToDictionary(x => x.key, x => x.i);
-        var active = Rules.Where(r => r.Applies(day.Month))
-            .OrderBy(r => priority.GetValueOrDefault(r.Family, priority.Count));
-        return MatchRules(db, categories, active);
+        return Rules.Where(r => r.Applies(day.Month))
+            .OrderBy(r => priority.GetValueOrDefault(r.Family, priority.Count)).ToArray();
     }
 
     public static IQueryable<Match> Calendar(PoliValkoDbContext db, IReadOnlyList<Category> categories) =>
-        MatchRules(db, categories, Rules).Rows;
+        MatchRules(db, categories, Rules, []).Rows;
 
+    /// <param name="rules">Rules that give a product its family, in the order of their families.</param>
+    /// <param name="dormant">Rules that only add their months.</param>
     private static (IQueryable<Match> Rows, int Families) MatchRules(PoliValkoDbContext db,
-        IReadOnlyList<Category> categories, IEnumerable<Rule> rules)
+        IReadOnlyList<Category> categories, IEnumerable<Rule> rules, IEnumerable<Rule> dormant)
     {
         var byParent = categories.ToLookup(c => c.ParentId);
+        Guid[] Sections(Rule rule) => categories.Where(c => rule.Sections.Any(section => Named(c, section)))
+            .SelectMany(c => CategoryQueries.Descendants(c.Id, byParent).Prepend(c.Id)).Distinct().ToArray();
         var groups = new List<string>();
-        var rows = new List<(Guid Category, int Family, string Include, string? Exclude, int MonthMask)>();
+        var rows = new List<(Guid Category, int? Family, string Include, string? Exclude, int MonthMask)>();
         foreach (var rule in rules)
         {
-            var ids = categories.Where(c => rule.Sections.Contains(c.Name) || rule.Sections.Contains(c.Slug))
-                .SelectMany(c => CategoryQueries.Descendants(c.Id, byParent).Prepend(c.Id)).Distinct().ToArray();
+            var ids = Sections(rule);
             if (ids.Length == 0) continue;
             if (!groups.Contains(rule.Family)) groups.Add(rule.Family);
-            rows.AddRange(ids.Select(id => (id, groups.IndexOf(rule.Family), rule.Include, rule.Exclude, rule.MonthMask)));
+            rows.AddRange(ids.Select(id => (id, (int?)groups.IndexOf(rule.Family), rule.Include, rule.Exclude, rule.MonthMask)));
         }
+        foreach (var rule in dormant)
+            rows.AddRange(Sections(rule).Select(id => (id, (int?)null, rule.Include, rule.Exclude, rule.MonthMask)));
         var categoryIds = rows.Select(r => r.Category).ToArray();
         var families = rows.Select(r => r.Family).ToArray();
         var include = rows.Select(r => r.Include).ToArray();

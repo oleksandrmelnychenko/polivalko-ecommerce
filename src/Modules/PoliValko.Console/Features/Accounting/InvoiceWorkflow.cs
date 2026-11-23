@@ -69,7 +69,7 @@ internal static class InvoiceWorkflow
         if (page is < 1 or > 1_000_000 || q is {Length: > 160}) return Results.BadRequest();
         var term = q?.Trim().ToLowerInvariant() ?? "";
         var rows = db.Database.SqlQuery<WarehouseBalance>($"""
-            SELECT w.org_id,w.store_id,org.title AS organization,s.title AS store,p.id AS product_id,p.name AS product,p.sku,w.quantity,
+            SELECT w.org_id,w.store_id,org.title AS organization,s.title AS store,p.id AS product_id,coalesce(nullif(p.display_name,''),p.name) AS product,p.sku,w.quantity,
                 coalesce(o.quantity,0) AS opening,c.quantity AS shop_quantity,c.reserved_quantity AS reserved,
                 c.warehouse_org_id AS source_org_id,c.warehouse_store_id AS source_store_id,
                 so.title AS source_organization,ss.title AS source_store,p.is_visible AS visible
@@ -80,8 +80,8 @@ internal static class InvoiceWorkflow
             LEFT JOIN accounting.references so ON so.id=c.warehouse_org_id
             LEFT JOIN accounting.references ss ON ss.id=c.warehouse_store_id
             WHERE ({store}::uuid IS NULL OR w.store_id={store}::uuid)
-                AND (strpos(lower(p.name),{term})>0 OR strpos(lower(p.sku),{term})>0)
-            ORDER BY p.name,w.product_id,w.org_id,w.store_id
+                AND (strpos(lower(p.name),{term})>0 OR strpos(lower(coalesce(p.display_name,'')),{term})>0 OR strpos(lower(p.sku),{term})>0)
+            ORDER BY coalesce(nullif(p.display_name,''),p.name),w.product_id,w.org_id,w.store_id
             """);
         return Results.Ok(new RegisterPage<WarehouseBalance>(await rows.Skip((page-1)*50).Take(50).ToListAsync(ct),await rows.CountAsync(ct)));
     }

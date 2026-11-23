@@ -84,7 +84,7 @@ public sealed class SeoTemplatesApiTests(ApiFactory api)
     }
 
     [Fact]
-    public async Task Product_without_price_skips_templates_that_mention_price()
+    public async Task Product_without_price_gets_templates_without_the_price_clause()
     {
         var product = await api.AddProductAsync("novyi-rik", "Ялинка без ціни", 0m, stock: 3);
         var admin = await Staff.AdminAsync(api);
@@ -92,15 +92,23 @@ public sealed class SeoTemplatesApiTests(ApiFactory api)
         try
         {
             await (await admin.PutAsJsonAsync(Templates, new SeoTemplatesDto(
-                    new SeoTemplateDto("{name}: ціна {price}, купити з доставкою", "{name} у розділі {category}, магазин {shop}."),
+                    SeoTemplateSettings.Defaults.Product,
                     new SeoTemplateDto("{name} — купити в Бучі", "")), TestJson.Options, Ct))
                 .ReadAsync<SeoTemplatesDto>();
 
             var details = await api.CreateClient().GetFromJsonAsync<ProductDetailsDto>($"/api/v1/products/{product.Slug}", TestJson.Options, Ct);
 
-            details!.SeoTitle.ShouldBeNull();
-            details.SeoDescription.ShouldNotBeNull().ShouldStartWith("Ялинка без ціни у розділі ");
-            details.SeoDescription.ShouldNotContain("грн");
+            details!.SeoTitle.ShouldBe("Ялинка без ціни: купити з доставкою");
+            details.SeoDescription.ShouldBe("Ялинка без ціни у магазині Poli Valko: доставка Новою поштою по Україні або самовивіз з магазину.");
+
+            await (await admin.PutAsJsonAsync(Templates, new SeoTemplatesDto(
+                    new SeoTemplateDto("{name} — купити за {price} | {shop}", "Ціна {price}: {name}"),
+                    new SeoTemplateDto("{name} — купити в Бучі", "")), TestJson.Options, Ct))
+                .ReadAsync<SeoTemplatesDto>();
+            var other = await api.AddProductAsync("novyi-rik", "Сосна без ціни", 0m, stock: 1);
+            details = await api.CreateClient().GetFromJsonAsync<ProductDetailsDto>($"/api/v1/products/{other.Slug}", TestJson.Options, Ct);
+            details!.SeoTitle.ShouldBe("Сосна без ціни | Poli Valko");
+            details.SeoDescription.ShouldBe("Сосна без ціни");
         }
         finally
         {

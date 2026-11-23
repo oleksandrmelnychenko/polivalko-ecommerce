@@ -1,12 +1,3 @@
-.dntrade-work-form-views {
-  border-bottom: 1px solid var(--mantine-color-gray-2);
-  flex: 0 0 auto;
-  padding: 8px 10px;
-}
-
-.dntrade-work-form-views .mantine-Button-root { color: var(--brand-ink); border-radius: 999px; }
-.dntrade-work-form-views [aria-current='page'] { background: var(--brand-ink); color: white; }
-
 .dntrade-work-form-body {
   background: var(--app-ground);
   flex: 1 1 auto;

@@ -9,11 +9,10 @@ export function ArchiveNavigation({ params }: { params: URLSearchParams }) {
 
   return (
     <div className="dntrade-archive-navigation">
-      <nav className="dntrade-archive-views" aria-label="Розділи архіву">
+      <nav className="dntrade-section-tabs" aria-label="Розділи архіву">
         {ARCHIVE_VIEWS.map((option) => (
           <Link
             key={option.id}
-            className="dntrade-archive-view"
             to={archiveViewLocation(option, view, params)}
             aria-current={option.id === view.id ? 'page' : undefined}
           >

@@ -101,15 +101,12 @@
   max-width: 100%;
   overflow-x: auto;
   border-radius: 999px;
-  border: 1px solid var(--app-line);
   background: white;
   scrollbar-width: thin;
 }
 .ba-page .ba-report-tabs .mantine-SegmentedControl-root {
-  background: white;
-  border: 0;
+  max-width: none;
   width: max-content;
-  padding: 4px;
 }
 .ba-report-tabs .mantine-SegmentedControl-root,
 .ba-page[data-report-content] .mantine-SegmentedControl-root,
@@ -121,7 +118,6 @@
 .ba-page[data-report-content] .mantine-SegmentedControl-label[data-active] { color: white; }
 .ba-page .ba-report-tabs .mantine-SegmentedControl-control::before,
 .ba-page[data-report-content] .mantine-SegmentedControl-control::before { display: none; }
-.ba-report-tabs .mantine-SegmentedControl-label { padding: 8px 12px; border-radius: 999px; }
 .ba-run-state {
   display: flex;
   align-items: center;

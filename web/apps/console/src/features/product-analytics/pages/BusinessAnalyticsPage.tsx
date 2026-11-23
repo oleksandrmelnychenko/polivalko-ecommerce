@@ -213,6 +213,7 @@ export function BusinessAnalyticsPage() {
           <div className="ba-report-tabs" ref={reportTabs}>
             <SegmentedControl
               aria-label="Розділ аналітики"
+              className="page-mode-switch"
               value={tab}
               onChange={(value) => update({ tab: value, horizon: '' })}
               data={[

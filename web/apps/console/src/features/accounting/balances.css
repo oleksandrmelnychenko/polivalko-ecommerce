@@ -1,13 +1,3 @@
-.balance-modes {
-  align-self: flex-start;
-  max-width: 100%;
-  padding: 4px;
-  border: 1px solid var(--app-line);
-  border-radius: 999px;
-  background: white;
-}
-.balance-modes .mantine-Button-root { height: 34px; padding-inline: clamp(8px, 2vw, 16px); border: 0; }
-.balance-modes button[aria-pressed=false] { color: var(--mantine-color-gray-7); }
 .balance-report-option { display: grid; gap: 3px; min-width: 0; }
 .balance-report-option small { color: var(--mantine-color-gray-7); overflow-wrap: anywhere; }
 .balance-row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 5px; }

@@ -3,7 +3,7 @@
   min-width: 0;
 }
 
-.dntrade-archive-views,
+.dntrade-section-tabs,
 .dntrade-archive-shortcuts {
   align-items: center;
   border-bottom: 1px solid var(--mantine-color-gray-2);
@@ -12,7 +12,7 @@
   padding-inline: 10px;
 }
 
-.dntrade-archive-view {
+.dntrade-section-tabs > a {
   border-radius: 999px;
   color: var(--mantine-color-gray-7);
   font-size: 14px;
@@ -22,18 +22,18 @@
   white-space: nowrap;
 }
 
-.dntrade-archive-views { gap: 4px; padding-block: 8px; }
+.dntrade-section-tabs { gap: 4px; padding-block: 8px; }
 
-.dntrade-archive-view:hover {
+.dntrade-section-tabs > a:hover {
   background: var(--app-ground);
 }
 
-.dntrade-archive-view[aria-current='page'] {
+.dntrade-section-tabs > a[aria-current='page'] {
   background: var(--brand-ink);
   color: white;
 }
 
-.dntrade-archive-view:focus-visible {
+.dntrade-section-tabs > a:focus-visible {
   outline: 2px solid var(--app-focus-border);
   outline-offset: -2px;
 }
@@ -53,7 +53,7 @@
 }
 
 @media (max-width: 680px) {
-  .dntrade-archive-views,
+  .dntrade-section-tabs,
   .dntrade-archive-shortcuts {
     flex-wrap: nowrap;
     overflow-x: auto;
