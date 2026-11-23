@@ -20,7 +20,9 @@ def build_insights(
     website: bool,
     ignored_documents: int,
     returns_available: bool,
+    in_units: bool = True,
 ) -> list[dict]:
+    """Signals for one product (in_units) or for all products, whose quantities cannot be added and are read in money."""
     insights = []
     if ignored_documents > 0:
         count = format_quantity(ignored_documents)
@@ -35,18 +37,20 @@ def build_insights(
                 f"Пропущено документів у завантаженій історії: {count}. Перевірте якість імпорту перед рішеннями на основі цих даних.",
             ))
 
-    previous = metrics["previousSoldUnits"]
-    if previous is not None and previous >= 5:
-        change = 100 * (metrics["soldUnits"] - previous) / previous
+    measure = "SoldUnits" if in_units else "NetRevenue"
+    previous = metrics["previous" + measure]
+    if previous is not None and previous >= (5 if in_units else Decimal("0.01")):
+        change = 100 * (metrics[measure[0].lower() + measure[1:]] - previous) / previous
         if abs(change) >= 15:
+            rose = change > 0
             insights.append(insight(
-                "trend", "Попит зріс" if change > 0 else "Попит знизився",
-                f"Кількість проданих одиниць змінилася на {format_quantity(abs(change))}% "
+                "trend", ("Попит зріс" if rose else "Попит знизився") if in_units else ("Виручка зросла" if rose else "Виручка знизилася"),
+                f"{'Кількість проданих одиниць змінилася' if in_units else 'Виручка змінилася'} на {format_quantity(abs(change))}% "
                 "проти попереднього періоду тієї самої тривалості.",
             ))
 
     if reliable_demand and covers(first, through, to - timedelta(days=62), to):
-        anomaly = detect_anomaly(demand, to)
+        anomaly = detect_anomaly(demand, to, in_units)
         if anomaly is not None:
             insights.append(anomaly)
 
@@ -81,12 +85,21 @@ def build_insights(
 
     sold = metrics["soldUnits"]
     returned = metrics["returnedUnits"]
-    if returns_available and sold >= 10 and returned >= 3 and returned / sold >= Decimal("0.15"):
-        insights.append(insight(
-            "returns", "Перевірте повернення",
-            f"За період зафіксовано {format_quantity(returned)} повернених і {format_quantity(sold)} проданих од. "
-            "Повернення могли стосуватися раніших продажів.",
-        ))
+    if returns_available and sold >= 10 and returned >= 3:
+        # For all products the counts only show that there was enough trade; the share is taken in money.
+        gross, refunds = metrics["grossRevenue"], metrics["returnValue"]
+        if in_units and returned / sold >= Decimal("0.15"):
+            insights.append(insight(
+                "returns", "Перевірте повернення",
+                f"За період зафіксовано {format_quantity(returned)} повернених і {format_quantity(sold)} проданих од. "
+                "Повернення могли стосуватися раніших продажів.",
+            ))
+        elif not in_units and gross > 0 and refunds / gross >= Decimal("0.15"):
+            insights.append(insight(
+                "returns", "Перевірте повернення",
+                f"За період повернено товарів на {format_quantity(refunds)} грн за продажів на {format_quantity(gross)} грн. "
+                "Повернення могли стосуватися раніших продажів.",
+            ))
 
     if forecast is not None and forecast["validationWape"] >= 50:
         insights.append(insight(
@@ -97,7 +110,7 @@ def build_insights(
     return insights
 
 
-def detect_anomaly(demand: Mapping[date, Decimal], through: date) -> dict | None:
+def detect_anomaly(demand: Mapping[date, Decimal], through: date, in_units: bool = True) -> dict | None:
     weeks = weekly(demand, through, 9)
     history = weeks[:-1]
     baseline = median(history)
@@ -110,10 +123,16 @@ def detect_anomaly(demand: Mapping[date, Decimal], through: date) -> dict | None
     if abs(delta) < max(3, 3 * deviation, baseline / 2):
         return None
 
+    if in_units:
+        return insight(
+            "anomaly", "Стрибок попиту за тиждень" if delta > 0 else "Спад попиту за тиждень",
+            f"За останні 7 днів продано {format_quantity(latest)} од. "
+            f"Медіана попередніх восьми тижнів становила {format_quantity(baseline)} од.",
+        )
     return insight(
-        "anomaly", "Стрибок попиту за тиждень" if delta > 0 else "Спад попиту за тиждень",
-        f"За останні 7 днів продано {format_quantity(latest)} од. "
-        f"Медіана попередніх восьми тижнів становила {format_quantity(baseline)} од.",
+        "anomaly", "Стрибок виручки за тиждень" if delta > 0 else "Спад виручки за тиждень",
+        f"За останні 7 днів продано на {format_quantity(latest)} грн. "
+        f"Медіана попередніх восьми тижнів становила {format_quantity(baseline)} грн.",
     )
 
 

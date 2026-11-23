@@ -10,6 +10,8 @@ import { AnalyticsChart } from './AnalyticsChart'
 import { DemandChange } from './AnalyticsProducts'
 
 type Props = { report: ProductAnalytics; canOpenProduct: boolean; onSelectProduct: (key: string) => void }
+type TrendPoint = ProductAnalytics['trend'][number]
+type TrendMetric = { value: string; label: string; description: string; read: (item: TrendPoint) => number; format: (value: number) => string }
 
 const FORECAST_METHODS: Record<string, string> = {
   'weekly-naive': 'Останній тиждень',
@@ -32,12 +34,17 @@ export function AnalyticsReport({ report, canOpenProduct, onSelectProduct }: Pro
   const [metric, setMetric] = useState('units')
   const { coverage, metrics, selectedProduct } = report
   const revenueLabel = coverage.returnsAvailable ? 'Чиста виручка' : 'Виручка продажів'
-  const trendMetrics = [
-    { value: 'units', label: 'Продано', description: 'Продано', read: (item: ProductAnalytics['trend'][number]) => item.soldUnits, format: formatUnits },
-    { value: 'revenue', label: 'Виручка', description: revenueLabel, read: (item: ProductAnalytics['trend'][number]) => item.netRevenue, format: formatPrice },
+  // Products are sold in pieces, metres and kilograms, and the source does not say which. Quantities are
+  // shown for one product; all products together are measured in money, as the service computes them.
+  const allProducts = !selectedProduct
+  const trendMetrics: TrendMetric[] = [
+    { value: 'revenue', label: 'Виручка', description: revenueLabel, read: (item) => item.netRevenue, format: formatPrice },
   ]
-  if (coverage.returnsAvailable) {
-    trendMetrics.push({ value: 'returns', label: 'Повернено', description: 'Повернено', read: (item) => item.returnedUnits, format: formatUnits })
+  if (!allProducts) {
+    trendMetrics.unshift({ value: 'units', label: 'Продано', description: 'Продано', read: (item) => item.soldUnits, format: formatUnits })
+    if (coverage.returnsAvailable) {
+      trendMetrics.push({ value: 'returns', label: 'Повернено', description: 'Повернено', read: (item) => item.returnedUnits, format: formatUnits })
+    }
   }
   const activeMetric = trendMetrics.find((item) => item.value === metric) ?? trendMetrics[0]
 
@@ -65,15 +72,15 @@ export function AnalyticsReport({ report, canOpenProduct, onSelectProduct }: Pro
             {coverage.returnsAvailable ? <small>{formatPrice(metrics.grossRevenue)} до повернень</small> : null}
             <small><DemandChange current={metrics.netRevenue} previous={metrics.previousNetRevenue} /> до попереднього періоду</small>
           </div>
-          <div className="pa-metric">
+          {!allProducts && <div className="pa-metric">
             <MetricLabel icon={IconChartLine}>Продано</MetricLabel>
             <strong>{formatUnits(metrics.soldUnits)}</strong>
             <small><DemandChange current={metrics.soldUnits} previous={metrics.previousSoldUnits} /> до попереднього періоду</small>
-          </div>
+          </div>}
           <div className="pa-metric">
             <MetricLabel icon={IconReceiptRefund}>Повернення</MetricLabel>
-            <strong>{coverage.returnsAvailable ? formatUnits(metrics.returnedUnits) : '—'}</strong>
-            <small>{coverage.returnsAvailable ? formatPrice(metrics.returnValue) : 'Джерело не надає повних даних'}</small>
+            <strong>{!coverage.returnsAvailable ? '—' : allProducts ? formatPrice(metrics.returnValue) : formatUnits(metrics.returnedUnits)}</strong>
+            <small>{!coverage.returnsAvailable ? 'Джерело не надає повних даних' : allProducts ? 'Сума повернень за період' : formatPrice(metrics.returnValue)}</small>
           </div>
           <div className="pa-metric">
             <MetricLabel icon={IconPackage}>{selectedProduct ? 'Залишок сайту зараз' : 'Товари з продажами'}</MetricLabel>
@@ -83,18 +90,23 @@ export function AnalyticsReport({ report, canOpenProduct, onSelectProduct }: Pro
         </div>
       ) : null}
 
+      {allProducts && report.trend.length ? (
+        <p className="pa-muted">Усі товари разом показано у гривнях: вони продаються в різних одиницях, тому їхні кількості не складаємо.
+          Продані одиниці й прогноз попиту є у звіті окремого товару.</p>
+      ) : null}
+
       {report.trend.length ? (
         <AnalyticsCard
           title="Динаміка продажів"
           description={dateRange(report.from, report.to)}
-          actions={
+          actions={trendMetrics.length > 1 ?
             <SegmentedControl
               size="xs"
               aria-label="Показник графіка продажів"
               value={activeMetric.value}
               onChange={setMetric}
               data={trendMetrics.map(({ value, label }) => ({ value, label }))}
-            />
+            /> : undefined
           }
         >
           <AnalyticsChart
@@ -108,7 +120,9 @@ export function AnalyticsReport({ report, canOpenProduct, onSelectProduct }: Pro
       ) : null}
 
       {(Boolean(report.seasonality?.length) || report.forecast) && <div className="pa-model-grid">
-        {report.seasonality?.length ? <AnalyticsCard title="Сезонність" description="Середні продажі за день у кожному місяці. Індекс 100 — середній попит за день у межах року.">
+        {report.seasonality?.length ? <AnalyticsCard title="Сезонність" description={allProducts
+          ? 'Середня виручка за день у кожному місяці. Індекс 100 — середня виручка за день у межах року.'
+          : 'Середні продажі за день у кожному місяці. Індекс 100 — середній попит за день у межах року.'}>
           <AnalyticsChart
             label="Індекс сезонності"
             variant="bars"

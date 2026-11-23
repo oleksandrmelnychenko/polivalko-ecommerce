@@ -79,15 +79,19 @@ def _build_report(payload: dict) -> dict:
         "previousNetRevenue": sum((row.net for row in previous), ZERO) if comparable else None,
     }
 
+    # Products are sold in pieces, metres and kilograms, and the source does not say which. Quantities can
+    # be added within one product only; for all products together the common measure is money.
+    in_units = selected is not None
     demand: dict[date, Decimal] = defaultdict(Decimal)
     for row in scope:
-        demand[row.day] += row.sold
+        demand[row.day] += row.sold if in_units else row.gross
 
     seasonal_cycle = None
     if reliable_demand and first is not None and through is not None:
         seasonal_cycle = seasonality(demand, first, min(through, end))
+    # The forecast is stated in units, so it exists for one product only.
     projections = None
-    if reliable_demand and covers(first, through, end - timedelta(days=FORECAST_HISTORY_DAYS - 1), end):
+    if in_units and reliable_demand and covers(first, through, end - timedelta(days=FORECAST_HISTORY_DAYS - 1), end):
         has_annual_history = covers(first, through, end - timedelta(days=ANNUAL_FORECAST_HISTORY_DAYS - 1), end)
         projections = forecast(demand, end, has_annual_history)
 
@@ -95,6 +99,7 @@ def _build_report(payload: dict) -> dict:
         metrics, products if selected is None else [selected], demand,
         to=end, first=first, through=through, forecast=projections, stock_coverage=stock_coverage,
         reliable_demand=reliable_demand, website=website, ignored_documents=ignored, returns_available=returns_available,
+        in_units=in_units,
     )
 
     inventory = payload["inventory"]
