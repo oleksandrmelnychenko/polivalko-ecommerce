@@ -100,6 +100,7 @@ public sealed class SeasonStateTests(ApiFactory api)
         var fair = await AddCategoryAsync(name: "novyi-rik");
         var resort = await AddCategoryAsync();
         var winterPool = await AddCategoryAsync(resort.Id, "Хімія для басейнів");
+        var seeds = await AddCategoryAsync(resort.Id, "Насіння");
         var garland = await api.AddProductAsync(newYear.Slug, "Гірлянда", 100);
         var sold = await AddSoldProductAsync(shelf, "Продається зараз");
         var sparse = await AddSoldProductAsync(shelf, "Мало чеків");
@@ -112,6 +113,8 @@ public sealed class SeasonStateTests(ApiFactory api)
         var net = await AddSoldProductAsync(winterPool, "Сачок");
         var thermometer = await api.AddProductAsync(winterPool.Slug, "Термометр плаваючий", 100);
         var tablets = await api.AddProductAsync(winterPool.Slug, "Хлор у таблетках", 100);
+        var bags = await AddSoldProductAsync(seeds, "Пакети паперові");
+        var pepper = await api.AddProductAsync(seeds.Slug, "Перець солодкий", 100);
         await AddReceiptsAsync(sold, new DateOnly(2050, 12, 15), 6);
         await AddReceiptsAsync(sold, new DateOnly(2050, 6, 1), 2);
         await AddReceiptsAsync(sparse, new DateOnly(2050, 6, 1), 1);
@@ -124,8 +127,11 @@ public sealed class SeasonStateTests(ApiFactory api)
         await AddReceiptsAsync(shock, new DateOnly(2050, 6, 1), 2);
         await AddReceiptsAsync(net, new DateOnly(2050, 12, 15), 6);
         await AddReceiptsAsync(net, new DateOnly(2050, 6, 1), 2);
-        Category[] categories = [department, shelf, newYear, pool, summerShelf, emptyShelf, fair, resort, winterPool];
-        Product[] products = [garland, sold, sparse, topLevel, chlorine, summer, unknown, autumnToy, shock, net, thermometer, tablets];
+        await AddReceiptsAsync(bags, new DateOnly(2050, 12, 15), 6);
+        await AddReceiptsAsync(bags, new DateOnly(2050, 6, 1), 2);
+        Category[] categories = [department, shelf, newYear, pool, summerShelf, emptyShelf, fair, resort, winterPool, seeds];
+        Product[] products = [garland, sold, sparse, topLevel, chlorine, summer, unknown, autumnToy, shock, net, thermometer, tablets,
+            bags, pepper];
 
         var december = await ClassifyAsync(products, categories, today, today);
 
@@ -146,6 +152,9 @@ public sealed class SeasonStateTests(ApiFactory api)
         december[net.Id].ShouldBe(("in_season", "product"));
         december[thermometer.Id].ShouldBe(("in_season", "category"));
         december[tablets.Id].ShouldBe(("all_year", "rule_capped"));
+        // Pepper seeds have a rule from January, and the four weeks from 10 December already reach January:
+        // their section speaks for them as it does for a product without a rule.
+        december[pepper.Id].ShouldBe(("in_season", "category"));
 
         // Looked at for January: the garland rule is over and nothing else speaks for it.
         var january = await ClassifyAsync(products, categories, today, new DateOnly(2052, 1, 15));
