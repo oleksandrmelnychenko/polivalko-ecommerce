@@ -1725,7 +1725,7 @@
 "10131": {
 "brand": "SeedEra",
 "category": "nasinnia",
-"displayName": "Морква Столова Червоний Велетнь SeedEra, 2 г",
+"displayName": "Морква Столова Червоний Велетень SeedEra, 2 г",
 "isVisible": true
 },
 "10132": {
@@ -4959,7 +4959,7 @@
 "10671": {
 "brand": "SeedEra",
 "category": "nasinnia",
-"displayName": "Перець солодкий Піроует F1 Seedera Profi, 10 шт.",
+"displayName": "Перець солодкий Пірует F1 Seedera Profi, 10 шт.",
 "isVisible": true
 },
 "10672": {
@@ -5301,7 +5301,7 @@
 "10728": {
 "brand": "Agrecol",
 "category": "dobryva",
-"displayName": "Агреколь для хвойних від пожовтінн (1.2кг)",
+"displayName": "Агреколь для хвойних від пожовтіння (1.2кг)",
 "isVisible": true
 },
 "10729": {
@@ -5673,7 +5673,7 @@
 "10790": {
 "brand": "Werk",
 "category": "dribnyi-ruchnyi-instrument",
-"displayName": null,
+"displayName": "Міні лопатка садова вузька 330 мм, епоксидне покриття WERK",
 "isVisible": true
 },
 "10791": {
@@ -5859,7 +5859,7 @@
 "10821": {
 "brand": null,
 "category": "ziednuvachi-y-perekhidnyky",
-"displayName": null,
+"displayName": "З’єднувач шлангу 3/4",
 "isVisible": true
 },
 "10822": {
@@ -5901,19 +5901,19 @@
 "10828": {
 "brand": null,
 "category": "vizky-dlia-shlanhu",
-"displayName": null,
+"displayName": "Візок для шлангів 1/2 60 метрів Comfort",
 "isVisible": true
 },
 "10829": {
 "brand": null,
 "category": "vizky-dlia-shlanhu",
-"displayName": null,
+"displayName": "Візок для шлангів 1/2 50 м, 3/4 25 м",
 "isVisible": true
 },
 "10830": {
 "brand": null,
 "category": "vizky-dlia-shlanhu",
-"displayName": null,
+"displayName": "Візок для шлангів 1/2 60 м, 3/4 30 м, з напрямними",
 "isVisible": true
 },
 "10831": {
@@ -6033,13 +6033,13 @@
 "10855": {
 "brand": "Presto-PS",
 "category": "krapelnyi-polyv",
-"displayName": null,
+"displayName": "Діркопробивач механічний 3 мм для сліпої труби 16 і 20 мм Престо",
 "isVisible": true
 },
 "10856": {
 "brand": "Presto-PS",
 "category": "inshi-brendy-pidzemnoho-polyvu",
-"displayName": "Контроллер на 8 зон зрошення №7803 Престо-ПС",
+"displayName": "Контролер на 8 зон зрошення №7803 Престо-ПС",
 "isVisible": true
 },
 "10857": {
@@ -6069,7 +6069,7 @@
 "10861": {
 "brand": null,
 "category": "zasoby-zakhystu-roslyn",
-"displayName": "Оіл Протект 10л. (Чистий стовбур)",
+"displayName": "Ойл Протект 10л. (Чистий стовбур)",
 "isVisible": true
 },
 "10862": {
@@ -6141,13 +6141,13 @@
 "10873": {
 "brand": null,
 "category": "velykyi-ruchnyi-instrument",
-"displayName": null,
+"displayName": "Комплект: щітка для прибирання 45 см+ дерев’яна ручка 130см",
 "isVisible": true
 },
 "10874": {
 "brand": null,
 "category": "velykyi-ruchnyi-instrument",
-"displayName": null,
+"displayName": "Комплект: щітка для прибирання 45 см + ручка дерев’яна 130 см",
 "isVisible": true
 },
 "10875": {
@@ -6291,13 +6291,13 @@
 "10901": {
 "brand": "Werk",
 "category": "zasoby-zakhystu-liudei",
-"displayName": "Рукавички робочі сад огород werk блакитні",
+"displayName": "Рукавички робочі сад-город Werk блакитні",
 "isVisible": true
 },
 "10902": {
 "brand": "Werk",
 "category": "zasoby-zakhystu-liudei",
-"displayName": "Рукавички робочі сад огород werk хакі",
+"displayName": "Рукавички робочі сад-город Werk хакі",
 "isVisible": true
 },
 "10903": {
@@ -6423,7 +6423,7 @@
 "10924": {
 "brand": "Werk",
 "category": "dribnyi-ruchnyi-instrument",
-"displayName": "Міні Граблі віялові 390 мм. tпоксидне покриття WERk",
+"displayName": "Міні граблі віялові 390 мм, епоксидне покриття WERK",
 "isVisible": true
 },
 "10925": {
@@ -6687,7 +6687,7 @@
 "10968": {
 "brand": null,
 "category": "krapelnyi-polyv",
-"displayName": null,
+"displayName": "Емітерна крапельна стрічка кожні 15 см 1,38 л/год",
 "isVisible": true
 },
 "10969": {
@@ -7131,7 +7131,7 @@
 "11043": {
 "brand": "БТУ-Центр",
 "category": "zasoby-zakhystu-roslyn",
-"displayName": null,
+"displayName": "Бітоксибацилін-БТУ 250мл",
 "isVisible": true
 },
 "11044": {
@@ -7293,7 +7293,7 @@
 "11070": {
 "brand": "Irritec",
 "category": "krapelnyi-polyv",
-"displayName": "Регулятор тиску Irritec 1,7 bar 3/4 ЗВ (3.4м. куб/ч)",
+"displayName": "Регулятор тиску Irritec 1,7 bar 3/4 ЗВ (3.4 м³/год)",
 "isVisible": true
 },
 "11071": {
@@ -7605,7 +7605,7 @@
 "11122": {
 "brand": null,
 "category": "roslyny",
-"displayName": null,
+"displayName": "Драцена",
 "isVisible": true
 },
 "11123": {
@@ -7665,7 +7665,7 @@
 "11132": {
 "brand": null,
 "category": "zasoby-zakhystu-liudei",
-"displayName": null,
+"displayName": "Дощовик суцільний",
 "isVisible": true
 },
 "11133": {
@@ -7815,7 +7815,7 @@
 "11158": {
 "brand": null,
 "category": "shkidnyky",
-"displayName": "Щелкунчик подушички від гризунів 250г",
+"displayName": "Щелкунчик подушечки від гризунів 250г",
 "isVisible": true
 },
 "11159": {
@@ -8301,7 +8301,7 @@
 "11240": {
 "brand": null,
 "category": "nasinnia",
-"displayName": null,
+"displayName": "Місячний посівний календар 2026 р.",
 "isVisible": true
 },
 "11241": {
@@ -8337,13 +8337,13 @@
 "11246": {
 "brand": null,
 "category": "hirliandy",
-"displayName": "Гірлянда ланцюжок, 80 суперяскравих теплобілих мікро світодіода та 20 білих спалахів 15м зовнішня MS100AF",
+"displayName": "Гірлянда ланцюжок, 80 суперяскравих теплобілих мікросвітлодіодів та 20 білих спалахів 15м зовнішня MS100AF",
 "isVisible": true
 },
 "11247": {
 "brand": null,
 "category": "hirliandy",
-"displayName": "Гірлянда - бурулька, 230 теплобілих світодіода, 3,0*1,0 м конектуєма з ефектом водоспаду, зовн. GFL300A",
+"displayName": "Гірлянда - бурулька, 230 теплобілих світлодіодів, 3,0*1,0 м конектуєма з ефектом водоспаду, зовнішня GFL300A",
 "isVisible": true
 },
 "11248": {
@@ -8361,13 +8361,13 @@
 "11250": {
 "brand": null,
 "category": "hirliandy",
-"displayName": "Гірлянда ланцюжок, 25м. 288 теплобілих світодіодів, 8 функцій пам'яті зовнішня RA381A",
+"displayName": "Гірлянда ланцюжок, 25м. 288 теплобілих світлодіодів, 8 функцій пам'яті зовнішня RA381A",
 "isVisible": true
 },
 "11251": {
 "brand": null,
 "category": "hirliandy",
-"displayName": "Гірлянда ланцюжок, 25м. 288 чисто білих світодіодів, 8 функцій пам'яті зовнішня RA381",
+"displayName": "Гірлянда ланцюжок, 25м. 288 чисто білих світлодіодів, 8 функцій пам'яті зовнішня RA381",
 "isVisible": true
 },
 "11252": {
@@ -8385,13 +8385,13 @@
 "11254": {
 "brand": null,
 "category": "hirliandy",
-"displayName": "Гірлянда - бурулька з 160 теплобілими світодіод, 8,0*0,5м, зі спалахом, зовнішня конектуєма JFL42AF",
+"displayName": "Гірлянда - бурулька з 160 теплобілими світлодіодами, 8,0*0,5м, зі спалахом, зовнішня конектуєма JFL42AF",
 "isVisible": true
 },
 "11255": {
 "brand": null,
 "category": "hirliandy",
-"displayName": "Гірлянда - бурулька з 160 теплобілими світодіод, 8,0*0,5м, 8 функцій дин, зовнішня, конектуєма JFL42A",
+"displayName": "Гірлянда - бурулька з 160 теплобілими світлодіодами, 8,0*0,5м, 8 функцій, зовнішня, конектуєма JFL42A",
 "isVisible": true
 },
 "11256": {
@@ -8403,7 +8403,7 @@
 "11257": {
 "brand": null,
 "category": "hirliandy",
-"displayName": "Світодіодна гірлянда штора 2,0*2,0м з 320 теплобілих мікросвітлодіодів зовнішня MLR320A",
+"displayName": "Світлодіодна гірлянда штора 2,0*2,0м з 320 теплобілих мікросвітлодіодів зовнішня MLR320A",
 "isVisible": true
 },
 "11258": {
@@ -8439,7 +8439,7 @@
 "11263": {
 "brand": null,
 "category": "hirliandy",
-"displayName": null,
+"displayName": "Гірлянда ланцюжок з 15 міні-букетами з мікродіодів, 4,5м, внутрішня GBL306",
 "isVisible": true
 },
 "11264": {
@@ -8535,7 +8535,7 @@
 "11279": {
 "brand": null,
 "category": "hirliandy",
-"displayName": null,
+"displayName": "Гірлянда 100 м зелена",
 "isVisible": true
 },
 "11280": {
@@ -8595,7 +8595,7 @@
 "11289": {
 "brand": null,
 "category": "velykyi-ruchnyi-instrument",
-"displayName": null,
+"displayName": "Лопата для снігу з пластиковим держаком (зелена) (38*37)",
 "isVisible": true
 },
 "11290": {
@@ -8787,7 +8787,7 @@
 "11321": {
 "brand": null,
 "category": "hrunty-ta-dobavky",
-"displayName": null,
+"displayName": "Дренаж керамзитовий 1л",
 "isVisible": true
 },
 "11322": {
@@ -8889,7 +8889,7 @@
 "11338": {
 "brand": null,
 "category": "dribnyi-ruchnyi-instrument",
-"displayName": null,
+"displayName": "Скоби для степлера садового 10000шт.",
 "isVisible": true
 },
 "11339": {
@@ -9033,7 +9033,7 @@
 "11362": {
 "brand": null,
 "category": "opory-dlia-roslyn",
-"displayName": null,
+"displayName": "Нитка садова котушка 30м",
 "isVisible": true
 },
 "11363": {
@@ -9279,7 +9279,7 @@
 "11403": {
 "brand": null,
 "category": "vytratni-materialy",
-"displayName": null,
+"displayName": "Садово-будівельна ліска 1*100",
 "isVisible": true
 },
 "11404": {
@@ -9447,7 +9447,7 @@
 "11431": {
 "brand": "Everris",
 "category": "dobryva",
-"displayName": "Осмокот хобі петерсс ріст та відновлення 31-11-11 200г",
+"displayName": "Осмокот хобі Петерс ріст та відновлення 31-11-11 200г",
 "isVisible": true
 },
 "11432": {
@@ -9489,7 +9489,7 @@
 "11438": {
 "brand": null,
 "category": "sekatory-suchkorizy-y-nozhytsi",
-"displayName": null,
+"displayName": "Обвідний секатор Kew Gardens",
 "isVisible": true
 },
 "11439": {
@@ -9717,7 +9717,7 @@
 "11476": {
 "brand": null,
 "category": "ziednuvachi-y-perekhidnyky",
-"displayName": null,
+"displayName": "З’єднувач з аквастопом для шлангів (3/4)",
 "isVisible": true
 },
 "11477": {
@@ -9861,7 +9861,7 @@
 "11500": {
 "brand": "GRÜNTEK",
 "category": "dribnyi-ruchnyi-instrument",
-"displayName": "Ручна сіялка Daisy 3л GRUNTEC",
+"displayName": "Ручна сівалка Daisy 3л GRUNTEC",
 "isVisible": true
 },
 "11501": {
@@ -9963,19 +9963,19 @@
 "11517": {
 "brand": null,
 "category": "ziednuvachi-y-perekhidnyky",
-"displayName": null,
+"displayName": "З’єднання для шланга 3/4",
 "isVisible": true
 },
 "11518": {
 "brand": null,
 "category": "rozpyliuvachi-i-pistolety",
-"displayName": null,
+"displayName": "Ручний пістолет 7 струменів PREMIUM",
 "isVisible": true
 },
 "11519": {
 "brand": null,
 "category": "rozpyliuvachi-i-pistolety",
-"displayName": null,
+"displayName": "Ручний пістолет 3 струмені PREMIUM",
 "isVisible": true
 },
 "11520": {
@@ -10149,7 +10149,7 @@
 "11548": {
 "brand": "Werk",
 "category": "dribnyi-ruchnyi-instrument",
-"displayName": null,
+"displayName": "Міні лопатка вузька Верк 310мм",
 "isVisible": true
 },
 "11549": {
@@ -10173,13 +10173,13 @@
 "11552": {
 "brand": null,
 "category": "zasoby-zakhystu-liudei",
-"displayName": null,
+"displayName": "Рукавички поліестер фіолетові 9р",
 "isVisible": true
 },
 "11553": {
 "brand": null,
 "category": "zasoby-zakhystu-liudei",
-"displayName": null,
+"displayName": "Рукавички поліестер зелені з латексним покриттям",
 "isVisible": true
 },
 "11554": {
@@ -10377,7 +10377,7 @@
 "11586": {
 "brand": null,
 "category": "horshchyky",
-"displayName": "Кашпо підвісний 3.7л (коричнивий)",
+"displayName": "Кашпо підвісний 3.7л (коричневий)",
 "isVisible": true
 },
 "11587": {
@@ -10629,19 +10629,19 @@
 "11628": {
 "brand": null,
 "category": "pryladdia-dlia-pryhotuvannia-yizhi",
-"displayName": null,
+"displayName": "Шампур 35см прямий",
 "isVisible": true
 },
 "11629": {
 "brand": null,
 "category": "pryladdia-dlia-pryhotuvannia-yizhi",
-"displayName": null,
+"displayName": "Шампур 35см кутовий",
 "isVisible": true
 },
 "11630": {
 "brand": null,
 "category": "pryladdia-dlia-pryhotuvannia-yizhi",
-"displayName": null,
+"displayName": "Шампур 60см прямий",
 "isVisible": true
 },
 "11631": {
@@ -10971,7 +10971,7 @@
 "11685": {
 "brand": null,
 "category": "opory-dlia-roslyn",
-"displayName": "Опора полупіраміда 500мм",
+"displayName": "Опора напівпіраміда 500мм",
 "isVisible": true
 },
 "11686": {
@@ -11061,7 +11061,7 @@
 "11700": {
 "brand": null,
 "category": "zasoby-zakhystu-roslyn",
-"displayName": null,
+"displayName": "Сілкер, КЕ інноваційний засіб від дрібних шкідників 5 мл.",
 "isVisible": true
 },
 "11701": {
@@ -11073,7 +11073,7 @@
 "11702": {
 "brand": "Werk",
 "category": "dribnyi-ruchnyi-instrument",
-"displayName": "Міні мотика двохстороння Верк 280мм",
+"displayName": "Міні мотика двостороння Верк 280мм",
 "isVisible": true
 },
 "11703": {
@@ -11145,7 +11145,7 @@
 "11714": {
 "brand": null,
 "category": "dobryva",
-"displayName": null,
+"displayName": "Зав’язь Провентус 2г",
 "isVisible": true
 },
 "11716": {
@@ -11469,7 +11469,7 @@
 "11769": {
 "brand": "Peatfield",
 "category": "hrunty-ta-dobavky",
-"displayName": "Субстрат PEATFIELD декорат-лист 10 л.",
+"displayName": "Субстрат PEATFIELD для декоративно-листяних 10 л.",
 "isVisible": true
 },
 "11770": {
@@ -11577,7 +11577,7 @@
 "11787": {
 "brand": null,
 "category": "ziednuvachi-y-perekhidnyky",
-"displayName": null,
+"displayName": "З’єднання для шланга 1/2",
 "isVisible": true
 },
 "11788": {
@@ -11673,7 +11673,7 @@
 "11803": {
 "brand": null,
 "category": "sekatory-suchkorizy-y-nozhytsi",
-"displayName": null,
+"displayName": "Сталеві садові ножиці з дерев’яними ручками",
 "isVisible": true
 },
 "11804": {
@@ -11835,7 +11835,7 @@
 "11830": {
 "brand": null,
 "category": "krapelnyi-polyv",
-"displayName": null,
+"displayName": "Емітерна крапельна стрічка кожні 30см 2.7л/год",
 "isVisible": true
 },
 "11831": {
@@ -11919,7 +11919,7 @@
 "11844": {
 "brand": "Fiskars",
 "category": "velykyi-ruchnyi-instrument",
-"displayName": "Набір грабель Fiskars One Click + ручка L 1080716",
+"displayName": "Набір граблів Fiskars One Click + ручка L 1080716",
 "isVisible": true
 },
 "11845": {
@@ -12129,7 +12129,7 @@
 "11879": {
 "brand": null,
 "category": "khimiia-dlia-baseiniv",
-"displayName": null,
+"displayName": "pH-мінус рідкий 1л (хімія для басейнів)",
 "isVisible": true
 },
 "11880": {
@@ -12291,7 +12291,7 @@
 "11906": {
 "brand": null,
 "category": "khimiia-dlia-baseiniv",
-"displayName": "Безхлорний засіб для очистки води в басейні водоросл \"В\" (хімія для басейнів)",
+"displayName": "Безхлорний засіб для очистки води в басейні від водоростей \"В\" (хімія для басейнів)",
 "isVisible": true
 },
 "11907": {
@@ -12447,7 +12447,7 @@
 "11932": {
 "brand": "GRÜNTEK",
 "category": "ziednuvachi-y-perekhidnyky",
-"displayName": "Адаптер з краном для шлангів зі штуцером двохсторонній GRUNTEK",
+"displayName": "Адаптер з краном для шлангів зі штуцером двосторонній GRUNTEK",
 "isVisible": true
 },
 "11933": {
@@ -12663,7 +12663,7 @@
 "11968": {
 "brand": null,
 "category": "horshchyky",
-"displayName": null,
+"displayName": "Вазон Сумела DAISY 46л мокко",
 "isVisible": true
 },
 "11969": {
@@ -13077,13 +13077,13 @@
 "12038": {
 "brand": null,
 "category": "velykyi-ruchnyi-instrument",
-"displayName": null,
+"displayName": "Сапа 180 мм, нержавіюча сталь",
 "isVisible": true
 },
 "12039": {
 "brand": null,
 "category": "horshchyky",
-"displayName": null,
+"displayName": "Вазон Amasra 0.13 л антрацит",
 "isVisible": true
 },
 "12040": {
@@ -13299,7 +13299,7 @@
 "12075": {
 "brand": null,
 "category": "elementy-osvitlennia",
-"displayName": "Лампочка з акамулятором 2*18650 20w світлодіодна",
+"displayName": "Лампочка з акумулятором 2*18650 20w світлодіодна",
 "isVisible": true
 },
 "12076": {
@@ -13317,7 +13317,7 @@
 "12078": {
 "brand": null,
 "category": "sekatory-suchkorizy-y-nozhytsi",
-"displayName": "Презиційні ножиці Razorsharp",
+"displayName": "Прецизійні ножиці Razorsharp",
 "isVisible": true
 },
 "12079": {
@@ -13695,7 +13695,7 @@
 "12141": {
 "brand": null,
 "category": "sokyry-pyly-y-nozhi",
-"displayName": null,
+"displayName": "Ніж 18мм з гумовою ручкою С9100",
 "isVisible": true
 },
 "12142": {
@@ -13839,7 +13839,7 @@
 "12165": {
 "brand": null,
 "category": "roslyny",
-"displayName": null,
+"displayName": "Хризантема",
 "isVisible": true
 },
 "12166": {
@@ -13857,7 +13857,7 @@
 "12168": {
 "brand": null,
 "category": "horshchyky",
-"displayName": null,
+"displayName": "Вазон Осло зі вставкою та декор 16см какао",
 "isVisible": true
 },
 "12169": {
@@ -14211,7 +14211,7 @@
 "12228": {
 "brand": null,
 "category": "elementy-osvitlennia",
-"displayName": "Лампочка з акамулятором З зарядкою USB та кнопкою.",
+"displayName": "Лампочка з акумулятором, із зарядкою USB та кнопкою",
 "isVisible": true
 },
 "12229": {
@@ -14391,7 +14391,7 @@
 "12258": {
 "brand": null,
 "category": "zasoby-zakhystu-roslyn",
-"displayName": null,
+"displayName": "Др. Ефект (від шкідників) 600мл",
 "isVisible": true
 },
 "12259": {
@@ -14463,7 +14463,7 @@
 "12270": {
 "brand": null,
 "category": "prykrasy",
-"displayName": null,
+"displayName": "Прикраса Верхівка срібна 26*18*5 YE1702S",
 "isVisible": true
 },
 "12271": {
@@ -14511,7 +14511,7 @@
 "12278": {
 "brand": null,
 "category": "prykrasy",
-"displayName": "Прикраса Сова 16*10*7 см EС0126",
+"displayName": "Прикраса Сова 16*10*7 см EC0126",
 "isVisible": true
 },
 "12279": {
@@ -14583,7 +14583,7 @@
 "12290": {
 "brand": null,
 "category": "prykrasy",
-"displayName": "Прикраса Янголч червоний 16,5*7*7см YE478R",
+"displayName": "Прикраса Янгол червоний 16,5*7*7см YE478R",
 "isVisible": true
 },
 "12291": {
@@ -14751,7 +14751,7 @@
 "12318": {
 "brand": null,
 "category": "prykrasy",
-"displayName": "Прикраса новорічна Цукерка полоска 19см, червоно-біла YE2937",
+"displayName": "Прикраса новорічна Цукерка в смужку 19см, червоно-біла YE2937",
 "isVisible": true
 },
 "12319": {
@@ -15051,7 +15051,7 @@
 "12368": {
 "brand": null,
 "category": "prykrasy",
-"displayName": null,
+"displayName": "Гілочка з ягодами, 19см, 2 в асортименті 450817",
 "isVisible": true
 },
 "12369": {
@@ -15147,13 +15147,13 @@
 "12384": {
 "brand": null,
 "category": "prykrasy",
-"displayName": "Квітка з органзи на кліпсі D16см, (зол., срібло, червон.) 780099",
+"displayName": "Квітка з органзи на кліпсі D16см, (золото, срібло, червоний) 780099",
 "isVisible": true
 },
 "12385": {
 "brand": null,
 "category": "prykrasy",
-"displayName": null,
+"displayName": "Гірлянда з кулями, 120 см, 5 кольорів в асорт. 770229",
 "isVisible": true
 },
 "12386": {
@@ -15243,7 +15243,7 @@
 "12400": {
 "brand": null,
 "category": "hirliandy",
-"displayName": null,
+"displayName": "Електрогірлянда світлодіодна 120Л, вулична, прозора 350070",
 "isVisible": true
 },
 "12401": {
@@ -15267,7 +15267,7 @@
 "12404": {
 "brand": null,
 "category": "hirliandy",
-"displayName": null,
+"displayName": "Електрогірлянда світлодіодна, 10 Л, біла, для використання як у приміщенні, так і надворі 930066",
 "isVisible": true
 },
 "12405": {
@@ -15279,7 +15279,7 @@
 "12406": {
 "brand": null,
 "category": "prykrasy",
-"displayName": null,
+"displayName": "Набір - 2 квітки з органзи на кліпсі D11см (срібло, золото, червоний) 780167",
 "isVisible": true
 },
 "12407": {
@@ -15315,7 +15315,7 @@
 "12412": {
 "brand": null,
 "category": "prykrasy",
-"displayName": "Квітка з органзи на кліпсі D20см, (зол., срібло, червон.) 780044",
+"displayName": "Квітка з органзи на кліпсі D20см, (золото, срібло, червоний) 780044",
 "isVisible": true
 },
 "12413": {
@@ -15351,19 +15351,19 @@
 "12418": {
 "brand": null,
 "category": "fihury-i-suveniry",
-"displayName": null,
+"displayName": "Дід Мороз музичний червоний з подарунками, що сидить на великому вінку, танцює, 41см 230341",
 "isVisible": true
 },
 "12419": {
 "brand": null,
 "category": "fihury-i-suveniry",
-"displayName": "Дід Мороз коричневий муз-ний, з подарунком та ведмежатком, 36см 230150",
+"displayName": "Дід Мороз коричневий музичний, з подарунком та ведмежатком, 36см 230150",
 "isVisible": true
 },
 "12420": {
 "brand": null,
 "category": "fihury-i-suveniry",
-"displayName": null,
+"displayName": "Дід Мороз червоний музичний сидить на кріслі зі скрипкою і подарунком, 30см 230310",
 "isVisible": true
 },
 "12421": {
@@ -15513,19 +15513,19 @@
 "12445": {
 "brand": null,
 "category": "fihury-i-suveniry",
-"displayName": null,
+"displayName": "Картина зі світлодіодним підсвічуванням, розмір 30*40*1,8 см, живлення від батарейок АА 940034",
 "isVisible": true
 },
 "12446": {
 "brand": null,
 "category": "fihury-i-suveniry",
-"displayName": null,
+"displayName": "Картина зі світлодіодним підсвічуванням, розмір 30*40*1,8 см, живлення від батарейок АА 940041",
 "isVisible": true
 },
 "12447": {
 "brand": null,
 "category": "fihury-i-suveniry",
-"displayName": null,
+"displayName": "Картина зі світлодіодним підсвічуванням, розмір 15*20*1,8 см, живлення від батарейок АА 940263",
 "isVisible": true
 },
 "12448": {
@@ -15567,7 +15567,7 @@
 "12454": {
 "brand": null,
 "category": "prykrasy",
-"displayName": null,
+"displayName": "Набір ялинкових прикрас, кульки у ПВХ боксі, 25мм*16шт, глянцеві, срібні, пластик, 890575",
 "isVisible": true
 },
 "12455": {
@@ -15699,7 +15699,7 @@
 "12476": {
 "brand": null,
 "category": "prykrasy",
-"displayName": null,
+"displayName": "Комплект куль 8*3, матові, з розписом, у коробці з віконцем 390441",
 "isVisible": true
 },
 "12477": {
@@ -16089,7 +16089,7 @@
 "7212": {
 "brand": null,
 "category": "materialy-dlia-pakuvannia",
-"displayName": null,
+"displayName": "Шпагат поліпропіленовий кольоровий 100гр",
 "isVisible": true
 },
 "7213": {
@@ -16119,7 +16119,7 @@
 "7217": {
 "brand": null,
 "category": "shkidnyky",
-"displayName": null,
+"displayName": "Спрей-Репелент від комарів і кліщів Тайга 100мл",
 "isVisible": true
 },
 "7218": {
@@ -16365,7 +16365,7 @@
 "7263": {
 "brand": null,
 "category": "shkidnyky",
-"displayName": null,
+"displayName": "Олівець від тарганів та мурах",
 "isVisible": true
 },
 "7264": {
@@ -16377,7 +16377,7 @@
 "7265": {
 "brand": null,
 "category": "shkidnyky",
-"displayName": null,
+"displayName": "Супер атака засіб від тарганів та мурах 10гр",
 "isVisible": true
 },
 "7266": {
@@ -16695,25 +16695,25 @@
 "7323": {
 "brand": null,
 "category": "shlanhy",
-"displayName": null,
+"displayName": "Садовий шланг ECO PLUS 1/2 20 м",
 "isVisible": true
 },
 "7324": {
 "brand": null,
 "category": "shlanhy",
-"displayName": null,
+"displayName": "Садовий шланг ECO PLUS 1/2 50 м",
 "isVisible": true
 },
 "7325": {
 "brand": null,
 "category": "shlanhy",
-"displayName": null,
+"displayName": "Садовий шланг ECO PLUS 3/4 20 м",
 "isVisible": true
 },
 "7326": {
 "brand": null,
 "category": "shlanhy",
-"displayName": null,
+"displayName": "Садовий шланг ECO PLUS 3/4 50 м",
 "isVisible": true
 },
 "7329": {
@@ -16851,7 +16851,7 @@
 "7351": {
 "brand": null,
 "category": "dribnyi-ruchnyi-instrument",
-"displayName": null,
+"displayName": "Вилка для прополки (чорна)",
 "isVisible": true
 },
 "7352": {
@@ -16929,7 +16929,7 @@
 "7364": {
 "brand": null,
 "category": "ziednuvachi-y-perekhidnyky",
-"displayName": null,
+"displayName": "Конектор з внутрішньою різьбою BASIC 3/4''",
 "isVisible": true
 },
 "7365": {
@@ -17043,13 +17043,13 @@
 "7383": {
 "brand": null,
 "category": "ziednuvachi-y-perekhidnyky",
-"displayName": null,
+"displayName": "Розподільник 2-канальний IDEAL LINE TM PLUS (блістер)",
 "isVisible": true
 },
 "7384": {
 "brand": null,
 "category": "ziednuvachi-y-perekhidnyky",
-"displayName": null,
+"displayName": "Розподільник 4-канальний IDEAL LINE TM PLUS (блістер)",
 "isVisible": true
 },
 "7385": {
@@ -17445,13 +17445,13 @@
 "7466": {
 "brand": null,
 "category": "hunter",
-"displayName": null,
+"displayName": "Сопло 8-AHE",
 "isVisible": true
 },
 "7467": {
 "brand": null,
 "category": "hunter",
-"displayName": null,
+"displayName": "Сопло 10-AHE",
 "isVisible": true
 },
 "7468": {
@@ -17547,7 +17547,7 @@
 "7489": {
 "brand": null,
 "category": "ziednuvachi-y-perekhidnyky",
-"displayName": null,
+"displayName": "Конектор 1/2 з аквастопом",
 "isVisible": true
 },
 "7490": {
@@ -17571,7 +17571,7 @@
 "7493": {
 "brand": null,
 "category": "rozpyliuvachi-i-pistolety",
-"displayName": "Ручний розприскувач багатофункціональний 7 струй 26AL",
+"displayName": "Ручний розприскувач багатофункціональний 7 струменів 26AL",
 "isVisible": true
 },
 "7494": {
@@ -17583,7 +17583,7 @@
 "7496": {
 "brand": null,
 "category": "irritec",
-"displayName": null,
+"displayName": "Кран для гідророзетки SM 3/4 в.р 3/4 з.р",
 "isVisible": true
 },
 "7498": {
@@ -17865,7 +17865,7 @@
 "7563": {
 "brand": null,
 "category": "opryskuvachi-liiky-y-vidra",
-"displayName": null,
+"displayName": "Відро 15л, Польща",
 "isVisible": true
 },
 "7564": {
@@ -18249,7 +18249,7 @@
 "7678": {
 "brand": "Rosasol",
 "category": "dobryva",
-"displayName": null,
+"displayName": "Добриво мінеральне водорозчинне ROSASOL для декоративно-листяних 0.5 л (розпилювач)",
 "isVisible": true
 },
 "7679": {
@@ -18501,13 +18501,13 @@
 "7737": {
 "brand": null,
 "category": "velykyi-ruchnyi-instrument",
-"displayName": null,
+"displayName": "Граблі R141 23 зуби, пластик, без ручки",
 "isVisible": true
 },
 "7738": {
 "brand": null,
 "category": "velykyi-ruchnyi-instrument",
-"displayName": null,
+"displayName": "Граблі R144 23 зуби, пластик, без ручки",
 "isVisible": true
 },
 "7739": {
@@ -18777,7 +18777,7 @@
 "7804": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": "Мітла для підлоги \"Gold\", розпушена, з металічним черенком",
+"displayName": "Мітла для підлоги \"Gold\", розпушена, з металевим держаком",
 "isVisible": true
 },
 "7805": {
@@ -18789,7 +18789,7 @@
 "7806": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": "Мітла для підлоги Джулія з металічним черенком",
+"displayName": "Мітла для підлоги Джулія з металевим держаком",
 "isVisible": true
 },
 "7807": {
@@ -18801,7 +18801,7 @@
 "7808": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": "Мітла для підлоги Карла з металічним черенком",
+"displayName": "Мітла для підлоги Карла з металевим держаком",
 "isVisible": true
 },
 "7809": {
@@ -18813,7 +18813,7 @@
 "7810": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": null,
+"displayName": "Щітка для підлоги 27 см з металевим держаком",
 "isVisible": true
 },
 "7811": {
@@ -19041,7 +19041,7 @@
 "7872": {
 "brand": null,
 "category": "roslyny",
-"displayName": null,
+"displayName": "Рулонний газон (100% тонконіг)",
 "isVisible": true
 },
 "7875": {
@@ -19311,13 +19311,13 @@
 "7966": {
 "brand": null,
 "category": "hrunty-ta-dobavky",
-"displayName": "Мох Свагнум 1л (Агро ресурс)",
+"displayName": "Мох Сфагнум 1л (Агро ресурс)",
 "isVisible": true
 },
 "7967": {
 "brand": null,
 "category": "hrunty-ta-dobavky",
-"displayName": "Мох Свагнум 0,5л Дім Сад Город плюс",
+"displayName": "Мох Сфагнум 0,5л Дім Сад Город плюс",
 "isVisible": true
 },
 "7968": {
@@ -19443,13 +19443,13 @@
 "7992": {
 "brand": null,
 "category": "sekatory-suchkorizy-y-nozhytsi",
-"displayName": null,
+"displayName": "Секатор площинний 18 см, рожевий 0703",
 "isVisible": true
 },
 "7993": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": null,
+"displayName": "Держак дерев’яний Л-1300",
 "isVisible": true
 },
 "7994": {
@@ -19479,7 +19479,7 @@
 "7998": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": null,
+"displayName": "Кий дерев’яний гвинтовий, італійська різьба",
 "isVisible": true
 },
 "7999": {
@@ -19587,19 +19587,19 @@
 "8026": {
 "brand": null,
 "category": "hazova-produktsiia",
-"displayName": "Балон-картридж газовий FR Cyclone універсальний 220 гр.(28 шт/eg) (ООО)",
+"displayName": "Балон-картридж газовий FR Cyclone універсальний 220 г",
 "isVisible": true
 },
 "8027": {
 "brand": null,
 "category": "hazova-produktsiia",
-"displayName": "Пильщик газовий FR Cyclone 581 (360) (ООО)",
+"displayName": "Пальник газовий FR Cyclone 581 (360)",
 "isVisible": true
 },
 "8028": {
 "brand": null,
 "category": "hazova-produktsiia",
-"displayName": "Пильник газовий FR Cyclone універсальний 7020 (ООО)",
+"displayName": "Пальник газовий FR Cyclone універсальний 7020",
 "isVisible": true
 },
 "8029": {
@@ -19971,7 +19971,7 @@
 "8103": {
 "brand": "Hunter",
 "category": "hunter",
-"displayName": null,
+"displayName": "Трансформатор 220/24 для PCC X-core, внутрішній",
 "isVisible": true
 },
 "8104": {
@@ -19983,19 +19983,19 @@
 "8105": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": "Совок з резиновою вставкою 131",
+"displayName": "Совок з гумовою вставкою 131",
 "isVisible": true
 },
 "8106": {
 "brand": null,
 "category": "zasoby-zakhystu-roslyn",
-"displayName": "Др. Мікро Квіткофор (від хвороб та гнилей) 300 мл.",
+"displayName": "Др. Мікро Квіткофор (від хвороб та гнилі) 300 мл.",
 "isVisible": true
 },
 "8107": {
 "brand": null,
 "category": "zasoby-zakhystu-roslyn",
-"displayName": null,
+"displayName": "Доктор Фолі від хвороб та гнилі 300 мл.",
 "isVisible": true
 },
 "8109": {
@@ -20403,7 +20403,7 @@
 "8207": {
 "brand": null,
 "category": "vuhillia-brykety-y-rozpaliuvachi",
-"displayName": null,
+"displayName": "Сухе пальне 8 таблеток, 65 г",
 "isVisible": true
 },
 "8208": {
@@ -20415,13 +20415,13 @@
 "8209": {
 "brand": null,
 "category": "hazova-produktsiia",
-"displayName": null,
+"displayName": "Плита газова туристична Happy Home BD-155A",
 "isVisible": true
 },
 "8210": {
 "brand": null,
 "category": "hazova-produktsiia",
-"displayName": null,
+"displayName": "Плита газова туристична Happy Home BD-155A1 з керамічною конфоркою",
 "isVisible": true
 },
 "8211": {
@@ -20433,13 +20433,13 @@
 "8212": {
 "brand": null,
 "category": "hazova-produktsiia",
-"displayName": null,
+"displayName": "Плита газова туристична Happy Home 2 в 1 з обігрівачем",
 "isVisible": true
 },
 "8213": {
 "brand": null,
 "category": "velykyi-ruchnyi-instrument",
-"displayName": null,
+"displayName": "Лопата мала алюмінієва для снігу 5400",
 "isVisible": true
 },
 "8214": {
@@ -20451,7 +20451,7 @@
 "8215": {
 "brand": null,
 "category": "velykyi-ruchnyi-instrument",
-"displayName": null,
+"displayName": "Лопата алюмінієва для снігу 88006",
 "isVisible": true
 },
 "8216": {
@@ -20505,7 +20505,7 @@
 "8225": {
 "brand": null,
 "category": "velykyi-ruchnyi-instrument",
-"displayName": "Лопата для снігу з черенком (жовта, синя)(135*46*46)",
+"displayName": "Лопата для снігу з держаком (жовта, синя)(135*46*46)",
 "isVisible": true
 },
 "8227": {
@@ -20733,7 +20733,7 @@
 "8269": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": null,
+"displayName": "Кий гвинтовий пластиковий кольоровий 120 см",
 "isVisible": true
 },
 "8270": {
@@ -20973,7 +20973,7 @@
 "8332": {
 "brand": null,
 "category": "ziednuvachi-y-perekhidnyky",
-"displayName": null,
+"displayName": "Універсальний адаптер з фільтром",
 "isVisible": true
 },
 "8333": {
@@ -21111,7 +21111,7 @@
 "8356": {
 "brand": null,
 "category": "horshchyky",
-"displayName": "Горщик для Орхідей Аквареь 12*0,6 (1л) прозорий",
+"displayName": "Горщик для Орхідей Акварель 12*0,6 (1л) прозорий",
 "isVisible": true
 },
 "8357": {
@@ -21129,7 +21129,7 @@
 "8359": {
 "brand": null,
 "category": "zasoby-zakhystu-roslyn",
-"displayName": null,
+"displayName": "Др. Ефект (від шкідників) 300мл",
 "isVisible": true
 },
 "8360": {
@@ -21573,7 +21573,7 @@
 "8443": {
 "brand": null,
 "category": "sekatory-suchkorizy-y-nozhytsi",
-"displayName": null,
+"displayName": "Ножиці універсальні подовжені 1144",
 "isVisible": true
 },
 "8444": {
@@ -21645,7 +21645,7 @@
 "8455": {
 "brand": null,
 "category": "sokyry-pyly-y-nozhi",
-"displayName": "Колун з ручкою версія \"Трациційна\" 2,5кг",
+"displayName": "Колун з ручкою версія \"Традиційна\" 2,5кг",
 "isVisible": true
 },
 "8456": {
@@ -21705,13 +21705,13 @@
 "8465": {
 "brand": null,
 "category": "velykyi-ruchnyi-instrument",
-"displayName": null,
+"displayName": "Держак дерев'яний, L-1500, конус (для граблів, ф 30)",
 "isVisible": true
 },
 "8466": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": null,
+"displayName": "Щітка для підлоги 30 см G300/1.5.4",
 "isVisible": true
 },
 "8467": {
@@ -21909,7 +21909,7 @@
 "8499": {
 "brand": "Fiskars",
 "category": "dribnyi-ruchnyi-instrument",
-"displayName": null,
+"displayName": "Совок садовий Fiskars",
 "isVisible": true
 },
 "8500": {
@@ -22089,13 +22089,13 @@
 "8529": {
 "brand": null,
 "category": "horshchyky",
-"displayName": null,
+"displayName": "Кронштейн-смуга для вазонів під балконний ящик (коричневий)",
 "isVisible": true
 },
 "8530": {
 "brand": null,
 "category": "horshchyky",
-"displayName": "Тримач для вазонів короткий (балк.40-60 см)(корич.)",
+"displayName": "Тримач для вазонів короткий (балкон 40-60 см) (коричневий)",
 "isVisible": true
 },
 "8531": {
@@ -22233,7 +22233,7 @@
 "8553": {
 "brand": null,
 "category": "horshchyky",
-"displayName": null,
+"displayName": "Кошик для цибулин круглий 30",
 "isVisible": true
 },
 "8554": {
@@ -22269,7 +22269,7 @@
 "8559": {
 "brand": null,
 "category": "dribnyi-ruchnyi-instrument",
-"displayName": null,
+"displayName": "Набір інвентарю для кімнатних рослин",
 "isVisible": true
 },
 "8560": {
@@ -22449,13 +22449,13 @@
 "8592": {
 "brand": null,
 "category": "zasoby-zakhystu-roslyn",
-"displayName": null,
+"displayName": "Магнікур стар 5 мл",
 "isVisible": true
 },
 "8593": {
 "brand": null,
 "category": "zasoby-zakhystu-roslyn",
-"displayName": null,
+"displayName": "Магнікур Енерджі 10 мл",
 "isVisible": true
 },
 "8594": {
@@ -22587,7 +22587,7 @@
 "8615": {
 "brand": null,
 "category": "ziednuvachi-y-perekhidnyky",
-"displayName": null,
+"displayName": "Подвійний з’єднувальний елемент",
 "isVisible": true
 },
 "8616": {
@@ -22635,7 +22635,7 @@
 "8623": {
 "brand": null,
 "category": "rozpyliuvachi-i-pistolety",
-"displayName": null,
+"displayName": "Розбризкувач мультифункціональний 3 режими",
 "isVisible": true
 },
 "8624": {
@@ -22701,7 +22701,7 @@
 "8634": {
 "brand": null,
 "category": "opryskuvachi-liiky-y-vidra",
-"displayName": null,
+"displayName": "Оприскувач акумуляторний Forte 16л",
 "isVisible": true
 },
 "8636": {
@@ -22731,7 +22731,7 @@
 "8642": {
 "brand": null,
 "category": "opryskuvachi-liiky-y-vidra",
-"displayName": null,
+"displayName": "Оприскувач акумуляторний Буковина 12л",
 "isVisible": true
 },
 "8643": {
@@ -22923,7 +22923,7 @@
 "8675": {
 "brand": null,
 "category": "zasoby-zakhystu-roslyn",
-"displayName": null,
+"displayName": "Космос інсектицид на 2 сотки",
 "isVisible": true
 },
 "8676": {
@@ -23055,7 +23055,7 @@
 "8700": {
 "brand": null,
 "category": "horshchyky",
-"displayName": null,
+"displayName": "Вазон самозволожуючий глянець 15 прозорий",
 "isVisible": true
 },
 "8701": {
@@ -23085,7 +23085,7 @@
 "8705": {
 "brand": null,
 "category": "nasinnia-hazonnykh-trav",
-"displayName": null,
+"displayName": "Робустіка універсальний",
 "isVisible": true
 },
 "8706": {
@@ -23115,13 +23115,13 @@
 "8710": {
 "brand": null,
 "category": "sekatory-suchkorizy-y-nozhytsi",
-"displayName": null,
+"displayName": "Площинний секатор Forster 24 мм",
 "isVisible": true
 },
 "8711": {
 "brand": null,
 "category": "sekatory-suchkorizy-y-nozhytsi",
-"displayName": null,
+"displayName": "Площинний секатор Forster 20-26 мм",
 "isVisible": true
 },
 "8712": {
@@ -23133,7 +23133,7 @@
 "8713": {
 "brand": null,
 "category": "sekatory-suchkorizy-y-nozhytsi",
-"displayName": null,
+"displayName": "Універсальний секатор Forster 24 мм",
 "isVisible": true
 },
 "8714": {
@@ -23241,7 +23241,7 @@
 "8732": {
 "brand": null,
 "category": "zasoby-zakhystu-roslyn",
-"displayName": null,
+"displayName": "Сяйво екстра. Прилипач",
 "isVisible": true
 },
 "8733": {
@@ -23259,7 +23259,7 @@
 "8735": {
 "brand": null,
 "category": "ziednuvachi-y-perekhidnyky",
-"displayName": null,
+"displayName": "З’єднувальна муфта для шланга 3/4, пластик",
 "isVisible": true
 },
 "8736": {
@@ -23373,19 +23373,19 @@
 "8756": {
 "brand": null,
 "category": "shlanhy",
-"displayName": null,
+"displayName": "Шланг, що сочиться, 5/8 20м",
 "isVisible": true
 },
 "8757": {
 "brand": null,
 "category": "krapelnyi-polyv",
-"displayName": null,
+"displayName": "Емітерна крапельна стрічка кожні 20см 2.7л/год",
 "isVisible": true
 },
 "8758": {
 "brand": null,
 "category": "krapelnyi-polyv",
-"displayName": null,
+"displayName": "Емітерна крапельна стрічка кожні 10см 1.38л/год",
 "isVisible": true
 },
 "8759": {
@@ -23625,7 +23625,7 @@
 "8801": {
 "brand": null,
 "category": "irritec",
-"displayName": null,
+"displayName": "Перехідник 3/4 ВРх 3/4 ВР",
 "isVisible": true
 },
 "8802": {
@@ -23661,7 +23661,7 @@
 "8807": {
 "brand": null,
 "category": "opryskuvachi-liiky-y-vidra",
-"displayName": null,
+"displayName": "Оприскувач садовий Forte KF-3,0 LS ємність 3л, тиск 3 бари",
 "isVisible": true
 },
 "8808": {
@@ -23763,7 +23763,7 @@
 "8824": {
 "brand": null,
 "category": "zasoby-zakhystu-roslyn",
-"displayName": null,
+"displayName": "Прилипач+амінокислоти 300 мл",
 "isVisible": true
 },
 "8825": {
@@ -23787,7 +23787,7 @@
 "8828": {
 "brand": null,
 "category": "zasoby-zakhystu-roslyn",
-"displayName": null,
+"displayName": "Прилипач+амінокислоти 12 мл",
 "isVisible": true
 },
 "8829": {
@@ -23913,7 +23913,7 @@
 "8849": {
 "brand": "Irritec",
 "category": "krapelnyi-polyv",
-"displayName": "Регулятор тиску Irritec 1,4 bar 3/4 ЗВ (5м. куб/ч)",
+"displayName": "Регулятор тиску Irritec 1,4 bar 3/4 ЗВ (5 м³/год)",
 "isVisible": true
 },
 "8850": {
@@ -24093,7 +24093,7 @@
 "8880": {
 "brand": null,
 "category": "zasoby-zakhystu-roslyn",
-"displayName": null,
+"displayName": "Сілкер, КЕ інноваційний засіб від дрібних шкідників 10мл.",
 "isVisible": true
 },
 "8881": {
@@ -24117,13 +24117,13 @@
 "8884": {
 "brand": "БТУ-Центр",
 "category": "zasoby-zakhystu-roslyn",
-"displayName": null,
+"displayName": "Бітоксибацилін-БТУ 500 мл.",
 "isVisible": true
 },
 "8885": {
 "brand": null,
 "category": "shkidnyky",
-"displayName": null,
+"displayName": "Тарган OFF пастка 6 шт.",
 "isVisible": true
 },
 "8886": {
@@ -24189,7 +24189,7 @@
 "8896": {
 "brand": null,
 "category": "dobryva",
-"displayName": null,
+"displayName": "Провентус для цибулі й часнику 300г",
 "isVisible": true
 },
 "8897": {
@@ -24213,7 +24213,7 @@
 "8900": {
 "brand": null,
 "category": "dobryva",
-"displayName": null,
+"displayName": "ФоліГрін Універсальний 300 мл.",
 "isVisible": true
 },
 "8901": {
@@ -24273,13 +24273,13 @@
 "8910": {
 "brand": "Hunter",
 "category": "hunter",
-"displayName": null,
+"displayName": "Внутрішній пульт керування на 8 зон Hunter X-CORE 801i-E",
 "isVisible": true
 },
 "8911": {
 "brand": null,
 "category": "avtotovary",
-"displayName": null,
+"displayName": "Зарядний пристрій для акумулятора 12/24 В",
 "isVisible": true
 },
 "8912": {
@@ -24327,7 +24327,7 @@
 "8919": {
 "brand": "БТУ-Центр",
 "category": "zasoby-zakhystu-roslyn",
-"displayName": null,
+"displayName": "Бітоксибацилін 35 мл. БТУ",
 "isVisible": true
 },
 "8920": {
@@ -24591,7 +24591,7 @@
 "8964": {
 "brand": null,
 "category": "dobryva",
-"displayName": null,
+"displayName": "Радіфарм Біостимулятор росту кореневої системи 100 мл. (25мл./10л)",
 "isVisible": true
 },
 "8965": {
@@ -24663,7 +24663,7 @@
 "8976": {
 "brand": null,
 "category": "horshchyky",
-"displayName": "Горщик для Орхідей Аквареь 12*0,6 (1л) прозоро-зелений",
+"displayName": "Горщик для Орхідей Акварель 12*0,6 (1л) прозоро-зелений",
 "isVisible": true
 },
 "8977": {
@@ -24681,13 +24681,13 @@
 "8979": {
 "brand": null,
 "category": "horshchyky",
-"displayName": null,
+"displayName": "Вазон самозволожуючий Глянець 18 прозорий",
 "isVisible": true
 },
 "8980": {
 "brand": null,
 "category": "horshchyky",
-"displayName": null,
+"displayName": "Вазон самозволожуючий Глянець 18 жовтий",
 "isVisible": true
 },
 "8981": {
@@ -24885,7 +24885,7 @@
 "9015": {
 "brand": null,
 "category": "zasoby-zakhystu-liudei",
-"displayName": null,
+"displayName": "Рукавички жіночі синтетичні фіолетові з фіолетовим спіненим латексним покриттям, розмір 8",
 "isVisible": true
 },
 "9016": {
@@ -25071,7 +25071,7 @@
 "9047": {
 "brand": null,
 "category": "shkidnyky",
-"displayName": null,
+"displayName": "Пацюк OFF! 200 гр. тісто у фільтр-пакетах",
 "isVisible": true
 },
 "9048": {
@@ -25191,7 +25191,7 @@
 "9067": {
 "brand": null,
 "category": "dobryva",
-"displayName": "Провентус добриво мінеральне кристалічне 300 г. (осіннє для газона)",
+"displayName": "Провентус добриво мінеральне кристалічне 300 г. (осіннє для газону)",
 "isVisible": true
 },
 "9068": {
@@ -25305,7 +25305,7 @@
 "9086": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": "Сіль камяна №3, розфас 1 кг. для доріг",
+"displayName": "Сіль кам’яна №3, фасована 1 кг, для доріг",
 "isVisible": true
 },
 "9087": {
@@ -26259,7 +26259,7 @@
 "9246": {
 "brand": "SeedEra",
 "category": "nasinnia",
-"displayName": "Квасоля китайська Вигна Макарена Seedera, 10 г (зелена з коричн. бобами)",
+"displayName": "Квасоля китайська Вигна Макарена Seedera, 10 г (зелена з коричневими бобами)",
 "isVisible": true
 },
 "9247": {
@@ -26283,13 +26283,13 @@
 "9250": {
 "brand": "SeedEra",
 "category": "nasinnia",
-"displayName": "Квасоля кущова Червона шапочка (червона с білим) Seedera, 20 г",
+"displayName": "Квасоля кущова Червона шапочка (червона з білим) Seedera, 20 г",
 "isVisible": true
 },
 "9251": {
 "brand": "SeedEra",
 "category": "nasinnia",
-"displayName": "Квасоля спаржева витка Блаухільде Seedera, 10 г (фіолет)",
+"displayName": "Квасоля спаржева витка Блаухільде Seedera, 10 г (фіолетова)",
 "isVisible": true
 },
 "9252": {
@@ -26301,7 +26301,7 @@
 "9253": {
 "brand": "SeedEra",
 "category": "nasinnia",
-"displayName": "Квасоля спаржева витка Хіменез Seedera, 20 г (зелена з червон. штрихами)",
+"displayName": "Квасоля спаржева витка Хіменез Seedera, 20 г (зелена з червоними штрихами)",
 "isVisible": true
 },
 "9254": {
@@ -26313,7 +26313,7 @@
 "9255": {
 "brand": "SeedEra",
 "category": "nasinnia",
-"displayName": "Квасоля спаржева кущова Борлетто Seedera, 20 г (кремова з червон. штрихами)",
+"displayName": "Квасоля спаржева кущова Борлетто Seedera, 20 г (кремова з червоними штрихами)",
 "isVisible": true
 },
 "9256": {
@@ -26355,7 +26355,7 @@
 "9262": {
 "brand": "SeedEra",
 "category": "nasinnia",
-"displayName": "Квасоля спаржева кущова Парпл тіпі Seedera, 20 г (фіолет.)",
+"displayName": "Квасоля спаржева кущова Парпл тіпі Seedera, 20 г (фіолетова)",
 "isVisible": true
 },
 "9263": {
@@ -28719,7 +28719,7 @@
 "9656": {
 "brand": "SeedEra",
 "category": "nasinnia",
-"displayName": null,
+"displayName": "Квіти Настурція напівмахрова Голден Глоуб Seedera, 1,5 г",
 "isVisible": true
 },
 "9657": {
@@ -30183,7 +30183,7 @@
 "9900": {
 "brand": "SeedEra",
 "category": "nasinnia",
-"displayName": null,
+"displayName": "Квіти Цикламен перський суміш багаторічний Seedera, 5 шт.",
 "isVisible": true
 },
 "9901": {
