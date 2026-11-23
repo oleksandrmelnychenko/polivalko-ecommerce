@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
 import { withCsrf } from "@/features/customer";
 import { postForgotPassword } from "../api/client";
 import { useFormState } from "../hooks/use-form-state";
 import { text } from "../lib/form-status";
+import { withNext } from "../lib/with-next";
 import { FormStatus } from "./form-status";
 import { TextField } from "./text-field";
 
 export function ForgotPasswordForm() {
+  const login = withNext("/account/login", useSearchParams());
   const formRef = useRef<HTMLFormElement>(null);
   const form = useFormState(formRef);
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -31,7 +34,7 @@ export function ForgotPasswordForm() {
               Якщо кабінет з адресою <b>{sentTo}</b> існує, ми надіслали туди посилання для нового пароля. Лист може
               потрапити в «Спам».
             </p>
-            <Link href="/account/login" className="btn btn--quiet">
+            <Link href={login} className="btn btn--quiet">
               Повернутися до входу
             </Link>
           </div>
@@ -46,7 +49,7 @@ export function ForgotPasswordForm() {
           </button>
           <p className="auth__switch">
             Згадали пароль?{" "}
-            <Link href="/account/login" className="link">
+            <Link href={login} className="link">
               Увійти
             </Link>
           </p>
@@ -57,6 +60,7 @@ export function ForgotPasswordForm() {
 }
 
 export function NoPasswordMail() {
+  const login = withNext("/account/login", useSearchParams());
   return (
     <div className="auth__done">
       <p className="notice">
@@ -67,7 +71,7 @@ export function NoPasswordMail() {
         </Link>
         .
       </p>
-      <Link href="/account/login" className="btn btn--quiet">
+      <Link href={login} className="btn btn--quiet">
         Повернутися до входу
       </Link>
     </div>

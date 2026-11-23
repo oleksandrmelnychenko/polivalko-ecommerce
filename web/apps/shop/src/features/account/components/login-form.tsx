@@ -49,7 +49,7 @@ export function LoginForm() {
         required
         errors={form.errors}
         aside={
-          <Link href="/account/forgot-password" className="link">
+          <Link href={withNext("/account/forgot-password", params)} className="link">
             Забули пароль?
           </Link>
         }
