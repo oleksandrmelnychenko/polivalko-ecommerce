@@ -7,6 +7,7 @@
 Credentials come from CONSOLE_EMAIL and CONSOLE_PASSWORD. Everything goes through the console API,
 so the change log, storefront cache invalidation and slug redirects work as for manual edits.
 `plan` only reads. `apply` never deletes anything and never changes a category's Navkolo reference.
+A category's SEO description is written only where the environment has none, so text written there stays.
 """
 import argparse
 import http.client
@@ -110,7 +111,7 @@ def export(console, out):
         target["categories"].append({
             "slug": c["slug"], "name": c["name"], "parent": slug_of.get(c["parentId"]), "sortOrder": c["sortOrder"],
             "isVisible": c["isVisible"], "navkoloRef": c["navkoloRef"], "path": list(paths[c["id"]]),
-            "previousNames": PREVIOUS_NAMES.get(c["name"], []),
+            "previousNames": PREVIOUS_NAMES.get(c["name"], []), "seoDescription": c.get("seoDescription"),
         })
     for item in console.products():
         detail = console.call("GET", f"/catalog/products/{item['id']}")
@@ -152,7 +153,8 @@ def reconcile(console, target, apply):
             if apply:
                 current = console.call("POST", "/catalog/categories", {
                     "parentId": parent_id, "name": t["name"], "slug": t["slug"], "sortOrder": t["sortOrder"],
-                    "isVisible": t["isVisible"], "navkoloRef": None, "filterAttributes": []})
+                    "isVisible": t["isVisible"], "navkoloRef": None, "filterAttributes": [],
+                    "seoDescription": t.get("seoDescription")})
                 paths[current["id"]] = parent_path + (norm(t["name"]),)
             resolved[t["slug"]] = current["id"] if current else f"new:{t['slug']}"
             continue
@@ -161,8 +163,12 @@ def reconcile(console, target, apply):
         if current["parentId"] is not None:
             wanted["parentId"] = parent_id
         diff = {k: v for k, v in wanted.items() if current.get(k) != v}
+        # The SEO description only fills an empty field: text someone wrote in that environment is kept.
+        if t.get("seoDescription") and not (current.get("seoDescription") or "").strip():
+            diff["seoDescription"] = t["seoDescription"]
         if diff and not (t["slug"] != current["slug"] and t["slug"] in by_slug and by_slug[t["slug"]]["id"] != current["id"]):
-            say(f"update category {current['slug']}: {diff}")
+            shown = {k: ("(fill the empty field)" if k == "seoDescription" else v) for k, v in diff.items()}
+            say(f"update category {current['slug']}: {shown}")
             changes["categories updated"] += 1
             if apply:
                 body = {k: current.get(k) for k in ("parentId", "name", "slug", "sortOrder", "isVisible", "navkoloRef",
