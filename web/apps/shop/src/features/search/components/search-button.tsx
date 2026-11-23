@@ -2,16 +2,28 @@
 
 import Form from "next/form";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 import type { ProductListItem } from "@polivalko/shared/api/types";
 import { formatMoney } from "@polivalko/shared/lib/format";
 import { hasPrice, PRICE_ON_REQUEST } from "@/shared/lib/price";
 import { CloseIcon, SearchIcon } from "@polivalko/shared/ui/icons";
 
 export function SearchButton() {
+  return <Suspense fallback={<SearchField initialQuery="" />}><SearchWithLocation /></Suspense>;
+}
+
+function SearchWithLocation() {
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const query = pathname === "/search" ? params.get("q")?.trim() ?? "" : "";
+  return <SearchField key={JSON.stringify([pathname, query])} initialQuery={query} />;
+}
+
+function SearchField({ initialQuery }: { initialQuery: string }) {
   const root = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [open, setOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [result, setResult] = useState<{ query: string; items: ProductListItem[]; failed?: boolean }>({ query: "", items: [] });
