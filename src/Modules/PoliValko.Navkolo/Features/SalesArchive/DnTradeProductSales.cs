@@ -14,8 +14,8 @@ internal sealed class DnTradeProductSales(PoliValkoDbContext db, ICatalogReporti
     {
         var archive = db.Set<DnTradeArchiveRecord>().AsNoTracking()
             .Where(r => SalesEntities.Contains(r.EntityType) && r.SourceDay.HasValue);
-        var firstDay = await BoundaryAsync(archive.OrderBy(r => r.SourceDay), latest: false, ct);
-        var lastDay = firstDay is null ? null : await BoundaryAsync(archive.OrderByDescending(r => r.SourceDay), latest: true, ct);
+        var firstDay = await BoundaryAsync(archive.OrderBy(r => r.SourceDay), ct);
+        var lastDay = firstDay is null ? null : await BoundaryAsync(archive.OrderByDescending(r => r.SourceDay), ct);
         var documentKeys = new HashSet<string>(StringComparer.Ordinal);
         var invoiceKeys = new HashSet<string>(StringComparer.Ordinal);
         var linkedReceipts = new List<DnTradeSalesDocument>();
@@ -24,11 +24,13 @@ internal sealed class DnTradeProductSales(PoliValkoDbContext db, ICatalogReporti
         var ignored = 0;
         var returnsAvailable = false;
 
-        await foreach (var record in ForPeriod(archive, from, to).OrderBy(r => r.SourceDay).ThenBy(r => r.Id)
-            .AsAsyncEnumerable().WithCancellation(ct))
+        // The day of a document is the date written in it. DNTrade marks the shop's own clock time as UTC:
+        // receipts stamped 14:46Z were already in the archive at 13:05 UTC. Reading the stamp as an instant
+        // would move a document entered after nine in the evening to the next day.
+        await foreach (var record in archive.Where(r => r.SourceDay >= from && r.SourceDay <= to)
+            .OrderBy(r => r.SourceDay).ThenBy(r => r.Id).AsAsyncEnumerable().WithCancellation(ct))
         {
-            if (DnTradeSalesDocument.BusinessDay(record) is not { } day || day < from || day > to) continue;
-            var document = DnTradeSalesDocument.Read(record, day, out var incomplete);
+            var document = DnTradeSalesDocument.Read(record, record.SourceDay!.Value, out var incomplete);
             if (incomplete) ignored++;
             if (document is null) continue;
 
@@ -61,28 +63,16 @@ internal sealed class DnTradeProductSales(PoliValkoDbContext db, ICatalogReporti
         return new ProductSalesData(rows, firstDay, lastDay, ignored, unmatchedLines, returnsAvailable);
     }
 
-    private static IQueryable<DnTradeArchiveRecord> ForPeriod(IQueryable<DnTradeArchiveRecord> archive, DateOnly from, DateOnly to)
+    // The day of the first record, in the given order, that reads as a sales document.
+    private static async Task<DateOnly?> BoundaryAsync(IQueryable<DnTradeArchiveRecord> ordered, CancellationToken ct)
     {
-        // A timestamp archived with another UTC offset can map to the neighboring Kyiv day.
-        var start = from == DateOnly.MinValue ? from : from.AddDays(-1);
-        var end = to == DateOnly.MaxValue ? to : to.AddDays(1);
-        return archive.Where(r => r.SourceDay >= start && r.SourceDay <= end);
-    }
-
-    private static async Task<DateOnly?> BoundaryAsync(IQueryable<DnTradeArchiveRecord> ordered, bool latest, CancellationToken ct)
-    {
-        DateOnly? boundary = null;
-        int? firstMatchedSourceDay = null;
         await foreach (var record in ordered.AsAsyncEnumerable().WithCancellation(ct))
         {
-            var sourceDay = record.SourceDay!.Value.DayNumber;
-            if (firstMatchedSourceDay is { } matched && Math.Abs(sourceDay - matched) > 1) break;
-            if (DnTradeSalesDocument.BusinessDay(record) is not { } day || DnTradeSalesDocument.Read(record, day, out _) is null) continue;
-            firstMatchedSourceDay ??= sourceDay;
-            if (boundary is null || (latest ? day > boundary : day < boundary)) boundary = day;
+            var day = record.SourceDay!.Value;
+            if (DnTradeSalesDocument.Read(record, day, out _) is not null) return day;
         }
 
-        return boundary;
+        return null;
     }
 
     private static async Task FindReferencedInvoicesAsync(IQueryable<DnTradeArchiveRecord> archive, HashSet<string> invoiceKeys,
@@ -94,8 +84,7 @@ internal sealed class DnTradeProductSales(PoliValkoDbContext db, ICatalogReporti
             var candidates = archive.Where(r => r.SourceAccount == account.Key && r.EntityType == "invoice" && references.Contains(r.SourceId));
             await foreach (var candidate in candidates.AsAsyncEnumerable().WithCancellation(ct))
             {
-                if (DnTradeSalesDocument.BusinessDay(candidate) is not { } day) continue;
-                if (DnTradeSalesDocument.Read(candidate, day, out _) is { Kind: DnTradeSalesKind.Invoice } invoice)
+                if (DnTradeSalesDocument.Read(candidate, candidate.SourceDay!.Value, out _) is { Kind: DnTradeSalesKind.Invoice } invoice)
                 {
                     invoiceKeys.Add(DocumentKey(invoice.Account, invoice.Id));
                     invoiceKeys.Add(DocumentKey(candidate.SourceAccount, candidate.SourceId));

@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text.Json;
-using PoliValko.SharedKernel;
 
 namespace PoliValko.Navkolo.Features.SalesArchive;
 
@@ -11,18 +10,6 @@ internal sealed record DnTradeSalesLine(string? ProviderId, string? Code, string
 internal sealed record DnTradeSalesDocument(string Account, string Id, string? ParentId, DateOnly Day, DnTradeSalesKind Kind,
     IReadOnlyList<DnTradeSalesLine> Lines)
 {
-    internal static DateOnly? BusinessDay(DnTradeArchiveRecord row)
-    {
-        if (row.SourceDate is { Length: > 10 } date &&
-            (date.EndsWith('Z') || date.AsSpan(10).IndexOfAny('+', '-') >= 0) &&
-            DateTimeOffset.TryParse(date, CultureInfo.InvariantCulture, DateTimeStyles.None, out var instant))
-        {
-            return KyivTime.DateOf(instant);
-        }
-
-        return row.SourceDay;
-    }
-
     // DNTrade /invoices/list enum and Invoice.products schema.
     // https://api.dntrade.com.ua/docs/swagger.json
     internal static DnTradeSalesDocument? Read(DnTradeArchiveRecord row, DateOnly day, out bool incomplete)

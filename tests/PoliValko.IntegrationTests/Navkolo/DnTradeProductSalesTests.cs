@@ -12,7 +12,7 @@ namespace PoliValko.IntegrationTests;
 public sealed class DnTradeProductSalesTests(ApiFactory api)
 {
     [Fact]
-    public async Task Archive_uses_Kyiv_dates_and_actual_movement_without_double_counting_invoices_and_receipts()
+    public async Task Archive_uses_the_day_written_in_a_document_and_actual_movement_without_double_counting_invoices_and_receipts()
     {
         var ct = TestContext.Current.CancellationToken;
         var account = $"analytics-{Guid.NewGuid():N}";
@@ -35,8 +35,9 @@ public sealed class DnTradeProductSalesTests(ApiFactory api)
                 var archive = string.Join('\n',
                     Invoice("invoice", linkedInvoice, "3", "2014-11-01", providerProduct, code, "9", "360"),
                     Invoice("receipt", Guid.NewGuid(), "6", "2014-11-02", providerProduct, code, "9", "360", parent: linkedInvoice),
-                    Invoice("invoice", invoice, "3", "2014-11-01T23:30:00Z", providerProduct, code, "2.5", "100"),
-                    Invoice("receipt", invoice, "3", "2014-11-01T23:30:00Z", providerProduct, code, "2.5", "100"),
+                    // DNTrade marks the shop's clock time as UTC: half past eleven at night is still 2 November.
+                    Invoice("invoice", invoice, "3", "2014-11-02T23:30:00Z", providerProduct, code, "2.5", "100"),
+                    Invoice("receipt", invoice, "3", "2014-11-02T23:30:00Z", providerProduct, code, "2.5", "100"),
                     Invoice("invoice", Guid.NewGuid(), "6", "2014-11-02", unmatchedProduct, 1, "1", "55"),
                     Invoice("customerReturn", Guid.NewGuid(), "7", "2014-11-03", providerProduct, code, "-0.5", "-20"),
                     Invoice("invoice", Guid.NewGuid(), "3", "2014-11-02", providerProduct, code, "100", "4000", status: "deactivated"),
