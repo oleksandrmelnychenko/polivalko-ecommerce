@@ -105,6 +105,7 @@ export function SettlementPicker({
         }}
       />
       {open && status === "loading" && <p role="status" className="field__help">Шукаємо населений пункт…</p>}
+      {open && status === "done" && !options.length && <p role="status" className="field__help">Населений пункт не знайдено.</p>}
       {open && status === "error" && <div className="field__error">
         <span role="status">Не вдалося завантажити населені пункти.</span>{" "}
         <button type="button" className="link" onClick={() => {
