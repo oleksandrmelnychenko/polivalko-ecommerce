@@ -81,9 +81,9 @@ export function SettlementPicker({
           } else if (e.key === "ArrowUp") {
             e.preventDefault();
             setActive((a) => Math.max(a - 1, 0));
-          } else if (e.key === "Enter" && open && options[active]) {
+          } else if (e.key === "Enter" && open) {
             e.preventDefault();
-            pick(options[active]);
+            if (options[active]) pick(options[active]);
           } else if (e.key === "Escape") {
             setOpen(false);
           }
