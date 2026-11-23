@@ -21,7 +21,7 @@ public sealed record ChangeStorefrontMode(string Mode, DateOnly? Through, Guid E
 
 /// <summary>A product of the preview with its season on the day looked at and what decided it.</summary>
 /// <param name="Season">in_season | all_year | off_season</param>
-/// <param name="Source">rule | product | category | department | none</param>
+/// <param name="Source">rule | product | category | department | rule_capped | none</param>
 public sealed record StorefrontPreviewItemDto(ProductListItemDto Product, string Season, string Source);
 public sealed record StorefrontPreviewCountsDto(int InSeason, int AllYear, int OffSeason);
 /// <param name="Counts">The whole catalog by season. Absent when the preview looks products up by name.</param>

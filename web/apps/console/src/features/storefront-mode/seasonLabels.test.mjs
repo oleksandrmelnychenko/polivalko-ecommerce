@@ -17,6 +17,8 @@ test('each season the shop answers with has its own name and colour', () => {
 test('the reason says what decided the season', () => {
   assert.deepEqual(['rule', 'product', 'category', 'department', 'none'].map(labels.sourceLabel),
     ['правило', 'історія товару', 'історія категорії', 'історія відділу', 'немає даних'])
+  // The category sells now, but the product has a rule for other months, so it is not called in season.
+  assert.equal(labels.seasonReason('all_year', 'rule_capped'), 'Цілорічний · категорія в сезоні, правило — ні')
   assert.equal(labels.seasonReason('off_season', 'rule'), 'Не сезон · правило')
 })
 

@@ -33,18 +33,23 @@ public sealed class SeasonVerdictTests
         SeasonVerdict.Judge((decimal)observed, (decimal)expected).ShouldBeNull();
 
     [Theory]
-    [InlineData(true, false, null, Season.In)]
-    [InlineData(true, false, Season.Off, Season.In)]          // a rule for this month outranks sales history
-    [InlineData(false, false, Season.In, Season.In)]
-    [InlineData(false, true, Season.In, Season.In)]           // sales now outrank a rule written for other months
-    [InlineData(false, false, Season.Off, Season.Off)]
-    [InlineData(false, true, Season.Off, Season.Off)]
-    [InlineData(false, true, null, Season.Off)]               // a rule for other months decides when history is silent
-    [InlineData(false, true, Season.AllYear, Season.AllYear)] // ... but not against history that says all-year
-    [InlineData(false, false, Season.AllYear, Season.AllYear)]
-    [InlineData(false, false, null, Season.AllYear)]
-    public void Rules_and_history_combine_into_one_state(bool ruleIn, bool ruleOff, Season? history, Season state) =>
-        SeasonVerdict.Combine(ruleIn, ruleOff, history).ShouldBe(state);
+    [InlineData(true, false, null, null, Season.In)]
+    [InlineData(true, false, Season.Off, null, Season.In)]          // a rule for this month outranks sales history
+    [InlineData(false, false, Season.In, null, Season.In)]
+    [InlineData(false, true, Season.In, Season.Off, Season.In)]     // the product's own sales now outrank a rule for other months
+    [InlineData(false, false, null, Season.In, Season.In)]          // a product without a rule follows its category
+    [InlineData(false, true, null, Season.In, Season.AllYear)]      // ... but a category cannot put a product in season against its rule
+    [InlineData(false, true, null, Season.AllYear, Season.AllYear)]
+    [InlineData(false, true, null, Season.Off, Season.Off)]
+    [InlineData(false, true, null, null, Season.Off)]               // a rule for other months decides when history is silent
+    [InlineData(false, true, Season.Off, Season.In, Season.Off)]    // the product's own history comes before its category's
+    [InlineData(false, true, Season.AllYear, Season.In, Season.AllYear)]
+    [InlineData(false, false, Season.Off, Season.In, Season.Off)]
+    [InlineData(false, false, Season.AllYear, null, Season.AllYear)]
+    [InlineData(false, false, null, Season.Off, Season.Off)]
+    [InlineData(false, false, null, null, Season.AllYear)]
+    public void Rules_and_history_combine_into_one_state(bool ruleIn, bool ruleOff, Season? own, Season? category, Season state) =>
+        SeasonVerdict.Combine(ruleIn, ruleOff, own, category).ShouldBe(state);
 
     [Fact]
     public void A_product_with_thin_history_takes_the_verdict_of_the_nearest_category_that_has_one()

@@ -30,11 +30,21 @@ internal static class SeasonVerdict
         return null;
     }
 
-    /// <summary>A rule for this month or sales now put a product in season; a rule for other months decides only when history is silent.</summary>
-    public static Season Combine(bool ruleIn, bool ruleOff, Season? history) =>
-        ruleIn || history == Season.In ? Season.In
-        : history == Season.Off || (ruleOff && history is null) ? Season.Off
-        : Season.AllYear;
+    /// <summary>
+    /// A rule for this month or the product's own sales now put it in season. A rule for other months decides when
+    /// there is no history at all, and it keeps the category from promoting the product: what its neighbours sell
+    /// now can leave it neutral or put it out of season, but not in season. Rules name promotion months, not a
+    /// product's whole season, so they do not overrule a category that sells evenly or not at all.
+    /// </summary>
+    /// <param name="own">What the product's own receipts say.</param>
+    /// <param name="category">What its category says, from the nearest level that has a verdict.</param>
+    public static Season Combine(bool ruleIn, bool ruleOff, Season? own, Season? category)
+    {
+        if (ruleIn || own == Season.In) return Season.In;
+        var history = own ?? category;
+        if (!ruleOff) return history ?? Season.AllYear;
+        return history switch { null => Season.Off, Season.In => Season.AllYear, _ => history.Value };
+    }
 
     /// <summary>
     /// The verdict a product without enough history of its own takes from its category: the nearest of the category

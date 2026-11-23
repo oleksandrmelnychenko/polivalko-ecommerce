@@ -12,6 +12,8 @@ internal sealed class SeasonRow
     /// <summary>A <see cref="Season"/> as a number, so that it sorts in the database.</summary>
     public int State { get; init; }
     public bool RuleIn { get; init; }
+    /// <summary>A rule names the product, but for other months.</summary>
+    public bool RuleOff { get; init; }
     /// <summary>The verdict of the product's own receipts, if they are enough for one.</summary>
     public int? Product { get; init; }
     /// <summary>The verdict the product's category gives it, from the nearest level that has one.</summary>
@@ -62,15 +64,19 @@ internal static class SeasonClassifier
                let ruleIn = rule.Family != null
                // A rule names the product, but for other months. Without a rule there are no months to compare.
                let ruleOff = rule.MonthMask > 0 && rule.Family == null
-               let verdict = (int?)receipts.Verdict ?? (int?)shelf.Verdict
+               let sales = (int?)receipts.Verdict
+               let verdict = sales ?? (int?)shelf.Verdict
                select new SeasonRow
                {
                    ProductId = p.Id,
                    // The same decision as SeasonVerdict.Combine, made where the catalog is sorted.
-                   State = ruleIn || verdict == (int)Season.In ? (int)Season.In
-                       : verdict == (int)Season.Off || (ruleOff && verdict == null) ? (int)Season.Off
-                       : (int)Season.AllYear,
+                   State = ruleIn || sales == (int)Season.In ? (int)Season.In
+                       : !ruleOff ? verdict ?? (int)Season.AllYear
+                       : verdict == null ? (int)Season.Off
+                       : verdict == (int)Season.In ? (int)Season.AllYear
+                       : verdict.Value,
                    RuleIn = ruleIn,
+                   RuleOff = ruleOff,
                    Product = (int?)receipts.Verdict,
                    Category = (int?)shelf.Verdict,
                    Root = (bool?)shelf.Root,
@@ -84,10 +90,14 @@ internal static class SeasonClassifier
         _ => "all_year",
     };
 
-    /// <summary>What decided the state: a rule, the product's own receipts, its category's, its department's, or nothing.</summary>
+    /// <summary>
+    /// What decided the state: a rule, the product's own receipts, its category's, its department's, a rule for
+    /// other months holding back a category that sells now, or nothing.
+    /// </summary>
     public static string Source(SeasonRow row) =>
         row.State == (int)Season.In && row.RuleIn ? "rule"
         : row.Product is not null ? "product"
+        : row.RuleOff && row.Category == (int)Season.In ? "rule_capped"
         : row.Category is not null ? row.Root == true ? "department" : "category"
         // Off season without any history: only a rule for other months can have said so.
         : row.State == (int)Season.Off ? "rule"
