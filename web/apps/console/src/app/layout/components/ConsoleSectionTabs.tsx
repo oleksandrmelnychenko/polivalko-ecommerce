@@ -10,7 +10,7 @@ export function ConsoleSectionTabs() {
   const activeLink = useRef<HTMLAnchorElement>(null)
 
   useEffect(() => {
-    if (activeSection?.id !== 'catalog' && activeSection?.id !== 'site' && activeSection?.id !== 'sales') return
+    if (!activeSection || !['catalog', 'site', 'sales', 'settings', 'system'].includes(activeSection.id)) return
     const link = activeLink.current
     const nav = link?.parentElement
     if (!link || !nav) return
@@ -25,7 +25,7 @@ export function ConsoleSectionTabs() {
     observer.observe(nav)
     revealActiveLink()
     return () => observer.disconnect()
-  }, [activeSection?.id, currentId, activeSectionItems.length])
+  }, [activeSection, currentId, activeSectionItems.length])
 
   if (!activeSection || activeSectionItems.length < 2) return null
 
