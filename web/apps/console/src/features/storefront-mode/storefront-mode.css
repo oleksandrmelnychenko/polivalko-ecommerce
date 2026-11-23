@@ -25,6 +25,8 @@
 .storefront-mode-products li { display: grid; grid-template-columns: 22px 36px minmax(0,1fr); align-content: start; align-items: center; gap: 6px 8px; border-top: 1px dashed var(--app-line); padding-block: 10px; }
 .storefront-product-image { width: 36px; height: 36px; display: grid; place-items: center; background: var(--app-ground); color: var(--mantine-color-dimmed); overflow: hidden; border-radius: 8px; }
 .storefront-product-image img { object-fit: contain; }
+.storefront-season { grid-column: 2 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.storefront-season-counts { display: flex; flex-wrap: wrap; gap: 4px; }
 .storefront-pin-actions { grid-column: 2 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .storefront-pin-grip[draggable=true] { cursor: grab; user-select: none; min-height: 24px; }
 .storefront-pin-grip[draggable=true]:active { cursor: grabbing; }

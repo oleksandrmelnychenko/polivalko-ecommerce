@@ -13,6 +13,7 @@ import { MetricLabel } from '@/shared/ui/MetricCard'
 import { TableChip } from '@/shared/ui/TableChip'
 import { PageState } from '@/shared/ui/PageState'
 import { notifySuccess } from '@/shared/ui/notify'
+import { seasonLabel, seasonReason, seasonTone, sourceLabel } from './seasonLabels'
 import './storefront-mode.css'
 
 const endpoint = '/api/v1/console/catalog/storefront-mode'
@@ -24,6 +25,7 @@ const modes = [
 type Setting = components['schemas']['StorefrontModeDto']
 type Product = components['schemas']['ProductListItemDto']
 const maxPins = 12
+const count = new Intl.NumberFormat('uk-UA')
 function ProductInfo({ product }: { product: Product }) {
   return <>
     <span className="storefront-product-image">{product.imageUrl
@@ -85,16 +87,30 @@ function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: 
     { params: { query: { q: term, sort: 'seasonal', pageSize: 8 } } }), { enabled: Boolean(term) })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [lookup, setLookup] = useState('')
+  const [found] = useDebouncedValue(lookup.trim(), 250)
   // Reordering the same pins only changes their positions, not the automatic selections.
   const preview = useApiQuery(['storefront-preview', today, mode, month, [...pins].sort().join(',')].join(':'), () =>
     api.GET('/api/v1/console/catalog/storefront-mode/preview', { params: { query: { mode, month, pinned: pins } }, cache: 'no-store' }))
+  // The same order narrowed to what a name or an article finds. The catalog above stays loaded: saving depends on it.
+  const lookedUp = useApiQuery(['storefront-lookup', today, mode, month, found].join(':'), () =>
+    api.GET('/api/v1/console/catalog/storefront-mode/preview', { params: { query: { mode, month, q: found } }, cache: 'no-store' }),
+    { enabled: Boolean(found) })
+  const searching = Boolean(lookup.trim())
+  const shown = searching ? lookedUp : preview
+  // Until the typed words reach the request, the list on screen answers the previous ones.
+  const listStatus = searching && found !== lookup.trim() ? 'loading' : shown.status
   const end = mode === 'seasonal' || !through ? null : through
   const invalid = Boolean(end && end < kyivDate())
   const dirty = mode !== baseline.mode || end !== (baseline.through ?? null) || pins.join() !== (baseline.pinnedProductIds ?? []).join()
-  const listed = preview.data?.items.map(item => item.product) ?? []
-  const byId = new Map(listed.map(product => [product.id, product]))
-  const products = [...pins.flatMap(id => byId.get(id) ?? []), ...listed.filter(product => !pins.includes(product.id))]
+  const items = preview.data?.items ?? []
+  const byId = new Map(items.map(item => [item.product.id, item]))
+  // The catalog starts with the pins, in the order chosen here. A search shows only what it found.
+  const rows = searching ? lookedUp.data?.items ?? []
+    : [...pins.flatMap(id => byId.get(id) ?? []), ...items.filter(item => !pins.includes(item.product.id))]
   const missing = preview.status === 'ready' ? pins.filter(id => !byId.has(id)) : []
+  const counts = preview.data?.counts
+  const lostRules = preview.data?.rulesWithoutCategory ?? []
   function movePin(index: number, destination: number) {
     if (busy || index < 0 || destination < 0 || destination >= pins.length || destination === index) return
     const next = pins.slice()
@@ -151,15 +167,24 @@ function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: 
           : <Text size="sm" role="status">Товарів за цим пошуком немає.</Text>)}
       </section>
       <section className="storefront-mode-card" aria-label="Попередній перегляд каталогу">
-        <h3>Перші 48 товарів у каталозі</h3>
+        <Group justify="space-between" gap="xs"><h3>{searching ? 'Знайдені товари' : 'Перші 48 товарів у каталозі'}</h3>
+          {counts && <span className="storefront-season-counts">
+            <TableChip tone={seasonTone('in_season')} value={seasonLabel('in_season') + ' · ' + count.format(counts.inSeason)} />
+            <TableChip tone={seasonTone('all_year')} value={seasonLabel('all_year') + ' · ' + count.format(counts.allYear)} />
+            <TableChip tone={seasonTone('off_season')} value={seasonLabel('off_season') + ' · ' + count.format(counts.offSeason)} />
+          </span>}</Group>
         {mode === 'seasonal' && <NativeSelect mt="xs" label="Місяць перегляду" value={String(month)} data={monthOptions}
           description={month === currentMonth ? 'Порядок на сьогодні за київським часом.' : 'Прогноз на 15-те число за сьогоднішніми залишками. Місяць змінює лише попередній перегляд.'}
           onChange={event => { const value = Number(event.currentTarget.value); setSelectedMonth(value === currentMonth ? null : value) }} />}
-        {missing.length > 0 && <Alert color="orange">Закріплених товарів поза каталогом · {missing.length}{' '}
+        <TextInput mt="xs" aria-label="Пошук товару в перегляді" placeholder="Знайти товар і побачити його сезон" radius="xl"
+          leftSection={<IconSearch size={16} />} value={lookup} onChange={event => setLookup(event.currentTarget.value)} />
+        {lostRules.length > 0 && <Alert color="orange" mt="xs" title={'Сезонні правила без розділу в каталозі · ' + lostRules.length}>
+          Розділ перейменовано або прибрано, тож правило не знаходить товарів: {lostRules.join('; ')}.</Alert>}
+        {missing.length > 0 && <Alert color="orange" mt="xs">Закріплених товарів поза каталогом · {missing.length}{' '}
           <Button variant="default" size="compact-xs" onClick={() => setPins(pins.filter(id => !missing.includes(id)))}>Зняти закріплення з недоступних</Button></Alert>}
-        {preview.status !== 'ready' ? <PageState kind={preview.status} onRetry={preview.reload} /> :
-          products.length ? <ol className="storefront-mode-products">{products.map((product, index) => {
-            const pinIndex = pins.indexOf(product.id)
+        {listStatus !== 'ready' ? <PageState kind={listStatus} onRetry={shown.reload} /> :
+          rows.length ? <ol className="storefront-mode-products">{rows.map(({ product, season, source }, index) => {
+            const pinIndex = searching ? -1 : pins.indexOf(product.id)
             const canDrop = !busy && draggedId !== null && draggedId !== product.id && pinIndex >= 0
             return <li key={product.id} data-dragging={draggedId === product.id || undefined}
               data-drop-target={canDrop && targetId === product.id || undefined}
@@ -178,8 +203,11 @@ function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: 
                 movePin(pins.indexOf(draggedId), pinIndex)
                 finishDrag()
               }}>
-              <span className="storefront-mode-rank" aria-hidden="true">{index + 1}</span>
+              <span className="storefront-mode-rank" aria-hidden="true">{searching ? '—' : index + 1}</span>
               <ProductInfo product={product} />
+              <span className="storefront-season"><TableChip tone={seasonTone(season)} value={seasonLabel(season)}
+                title={seasonReason(season, source)} /><small>{sourceLabel(source)}</small>
+                {searching && pins.includes(product.id) && <TableChip tone="product" value="Закріплено" />}</span>
               {pinIndex >= 0 && <div className="storefront-pin-actions">
                 <span className="app-table-chip is-product storefront-pin-grip" draggable={!busy && pins.length > 1}
                   title={pins.length > 1 ? 'Перетягнути на місце іншого закріпленого товару' : 'Закріплено'}
@@ -198,7 +226,7 @@ function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: 
                   onClick={() => setPins(pins.filter(id => id !== product.id))}><IconX size={14} /></ActionIcon>
               </div>}
             </li>
-          })}</ol> : <Text size="sm">Опублікованих товарів поки немає.</Text>}
+          })}</ol> : <Text size="sm" role="status">{searching ? 'Товарів за цим пошуком немає.' : 'Опублікованих товарів поки немає.'}</Text>}
       </section>
       {error && <Alert color="red" role="alert">{error}</Alert>}
     </Stack>
