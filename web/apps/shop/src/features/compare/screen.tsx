@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useHydrated } from "@/shared/hooks/use-hydrated";
 import { useEffect, useState } from "react";
 import { formatMoney } from "@polivalko/shared/lib/format";
 import { hasPrice, PRICE_ON_REQUEST } from "@/shared/lib/price";
@@ -8,11 +10,16 @@ import { CloseIcon } from "@polivalko/shared/ui/icons";
 import { comparisonGroup, comparisonRows, type CompareProduct } from "./model";
 import { clearComparisonGroup, loadComparisonProduct, refreshComparison, removeComparison, useComparison } from "./store";
 
-export function CompareScreen({ initialGroup = "" }: { initialGroup?: string }) {
+export function CompareScreen() {
+  const group = useSearchParams().get("group") ?? "";
+  return <ComparisonGroups key={group} initialGroup={group} />;
+}
+
+function ComparisonGroups({ initialGroup }: { initialGroup: string }) {
+  const hydrated = useHydrated();
   const saved = useComparison();
   const [activeKey, setActiveKey] = useState(initialGroup);
   const [onlyDifferences, setOnlyDifferences] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState<string[]>([]);
   const [retry, setRetry] = useState(0);
   const signature = saved.map(p => p.slug).join(",");
@@ -25,7 +32,6 @@ export function CompareScreen({ initialGroup = "" }: { initialGroup?: string }) 
       const loaded = results.flatMap(result => result.status === "fulfilled" ? [result.value] : []);
       if (loaded.length) refreshComparison(loaded);
       setFailed(slugs.filter((_, index) => results[index].status === "rejected"));
-      setLoading(false);
     });
     return () => { cancelled = true; };
   }, [signature, retry]);
@@ -44,13 +50,8 @@ export function CompareScreen({ initialGroup = "" }: { initialGroup?: string }) 
   const categoryHref = active?.slug ? `/catalog/${active.slug}` : "/catalog";
   const addSlot = products.length < 4;
 
-  return <div className="container compare-page">
-    <header className="page-head compare-page__head">
-      <nav className="crumbs" aria-label="Хлібні крихти"><ol><li><Link href="/">Головна</Link></li><li aria-current="page">Порівняння</li></ol></nav>
-      <h1>Порівняння товарів</h1>
-      <p>Порівнюйте характеристики до 4 товарів одного типу.</p>
-    </header>
-    {loading ? <p role="status" className="compare-loading">Завантажуємо характеристики…</p> : saved.length === 0 ?
+  if (!hydrated) return <p role="status" className="compare-loading">Завантажуємо порівняння…</p>;
+  return saved.length === 0 ?
       <div className="compare-empty"><span className="compare-empty__symbol" aria-hidden="true">⇄</span><h2>Товарів для порівняння ще немає</h2><p>У каталозі натисніть іконку порівняння на фото товару, під сердечком. Товари різних типів зберуться в окремі групи.</p><Link href="/catalog" className="btn">Обрати товари</Link></div> : <>
       <nav className="compare-groups" aria-label="Групи порівняння">{[...groups.values()].map(group => <button key={group.key} type="button" aria-pressed={active?.key === group.key} onClick={() => { setActiveKey(group.key); setOnlyDifferences(false); }}>{group.name}<span>{group.products.length}</span></button>)}</nav>
       {failed.length > 0 && <div role="alert" className="notice">Не вдалося оновити частину товарів. Показуємо останні збережені дані. <button type="button" className="link" onClick={() => setRetry(value => value + 1)}>Спробувати ще раз</button></div>}
@@ -79,6 +80,5 @@ export function CompareScreen({ initialGroup = "" }: { initialGroup?: string }) 
         </table>
       </div>
       {products.every(p => !p.attributes?.length) && <p className="compare-hint">Детальні характеристики цих товарів ще не заповнені.</p>}
-    </>}
-  </div>;
+    </>;
 }

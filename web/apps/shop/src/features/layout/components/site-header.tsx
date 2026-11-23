@@ -19,7 +19,7 @@ export function SiteHeader() {
         <AnnouncementBar />
       </Suspense>
       <header className="site-header">
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="site-header__top" aria-hidden="true"><div className="site-header__top-inner" /></div>}>
           <HeaderTopbar />
         </Suspense>
         <div className="container site-header__bar">

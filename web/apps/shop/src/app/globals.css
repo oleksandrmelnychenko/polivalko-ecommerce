@@ -93,6 +93,20 @@
 @import url("../features/compare/compare.css");
 
 :root {
+  scrollbar-gutter: stable;
   --font-onest: "Onest Variable";
   --font-oswald: "Oswald";
+}
+
+@media screen {
+  #main { min-block-size: calc(100svh - var(--bar-height)); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :where(.comparison-scroll, .compare-empty, .auth__form) {
+    transition: opacity 120ms ease-out;
+  }
+  @starting-style {
+    :where(.comparison-scroll, .compare-empty, .auth__form) { opacity: 0.94; }
+  }
 }

@@ -26,7 +26,6 @@ export function CategoryHead({ category }: { category: Category }) {
         </ol>
       </nav>
       <div className="page-head__title">
-        <p className="page-head__kicker">Каталог</p>
         <h1>{category.name}</h1>
       </div>
       <CategoryIntro description={category.description} />
