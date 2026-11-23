@@ -47,7 +47,7 @@ function CheckoutFields({ mailDelivers, phone, pickupPoint }: CheckoutFormProps)
         <CheckoutContacts field={field} fieldError={fieldError} mailDelivers={mailDelivers} />
         <CheckoutComment field={field} fieldError={fieldError} />
         <CheckoutDelivery
-          quote={checkout.quote}
+          quote={checkout.deliveryQuote}
           delivery={checkout.delivery}
           setDelivery={checkout.setDelivery}
           settlement={checkout.settlement}
@@ -88,7 +88,7 @@ function CheckoutFields({ mailDelivers, phone, pickupPoint }: CheckoutFormProps)
         priceNote={checkout.deliveryOption?.priceNote}
         sending={checkout.sending}
         canConfirm={checkout.canConfirm}
-        quantities={checkout.quantities}
+        rows={checkout.rows}
         setQuantity={checkout.setQuantity}
         remove={checkout.remove}
         consent={

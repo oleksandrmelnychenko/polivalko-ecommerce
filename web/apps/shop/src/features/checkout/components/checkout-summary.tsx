@@ -4,6 +4,7 @@ import type { Quote } from "@polivalko/shared/api/types";
 import { countProducts, formatMoney } from "@polivalko/shared/lib/format";
 import { thumb } from "@polivalko/shared/lib/images";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper";
+import type { CartRow } from "@/features/cart";
 
 export function CheckoutSummary({
   quote,
@@ -13,7 +14,7 @@ export function CheckoutSummary({
   priceNote,
   sending,
   canConfirm,
-  quantities,
+  rows,
   setQuantity,
   remove,
   consent,
@@ -25,12 +26,12 @@ export function CheckoutSummary({
   priceNote?: string | null;
   sending: boolean;
   canConfirm: boolean;
-  quantities: ReadonlyMap<string, number>;
+  rows: CartRow[];
   setQuantity: (productId: string, quantity: number) => void;
   remove: (productId: string) => void;
   consent: ReactNode;
 }) {
-  const count = (quote?.items ?? []).reduce((sum, item) => sum + item.quantity, 0);
+  const count = rows.reduce((sum, item) => sum + item.quantity, 0);
   return (
     <aside className="summary co-summary" aria-labelledby="summary-title">
       <header className="co-summary__head">
@@ -54,18 +55,18 @@ export function CheckoutSummary({
         </p>
       )}
       <ul className="co-summary__lines">
-        {(quote?.items ?? []).map((item) => (
+        {rows.map((item) => (
           <li key={item.productId} className="line">
             <span className="line__photo">{item.imageUrl && <img src={thumb(item.imageUrl)} alt="" width={56} height={56} loading="lazy" />}</span>
             <div>
               <p className="line__name">
-                <Link href={`/product/${item.slug}`}>{item.name}</Link>
+                {item.slug ? <Link href={`/product/${item.slug}`}>{item.name}</Link> : item.name}
               </p>
               <p className="co-summary__unit">
-                <span className="money">{formatMoney(item.unitPrice)}</span> за шт.
+                <span className="money">{item.unit}</span> за шт.
               </p>
               <div className="line__controls">
-                <QuantityStepper small value={quantities.get(item.productId) ?? item.quantity} onChange={(q) => setQuantity(item.productId, q)} label={`Кількість: ${item.name}`} />
+                <QuantityStepper small value={item.quantity} onChange={(q) => setQuantity(item.productId, q)} label={`Кількість: ${item.name}`} />
                 <button type="button" className="remove" onClick={() => remove(item.productId)}>
                   Прибрати
                 </button>
@@ -73,11 +74,11 @@ export function CheckoutSummary({
               {item.issue === "insufficient_stock" && <p className="line__issue">Доступно лише {item.availableQuantity} шт.</p>}
               {item.issue === "unavailable" && <p className="line__issue">Товар зараз недоступний, приберіть його.</p>}
             </div>
-            <p className="line__total"><span className="money">{formatMoney(item.lineTotal)}</span></p>
+            <p className="line__total"><span className="money">{item.total}</span></p>
           </li>
         ))}
-        {!quote && !quoteError && <li className="skeleton" style={{ height: "var(--space-4xl)" }} />}
       </ul>
+      {!quote && !quoteError && <p role="status" className="field__help">Уточнюємо суму замовлення…</p>}
       {quote && (
         <dl className="totals">
           <dt>Товари</dt>

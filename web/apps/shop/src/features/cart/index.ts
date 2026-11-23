@@ -6,3 +6,4 @@ export { CartScreen } from "./components/cart-screen";
 export { BuyForm } from "./components/buy-form";
 export { AddToCart } from "./components/add-to-cart";
 export { checkoutCart } from "./api/server-cart";
+export { cartRows, type CartRow } from "./lib/cart-rows";

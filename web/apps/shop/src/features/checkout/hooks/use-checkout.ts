@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type FormEvent, type RefObject } from "react";
+import { useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
 import { track } from "@/features/analytics";
-import { useCart, useCartQuote } from "@/features/cart";
+import { cartRows, useCart, useCartQuote } from "@/features/cart";
 import { withActiveSession, type CustomerAddress } from "@/features/customer";
 import { checkoutCart } from "@/features/cart";
 import type { Problem } from "@polivalko/shared/api/problem";
@@ -17,7 +17,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
   const router = useRouter();
   const cartState = useCart();
   const { lines, setQuantity, remove } = cartState;
-  const { items, quote, current: quoteCurrent, failed: quoteError, refresh: refreshQuote } = useCartQuote();
+  const { items, quote, deliveryQuote, current: quoteCurrent, failed: quoteError, refresh: refreshQuote } = useCartQuote();
   const [chosenDelivery, setDelivery] = useState("nova_poshta");
   const [payment, setPayment] = useState("");
   const point = useDeliveryPoint();
@@ -39,7 +39,6 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
   }
 
   const account = useCheckoutAccount(formRef, lines.length > 0, applyAddress);
-  const quantities = useMemo(() => new Map(lines.map((l) => [l.productId, l.quantity])), [lines]);
 
   useEffect(() => {
     if (!focusInvalid.current) return;
@@ -58,7 +57,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
     });
   }, [quote]);
 
-  const deliveryMethods = quote?.deliveryMethods ?? [];
+  const deliveryMethods = deliveryQuote?.deliveryMethods ?? [];
   const deliveryOption = deliveryMethods.find((d) => d.code === chosenDelivery) ?? deliveryMethods[0];
   const delivery = deliveryOption?.code ?? chosenDelivery;
   const paymentOptions = deliveryOption?.paymentMethods ?? [];
@@ -157,10 +156,11 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
     refreshCart: cartState.refresh,
     recovering: !!recoveredOrder,
     lines,
-    quantities,
+    rows: cartRows(quote, lines),
     setQuantity,
     remove,
     quote,
+    deliveryQuote,
     quoteError,
     refreshQuote,
     delivery,
