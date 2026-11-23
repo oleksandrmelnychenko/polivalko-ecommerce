@@ -5,7 +5,7 @@ from datetime import datetime
 import json
 
 from .invoices import currency_valid
-from .register import ACTIVE, INACTIVE, KINDS, KYIV, identifier, kind_of, number, sale_line
+from .register import ACTIVE, INACTIVE, KINDS, identifier, kind_of, number, sale_line
 
 
 ORG = "lower(coalesce(d.native_org_id::text, nullif(d.organization_id,''), d.details#>>'{organization,external_id}'))"
@@ -80,11 +80,12 @@ def stock_key(doc, line):
 
 
 def timestamp(raw, day):
+    """The moment of a document, to order documents of one day. The stamp is the shop's clock as written."""
     if not raw:
         return None
     try:
         dt = datetime.fromisoformat(raw)
-        if dt.tzinfo and dt.astimezone(KYIV).date() == day:
+        if dt.tzinfo and dt.date() == day:
             return dt
     except (ValueError, TypeError):
         pass

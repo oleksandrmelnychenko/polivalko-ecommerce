@@ -9,7 +9,7 @@ from analytics.invoices import cash_issue, read_year
 
 DAY = date(2026, 3, 5)
 ROW = dict(id="r1", number="ЧК-7", day=DAY, header=Decimal(100), lines=Decimal(100), archived=True,
-           status_differs=False, source_day=DAY, kyiv_day=None, invalid=0)
+           status_differs=False, source_day=DAY, invalid=0)
 
 
 def reason(**changes):
@@ -28,8 +28,14 @@ class CashIssueTests(TestCase):
         self.assertEqual(reason(header=None), "Недостатньо даних для звірки суми")
         self.assertEqual(reason(status_differs=True), "Статус у реєстрі відрізняється від статусу в архіві")
         self.assertEqual(reason(source_day=date(2026, 3, 4)), "Дата в реєстрі 2026-03-05, дата в архіві 2026-03-04")
-        self.assertEqual(reason(kyiv_day=date(2026, 3, 6)), "Дата в реєстрі 2026-03-05, дата джерела за Києвом 2026-03-06")
         self.assertEqual(reason(invalid=2, lines=Decimal(90)), "Суми відрізняються. Є некоректні товарні рядки")
+
+    def test_a_receipt_issued_late_in_the_evening_is_not_a_date_discrepancy(self):
+        # DNTrade marks the shop's clock time as UTC. Moving the stamp to Kyiv time would put a receipt
+        # issued after nine in the evening on the next day and report it.
+        for query in (invoices.CASH_MONTHS, invoices.CASH_ISSUES):
+            self.assertNotIn("source_date", query)
+            self.assertNotIn("AT TIME ZONE", query)
 
     def test_receipts_are_listed_only_when_the_monthly_count_found_some(self):
         for found in (0, 2):

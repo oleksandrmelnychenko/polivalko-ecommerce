@@ -1,5 +1,4 @@
 from collections import Counter, defaultdict
-from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from itertools import groupby
 from zoneinfo import ZoneInfo
@@ -107,18 +106,6 @@ def kind_of(doc):
     return kinds[0]
 
 
-def business_day(doc):
-    raw = doc.get("source_date")
-    if raw and len(raw) > 10:
-        try:
-            instant = datetime.fromisoformat(raw)
-            if instant.tzinfo:
-                return instant.astimezone(KYIV).date()
-        except ValueError:
-            pass
-    return doc["day"]
-
-
 def sale_line(line, refund):
     if not isinstance(line, dict) or not isinstance(line.get("product"), dict):
         return None
@@ -152,7 +139,7 @@ def reconcile(documents, website, catalog, refs, as_of):
     for d in documents:
         account = d["account"]
         ref = identifier(d.get("external")) or identifier(d["ref"])
-        day = business_day(d)
+        day = d["day"]
         if not day or day > as_of:
             continue
         if d["entity"] == "order":

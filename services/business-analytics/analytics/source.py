@@ -160,14 +160,17 @@ REFERENCES = (
 )
 # Use the live archive for imports. Its accounting projection is insert-triggered
 # and may still contain the old body after a source correction or deletion.
+# The day of a document is the date written in it (source_day). DNTrade marks the shop's own clock
+# time as UTC: receipts stamped 14:46Z were already in this archive at 13:05 UTC. Reading the stamp
+# as an instant would move a document entered after nine in the evening to the next day.
 ARCHIVE_SQL = """
 SELECT id::text, source_account AS account, source_id AS ref, entity_type AS entity,
-       source_day AS day, source_date, document_type AS kind, status, currency, total, store_ids, organization_id AS org,
+       source_day AS day, document_type AS kind, status, currency, total, store_ids, organization_id AS org,
        parent_source_id AS parent, payload
 FROM integration.dntrade_archive_records r
 WHERE r.entity_type IN ('invoice','receipt','customerReturn','order') AND DAY_FILTER
 """
-ARCHIVE = ARCHIVE_SQL.replace("DAY_FILTER", "r.source_day <= %s::date + 1")
+ARCHIVE = ARCHIVE_SQL.replace("DAY_FILTER", "r.source_day <= %s")
 NATIVE = """
 SELECT id::text, source_account AS account,source_id AS ref,entity_type AS entity,day,kind,status,currency,total,
        native_org_id::text AS org, ARRAY[native_store_id::text] AS store_ids, number, details->'products' AS products

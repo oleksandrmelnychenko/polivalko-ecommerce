@@ -5,7 +5,7 @@ from itertools import chain
 from threading import Lock
 from time import monotonic
 
-from .register import INACTIVE, business_day, identifier, kind_of, number, sale_line
+from .register import INACTIVE, identifier, kind_of, number, sale_line
 from .source import ARCHIVE_SQL, archived_rows, production
 
 
@@ -57,11 +57,9 @@ WHERE d.entity_type='receipt' AND lower(d.kind) IN ('cash','6','receipt','salere
 # Sum the cash register in PostgreSQL so annual charts do not need to transfer
 # every receipt or wait for the assortment and forecast models to finish.
 INDEPENDENT_RECEIPTS = INDEPENDENT_RECEIPT_ROWS + "  AND " + BODY_IN_HRYVNIA + "\n"
-KYIV_DAY = """CASE WHEN a.source_date ~ '(Z|[+-][0-9]{2}:[0-9]{2})$'
-            THEN (a.source_date::timestamptz AT TIME ZONE 'Europe/Kyiv')::date END"""
+# The day of a receipt is the date written in it, which the archive keeps as source_day (see ARCHIVE_SQL).
 CASH_DISCREPANCY = """(d.total IS NULL OR s.amount IS NULL OR abs(d.total) <> s.amount
-        OR a.status IS DISTINCT FROM d.status OR a.source_day IS DISTINCT FROM d.day
-        OR coalesce(KYIV_DAY <> d.day, false) OR s.invalid > 0)""".replace("KYIV_DAY", KYIV_DAY)
+        OR a.status IS DISTINCT FROM d.status OR a.source_day IS DISTINCT FROM d.day OR s.invalid > 0)"""
 CASH_FROM = """
 FROM accounting.documents d LEFT JOIN integration.dntrade_archive_records a ON a.id=d.id
 LEFT JOIN LATERAL (
@@ -84,7 +82,7 @@ SELECT extract(month FROM d.day)::int AS month, count(*) AS documents,
 CASH_ISSUES = """
 SELECT d.id::text, coalesce(nullif(d.number,''), d.source_id) AS number, d.day, abs(d.total) AS header, s.amount AS lines,
        a.id IS NOT NULL AS archived, a.status IS DISTINCT FROM d.status AS status_differs, a.source_day,
-       KYIV_DAY AS kyiv_day, s.invalid""".replace("KYIV_DAY", KYIV_DAY) + CASH_FROM + "  AND " + CASH_DISCREPANCY + """
+       s.invalid""" + CASH_FROM + "  AND " + CASH_DISCREPANCY + """
 ORDER BY d.day, d.id LIMIT 50"""
 
 
@@ -143,7 +141,7 @@ def compare(year, headers, documents, through=None):
         ok = kind != "invalid" and currency_valid(doc) and total is not None
         expected[doc["id"]] = (doc["day"], kind, abs(total) if ok else None, doc.get("number") or doc["ref"])
     for doc in documents:
-        day = business_day(doc)
+        day = doc["day"]
         kind = kind_of(doc)
         if not day or day.year != year or (through and day > through) or kind not in ("sale", "return", "invalid"):
             continue
@@ -190,7 +188,7 @@ def compare(year, headers, documents, through=None):
                 reasons.append("Відсутній запис у реєстрі" if not header else "Відсутні товарні рядки джерела")
             else:
                 if header[0] != line[0]:
-                    reasons.append(f"Дата в реєстрі {header[0]}, дата джерела за Києвом {line[0]}")
+                    reasons.append(f"Дата в реєстрі {header[0]}, дата в архіві {line[0]}")
                 if header[1] != line[1]:
                     reasons.append("Тип документа відрізняється")
                 if header[2] is None or line[2] is None:
@@ -241,8 +239,6 @@ def cash_issue(row):
             reasons.append("Статус у реєстрі відрізняється від статусу в архіві")
         if row["source_day"] != row["day"]:
             reasons.append(f"Дата в реєстрі {row['day']}, дата в архіві {row['source_day']}")
-        elif row["kyiv_day"] and row["kyiv_day"] != row["day"]:
-            reasons.append(f"Дата в реєстрі {row['day']}, дата джерела за Києвом {row['kyiv_day']}")
     if row["header"] is None:
         reasons.append("Недостатньо даних для звірки суми")
     elif row["lines"] is not None and row["header"] != row["lines"]:
@@ -259,7 +255,7 @@ def read_year(year, through=None):
     with production() as conn:
         headers = conn.execute(HEADERS, (start, end)).fetchall()
         native = conn.execute(NATIVE_LINES, (start, end)).fetchall()
-        archive = archived_rows(conn, ARCHIVE_LINES, (start - timedelta(days=1), end))
+        archive = archived_rows(conn, ARCHIVE_LINES, (start, last))
         report = compare(year, headers, chain(archive, native), last)
         add_cash(report, conn.execute(CASH_MONTHS, (start, end)))
         # Listing repeats the pass over the archived bodies, so it runs only when the monthly count found something.

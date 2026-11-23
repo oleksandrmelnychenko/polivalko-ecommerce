@@ -40,6 +40,12 @@ class PurchaseCostTests(TestCase):
         self.assertEqual(book.cost(sale, dict(position(),unit="piece"), 1), (None,()))
         self.assertEqual(book.cost(sale, dict(position(),store="other"), 1), (None,()))
 
+    def test_a_sale_late_in_the_evening_follows_a_delivery_received_earlier_that_evening(self):
+        # DNTrade marks the shop's clock time as UTC; the stamp is read as written.
+        book = PurchaseBook([purchase(DAY - timedelta(days=3), 1, 10), purchase(DAY, 1, 30, 22)])
+        cost, refs = book.cost(document(stamp=f"{DAY}T23:30:00Z"), position(), Decimal(1))
+        self.assertEqual((cost, len(refs)), (30, 1))
+
     def test_unreconciled_latest_day_does_not_silently_reuse_old_cost(self):
         book = PurchaseBook([purchase(DAY-timedelta(days=1), 1, 10),purchase(DAY, 1, None)])
         self.assertEqual(book.cost(document(),position(),1),(None,()))

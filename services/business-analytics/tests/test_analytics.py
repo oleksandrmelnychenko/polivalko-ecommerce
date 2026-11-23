@@ -88,7 +88,7 @@ class RegisterTests(unittest.TestCase):
         result = compare(DAY.year, headers, [sale, refund])["total"]
         self.assertEqual((result["documents"], result["net"], result["discrepancies"]), (2, 75, 0))
         shifted = compare(DAY.year, [headers[0]], [dict(sale, day=DAY + timedelta(days=1))])
-        self.assertIn("дата джерела за Києвом", shifted["issues"][0]["reason"])
+        self.assertIn(f"дата в архіві {DAY + timedelta(days=1)}", shifted["issues"][0]["reason"])
         self.assertEqual(shifted["total"]["difference"], 0)
 
     def test_annual_invoice_control_detects_offsetting_errors_and_missing_source(self):
@@ -162,7 +162,8 @@ class RegisterTests(unittest.TestCase):
         self.assertEqual(snapshot([])["facts"], [])
         self.assertEqual(snapshot([doc(), doc()])["audits"], snapshot([doc()])["audits"])
 
-    def test_kyiv_day_and_partial_yoy(self):
+    def test_document_day_is_the_date_written_in_it_and_partial_yoy(self):
+        # DNTrade marks the shop's clock time as UTC, so half past eleven at night is still that day.
         rows = [
             doc("a", day=date(2025, 11, 19)),
             doc("b", day=date(2025, 11, 20)),
@@ -171,7 +172,7 @@ class RegisterTests(unittest.TestCase):
         ]
         r = report(snapshot(rows), {"from": "2026-11-01", "to": "2026-11-19"})
         self.assertEqual(r["previous"]["net"], 100)
-        self.assertEqual(r["summary"]["net"], 100)
+        self.assertEqual(r["summary"]["net"], 200)
 
     def test_month_without_documents_is_unknown(self):
         r = report(snapshot([doc()]), {"from": "2026-10-01"})
