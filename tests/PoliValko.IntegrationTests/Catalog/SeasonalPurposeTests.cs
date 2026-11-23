@@ -54,6 +54,56 @@ public sealed class SeasonalPurposeTests(ApiFactory api)
         await CheckMonthsAsync(cases, [1, 3, 7, 9, 11], ct);
     }
 
+    [Fact]
+    public async Task Sections_renamed_in_the_catalog_keep_their_rules_and_the_whole_new_year_department_is_seasonal()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var cases = new (string Section, string Title, string? Attribute, int[] Months)[]
+        {
+            ("Секатори, сучкорізи й ножиці", "Секатор обвідний", null, [2, 3, 9, 10]),
+            ("Сокири, пили й ножі", "Пила садова", null, [2, 3, 9, 10]),
+            ("Септики й компост", "Компостер садовий", null, [9, 10, 11]),
+            ("Оприскувачі, лійки й відра", "Обприскувач ручний", null, [4, 5, 6, 7, 8]),
+            ("Бордюри й огорожі", "Садовий бордюр", null, [4, 5, 6]),
+            // Nothing in the name says New Year, but the department holds nothing else.
+            ("novyi-rik", "Декоративна стрічка", null, [11, 12]),
+        };
+        await CheckMonthsAsync(cases, Enumerable.Range(1, 12).ToArray(), ct);
+    }
+
+    [Fact]
+    public async Task A_rule_for_other_months_is_known_while_it_is_not_in_force()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var pool = new Category { Id = Guid.NewGuid(), Slug = "purpose-" + Guid.NewGuid(), Name = "Хімія для басейнів" };
+        await api.WithDbAsync(db => { db.Add(pool); return db.SaveChangesAsync(ct); });
+        var chlorine = await api.AddProductAsync(pool.Slug, "Хлор у гранулах", 100);
+        var bucket = await api.AddProductAsync(pool.Slug, "Відро", 100);
+        await api.WithDbAsync(async db =>
+        {
+            var summer = await SeasonalPurpose.Matches(db, [pool], new DateOnly(2034, 7, 15)).Rows.ToListAsync(ct);
+            var winter = await SeasonalPurpose.Matches(db, [pool], new DateOnly(2034, 1, 15)).Rows.ToListAsync(ct);
+            // May to August.
+            const int months = 0b0000_1111_0000;
+            summer.Single().ShouldBe(new SeasonalPurpose.Match(chlorine.Id, 0, months));
+            winter.Single().ShouldBe(new SeasonalPurpose.Match(chlorine.Id, null, months));
+            summer.Concat(winter).ShouldAllBe(match => match.ProductId != bucket.Id);
+            return true;
+        });
+    }
+
+    [Fact]
+    public void Rules_whose_sections_are_no_longer_in_the_catalog_are_named()
+    {
+        var seeds = new Category { Id = Guid.NewGuid(), Slug = "nasinnia", Name = "Насіння" };
+        var missing = SeasonalPurpose.RulesWithoutCategory([seeds]);
+        missing.ShouldContain("Хімія для басейнів (5–8)");
+        missing.ShouldNotContain(rule => rule.StartsWith("Насіння ("));
+        // Either the old or the new name of a renamed section is enough.
+        var tools = new Category { Id = Guid.NewGuid(), Slug = "sekatory", Name = "Секатори, сучкорізи й ножиці" };
+        SeasonalPurpose.RulesWithoutCategory([tools]).ShouldNotContain(rule => rule.Contains("Секатори"));
+    }
+
     private async Task CheckMonthsAsync((string Section, string Title, string? Attribute, int[] Months)[] cases, int[] months, CancellationToken ct)
     {
         var root = await api.WithDbAsync(db => db.Set<Category>().SingleAsync(c => c.Slug == "landshaftnyi-dyzain", ct));

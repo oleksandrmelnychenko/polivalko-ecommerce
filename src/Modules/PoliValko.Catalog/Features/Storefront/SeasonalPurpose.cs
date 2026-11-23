@@ -17,12 +17,17 @@ internal static class SeasonalPurpose
     private const string Covers = "Укривні матеріали";
     private const string Pruning = "Гілкорізи/Сучкорізи/Секатори/Ножиці";
     private const string WinterCare = "Прибирання снігу й льоду";
+    // The catalog renamed these sections on 23.11.2026. A rule finds its section under either name.
+    private static readonly string[] PruningSections = [Pruning, "Секатори, сучкорізи й ножиці", "Сокири/Пили/Ножі", "Сокири, пили й ножі"];
+    private static readonly string[] CompostSections = ["Септик/Компост", "Септики й компост", "Господарчі товари", "Ручний інструмент"];
+    private static readonly string[] PlantCareSections = ["Опори для рослин", "Оприскувачі/Лійки/Відра", "Оприскувачі, лійки й відра"];
     private static readonly string[] Attributes = ["тип", "тип товару", "призначення", "тематика", "культура", "сезон", "сезонність", "період застосування", "сезон застосування"];
 
     // Inclusive months describe storefront priorities. Match only inside the named catalog branches.
     private static readonly Rule[] Rules =
     [
-        new("novyi-rik", 11, 12, ["novyi-rik"], "новоріч|новий рік|різдв|ялин|гірлянд|мішур|санта|дід мороз|сніговик|верхівк|віно(к|ч)|бородань"),
+        // Everything in the New Year department, whatever it is called: its goods have no other season.
+        new("novyi-rik", 11, 12, ["novyi-rik"], "."),
         new("Обігрівачі", 10, 3, ["Обігрівачі"], "обігрів|обігрівач|нагрівач|конвектор|тепловентилятор"),
         new("Годівниці", 10, 3, ["Годівниці"], "годівниц|годівл.*птах|годуван.*птах"),
         new("Годівниці", 2, 4, ["Годівниці"], "шпаківн|синичник|гніздівл|будиночок для птах"),
@@ -45,12 +50,12 @@ internal static class SeasonalPurpose
         new("Композитні грядки", 3, 5, ["Композитні грядки"], "грядк"),
         new("Посадка", 3, 5, ["Ручний інструмент"], "сіялк|саджалк|для (ви)?сад(жування|ки)|для посадки|лопатка садова|садова лопатка"),
         new("Посадка", 9, 10, ["Ручний інструмент"], "для (висад(ки|жування)|посадки) цибул|саджалка.*цибул"),
-        new("Облаштування саду", 4, 6, ["Бордюрні стрічки", "Рослини"], "садовий бордюр|бордюр садовий|газонне огородження|рулонний газон"),
-        new(Pruning, 2, 3, [Pruning, "Сокири/Пили/Ножі"], "секатор|сучкоріз|гілкоріз|обріз(к|у)|пил[ак].*садов|садов.*пил"),
-        new(Pruning, 9, 10, [Pruning, "Сокири/Пили/Ножі"], "секатор|сучкоріз|гілкоріз|обріз(к|у)|пил[ак].*садов|садов.*пил"),
+        new("Облаштування саду", 4, 6, ["Бордюрні стрічки", "Бордюри й огорожі", "Рослини"], "садовий бордюр|бордюр садовий|газонне огородження|рулонний газон"),
+        new(Pruning, 2, 3, PruningSections, "секатор|сучкоріз|гілкоріз|обріз(к|у)|пил[ак].*садов|садов.*пил"),
+        new(Pruning, 9, 10, PruningSections, "секатор|сучкоріз|гілкоріз|обріз(к|у)|пил[ак].*садов|садов.*пил"),
         new("Все для прибирання", 9, 11, ["Все для прибирання", "Ручний інструмент"], "для листя|віялов.*грабл|граблі.*віял|збирання листя"),
         new("Збирання врожаю", 8, 10, ["Матеріали для пакування", "Ручний інструмент"], "мішок овочев|овочева сітка|сітка для овочів|плодознімач"),
-        new("Септик/Компост", 9, 11, ["Септик/Компост", "Господарчі товари", "Ручний інструмент"], "компостер|для компост|компостуван"),
+        new("Септик/Компост", 9, 11, CompostSections, "компостер|для компост|компостуван"),
         new("Догляд за деревами", 10, 11, ["Засоби захисту рослин"], "побілк|для побілки|фарба для дерев"),
         new("Догляд за деревами", 2, 3, ["Засоби захисту рослин"], "побілк|для побілки|фарба для дерев"),
         new("Захист рослин у період вегетації", 3, 4, ["Засоби захисту рослин"], "фунгіцид|медян екстра", "протруйник|для зберігання|для сховищ"),
@@ -68,7 +73,7 @@ internal static class SeasonalPurpose
         new("Хімія для басейнів", 5, 8, ["Хімія для басейнів"], "басейн|хлор|альгекс|флокер|коагул|тест.*води", "консервац|зимівл|зимов"),
         new("Хімія для басейнів", 9, 10, ["Хімія для басейнів"], "консервац|зимівл|зимов"),
         new("Догляд за газоном", 4, 9, ["Техніка для саду та городу", "Ручний інструмент"], "газонокос|мотокос|тример|ножиці для трав|аератор.*газон", "ліска|волосін|корд для|котушк|шпул|головка для|ніж для|запасн"),
-        new("Догляд за рослинами", 4, 8, ["Опори для рослин", "Оприскувачі/Лійки/Відра"], "шпалер|опор.*(рослин|бамбук)|підв.яз|обприскувач|оприскувач|лійка.*садов"),
+        new("Догляд за рослинами", 4, 8, PlantCareSections, "шпалер|опор.*(рослин|бамбук)|підв.яз|обприскувач|оприскувач|лійка.*садов"),
         new("Захист від комах", 5, 9, ["Засоби захисту людей"], "комар|кліщ|москіт|репелент"),
         new("Садове освітлення", 4, 8, ["Елементи освітлення"], "світильник.*сонячн|сонячн.*світильник|освітлення садов.*доріж"),
     ];
@@ -77,6 +82,27 @@ internal static class SeasonalPurpose
         DateOnly day, bool enabled)
     {
         if (!enabled) return (db.Database.SqlQuery<Match>($"SELECT NULL::uuid AS product_id, 0 AS family, 0 AS month_mask WHERE false"), 0);
+        return MatchRules(db, categories, InForce(day), []);
+    }
+
+    /// <summary>
+    /// Every product a rule names for any month. Family is set while one of its rules is in force; MonthMask holds
+    /// all its months, so a product whose season is another time of the year can be told from one without a season.
+    /// </summary>
+    public static (IQueryable<Match> Rows, int Families) Matches(PoliValkoDbContext db, IReadOnlyList<Category> categories,
+        DateOnly day)
+    {
+        var active = InForce(day);
+        return MatchRules(db, categories, active, Rules.Except(active));
+    }
+
+    /// <summary>Rules that find no section in the catalog, for instance after a section was renamed.</summary>
+    public static IReadOnlyList<string> RulesWithoutCategory(IReadOnlyList<Category> categories) =>
+        Rules.Where(rule => !categories.Any(c => rule.Sections.Contains(c.Name) || rule.Sections.Contains(c.Slug)))
+            .Select(rule => $"{string.Join(" / ", rule.Sections)} ({rule.From}–{rule.Through})").Distinct().ToArray();
+
+    private static Rule[] InForce(DateOnly day)
+    {
         string[] leadingTasks = day.Month switch
         {
             1 => ["Обігрівачі", WinterCare, "Годівниці", "Насіння", "Грунти та добавки"],
@@ -87,28 +113,32 @@ internal static class SeasonalPurpose
             _ => SeasonalMerchandising.PriorityCategories(day),
         };
         var priority = leadingTasks.Select((key, i) => (key, i)).ToDictionary(x => x.key, x => x.i);
-        var active = Rules.Where(r => r.Applies(day.Month))
-            .OrderBy(r => priority.GetValueOrDefault(r.Family, priority.Count));
-        return MatchRules(db, categories, active);
+        return Rules.Where(r => r.Applies(day.Month))
+            .OrderBy(r => priority.GetValueOrDefault(r.Family, priority.Count)).ToArray();
     }
 
     public static IQueryable<Match> Calendar(PoliValkoDbContext db, IReadOnlyList<Category> categories) =>
-        MatchRules(db, categories, Rules).Rows;
+        MatchRules(db, categories, Rules, []).Rows;
 
+    /// <param name="rules">Rules that give a product its family, in the order of their families.</param>
+    /// <param name="dormant">Rules that only add their months.</param>
     private static (IQueryable<Match> Rows, int Families) MatchRules(PoliValkoDbContext db,
-        IReadOnlyList<Category> categories, IEnumerable<Rule> rules)
+        IReadOnlyList<Category> categories, IEnumerable<Rule> rules, IEnumerable<Rule> dormant)
     {
         var byParent = categories.ToLookup(c => c.ParentId);
+        Guid[] Sections(Rule rule) => categories.Where(c => rule.Sections.Contains(c.Name) || rule.Sections.Contains(c.Slug))
+            .SelectMany(c => CategoryQueries.Descendants(c.Id, byParent).Prepend(c.Id)).Distinct().ToArray();
         var groups = new List<string>();
-        var rows = new List<(Guid Category, int Family, string Include, string? Exclude, int MonthMask)>();
+        var rows = new List<(Guid Category, int? Family, string Include, string? Exclude, int MonthMask)>();
         foreach (var rule in rules)
         {
-            var ids = categories.Where(c => rule.Sections.Contains(c.Name) || rule.Sections.Contains(c.Slug))
-                .SelectMany(c => CategoryQueries.Descendants(c.Id, byParent).Prepend(c.Id)).Distinct().ToArray();
+            var ids = Sections(rule);
             if (ids.Length == 0) continue;
             if (!groups.Contains(rule.Family)) groups.Add(rule.Family);
-            rows.AddRange(ids.Select(id => (id, groups.IndexOf(rule.Family), rule.Include, rule.Exclude, rule.MonthMask)));
+            rows.AddRange(ids.Select(id => (id, (int?)groups.IndexOf(rule.Family), rule.Include, rule.Exclude, rule.MonthMask)));
         }
+        foreach (var rule in dormant)
+            rows.AddRange(Sections(rule).Select(id => (id, (int?)null, rule.Include, rule.Exclude, rule.MonthMask)));
         var categoryIds = rows.Select(r => r.Category).ToArray();
         var families = rows.Select(r => r.Family).ToArray();
         var include = rows.Select(r => r.Include).ToArray();
