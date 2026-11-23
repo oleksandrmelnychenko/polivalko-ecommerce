@@ -8,6 +8,7 @@ import { FiltersPanel } from "./filters-panel";
 import { ListingFilters } from "./listing-filters";
 import { ListingPager } from "./listing-pager";
 import { ListingToolbar } from "./listing-toolbar";
+import { ListingNavigation } from "./listing-navigation";
 import { ProductTiles } from "./product-tiles";
 
 type Subcategory = { id: string; slug: string; name: string };
@@ -81,7 +82,7 @@ export async function CatalogListing({
       : null;
 
   return (
-    <div className="catalog">
+    <ListingNavigation basePath={basePath} fixed={fixed} parsed={p}><div className="catalog">
       {itemList && <JsonLd data={itemList} />}
       <FiltersPanel active={chips.length}>
         {subcategories.length > 0 && (
@@ -98,10 +99,10 @@ export async function CatalogListing({
             </ul>
           </nav>
         )}
-        <ListingFilters result={result} parsed={p} basePath={basePath} fixed={fixed} saleOnly={saleOnly} />
+        <ListingFilters result={result} basePath={basePath} fixed={fixed} saleOnly={saleOnly} />
       </FiltersPanel>
       <div className="catalog__main">
-        <ListingToolbar summary={summary} parsed={p} basePath={basePath} fixed={fixed} />
+        <ListingToolbar summary={summary} />
 
         {chips.length > 0 && (
           <div className="active-filters">
@@ -138,6 +139,6 @@ export async function CatalogListing({
 
         <ListingPager result={result} href={(page) => href({ page })} />
       </div>
-    </div>
+    </div></ListingNavigation>
   );
 }

@@ -1,10 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useId, useState, useTransition, type FormEvent, type KeyboardEvent } from "react";
+import { useId, useState, type FormEvent, type KeyboardEvent } from "react";
 import type { ProductSearch } from "@polivalko/shared/api/types";
 import { formatMoney } from "@polivalko/shared/lib/format";
-import { hrefFor, priceOrder, priceRanges, type Parsed } from "../lib/listing-params";
+import { priceOrder, priceRanges } from "../lib/listing-params";
+import { useListingNavigation } from "./listing-navigation";
 
 const LIST_LIMIT = 6;
 const SEARCH_FROM = 9;
@@ -67,39 +67,27 @@ function FacetGroup({ title, options }: { title: string; options: Option[] }) {
 
 export function ListingFilters({
   result,
-  parsed,
   basePath,
   fixed,
   saleOnly = false,
 }: {
   result: ProductSearch;
-  parsed: Parsed;
   basePath: string;
   fixed: Record<string, string>;
   saleOnly?: boolean;
 }) {
   const { facets } = result;
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const current = hrefFor(basePath, fixed, parsed, {});
-  const [synced, setSynced] = useState(current);
-  const [selection, setSelection] = useState(parsed);
-  const [priceMin, setPriceMin] = useState(parsed.priceMin ? String(parsed.priceMin) : "");
-  const [priceMax, setPriceMax] = useState(parsed.priceMax ? String(parsed.priceMax) : "");
-
-  if (synced !== current) {
-    setSynced(current);
-    setSelection(parsed);
-    setPriceMin(parsed.priceMin ? String(parsed.priceMin) : "");
-    setPriceMax(parsed.priceMax ? String(parsed.priceMax) : "");
-  }
-
-  function apply(patch: Partial<Parsed>) {
-    const next = { ...selection, ...patch, page: 1 };
-    setSelection(next);
-    const href = hrefFor(basePath, fixed, next, {});
-    if (href === hrefFor(basePath, fixed, selection, {})) return;
-    startTransition(() => router.push(href, { scroll: false }));
+  const { selection, pending, apply } = useListingNavigation();
+  const minValue = selection.priceMin?.toString() ?? "";
+  const maxValue = selection.priceMax?.toString() ?? "";
+  const [priceMin, setPriceMin] = useState(minValue);
+  const [priceMax, setPriceMax] = useState(maxValue);
+  const rangeKey = minValue + "/" + maxValue;
+  const [previousRange, setPreviousRange] = useState(rangeKey);
+  if (rangeKey !== previousRange) {
+    setPreviousRange(rangeKey);
+    setPriceMin(minValue);
+    setPriceMax(maxValue);
   }
 
   function applyPrice() {
@@ -134,7 +122,7 @@ export function ListingFilters({
       {Object.entries(fixed).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v} />
       ))}
-      {parsed.sort !== "recommended" && <input type="hidden" name="sort" value={parsed.sort} />}
+      {selection.sort !== "recommended" && <input type="hidden" name="sort" value={selection.sort} />}
 
       <FacetGroup title="Наявність" options={availability} />
 
