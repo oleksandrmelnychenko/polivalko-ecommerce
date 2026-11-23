@@ -151,9 +151,11 @@ export function ListingFilters({
                     className="fprice"
                     aria-pressed={active}
                     onClick={() => {
-                      setPriceMin(r.min ? String(r.min) : "");
-                      setPriceMax(r.max ? String(r.max) : "");
-                      apply(active ? { priceMin: undefined, priceMax: undefined } : { priceMin: r.min, priceMax: r.max });
+                      const min = active ? undefined : r.min;
+                      const max = active ? undefined : r.max;
+                      setPriceMin(min === undefined ? "" : String(min));
+                      setPriceMax(max === undefined ? "" : String(max));
+                      apply({ priceMin: min, priceMax: max });
                     }}
                   >
                     <span className="fprice__dot" aria-hidden="true" />
