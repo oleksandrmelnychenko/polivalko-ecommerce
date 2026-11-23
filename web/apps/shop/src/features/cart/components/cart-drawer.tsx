@@ -53,8 +53,8 @@ export function CartDrawer() {
         {(error || !ready) && <p role="status">{error ?? "Завантажуємо кошик…"}{" "}
           {error && <button type="button" className="link" onClick={() => void refresh()}>Спробувати ще раз</button>}
         </p>}
-        <p role="status" className="visually-hidden">{ready && !error && saving ? "Зберігаємо кошик…" : ""}</p>
-        {ready && lines.length === 0 ? (
+        <p role="status" className={saving && lines.length === 0 ? undefined : "visually-hidden"}>{ready && !error && saving ? "Зберігаємо кошик…" : ""}</p>
+        {ready && !saving && !error && lines.length === 0 ? (
           <div className="drawer__lines drawer__lines--empty">
             <CartEmpty drawer onNavigate={close} />
           </div>
