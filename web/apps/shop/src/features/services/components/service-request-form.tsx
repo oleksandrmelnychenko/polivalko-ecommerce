@@ -23,6 +23,10 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
   const sending = useRef(false);
   const pending = state.status === "sending";
 
+  function beginDraft() {
+    setState(previous => previous.status === "sent" ? { status: "idle" } : previous);
+  }
+
   useEffect(() => {
     if (state.status === "error") formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
   }, [state]);
@@ -32,6 +36,7 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
       const code = (event as CustomEvent<string>).detail;
       if (!sending.current && directions.some((d) => d.code === code)) {
         setDirection(code);
+        beginDraft();
       }
     };
     window.addEventListener(DIRECTION_EVENT, pick);
@@ -83,7 +88,7 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
   const err = (key: string) => errors[key]?.[0];
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} noValidate className={className} aria-labelledby="request-form-title">
+    <form ref={formRef} onSubmit={onSubmit} onChange={beginDraft} noValidate className={className} aria-labelledby="request-form-title">
       <h2 id="request-form-title">Ваші контакти</h2>
 
       <div className="field">
@@ -111,6 +116,7 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
           onChange={code => {
             if (sending.current) return;
             setDirection(code);
+            beginDraft();
           }}
           aria-invalid={Boolean(err("direction"))}
           aria-describedby={err("direction") ? "direction-error" : undefined}
