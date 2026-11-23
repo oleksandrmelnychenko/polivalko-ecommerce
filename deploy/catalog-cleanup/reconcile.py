@@ -390,6 +390,8 @@ def audit(console, target, report_path):
                 rows.append(("visible on a parent category", item["sku"], name, place, ""))
             for problem in name_problems(name):
                 rows.append(("name", item["sku"], name, place, problem))
+        if not visible and item["stock"] > 0 and item["sku"] in target["products"]:
+            rows.append(("hidden in stock", item["sku"], name, place, f"stock {item['stock']:g}"))
         if item["sku"] not in target["products"] and not any(item["sku"].lower().startswith(p) for p in target["hideNavkoloPrefixes"]):
             rows.append(("not in the target", item["sku"], name, place,
                          f"{'visible' if visible else 'hidden'}, stock {item['stock']:g}"))
