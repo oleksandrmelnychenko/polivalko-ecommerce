@@ -1,0 +1,2 @@
+[tool.vercel]
+entrypoint = "product_analytics.app:app"
