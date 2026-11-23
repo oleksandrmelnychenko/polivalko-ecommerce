@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.Extensions.DependencyInjection;
+using PoliValko.Catalog.Contracts;
 using PoliValko.Catalog.Features.Console.Products;
 using PoliValko.Console.Features.Dashboard;
 using PoliValko.Ordering.Contracts;
@@ -93,29 +95,34 @@ public sealed class ConsoleDashboardApiTests(ApiFactory api)
         await (await admin.PostWithKeyAsync($"/api/v1/console/orders/{second.Number}/refunds",
             new CreateRefundRequest([new RefundLineRequest(returned.Id, 1)], "Повернули єдиний"))).ReadAsync<ConsoleOrderDto>();
 
-        var top = (await manager.ReadAsync<ConsoleDashboardDto>("/api/v1/console/dashboard")).TopProducts;
+        // The card shows five products, and other tests sell in the same period: read the whole ranking it is cut from.
+        var top = await api.WithScopeAsync(services => services.GetRequiredService<IOrderReporting>().TopProductsAsync(
+            KyivTime.StartOfDay(KyivToday.AddDays(-1)), KyivTime.StartOfDay(KyivToday.AddDays(1)), int.MaxValue, Ct));
         var row = top.Single(p => p.ProductId == kept.Id);
         row.Quantity.ShouldBe(1);
-        Amount(row.Revenue).ShouldBe(49000m);
+        row.Revenue.ShouldBe(49000m);
         top.ShouldNotContain(p => p.ProductId == returned.Id);
+        top.Select(p => p.Revenue).ShouldBeInOrder(SortDirection.Descending);
+        (await manager.ReadAsync<ConsoleDashboardDto>("/api/v1/console/dashboard")).TopProducts.ShouldNotContain(p => p.ProductId == returned.Id);
     }
 
     [Fact]
     public async Task Low_stock_lists_visible_products_with_a_few_units_left_after_reservations()
     {
         var manager = await Staff.ManagerAsync(api);
-        // The card shows eight products, lowest first and then by name. A prefix that decreases with time keeps these ahead of earlier runs.
-        var prefix = $"00{9_999_999_999 - DateTimeOffset.UtcNow.ToUnixTimeSeconds()} Лійка";
-        var few = await api.AddProductAsync("hospodarchi-tovary", prefix + ", остання", 120m, stock: 1);
-        var soldOut = await api.AddProductAsync("hospodarchi-tovary", prefix + " розпродана", 120m, stock: 0);
-        var reserved = await api.AddProductAsync("hospodarchi-tovary", prefix + " в резерві", 120m, stock: 5);
+        var few = await api.AddProductAsync("hospodarchi-tovary", "Лійка, остання", 120m, stock: 1);
+        var soldOut = await api.AddProductAsync("hospodarchi-tovary", "Лійка розпродана", 120m, stock: 0);
+        var reserved = await api.AddProductAsync("hospodarchi-tovary", "Лійка в резерві", 120m, stock: 5);
         await TestOrders.PlaceAsync(api, reserved.Id, 4, 120m, CheckoutApiTests.UniquePhone());
 
-        var low = (await manager.ReadAsync<ConsoleDashboardDto>("/api/v1/console/dashboard")).LowStock;
+        // The card shows eight products, and other tests leave low stock too: read the whole list it is cut from.
+        var low = await api.WithScopeAsync(services => services.GetRequiredService<ICatalogReporting>().GetLowStockAsync(int.MaxValue, Ct));
         low.ShouldAllBe(p => p.Stock > 0 && p.Stock <= 3);
         low.Single(p => p.Id == few.Id).Stock.ShouldBe(1);
         low.Single(p => p.Id == reserved.Id).Stock.ShouldBe(1);
         low.ShouldNotContain(p => p.Id == soldOut.Id);
+        low.Select(p => p.Stock).ShouldBeInOrder();
+        (await manager.ReadAsync<ConsoleDashboardDto>("/api/v1/console/dashboard")).LowStock.ShouldAllBe(p => p.Stock > 0 && p.Stock <= 3);
 
         (await ListProductsAsync(manager, reserved.Sku, "low")).ShouldHaveSingleItem().Id.ShouldBe(reserved.Id);
         (await ListProductsAsync(manager, reserved.Sku, "in")).ShouldHaveSingleItem();
