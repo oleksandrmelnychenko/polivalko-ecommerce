@@ -77,14 +77,19 @@ internal static class StorefrontMode
             pinned: term is null ? pinned : null, seasonDate: seasonDate);
         var rows = await ProductListing.ListItems(ranked.Take(PreviewSize)).ToListAsync(ct);
         var items = await ProductListing.ToListItemsAsync(db, rows, time, ct);
-        var seasons = await SeasonClassifier.QueryAsync(products, categories, db, cache, today, seasonDate, ct);
-        var shown = items.Select(item => item.Id).ToArray();
-        var states = await seasons.Where(row => shown.Contains(row.ProductId)).ToDictionaryAsync(row => row.ProductId, ct);
-        var counts = await seasons.GroupBy(row => row.State).Select(group => new { State = group.Key, Count = group.Count() })
-            .ToDictionaryAsync(group => group.State, group => group.Count, ct);
+        // Read once for the whole catalog: matching every rule against every product is the costly part
+        // (0.6 s on 4 900 products), and both the counts and the products shown come from the same rows.
+        var seasons = await (await SeasonClassifier.QueryAsync(products, categories, db, cache, today, seasonDate, ct)).ToListAsync(ct);
+        var states = seasons.ToDictionary(row => row.ProductId);
+        var counts = seasons.CountBy(row => row.State).ToDictionary();
+        // A product that became visible between the two reads has no row and is shown as one nothing is known about.
+        var unknown = new SeasonRow { State = (int)Season.AllYear };
         return TypedResults.Ok(new StorefrontPreviewDto(
-            items.Select(item => new StorefrontPreviewItemDto(item, SeasonClassifier.Name(states[item.Id].State),
-                SeasonClassifier.Source(states[item.Id]))).ToList(),
+            items.Select(item =>
+            {
+                var state = states.GetValueOrDefault(item.Id, unknown);
+                return new StorefrontPreviewItemDto(item, SeasonClassifier.Name(state.State), SeasonClassifier.Source(state));
+            }).ToList(),
             new StorefrontPreviewCountsDto(counts.GetValueOrDefault((int)Season.In), counts.GetValueOrDefault((int)Season.AllYear),
                 counts.GetValueOrDefault((int)Season.Off)),
             SeasonalPurpose.RulesWithoutCategory(categories)));
