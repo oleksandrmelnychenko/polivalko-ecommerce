@@ -5316,7 +5316,7 @@
 "brand": null,
 "category": "horshchyky",
 "displayName": null,
-"isVisible": true
+"isVisible": false
 },
 "10742": {
 "brand": null,
@@ -6641,7 +6641,7 @@
 "10971": {
 "brand": null,
 "category": "horshchyky",
-"displayName": "Горщик квадратний 8,7 л. 21,2*21,2*28,7 сірий)",
+"displayName": "Горщик квадратний 8,7 л, 21,2*21,2*28,7, сірий",
 "isVisible": true
 },
 "10972": {
@@ -8136,7 +8136,7 @@
 "brand": null,
 "category": "prykrasy",
 "displayName": "Серце скляне Новорічне з візеруночним малюнком. 1шт",
-"isVisible": true
+"isVisible": false
 },
 "11224": {
 "brand": null,
@@ -9594,7 +9594,7 @@
 "brand": "Spear & Jackson",
 "category": "opryskuvachi-liiky-y-vidra",
 "displayName": null,
-"isVisible": true
+"isVisible": false
 },
 "11467": {
 "brand": "Spear & Jackson",
@@ -10103,7 +10103,7 @@
 "11551": {
 "brand": null,
 "category": "zasoby-zakhystu-liudei",
-"displayName": null,
+"displayName": "Рукавички шкіра+тканина з застібкою, арт. 211521",
 "isVisible": true
 },
 "11552": {
@@ -10121,7 +10121,7 @@
 "11554": {
 "brand": null,
 "category": "zasoby-zakhystu-liudei",
-"displayName": null,
+"displayName": "Рукавички шкіра+тканина з застібкою, арт. 211524",
 "isVisible": true
 },
 "11555": {
@@ -10416,7 +10416,7 @@
 "brand": null,
 "category": "shkidnyky",
 "displayName": "Фіпроксан 10г",
-"isVisible": true
+"isVisible": false
 },
 "11604": {
 "brand": null,
@@ -11171,7 +11171,7 @@
 "11730": {
 "brand": null,
 "category": "zasoby-zakhystu-liudei",
-"displayName": "Рукавиці латекс Амбуленс- Vit 25 пар, уп розмір XL)",
+"displayName": "Рукавиці латекс Амбуленс-Vit 25 пар, розмір XL",
 "isVisible": true
 },
 "11731": {
@@ -12425,7 +12425,7 @@
 "11939": {
 "brand": null,
 "category": "horshchyky",
-"displayName": null,
+"displayName": "Горщик для орхідей дренажний 11*8, прозорий, з прорізами",
 "isVisible": true
 },
 "11940": {
@@ -12905,13 +12905,13 @@
 "12019": {
 "brand": null,
 "category": "zasoby-zakhystu-liudei",
-"displayName": "Рукавиці латекс Амбуленс- Vit 25 пар, уп розмір L)",
+"displayName": "Рукавиці латекс Амбуленс-Vit 25 пар, розмір L",
 "isVisible": true
 },
 "12020": {
 "brand": null,
 "category": "zasoby-zakhystu-liudei",
-"displayName": "Рукавиці латекс Амбуленс- Vit 25 пар, уп розмір XL)",
+"displayName": "Рукавиці латекс Амбуленс-Vit 25 пар, розмір XL",
 "isVisible": true
 },
 "12021": {
@@ -14621,7 +14621,7 @@
 "12307": {
 "brand": null,
 "category": "prykrasy",
-"displayName": "Прикраса новорічна Олень, бірюзово- золотий 19*16*4.5 см SD019-5",
+"displayName": "Прикраса новорічна Олень, бірюзово-золотий 19*16*4.5 см SD019-5",
 "isVisible": true
 },
 "12308": {
@@ -18659,13 +18659,13 @@
 "7795": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": null,
+"displayName": "Вулична щітка 40 см з кріпленням",
 "isVisible": true
 },
 "7796": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": null,
+"displayName": "Вулична щітка 40 см з кріпленням",
 "isVisible": true
 },
 "7797": {
@@ -18677,25 +18677,25 @@
 "7798": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": null,
+"displayName": "Вулична щітка 60 см з кріпленням",
 "isVisible": true
 },
 "7799": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": null,
+"displayName": "Вулична щітка 60 см з кріпленням",
 "isVisible": true
 },
 "7800": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": null,
+"displayName": "Вулична щітка 80 см з кріпленням",
 "isVisible": true
 },
 "7801": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": null,
+"displayName": "Вулична щітка 80 см з кріпленням",
 "isVisible": true
 },
 "7802": {
@@ -18744,7 +18744,7 @@
 "brand": null,
 "category": "vse-dlia-prybyrannia",
 "displayName": null,
-"isVisible": true
+"isVisible": false
 },
 "7810": {
 "brand": null,
@@ -18761,19 +18761,19 @@
 "7812": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": null,
+"displayName": "Щітка для змітання",
 "isVisible": true
 },
 "7813": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": null,
+"displayName": "Щітка для змітання",
 "isVisible": true
 },
 "7814": {
 "brand": null,
 "category": "vse-dlia-prybyrannia",
-"displayName": null,
+"displayName": "Щітка для змітання",
 "isVisible": true
 },
 "7815": {
@@ -18894,7 +18894,7 @@
 "brand": "Irritec",
 "category": "irritec",
 "displayName": null,
-"isVisible": true
+"isVisible": false
 },
 "7841": {
 "brand": "Irritec",
@@ -20003,7 +20003,7 @@
 "8129": {
 "brand": null,
 "category": "zasoby-zakhystu-liudei",
-"displayName": "Рукавиці латекс Амбуленс- Vit 25 пар, уп розмір М)",
+"displayName": "Рукавиці латекс Амбуленс-Vit 25 пар, розмір M",
 "isVisible": true
 },
 "8130": {
@@ -21564,7 +21564,7 @@
 "brand": null,
 "category": "sokyry-pyly-y-nozhi",
 "displayName": "Сокира з ручкою (версія \"Традиційна\") 0,8кг",
-"isVisible": true
+"isVisible": false
 },
 "8453": {
 "brand": null,
@@ -23063,7 +23063,7 @@
 "8712": {
 "brand": null,
 "category": "sekatory-suchkorizy-y-nozhytsi",
-"displayName": null,
+"displayName": "Садовий секатор-ножиці 22 см",
 "isVisible": true
 },
 "8713": {
@@ -25211,7 +25211,7 @@
 "9081": {
 "brand": null,
 "category": "zasoby-zakhystu-roslyn",
-"displayName": null,
+"displayName": "Лак-бальзам 200 г Гарден Клаб",
 "isVisible": true
 },
 "9082": {
