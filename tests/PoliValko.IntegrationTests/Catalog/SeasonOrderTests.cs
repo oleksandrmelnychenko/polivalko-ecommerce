@@ -49,6 +49,9 @@ public sealed class SeasonOrderTests(ApiFactory api)
             (await RankAsync(products, [shelf], today, mode, pinned: [pin.Id]))
                 .ShouldBe([pin.Id, seasonal.Id, steady.Id, away.Id, gone.Id], mode);
             (await RankAsync(products, [shelf], today, mode, term: gone.Sku))[0].ShouldBe(gone.Id, mode);
+            // A pin leads even when it cannot be bought: the manager chose it.
+            (await RankAsync(products, [shelf], today, mode, pinned: [gone.Id]))
+                .ShouldBe([gone.Id, seasonal.Id, steady.Id, pin.Id, away.Id], mode);
         }
     }
 
@@ -58,21 +61,23 @@ public sealed class SeasonOrderTests(ApiFactory api)
         var today = new DateOnly(2065, 12, 10);
         var heaters = await api.AddCategoryAsync(name: "Обігрівачі");
         // The names sort the other way round, so only the purchases can give this order.
-        var lastYear = await api.AddSoldProductAsync(heaters, "Обігрівач 5");
-        var twoYearsAgo = await api.AddSoldProductAsync(heaters, "Обігрівач 4");
-        var threeYearsAgo = await api.AddSoldProductAsync(heaters, "Обігрівач 3");
-        var lately = await api.AddSoldProductAsync(heaters, "Обігрівач 2");
+        var lastYear = await api.AddSoldProductAsync(heaters, "Обігрівач 6");
+        var twoYearsAgo = await api.AddSoldProductAsync(heaters, "Обігрівач 5");
+        var threeYearsAgo = await api.AddSoldProductAsync(heaters, "Обігрівач 4");
+        var lately = await api.AddSoldProductAsync(heaters, "Обігрівач 3");
+        var longAgo = await api.AddSoldProductAsync(heaters, "Обігрівач 2");
         var never = await api.AddSoldProductAsync(heaters, "Обігрівач 1");
         // Two purchases last year count for six, two the year before for four, three older ones for three,
-        // one in the last four weeks for two.
+        // one in the last four weeks for two, and one three years ago for one.
         await api.AddReceiptsAsync(lastYear, new DateOnly(2064, 12, 15), 2);
         await api.AddReceiptsAsync(twoYearsAgo, new DateOnly(2063, 12, 15), 2);
         await api.AddReceiptsAsync(threeYearsAgo, new DateOnly(2062, 12, 15), 3);
         await api.AddReceiptsAsync(lately, today.AddDays(-5), 1);
+        await api.AddReceiptsAsync(longAgo, new DateOnly(2062, 12, 16), 1);
 
-        var order = await RankAsync([lastYear, twoYearsAgo, threeYearsAgo, lately, never], [heaters], today, ProductSort.Seasonal);
+        var order = await RankAsync([lastYear, twoYearsAgo, threeYearsAgo, lately, longAgo, never], [heaters], today, ProductSort.Seasonal);
 
-        order.ShouldBe([lastYear.Id, twoYearsAgo.Id, threeYearsAgo.Id, lately.Id, never.Id]);
+        order.ShouldBe([lastYear.Id, twoYearsAgo.Id, threeYearsAgo.Id, lately.Id, longAgo.Id, never.Id]);
     }
 
     [Fact]
@@ -100,6 +105,49 @@ public sealed class SeasonOrderTests(ApiFactory api)
         // The rule family opens, the products in season by their sales follow as a family of their own, and so in turn,
         // although both of them were bought more often than any heater.
         order.ShouldBe([heater.Id, sold.Id, convector.Id, alsoSold.Id, plain.Id]);
+        // A category page and a search have no turns: there the season and the purchases alone decide.
+        Guid[] byPurchases = [sold.Id, alsoSold.Id, heater.Id, convector.Id, plain.Id];
+        (await RankAsync([heater, convector, sold, alsoSold, plain], [heaters, shelf, bare], today, ProductSort.Seasonal,
+            acrossCategories: false)).ShouldBe(byPurchases);
+        (await RankAsync([heater, convector, sold, alsoSold, plain], [heaters, shelf, bare], today, ProductSort.Seasonal,
+            term: "товар")).ShouldBe(byPurchases);
+        // The stock mode has no turns either.
+        (await RankAsync([heater, convector, sold, alsoSold, plain], [heaters, shelf, bare], today, ProductSort.StockCover))
+            .ShouldBe(byPurchases);
+    }
+
+    [Fact]
+    public async Task With_twelve_rule_families_to_show_the_first_twelve_places_are_theirs()
+    {
+        var today = new DateOnly(2072, 11, 20);
+        // One section and one product for each of the twelve families the rules name for November.
+        var themes = new (string Section, string Product)[]
+        {
+            ("novyi-rik", "Гірлянда"), ("Обігрівачі", "Обігрівач"), ("Годівниці", "Годівниця"), ("Укривні матеріали", "Чохол для рослин"),
+            ("Автотовари", "Омивач зимовий"), ("Добрива", "Добриво осіннє"), ("Все для прибирання", "Граблі віялові"),
+            ("Септик/Компост", "Компостер"), ("Засоби захисту рослин", "Побілка садова"), ("vse-dlia-polyvu", "Перехідник для продувки"),
+            ("Шкідники", "Мишоловка"), ("Горщики", "Кошик для цибулин"),
+        };
+        var categories = new List<Category>();
+        var ruled = new List<Product>();
+        foreach (var (section, product) in themes)
+        {
+            var category = await api.AddCategoryAsync(name: section);
+            categories.Add(category);
+            ruled.Add(await api.AddProductAsync(category.Slug, product, 100));
+        }
+        // In season by its sales alone, and bought more often than any of them.
+        var shelf = await api.AddCategoryAsync();
+        categories.Add(shelf);
+        var sold = await api.AddSoldProductAsync(shelf, "Товар");
+        await api.AddReceiptsAsync(sold, new DateOnly(2071, 11, 25), 6);
+        await api.AddReceiptsAsync(sold, new DateOnly(2071, 6, 1), 2);
+
+        var order = await RankAsync([.. ruled, sold], [.. categories], today, ProductSort.Seasonal);
+
+        // Each family opens with its product; what only sales put in season follows them, first of the rest.
+        order[..12].Order().ShouldBe(ruled.Select(p => p.Id).Order());
+        order[12].ShouldBe(sold.Id);
     }
 
     [Fact]
