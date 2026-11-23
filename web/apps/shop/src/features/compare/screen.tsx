@@ -56,7 +56,7 @@ function ComparisonGroups({ initialGroup }: { initialGroup: string }) {
       <nav className="compare-groups" aria-label="Групи порівняння">{[...groups.values()].map(group => <button key={group.key} type="button" aria-pressed={active?.key === group.key} onClick={() => { setActiveKey(group.key); setOnlyDifferences(false); }}>{group.name}<span>{group.products.length}</span></button>)}</nav>
       {failed.length > 0 && <div role="alert" className="notice">Не вдалося оновити частину товарів. Показуємо останні збережені дані. <button type="button" className="link" onClick={() => setRetry(value => value + 1)}>Спробувати ще раз</button></div>}
       <div className="compare-toolbar">
-        <label className="consent"><input type="checkbox" checked={onlyDifferences} disabled={products.length < 2} onChange={event => setOnlyDifferences(event.target.checked)} />Тільки відмінності</label>
+        <label className="consent"><input type="checkbox" checked={products.length > 1 && onlyDifferences} disabled={products.length < 2} onChange={event => setOnlyDifferences(event.target.checked)} />Тільки відмінності</label>
         <button className="compare-clear" type="button" onClick={() => active && clearComparisonGroup(active.key)}>Очистити цю групу</button>
       </div>
       {products.length === 1 && <p className="compare-hint">Додайте ще товар цього типу, щоб побачити відмінності.</p>}
