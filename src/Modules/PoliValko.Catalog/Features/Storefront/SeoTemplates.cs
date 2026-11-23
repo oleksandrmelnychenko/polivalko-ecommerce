@@ -29,10 +29,11 @@ internal static partial class SeoTemplates
             return own;
         }
 
-        // Без ціни шаблон «ціна {price}» дав би «ціна 0 грн» або обірвану фразу, тому його не застосовуємо.
+        // Без ціни шаблон «ціна {price}» дав би «ціна 0 грн» або обірвану фразу, тому з шаблону вирізаємо
+        // частину речення з ціною: «{name}: ціна {price}, купити з доставкою» → «{name}: купити з доставкою».
         if (values.Price is null && template.Contains("{price}", StringComparison.Ordinal))
         {
-            return own;
+            template = WithoutPrice(template);
         }
 
         var text = template
@@ -45,8 +46,27 @@ internal static partial class SeoTemplates
         return text.Length == 0 ? own : text;
     }
 
+    /// <summary>Шаблон без фрагмента з <c>{price}</c> між розділовими знаками й без розділових знаків, що лишились зайвими.</summary>
+    internal static string WithoutPrice(string template)
+    {
+        var text = PriceClause().Replace(template, " ");
+        text = DanglingSeparator().Replace(text, string.Empty);
+        return LeadingSeparators().Replace(text, string.Empty);
+    }
+
     [GeneratedRegex(@"\s{2,}")]
     private static partial Regex Spaces();
+
+    // A clause holding {price}: no other placeholder, no punctuation; a following comma or semicolon goes with it.
+    [GeneratedRegex(@"\s*[^:;,.!?—–|{}]*\{price\}[^:;,.!?—–|{}]*(?:[,;]\s*)?")]
+    private static partial Regex PriceClause();
+
+    // A separator left with nothing after it: before another separator, before the end of the sentence or the text.
+    [GeneratedRegex(@"\s*[:;,—–|](?=\s*[:;,.—–|]|\s*$)")]
+    private static partial Regex DanglingSeparator();
+
+    [GeneratedRegex(@"^[\s:;,.—–|]+")]
+    private static partial Regex LeadingSeparators();
 
     internal sealed record Pair(string? Title, string? Description);
 
