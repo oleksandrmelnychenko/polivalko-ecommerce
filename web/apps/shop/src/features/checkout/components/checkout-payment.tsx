@@ -14,11 +14,13 @@ const PAYMENT: Record<string, { icon: ReactNode; note: string }> = {
 };
 
 export function CheckoutPayment({
+  unavailable,
   paymentOptions,
   effectivePayment,
   setPayment,
   fieldError,
 }: Pick<FieldProps, "fieldError"> & {
+  unavailable: boolean;
   paymentOptions: PaymentOption[];
   effectivePayment: string;
   setPayment: (code: string) => void;
@@ -33,6 +35,7 @@ export function CheckoutPayment({
   return (
     <CheckoutStep id="payment-title" icon={<WalletIcon />} title="Оплата" hint="Способи залежать від обраної доставки">
       <CheckoutOptions name="payment" legend="Спосіб оплати" options={options} value={effectivePayment} onChange={setPayment} />
+      {unavailable && <p className="notice">Для цього способу отримання оплата зараз недоступна.</p>}
       {fieldError("payment.method")}
     </CheckoutStep>
   );

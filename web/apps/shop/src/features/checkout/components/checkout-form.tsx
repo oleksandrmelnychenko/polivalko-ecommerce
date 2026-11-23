@@ -73,6 +73,7 @@ function CheckoutFields({ mailDelivers, phone, pickupPoint }: CheckoutFormProps)
           }
         />
         <CheckoutPayment
+          unavailable={!!checkout.deliveryOption && checkout.paymentOptions.length === 0}
           paymentOptions={checkout.paymentOptions}
           effectivePayment={checkout.effectivePayment}
           setPayment={checkout.setPayment}

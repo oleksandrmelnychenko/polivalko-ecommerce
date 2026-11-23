@@ -64,6 +64,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
   const effectivePayment = paymentOptions.some((p) => p.code === payment) ? payment : (paymentOptions[0]?.code ?? "");
 
   const blocking = quote?.items.some((i) => i.issue) ?? false;
+  const canConfirm = quoteCurrent && !!quote && !!deliveryOption && !!effectivePayment && !blocking && !cartState.error;
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -72,11 +73,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
       void refreshQuote();
       return;
     }
-    if (!quote || !quoteCurrent || submitting.current || !cartState.ready || !cartState.owner || cartState.saving) return;
-    if (blocking) {
-      setNotice({ kind: "error", title: "Частини товарів не вистачає", text: "Змініть кількість або приберіть позиції, позначені в замовленні." });
-      return;
-    }
+    if (!quote || !canConfirm || submitting.current || !cartState.ready || !cartState.owner || cartState.saving) return;
     const form = new FormData(event.currentTarget);
     const request = orderRequest(form, {
       items, quote, delivery, settlement: point.settlement, warehouseRef: point.warehouseRef, payment: effectivePayment,
@@ -192,7 +189,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
     errors,
     notice,
     sending: sending || cartState.saving || !cartState.ready,
-    canConfirm: quoteCurrent && !!quote,
+    canConfirm,
     onSubmit,
   };
 }
