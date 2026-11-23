@@ -24,6 +24,7 @@ function SearchField({ initialQuery }: { initialQuery: string }) {
   const root = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState(initialQuery);
+  const [attempt, setAttempt] = useState(0);
   const [open, setOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [result, setResult] = useState<{ query: string; items: ProductListItem[]; failed?: boolean }>({ query: "", items: [] });
@@ -44,11 +45,11 @@ function SearchField({ initialQuery }: { initialQuery: string }) {
   }, []);
 
   useEffect(() => {
-    if (term.length < 2) return;
+    if (!open || term.length < 2) return;
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/v1/products?q=${encodeURIComponent(term)}&pageSize=5`, { signal: controller.signal });
+        const response = await fetch(`/api/v1/products?q=${encodeURIComponent(term)}&pageSize=5`, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]) });
         if (!response.ok) throw new Error("search");
         const data = await response.json();
         if (!controller.signal.aborted) setResult({ query: term, items: data.items ?? [] });
@@ -57,7 +58,7 @@ function SearchField({ initialQuery }: { initialQuery: string }) {
       }
     }, 250);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [term]);
+  }, [term, open, attempt]);
 
   const close = () => { setOpen(false); setMobileOpen(false); };
   return <div ref={root} className="header-search" data-open={mobileOpen} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}>
@@ -68,7 +69,14 @@ function SearchField({ initialQuery }: { initialQuery: string }) {
       {query && <button type="button" className="header-search__clear" aria-label="Очистити пошук" onClick={() => { setQuery(""); input.current?.focus(); }}><CloseIcon /></button>}
     </Form>
     {open && <div id="search-suggestions" className="search-suggestions">
-      {term.length < 2 ? <p className="search-suggestions__message">Введіть щонайменше 2 символи назви або артикулу.</p> : loading ? <p className="search-suggestions__message" role="status">Шукаємо…</p> : result.failed ? <p className="search-suggestions__message" role="status">Пошук тимчасово недоступний. Спробуйте ще раз.</p> : <>
+      {term.length < 2 ? <p className="search-suggestions__message">Введіть щонайменше 2 символи назви або артикулу.</p> : loading ? <p className="search-suggestions__message" role="status">Шукаємо…</p> : result.failed ? <div className="search-suggestions__message">
+        <p role="status">Пошук тимчасово недоступний.</p>
+        <button type="button" className="link" onClick={() => {
+          input.current?.focus();
+          setResult({ query: "", items: [] });
+          setAttempt(value => value + 1);
+        }}>Спробувати ще раз</button>
+      </div> : <>
         {result.items.length ? <ul>{result.items.map((p) => <li key={p.id}><Link href={`/product/${p.slug}`} onClick={close}>{p.imageUrl && <img src={p.imageUrl} alt="" width={48} height={56} />}<span><span>{p.name}</span><strong>{hasPrice(p.price) ? formatMoney(p.price) : PRICE_ON_REQUEST}</strong></span></Link></li>)}</ul> : <p className="search-suggestions__message" role="status">Товарів не знайдено.</p>}
         <Link href={`/search?q=${encodeURIComponent(term)}`} className="search-suggestions__all" onClick={close}>Усі результати пошуку</Link>
       </>}
