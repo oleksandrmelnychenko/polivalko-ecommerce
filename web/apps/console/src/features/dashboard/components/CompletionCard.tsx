@@ -10,10 +10,11 @@ const dots = Array.from({ length: 33 }, (_, index) => {
 const percent = new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 1 })
 
 export function CompletionCard({ statuses }: { statuses: Dashboard['byStatus'] }) {
-  const total = statuses.reduce((sum, item) => sum + item.count, 0)
+  // A cancelled order cannot be completed, and the order count of the period leaves it out as well.
+  const total = statuses.reduce((sum, item) => sum + (item.status === 'cancelled' ? 0 : item.count), 0)
   const completed = statuses.find((item) => item.status === 'completed')?.count ?? 0
   return <ShareCard heading={<><IconCircleCheck aria-hidden="true" />Виконані замовлення</>}
-    total={total} part={completed} totalLabel="Усього замовлень" partLabel="Виконано" empty="За цей період замовлень немає." />
+    total={total} part={completed} totalLabel="Замовлень без скасованих" partLabel="Виконано" empty="За цей період замовлень немає." />
 }
 
 export function ShareCard({ heading, total, part, totalLabel, partLabel, empty }: {

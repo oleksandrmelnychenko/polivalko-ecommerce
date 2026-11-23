@@ -20,7 +20,7 @@ function ProductName({ id, name, canOpen }: { id: string; name: string; canOpen:
 
 export function TopProducts({ data, canOpen }: { data: Dashboard; canOpen: boolean }) {
   return (
-    <DashboardCard title="Топ товарів" aside={<span className="dash-muted">за виручкою</span>} flush>
+    <DashboardCard title="Топ товарів" aside={<span className="dash-muted">за виручкою після повернень</span>} flush>
       {data.topProducts.length === 0 ? (
         <p className="dash-rank-empty">Продажів за період немає.</p>
       ) : (
@@ -56,7 +56,7 @@ export function LowStock({ data, canOpen }: { data: Dashboard; canOpen: boolean 
       flush
       aside={
         canOpen ? (
-          <Link to="/catalog/products?stock=low" className="dash-link">
+          <Link to="/catalog/products?stock=low&visible=true" className="dash-link">
             Усі
           </Link>
         ) : null
