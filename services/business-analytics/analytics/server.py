@@ -22,6 +22,7 @@ from .stock_turnover import COVER_OPTIONS, DEFAULT_COVER_DAYS, stock_page
 from .product_contribution import profit_page
 from .turnover import forecast_months, history_for
 from .markets import markets
+from .order_waybills import order_waybills
 from .winter import winter
 from .offers import generate
 from .shipments import check_shipment_sources
@@ -199,6 +200,15 @@ service = Service()
 
 def dispatch(env):
     route = (env["REQUEST_METHOD"], env["PATH_INFO"])
+    if route[0] == "GET" and route[1].startswith("/order-waybills/"):
+        args = parse_qs(env.get("QUERY_STRING", ""), max_num_fields=1)
+        if args not in ({}, {"refresh": ["true"]}, {"refresh": ["false"]}):
+            raise ValueError("Invalid waybill request")
+        try:
+            return order_waybills(route[1].removeprefix("/order-waybills/"), now().date(), args.get("refresh") == ["true"])
+        except Exception as exc:
+            logger.error("Order shipment lookup unavailable (%s)", type(exc).__name__)
+            return 503, {"title": "Не вдалося перевірити ТТН замовлення"}
     if route == ("GET", "/health/live"):
         return 200, {"status": "ok"}
     if route == ("GET", "/checks/last-closed-year"):
