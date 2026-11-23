@@ -20,6 +20,8 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
   const [direction, setDirection] = useState(preset);
   const [state, setState] = useState<State>({ status: "idle" });
   const formRef = useRef<HTMLFormElement>(null);
+  const sending = useRef(false);
+  const pending = state.status === "sending";
 
   useEffect(() => {
     if (state.status === "error") formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
@@ -28,7 +30,9 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
   useEffect(() => {
     const pick = (event: Event) => {
       const code = (event as CustomEvent<string>).detail;
-      if (directions.some((d) => d.code === code)) setDirection(code);
+      if (!sending.current && directions.some((d) => d.code === code)) {
+        setDirection(code);
+      }
     };
     window.addEventListener(DIRECTION_EVENT, pick);
     return () => window.removeEventListener(DIRECTION_EVENT, pick);
@@ -39,7 +43,6 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
     setDirection(preset);
   }
   const idempotencyKey = useRef<string | null>(null);
-  const sending = useRef(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -85,13 +88,13 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
 
       <div className="field">
         <label htmlFor="name">Ім&apos;я</label>
-        <input id="name" name="name" required autoComplete="name" maxLength={100} aria-invalid={Boolean(err("name"))} aria-describedby={err("name") ? "name-error" : undefined} />
+        <input id="name" name="name" readOnly={pending} required autoComplete="name" maxLength={100} aria-invalid={Boolean(err("name"))} aria-describedby={err("name") ? "name-error" : undefined} />
         {err("name") && <p id="name-error" className="field__error">{err("name")}</p>}
       </div>
 
       <div className="field">
         <label htmlFor="phone">Телефон</label>
-        <input id="phone" name="phone" type="tel" required inputMode="tel" autoComplete="tel" spellCheck={false} placeholder="+380 67 123 45 67" aria-invalid={Boolean(err("phone"))} aria-describedby={err("phone") ? "phone-error" : undefined} />
+        <input id="phone" name="phone" type="tel" readOnly={pending} required inputMode="tel" autoComplete="tel" spellCheck={false} placeholder="+380 67 123 45 67" aria-invalid={Boolean(err("phone"))} aria-describedby={err("phone") ? "phone-error" : undefined} />
         {err("phone") && <p id="phone-error" className="field__error">{err("phone")}</p>}
       </div>
 
@@ -104,7 +107,11 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
           value={direction}
           placeholder="Оберіть послугу"
           options={directions.map((d) => ({ value: d.code, label: d.name }))}
-          onChange={setDirection}
+          disabled={pending}
+          onChange={code => {
+            if (sending.current) return;
+            setDirection(code);
+          }}
           aria-invalid={Boolean(err("direction"))}
           aria-describedby={err("direction") ? "direction-error" : undefined}
         />
@@ -113,12 +120,12 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
 
       <div className="field">
         <label htmlFor="comment">Коментар (необов’язково)</label>
-        <textarea id="comment" name="comment" autoComplete="off" maxLength={1000} aria-invalid={Boolean(err("comment"))} aria-describedby={err("comment") ? "comment-error" : undefined} />
+        <textarea id="comment" name="comment" readOnly={pending} autoComplete="off" maxLength={1000} aria-invalid={Boolean(err("comment"))} aria-describedby={err("comment") ? "comment-error" : undefined} />
         {err("comment") && <p id="comment-error" className="field__error">{err("comment")}</p>}
       </div>
 
-      <button type="submit" className="btn btn--wide" disabled={state.status === "sending"} aria-busy={state.status === "sending"}>
-        {state.status === "sending" ? "Надсилаємо…" : "Надіслати заявку"}
+      <button type="submit" className="btn btn--wide" disabled={pending} aria-busy={pending}>
+        {pending ? "Надсилаємо…" : "Надіслати заявку"}
       </button>
 
       <div role="status" aria-live="polite">
