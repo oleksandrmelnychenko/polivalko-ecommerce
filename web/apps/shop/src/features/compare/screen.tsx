@@ -12,13 +12,12 @@ import { clearComparisonGroup, loadComparisonProduct, refreshComparison, removeC
 
 export function CompareScreen() {
   const group = useSearchParams().get("group") ?? "";
-  return <ComparisonGroups key={group} initialGroup={group} />;
+  return <ComparisonGroups selectedGroup={group} />;
 }
 
-function ComparisonGroups({ initialGroup }: { initialGroup: string }) {
+function ComparisonGroups({ selectedGroup }: { selectedGroup: string }) {
   const hydrated = useHydrated();
   const saved = useComparison();
-  const [activeKey, setActiveKey] = useState(initialGroup);
   const [onlyDifferences, setOnlyDifferences] = useState(false);
   const [failed, setFailed] = useState<string[]>([]);
   const [retry, setRetry] = useState(0);
@@ -43,17 +42,25 @@ function ComparisonGroups({ initialGroup }: { initialGroup: string }) {
     if (existing) existing.products.push(product);
     else groups.set(group.key, { ...group, products: [product] });
   });
-  const active = groups.get(activeKey) ?? [...groups.values()][0];
+  const active = groups.get(selectedGroup) ?? [...groups.values()][0];
   const products = active?.products ?? [];
   const rows = comparisonRows(products);
   const visibleRows = onlyDifferences && products.length > 1 ? rows.filter(row => row.differs) : rows;
   const categoryHref = active?.slug ? `/catalog/${active.slug}` : "/catalog";
   const addSlot = products.length < 4;
 
+  function selectGroup(key: string) {
+    if (active?.key === key) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("group", key);
+    window.history.pushState(null, "", url);
+    setOnlyDifferences(false);
+  }
+
   if (!hydrated) return <p role="status" className="compare-loading">Завантажуємо порівняння…</p>;
   return saved.length === 0 ?
       <div className="compare-empty"><span className="compare-empty__symbol" aria-hidden="true">⇄</span><h2>Товарів для порівняння ще немає</h2><p>У каталозі натисніть іконку порівняння на фото товару, під сердечком. Товари різних типів зберуться в окремі групи.</p><Link href="/catalog" className="btn">Обрати товари</Link></div> : <>
-      <nav className="compare-groups" aria-label="Групи порівняння">{[...groups.values()].map(group => <button key={group.key} type="button" aria-pressed={active?.key === group.key} onClick={() => { setActiveKey(group.key); setOnlyDifferences(false); }}>{group.name}<span>{group.products.length}</span></button>)}</nav>
+      <nav className="compare-groups" aria-label="Групи порівняння">{[...groups.values()].map(group => <button key={group.key} type="button" aria-pressed={active?.key === group.key} onClick={() => selectGroup(group.key)}>{group.name}<span>{group.products.length}</span></button>)}</nav>
       {failed.length > 0 && <div role="alert" className="notice">Не вдалося оновити частину товарів. Показуємо останні збережені дані. <button type="button" className="link" onClick={() => setRetry(value => value + 1)}>Спробувати ще раз</button></div>}
       <div className="compare-toolbar">
         <label className="consent"><input type="checkbox" checked={products.length > 1 && onlyDifferences} disabled={products.length < 2} onChange={event => setOnlyDifferences(event.target.checked)} />Тільки відмінності</label>
