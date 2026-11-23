@@ -63,6 +63,58 @@ public sealed class SeasonStateTests(ApiFactory api)
         history.ByCategory[shelf.Id].ShouldBe((3m, 3m));
     }
 
+    [Fact]
+    public async Task Rules_and_history_give_every_product_a_state_and_its_reason()
+    {
+        var today = new DateOnly(2051, 12, 10);
+        var department = await AddCategoryAsync();
+        var shelf = await AddCategoryAsync(department.Id);
+        var newYear = await AddCategoryAsync(department.Id, "novyi-rik");
+        var pool = await AddCategoryAsync(name: "Хімія для басейнів");
+        var summerShelf = await AddCategoryAsync();
+        var emptyShelf = await AddCategoryAsync();
+        var garland = await api.AddProductAsync(newYear.Slug, "Гірлянда", 100);
+        var sold = await AddSoldProductAsync(shelf, "Продається зараз");
+        var sparse = await AddSoldProductAsync(shelf, "Мало чеків");
+        var topLevel = await api.AddProductAsync(department.Slug, "Без чеків у відділі", 100);
+        var chlorine = await AddSoldProductAsync(pool, "Хлор у гранулах");
+        var summer = await AddSoldProductAsync(summerShelf, "Літній товар");
+        var unknown = await api.AddProductAsync(emptyShelf.Slug, "Без історії", 100);
+        await AddReceiptsAsync(sold, new DateOnly(2050, 12, 15), 6);
+        await AddReceiptsAsync(sold, new DateOnly(2050, 6, 1), 2);
+        await AddReceiptsAsync(sparse, new DateOnly(2050, 6, 1), 1);
+        await AddDailyReceiptsAsync(chlorine, new DateOnly(2050, 1, 1), today.AddDays(-1));
+        await AddReceiptsAsync(summer, new DateOnly(2049, 9, 1), 60);
+        await AddReceiptsAsync(summer, new DateOnly(2050, 9, 1), 60);
+        Category[] categories = [department, shelf, newYear, pool, summerShelf, emptyShelf];
+        Product[] products = [garland, sold, sparse, topLevel, chlorine, summer, unknown];
+
+        var december = await ClassifyAsync(products, categories, today, today);
+
+        december[garland.Id].ShouldBe(("in_season", "rule"));
+        december[sold.Id].ShouldBe(("in_season", "product"));
+        december[sparse.Id].ShouldBe(("in_season", "category"));
+        december[topLevel.Id].ShouldBe(("in_season", "department"));
+        // Its rule is for summer, but it sells evenly all year.
+        december[chlorine.Id].ShouldBe(("all_year", "product"));
+        december[summer.Id].ShouldBe(("off_season", "product"));
+        december[unknown.Id].ShouldBe(("all_year", "none"));
+
+        // Looked at for January: the garland rule is over and nothing else speaks for it.
+        var january = await ClassifyAsync(products, categories, today, new DateOnly(2052, 1, 15));
+        january[garland.Id].ShouldBe(("off_season", "rule"));
+    }
+
+    private Task<Dictionary<Guid, (string Season, string Source)>> ClassifyAsync(Product[] products, Category[] categories,
+        DateOnly today, DateOnly anchor) => api.WithScopeAsync(async services =>
+    {
+        var db = services.GetRequiredService<PoliValkoDbContext>();
+        var ids = products.Select(p => p.Id).ToArray();
+        var rows = await (await SeasonClassifier.QueryAsync(db.Set<Product>().Where(p => ids.Contains(p.Id)), categories, db,
+            services.GetRequiredService<IMemoryCache>(), today, anchor, Ct)).ToListAsync(Ct);
+        return rows.ToDictionary(row => row.ProductId, row => (SeasonClassifier.Name(row.State), SeasonClassifier.Source(row)));
+    });
+
     private static int Verdict(SeasonHistory history, Product product)
     {
         var index = Array.IndexOf(history.ProductIds, product.Id);
@@ -74,9 +126,9 @@ public sealed class SeasonStateTests(ApiFactory api)
         SeasonalHistory.LoadAsync(services.GetRequiredService<PoliValkoDbContext>(),
             services.GetRequiredService<IMemoryCache>(), today, anchor, Ct));
 
-    private async Task<Category> AddCategoryAsync(Guid? parent = null)
+    private async Task<Category> AddCategoryAsync(Guid? parent = null, string name = "Полиця сезону")
     {
-        var category = new Category { Id = Guid.NewGuid(), ParentId = parent, Slug = "season-" + Guid.NewGuid(), Name = "Полиця сезону" };
+        var category = new Category { Id = Guid.NewGuid(), ParentId = parent, Slug = "season-" + Guid.NewGuid(), Name = name };
         await api.WithDbAsync(db => { db.Add(category); return db.SaveChangesAsync(Ct); });
         return category;
     }

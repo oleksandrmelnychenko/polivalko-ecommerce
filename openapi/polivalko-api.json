@@ -7589,6 +7589,13 @@
                 "format": "uuid"
               }
             }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -7597,10 +7604,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ProductListItemDto"
-                  }
+                  "$ref": "#/components/schemas/StorefrontPreviewDto"
                 }
               }
             }
@@ -23662,6 +23666,72 @@
               "type": "string",
               "format": "uuid"
             }
+          }
+        }
+      },
+      "StorefrontPreviewCountsDto": {
+        "required": [
+          "inSeason",
+          "allYear",
+          "offSeason"
+        ],
+        "type": "object",
+        "properties": {
+          "inSeason": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "allYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "offSeason": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "StorefrontPreviewDto": {
+        "required": [
+          "items",
+          "counts",
+          "rulesWithoutCategory"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorefrontPreviewItemDto"
+            }
+          },
+          "counts": {
+            "$ref": "#/components/schemas/StorefrontPreviewCountsDto"
+          },
+          "rulesWithoutCategory": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "StorefrontPreviewItemDto": {
+        "required": [
+          "product",
+          "season",
+          "source"
+        ],
+        "type": "object",
+        "properties": {
+          "product": {
+            "$ref": "#/components/schemas/ProductListItemDto"
+          },
+          "season": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
           }
         }
       },

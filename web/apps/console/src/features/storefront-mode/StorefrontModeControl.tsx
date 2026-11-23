@@ -91,8 +91,9 @@ function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: 
   const end = mode === 'seasonal' || !through ? null : through
   const invalid = Boolean(end && end < kyivDate())
   const dirty = mode !== baseline.mode || end !== (baseline.through ?? null) || pins.join() !== (baseline.pinnedProductIds ?? []).join()
-  const byId = new Map(preview.data?.map(product => [product.id, product]))
-  const products = [...pins.flatMap(id => byId.get(id) ?? []), ...(preview.data ?? []).filter(product => !pins.includes(product.id))]
+  const listed = preview.data?.items.map(item => item.product) ?? []
+  const byId = new Map(listed.map(product => [product.id, product]))
+  const products = [...pins.flatMap(id => byId.get(id) ?? []), ...listed.filter(product => !pins.includes(product.id))]
   const missing = preview.status === 'ready' ? pins.filter(id => !byId.has(id)) : []
   function movePin(index: number, destination: number) {
     if (busy || index < 0 || destination < 0 || destination >= pins.length || destination === index) return
@@ -150,7 +151,7 @@ function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: 
           : <Text size="sm" role="status">Товарів за цим пошуком немає.</Text>)}
       </section>
       <section className="storefront-mode-card" aria-label="Попередній перегляд каталогу">
-        <h3>Перші 12 товарів у каталозі</h3>
+        <h3>Перші 48 товарів у каталозі</h3>
         {mode === 'seasonal' && <NativeSelect mt="xs" label="Місяць перегляду" value={String(month)} data={monthOptions}
           description={month === currentMonth ? 'Порядок на сьогодні за київським часом.' : 'Прогноз на 15-те число за сьогоднішніми залишками. Місяць змінює лише попередній перегляд.'}
           onChange={event => { const value = Number(event.currentTarget.value); setSelectedMonth(value === currentMonth ? null : value) }} />}

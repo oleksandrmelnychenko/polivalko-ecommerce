@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using PoliValko.Catalog.Persistence;
 using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Persistence;
@@ -17,6 +18,14 @@ namespace PoliValko.Catalog.Features.Storefront;
 
 public sealed record StorefrontModeDto(string Mode, DateOnly? Through, Guid Revision, Guid[]? PinnedProductIds = null);
 public sealed record ChangeStorefrontMode(string Mode, DateOnly? Through, Guid ExpectedRevision, Guid[]? PinnedProductIds = null);
+
+/// <summary>A product of the preview with its season on the day looked at and what decided it.</summary>
+/// <param name="Season">in_season | all_year | off_season</param>
+/// <param name="Source">rule | product | category | department | none</param>
+public sealed record StorefrontPreviewItemDto(ProductListItemDto Product, string Season, string Source);
+public sealed record StorefrontPreviewCountsDto(int InSeason, int AllYear, int OffSeason);
+public sealed record StorefrontPreviewDto(IReadOnlyList<StorefrontPreviewItemDto> Items, StorefrontPreviewCountsDto Counts,
+    IReadOnlyList<string> RulesWithoutCategory);
 
 internal static class StorefrontMode
 {
@@ -45,12 +54,15 @@ internal static class StorefrontMode
         return CurrentAsync(db, KyivTime.Today(time), ct);
     }
 
-    private static async Task<Results<Ok<List<ProductListItemDto>>, BadRequest>> Preview(string mode, int? month,
-        [Microsoft.AspNetCore.Mvc.FromQuery] Guid[]? pinned, HttpResponse response,
-        PoliValkoDbContext db, SeasonalMerchandising merchandising, TimeProvider time, CancellationToken ct)
+    private const int PreviewSize = 48;
+
+    private static async Task<Results<Ok<StorefrontPreviewDto>, BadRequest>> Preview(string mode, int? month,
+        [Microsoft.AspNetCore.Mvc.FromQuery] Guid[]? pinned, string? q, HttpResponse response,
+        PoliValkoDbContext db, SeasonalMerchandising merchandising, IMemoryCache cache, TimeProvider time, CancellationToken ct)
     {
         if (!ProductSort.IsMode(mode) || pinned is { Length: > 12 } ||
-            month is < 1 or > 12 || (month.HasValue && mode != ProductSort.Seasonal)) return TypedResults.BadRequest();
+            month is < 1 or > 12 || (month.HasValue && mode != ProductSort.Seasonal) ||
+            q is { Length: > 128 } || q?.Any(char.IsControl) == true) return TypedResults.BadRequest();
         response.Headers.CacheControl = "private, no-store";
         var categories = await CategoryQueries.LoadVisibleCategoriesAsync(db, ct);
         var products = CatalogVisibility.Products(db, categories.Select(c => c.Id).ToArray());
@@ -58,9 +70,24 @@ internal static class StorefrontMode
         var seasonDate = month is { } selected && selected != today.Month
             ? new DateOnly(today.Year + (selected < today.Month ? 1 : 0), selected, 15)
             : today;
-        var ranked = await merchandising.SortAsync(products, categories, null, db, today, ct, mode, pinned: pinned, seasonDate: seasonDate);
-        var rows = await ProductListing.ListItems(ranked.Take(12)).ToListAsync(ct);
-        return TypedResults.Ok(await ProductListing.ToListItemsAsync(db, rows, time, ct));
+        // A name or an article looks one product up; the pins belong to the catalog as a whole.
+        var term = string.IsNullOrWhiteSpace(q) ? null : q.Trim();
+        var listed = term is null ? products : ProductSearchText.Matching(products, term, ProductSearchText.Words(term));
+        var ranked = await merchandising.SortAsync(listed, categories, term, db, today, ct, mode,
+            pinned: term is null ? pinned : null, seasonDate: seasonDate);
+        var rows = await ProductListing.ListItems(ranked.Take(PreviewSize)).ToListAsync(ct);
+        var items = await ProductListing.ToListItemsAsync(db, rows, time, ct);
+        var seasons = await SeasonClassifier.QueryAsync(products, categories, db, cache, today, seasonDate, ct);
+        var shown = items.Select(item => item.Id).ToArray();
+        var states = await seasons.Where(row => shown.Contains(row.ProductId)).ToDictionaryAsync(row => row.ProductId, ct);
+        var counts = await seasons.GroupBy(row => row.State).Select(group => new { State = group.Key, Count = group.Count() })
+            .ToDictionaryAsync(group => group.State, group => group.Count, ct);
+        return TypedResults.Ok(new StorefrontPreviewDto(
+            items.Select(item => new StorefrontPreviewItemDto(item, SeasonClassifier.Name(states[item.Id].State),
+                SeasonClassifier.Source(states[item.Id]))).ToList(),
+            new StorefrontPreviewCountsDto(counts.GetValueOrDefault((int)Season.In), counts.GetValueOrDefault((int)Season.AllYear),
+                counts.GetValueOrDefault((int)Season.Off)),
+            SeasonalPurpose.RulesWithoutCategory(categories)));
     }
 
     private static async Task<Results<Ok<StorefrontModeDto>, ValidationProblem, Conflict>> Save(
