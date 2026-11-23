@@ -23,8 +23,10 @@ internal static class SeasonalHistory
     /// <param name="anchor">The day asked about: today on the storefront, the 15th of a month in a preview.</param>
     public static Task<SeasonHistory> LoadAsync(PoliValkoDbContext db, IMemoryCache cache, DateOnly today, DateOnly anchor,
         CancellationToken ct) =>
-        // Receipts arrive with an import, a few times a day at most.
-        CachedLoad.GetAsync(cache, ("storefront-season-history", today, anchor), Reading, TimeSpan.FromMinutes(30),
+        // Every listing of the shop needs this, and reading three years of receipts takes about half a second on the
+        // live database. For today the receipts end with yesterday and the key names the day, so the answer changes
+        // only when receipts of past days are imported, a few times a day at most: it is kept for hours.
+        CachedLoad.GetAsync(cache, ("storefront-season-history", today, anchor), Reading, TimeSpan.FromHours(6),
             async () => (await ReadAsync(db, today, anchor, ct), true), ct);
 
     private static async Task<SeasonHistory> ReadAsync(PoliValkoDbContext db, DateOnly today, DateOnly anchor, CancellationToken ct)

@@ -16,7 +16,8 @@ internal static class MonthlySalesLeader
         var cutoff = new DateOnly(today.Year, today.Month, 1);
         var sales = await cache.GetOrCreateAsync(("storefront-monthly-sales", cutoff), entry =>
         {
-            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
+            // Receipts before the first of this month: only a late import changes them.
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(6);
             return ReadSalesAsync(db, cutoff, ct);
         }) ?? [];
         if (sales.Length == 0) return null;
