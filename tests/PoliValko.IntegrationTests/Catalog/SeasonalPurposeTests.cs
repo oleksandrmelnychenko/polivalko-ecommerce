@@ -147,7 +147,8 @@ public sealed class SeasonalPurposeTests(ApiFactory api)
         var categories = new List<Category>();
         foreach (var section in cases.GroupBy(row => row.Section))
         {
-            var category = new Category { Id = Guid.NewGuid(), ParentId = root.Id, Slug = "purpose-" + Guid.NewGuid(), Name = section.Key };
+            // Hidden: the rules are given these sections directly, and the shop the other tests look at gains nothing.
+            var category = new Category { Id = Guid.NewGuid(), ParentId = root.Id, Slug = "purpose-" + Guid.NewGuid(), Name = section.Key, IsVisible = false };
             categories.Add(category);
             await api.WithDbAsync(db => { db.Add(category); return db.SaveChangesAsync(ct); });
             foreach (var row in section)

@@ -22,7 +22,7 @@ internal static class SeasonalHistory
         CancellationToken ct) =>
         // Receipts arrive with an import, a few times a day at most.
         CachedLoad.GetAsync(cache, ("storefront-season-history", today, anchor), Reading, TimeSpan.FromMinutes(30),
-            () => ReadAsync(db, today, anchor, ct), ct);
+            async () => (await ReadAsync(db, today, anchor, ct), true), ct);
 
     private static async Task<SeasonHistory> ReadAsync(PoliValkoDbContext db, DateOnly today, DateOnly anchor, CancellationToken ct)
     {

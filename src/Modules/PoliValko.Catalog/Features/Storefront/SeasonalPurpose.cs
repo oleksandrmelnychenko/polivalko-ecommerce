@@ -121,9 +121,23 @@ internal static class SeasonalPurpose
     public static async Task<RuleMatches> LoadAsync(PoliValkoDbContext db, IMemoryCache cache,
         IReadOnlyList<Category> categories, CancellationToken ct)
     {
-        // Everything the matching reads, in one cheap pass over the catalog: published products with their
-        // names and sections, and the attributes the rules look at. The tree is the one given here.
-        var catalog = await db.Database.SqlQuery<string>($"""
+        var catalog = await CatalogStateAsync(db, ct);
+        return await CachedLoad.GetAsync(cache, ("storefront-rule-matches", Signature(categories), catalog), Matching,
+            TimeSpan.FromMinutes(30), async () =>
+            {
+                var matches = await MatchAsync(db, categories, ct);
+                // A catalog that changed while the rules were being matched may have given these matches.
+                // They serve this request; the next one matches again.
+                return (matches, await CatalogStateAsync(db, ct) == catalog);
+            }, ct);
+    }
+
+    /// <summary>
+    /// Everything the matching reads, in one cheap pass over the catalog: published products with their names
+    /// and sections, and the attributes the rules look at.
+    /// </summary>
+    private static Task<string> CatalogStateAsync(PoliValkoDbContext db, CancellationToken ct) =>
+        db.Database.SqlQuery<string>($"""
             SELECT (SELECT count(*)::text || ':' || coalesce(sum(hashtextextended(
                         p.id::text || p.category_id::text || coalesce(p.display_name,p.name), 0)), 0)::text
                     FROM catalog.products p WHERE p.is_visible AND NOT p.is_archived)
@@ -132,9 +146,6 @@ internal static class SeasonalPurpose
                         a.product_id::text || lower(a.name) || '=' || a.value, 0)), 0)::text
                     FROM catalog.product_attributes a WHERE lower(a.name) = ANY({Attributes})) AS "Value"
             """).SingleAsync(ct);
-        return await CachedLoad.GetAsync(cache, ("storefront-rule-matches", Signature(categories), catalog), Matching,
-            TimeSpan.FromMinutes(30), () => MatchAsync(db, categories, ct), ct);
-    }
 
     /// <summary>
     /// Sections the rules name that the catalog does not have, for instance after a section was renamed.

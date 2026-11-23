@@ -84,6 +84,39 @@ public sealed class SeasonCacheTests(ApiFactory api)
         history.ShouldAllBe(answer => ReferenceEquals(answer, history[0]));
     }
 
+    [Fact]
+    public async Task Families_are_numbered_in_the_order_of_the_month_and_a_rule_without_its_section_brings_none()
+    {
+        var pool = await AddSectionAsync("Хімія для басейнів");
+        var people = await AddSectionAsync("Засоби захисту людей");
+        var chlorine = await api.AddProductAsync(pool.Slug, "Хлор у гранулах", 100);
+        var spray = await api.AddProductAsync(people.Slug, "Спрей від комарів", 100);
+        var july = new DateOnly(2034, 7, 15);
+        await api.WithScopeAsync(async services =>
+        {
+            var db = services.GetRequiredService<PoliValkoDbContext>();
+            var cache = services.GetRequiredService<IMemoryCache>();
+            Category[] both = [pool, people];
+            var matches = await SeasonalPurpose.LoadAsync(db, cache, both, Ct);
+            // Pool chemistry is one of July's leading tasks, so its family comes before the others.
+            var (rows, families) = SeasonalPurpose.Query(db, matches, both, july);
+            families.ShouldBe(2);
+            (await rows.ToDictionaryAsync(row => row.ProductId, row => row.Family, Ct))
+                .ShouldBe(new Dictionary<Guid, int?> { [chlorine.Id] = 0, [spray.Id] = 1 }, ignoreOrder: true);
+            // Without the pool section its rule has no place among the families.
+            Category[] alone = [people];
+            var (fewer, count) = SeasonalPurpose.Query(db, await SeasonalPurpose.LoadAsync(db, cache, alone, Ct), alone, july);
+            count.ShouldBe(1);
+            (await fewer.SingleAsync(Ct)).ShouldBe(new SeasonalPurpose.Match(spray.Id, 0, 0b0001_1111_0000));
+            // The monthly leader reads the months of every rule, whatever the day: May to August, May to September.
+            (await SeasonalPurpose.Calendar(db, matches).ToDictionaryAsync(row => row.ProductId, row => row.MonthMask, Ct))
+                .ShouldBe(new Dictionary<Guid, int> { [chlorine.Id] = 0b0000_1111_0000, [spray.Id] = 0b0001_1111_0000 }, ignoreOrder: true);
+            // In January neither rule is in force.
+            (await SeasonalPurpose.Query(db, matches, both, January).Rows.CountAsync(Ct)).ShouldBe(0);
+            return true;
+        });
+    }
+
     private Task<(object Matches, Guid[] InSeason)> LookAsync(Category[] sections) => api.WithScopeAsync(async services =>
     {
         var db = services.GetRequiredService<PoliValkoDbContext>();
