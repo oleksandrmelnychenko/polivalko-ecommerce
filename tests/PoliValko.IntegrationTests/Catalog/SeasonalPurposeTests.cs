@@ -72,6 +72,30 @@ public sealed class SeasonalPurposeTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Snow_tools_under_any_wording_and_rodent_control_have_their_seasons()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var cases = new (string Section, string Title, string? Attribute, int[] Months)[]
+        {
+            // The catalog words snow tools and de-icing in several ways; all of them are for winter.
+            ("Ручний інструмент", "Лопата снігова автомобільна", null, [1, 2, 11, 12]),
+            ("Ручний інструмент", "Скрепер для прибирання снігу", null, [1, 2, 11, 12]),
+            ("Ручний інструмент", "Лопата штикова", null, []),
+            ("Все для прибирання", "Сіль кам’яна фасована, для доріг", null, [1, 2, 11, 12]),
+            ("Все для прибирання", "Протилід 1 кг", null, [1, 2, 11, 12]),
+            // Mice come indoors from August to November: over three years traps and poison sold
+            // 1.7 to 2.2 times their monthly average then.
+            ("Шкідники", "Гранули від мишей і пацюків", null, [8, 9, 10, 11]),
+            ("Шкідники", "Клеєва пастка", "Від гризунів", [8, 9, 10, 11]),
+            ("Шкідники", "Щелкунчик брикет", null, [8, 9, 10, 11]),
+            // The same brand makes mole repellent, which belongs to the garden season.
+            ("Шкідники", "Щелкунчик гранула від кротів", null, []),
+            ("Шкідники", "Інсектицид від попелиці", null, []),
+        };
+        await CheckMonthsAsync(cases, Enumerable.Range(1, 12).ToArray(), ct);
+    }
+
+    [Fact]
     public async Task A_rule_for_other_months_is_known_while_it_is_not_in_force()
     {
         var ct = TestContext.Current.CancellationToken;
