@@ -29,6 +29,7 @@ import {
   type Projection,
   type Run,
 } from '../api/businessAnalytics'
+import { nextReportParams } from '../lib/reportParams'
 import './product-analytics.css'
 import './business-analytics.css'
 
@@ -158,18 +159,7 @@ export function BusinessAnalyticsPage() {
   }, [reloadStatus, status.data?.state])
 
   function update(changes: Record<string, string>) {
-    const p = new URLSearchParams(params)
-    if (!('page' in changes)) p.delete('page')
-    if (changes.tab && changes.tab !== tab) for (const key of ['season', 'week', 'partner']) p.delete(key)
-    if (tab === 'markets' && changes.tab && changes.tab !== tab) {
-      for (const name of ['region', 'source', 'metric', 'carrier']) p.delete(name)
-      if (changes.tab !== 'invoices') p.delete('year')
-    }
-    for (const [key, value] of Object.entries(changes)) {
-      if (value) p.set(key, value)
-      else p.delete(key)
-    }
-    setParams(p)
+    setParams(nextReportParams(params, tab, changes))
     setDocPage(1)
   }
   const assortment = tab === 'assortment'
