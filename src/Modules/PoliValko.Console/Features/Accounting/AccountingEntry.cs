@@ -137,7 +137,7 @@ internal static class AccountingEntry
         if (partner == null || org == null || store == null) return Invalid("Контрагента, організацію або склад не знайдено.");
         var ids = lines.Select(l => l.ProductId).Distinct().ToArray();
         var products = await db.Database.SqlQuery<ProductReference>($"""
-            SELECT id,name,sku FROM catalog.products WHERE id=ANY({ids})
+            SELECT id,coalesce(nullif(display_name,''),name) AS name,sku FROM catalog.products WHERE id=ANY({ids})
             """).ToDictionaryAsync(p => p.Id, ct);
         if (products.Count != ids.Length) return Invalid("Один із товарів відсутній у каталозі.");
         var positions = lines.Select(l => new

@@ -213,7 +213,7 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
                 value={null}
                 searchValue={productTerm}
                 onSearchChange={setProductTerm}
-                data={products.data?.items.map((p) => ({ value: p.id, label: p.name + ' · ' + p.sku })) ?? []}
+                data={products.data?.items.map((p) => ({ value: p.id, label: (p.displayName || p.name) + ' · ' + p.sku })) ?? []}
                 onChange={(value, item) => {
                   if (value && item) {
                     setLines((l) => [...l, { productId: value, title: item.label, price: '', quantity: '1' }])

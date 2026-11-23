@@ -57,7 +57,8 @@ public sealed class InventoryReviewTests(ApiFactory api)
         using var admin=await Staff.AdminAsync(api);
         var source="review-"+Guid.NewGuid().ToString("N");
         var product=await api.AddProductAsync("ruchnyi-instrument","Перевірка залишків",12m);
-        await api.WithDbAsync(db=>db.Set<Product>().Where(p=>p.Id==product.Id).ExecuteUpdateAsync(s=>s.SetProperty(p=>p.NavkoloId,"dntrade-code:"+source),Ct));
+        await api.WithDbAsync(db=>db.Set<Product>().Where(p=>p.Id==product.Id).ExecuteUpdateAsync(s=>s.SetProperty(p=>p.NavkoloId,"dntrade-code:"+source)
+            .SetProperty(p=>p.DisplayName,"Секатор для перевірки залишків"),Ct));
         object Row(string section,params string[] values)=> new {section,cells=values.Select(value=>new {value})};
         var report=new {schemaVersion=1,source="dntrade",entityType="inventorySnapshot",sourceId=source,sourceDate="2026-11-20",raw=new{
             cutoff="2026-11-20T14:29:21+02:00",scope=new{warehouses=source,groupProductVariants=false},
@@ -76,12 +77,18 @@ public sealed class InventoryReviewTests(ApiFactory api)
         var url=Root+"/inventory-reports/"+snapshot.Id;
         var ready=(await admin.ReadAsync<InventoryPage>(url+"?org="+org+"&status=ready")).Items.Single();
         ready.Quantity.ShouldBe(3.250m);
+        ready.Title.ShouldBe("Товар");
+        ready.ProductName.ShouldBe("Секатор для перевірки залишків");
+        (await admin.ReadAsync<InventoryPage>(url+"?org="+org+"&q="+Uri.EscapeDataString("для перевірки"))).Items.Single().Position.ShouldBe(ready.Position);
         var request=new ConfirmInventory(org,store,[new(ready.Position,product.Id,3.25m)]);
         (await admin.PostAsJsonAsync(url+"/confirm",request with {Lines=[..request.Lines!,new(3,product.Id,2)]},Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
         (await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root+"/warehouse?store="+store)).Total.ShouldBe(0);
         var results=await Task.WhenAll(admin.PostAsJsonAsync(url+"/confirm",request,Ct),admin.PostAsJsonAsync(url+"/confirm",request,Ct));
         results.ShouldAllBe(r=>r.StatusCode==HttpStatusCode.OK);
-        (await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root+"/warehouse?store="+store)).Items.Single().Opening.ShouldBe(3.25m);
+        var balance=(await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root+"/warehouse?store="+store)).Items.Single();
+        balance.Opening.ShouldBe(3.25m);
+        balance.Product.ShouldBe("Секатор для перевірки залишків");
+        (await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root+"/warehouse?store="+store+"&q="+Uri.EscapeDataString("для перевірки"))).Total.ShouldBe(1);
         (await admin.ReadAsync<InventoryPage>(url+"?org="+org+"&status=confirmed")).Items.Single().OpeningOrgId.ShouldBe(org);
         using var clerk=await TestRoles.LoginWithPermissionsAsync(api,admin,PoliValko.Infrastructure.Security.Permissions.PermissionKeys.AccountingView);
         (await clerk.PostAsJsonAsync(url+"/confirm",request,Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);

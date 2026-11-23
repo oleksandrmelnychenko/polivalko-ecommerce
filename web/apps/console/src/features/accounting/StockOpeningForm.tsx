@@ -24,7 +24,7 @@ export function StockOpeningForm({ close, saved }: { close: () => void; saved: (
   const products = useApiQuery('opening-products:' + term, () => getProducts({ q: term, page: 1, pageSize: 25 }), {
     enabled: term.trim().length >= 2,
   })
-  const items = (products.data?.items ?? []).map((p) => ({ value: p.id, label: p.name + ' · ' + p.sku }))
+  const items = (products.data?.items ?? []).map((p) => ({ value: p.id, label: (p.displayName || p.name) + ' · ' + p.sku }))
   if (product && !items.some((i) => i.value === product.id)) items.unshift({ value: product.id, label: product.title })
   const options = (refs: Ref[]) => refs.map((r) => ({ value: r.id, label: r.title }))
   async function submit(e: FormEvent) {

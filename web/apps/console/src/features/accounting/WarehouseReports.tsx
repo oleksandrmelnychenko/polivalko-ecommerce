@@ -92,11 +92,13 @@ export function WarehouseReports() {
                 : rows.data.items.length === 0 ? <PageState kind="empty" title="За цими умовами товарів немає" /> : (
                   <Grid columns={['Товар', 'Код товару', 'Одиниця', 'Залишок на дату звіту', 'Резерв у звіті']}>
                     {rows.data.items.map(r => {
-                      const name = r.title || r.productName || r.code || '—'
+                      // The catalog name once the line is linked to a product; the report's own DNTrade text stays as a tooltip.
+                      const name = r.productName || r.title || r.code || '—'
+                      const source = r.productName && r.title && r.title !== r.productName ? r.title : undefined
                       return (
                         <Table.Tr key={r.position}>
                           <Table.Td className="wh-name"><div className="wh-report-name"><IconPackage size={16} aria-hidden="true" />
-                            {r.productId ? <Link to={'/catalog/products/' + r.productId}>{name}</Link> : <span>{name}</span>}
+                            {r.productId ? <Link to={'/catalog/products/' + r.productId} title={source}>{name}</Link> : <span>{name}</span>}
                           </div></Table.Td>
                           <Table.Td className="ledger-number" data-label="Код товару">{r.code || '—'}</Table.Td>
                           <Table.Td data-label="Одиниця">{r.unit || '—'}</Table.Td>
