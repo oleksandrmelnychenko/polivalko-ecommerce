@@ -111,6 +111,37 @@ public sealed class RecommendationOfferTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Accepting_an_offer_says_whether_the_product_was_archived_or_stock_ran_short()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var staff = await Staff.AdminAsync(api);
+        var archived = await api.AddProductAsync("ruchnyi-instrument", "Товар, знятий з продажу", 50m, 5m);
+        var scarce = await api.AddProductAsync("ruchnyi-instrument", "Товар, якого бракує", 50m, 1m);
+        var partner = Guid.NewGuid();
+        var gone = Guid.NewGuid();
+        var shortOf = Guid.NewGuid();
+        var last = new DateOnly(2026, 10, 1);
+        await api.WithDbAsync(db => db.Database.ExecuteSqlAsync($"""
+            INSERT INTO accounting.partners(id,source_account,source_id,title,details)
+            VALUES ({partner},'archive-test',{partner.ToString()},'Клієнт',jsonb_build_object());
+            INSERT INTO accounting.recommendation_offers(id,partner_id,product_id,last_purchase,quantity,unit,price,status)
+            VALUES ({gone},{partner},{archived.Id},{last},2,'шт',50,'offered'),({shortOf},{partner},{scarce.Id},{last},2,'шт',50,'offered');
+            UPDATE catalog.products SET is_archived=true,is_visible=false WHERE id={archived.Id}
+            """, ct));
+        async Task<string?> Refusal(Guid id)
+        {
+            var response = await staff.PutAsJsonAsync(Route + id + "/accept", new { }, ct);
+            response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+            return (await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(ct)).GetProperty("title").GetString();
+        }
+
+        (await Refusal(gone)).ShouldBe("Товар перенесено в архів, тому резерв не створено. Поверніть товар з архіву або позначте, що клієнт відмовився.");
+        (await Refusal(shortOf)).ShouldBe("Для погодженої кількості бракує вільного залишку. Резерв не створено.");
+        (await api.WithDbAsync(db => db.Set<ProductStock>().Where(s => s.ProductId == archived.Id || s.ProductId == scarce.Id)
+            .SumAsync(s => s.ReservedQuantity, ct))).ShouldBe(0);
+    }
+
+    [Fact]
     public async Task Issuing_declining_and_reserving_are_shared_atomic_and_retryable()
     {
         var ct = TestContext.Current.CancellationToken;

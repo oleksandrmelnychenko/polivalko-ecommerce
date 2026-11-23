@@ -173,7 +173,17 @@ internal static class RecommendationOfferWorkflow
                    WHERE other.product_id=s.product_id AND other.status='offered'
                      AND (other.offered_at,other.id)<(current_offer.offered_at,current_offer.id))
                 """, ct);
-            if (updated != 1) return Conflict("Для погодженої кількості бракує вільного залишку. Резерв не створено.");
+            if (updated != 1)
+            {
+                // The update refuses an archived product as well as a shortage. Name the one that happened:
+                // waiting for stock does not help when the product has left the catalog.
+                var archived = await db.Database.SqlQuery<bool>($"""
+                    SELECT is_archived AS "Value" FROM catalog.products WHERE id={offer.ProductId}
+                    """).SingleOrDefaultAsync(ct);
+                return Conflict(archived
+                    ? "Товар перенесено в архів, тому резерв не створено. Поверніть товар з архіву або позначте, що клієнт відмовився."
+                    : "Для погодженої кількості бракує вільного залишку. Резерв не створено.");
+            }
         }
         if (target == "released" && await db.Database.ExecuteSqlAsync($"""
             UPDATE catalog.product_stock SET reserved_quantity=reserved_quantity-{offer.Quantity}, updated_at=now()
