@@ -9,7 +9,7 @@ export function ProductDescription({ product }: { product: ProductDetails }) {
   });
 
   return (
-    <div className="product-details" data-has-description={product.descriptionHtml ? "" : undefined}>
+    <div className="product-details">
       {product.descriptionHtml && (
         <section className="product-details__description" aria-labelledby="product-description">
           <h2 id="product-description">Опис товару</h2>
