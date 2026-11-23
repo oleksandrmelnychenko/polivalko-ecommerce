@@ -32,3 +32,28 @@
 .mantine-SegmentedControl-root .mantine-SegmentedControl-label[data-active] .mantine-SegmentedControl-innerLabel {
   color: var(--mantine-color-white) !important;
 }
+
+.page-mode-switch {
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 4px;
+  border: 1px solid var(--app-line);
+  border-radius: 999px;
+  background: white;
+  gap: 2px;
+}
+
+.page-mode-switch .mantine-Button-root,
+.page-mode-switch .mantine-SegmentedControl-label {
+  height: 34px;
+  padding: 0 clamp(8px, 2vw, 16px);
+  border: 0;
+}
+
+.page-mode-switch .mantine-SegmentedControl-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-mode-switch button[aria-pressed=false] { color: var(--mantine-color-gray-7); }

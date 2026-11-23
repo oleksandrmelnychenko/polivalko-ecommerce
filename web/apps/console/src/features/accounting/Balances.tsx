@@ -35,7 +35,7 @@ export function Balances() {
   return (
     <Stack gap="sm" className="ledger-workspace balance-workspace">
       <PageHeader title="Взаєморозрахунки" />
-      <Group wrap="nowrap" gap={2} role="group" aria-label="Режим взаєморозрахунків" className="balance-modes">
+      <Group wrap="nowrap" gap={2} role="group" aria-label="Режим взаєморозрахунків" className="page-mode-switch">
         <Button
           variant={history ? 'default' : 'filled'}
           aria-pressed={!history}

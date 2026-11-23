@@ -136,7 +136,7 @@ export function WarehousePage() {
   if (requested === 'inventory') return <InventoryReview />
   const view = requested ?? (current.data ? (current.data.total ? 'current' : 'reports') : null)
   return <Stack gap="sm">
-    <Group><SegmentedControl aria-label="Джерело складських залишків" value={view ?? ''}
+    <Group><SegmentedControl className="page-mode-switch" aria-label="Джерело складських залишків" value={view ?? ''}
       data={[{ value: 'reports', label: 'Звіти DNTrade' }, { value: 'current', label: 'Проведені залишки' }]}
       onChange={value => setParams({ view: value })} /></Group>
     {view === 'reports' ? <WarehouseReports /> : view ? <WarehouseBalances /> :

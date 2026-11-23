@@ -13,7 +13,7 @@ export default function SalesReturnsPage() {
   if (!can(PermissionKeys.Accounting.View)) return <ShopReturns />
   const legacyShopLink = ['id', 'q', 'from', 'to', 'page', 'pageSize', 'status'].some(key => params.has(key))
   const source = params.get('source') ?? (legacyShopLink ? 'web' : 'accounting')
-  const sourceSwitch = <SegmentedControl aria-label="Джерело повернень" value={source}
+  const sourceSwitch = <SegmentedControl className="page-mode-switch" aria-label="Джерело повернень" value={source}
     data={[{ value: 'accounting', label: 'Документи обліку' }, { value: 'web', label: 'Інтернет-магазин' }]}
     onChange={value => setParams({ source: value })} />
   return source === 'web' ? <ShopReturns sourceSwitch={sourceSwitch} /> : <AccountingReturns sourceSwitch={sourceSwitch} />
