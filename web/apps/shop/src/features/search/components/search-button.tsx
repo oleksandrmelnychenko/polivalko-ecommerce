@@ -65,7 +65,9 @@ function SearchField({ initialQuery }: { initialQuery: string }) {
     <button type="button" className="icon-btn header-search__toggle" aria-label={mobileOpen ? "Закрити пошук" : "Пошук"} aria-expanded={mobileOpen} aria-controls="header-search-form" onClick={() => { setMobileOpen(!mobileOpen); setOpen(!mobileOpen); if (!mobileOpen) requestAnimationFrame(() => input.current?.focus()); }}>{mobileOpen ? <CloseIcon /> : <SearchIcon />}</button>
     <Form id="header-search-form" action="/search" role="search" className="header-search__form" onSubmit={close}>
       <SearchIcon />
-      <input ref={input} name="q" type="search" value={query} onChange={(e) => { setQuery(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)} placeholder="Пошук товарів…" aria-label="Пошук у каталозі" aria-controls={open ? "search-suggestions" : undefined} autoComplete="off" spellCheck={false} enterKeyHint="search" />
+      <input ref={input} name="q" type="search" value={query} onChange={(e) => { setQuery(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)}
+        onKeyDown={(event) => { if (event.key === "Escape" && open) event.preventDefault(); }}
+        placeholder="Пошук товарів…" aria-label="Пошук у каталозі" aria-controls={open ? "search-suggestions" : undefined} autoComplete="off" spellCheck={false} enterKeyHint="search" />
       {query && <button type="button" className="header-search__clear" aria-label="Очистити пошук" onClick={() => { setQuery(""); input.current?.focus(); }}><CloseIcon /></button>}
     </Form>
     {open && <div id="search-suggestions" className="search-suggestions">
