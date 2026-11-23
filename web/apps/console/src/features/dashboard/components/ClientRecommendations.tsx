@@ -31,6 +31,22 @@ const statusLabels = { offered: 'Вже запропоновано', reserved: '
 const waitingReason = (item: ClientSuggestion) => item.held
   ? 'Утримано до відповіді на пропозицію · ' + quantityLabel(item.held, item.unit) : 'Очікує поповнення'
 
+// The quantity of an offer can be changed until the customer answers, and a closed offer can be made again with one.
+function QuantityAction({ offer, label, changeOnly, disabled, submit }: {
+  offer: RecommendationOffer; label: string; changeOnly?: boolean; disabled: boolean; submit: (quantity: number) => void
+}) {
+  const [value, setValue] = useState(String(offer.quantity))
+  const step = offer.unit === 'шт' ? 1 : 0.001
+  const quantity = Number(value)
+  const valid = value !== '' && Number.isFinite(quantity) && quantity > 0 && Math.abs(quantity / step - Math.round(quantity / step)) < 1e-6
+  return <span className="client-rec-change">
+    <input type="number" aria-label={`Кількість, ${offer.unit} · ${offer.name}`} min={step} step={step} max={999999999} value={value}
+      disabled={disabled} onChange={event => setValue(event.currentTarget.value)} />
+    <Button size="xs" variant="default" disabled={disabled || !valid || (changeOnly && quantity === offer.quantity)}
+      onClick={() => submit(quantity)}>{label}</Button>
+  </span>
+}
+
 type Buyer = { client: SuggestedClient; item: ClientSuggestion }
 type ActionProps = { actions: (client: SuggestedClient, item: ClientSuggestion) => ReactNode }
 
@@ -224,7 +240,12 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
       {offer.status === 'offered' && <>
         {canReserve && <Button size="xs" disabled={disabled} onClick={() => record(offer.id + '/accept', {}, 'Погоджену кількість зарезервовано.')}>Погодився · резервувати</Button>}
         {canEdit && <Button size="xs" variant="default" disabled={disabled} onClick={() => record(offer.id + '/decline', {}, 'Відмову записано. Чергу перераховано.')}>Відмовився</Button>}
+        {canEdit && <QuantityAction key={offer.id + ':' + offer.quantity} offer={offer} label="Змінити кількість" changeOnly disabled={disabled}
+          submit={quantity => record(offer.id + '/quantity', { quantity }, 'Кількість у пропозиції змінено.')} />}
       </>}
+      {canEdit && (offer.status === 'declined' || offer.status === 'released') && <QuantityAction key={offer.id + ':' + offer.status + offer.quantity}
+        offer={offer} label="Запропонувати знову" disabled={disabled}
+        submit={quantity => record(offer.id + '/reopen', { quantity }, 'Пропозицію повернуто за поточною ціною. Очікуємо відповідь клієнта.')} />}
       {canReserve && offer.status === 'reserved' && <Button size="xs" variant="default" disabled={disabled}
         onClick={() => record(offer.id + '/release', {}, 'Резерв знято. Кількість повернуто в розподіл.')}>
         {offer.invoiceId ? 'Скасувати чернетку і зняти резерв' : 'Зняти резерв'}</Button>}
@@ -238,9 +259,8 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
     if (item.offerId) {
       const offer = byId.get(item.offerId)
       if (!offer) return null
-      // One offer is kept per purchase, so a closed one cannot be repeated until the customer buys the product again.
-      return offer.status === 'declined' || offer.status === 'released'
-        ? <>{decisions(offer)}<small>Нова пропозиція буде можлива після наступної покупки цього товару.</small></> : decisions(offer)
+      // One offer is kept per purchase. A closed one is made again in place instead of adding a second.
+      return decisions(offer)
     }
     return canEdit && item.quantity > 0 && <div className="client-rec-actions"><Button size="xs" disabled={disabled}
       onClick={() => issue(client, item)}>Запропонувати</Button></div>
@@ -250,7 +270,7 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
       <p>Для кожного клієнта показуємо до трьох товарів з його покупок за два роки. Вище стоять товари, для яких наближається звичний строк повторної покупки, далі — покупки у відповідні тижні попередніх років. Якщо покупка була одна, варто уточнити потребу.</p>
       <p>Потреба — середня кількість на документ з урахуванням повернень. Вільний залишок ділимо в порядку черги між активними клієнтами вибраного періоду. За однакової підстави раніше пропонуємо тому, в кого раніше очікується повторна покупка, більше сезонів або документів із товаром, далі — за свіжістю покупки.</p>
     </>}
-    {offers && <p>{canEdit && !journal ? 'Після розмови натисніть «Запропонувати», щоб записати клієнта й кількість.' : '«Запропонувати» фіксує розмову з покупцем.'} До відповіді ця кількість закріплена в черзі в усіх періодах. Після згоди створюється складський резерв, після відмови кількість переходить далі. Журнал показує всі відкриті пропозиції й резерви та рішення за вибраний період.</p>}
+    {offers && <p>{canEdit && !journal ? 'Після розмови натисніть «Запропонувати», щоб записати клієнта й кількість.' : '«Запропонувати» фіксує розмову з покупцем.'} До відповіді ця кількість закріплена в черзі в усіх періодах. Після згоди створюється складський резерв, після відмови кількість переходить далі. До відповіді кількість можна змінити, а пропозицію після відмови чи знятого резерву — зробити знову: вона повертається за поточною ціною, якщо для неї є вільний залишок. Журнал показує всі відкриті пропозиції й резерви та рішення за вибраний період.</p>}
   </CalculationInfo>
   return <AppEditorModal opened={opened} onClose={onClose} size="standard" className="client-rec-modal"
     title={<MetricLabel icon={IconUsers}>Рекомендації клієнтам</MetricLabel>}>

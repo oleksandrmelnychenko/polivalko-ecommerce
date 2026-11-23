@@ -141,6 +141,98 @@ public sealed class RecommendationOfferTests(ApiFactory api)
             .SumAsync(s => s.ReservedQuantity, ct))).ShouldBe(0);
     }
 
+    private sealed record OfferState(string Status, decimal Quantity, decimal Price, Guid? InvoiceId);
+
+    [Fact]
+    public async Task A_pending_offer_can_be_changed_and_a_closed_one_brought_back_without_touching_reservations()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var staff = await Staff.AdminAsync(api);
+        var product = await api.AddProductAsync("ruchnyi-instrument", "Товар із поверненою пропозицією", 40m, 3m);
+        var a = Guid.NewGuid();
+        var b = Guid.NewGuid();
+        var first = Guid.NewGuid();
+        var other = Guid.NewGuid();
+        var later = Guid.NewGuid();
+        var draft = Guid.NewGuid();
+        var last = new DateOnly(2026, 9, 1);
+        await api.WithDbAsync(db => db.Database.ExecuteSqlAsync($"""
+            INSERT INTO accounting.partners(id,source_account,source_id,title,details) VALUES
+              ({a},'reopen-test',{a.ToString()},'Клієнт А',jsonb_build_object()),({b},'reopen-test',{b.ToString()},'Клієнт Б',jsonb_build_object());
+            INSERT INTO accounting.recommendation_offers(id,partner_id,product_id,last_purchase,quantity,unit,price,status)
+            VALUES ({first},{a},{product.Id},{last},3,'шт',35,'offered')
+            """, ct));
+        Task<HttpResponseMessage> Act(Guid id, string action, object body) => staff.PutAsJsonAsync(Route + id + "/" + action, body, ct);
+        Task<decimal> Reserved() => api.WithDbAsync(db => db.Set<ProductStock>().Where(s => s.ProductId == product.Id)
+            .Select(s => s.ReservedQuantity).SingleAsync(ct));
+        Task<OfferState> State(Guid id) => api.WithDbAsync(db => db.Database.SqlQuery<OfferState>(
+            $"SELECT status,quantity,price,invoice_id FROM accounting.recommendation_offers WHERE id={id}").SingleAsync(ct));
+        Task OnHand(decimal quantity) => api.WithDbAsync(db => db.Set<ProductStock>().Where(s => s.ProductId == product.Id)
+            .ExecuteUpdateAsync(v => v.SetProperty(s => s.Quantity, quantity), ct));
+
+        // Someone else bought one unit: the three offered units can no longer be reserved, two can.
+        await OnHand(2m);
+        (await Act(first, "accept", new { })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await Act(first, "quantity", new { quantity = 0 })).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await Act(first, "quantity", new { quantity = 2.5m })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Act(first, "quantity", new { quantity = 2.5m })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Act(first, "quantity", new { quantity = 2.75m })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await Act(first, "quantity", new { quantity = 2 })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await State(first)).ShouldBe(new OfferState("offered", 2m, 35m, null));
+        (await Reserved()).ShouldBe(0);
+        (await Act(first, "accept", new { })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Reserved()).ShouldBe(2m);
+        (await Act(first, "quantity", new { quantity = 1 })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await Act(first, "reopen", new { quantity = 1 })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // The reservation was released by mistake. The offer comes back at today's price and holds no reservation.
+        await api.WithDbAsync(db => db.Database.ExecuteSqlAsync($"""
+            INSERT INTO accounting.documents(id,source_account,source_id,entity_type,kind,status,store_ids,details)
+            VALUES ({draft},'polivalko-native',{draft.ToString()},'invoice','out','cancelled',ARRAY[]::text[],jsonb_build_object());
+            UPDATE accounting.recommendation_offers SET invoice_id={draft} WHERE id={first}
+            """, ct));
+        (await Act(first, "release", new { })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        await api.WithDbAsync(db => db.Database.ExecuteSqlAsync($"""
+            UPDATE accounting.recommendation_offers SET status='released' WHERE id={first};
+            UPDATE catalog.product_stock SET reserved_quantity=0 WHERE product_id={product.Id}
+            """, ct));
+        (await Act(first, "reopen", new { quantity = 2.5m })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await Act(first, "reopen", new { quantity = 2 })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Act(first, "reopen", new { quantity = 2 })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await State(first)).ShouldBe(new OfferState("offered", 2m, 40m, null));
+        (await Reserved()).ShouldBe(0);
+        (await api.WithDbAsync(db => db.Database.SqlQuery<string>($"SELECT status AS \"Value\" FROM accounting.documents WHERE id={draft}").SingleAsync(ct))).ShouldBe("cancelled");
+
+        // Stock promised to another customer's unanswered offer is not free for an offer that comes back.
+        (await Act(first, "decline", new { })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        await api.WithDbAsync(db => db.Database.ExecuteSqlAsync($"""
+            INSERT INTO accounting.recommendation_offers(id,partner_id,product_id,last_purchase,quantity,unit,price,status)
+            VALUES ({other},{b},{product.Id},{last},1.5,'шт',40,'offered')
+            """, ct));
+        (await Act(first, "reopen", new { quantity = 1 })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await Act(first, "reopen", new { quantity = 0.5m })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Act(other, "quantity", new { quantity = 1.75m })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await Act(other, "quantity", new { quantity = 1 })).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // One customer has one open offer for a product: an older closed one cannot come back beside it.
+        (await Act(first, "decline", new { })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        await api.WithDbAsync(db => db.Database.ExecuteSqlAsync($"""
+            INSERT INTO accounting.recommendation_offers(id,partner_id,product_id,last_purchase,quantity,unit,price,status)
+            VALUES ({later},{a},{product.Id},{last.AddDays(30)},0.5,'шт',40,'offered')
+            """, ct));
+        (await Act(first, "reopen", new { quantity = 0.5m })).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await State(first)).Status.ShouldBe("declined");
+        (await Act(Guid.NewGuid(), "reopen", new { quantity = 1 })).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        using var admin = await Staff.AdminAsync(api);
+        using var editor = await TestRoles.LoginWithPermissionsAsync(api, admin, PermissionKeys.AccountingView,
+            PermissionKeys.ProductsView, PermissionKeys.ProductAnalyticsView, PermissionKeys.AccountingEdit);
+        (await editor.PutAsJsonAsync(Route + later + "/quantity", new { quantity = 0.25m }, ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        using var viewer = await TestRoles.LoginWithPermissionsAsync(api, admin, PermissionKeys.AccountingView,
+            PermissionKeys.ProductsView, PermissionKeys.ProductAnalyticsView);
+        (await viewer.PutAsJsonAsync(Route + later + "/quantity", new { quantity = 0.5m }, ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
     [Fact]
     public async Task Issuing_declining_and_reserving_are_shared_atomic_and_retryable()
     {

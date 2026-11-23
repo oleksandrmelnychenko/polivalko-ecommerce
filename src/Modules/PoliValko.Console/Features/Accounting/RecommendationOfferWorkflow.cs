@@ -15,6 +15,7 @@ namespace PoliValko.Console.Features.Accounting;
 public sealed record RecommendationOfferRequest(Guid PartnerId, Guid ProductId, DateOnly LastPurchase, int Days,
     decimal Quantity, string Unit, decimal Price);
 public sealed record OfferInvoiceSource(Guid? OrganizationId, Guid? StoreId);
+public sealed record OfferQuantityRequest(decimal Quantity);
 
 internal static class RecommendationOfferWorkflow
 {
@@ -30,6 +31,8 @@ internal static class RecommendationOfferWorkflow
             PermissionRequirement.PolicyName([PermissionKeys.AccountingEdit]));
         offers.MapPut("/{id:guid}", Issue).WithName("ConsoleIssueRecommendationOffer");
         offers.MapPut("/{id:guid}/invoice", CreateInvoice).WithName("ConsoleCreateRecommendationInvoice").Produces<Guid>();
+        offers.MapPut("/{id:guid}/quantity", Amend).WithName("ConsoleAmendRecommendationOffer");
+        offers.MapPut("/{id:guid}/reopen", Reopen).WithName("ConsoleReopenRecommendationOffer");
         offers.MapPut("/{id:guid}/decline", (Guid id, PoliValkoDbContext db, IAuditLog audit, IOutbox outbox, CancellationToken ct) =>
             Decide(id, "declined", db, audit, outbox, ct)).WithName("ConsoleDeclineRecommendationOffer");
         offers.MapPut("/{id:guid}/accept", (Guid id, PoliValkoDbContext db, IAuditLog audit, IOutbox outbox, CancellationToken ct) =>
@@ -137,6 +140,86 @@ internal static class RecommendationOfferWorkflow
 
     private static Task LockStock(PoliValkoDbContext db, Guid productId, CancellationToken ct) =>
         db.Database.ExecuteSqlAsync($"SELECT 1 FROM catalog.product_stock WHERE product_id={productId} FOR UPDATE", ct);
+
+    private static bool Usable(decimal quantity) =>
+        quantity > 0 && quantity <= 999_999_999.999m && decimal.Round(quantity, 3) == quantity;
+
+    // An unanswered offer holds no reservation: its quantity is only promised in the queue. Changing it
+    // therefore moves no stock. A smaller quantity is always possible; a larger one must still fit
+    // beside the other unanswered offers, as a new offer must.
+    private static async Task<IResult> Amend(Guid id, OfferQuantityRequest input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
+    {
+        if (!Usable(input.Quantity)) return Results.BadRequest();
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var offer = await Find(id, db, ct);
+        if (offer is null) return Results.NotFound();
+        await LockStock(db, offer.ProductId, ct);
+        await db.Database.ExecuteSqlAsync($"SELECT 1 FROM accounting.recommendation_offers WHERE id={id} FOR UPDATE", ct);
+        offer = (await Find(id, db, ct))!;
+        if (offer.Status != "offered") return Conflict("Кількість можна змінити лише до відповіді клієнта.");
+        if (offer.Quantity == input.Quantity) return Results.Ok(id);
+        var changed = await db.Database.ExecuteSqlAsync($"""
+            UPDATE accounting.recommendation_offers o SET quantity={input.Quantity},changed_at=now()
+            FROM catalog.product_stock s
+            WHERE o.id={id} AND o.status='offered' AND s.product_id=o.product_id
+              AND ({input.Quantity} < o.quantity OR s.quantity-s.reserved_quantity >= {input.Quantity} +
+                (SELECT coalesce(sum(pending.quantity),0) FROM accounting.recommendation_offers pending
+                 WHERE pending.product_id=o.product_id AND pending.status='offered' AND pending.id<>o.id))
+            """, ct);
+        if (changed != 1) return Conflict("Для такої кількості бракує вільного залишку.");
+        audit.Record("recommendation.amended", "RecommendationOffer", id.ToString(), new { offer.PartnerId, offer.ProductId, From = offer.Quantity, To = input.Quantity });
+        await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+        return Results.Ok(id);
+    }
+
+    // A declined offer never held stock and a released one has given it back, so bringing either
+    // back to "offered" moves no stock. It is offered again as a new offer would be: at today's price,
+    // for a product that is still on sale, within the stock that other unanswered offers leave free.
+    // The link to a cancelled draft is dropped; a new draft is created after the customer agrees.
+    private static async Task<IResult> Reopen(Guid id, OfferQuantityRequest input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
+    {
+        if (!Usable(input.Quantity)) return Results.BadRequest();
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var offer = await Find(id, db, ct);
+        if (offer is null) return Results.NotFound();
+        await LockStock(db, offer.ProductId, ct);
+        await db.Database.ExecuteSqlAsync($"SELECT 1 FROM accounting.recommendation_offers WHERE id={id} FOR UPDATE", ct);
+        offer = (await Find(id, db, ct))!;
+        if (offer.Status == "offered" && offer.Quantity == input.Quantity) return Results.Ok(id);
+        if (offer.Status is not ("declined" or "released"))
+            return Conflict("Повернути можна лише пропозицію, від якої відмовилися або з якої знято резерв.");
+        var open = await db.Database.SqlQuery<int>($"""
+            SELECT count(*)::int AS "Value" FROM accounting.recommendation_offers
+            WHERE product_id={offer.ProductId} AND partner_id={offer.PartnerId} AND id<>{id} AND status IN ('offered','reserved')
+            """).SingleAsync(ct);
+        if (open > 0) return Conflict("Цьому клієнтові вже зроблено новішу пропозицію цього товару.");
+        var reopened = await db.Database.ExecuteSqlAsync($"""
+            UPDATE accounting.recommendation_offers o
+            SET status='offered',invoice_id=NULL,quantity={input.Quantity},price=pr.amount,changed_at=now()
+            FROM catalog.product_stock s
+            JOIN catalog.products p ON p.id=s.product_id AND NOT p.is_archived
+            JOIN catalog.product_prices pr ON pr.product_id=s.product_id AND pr.amount>0
+            WHERE o.id={id} AND o.status IN ('declined','released') AND s.product_id=o.product_id
+              AND s.quantity-s.reserved_quantity >= {input.Quantity} +
+                (SELECT coalesce(sum(pending.quantity),0) FROM accounting.recommendation_offers pending
+                 WHERE pending.product_id=o.product_id AND pending.status='offered')
+            """, ct);
+        if (reopened != 1)
+        {
+            var archived = await db.Database.SqlQuery<bool>($"""
+                SELECT is_archived AS "Value" FROM catalog.products WHERE id={offer.ProductId}
+                """).SingleOrDefaultAsync(ct);
+            return Conflict(archived
+                ? "Товар перенесено в архів, тому пропозицію не повернуто."
+                : "Для такої кількості бракує вільного залишку або товар не має ціни.");
+        }
+        audit.Record("recommendation.reopened", "RecommendationOffer", id.ToString(),
+            new { offer.PartnerId, offer.ProductId, From = offer.Status, input.Quantity });
+        await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+        return Results.Ok(id);
+    }
 
     private static async Task<IResult> Decide(Guid id, string target, PoliValkoDbContext db, IAuditLog audit,
         IOutbox outbox, CancellationToken ct)

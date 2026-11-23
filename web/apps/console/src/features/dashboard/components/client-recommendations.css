@@ -69,6 +69,8 @@
   .client-rec-total { font-size: .875rem; }
 }
 .client-rec-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-block: 6px; }
+.client-rec-change { display: inline-flex; align-items: center; gap: 6px; }
+.client-rec-change input { width: 6em; padding: 5px 9px; color: var(--brand-ink); font: 500 13px/1.4 var(--font-money); background: white; border: 1px solid var(--mantine-color-default-border); border-radius: 999px; }
 .client-rec-journal { display: grid; gap: 5px; padding: 12px 14px; }
 .client-rec-journal + .client-rec-journal { margin-top: 8px; }
 .client-rec-journal small { color: var(--mantine-color-dimmed); }
