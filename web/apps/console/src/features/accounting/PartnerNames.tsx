@@ -175,9 +175,6 @@ export function PartnerNameEditor({ partner, close, saved }: { partner: Partner;
             Охайно: {suggestion.title}{suggestion.note ? ' · ' + suggestion.note : ''}
           </Button>
         )}
-        {partner.sourceTitle && partner.sourceTitle !== partner.title && (
-          <Text size="xs" c="dimmed">Назва з DNTrade (для звірки звітів): {partner.sourceTitle}</Text>
-        )}
         {error && <Alert color="red" role="alert">{error}</Alert>}
       </section>
     </AppEditorModal>

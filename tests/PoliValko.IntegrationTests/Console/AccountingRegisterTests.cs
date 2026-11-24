@@ -118,7 +118,9 @@ public sealed class AccountingRegisterTests(ApiFactory api)
                 Row("TFOOT",null,"Разом","0,00 грн.","15,00 грн.","0,00 грн.","-15,00 грн.")
             } } } };
         object Partner(string id,string title) => new { schemaVersion=1,source="dntrade",entityType="partner",sourceId=id,raw=new { title } };
-        var body = string.Join("\n",new[]{report,Partner("p1"," Іван (Шашлики)"),Partner("p2","Петро"),Partner("p3","Петро")}
+        var invoice = new { schemaVersion=1,source="dntrade",entityType="invoice",sourceId="names-invoice",documentType="in",sourceDate="2026-11-20",
+            raw=new { number="names-1",partner=new { external_id="p1",title=" Іван (Шашлики)" } } };
+        var body = string.Join("\n",new[]{report,Partner("p1"," Іван (Шашлики)"),Partner("p2","Петро"),Partner("p3","Петро"),invoice}
             .Select(x=>System.Text.Json.JsonSerializer.Serialize(x)));
         (await admin.PostAsync("/api/v1/console/dntrade-archive/import?sourceAccount="+account,
             new StringContent(body,Encoding.UTF8,"application/x-ndjson"),Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -136,6 +138,7 @@ public sealed class AccountingRegisterTests(ApiFactory api)
         renamed.Title.ShouldBe("Іван");
         renamed.Note.ShouldBe("Шашлики");
         renamed.SourceTitle.ShouldBe(" Іван (Шашлики)");
+        (await admin.ReadAsync<RegisterPage<DocumentRow>>(Root+"/documents?partnerId="+partner.Id)).Items.Single().PartnerTitle.ShouldBe("Іван");
 
         var reportId = (await admin.ReadAsync<List<BalanceReport>>(Root+"/balance-reports")).Single(r=>r.SourceAccount==account).Id;
         var url = Root+"/balance-reports/"+reportId;

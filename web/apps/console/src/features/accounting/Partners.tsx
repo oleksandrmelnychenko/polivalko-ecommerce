@@ -37,9 +37,9 @@ import { currencyLabel, money, read, useRegister, type Page, type Partner, type 
 import './partners.css'
 
 const directory = '/accounting/partners'
-// Balance reports name partners as the old system did, so search them by the imported name.
+// The balance report matches rows by the card's current name as well, so search by it.
 const balancesLink = (partner: Partner) =>
-  '/accounting/balances?' + new URLSearchParams({ q: (partner.sourceTitle ?? partner.title).trim() })
+  '/accounting/balances?' + new URLSearchParams({ q: partner.title.trim() })
 const checks = [
   { value: 'cleanup', label: 'Назва потребує чистки' },
   { value: 'duplicates', label: 'Можливі дублікати' },

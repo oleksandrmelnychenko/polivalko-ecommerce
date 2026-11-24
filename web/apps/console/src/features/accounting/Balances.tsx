@@ -335,15 +335,12 @@ function BalanceReports() {
                       {r.linkedPartner ? (
                         <PartnerDetailLink id={r.linkedPartner}>{r.partnerName || r.partnerTitle}</PartnerDetailLink>
                       ) : (
-                        r.partnerTitle || 'Без назви'
-                      )}
-                      {r.linkedPartner && r.partnerName && r.partnerName !== r.partnerTitle?.trim() && (
-                        <small className="balance-source-name">у звіті: {r.partnerTitle}</small>
+                        r.partnerName || r.partnerTitle || 'Без назви'
                       )}
                       <div className="balance-row-actions">
                         {!r.linkedPartner && (
                           <TableChip tone={r.candidateCount === 1 ? 'neutral' : 'warning'} value={r.candidateCount === 1
-                              ? 'Збіг: ' + (r.partnerName ?? '')
+                              ? 'Один збіг у довіднику'
                               : r.candidateCount > 1
                                 ? `Збігів за назвою: ${r.candidateCount}`
                                 : 'Без зв’язку з довідником'} />
