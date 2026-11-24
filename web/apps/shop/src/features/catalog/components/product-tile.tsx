@@ -8,7 +8,8 @@ import { sized } from "@polivalko/shared/lib/images";
 import { toCartProduct } from "../lib/cart-product";
 import { discountPercent } from "../lib/discount";
 import { canBuy, hasPrice, PRICE_ON_REQUEST } from "@/shared/lib/price";
-import { TileFlashes } from "./tile-flashes";
+import { withoutSaleLabel } from "../lib/labels";
+import { ProductLabels } from "./product-labels";
 
 export function ProductTile({ product, priority }: { product: ProductListItem; priority?: boolean }) {
   const discount = discountPercent(product.price, product.oldPrice);
@@ -26,6 +27,7 @@ export function ProductTile({ product, priority }: { product: ProductListItem; p
         ) : (
           <span className="tile__photo-empty">Фото відсутнє</span>
         )}
+        <ProductLabels labels={withoutSaleLabel(product.labels, showDiscount)} className="tile__flashes" />
         <div className="tile__bar">
           <FavoriteButton productId={product.id} name={product.name} />
           <CompareButton product={product} />
@@ -41,7 +43,6 @@ export function ProductTile({ product, priority }: { product: ProductListItem; p
         <p className="tile__name">
           <Link href={href}>{product.name}</Link>
         </p>
-        <TileFlashes product={product} discountShown={showDiscount} />
         {hasPrice(product.price) ? (
           <p className="tile__price">
             <strong className={discount ? "price-sale" : undefined}>
