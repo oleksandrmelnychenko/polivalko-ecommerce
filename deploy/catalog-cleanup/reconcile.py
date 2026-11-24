@@ -458,14 +458,45 @@ def adopt(console, keep_slug, replace_slug, apply):
     print("done")
 
 
+def merge_stock(console, source_sku, target_sku, apply):
+    """Fold a duplicate card into its twin: the twin gets both stocks, the duplicate goes to 0 and is hidden.
+
+    Uses the console's stock adjustment, which checks the stock has not moved since it was read, keeps reservations
+    and writes the change log; it refuses products whose stock the warehouse ledger manages.
+    """
+    say = lambda line: print(("APPLY " if apply else "PLAN  ") + line)
+
+    def find(sku):
+        hits = [i for i in console.call("GET", f"/catalog/products?q={sku}&page=1&pageSize=100")["items"] if i["sku"] == sku]
+        if len(hits) != 1:
+            sys.exit(f"product {sku}: {len(hits)} matches")
+        return console.call("GET", f"/catalog/products/{hits[0]['id']}")
+
+    source, target = find(source_sku), find(target_sku)
+    s_stock, t_stock = source["navkolo"]["stock"], target["navkolo"]["stock"]
+    name = lambda p: p.get("displayName") or p["navkolo"]["name"]
+    say(f"{target_sku} «{name(target)}»: stock {t_stock:g} -> {s_stock + t_stock:g}, visible")
+    say(f"{source_sku} «{name(source)}»: stock {s_stock:g} -> 0, hidden")
+    if not apply:
+        return
+    change = lambda p, quantity: {"productId": p["id"], "expectedNavkoloId": p["navkolo"]["navkoloId"],
+                                  "expectedQuantity": p["navkolo"]["stock"], "expectedStockUpdatedAt": p["navkolo"]["stockUpdatedAt"],
+                                  "quantity": quantity}
+    print(console.call("POST", "/catalog/products/stock", {"changes": [change(target, s_stock + t_stock), change(source, 0)]}))
+    console.call("POST", "/catalog/products/bulk", {"productIds": [source["id"]], "isVisible": False})
+    console.call("POST", "/catalog/products/bulk", {"productIds": [target["id"]], "isVisible": True})
+    print("done")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("mode", choices=["export", "plan", "apply", "audit", "adopt-plan", "adopt-apply"])
+    parser.add_argument("mode", choices=["export", "plan", "apply", "audit", "adopt-plan", "adopt-apply", "merge-plan", "merge-apply"])
     parser.add_argument("--base", required=True, help="console origin, e.g. https://console.example.ua")
     parser.add_argument("--host", help="Host header when it differs from --base, e.g. console.localhost:8081")
     parser.add_argument("--target", default="target.json")
     parser.add_argument("--out", default="target.json")
     parser.add_argument("--report", help="plan/apply: write every product change (current and wanted value) to this TSV file")
+    parser.add_argument("--merge", help="merge: SOURCE_SKU:TARGET_SKU, the duplicate folded into its twin")
     parser.add_argument("--keep", help="adopt: slug of the category the DNTrade import feeds")
     parser.add_argument("--replace", help="adopt: slug of the hand-made duplicate whose place it takes")
     parser.add_argument("--previous-target", help="plan/apply: target file of an earlier run; values it wrote may be updated")
@@ -476,6 +507,9 @@ def main():
     console.login()
     if args.mode == "export":
         export(console, args.out)
+    elif args.mode.startswith("merge"):
+        source_sku, target_sku = args.merge.split(":")
+        merge_stock(console, source_sku, target_sku, args.mode == "merge-apply")
     elif args.mode.startswith("adopt"):
         adopt(console, args.keep, args.replace, args.mode == "adopt-apply")
     elif args.mode == "audit":
