@@ -328,6 +328,9 @@ function PartnerProfile({ id }: { id: string }) {
               <TableChip tone={partner.category === 'Постачальники' ? 'document' : 'neutral'} value={partner.category || 'Без категорії'} />
             </div>
             {partner.note && <Text size="sm" className="partner-note">{partner.note}</Text>}
+            {partner.sourceTitle && partner.sourceTitle.trim() !== partner.title && (
+              <Text size="xs" className="partner-note">Назва в DNTrade: {partner.sourceTitle.trim()}</Text>
+            )}
             <span className="partner-id">Код <code>{partner.sourceId}</code></span>
             {can(PermissionKeys.Accounting.Edit) && (
               <Button size="xs" variant="default" leftSection={<IconPencil size={14} />} onClick={() => setRenaming(true)}>
