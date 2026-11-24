@@ -25,8 +25,7 @@ export function PasswordForm({ owner, email }: { owner: string; email: string })
   }
 
   return (
-    <form ref={formRef} className="profile-card" onSubmit={onSubmit} noValidate aria-labelledby="password-title">
-      <h3 id="password-title">Пароль</h3>
+    <form ref={formRef} className="profile-card" onSubmit={onSubmit} noValidate aria-label="Зміна пароля">
       <input type="text" name="username" autoComplete="username" value={email} readOnly hidden />
       <TextField name="currentPassword" label="Поточний пароль" type="password" autoComplete="current-password" required errors={form.errors} />
       <TextField name="newPassword" label="Новий пароль" type="password" autoComplete="new-password" required errors={form.errors} help="Щонайменше 8 символів." />

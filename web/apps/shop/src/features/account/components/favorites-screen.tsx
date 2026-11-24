@@ -1,7 +1,7 @@
 "use client";
 
 import { ProductTiles, ProductTilesSkeleton } from "@/features/catalog";
-import { getFavoriteProducts, useFavorites } from "@/features/favorites";
+import { getFavoriteProducts, HeartIcon, useFavorites } from "@/features/favorites";
 import { countProducts } from "@polivalko/shared/lib/format";
 import { useAccountData } from "../hooks/use-account-data";
 import { CabinetHead } from "./cabinet-head";
@@ -32,6 +32,7 @@ export function FavoritesScreen() {
       ) : (
         <StateBox
           title="В обраному поки порожньо"
+          icon={<HeartIcon />}
           text="Натисніть на сердечко біля товару, і він збережеться тут."
           action={{ href: "/catalog", label: "Перейти до каталогу" }}
         />

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { getAddresses } from "@/features/customer";
-import { PlusIcon } from "@polivalko/shared/ui/icons";
+import { PinIcon, PlusIcon } from "@polivalko/shared/ui/icons";
 import { useAccountData } from "../hooks/use-account-data";
 import type { Status } from "../lib/form-status";
 import { AddressCard } from "./address-card";
@@ -63,6 +63,7 @@ export function AddressesScreen() {
         editing === null && (
           <StateBox
             title="Збережених адрес ще немає"
+            icon={<PinIcon />}
             text="Додайте відділення Нової пошти або адресу для кур'єра, і під час оформлення її можна буде обрати одним натиском."
             action={addButton}
           />

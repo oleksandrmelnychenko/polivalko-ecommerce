@@ -36,29 +36,38 @@ export function CabinetFrame({ mailDelivers, children }: { mailDelivers: boolean
   }
 
   return (
-    <div className="container">
-      <header className="page-head">
-        <nav className="crumbs" aria-label="Хлібні крихти">
-          <ol>
-            <li>
-              <Link href="/">Головна</Link>
-            </li>
-            <li aria-current="page">Особистий кабінет</li>
-          </ol>
-        </nav>
-        <h1>Особистий кабінет</h1>
-        <p className="lead cabinet__hello">{me ? `Вітаємо, ${me.name}` : " "}</p>
-      </header>
-      <div className="cabinet">
-        <CabinetNav pathname={pathname} onLogout={logout} />
-        <div className="cabinet__main">
-          {logoutFailed && (
-            <p className="notice notice--error" role="alert">
-              Не вдалося вийти. Спробуйте ще раз.
-            </p>
-          )}
-          {me && !me.emailConfirmed && <ConfirmBanner key={me.id} owner={me.id} email={me.email} mailDelivers={mailDelivers} />}
-          {children}
+    <div className="cabinet-workspace">
+      <div className="container">
+        <header className="cabinet-heading">
+          <nav className="crumbs" aria-label="Хлібні крихти">
+            <ol>
+              <li>
+                <Link href="/">Головна</Link>
+              </li>
+              <li aria-current="page">Особистий кабінет</li>
+            </ol>
+          </nav>
+          <h1>Особистий кабінет</h1>
+        </header>
+        <div className="cabinet">
+          <div className="cabinet-sidebar">
+            {me && (
+              <div className="cabinet-identity">
+                <span aria-hidden="true">{me.name.trim().split(/\s+/).slice(0, 2).map(part => part.charAt(0)).join("").toLocaleUpperCase("uk")}</span>
+                <strong>{me.name}</strong>
+              </div>
+            )}
+            <CabinetNav pathname={pathname} onLogout={logout} />
+          </div>
+          <div className="cabinet__main">
+            {logoutFailed && (
+              <p className="notice notice--error" role="alert">
+                Не вдалося вийти. Спробуйте ще раз.
+              </p>
+            )}
+            {me && !me.emailConfirmed && <ConfirmBanner key={me.id} owner={me.id} email={me.email} mailDelivers={mailDelivers} />}
+            {children}
+          </div>
         </div>
       </div>
     </div>
