@@ -389,6 +389,7 @@
 }
 .co-pickup-details { display: grid; gap: 4px; }
 .co-pickup-details p { margin: 0; }
+.co-pickup-route { justify-self: start; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; }
 
 .cart-empty { width: 100%; padding: clamp(28px, 6vh, 64px) 32px 32px; text-align: center; }
 .cart-empty__icon { display: grid; place-items: center; width: 100px; height: 100px; margin: 0 auto 28px; border-radius: 50%; background: #edf6e9; color: #007d37; }

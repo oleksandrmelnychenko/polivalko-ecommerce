@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { PickupPoint, Quote, Settlement, Warehouse } from "@polivalko/shared/api/types";
 import { StoreIcon, TruckIcon } from "@polivalko/shared/ui/icons";
+import { directionsUrl } from "@/shared/lib/directions-url";
 import { deliveryHint, deliveryTitle } from "../lib/delivery";
 import type { FieldProps } from "../lib/field-props";
 import type { CourierPrefill, Errors } from "../lib/types";
@@ -61,6 +62,7 @@ export function CheckoutDelivery({
   pickupPoint: PickupPoint | null;
 }) {
   const methods = quote?.deliveryMethods ?? [];
+  const pickupRoute = directionsUrl(pickupPoint?.mapUrl, pickupPoint?.address);
   const options = methods.map((d) => ({
     code: d.code,
     title: deliveryTitle[d.code] ?? d.name,
@@ -122,7 +124,7 @@ export function CheckoutDelivery({
               <p>{pickupPoint.address}</p>
               <p>{pickupPoint.schedule}</p>
               <p>{pickupPoint.instructions}</p>
-              {pickupPoint.mapUrl && <a className="link" href={pickupPoint.mapUrl} target="_blank" rel="noopener noreferrer">Прокласти маршрут ↗</a>}
+              {pickupRoute && <a className="link co-pickup-route" href={pickupRoute} target="_blank" rel="noopener noreferrer">Прокласти маршрут <span aria-hidden="true">↗</span></a>}
             </> : <Link className="link" href="/contacts">Адреса й графік магазину</Link>}
           </div>
         </div>

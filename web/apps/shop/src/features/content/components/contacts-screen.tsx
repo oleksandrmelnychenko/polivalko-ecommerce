@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { breadcrumbJsonLd, contactPageJsonLd, JsonLd } from "@/features/seo";
 import { getServiceDirections, ServiceRequestForm } from "@/features/services/server";
 import { ArrowRightIcon, PhoneIcon } from "@polivalko/shared/ui/icons";
+import { directionsUrl } from "@/shared/lib/directions-url";
 import { getContacts, getPickupPoints, getSeller } from "../api/server";
 import { organizationSource } from "../lib/organization";
 import { socialLinks } from "../lib/social-links";
@@ -21,6 +22,7 @@ async function ContactsContent() {
   const address = contacts?.address || point?.address || "Буча, Київська область";
   const schedule = contacts?.schedule || point?.schedule;
   const mapUrl = contacts?.mapUrl || point?.mapUrl;
+  const route = directionsUrl(mapUrl, contacts?.address || point?.address);
   const socials = socialLinks(contacts);
   const hasServices = Boolean(directions.length || contacts?.servicesPhone);
   const requestIntro = (
@@ -38,7 +40,7 @@ async function ContactsContent() {
       <div className="contact-info">
         <h2 id="contact-store-title">Адреса магазину</h2>
         <p className="contact-address">{address}</p>
-        {mapUrl && <a className="contact-route" href={mapUrl} target="_blank" rel="noopener noreferrer">Прокласти маршрут <ArrowRightIcon /></a>}
+        {route && <a className="contact-route" href={route} target="_blank" rel="noopener noreferrer">Прокласти маршрут <ArrowRightIcon /></a>}
         <dl className="contact-facts">
           {contacts?.storePhone && <div><dt>Магазин і замовлення</dt><dd><a href={tel(contacts.storePhone)}>{contacts.storePhone}</a></dd></div>}
           {(schedule || contacts?.specialDays?.length) ? <div><dt>Графік роботи</dt><dd>{schedule}<SpecialDays days={contacts?.specialDays} /></dd></div> : null}
