@@ -488,9 +488,70 @@ def merge_stock(console, source_sku, target_sku, apply):
     print("done")
 
 
+# Attribute values written as words, kept in dictionary case so «Ранній» and «ранній» are one value.
+LOWER_FIRST = {"Строк достигання", "Колір плоду", "Колір квітки", "Життєвий цикл", "Форма плоду", "Тип плоду",
+               "Щільність головки", "Форма коренеплоду", "Колір листя"}
+SYNONYMS = {"Життєвий цикл": {"багаторічна рослина": "багаторічник", "однорічна рослина": "однорічник",
+                              "двурічник": "дворічник"}}
+DROP_ATTRIBUTES = {"Категорія DNTrade"}
+MEASURED = ("Висота", "Маса", "Діаметр", "Довжина", "Ширина", "період", "Строк до")
+UNITS = "мм|см|м|г|кг|мл|л"
+
+
+def normalized_attributes(name_on_site, attributes):
+    import re
+    result = []
+    for a in attributes:
+        key, value = a["name"], (a["value"] or "").strip()
+        if key in DROP_ATTRIBUTES:
+            continue
+        if key == "Одиниця виміру" and "на вагу, ціна за 1 кг" in name_on_site:
+            value = "кг"
+        if key in LOWER_FIRST and not re.search(r"[A-Za-z0-9]", value):  # plain words, no names or codes
+            value = value.lower()
+        value = SYNONYMS.get(key, {}).get(value, value)
+        if any(word in key for word in MEASURED):
+            value = re.sub(r"(\d)\s*[-–]\s*(\d)", r"\1–\2", value)  # a range takes an en dash without spaces
+            value = re.sub(rf"(\d)({UNITS})\b", r"\1 \2", value)     # a unit stands apart from the number
+        result.append({"name": key, "value": value})
+    return result
+
+
+def normalize_attributes(console, apply, report_path):
+    """Put product attributes in one form everywhere: see LOWER_FIRST, SYNONYMS, DROP_ATTRIBUTES and MEASURED."""
+    say = lambda line: print(("APPLY " if apply else "PLAN  ") + line)
+    rows, changed = [], 0
+    for item in console.products():
+        detail = console.call("GET", f"/catalog/products/{item['id']}")
+        if not detail["navkolo"]["navkoloId"].startswith(DNTRADE):
+            continue
+        shown = detail.get("displayName") or detail["navkolo"]["name"]
+        before = [{"name": a["name"], "value": a["value"]} for a in detail["attributes"]]
+        after = normalized_attributes(shown, before)
+        if after == before:
+            continue
+        changed += 1
+        old = {(a["name"], a["value"]) for a in before}
+        new = {(a["name"], a["value"]) for a in after}
+        for n, v in sorted(old - new):
+            rows.append((detail["navkolo"]["sku"], shown, n, v, next((b for a, b in new - old if a == n), "(removed)")))
+        if apply:
+            console.call("PUT", f"/catalog/products/{item['id']}", {
+                "displayName": detail.get("displayName"), "slug": detail["slug"], "categoryId": detail["categoryId"],
+                "brand": detail.get("brand"), "descriptionHtml": detail.get("descriptionHtml"), "isVisible": detail["isVisible"],
+                "seoTitle": detail.get("seoTitle"), "seoDescription": detail.get("seoDescription"), "attributes": after,
+                "labelIds": detail.get("labelIds")})
+    say(f"attributes changed on {changed} products ({len(rows)} values)")
+    with open(report_path or "attributes.tsv", "w", encoding="utf-8", newline="") as file:
+        writer = csv.writer(file, delimiter="\t")
+        writer.writerow(["sku", "name", "attribute", "was", "now"])
+        writer.writerows(rows)
+    print(f"details in {report_path or 'attributes.tsv'}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("mode", choices=["export", "plan", "apply", "audit", "adopt-plan", "adopt-apply", "merge-plan", "merge-apply"])
+    parser.add_argument("mode", choices=["export", "plan", "apply", "audit", "adopt-plan", "adopt-apply", "merge-plan", "merge-apply", "attributes-plan", "attributes-apply"])
     parser.add_argument("--base", required=True, help="console origin, e.g. https://console.example.ua")
     parser.add_argument("--host", help="Host header when it differs from --base, e.g. console.localhost:8081")
     parser.add_argument("--target", default="target.json")
@@ -507,6 +568,8 @@ def main():
     console.login()
     if args.mode == "export":
         export(console, args.out)
+    elif args.mode.startswith("attributes"):
+        normalize_attributes(console, args.mode == "attributes-apply", args.report)
     elif args.mode.startswith("merge"):
         source_sku, target_sku = args.merge.split(":")
         merge_stock(console, source_sku, target_sku, args.mode == "merge-apply")
