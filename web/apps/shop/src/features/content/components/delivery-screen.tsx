@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { ArrowRightIcon, StoreIcon } from "@polivalko/shared/ui/icons";
+import { directionsUrl } from "@/shared/lib/directions-url";
 import { breadcrumbJsonLd, JsonLd } from "@/features/seo";
 import { getContacts, getDeliveryMethods, getPage, getPickupPoints } from "../api/server";
 import { htmlSections } from "../lib/html-sections";
@@ -11,7 +13,7 @@ const FALLBACK_TITLE = "Доставка й оплата";
 const CARRIER_RATE = "за тарифами перевізника";
 
 type Method = Awaited<ReturnType<typeof getDeliveryMethods>>[number];
-type PickupPoint = Awaited<ReturnType<typeof getPickupPoints>>[number];
+type PickupLocation = { address?: string | null; schedule?: string | null; mapUrl?: string | null; instructions?: string | null };
 
 const PAYMENTS: Record<string, { title: string; text: string }> = {
   card: {
@@ -49,6 +51,9 @@ async function DeliveryContent() {
   if (!page) notFound();
   const title = page.title?.trim() || FALLBACK_TITLE;
   const terms = page.bodyHtml ? htmlSections(page.bodyHtml) : null;
+  const store = pickupPoints.find((point) => point.code === "bucha-store") ?? pickupPoints[0];
+  const location: PickupLocation = store ?? contacts ?? {};
+  const orderedMethods = methods.toSorted((a, b) => Number(b.code === "pickup") - Number(a.code === "pickup"));
   const payments = [...new Set(methods.flatMap((m) => m.paymentMethods.map((p) => p.code)))].filter((code) => PAYMENTS[code]);
 
   return (
@@ -63,11 +68,10 @@ async function DeliveryContent() {
         <section className="delivery-section" aria-labelledby="delivery-title">
           <div className="delivery-section__head">
             <h2 id="delivery-title">Способи отримання</h2>
-            <p>Доставку Новою поштою оплачуєте {CARRIER_RATE}, самовивіз безкоштовний.</p>
           </div>
           <ul className="delivery-options">
-            {methods.map((method) => (
-              <DeliveryOption key={method.code} method={method} point={pickupPoints[0]} />
+            {orderedMethods.map((method) => (
+              <DeliveryOption key={method.code} method={method} location={location} />
             ))}
           </ul>
         </section>
@@ -141,26 +145,28 @@ function shortName(method: Method): string {
   return method.name;
 }
 
-function DeliveryOption({ method, point }: { method: Method; point?: PickupPoint }) {
+function DeliveryOption({ method, location }: { method: Method; location: PickupLocation }) {
   const pickup = method.code === "pickup";
   const courier = method.code === "nova_poshta_courier";
+  const route = pickup ? directionsUrl(location.mapUrl, location.address) : null;
   const text = pickup
-    ? point?.instructions || "Дочекайтеся повідомлення, що замовлення готове, і заберіть його в магазині."
+    ? location.instructions || "Дочекайтеся повідомлення, що замовлення готове, і заберіть його в магазині."
     : courier
       ? "Кур'єр Нової пошти привезе посилку за вказаною адресою."
       : "Доставка у відділення або поштомат Нової пошти. Доступні населені пункти й відділення обираєте під час оформлення.";
   const facts: { label: string; value: string }[] = [];
-  if (pickup && point) {
-    facts.push({ label: "Адреса", value: point.address });
-    facts.push({ label: "Графік", value: point.schedule });
-  }
+  if (pickup && location.address) facts.push({ label: "Адреса", value: location.address });
+  if (pickup && location.schedule) facts.push({ label: "Графік", value: location.schedule });
   if (courier && method.description) facts.push({ label: "Зона", value: method.description });
-  facts.push({ label: "Вартість", value: pickup ? "безкоштовно" : method.priceNote || CARRIER_RATE });
   facts.push({ label: "Оплата", value: method.paymentMethods.map((p) => p.name).join(", ") });
 
   return (
     <li className="delivery-option">
-      <h3>{method.name}</h3>
+      <div className="delivery-option__head">
+        {pickup ? <StoreIcon /> : (courier || method.code === "nova_poshta") && <img src="/brand/nova-poshta.svg" width={20} height={20} alt="" />}
+        <h3>{method.name}</h3>
+      </div>
+      <span className="delivery-option__rate">{pickup ? "Безкоштовно" : method.priceNote || CARRIER_RATE}</span>
       <div className="delivery-option__body">
         <p>{text}</p>
         <dl className="delivery-facts">
@@ -171,6 +177,7 @@ function DeliveryOption({ method, point }: { method: Method; point?: PickupPoint
             </div>
           ))}
         </dl>
+        {route && <a className="btn delivery-route" href={route} target="_blank" rel="noopener noreferrer">Прокласти маршрут <ArrowRightIcon /></a>}
       </div>
     </li>
   );
