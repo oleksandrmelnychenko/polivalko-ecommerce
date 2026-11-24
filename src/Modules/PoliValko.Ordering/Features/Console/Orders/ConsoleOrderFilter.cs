@@ -78,6 +78,8 @@ internal sealed record ConsoleOrderFilter(
         if (PaymentStatus is { } payment)
         {
             orders = orders.Where(o => o.PaymentStatus == payment);
+            // An order cancelled before it was paid keeps "pending", but nobody waits for that payment any more.
+            if (payment == Contracts.PaymentStatus.Pending) orders = orders.Where(o => o.Status != OrderStatus.Cancelled);
         }
 
         if (Delivery is { } delivery)

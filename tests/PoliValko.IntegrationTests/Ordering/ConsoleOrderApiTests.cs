@@ -20,6 +20,23 @@ public sealed class ConsoleOrderApiTests(ApiFactory api)
     private static DateOnly KyivToday => KyivTime.Today(TimeProvider.System);
 
     [Fact]
+    public async Task A_card_order_cancelled_before_payment_is_not_listed_as_waiting_for_payment()
+    {
+        var product = await api.AddProductAsync("vse-dlia-polyvu", "Лійка для скасованої оплати", 100m, stock: 5);
+        var phone = CheckoutApiTests.UniquePhone();
+        var body = CheckoutApiTests.Order(product.Id, 1, "100.00", phone) with { Payment = new PaymentRequest(PaymentCodes.Card) };
+        var order = await (await new CheckoutApiTests(api).PostOrderAsync(body, Guid.NewGuid().ToString())).ReadAsync<OrderCreatedDto>(HttpStatusCode.Created);
+        using var manager = await Staff.ManagerAsync(api);
+        var digits = phone[^7..];
+        (await ListOrdersAsync(manager, $"q={digits}&paymentStatus=pending")).Items.ShouldHaveSingleItem().Number.ShouldBe(order.Number);
+
+        (await manager.PostJsonAsync($"/api/v1/console/orders/{order.Number}/status", new ChangeOrderStatusRequest(OrderStatus.Cancelled, "Не оплатив")))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        (await ListOrdersAsync(manager, $"q={digits}&paymentStatus=pending")).Items.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task Status_change_requires_csrf_follows_transitions_and_records_who_changed_it()
     {
         var product = await api.AddProductAsync("ruchnyi-instrument", "Лопата для консолі", 1549m, stock: 4);
