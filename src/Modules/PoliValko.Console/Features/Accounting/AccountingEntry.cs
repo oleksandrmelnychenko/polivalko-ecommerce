@@ -14,6 +14,7 @@ public sealed record DraftChange(string Revision, NewDraft Draft);
 internal sealed record ProductReference(Guid Id, string Name, string Sku);
 public sealed record RegisterReference(string Id, string Title);
 public sealed record BalancePartnerLink(long HeadingPosition, Guid PartnerId, Guid? Previous);
+public sealed record BalanceRowLink(Guid PartnerId, Guid? Previous);
 public sealed record PartnerNameChange(Guid Id, string Title, string? Note, string PreviousTitle, string? PreviousNote);
 public sealed record PartnerNameChanges(List<PartnerNameChange> Changes);
 
@@ -63,6 +64,52 @@ internal static class AccountingEntry
         await tx.CommitAsync(ct);
         return Results.Ok(input.PartnerId);
     }
+    // Links one report row to a partner, overriding its heading's link: DNTrade puts same-named partners under one heading.
+    internal static async Task<IResult> LinkRow(Guid id, long position, BalanceRowLink input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
+    {
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var heading = (await db.Database.SqlQuery<long>($"""
+            SELECT s.heading_position AS "Value" FROM accounting.settlements s JOIN accounting.partners p ON p.id={input.PartnerId}
+                AND (p.source_account=s.source_account OR p.source_account='polivalko-native')
+            WHERE s.report_id={id} AND NOT s.footer AND s.position={position} AND s.heading_position IS NOT NULL
+            """).ToListAsync(ct)).Cast<long?>().SingleOrDefault();
+        if (heading == null) return Invalid("Контрагента або рядок звіту не знайдено.");
+        // Lock both links so a concurrent opening confirmation sees either the old or the new owner of the row.
+        await db.Database.SqlQuery<Guid>($"""
+            SELECT partner_id AS "Value" FROM accounting.balance_partner_links
+            WHERE report_id={id} AND heading_position={heading} FOR UPDATE
+            """).ToListAsync(ct);
+        await db.Database.SqlQuery<Guid>($"""
+            SELECT partner_id AS "Value" FROM accounting.balance_row_links WHERE report_id={id} AND position={position} FOR UPDATE
+            """).ToListAsync(ct);
+        var confirmed = await db.Database.SqlQuery<int>($"""
+            SELECT 1 AS "Value" FROM accounting.partner_openings WHERE report_id={id} AND position={position}
+            """).AnyAsync(ct);
+        if (confirmed) return Results.Problem(detail: "За цим рядком уже підтверджено початковий борг.", statusCode: 409);
+        int changed;
+        if (input.Previous is Guid previous)
+            changed = await db.Database.ExecuteSqlAsync($"""
+                UPDATE accounting.balance_row_links SET partner_id={input.PartnerId}
+                WHERE report_id={id} AND position={position} AND partner_id={previous}
+                """, ct);
+        else
+            changed = await db.Database.ExecuteSqlAsync($"""
+                INSERT INTO accounting.balance_row_links VALUES ({id},{position},{input.PartnerId}) ON CONFLICT DO NOTHING
+                """, ct);
+        if (changed == 0)
+        {
+            var applied = await db.Database.SqlQuery<int>($"""
+                SELECT 1 AS "Value" FROM accounting.balance_row_links WHERE report_id={id} AND position={position}
+                    AND partner_id={input.PartnerId}
+                """).AnyAsync(ct);
+            return applied ? Results.Ok(input.PartnerId) : Results.Problem(detail: "Прив’язку рядка вже змінили. Оновіть сторінку.", statusCode: 409);
+        }
+        audit.Record("accounting.balance_row_linked", "BalanceReport", id.ToString(), new { Position = position, input.PartnerId, input.Previous });
+        await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+        return Results.Ok(input.PartnerId);
+    }
+
     // Links every unlinked heading of the report whose name matches exactly one partner.
     internal static async Task<IResult> LinkAllCandidates(Guid id, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
     {

@@ -32,6 +32,9 @@ function reportLabel(report: Report) {
   return (raw.includes('T') ? reportTime : reportDay).format(date)
 }
 
+// DNTrade puts same-named partners under one heading, so such rows are linked one by one.
+const rowLevel = (r: Balance) => r.rowLinked || (!r.linkedPartner && r.candidateCount > 1)
+
 const zero = (value: string | null) => value != null && /^[-+]?0([.]0+)?$/.test(value)
 
 function Difference({ value }: { value: string | null }) {
@@ -345,9 +348,11 @@ function BalanceReports() {
                                 ? `Збігів за назвою: ${r.candidateCount}`
                                 : 'Без зв’язку з довідником'} />
                         )}
-                        {r.headingPosition && !r.headingConfirmed && can(PermissionKeys.Accounting.Edit) && (
+                        {r.headingPosition && can(PermissionKeys.Accounting.Edit) && (rowLevel(r) ? !r.openingId : !r.headingConfirmed) && (
                           <Button size="compact-xs" onClick={() => setLinking(r)}>
-                            {r.linkedPartner ? 'Змінити прив’язку' : 'Прив’язати'}
+                            {rowLevel(r)
+                              ? r.rowLinked ? 'Змінити прив’язку рядка' : 'Прив’язати рядок'
+                              : r.linkedPartner ? 'Змінити прив’язку' : 'Прив’язати'}
                           </Button>
                         )}
                         {r.openingId && (
@@ -472,19 +477,20 @@ function LinkPartner({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const query = useRegister<Page<Partner>>('partners?q=' + encodeURIComponent(term))
+  const single = rowLevel(row)
   async function confirm() {
     if (!choice || busy) return
     setBusy(true)
     try {
       const result = await withCsrf((headers) =>
-        read<string>('balance-reports/' + report + '/partner', {
+        read<string>(single
+          ? 'balance-reports/' + report + '/rows/' + row.position + '/partner'
+          : 'balance-reports/' + report + '/partner', {
           method: 'PUT',
           headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            headingPosition: row.headingPosition,
-            partnerId: choice,
-            previous: row.linkedPartner,
-          }),
+          body: JSON.stringify(single
+            ? { partnerId: choice, previous: row.rowLinked ? row.linkedPartner : null }
+            : { headingPosition: row.headingPosition, partnerId: choice, previous: row.linkedPartner }),
         }),
       )
       if (result.response.ok) setDialog('saved')
@@ -509,7 +515,13 @@ function LinkPartner({
         <Button disabled={!choice} loading={busy} onClick={confirm}>Зберегти прив’язку</Button>
       </Group>}>
       <section className="ledger-form-block">
-        <MetricLabel icon={IconBuildingStore}>{row.partnerTitle || 'Без назви'}</MetricLabel>
+        <MetricLabel icon={IconBuildingStore}>{row.partnerName || row.partnerTitle || 'Без назви'}</MetricLabel>
+        {single && (
+          <Text size="sm" c="dimmed">
+            Лише цей рядок: {row.account || '—'} · прихід {row.sourceAmounts[1] ?? '—'} · розхід {row.sourceAmounts[2] ?? '—'}
+            {' '}· залишок {row.sourceAmounts[3] ?? '—'}. Решта рядків цього контрагента у звіті не зміниться.
+          </Text>
+        )}
         <TextInput
           label="Пошук у довіднику"
           value={term}

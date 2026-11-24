@@ -3403,6 +3403,77 @@
         }
       }
     },
+    "/api/v1/console/accounting/balance-reports/{id}/rows/{position}/partner": {
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ConsoleLinkBalanceRowPartner",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "position",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BalanceRowLink"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/console/accounting/balance-reports/{id}/partner-links": {
       "post": {
         "tags": [
@@ -14426,7 +14497,8 @@
           "openingId",
           "headingConfirmed",
           "partnerName",
-          "partnerCategory"
+          "partnerCategory",
+          "rowLinked"
         ],
         "type": "object",
         "properties": {
@@ -14531,6 +14603,29 @@
               "null",
               "string"
             ]
+          },
+          "rowLinked": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BalanceRowLink": {
+        "required": [
+          "partnerId",
+          "previous"
+        ],
+        "type": "object",
+        "properties": {
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "previous": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },

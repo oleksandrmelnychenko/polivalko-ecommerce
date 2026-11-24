@@ -1066,6 +1066,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/accounting/balance-reports/{id}/rows/{position}/partner": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["ConsoleLinkBalanceRowPartner"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/accounting/balance-reports/{id}/partner-links": {
         parameters: {
             query?: never;
@@ -3699,6 +3715,13 @@ export interface components {
             headingConfirmed: boolean;
             partnerName: null | string;
             partnerCategory: null | string;
+            rowLinked: boolean;
+        };
+        BalanceRowLink: {
+            /** Format: uuid */
+            partnerId: string;
+            /** Format: uuid */
+            previous: null | string;
         };
         BannerDto: {
             /** Format: uuid */
@@ -8847,6 +8870,51 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleLinkBalanceRowPartner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                position: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BalanceRowLink"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
             /** @description Unauthorized */
             401: {
                 headers: {

@@ -67,14 +67,26 @@ internal static class PartnerOpenings
     {
         if (input.Direction is not ("receivable" or "payable")) return Results.BadRequest();
         await using var tx = await db.Database.BeginTransactionAsync(ct);
+        // Lock the heading link and the row link (whichever exist) so the row cannot change owner meanwhile.
+        await db.Database.SqlQuery<Guid>($"""
+            SELECT l.partner_id AS "Value" FROM accounting.balance_partner_links l
+            JOIN accounting.settlements s USING(report_id,heading_position)
+            WHERE s.report_id={id} AND s.position={input.Position} FOR UPDATE OF l
+            """).ToListAsync(ct);
+        await db.Database.SqlQuery<Guid>($"""
+            SELECT partner_id AS "Value" FROM accounting.balance_row_links
+            WHERE report_id={id} AND position={input.Position} FOR UPDATE
+            """).ToListAsync(ct);
         var source = (await db.Database.SqlQuery<OpeningSource>($"""
-            SELECT s.heading_position,s.source_account,s.day,abs(s.closing) AS amount,l.partner_id
-            FROM accounting.settlements s JOIN accounting.balance_partner_links l USING(report_id,heading_position)
+            SELECT s.heading_position,s.source_account,s.day,abs(s.closing) AS amount,coalesce(rl.partner_id,l.partner_id) AS partner_id
+            FROM accounting.settlements s
+            LEFT JOIN accounting.balance_partner_links l USING(report_id,heading_position)
+            LEFT JOIN accounting.balance_row_links rl ON rl.report_id=s.report_id AND rl.position=s.position
             JOIN accounting.references org ON org.id={input.OrgId} AND org.kind='organization'
             WHERE s.report_id={id} AND s.position={input.Position} AND NOT s.footer AND s.day IS NOT NULL
                 AND s.closing::text={input.Closing} AND s.closing<>0 AND s.closing=s.opening+s.outgoing-s.incoming
                 AND NOT EXISTS (SELECT 1 FROM unnest(s.source_amounts) v WHERE strpos(trim(v),chr(10))>0)
-                AND l.partner_id={input.PartnerId} FOR UPDATE OF l
+                AND coalesce(rl.partner_id,l.partner_id)={input.PartnerId}
             """).ToListAsync(ct)).SingleOrDefault();
         if (source == null) return Conflict("Перевірте прив’язку, організацію, валюту й арифметику вибраного рядка.");
         await db.Database.ExecuteSqlAsync($"""

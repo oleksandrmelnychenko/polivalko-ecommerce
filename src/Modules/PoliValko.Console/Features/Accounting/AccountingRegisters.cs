@@ -22,7 +22,7 @@ public sealed record BalanceReport(Guid Id, string SourceAccount, string SourceI
 public sealed record BalanceRow(long Position, bool Footer, string? PartnerTitle, string? Account, string? Opening,
     string? Incoming, string? Outgoing, string? Closing, string? Difference, string?[] SourceAmounts,
     long? HeadingPosition, Guid? LinkedPartner, Guid? Candidate, int CandidateCount, Guid? OpeningId, bool HeadingConfirmed,
-    string? PartnerName, string? PartnerCategory);
+    string? PartnerName, string? PartnerCategory, bool RowLinked);
 public sealed record AgreementRow(string? Id, string? Title, string? Currency);
 public sealed record PartnerCard(PartnerRow Partner, List<AgreementRow> Agreements);
 public sealed record ProductMovement(Guid DocumentId, int Position, DateOnly? Day, string? Number, string? EntityType,
@@ -51,6 +51,8 @@ public static class AccountingRegisters
         group.MapGet("/balance-reports/{id:guid}", Balances).WithName("ConsoleAccountingBalances").Produces<List<BalanceRow>>();
         group.MapPut("/balance-reports/{id:guid}/partner", AccountingEntry.LinkPartner)
             .WithName("ConsoleLinkBalancePartner").RequirePermission(PermissionKeys.AccountingEdit);
+        group.MapPut("/balance-reports/{id:guid}/rows/{position:long}/partner", AccountingEntry.LinkRow)
+            .WithName("ConsoleLinkBalanceRowPartner").RequirePermission(PermissionKeys.AccountingEdit).Produces<Guid>();
         group.MapPost("/balance-reports/{id:guid}/partner-links", AccountingEntry.LinkAllCandidates)
             .WithName("ConsoleLinkBalanceCandidates").RequirePermission(PermissionKeys.AccountingEdit).Produces<int>();
         group.MapPost("/partners", AccountingEntry.CreatePartner).WithName("ConsoleCreateAccountingPartner").RequirePermission(PermissionKeys.AccountingEdit);
@@ -197,15 +199,16 @@ public static class AccountingRegisters
                 opening::text,incoming::text,outgoing::text,closing::text,
                 (closing-(opening+outgoing-incoming))::text AS difference,source_amounts,
                 CASE WHEN s.footer THEN NULL ELSE s.heading_position END AS heading_position,
-                l.partner_id AS linked_partner,c.candidate,coalesce(c.candidate_count,0) AS candidate_count,
+                coalesce(rl.partner_id,l.partner_id) AS linked_partner,c.candidate,coalesce(c.candidate_count,0) AS candidate_count,
                 o.id AS opening_id,EXISTS(SELECT 1 FROM accounting.partner_openings h
                    WHERE h.report_id=s.report_id AND h.heading_position=s.heading_position) AS heading_confirmed,
-                p.title AS partner_name,p.details->'category'->>'title' AS partner_category
+                p.title AS partner_name,p.details->'category'->>'title' AS partner_category,rl.partner_id IS NOT NULL AS row_linked
             FROM accounting.settlements s LEFT JOIN accounting.balance_partner_links l ON NOT s.footer
                 AND l.report_id=s.report_id AND l.heading_position=s.heading_position
             LEFT JOIN accounting.partner_name_candidates c ON NOT s.footer AND c.source_account=s.source_account
                 AND c.name=trim(regexp_replace(lower(s.partner_title),'[[:space:]  ]+',' ','g'))
-            LEFT JOIN accounting.partners p ON p.id=coalesce(l.partner_id,c.candidate)
+            LEFT JOIN accounting.balance_row_links rl ON NOT s.footer AND rl.report_id=s.report_id AND rl.position=s.position
+            LEFT JOIN accounting.partners p ON p.id=coalesce(rl.partner_id,l.partner_id,c.candidate)
             LEFT JOIN accounting.partner_openings o ON o.report_id=s.report_id AND o.position=s.position
             WHERE s.report_id={id} ORDER BY s.position
             """).ToListAsync(ct);

@@ -115,11 +115,12 @@ public sealed class AccountingRegisterTests(ApiFactory api)
             documentType="Взаєморозрахунки з контрагентами",raw=new { tables=new[] { new[] {
                 Row("TBODY",null," Іван (Шашлики)","","","",""),Row("TBODY","indent","Main","0,00 грн.","10,00 грн.","0,00 грн.","-10,00 грн."),
                 Row("TBODY",null,"Петро","","","",""),Row("TBODY","indent","Main","0,00 грн.","5,00 грн.","0,00 грн.","-5,00 грн."),
-                Row("TFOOT",null,"Разом","0,00 грн.","15,00 грн.","0,00 грн.","-15,00 грн.")
+                Row("TBODY","indent","Main","0,00 грн.","7,00 грн.","0,00 грн.","-7,00 грн."),
+                Row("TFOOT",null,"Разом","0,00 грн.","22,00 грн.","0,00 грн.","-22,00 грн.")
             } } } };
         object Partner(string id,string title) => new { schemaVersion=1,source="dntrade",entityType="partner",sourceId=id,raw=new { title } };
-        var invoice = new { schemaVersion=1,source="dntrade",entityType="invoice",sourceId="names-invoice",documentType="in",sourceDate="2026-11-20",
-            raw=new { number="names-1",partner=new { external_id="p1",title=" Іван (Шашлики)" } } };
+        var invoice = new { schemaVersion=1,source="dntrade",entityType="invoice",sourceId="names-invoice",documentType="in",sourceDate="2026-11-20",organizationId="org-names",
+            raw=new { number="names-1",organization=new { title="Org "+account },partner=new { external_id="p1",title=" Іван (Шашлики)" } } };
         var body = string.Join("\n",new[]{report,Partner("p1"," Іван (Шашлики)"),Partner("p2","Петро"),Partner("p3","Петро"),invoice}
             .Select(x=>System.Text.Json.JsonSerializer.Serialize(x)));
         (await admin.PostAsync("/api/v1/console/dntrade-archive/import?sourceAccount="+account,
@@ -155,6 +156,32 @@ public sealed class AccountingRegisterTests(ApiFactory api)
         rows[0].LinkedPartner.ShouldBe(partner.Id);
         rows[1].LinkedPartner.ShouldBeNull();
         rows.Single(r=>r.Footer).LinkedPartner.ShouldBeNull();
+
+        // One heading can hold rows of different same-named partners; each row links on its own.
+        var namesakes = (await admin.ReadAsync<RegisterPage<PartnerRow>>(Root+"/partners?q=петро")).Items
+            .Where(p=>p.SourceAccount==account).OrderBy(p=>p.SourceId).ToList();
+        var rowUrl = url+"/rows/"+rows[2].Position+"/partner";
+        (await clerk.PutAsJsonAsync(rowUrl,new BalanceRowLink(namesakes[1].Id,null),Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await admin.PutAsJsonAsync(rowUrl,new BalanceRowLink(namesakes[1].Id,null),Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.PutAsJsonAsync(rowUrl,new BalanceRowLink(namesakes[1].Id,null),Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.PutAsJsonAsync(rowUrl,new BalanceRowLink(namesakes[0].Id,null),Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await admin.PutAsJsonAsync(url+"/rows/"+rows[1].Position+"/partner",new BalanceRowLink(namesakes[0].Id,null),Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.PutAsJsonAsync(url+"/rows/"+rows.Single(r=>r.Footer).Position+"/partner",new BalanceRowLink(namesakes[0].Id,null),Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        rows = await admin.ReadAsync<List<BalanceRow>>(url);
+        rows[1].LinkedPartner.ShouldBe(namesakes[0].Id);
+        rows[1].RowLinked.ShouldBeTrue();
+        rows[2].LinkedPartner.ShouldBe(namesakes[1].Id);
+        rows[2].PartnerName.ShouldBe("Петро");
+        rows[0].RowLinked.ShouldBeFalse();
+
+        var org = (await admin.ReadAsync<References>(Root+"/references")).Organizations.Single(x=>x.Title=="Org "+account);
+        var opening = new ConfirmOpening(rows[2].Position,namesakes[1].Id,Guid.Parse(org.Id),"payable",rows[2].Closing!);
+        (await admin.PostAsJsonAsync(url+"/openings",opening with {PartnerId=namesakes[0].Id},Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await admin.PostAsJsonAsync(url+"/openings",opening,Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.PutAsJsonAsync(rowUrl,new BalanceRowLink(namesakes[0].Id,namesakes[1].Id),Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await admin.ReadAsync<List<PartnerOpening>>(Root+"/partners/"+namesakes[1].Id+"/openings")).Single().Amount.ShouldBe("7.00");
     }
 
     [Fact]
