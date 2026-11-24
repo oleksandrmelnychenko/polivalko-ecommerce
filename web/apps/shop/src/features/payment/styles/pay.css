@@ -1,3 +1,5 @@
-.pay { display: grid; gap: var(--space-md); padding: var(--space-lg); border: 2px solid var(--color-brand); }
-.pay h2 { font-size: var(--text-xl); }
+.pay { display: grid; gap: 10px; padding: clamp(12px, 1.5vw, 18px); border: 1px solid var(--color-rule); border-radius: 16px; background: #f4f4f4; }
+.pay h2 { font-size: 18px; }
+.pay > p { font-size: var(--text-sm); }
 .pay__actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+@media (max-width: 40rem) { .pay__actions .btn { width: 100%; white-space: normal; } }

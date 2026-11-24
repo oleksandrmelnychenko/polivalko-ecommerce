@@ -1,5 +1,4 @@
 .delivery-header { padding-block: var(--space-xl) var(--space-2xl); }
-.delivery-header .crumbs { margin-bottom: var(--space-xl); }
 .delivery-header h1 { margin: 0; font-size: clamp(2.5rem, 4vw, 4rem); line-height: 1.1; }
 .delivery-header > p { max-width: 48rem; margin: var(--space-md) 0 0; color: var(--color-ink-2); line-height: 1.7; }
 .delivery-section { border-top: 1px solid var(--color-rule); padding-block: var(--space-xl); }

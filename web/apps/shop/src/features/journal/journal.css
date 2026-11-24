@@ -8,7 +8,9 @@
 .journal-card__more { display: flex; align-items: center; gap: 8px; margin-top: auto; font-size: 14px; padding-top: 6px; }
 .journal-card__more svg { width: 16px; height: 16px; }
 .journal-card:hover h2 { color: var(--color-brand-strong); }
-.journal-article { max-width: 1040px; margin: 32px auto 64px; }
+.journal-page > .crumbs { padding-block: 12px; }
+.journal-article { max-width: 1040px; margin: 0 auto 64px; }
+.journal-article header > .journal-card__category { margin-top: 0; }
 .journal-article header { max-width: 920px; margin: 0 auto 40px; }
 .journal-article h1 { font-size: clamp(32px, 4vw, 58px); line-height: 1.1; letter-spacing: -.035em; margin: 20px 0; }
 .journal-article__cover { width: 100%; height: auto; max-height: 580px; object-fit: cover; border-radius: 24px; }
@@ -27,4 +29,4 @@
 .about-row h2 { font-size: 30px; line-height: 1.2; }
 .about-row p:first-child { margin-top: 0; }
 @media (max-width: 64rem) { .journal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .about-intro, .about-row { gap: 28px; } .about-intro img { height: 400px; } }
-@media (max-width: 40rem) { .journal-grid { grid-template-columns: minmax(0, 1fr); gap: 36px; } .journal-card > img { border-radius: 20px; } .journal-article { margin-top: 20px; } .journal-article header { margin-bottom: 24px; } .journal-article__body h2 { font-size: 24px; } .journal-article__body p { font-size: 16px; } .about-intro, .about-row { grid-template-columns: minmax(0, 1fr); gap: 20px; } .about-intro img { height: 320px; } .about-row { padding-block: 28px; } .about-row h2 { font-size: 26px; } }
+@media (max-width: 40rem) { .journal-grid { grid-template-columns: minmax(0, 1fr); gap: 36px; } .journal-card > img { border-radius: 20px; } .journal-article header { margin-bottom: 24px; } .journal-article__body h2 { font-size: 24px; } .journal-article__body p { font-size: 16px; } .about-intro, .about-row { grid-template-columns: minmax(0, 1fr); gap: 20px; } .about-intro img { height: 320px; } .about-row { padding-block: 28px; } .about-row h2 { font-size: 26px; } }

@@ -40,7 +40,7 @@ export async function OrderScreen({ params, searchParams, mailDelivers }: OrderS
   const payButton = <PayButton number={order.number} token={token} failed={order.paymentStatus === "failed"} amount={formatMoney(order.total)} />;
 
   return (
-    <div className="container">
+    <div className="container order-page">
       {(paid || (order.paymentMethod !== "card" && order.status !== "cancelled")) && (
         <TrackPurchase
           orderNumber={order.number}

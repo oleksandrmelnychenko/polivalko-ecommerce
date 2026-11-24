@@ -1,10 +1,8 @@
-import Link from "next/link";
 import { connection } from "next/server";
 import { getCategoryTree, searchProducts } from "@/features/catalog/server";
-import { ArrowRightIcon, ChevronDownIcon } from "@polivalko/shared/ui/icons";
 import { pageLinks, saleLink } from "../lib/nav-links";
 import { MainNav } from "./main-nav";
-import { MegaColumn } from "./mega-column";
+import { toMenuCategory } from "../lib/menu-category";
 import { NavFallback } from "./nav-fallback";
 import { NavItemLink } from "./nav-item-link";
 
@@ -15,29 +13,7 @@ export async function HeaderNav() {
   const links = sale && sale.totalItems > 0 ? [saleLink, ...pageLinks] : pageLinks;
 
   return (
-    <MainNav>
-      <li className="nav-item nav-item--mega">
-        <Link href="/catalog" className="nav-link" aria-haspopup="true">
-          Каталог
-          <ChevronDownIcon />
-        </Link>
-        <div className="sub sub--mega">
-          {categories.map((c) => (
-            <MegaColumn
-              key={c.id}
-              title={c.name}
-              href={`/catalog/${c.slug}`}
-              links={(c.children ?? []).map((child) => ({ href: `/catalog/${child.slug}`, label: child.name }))}
-            />
-          ))}
-          <p className="mega-all">
-            <Link href="/catalog">
-              Увесь каталог
-              <ArrowRightIcon />
-            </Link>
-          </p>
-        </div>
-      </li>
+    <MainNav categories={categories.map(toMenuCategory)}>
       {links.map((link) => (
         <NavItemLink key={link.href} {...link} />
       ))}

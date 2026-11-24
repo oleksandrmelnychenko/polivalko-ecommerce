@@ -30,13 +30,28 @@ export function CartDrawer() {
   useEffect(() => {
     const el = dialog.current;
     if (!el) return;
-    if (isOpen && !el.open) el.showModal();
-    if (!isOpen && el.open) el.close();
+    if (!isOpen) {
+      if (el.open) el.close();
+      return;
+    }
+    if (!el.open) el.showModal();
+    const anchor = document.getElementById("header-cart-button");
+    if (!anchor) return;
+    const position = () => {
+      const rect = anchor.getBoundingClientRect();
+      const top = rect.bottom > 0 && rect.bottom < window.innerHeight / 2 ? rect.bottom + 8 : 8;
+      el.style.setProperty("--cart-top", `${top}px`);
+      el.style.setProperty("--cart-right", `${Math.max(8, document.documentElement.clientWidth - rect.right)}px`);
+    };
+    position();
+    window.addEventListener("resize", position);
+    return () => window.removeEventListener("resize", position);
   }, [isOpen]);
 
   return (
     <dialog
       ref={dialog}
+      id="mini-cart"
       className="drawer"
       aria-labelledby="cart-title"
       onClose={close}
@@ -95,15 +110,15 @@ export function CartDrawer() {
               <dt>Разом, {count} шт.</dt>
               <dd className="num"><span className="money">{formatPrice(subtotal)}</span></dd>
             </dl>
-            <p className="muted" style={{ fontSize: "var(--text-sm)" }}>
+            <p className="muted">
               Ціни й наявність ще раз перевіримо під час оформлення. Доставка за тарифами перевізника.
             </p>
-            {!blocked && <Link href="/checkout" className="btn btn--wide" onClick={close}>
-              Оформити замовлення
-            </Link>}
-            <Link href="/cart" className="btn btn--quiet btn--wide" onClick={close}>
-              Перейти в кошик
-            </Link>
+            <div className="drawer__actions">
+              <Link href="/cart" className="btn btn--quiet" onClick={close}>Перейти в кошик</Link>
+              {!blocked && <Link href="/checkout" className="btn drawer__checkout" onClick={close}>
+                Оформити замовлення
+              </Link>}
+            </div>
           </div>
         )}
       </div>

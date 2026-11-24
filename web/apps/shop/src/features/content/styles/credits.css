@@ -1,6 +1,5 @@
 .credits-page { padding-bottom: var(--space-3xl); }
 .credits-page .page-head { padding-block: var(--space-xl) var(--space-2xl); margin: 0; }
-.credits-page .page-head .crumbs { margin-bottom: var(--space-xl); }
 .credits-page .page-head h1 { margin: 0; font-size: clamp(2.5rem, 4vw, 4rem); line-height: 1.1; }
 .credits-page .page-head .lead { max-width: 48rem; margin: var(--space-md) 0 0; color: var(--color-ink-2); line-height: 1.7; }
 .credits { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-rule); }

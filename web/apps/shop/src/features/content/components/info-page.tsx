@@ -9,7 +9,7 @@ import { PageHead } from "./page-head";
 
 const TOC_MIN_SECTIONS = 7;
 
-type InfoPageProps = { slug: string; title: string; lead?: string; children?: ReactNode; layout?: "document" | "rows" };
+type InfoPageProps = { slug: string; title: string; lead?: string; children?: ReactNode; layout?: "document" | "compact" };
 
 export function InfoPage({ slug, title, lead, children, layout = "document" }: InfoPageProps) {
   return (

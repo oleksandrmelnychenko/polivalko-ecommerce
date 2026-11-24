@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Order } from "@polivalko/shared/api/types";
 import { formatDateTime } from "@polivalko/shared/lib/format";
+import { paymentStatusLabel } from "@polivalko/shared/lib/labels";
 import { AlertIcon, ArrowRightIcon, CheckIcon, ClockIcon } from "@polivalko/shared/ui/icons";
 import { OrderProgress } from "./order-progress";
 
@@ -21,10 +22,7 @@ export function OrderHead({ order, heading, mailDelivers }: { order: Order; head
             Замовлення <span className="order-hero__number">{order.number}</span> від {formatDateTime(order.createdAt)}
           </p>
         </div>
-        <Link className="btn btn--outline order-hero__back" href="/catalog">
-          Продовжити покупки
-          <ArrowRightIcon />
-        </Link>
+        <span className="order-payment-status" data-status={order.paymentStatus}>{paymentStatusLabel[order.paymentStatus]}</span>
       </div>
       {waiting && (
         <p className="notice order-hero__notice">
@@ -33,11 +31,14 @@ export function OrderHead({ order, heading, mailDelivers }: { order: Order; head
         </p>
       )}
       <OrderProgress order={order} />
-      <p className="order-hero__note">
-        {mailDelivers && order.customer.email
-          ? `Посилання на цю сторінку ми надіслали на ${order.customer.email}. Тут видно статус замовлення, оплату й чеки.`
-          : "Збережіть посилання на цю сторінку: тут видно статус замовлення, оплату й чеки."}
-      </p>
+      <div className="order-hero__foot">
+        <p className="order-hero__note">
+          {mailDelivers && order.customer.email
+            ? `Посилання на замовлення надіслано на ${order.customer.email}.`
+            : "Збережіть посилання, щоб перевіряти статус замовлення й переглядати чеки."}
+        </p>
+        <Link className="order-hero__back" href="/catalog">Продовжити покупки <ArrowRightIcon /></Link>
+      </div>
     </header>
   );
 }

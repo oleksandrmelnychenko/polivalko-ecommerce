@@ -22,7 +22,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   const article = articles.find((item) => item.slug === slug);
   if (!article) notFound();
   return <div className="container journal-page">
-    <nav className="crumbs" aria-label="Хлібні крихти"><ol><li><Link href="/">Головна</Link></li><li><Link href="/blog">Блог</Link></li><li aria-current="page">{article.title}</li></ol></nav>
+    <nav className="crumbs" aria-label="Хлібні крихти"><ol><li><Link href="/blog">Блог</Link></li></ol></nav>
     <article className="journal-article">
       <header><p className="journal-card__category">{article.category} · Полі-Валько</p><h1>{article.title}</h1><p className="lead">{article.intro}</p></header>
       <img className="journal-article__cover" {...sized(article.image.url, "(max-width: 64rem) 100vw, 960px", 960)} alt={article.image.alt} width={1200} height={720} fetchPriority="high" />

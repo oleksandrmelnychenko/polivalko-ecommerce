@@ -9,7 +9,9 @@ export function OrderFacts({ order, where }: { order: Order; where: string }) {
   const rows: { label: string; icon: ReactNode; value: string; sub?: string }[] = [
     {
       label: "Отримання",
-      icon: order.deliveryMethod === "pickup" ? <StoreIcon /> : <TruckIcon />,
+      icon: order.deliveryMethod === "pickup" ? <StoreIcon /> :
+        ["nova_poshta", "nova_poshta_courier"].includes(order.deliveryMethod) ?
+          <img className="np-mark" src="/brand/nova-poshta.svg" width={24} height={24} alt="" /> : <TruckIcon />,
       value: deliveryMethodLabel[order.deliveryMethod] ?? order.deliveryMethod,
       sub: where || undefined,
     },

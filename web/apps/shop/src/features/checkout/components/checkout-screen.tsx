@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import type { PickupPoint } from "@polivalko/shared/api/types";
 import { CheckoutForm } from "./checkout-form";
@@ -7,19 +6,8 @@ type CheckoutScreenProps = { mailDelivers: () => Promise<boolean>; storePhone: (
 
 export function CheckoutScreen(props: CheckoutScreenProps) {
   return (
-    <div className="container">
+    <div className="container checkout-page">
       <header className="page-head">
-        <nav className="crumbs" aria-label="Хлібні крихти">
-          <ol>
-            <li>
-              <Link href="/">Головна</Link>
-            </li>
-            <li>
-              <Link href="/cart">Кошик</Link>
-            </li>
-            <li aria-current="page">Оформлення</li>
-          </ol>
-        </nav>
         <h1>Оформлення замовлення</h1>
       </header>
       <Suspense fallback={<p role="status">Завантажуємо кошик…</p>}>

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { currentPath, loginHref, signOut, useCustomer } from "@/features/customer";
@@ -39,14 +38,6 @@ export function CabinetFrame({ mailDelivers, children }: { mailDelivers: boolean
     <div className="cabinet-workspace">
       <div className="container">
         <header className="cabinet-heading">
-          <nav className="crumbs" aria-label="Хлібні крихти">
-            <ol>
-              <li>
-                <Link href="/">Головна</Link>
-              </li>
-              <li aria-current="page">Особистий кабінет</li>
-            </ol>
-          </nav>
           <h1>Особистий кабінет</h1>
         </header>
         <div className="cabinet">

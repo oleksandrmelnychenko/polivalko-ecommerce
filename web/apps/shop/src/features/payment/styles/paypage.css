@@ -1,7 +1,8 @@
 .paypage { display: grid; place-items: center; min-height: 100dvh; padding: var(--space-lg); background: var(--color-paper-2); }
-.paypage__card { border-radius: var(--radius); display: grid; gap: var(--space-md); width: min(480px, 100%); padding: var(--space-xl); background: var(--color-paper); box-shadow: var(--shadow-pop); }
-.paypage__card h1 { font-size: var(--text-title); }
-.paypage__amount { font: 600 var(--text-display-s)/1 var(--font-body); color: var(--color-ink); font-variant-numeric: tabular-nums; }
+.paypage__card { min-width: 0; border: 1px solid var(--color-rule); border-radius: 16px; display: grid; gap: 12px; width: min(420px, 100%); padding: clamp(14px, 3vw, 24px); background: var(--color-paper); overflow-wrap: anywhere; }
+.paypage__card h1 { font-size: clamp(1.375rem, 3vw, 1.75rem); }
+.paypage__amount { font: 600 1.5rem/1.2 var(--font-money); color: var(--color-ink); }
+.paypage__card > p:not(.paypage__amount) { font-size: var(--text-sm); }
 .paypage__actions { display: grid; gap: var(--space-sm); }
 .paypage__more summary { cursor: pointer; color: var(--color-ink-2); font-size: var(--text-sm); }
 .paypage__more .btn { margin-top: var(--space-xs); }

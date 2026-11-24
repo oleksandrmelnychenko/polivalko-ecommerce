@@ -2,12 +2,15 @@ import type { Order } from "@polivalko/shared/api/types";
 import { formatDateTime } from "@polivalko/shared/lib/format";
 import { CheckIcon } from "@polivalko/shared/ui/icons";
 import { orderSteps } from "../lib/order-view";
+import { orderStatusLabel } from "@polivalko/shared/lib/labels";
 
 export function OrderProgress({ order }: { order: Order }) {
   const steps = orderSteps(order);
   if (!steps) return null;
   return (
-    <ol className="order-steps" aria-label="Стан замовлення">
+    <details className="order-progress">
+      <summary>Стан замовлення <strong>{orderStatusLabel[order.status]}</strong></summary>
+      <ol className="order-steps" aria-label="Стан замовлення">
       {steps.map((step, i) => (
         <li key={step.key} className={`order-step order-step--${step.state}`} aria-current={step.state === "current" ? "step" : undefined}>
           <span className="order-step__dot" aria-hidden="true">
@@ -22,6 +25,7 @@ export function OrderProgress({ order }: { order: Order }) {
           {step.hint && <span className="order-step__hint">{step.hint}</span>}
         </li>
       ))}
-    </ol>
+      </ol>
+    </details>
   );
 }

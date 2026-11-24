@@ -55,12 +55,6 @@ async function DeliveryContent() {
     <>
       <JsonLd data={breadcrumbJsonLd([{ name: title, path: `/${SLUG}` }])} />
       <header className="delivery-header">
-        <nav className="crumbs" aria-label="Хлібні крихти">
-          <ol>
-            <li><Link href="/">Головна</Link></li>
-            <li aria-current="page">{title}</li>
-          </ol>
-        </nav>
         <h1>{title}</h1>
         <p>{page.lead || "Нова пошта по Україні або самовивіз з магазину. Спосіб отримання й оплати обираєте під час оформлення."}</p>
       </header>

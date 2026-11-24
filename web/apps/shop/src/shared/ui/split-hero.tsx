@@ -1,27 +1,17 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { sized } from "@polivalko/shared/lib/images";
 
 type SplitHeroProps = {
   title: string;
-  crumb?: string;
   lead?: string | null;
   icon?: ReactNode;
   photo?: { url: string; alt: string };
   actions?: ReactNode;
 };
 
-export function SplitHero({ title, crumb, lead, icon, photo, actions }: SplitHeroProps) {
+export function SplitHero({ title, lead, icon, photo, actions }: SplitHeroProps) {
   return (
     <header className="split-hero">
-      <nav className="crumbs" aria-label="Хлібні крихти">
-        <ol>
-          <li>
-            <Link href="/">Головна</Link>
-          </li>
-          <li aria-current="page">{crumb ?? title}</li>
-        </ol>
-      </nav>
       <div className={photo ? "split-hero__grid" : "split-hero__grid split-hero__grid--solo"}>
         <div className="split-hero__panel">
           {icon && (

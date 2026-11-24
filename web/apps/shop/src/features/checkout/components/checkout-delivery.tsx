@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { PickupPoint, Quote, Settlement, Warehouse } from "@polivalko/shared/api/types";
-import { PinIcon, StoreIcon, TruckIcon } from "@polivalko/shared/ui/icons";
+import { StoreIcon, TruckIcon } from "@polivalko/shared/ui/icons";
 import { deliveryHint, deliveryTitle } from "../lib/delivery";
 import type { FieldProps } from "../lib/field-props";
 import type { CourierPrefill, Errors } from "../lib/types";
@@ -12,7 +12,8 @@ import { CheckoutWarehouseSelect } from "./checkout-warehouse-select";
 import { SettlementPicker } from "./settlement-picker";
 import type { WarehouseStatus } from "../hooks/use-delivery-point";
 
-const ICONS: Record<string, ReactNode> = { nova_poshta: <TruckIcon />, nova_poshta_courier: <PinIcon />, pickup: <StoreIcon /> };
+const carrierMark = <img className="np-mark" src="/brand/nova-poshta.svg" width={24} height={24} alt="" />;
+const ICONS: Record<string, ReactNode> = { nova_poshta: carrierMark, nova_poshta_courier: carrierMark, pickup: <StoreIcon /> };
 
 function stepHint(codes: string[]) {
   const carrier = codes.some((code) => code !== "pickup");

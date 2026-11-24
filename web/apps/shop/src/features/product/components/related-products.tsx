@@ -9,10 +9,7 @@ export async function RelatedProducts({ category, exclude }: { category: string;
   return (
     <section className="related" aria-labelledby="related-title">
       <div className="related__head">
-        <div>
-          <p className="related__kicker">З цього ж розділу</p>
-          <h2 id="related-title">Схожі товари</h2>
-        </div>
+        <h2 id="related-title">Схожі товари</h2>
         <Link href={`/catalog/${category}`} className="related__all">
           Уся категорія
         </Link>

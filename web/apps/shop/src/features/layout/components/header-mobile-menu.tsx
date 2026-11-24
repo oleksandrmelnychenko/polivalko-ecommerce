@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { categoryPhotoUrl } from "@/features/catalog";
+import { toMenuCategory } from "../lib/menu-category";
 import { getCategoryTree, searchProducts } from "@/features/catalog/server";
 import { mobilePageLinks, saleLink } from "../lib/nav-links";
 import { MobileMenu } from "./mobile-menu";
@@ -9,13 +9,7 @@ export async function HeaderMobileMenu() {
   const [categories, sale] = await Promise.all([getCategoryTree().catch(() => []), searchProducts({ onSale: true, pageSize: 1 }).catch(() => null)]);
   return (
     <MobileMenu
-      categories={categories.map((c) => ({
-        id: c.id,
-        slug: c.slug,
-        name: c.name,
-        photo: categoryPhotoUrl(c),
-        children: (c.children ?? []).map((child) => ({ id: child.id, slug: child.slug, name: child.name })),
-      }))}
+      categories={categories.map(toMenuCategory)}
       pages={sale && sale.totalItems > 0 ? [saleLink, ...mobilePageLinks] : mobilePageLinks}
     />
   );

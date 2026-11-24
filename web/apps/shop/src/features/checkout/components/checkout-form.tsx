@@ -45,7 +45,6 @@ function CheckoutFields({ mailDelivers, phone, pickupPoint }: CheckoutFormProps)
         {cartError}
         {checkout.notice && <CheckoutNotice notice={checkout.notice} />}
         <CheckoutContacts field={field} fieldError={fieldError} mailDelivers={mailDelivers} />
-        <CheckoutComment field={field} fieldError={fieldError} />
         <CheckoutDelivery
           quote={checkout.deliveryQuote}
           delivery={checkout.delivery}
@@ -81,6 +80,7 @@ function CheckoutFields({ mailDelivers, phone, pickupPoint }: CheckoutFormProps)
           setPayment={checkout.setPayment}
           fieldError={fieldError}
         />
+        <CheckoutComment field={field} fieldError={fieldError} />
       </div>
 
       <CheckoutSummary

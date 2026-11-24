@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { CircleCheckIcon, CloseIcon } from "@polivalko/shared/ui/icons";
+import { AlertIcon, ArrowRightIcon, CloseIcon } from "@polivalko/shared/ui/icons";
 import { COMPARISON_NOTICE, type ComparisonNotice } from "./notice";
 
 export function CompareToast() {
@@ -25,7 +25,7 @@ export function CompareToast() {
   }, []);
   useEffect(() => {
     if (!notice || hovered || focused || closing) return;
-    const timer = window.setTimeout(() => setClosing(true), 2000);
+    const timer = window.setTimeout(() => setClosing(true), 5000);
     return () => window.clearTimeout(timer);
   }, [notice, hovered, focused, closing]);
   useEffect(() => {
@@ -36,8 +36,16 @@ export function CompareToast() {
 
   return <div className="compare-toast-region" role="status" aria-live="polite" aria-atomic="true">
     {notice && <div key={sequence} className="compare-toast" data-kind={notice.kind} data-closing={closing} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onFocusCapture={() => setFocused(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}>
-      <span className="compare-toast__icon" aria-hidden="true">{notice.kind === "error" ? "!" : <CircleCheckIcon />}</span>
-      <div className="compare-toast__body"><strong>{notice.kind === "added" ? "Додано до порівняння" : notice.kind === "removed" ? "Прибрано з порівняння" : "Не вдалося додати товар"}</strong><p>{notice.message ?? notice.name}</p><Link href={notice.groupKey ? `/compare?group=${encodeURIComponent(notice.groupKey)}` : "/compare"} onClick={dismiss}>Переглянути порівняння →</Link></div>
+      <span className="compare-toast__icon" aria-hidden="true">
+        {notice.kind === "error" ? <AlertIcon /> : notice.kind === "added" ? "+" : "−"}
+      </span>
+      <div className="compare-toast__body">
+        <strong>{notice.kind === "added" ? "Додано до порівняння" : notice.kind === "removed" ? "Прибрано з порівняння" : "Не вдалося додати товар"}</strong>
+        <p>{notice.message ?? notice.name}</p>
+        <Link href={notice.groupKey ? `/compare?group=${encodeURIComponent(notice.groupKey)}` : "/compare"} onClick={dismiss}>
+          Переглянути порівняння <ArrowRightIcon />
+        </Link>
+      </div>
       <button type="button" className="compare-toast__close" aria-label="Закрити повідомлення" onClick={dismiss}><CloseIcon /></button>
     </div>}
   </div>;

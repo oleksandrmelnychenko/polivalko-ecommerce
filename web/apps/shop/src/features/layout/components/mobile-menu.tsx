@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useRef, type MouseEvent } from "react";
-import { thumb } from "@polivalko/shared/lib/images";
+import { usePathname } from "next/navigation";
+import { CategoryLinks, CategoryPicture, containsCategory } from "./mega-column";
+import type { MenuCategory } from "../lib/menu-category";
 import { ArrowRightIcon, ChevronDownIcon, CloseIcon } from "@polivalko/shared/ui/icons";
-
-type MenuSubcategory = { id: string; slug: string; name: string };
-type MenuCategory = { id: string; slug: string; name: string; photo: string | null; children: MenuSubcategory[] };
 
 export function MobileMenu({ categories, pages }: { categories: MenuCategory[]; pages: { href: string; label: string }[] }) {
   const menu = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   function closeOnNavigate(event: MouseEvent<HTMLDivElement>) {
     if ((event.target as HTMLElement).closest("a")) menu.current?.hidePopover();
@@ -19,6 +19,7 @@ export function MobileMenu({ categories, pages }: { categories: MenuCategory[]; 
     <div id="mobile-menu" ref={menu} popover="auto" className="mega" onClick={closeOnNavigate}>
       <div className="mega__head">
         <p className="mega__title">Каталог</p>
+        <Link href="/catalog" className="mega__all">Увесь каталог <ArrowRightIcon /></Link>
         <button type="button" className="icon-btn" popoverTarget="mobile-menu" popoverTargetAction="hide" aria-label="Закрити меню">
           <CloseIcon />
         </button>
@@ -28,31 +29,25 @@ export function MobileMenu({ categories, pages }: { categories: MenuCategory[]; 
           {categories.map((c) => {
             const head = (
               <>
-                {c.photo ? <img src={thumb(c.photo, 120)} alt="" width={56} height={56} loading="lazy" /> : <span className="mega__dot" aria-hidden="true" />}
+                <CategoryPicture category={c} />
                 <span>{c.name}</span>
               </>
             );
             return (
               <li key={c.id}>
                 {c.children.length > 0 ? (
-                  <details className="mega__group">
+                  <details className="mega__group" name="mobile-catalog-section" open={containsCategory(c, pathname)}>
                     <summary>
                       {head}
                       <ChevronDownIcon />
                     </summary>
-                    <ul className="mega__subs">
-                      <li>
-                        <Link href={`/catalog/${c.slug}`}>Усі товари розділу</Link>
-                      </li>
-                      {c.children.map((child) => (
-                        <li key={child.id}>
-                          <Link href={`/catalog/${child.slug}`}>{child.name}</Link>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="mega__subs">
+                      <Link href={`/catalog/${c.slug}`} aria-current={pathname === `/catalog/${c.slug}` ? "page" : undefined}>Усі товари розділу <ArrowRightIcon /></Link>
+                      <CategoryLinks categories={c.children} pathname={pathname} />
+                    </div>
                   </details>
                 ) : (
-                  <Link href={`/catalog/${c.slug}`}>{head}</Link>
+                  <Link href={`/catalog/${c.slug}`} aria-current={pathname === `/catalog/${c.slug}` ? "page" : undefined}>{head}</Link>
                 )}
               </li>
             );
@@ -67,10 +62,6 @@ export function MobileMenu({ categories, pages }: { categories: MenuCategory[]; 
             </Link>
           ))}
         </nav>
-        <Link href="/catalog" className="btn btn--dark btn--small">
-          Увесь каталог
-          <ArrowRightIcon />
-        </Link>
       </div>
     </div>
   );

@@ -68,8 +68,8 @@
   .co-summary__head, .co-summary .co-summary__lines, .co-summary .totals, .co-summary__confirm { padding-inline: var(--space-md); }
   .co-summary > .notice { margin-inline: var(--space-md); }
   .cart__head { display: none; }
-  .cart-line { grid-template-columns: 72px minmax(0, 1fr) auto; grid-template-areas: "photo info remove" "photo price price" "qty qty total"; row-gap: var(--space-sm); align-items: start; }
-  .cart-line__photo { width: 72px; }
+  .cart-line { grid-template-columns: 52px minmax(0, 1fr) auto; grid-template-areas: "photo info remove" "photo price price" "qty qty total"; row-gap: 4px; align-items: start; }
+  .cart-line__photo { width: 52px; }
   .cart-line__price { color: var(--color-muted); font-size: var(--text-sm); }
   .cart-line__label { display: inline; }
   .cart-line .line__total { align-self: center; }

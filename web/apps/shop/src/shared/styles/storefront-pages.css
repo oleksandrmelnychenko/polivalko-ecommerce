@@ -16,9 +16,6 @@ main .btn:not(:where(.btn--outline, .btn--quiet, .btn--text, .btn--soft, .btn--l
 .auth-card .auth__form, .cabinet__main { gap: 14px; }
 .cart-empty--page, .co-step, .doc__toc, .journal-card, .cabinet-nav { border-radius: 16px; }
 .cart-empty--page { padding: clamp(18px, 3vw, 32px); }
-.co-step__body { padding: clamp(14px, 2vw, 24px); gap: 16px; }
-.compare-toolbar { gap: 12px; padding: 10px 14px; border: 0; border-radius: 16px; background: var(--color-paper-2); }
-.compare-page .page-head > p { margin: 0; }
 .journal-grid { gap: 12px; }
 .journal-card { border: 1px solid var(--color-rule); padding: 12px; gap: 8px; }
 .journal-card > img, .journal-article__cover { border-radius: 12px; }

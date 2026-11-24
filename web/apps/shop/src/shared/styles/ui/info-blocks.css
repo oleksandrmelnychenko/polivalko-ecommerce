@@ -1,5 +1,4 @@
 .split-hero { padding-top: var(--space-xl); }
-.split-hero .crumbs { margin-bottom: var(--space-lg); }
 .split-hero__grid { border-radius: var(--radius); overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 360px; }
 .split-hero__panel { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: var(--space-md); padding: var(--space-2xl) clamp(var(--space-xl), 5vw, 64px); background: var(--color-ink); color: #fff; }
 .split-hero__icon { border-radius: var(--radius); display: grid; place-items: center; width: 52px; height: 52px; border: 2px solid var(--color-brand); color: var(--color-brand); }

@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { formatMoney } from "@polivalko/shared/lib/format";
+import { sized } from "@polivalko/shared/lib/images";
 import { hasPrice, PRICE_ON_REQUEST } from "@/shared/lib/price";
-import { CloseIcon } from "@polivalko/shared/ui/icons";
+import { CloseIcon, PlusIcon } from "@polivalko/shared/ui/icons";
 import { comparisonGroup, comparisonRows, type CompareProduct } from "./model";
+import { ComparisonColumnNames } from "./column-names";
 import { clearComparisonGroup, loadComparisonProduct, refreshComparison, removeComparison, useComparison } from "./store";
 
 export function CompareScreen() {
@@ -15,9 +17,25 @@ export function CompareScreen() {
   return <ComparisonGroups selectedGroup={group} />;
 }
 
+function ComparisonPrice({ product, lowest }: { product: CompareProduct; lowest: boolean }) {
+  if (!hasPrice(product.price)) return <span>{PRICE_ON_REQUEST}</span>;
+  const oldPrice = product.oldPrice;
+  return (
+    <div className="comparison-price">
+      <strong>{formatMoney(product.price)}</strong>
+      {oldPrice && Number(oldPrice.value) > Number(product.price.value) && (
+        <s><span className="visually-hidden">Попередня ціна </span>{formatMoney(oldPrice)}</s>
+      )}
+      {lowest && <span className="comparison-price__lowest">Найнижча ціна</span>}
+    </div>
+  );
+}
+
 function ComparisonGroups({ selectedGroup }: { selectedGroup: string }) {
   const hydrated = useHydrated();
   const saved = useComparison();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [tableOverflows, setTableOverflows] = useState(false);
   const [onlyDifferences, setOnlyDifferences] = useState(false);
   const [failed, setFailed] = useState<string[]>([]);
   const [retry, setRetry] = useState(0);
@@ -44,10 +62,26 @@ function ComparisonGroups({ selectedGroup }: { selectedGroup: string }) {
   });
   const active = groups.get(selectedGroup) ?? [...groups.values()][0];
   const products = active?.products ?? [];
+  const productCount = products.length;
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!hydrated || productCount <= 2 || !scroller) return;
+    const measure = () => setTableOverflows(scroller.scrollWidth > scroller.clientWidth + 1);
+    measure();
+    const resize = new ResizeObserver(measure);
+    resize.observe(scroller);
+    return () => resize.disconnect();
+  }, [hydrated, productCount]);
   const rows = comparisonRows(products);
-  const visibleRows = onlyDifferences && products.length > 1 ? rows.filter(row => row.differs) : rows;
+  const differences = rows.filter(row => row.differs);
+  const visibleRows = onlyDifferences && products.length > 1 ? differences : [
+    ...rows.filter(row => row.key === "price"),
+    ...differences.filter(row => row.key !== "price"),
+    ...rows.filter(row => row.key !== "price" && !row.differs),
+  ];
+  const prices = products.filter(product => hasPrice(product.price)).map(product => Number(product.price.value));
+  const lowestPrice = new Set(prices).size > 1 ? Math.min(...prices) : null;
   const categoryHref = active?.slug ? `/catalog/${active.slug}` : "/catalog";
-  const addSlot = products.length < 4;
 
   function selectGroup(key: string) {
     if (active?.key === key) return;
@@ -59,32 +93,62 @@ function ComparisonGroups({ selectedGroup }: { selectedGroup: string }) {
 
   if (!hydrated) return <p role="status" className="compare-loading">Завантажуємо порівняння…</p>;
   return saved.length === 0 ?
-      <div className="compare-empty"><span className="compare-empty__symbol" aria-hidden="true">⇄</span><h2>Товарів для порівняння ще немає</h2><p>У каталозі натисніть іконку порівняння на фото товару, під сердечком. Товари різних типів зберуться в окремі групи.</p><Link href="/catalog" className="btn">Обрати товари</Link></div> : <>
-      <nav className="compare-groups" aria-label="Групи порівняння">{[...groups.values()].map(group => <button key={group.key} type="button" aria-pressed={active?.key === group.key} onClick={() => selectGroup(group.key)}>{group.name}<span>{group.products.length}</span></button>)}</nav>
+      <div className="compare-empty"><h2>Товарів для порівняння ще немає</h2><p>Оберіть у каталозі товари одного типу й натисніть іконку порівняння на кожному з них.</p><Link href="/catalog" className="btn">Обрати товари</Link></div> : <>
       {failed.length > 0 && <div role="alert" className="notice">Не вдалося оновити частину товарів. Показуємо останні збережені дані. <button type="button" className="link" onClick={() => setRetry(value => value + 1)}>Спробувати ще раз</button></div>}
       <div className="compare-toolbar">
-        <label className="consent"><input type="checkbox" checked={products.length > 1 && onlyDifferences} disabled={products.length < 2} onChange={event => setOnlyDifferences(event.target.checked)} />Тільки відмінності</label>
-        <button className="compare-clear" type="button" onClick={() => active && clearComparisonGroup(active.key)}>Очистити цю групу</button>
+        <nav className="compare-groups" aria-label="Групи порівняння">
+          {[...groups.values()].map(group => <button key={group.key} type="button" aria-pressed={active?.key === group.key} onClick={() => selectGroup(group.key)}>{group.name}<span>{group.products.length}</span></button>)}
+        </nav>
+        <div className="compare-toolbar__actions">
+          {products.length > 1 && <label className="consent compare-differences"><input type="checkbox" checked={onlyDifferences} onChange={event => setOnlyDifferences(event.target.checked)} />Тільки відмінності <span>{differences.length}</span></label>}
+          <Link className="compare-add" href={categoryHref}>{products.length < 4 ? <><PlusIcon />Додати товар</> : "Уся категорія"}</Link>
+          <button className="compare-clear" type="button" onClick={() => active && clearComparisonGroup(active.key)}>Очистити групу</button>
+        </div>
       </div>
-      {products.length === 1 && <p className="compare-hint">Додайте ще товар цього типу, щоб побачити відмінності.</p>}
-      <div className="comparison-scroll" role="region" aria-label={`Порівняння: ${active?.name}`} tabIndex={0}>
-        <table className="comparison-grid">
-          <caption className="visually-hidden">Характеристики товарів: {active?.name}</caption>
-          <colgroup><col className="comparison-grid__labels" />{products.map(p => <col key={p.id} className="comparison-grid__product" />)}{addSlot && <col className="comparison-grid__product" />}</colgroup>
-          <thead><tr><th scope="col" className="comparison-intro"><span>Ваш вибір</span><strong>{active?.name}</strong><Link href={categoryHref}>Усі товари категорії →</Link></th>
-            {products.map(product => <th scope="col" key={product.id}><article className="comparison-product">
-              <button className="comparison-product__remove" type="button" aria-label={`Прибрати: ${product.name}`} onClick={() => removeComparison(product.id)}><CloseIcon /></button>
-              <Link href={`/product/${product.slug}`} className="comparison-product__photo">{product.imageUrl ? <img src={product.imageUrl} alt={product.name} width={260} height={240} /> : <span>Фото відсутнє</span>}</Link>
-              <Link href={`/product/${product.slug}`} className="comparison-product__name">{product.name}</Link>
-            </article></th>)}
-            {addSlot && <th><Link href={categoryHref} className="comparison-add"><span aria-hidden="true">+</span><strong>Додати товар</strong><small>З цієї категорії</small></Link></th>}
-          </tr></thead>
-          <tbody>
-            <tr className="comparison-section"><th scope="row" colSpan={1 + products.length + Number(addSlot)}>Характеристики</th></tr>
-            {visibleRows.map(row => <tr key={row.key} className={row.differs ? "comparison-row--different" : undefined}><th scope="row">{row.name}</th>{row.values.map((value, i) => <td key={products[i].id}>{row.key === "price" ? <div className="comparison-price"><strong>{hasPrice(products[i].price) ? formatMoney(products[i].price) : PRICE_ON_REQUEST}</strong>{products[i].oldPrice && Number(products[i].oldPrice!.value) > Number(products[i].price.value) && <s>{formatMoney(products[i].oldPrice!)}</s>}</div> : value}</td>)}{addSlot && <td aria-hidden="true" />}</tr>)}
-            {visibleRows.length === 0 && <tr><td colSpan={1 + products.length + Number(addSlot)}>У заповнених характеристиках відмінностей немає.</td></tr>}
-          </tbody>
-        </table>
+      {productCount > 2 && tableOverflows && (
+        <p className="comparison-scroll-hint"><span aria-hidden="true">↔</span> Гортайте вбік, щоб побачити інші товари</p>
+      )}
+      <div className="comparison-table-wrap" style={{ "--comparison-count": products.length } as CSSProperties}>
+        <ComparisonColumnNames products={products} scrollRef={scrollRef} />
+        <div ref={scrollRef} className="comparison-scroll" role="region" aria-label={`Порівняння: ${active?.name}`} tabIndex={0}>
+          <table className="comparison-grid" role="table">
+            <caption className="visually-hidden">Характеристики товарів: {active?.name}</caption>
+            <colgroup><col className="comparison-grid__labels" />{products.map(p => <col key={p.id} />)}</colgroup>
+            <thead><tr><th scope="col">Товар</th>
+              {products.map(product => <th scope="col" key={product.id}><article className="comparison-product tile--shop">
+                <button className="comparison-product__remove" type="button" aria-label={`Прибрати: ${product.name}`} onClick={() => removeComparison(product.id)}><CloseIcon /></button>
+                <Link href={`/product/${product.slug}`} className="comparison-product__link">
+                  <span className="tile__photo comparison-product__photo">
+                    {product.imageUrl
+                      ? <img {...sized(product.imageUrl, "(max-width: 40rem) 55vw, 340px", 330)} alt="" width={320} height={240} />
+                      : <span className="tile__photo-empty">Фото відсутнє</span>}
+                  </span>
+                  <span className="comparison-product__name">{product.name}</span>
+                </Link>
+              </article></th>)}
+            </tr></thead>
+            <tbody>
+              {visibleRows.map(row => (
+                <tr key={row.key} className={row.differs ? "comparison-row--different" : undefined}>
+                  <th scope="row">
+                    <span className="comparison-row__label">
+                      {row.differs && <><span className="comparison-row__mark" aria-hidden="true">≠</span><span className="visually-hidden">Відмінність. </span></>}
+                      {row.name}
+                    </span>
+                  </th>
+                  {row.values.map((value, i) => (
+                    <td key={products[i].id}>
+                      {row.key === "price"
+                        ? <ComparisonPrice product={products[i]} lowest={Number(products[i].price.value) === lowestPrice} />
+                        : value}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+              {visibleRows.length === 0 && <tr><td colSpan={1 + products.length}>У заповнених характеристиках відмінностей немає.</td></tr>}
+            </tbody>
+          </table>
+        </div>
       </div>
       {products.every(p => !p.attributes?.length) && <p className="compare-hint">Детальні характеристики цих товарів ще не заповнені.</p>}
     </>;

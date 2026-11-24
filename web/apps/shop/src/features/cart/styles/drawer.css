@@ -1,12 +1,49 @@
-.drawer { border-radius: var(--radius) 0 0 var(--radius); overflow: hidden; position: fixed; inset: 0 0 0 auto; width: min(440px, 100%); max-width: 100%; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0; background: var(--color-paper); color: var(--color-ink); box-shadow: var(--shadow-pop); overscroll-behavior: contain; transform: translateX(100%); transition: transform var(--dur-short) var(--ease-out), overlay var(--dur-short) allow-discrete, display var(--dur-short) allow-discrete; }
-.drawer[open] { transform: none; }
-@starting-style { .drawer[open] { transform: translateX(100%); } }
-.drawer::backdrop { background: rgb(0 0 0 / 0.45); }
-.drawer__inner { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; }
-.drawer__head { display: flex; justify-content: space-between; align-items: center; padding: var(--space-md) var(--space-md) var(--space-md) var(--space-lg); background: var(--color-chrome); color: #fff; }
-.drawer__head h2 { color: #fff; font-size: var(--text-xl); }
-.drawer__head .icon-btn { color: #fff; }
-.drawer__head .icon-btn:hover { background: transparent; color: var(--color-brand); }
-.drawer__lines { margin: 0; padding: 0 var(--space-lg); list-style: none; overflow-y: auto; overscroll-behavior: contain; }
-.drawer__foot { display: flex; flex-direction: column; gap: var(--space-sm); padding: var(--space-lg); border-top: var(--rule-hair) solid var(--color-rule); background: var(--color-paper-2); }
-.drawer__foot .muted { font-size: var(--text-sm); }
+.drawer {
+  --cart-top: 8px;
+  position: fixed;
+  inset: var(--cart-top) var(--cart-right, 8px) auto auto;
+  width: min(460px, calc(100% - 16px));
+  max-width: none;
+  max-height: calc(100dvh - var(--cart-top) - 8px);
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--color-rule);
+  border-radius: 20px;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 14%);
+}
+.drawer::backdrop { background: rgb(20 24 28 / 10%); }
+html:has(.drawer[open]) { overflow: hidden; }
+.drawer__inner { display: flex; flex-direction: column; max-height: inherit; }
+.drawer__head, .drawer__foot { flex: none; padding: 14px 18px; }
+.drawer__head { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--color-rule); }
+.drawer__head h2 { font-size: 20px; line-height: 1.25; }
+.drawer__head .icon-btn { width: 36px; height: 36px; border-radius: 12px; background: var(--color-paper-2); }
+.drawer__lines { min-height: 0; margin: 0; padding: 0 18px; overflow-y: auto; overscroll-behavior: contain; list-style: none; }
+.drawer .line { grid-template-columns: 58px minmax(0, 1fr) auto; gap: 10px; padding-block: 14px; }
+.drawer .line__photo { width: 58px; border: 1px solid var(--color-rule); border-radius: 10px; }
+.drawer .line__photo img { object-fit: contain; }
+.drawer .line__name { overflow-wrap: anywhere; }
+.drawer .line__controls { flex-wrap: wrap; gap: 4px 10px; }
+.drawer__foot { display: grid; gap: 8px; border-top: 1px solid var(--color-rule); }
+.drawer__foot .totals { margin: 0; }
+.drawer__foot .muted { margin: 0; font-size: var(--text-xs); line-height: 1.45; }
+.drawer__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.drawer__actions .btn { flex: 1 1 auto; min-height: 42px; padding: 8px 12px; border-radius: 12px; font-size: 14px; }
+.drawer__actions .drawer__checkout { background: var(--shop-graphite); color: #fff; border-color: transparent; }
+.drawer .cart-empty { padding: 20px 0; }
+.drawer .cart-empty__icon { width: 48px; height: 48px; margin-bottom: 12px; }
+.drawer .cart-empty__icon svg { width: 24px; height: 24px; }
+.drawer .cart-empty h2 { font-size: 20px; }
+.drawer .cart-empty > p { margin-bottom: 16px; }
+.drawer .cart-empty__suggestions { display: none; }
+@media (max-width: 32rem) {
+  .drawer { right: 8px; }
+  .drawer__head, .drawer__foot { padding: 12px; }
+  .drawer__lines { padding-inline: 12px; }
+}
+@media (max-height: 32rem) {
+  .drawer__inner { max-height: none; }
+}

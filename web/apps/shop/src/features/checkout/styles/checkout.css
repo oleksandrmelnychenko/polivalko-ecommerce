@@ -16,6 +16,7 @@
 
 .co-options { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-xs); min-width: 0; margin: 0; padding: 0; border: 0; }
 .co-option { position: relative; display: flex; min-width: 0; }
+.co-option .np-mark, .order-facts .np-mark { display: block; width: 24px; height: 24px; padding: 2px; border-radius: 5px; background: #fff; }
 .co-option input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .co-option label { border-radius: var(--radius); position: relative; flex: 1; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: var(--space-md); align-items: center; min-height: 72px; padding: var(--space-sm) 56px var(--space-sm) var(--space-md); border: var(--rule-hair) solid var(--color-rule); background: var(--color-paper); cursor: pointer; transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s; }
 .co-option label:hover { border-color: var(--color-field); }
