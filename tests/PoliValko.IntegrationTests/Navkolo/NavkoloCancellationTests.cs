@@ -163,7 +163,7 @@ public sealed class NavkoloCancellationTests(ApiFactory api)
     }
 
     [Fact]
-    public async Task Shipped_reservation_is_not_returned_to_sale_by_status_cancellation()
+    public async Task A_shipped_order_is_written_off_and_its_cancellation_does_not_return_the_goods_to_sale()
     {
         var order = await CreateAsync(); var provider = new Provider(); await using var host = Host(provider);
         await Export(host, order);
@@ -171,9 +171,10 @@ public sealed class NavkoloCancellationTests(ApiFactory api)
         foreach (var status in new[] { OrderStatus.Confirmed, OrderStatus.Shipped })
             (await admin.PostJsonAsync($"/api/v1/console/orders/{order.Number}/status", new ChangeOrderStatusRequest(status, "Тест"))).StatusCode.ShouldBe(HttpStatusCode.OK);
         await Cancel(order); await SyncCancellation(host, order);
-        (await Reserved(order)).ShouldBe(2);
+        // The goods left at shipment: the reserve ended then and the stock went down; the cancel brings back neither.
+        (await Reserved(order)).ShouldBe(0);
         var row = await api.WithDbAsync(db => db.Set<StockReservation>().AsNoTracking().SingleAsync(r => r.OrderId == order.Id, Ct));
-        row.Consumed.ShouldBeTrue(); row.Released.ShouldBeFalse();
+        row.Consumed.ShouldBeTrue(); row.Released.ShouldBeTrue();
     }
 
     private sealed class TestSettings(bool orderSyncEnabled) : INavkoloSettings

@@ -83,13 +83,20 @@ internal sealed class CatalogReservations(PoliValkoDbContext db, TimeProvider ti
                         AND w.product_id={row.ProductId} AND w.org_id={row.WarehouseOrgId} AND w.store_id={row.WarehouseStoreId}
                     """,ct);
             }
-            var release=managed || reconciled;
-            if (release && !row.Released)
+            // The shop keeps its own stock: goods that leave it are written off here and their reserve ends with them.
+            // A shipment the ERP reports (reconciled) only frees the reserve: its stock sync brings the new quantity.
+            var writeOff=!managed && !reconciled && !row.Consumed && !row.Released;
+            if (writeOff)
+                await db.Set<ProductStock>().Where(s => s.ProductId == row.ProductId)
+                    .ExecuteUpdateAsync(s => s.SetProperty(p => p.Quantity, p => p.Quantity - row.Quantity)
+                        .SetProperty(p => p.ReservedQuantity, p => p.ReservedQuantity - row.Quantity)
+                        .SetProperty(p => p.UpdatedAt, time.GetUtcNow()), ct);
+            else if (!row.Released)
                 await db.Set<ProductStock>().Where(s => s.ProductId == row.ProductId)
                     .ExecuteUpdateAsync(s => s.SetProperty(p => p.ReservedQuantity, p => p.ReservedQuantity - row.Quantity), ct);
             await db.Set<StockReservation>().Where(r=>r.OrderId==row.OrderId && r.ProductId==row.ProductId)
-                .ExecuteUpdateAsync(s=>s.SetProperty(r=>r.Consumed,true).SetProperty(r=>r.Released,release||row.Released),ct);
-            availabilityChanged |= release;
+                .ExecuteUpdateAsync(s=>s.SetProperty(r=>r.Consumed,true).SetProperty(r=>r.Released,true),ct);
+            availabilityChanged=true;
         }
         if (availabilityChanged) outbox.Enqueue(new StockAvailabilityChanged());
     }
