@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Routing;
@@ -16,6 +17,9 @@ namespace PoliValko.Infrastructure.Idempotency;
 internal sealed class IdempotencyFilter<TRequest> : IEndpointFilter
     where TRequest : class
 {
+    // A saved answer can hold secrets, such as the token of an order page: it is kept encrypted, as a JSON string.
+    private const string Purpose = "PoliValko.Idempotency.Response.v1";
+
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
         var http = context.HttpContext;
@@ -56,7 +60,7 @@ internal sealed class IdempotencyFilter<TRequest> : IEndpointFilter
 
         if (inserted == 0)
         {
-            return await ReplayAsync(db, http, scope, key, hash, subjectHash, ct);
+            return await ReplayAsync(db, http, Protector(services), scope, key, hash, subjectHash, ct);
         }
 
         object? result;
@@ -73,7 +77,9 @@ internal sealed class IdempotencyFilter<TRequest> : IEndpointFilter
         var httpResult = result is INestedHttpResult nested ? nested.Result : result;
         if (httpResult is IStatusCodeHttpResult { StatusCode: >= 200 and < 300 } success)
         {
-            var body = httpResult is IValueHttpResult { Value: { } value } ? JsonSerializer.Serialize(value, value.GetType(), json) : null;
+            var body = httpResult is IValueHttpResult { Value: { } value }
+                ? JsonSerializer.Serialize(Protector(services).Protect(JsonSerializer.Serialize(value, value.GetType(), json)))
+                : null;
             var location = httpResult.GetType().GetProperty("Location")?.GetValue(httpResult) as string;
 
             await db.IdempotencyRecords
@@ -96,6 +102,7 @@ internal sealed class IdempotencyFilter<TRequest> : IEndpointFilter
     private static async Task<IResult> ReplayAsync(
         PoliValkoDbContext db,
         HttpContext http,
+        IDataProtector protector,
         string scope,
         string key,
         string hash,
@@ -139,8 +146,15 @@ internal sealed class IdempotencyFilter<TRequest> : IEndpointFilter
 
         return record.ResponseBody is null
             ? Results.StatusCode(record.StatusCode ?? StatusCodes.Status200OK)
-            : Results.Content(record.ResponseBody, "application/json", Encoding.UTF8, record.StatusCode);
+            : Results.Content(Readable(record.ResponseBody, protector), "application/json", Encoding.UTF8, record.StatusCode);
     }
+
+    private static IDataProtector Protector(IServiceProvider services) =>
+        services.GetRequiredService<IDataProtectionProvider>().CreateProtector(Purpose);
+
+    /// <summary>Rows saved before the answers were encrypted hold the JSON itself; they expire within days.</summary>
+    private static string Readable(string body, IDataProtector protector) =>
+        body.StartsWith('"') ? protector.Unprotect(JsonSerializer.Deserialize<string>(body)!) : body;
 
     private static Task ReleaseAsync(PoliValkoDbContext db, string scope, string key) =>
         db.IdempotencyRecords
