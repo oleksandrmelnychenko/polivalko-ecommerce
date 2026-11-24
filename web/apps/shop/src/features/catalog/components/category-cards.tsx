@@ -1,62 +1,47 @@
 import Link from "next/link";
 import { sized } from "@polivalko/shared/lib/images";
-import { ArrowRightIcon } from "@polivalko/shared/ui/icons";
+import { ArrowRightIcon, ChevronDownIcon, GridIcon } from "@polivalko/shared/ui/icons";
 import { categoryPhotoUrl } from "../lib/category-photo";
 
 type CategoryCardItem = { id: string; slug: string; name: string; imageUrl?: string | null; children?: { id: string; slug: string; name: string }[] };
 
-const SHOWN_SUBCATEGORIES = 3;
-
-export function CategoryCards({ categories }: { categories: CategoryCardItem[] }) {
+export function CategoryCards({ categories, nested = false }: { categories: CategoryCardItem[]; nested?: boolean }) {
   return (
     <ul className="ctiles">
       {categories.map((category, index) => (
-        <CategoryCard key={category.id} category={category} priority={index < 4} />
+        <CategoryCard key={category.id} category={category} priority={!nested && index < 4} heading={nested ? "h3" : "h2"} />
       ))}
     </ul>
   );
 }
 
-function CategoryCard({ category, priority }: { category: CategoryCardItem; priority: boolean }) {
+function CategoryCard({ category, priority, heading: Heading }: { category: CategoryCardItem; priority: boolean; heading: "h2" | "h3" }) {
   const photo = categoryPhotoUrl(category);
-  const image = photo ? sized(photo, "(max-width: 40rem) 50vw, (max-width: 75rem) 33vw, 320px", 500) : null;
+  const image = photo ? sized(photo, "(max-width: 36rem) 36px, 52px", 330) : null;
   const children = category.children ?? [];
-  const shown = children.slice(0, SHOWN_SUBCATEGORIES);
-  const more = children.length - shown.length;
   const href = `/catalog/${category.slug}`;
 
   return (
     <li className="ctile">
-      <figure className="ctile__photo">
-        {image && <img {...image} alt="" width={400} height={500} loading={priority ? "eager" : "lazy"} decoding="async" />}
-      </figure>
-      <span className="ctile__go" aria-hidden="true">
-        <ArrowRightIcon />
-      </span>
-      <div className="ctile__body">
-        <span className="ctile__bar" aria-hidden="true" />
-        <h2 className="ctile__name">
-          <Link href={href} className="ctile__link">
-            {category.name}
-          </Link>
-        </h2>
-        {shown.length > 0 && (
-          <ul className="ctile__subs" aria-label={`Підрозділи: ${category.name}`}>
-            {shown.map((child) => (
-              <li key={child.id}>
-                <Link href={`/catalog/${child.slug}`}>{child.name}</Link>
-              </li>
+      <Heading className="ctile__name">
+        <Link href={href} className="ctile__link">
+          <span className="ctile__photo" aria-hidden="true">
+            {image ? <img {...image} alt="" width={96} height={96} loading={priority ? "eager" : "lazy"} decoding="async" /> : <GridIcon />}
+          </span>
+          <span>{category.name}</span>
+          {children.length === 0 && <ArrowRightIcon className="ctile__go" />}
+        </Link>
+      </Heading>
+      {children.length > 0 && (
+        <details className="ctile__children">
+          <summary aria-label={"Підрозділи категорії «" + category.name + "»"}><ChevronDownIcon /></summary>
+          <ul className="ctile__subs">
+            {children.map((child) => (
+              <li key={child.id}><Link href={`/catalog/${child.slug}`}>{child.name}</Link></li>
             ))}
-            {more > 0 && (
-              <li>
-                <Link href={href} className="ctile__more">
-                  ще {more}
-                </Link>
-              </li>
-            )}
           </ul>
-        )}
-      </div>
+        </details>
+      )}
     </li>
   );
 }

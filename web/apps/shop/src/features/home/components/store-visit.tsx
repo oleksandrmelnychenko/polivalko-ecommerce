@@ -22,7 +22,7 @@ export async function StoreVisit({ visit }: { visit?: TextItem | null }) {
         </div>
         <div className="store-visit__actions">
           {contacts?.mapUrl ? <a href={contacts.mapUrl} target="_blank" rel="noopener noreferrer" className="btn">Прокласти маршрут <ArrowRightIcon /></a> : <Link href="/contacts" className="btn">Як нас знайти <ArrowRightIcon /></Link>}
-          <Link href="/contacts" className="store-visit__contact-link">Усі контакти</Link>
+          {contacts?.mapUrl && <Link href="/contacts" className="store-visit__contact-link">Усі контакти</Link>}
         </div>
       </div>
       <div className="store-visit__pickup"><BagIcon /><p><strong>Самовивіз — безкоштовно</strong><span>Оформіть замовлення онлайн та дочекайтеся підтвердження готовності.</span></p><Link href="/payment-delivery">Про доставку й оплату <ArrowRightIcon /></Link></div>

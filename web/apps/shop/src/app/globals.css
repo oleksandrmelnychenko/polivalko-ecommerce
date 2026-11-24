@@ -91,6 +91,8 @@
 @import url("../features/content/styles/page-refresh.css");
 @import url("../features/home/styles/merchandising.css");
 @import url("../features/compare/compare.css");
+@import url("../shared/styles/storefront-pages.css");
+@import url("../features/catalog/styles/compact-listing.css");
 
 :root {
   scrollbar-gutter: stable;

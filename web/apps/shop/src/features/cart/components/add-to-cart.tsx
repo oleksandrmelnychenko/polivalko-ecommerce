@@ -1,6 +1,6 @@
 "use client";
 
-import { CartIcon } from "@polivalko/shared/ui/icons";
+import { PurchaseIcon } from "./purchase-icon";
 import type { CartProduct } from "../lib/cart-store";
 import { useCart } from "./cart-provider";
 
@@ -8,9 +8,9 @@ export function AddToCart({ product, inStock }: { product: CartProduct; inStock:
   const { add } = useCart();
   if (!inStock) return null;
   return (
-    <button type="button" className="tile__buy" onClick={() => add(product, 1)} aria-label={`У кошик: ${product.name}`}>
-      <CartIcon />
-      <span aria-hidden="true">Купити</span>
+    <button type="button" className="tile__buy cart-purchase" onClick={() => add(product, 1)} aria-label={`До кошика: ${product.name}`}>
+      <PurchaseIcon />
+      <span aria-hidden="true">До кошика</span>
     </button>
   );
 }

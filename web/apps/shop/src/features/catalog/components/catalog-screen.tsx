@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { breadcrumbJsonLd, itemListJsonLd, JsonLd } from "@/features/seo";
 import { getCategoryTree } from "../api/server";
@@ -10,24 +9,15 @@ import { ListingSkeleton } from "./listing-skeleton";
 
 export function CatalogScreen({ searchParams }: { searchParams: Promise<SearchParams> }) {
   return (
-    <div className="container">
+    <div className="container catalog-page listing-page">
       <JsonLd data={breadcrumbJsonLd([{ name: "Каталог", path: "/catalog" }])} />
       <header className="page-head">
-        <nav className="crumbs" aria-label="Хлібні крихти">
-          <ol>
-            <li>
-              <Link href="/">Головна</Link>
-            </li>
-            <li aria-current="page">Каталог</li>
-          </ol>
-        </nav>
         <h1>Каталог</h1>
       </header>
       <Suspense fallback={<div className="skeleton" style={{ height: 320 }} />}>
         <CatalogCategories searchParams={searchParams} />
       </Suspense>
-      <section aria-labelledby="catalog-products">
-        <h2 id="catalog-products">Товари</h2>
+      <section aria-label="Товари">
         <Suspense fallback={<ListingSkeleton head={false} />}>
           <CatalogProducts searchParams={searchParams} />
         </Suspense>
@@ -58,6 +48,7 @@ async function CatalogCategories({ searchParams }: { searchParams: Promise<Searc
 async function CatalogProducts({ searchParams }: { searchParams: Promise<SearchParams> }) {
   return (
     <CatalogListing
+      compact
       basePath="/catalog"
       base={{}}
       searchParams={await searchParams}

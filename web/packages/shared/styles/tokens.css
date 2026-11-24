@@ -34,12 +34,10 @@
   --color-hero-veil: rgb(0 160 70 / 0.88);
   --color-error: #c8261d; --color-success: #2e8b57;
 
-  --font-body: var(--font-onest), "Onest", ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-digits), var(--font-onest), "Onest", ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-body);
   --font-accent: var(--font-display);
-  --font-numeric: var(--font-body);
-  --font-money: var(--font-body);
-  --font-price: var(--font-body);
+  --font-numeric: var(--font-money);
   --font-outlier: var(--font-body);
   --font-mega: var(--font-display);
   --font-button: var(--font-body);

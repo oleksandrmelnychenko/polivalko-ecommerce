@@ -12,7 +12,7 @@ import { RelatedProducts } from "./related-products";
 /** The page resolves the product first (see requireProduct), so a missing one is a real 404. */
 export function ProductScreen({ product, deliveryFacts }: { product: ProductDetails; deliveryFacts: () => Promise<DeliveryFacts | null> }) {
   return (
-    <div className="container">
+    <div className="container product-page">
       <ProductJsonLd product={product} />
       <TrackViewItem item={{ item_id: product.sku, item_name: product.name, price: Number(product.price.value), quantity: 1 }} />
       <nav className="crumbs product-crumbs" aria-label="Хлібні крихти">
@@ -23,18 +23,15 @@ export function ProductScreen({ product, deliveryFacts }: { product: ProductDeta
           <li>
             <Link href={`/catalog/${product.category.slug}`}>{product.category.name}</Link>
           </li>
-          <li aria-current="page">{product.name}</li>
         </ol>
       </nav>
 
       <div className="product">
-        <div className="product__main">
-          <Gallery key={product.id} images={product.images} name={product.name} />
-          <ProductDescription product={product} />
-        </div>
+        <Gallery key={product.id} images={product.images} name={product.name} />
         <ProductBuybox product={product} deliveryFacts={deliveryFacts} />
       </div>
 
+      <ProductDescription product={product} />
       <Suspense fallback={null}>
         <RelatedProducts category={product.category.slug} exclude={product.id} />
       </Suspense>

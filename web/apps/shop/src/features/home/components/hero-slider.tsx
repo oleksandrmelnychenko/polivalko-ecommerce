@@ -50,7 +50,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
           {slides.map((slide, i) => <li key={slide.key} className="hero-mobile__slide">
             <div className="hero-mobile__content">
               {i === 0 ? <h1>{slide.title}</h1> : <h2>{slide.title}</h2>}
-              {slide.kicker && <p>{slide.kicker}</p>}
+              {(slide.sub || slide.kicker) && <p>{slide.sub || slide.kicker}</p>}
               {slide.cta && <Link href={slide.cta.href} className="hero-panel__btn">{slide.cta.label}<ArrowRightIcon /></Link>}
             </div>
             <div className="hero-mobile__photo"><HeroPhoto slide={slide} first={i === 0} /></div>

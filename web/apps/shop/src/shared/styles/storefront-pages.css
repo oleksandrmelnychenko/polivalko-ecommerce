@@ -1,0 +1,31 @@
+/* Shared storefront page headers, primary actions and form panels. */
+main .page-head, .delivery-page .delivery-header { gap: 8px; padding-block: 16px 12px; }
+main .page-head h1, .compare-page > .page-head h1, .delivery-page .delivery-header h1, .auth-card h1 {
+  margin: 0; font: 600 clamp(1.75rem, 3vw, 2.5rem)/1.12 var(--font-body); letter-spacing: -.035em;
+}
+main .crumbs ol { font-size: var(--text-xs); }
+main .btn:not(:where(.btn--outline, .btn--quiet, .btn--text, .btn--soft, .btn--light, .btn--danger, .btn--chrome)), .hero-panel__btn {
+  min-height: 42px; border-color: transparent; border-radius: 10px; background: var(--shop-graphite); color: white;
+}
+main .btn:not(:where(.btn--outline, .btn--quiet, .btn--text, .btn--soft, .btn--light, .btn--danger, .btn--chrome)):hover:not(:disabled), .hero-panel__btn:hover {
+  background: linear-gradient(145deg, #444449, #222227); color: white;
+}
+.auth-card { width: min(500px, calc(100% - 32px)); margin-block: 24px 40px; padding: clamp(16px, 3vw, 28px); border-radius: 16px; }
+.auth-card__icon, .auth-card .lead { margin-block: 0 12px; }
+.auth-card .auth { margin-top: 16px; }
+.auth-card .auth__form, .cabinet__main { gap: 14px; }
+.cart-empty--page, .co-step, .doc__toc, .journal-card, .cabinet-nav { border-radius: 16px; }
+.cart-empty--page { padding: clamp(18px, 3vw, 32px); }
+.co-step__body { padding: clamp(14px, 2vw, 24px); gap: 16px; }
+.compare-toolbar { gap: 12px; padding: 10px 14px; border: 0; border-radius: 16px; background: var(--color-paper-2); }
+.compare-page .page-head > p { margin: 0; }
+.journal-grid { gap: 12px; }
+.journal-card { border: 1px solid var(--color-rule); padding: 12px; gap: 8px; }
+.journal-card > img, .journal-article__cover { border-radius: 12px; }
+.journal-card h2 { font-size: var(--text-lg); }
+.journal-card__more { min-height: 32px; }
+.delivery-option, .delivery-help, .doc__seller { border-radius: 16px; }
+@media (max-width: 40rem) {
+  main .page-head, .delivery-page .delivery-header { padding-block: 12px; }
+  .contact-page .contact-columns { gap: 10px; }
+}

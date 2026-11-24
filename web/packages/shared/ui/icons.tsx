@@ -11,6 +11,13 @@ const base = {
   focusable: false,
 };
 
+export const AdjustmentsIcon = ({ className }: IconProps) => (
+  <svg {...base} className={className}>
+    <path d="M4 6h4m4 0h8M4 12h10m4 0h2M4 18h2m4 0h10" />
+    <circle cx="10" cy="6" r="2" /><circle cx="16" cy="12" r="2" /><circle cx="8" cy="18" r="2" />
+  </svg>
+);
+
 export const CartIcon = ({ className }: IconProps) => (
   <svg {...base} aria-hidden="true" className={className}>
     <path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H6.4" />

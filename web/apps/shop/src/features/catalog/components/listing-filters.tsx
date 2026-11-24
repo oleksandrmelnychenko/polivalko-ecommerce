@@ -1,6 +1,7 @@
 "use client";
 
-import { useId, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useId, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
+import { CircleCheckIcon, GridIcon, TagIcon, WalletIcon } from "@polivalko/shared/ui/icons";
 import type { ProductSearch } from "@polivalko/shared/api/types";
 import { formatMoney } from "@polivalko/shared/lib/format";
 import { priceOrder, priceRanges } from "../lib/listing-params";
@@ -18,7 +19,7 @@ const priceOf = (text: string) => {
 
 type Option = { key: string; label: string; count?: number; checked: boolean; name: string; value: string; onToggle: () => void; };
 
-function FacetGroup({ title, options }: { title: string; options: Option[] }) {
+function FacetGroup({ title, options, icon }: { title: string; options: Option[]; icon?: ReactNode }) {
   const id = useId();
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState(false);
@@ -30,7 +31,7 @@ function FacetGroup({ title, options }: { title: string; options: Option[] }) {
 
   return (
     <fieldset className="fw">
-      <legend className="fw__title">{title}</legend>
+      <legend className="fw__title">{icon}{title}</legend>
       {searchable && (
         <div className="fw__search">
           <label className="visually-hidden" htmlFor={`${id}-q`}>
@@ -70,11 +71,13 @@ export function ListingFilters({
   basePath,
   fixed,
   saleOnly = false,
+  compact,
 }: {
   result: ProductSearch;
   basePath: string;
   fixed: Record<string, string>;
   saleOnly?: boolean;
+  compact: boolean;
 }) {
   const { facets } = result;
   const { selection, pending, apply } = useListingNavigation();
@@ -124,10 +127,10 @@ export function ListingFilters({
       ))}
       {selection.sort !== "recommended" && <input type="hidden" name="sort" value={selection.sort} />}
 
-      <FacetGroup title="Наявність" options={availability} />
+      <FacetGroup title="Наявність" options={availability} icon={compact && <CircleCheckIcon />} />
 
       <fieldset className="fw">
-        <legend className="fw__title">Ціна, ₴</legend>
+        <legend className="fw__title">{compact && <WalletIcon />}Ціна, ₴</legend>
         {ranges.length > 0 && (
           <ul className="fw__list">
             {ranges.map((r) => {
@@ -147,7 +150,7 @@ export function ListingFilters({
                     }}
                   >
                     <span className="fprice__dot" aria-hidden="true" />
-                    <span className="money">{r.label}</span>
+                    <span className={compact ? undefined : "money"}>{r.label}</span>
                   </button>
                 </li>
               );
@@ -190,7 +193,7 @@ export function ListingFilters({
             onKeyDown={applyOnEnter}
           />
         </div>
-        {facets.priceMin && facets.priceMax && (
+        {!compact && facets.priceMin && facets.priceMax && (
           <p className="fw__hint">
             У розділі від <span className="money">{formatMoney(facets.priceMin)}</span> до <span className="money">{formatMoney(facets.priceMax)}</span>
           </p>
@@ -200,6 +203,7 @@ export function ListingFilters({
       {facets.brands.length > 0 && (
         <FacetGroup
           title="Бренд"
+          icon={compact && <TagIcon />}
           options={facets.brands.map((b) => ({
             key: b.name,
             label: b.name,
@@ -216,6 +220,7 @@ export function ListingFilters({
         <FacetGroup
           key={attribute.name}
           title={attribute.name}
+          icon={compact && <GridIcon />}
           options={attribute.values.map((v) => {
             const value = `${attribute.name}:${v.value}`;
             return {

@@ -22,12 +22,9 @@ export function CategoryHead({ category }: { category: Category }) {
               <Link href={`/catalog/${c.slug}`}>{c.name}</Link>
             </li>
           ))}
-          <li aria-current="page">{category.name}</li>
         </ol>
       </nav>
-      <div className="page-head__title">
-        <h1>{category.name}</h1>
-      </div>
+      <h1>{category.name}</h1>
       <CategoryIntro description={category.description} />
       {category.children.length > 0 && (
         <nav aria-label="Підрозділи" className="page-head__subs">

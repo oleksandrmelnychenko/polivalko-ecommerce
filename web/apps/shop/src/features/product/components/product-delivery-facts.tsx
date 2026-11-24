@@ -14,12 +14,11 @@ export async function ProductDeliveryFacts({ load }: { load: () => Promise<Deliv
   const places = carrierPlaces(facts);
   const payments = joinOr(facts.payments.map((code) => PAYMENT_WORDS[code]).filter(Boolean));
   return (
-    <>
+    <details className="pinfo product-fulfillment">
+      <summary>Доставка, оплата й повернення</summary>
       {(facts.pickup || places) && (
-        <section className="pinfo" aria-labelledby="pinfo-delivery">
-          <h2 id="pinfo-delivery" className="pinfo__title">
-            Доставка
-          </h2>
+        <section>
+          <h2>Доставка</h2>
           <ul className="pinfo__rows">
             {facts.pickup && (
               <li className="pinfo__row">
@@ -48,10 +47,8 @@ export async function ProductDeliveryFacts({ load }: { load: () => Promise<Deliv
         </section>
       )}
       {payments && (
-        <section className="pinfo" aria-labelledby="pinfo-payment">
-          <h2 id="pinfo-payment" className="pinfo__title">
-            Оплата
-          </h2>
+        <section>
+          <h2>Оплата</h2>
           <p className="pinfo__text">
             {payments[0].toUpperCase()}
             {payments.slice(1)}.
@@ -65,6 +62,6 @@ export async function ProductDeliveryFacts({ load }: { load: () => Promise<Deliv
         </Link>
         .
       </p>
-    </>
+    </details>
   );
 }

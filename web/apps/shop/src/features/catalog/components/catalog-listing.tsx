@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { countProducts } from "@polivalko/shared/lib/format";
+import { CloseIcon } from "@polivalko/shared/ui/icons";
 import { itemListJsonLd, JsonLd } from "@/features/seo";
 import { searchProducts, type ProductQuery } from "../api/server";
 import { hrefFor, parseListingParams, toQuery, type Parsed, type SearchParams } from "../lib/listing-params";
@@ -11,13 +12,11 @@ import { ListingToolbar } from "./listing-toolbar";
 import { ListingNavigation } from "./listing-navigation";
 import { ProductTiles } from "./product-tiles";
 
-type Subcategory = { id: string; slug: string; name: string };
-
 const CLEARED: Partial<Parsed> = { brands: [], attrs: [], inStock: false, onSale: false, priceMin: undefined, priceMax: undefined, page: 1 };
 
 function priceChip(min?: number, max?: number) {
   const money = (n: number) => n.toLocaleString("uk-UA");
-  if (min && max) return `Ціна: від ${money(min)} до ${money(max)} ₴`;
+  if (min && max) return `Ціна: ${money(min)}–${money(max)} ₴`;
   if (min) return `Ціна: від ${money(min)} ₴`;
   return `Ціна: до ${money(max ?? 0)} ₴`;
 }
@@ -41,20 +40,20 @@ export async function CatalogListing({
   fixed = {},
   searchParams,
   emptyHint,
-  subcategories = [],
   listName,
   saleOnly = false,
+  compact = saleOnly,
 }: {
   basePath: string;
   base: ProductQuery;
   fixed?: Record<string, string>;
   searchParams: SearchParams | Promise<SearchParams>;
   emptyHint: string;
-  subcategories?: Subcategory[];
+  compact?: boolean;
   listName?: string;
   saleOnly?: boolean;
 }) {
-  const p = parseListingParams(await searchParams);
+  const p = parseListingParams(await searchParams, basePath);
   const result = await searchProducts(toQuery(base, p));
   if (!result) return null;
 
@@ -84,42 +83,29 @@ export async function CatalogListing({
   return (
     <ListingNavigation basePath={basePath} fixed={fixed} parsed={p}><div className="catalog">
       {itemList && <JsonLd data={itemList} />}
-      <FiltersPanel active={chips.length}>
-        {subcategories.length > 0 && (
-          <nav className="fw fw--nav" aria-labelledby="subcategories-title">
-            <h2 className="fw__title" id="subcategories-title">
-              Підрозділи
-            </h2>
-            <ul className="fw__links">
-              {subcategories.map((c) => (
-                <li key={c.id}>
-                  <Link href={`/catalog/${c.slug}`}>{c.name}</Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )}
-        <ListingFilters result={result} basePath={basePath} fixed={fixed} saleOnly={saleOnly} />
+      <FiltersPanel active={chips.length} compact={compact}>
+        <ListingFilters result={result} basePath={basePath} fixed={fixed} saleOnly={saleOnly} compact={compact} />
       </FiltersPanel>
       <div className="catalog__main">
-        <ListingToolbar summary={summary} />
+        <ListingToolbar summary={compact && result.items.length === 0 ? "" : summary} path={basePath} />
 
         {chips.length > 0 && (
           <div className="active-filters">
-            <span className="active-filters__title">Вибрано:</span>
-            <ul>
+            <ul aria-label="Вибрані фільтри">
               {chips.map((c) => (
                 <li key={c.key}>
                   <Link href={c.href} scroll={false} aria-label={`Прибрати фільтр «${c.label}»`}>
-                    <span className={c.key === "price" ? "money" : undefined}>{c.label}</span>
-                    <span aria-hidden="true">×</span>
+                    <span>{c.label}</span>
+                    <CloseIcon />
                   </Link>
                 </li>
               ))}
             </ul>
-            <Link className="active-filters__reset" href={href(CLEARED)} scroll={false}>
-              Скинути все
-            </Link>
+            {chips.length > 1 && (
+              <Link className="active-filters__reset" href={href(CLEARED)} scroll={false}>
+                Скинути все
+              </Link>
+            )}
           </div>
         )}
 

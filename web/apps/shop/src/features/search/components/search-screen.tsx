@@ -7,7 +7,7 @@ type SearchScreenProps = { searchParams: Promise<SearchParams> };
 
 export function SearchScreen(props: SearchScreenProps) {
   return (
-    <div className="container">
+    <div className="container listing-page">
       <Suspense fallback={<ListingSkeleton />}>
         <SearchResults {...props} />
       </Suspense>
@@ -34,6 +34,7 @@ async function SearchResults({ searchParams }: SearchScreenProps) {
         <h1>Пошук: «{q}»</h1>
       </header>
       <CatalogListing
+        compact
         basePath="/search"
         base={{ q }}
         fixed={{ q }}

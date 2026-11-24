@@ -1,12 +1,10 @@
 import Link from "next/link";
 import type { ProductDetails } from "@polivalko/shared/api/types";
 import { brandHref } from "../lib/brand-href";
+import { displayAttributes } from "../lib/display-attributes";
 
 export function ProductDescription({ product }: { product: ProductDetails }) {
-  const attributes = product.attributes.filter(({ name, value }) => {
-    const label = name.trim().toLowerCase();
-    return label !== "артикул dntrade" && (label !== "штрихкод" || value !== product.sku);
-  });
+  const attributes = displayAttributes(product);
 
   return (
     <div className="product-details">

@@ -1,29 +1,20 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { breadcrumbJsonLd, JsonLd } from "@/features/seo";
 import type { SearchParams } from "../lib/listing-params";
 import { CatalogListing } from "./catalog-listing";
-import { ListingSkeleton } from "./listing-skeleton";
+import { ProductTilesSkeleton } from "./product-tiles-skeleton";
 
 export const SALE_TITLE = "Акції";
 export const SALE_LEAD = "Акційні пропозиції Полі-Валько для дому, саду й городу.";
 
 export function SaleScreen({ searchParams }: { searchParams: Promise<SearchParams> }) {
   return (
-    <div className="container">
+    <div className="container sale-page listing-page">
       <JsonLd data={breadcrumbJsonLd([{ name: SALE_TITLE, path: "/sale" }])} />
       <header className="page-head">
-        <nav className="crumbs" aria-label="Хлібні крихти">
-          <ol>
-            <li>
-              <Link href="/">Головна</Link>
-            </li>
-            <li aria-current="page">{SALE_TITLE}</li>
-          </ol>
-        </nav>
         <h1>{SALE_TITLE}</h1>
       </header>
-      <Suspense fallback={<ListingSkeleton />}>
+      <Suspense fallback={<div className="catalog" aria-busy="true"><div className="catalog__main"><div className="sale-controls-skeleton skeleton" /><ProductTilesSkeleton count={5} /></div><div className="filters-panel sale-controls-skeleton skeleton" aria-hidden="true" /></div>}>
         <SaleListing searchParams={searchParams} />
       </Suspense>
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
-import { CartIcon } from "@polivalko/shared/ui/icons";
+import { PurchaseIcon } from "./purchase-icon";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper";
 import type { CartProduct } from "../lib/cart-store";
 import { useCart } from "./cart-provider";
@@ -36,9 +36,10 @@ export function BuyForm({
         {inStock ? (
           <>
             <QuantityStepper value={quantity} onChange={setQuantity} label={`Кількість: ${product.name}`} />
-            <button type="submit" className="btn">
-              <CartIcon />
-              У кошик
+            {aside}
+            <button type="submit" className="btn cart-purchase">
+              <PurchaseIcon />
+              Додати до кошика
             </button>
           </>
         ) : (
@@ -46,7 +47,7 @@ export function BuyForm({
             Немає в наявності
           </button>
         )}
-        {aside}
+        {!inStock && aside}
       </div>
     </form>
   );

@@ -11,7 +11,7 @@ import { hrefFor, parseListingParams, toQuery, type SearchParams } from "./lib/l
 export async function redirectPastLastPage(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
   const sp: SearchParams = Object.fromEntries(Array.from(new Set(searchParams.keys()), (key) => [key, searchParams.getAll(key)]));
-  const parsed = parseListingParams(sp);
+  const parsed = parseListingParams(sp, pathname);
   if (parsed.page <= 1) return undefined;
 
   // The same base and fixed parameters as the search and category screens, so the API sees the page's own query.
