@@ -1,18 +1,20 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
-import { getPickupPoints } from "@/features/content/server";
+import type { PickupPoint } from "@polivalko/shared/api/types";
 import { OrderDetail } from "./order-detail";
 import { RowsSkeleton } from "./rows-skeleton";
 
-export function OrderDetailScreen() {
+type Props = { getPickupPoints: () => Promise<PickupPoint[]> };
+
+export function OrderDetailScreen(props: Props) {
   return (
     <Suspense fallback={<RowsSkeleton />}>
-      <OrderDetailWithDirectory />
+      <OrderDetailWithDirectory {...props} />
     </Suspense>
   );
 }
 
-async function OrderDetailWithDirectory() {
+async function OrderDetailWithDirectory({ getPickupPoints }: Props) {
   await connection();
   return <OrderDetail pickupPoints={await getPickupPoints().catch(() => [])} />;
 }

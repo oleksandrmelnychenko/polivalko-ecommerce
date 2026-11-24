@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { TrackPurchase } from "@/features/analytics";
-import { getPickupPoints } from "@/features/content/server";
+import type { PickupPoint } from "@polivalko/shared/api/types";
 import { PaymentPending, PayButton } from "@/features/payment";
 import { formatMoney } from "@polivalko/shared/lib/format";
 import { getOrderAndReceipts } from "../api/server";
@@ -15,6 +15,7 @@ type OrderScreenProps = {
   params: Promise<{ number: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
   mailDelivers: () => Promise<boolean>;
+  getPickupPoints: () => Promise<PickupPoint[]>;
 };
 
 const NOT_FOUND_STATUSES = [400, 401, 403, 404];
@@ -23,7 +24,7 @@ const NOT_FOUND_STATUSES = [400, 401, 403, 404];
  * Loads the order before anything streams, so an unknown number or a wrong token answers a real 404
  * (inside Suspense the status would already be 200). The page opts into blocking with `instant = false`.
  */
-export async function OrderScreen({ params, searchParams, mailDelivers }: OrderScreenProps) {
+export async function OrderScreen({ params, searchParams, mailDelivers, getPickupPoints }: OrderScreenProps) {
   await connection();
   const [{ number }, sp] = await Promise.all([params, searchParams]);
   const token = typeof sp.token === "string" ? sp.token : "";
