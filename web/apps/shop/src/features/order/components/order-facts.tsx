@@ -1,19 +1,35 @@
 import type { ReactNode } from "react";
-import type { Order } from "@polivalko/shared/api/types";
+import type { Order, PickupPoint } from "@polivalko/shared/api/types";
+import { directionsUrl } from "@/shared/lib/directions-url";
 import { deliveryMethodLabel, paymentMethodLabel, paymentStatusLabel } from "@polivalko/shared/lib/labels";
 import { StoreIcon, TruckIcon, UserIcon, WalletIcon } from "@polivalko/shared/ui/icons";
 
 const PENDING_SELLER = /уточнюється/i;
 
-export function OrderFacts({ order, where }: { order: Order; where: string }) {
-  const rows: { label: string; icon: ReactNode; value: string; sub?: string }[] = [
+function pickupDetails(saved: string, points: PickupPoint[]) {
+  // Older orders for Bucha contain a seeded address instead of a street address.
+  const legacy = saved.includes("(точну адресу надає замовник)") || saved.includes("(точну адресу надає магазин)");
+  const point = legacy
+    ? points.find((p) => p.code === "bucha-store")
+    : points.find((p) => p.address && (saved === p.address || saved.endsWith(", " + p.address)));
+  const address = point?.address || (legacy ? "" : saved);
+  return { address, schedule: point?.schedule, route: directionsUrl(point?.mapUrl, address) };
+}
+
+export function OrderFacts({ order, where, pickupPoints }: { order: Order; where: string; pickupPoints: PickupPoint[] }) {
+  const pickup = order.deliveryMethod === "pickup" ? pickupDetails(where, pickupPoints) : null;
+  const rows: { label: string; icon: ReactNode; value: string; sub?: string; extra?: ReactNode }[] = [
     {
       label: "Отримання",
       icon: order.deliveryMethod === "pickup" ? <StoreIcon /> :
         ["nova_poshta", "nova_poshta_courier"].includes(order.deliveryMethod) ?
           <img className="np-mark" src="/brand/nova-poshta.svg" width={24} height={24} alt="" /> : <TruckIcon />,
       value: deliveryMethodLabel[order.deliveryMethod] ?? order.deliveryMethod,
-      sub: where || undefined,
+      sub: (pickup ? pickup.address : where) || undefined,
+      extra: pickup && <>
+        {pickup.schedule && <span className="order-facts__sub">Графік роботи · {pickup.schedule}</span>}
+        {pickup.route && <a className="link order-facts__route" href={pickup.route} target="_blank" rel="noopener noreferrer">Прокласти маршрут <span aria-hidden="true">↗</span></a>}
+      </>,
     },
     {
       label: "Оплата",
@@ -43,6 +59,7 @@ export function OrderFacts({ order, where }: { order: Order; where: string }) {
             <dd>
               <span className="order-facts__value">{row.value}</span>
               {row.sub && <span className="order-facts__sub">{row.sub}</span>}
+              {row.extra}
             </dd>
           </div>
         ))}

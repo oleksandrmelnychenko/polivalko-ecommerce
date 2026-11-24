@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { PickupPoint } from "@polivalko/shared/api/types";
 import { useParams, useSearchParams } from "next/navigation";
 import { OrderFacts, OrderItems, OrderProgress, OrderReceipts, orderHeading, orderWhere } from "@/features/order";
 import { formatDateTime } from "@polivalko/shared/lib/format";
@@ -16,7 +17,7 @@ async function loadOrder(number: string) {
   return { data: order.data ? { order: order.data, receipts: receipts.data ?? [] } : undefined, response: order.response };
 }
 
-export function OrderDetail() {
+export function OrderDetail({ pickupPoints }: { pickupPoints: PickupPoint[] }) {
   const { number } = useParams<{ number: string }>();
   const returned = useSearchParams().get("payment") === "return";
   const { owner, data, loading, notFound, reload } = useAccountData(`order-${number}`, () => loadOrder(number));
@@ -57,7 +58,7 @@ export function OrderDetail() {
           {receipts.length > 0 && <OrderReceipts receipts={receipts} />}
         </div>
         <aside className="order-body__side">
-          <OrderFacts order={order} where={orderWhere(order)} />
+          <OrderFacts order={order} where={orderWhere(order)} pickupPoints={pickupPoints} />
         </aside>
       </div>
     </section>

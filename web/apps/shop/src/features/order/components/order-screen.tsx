@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { TrackPurchase } from "@/features/analytics";
+import { getPickupPoints } from "@/features/content/server";
 import { PaymentPending, PayButton } from "@/features/payment";
 import { formatMoney } from "@polivalko/shared/lib/format";
 import { getOrderAndReceipts } from "../api/server";
@@ -36,6 +37,7 @@ export async function OrderScreen({ params, searchParams, mailDelivers }: OrderS
 
   const returnedFromPayment = sp.payment === "return";
   const where = orderWhere(order);
+  const points = order.deliveryMethod === "pickup" ? await getPickupPoints().catch(() => []) : [];
   const paid = isOrderPaid(order);
   const payButton = <PayButton number={order.number} token={token} failed={order.paymentStatus === "failed"} amount={formatMoney(order.total)} />;
 
@@ -58,7 +60,7 @@ export async function OrderScreen({ params, searchParams, mailDelivers }: OrderS
         </div>
 
         <aside className="order-body__side">
-          <OrderFacts order={order} where={where} />
+          <OrderFacts order={order} where={where} pickupPoints={points} />
         </aside>
       </div>
     </div>
