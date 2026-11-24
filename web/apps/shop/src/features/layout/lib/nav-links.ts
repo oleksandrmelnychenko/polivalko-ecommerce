@@ -6,7 +6,7 @@ export const saleLink: NavLink = { href: "/sale", label: "Акції" };
 
 export const pageLinks: NavLink[] = [
   { href: "/about", label: "Про нас" },
-  { href: "/services", label: "Послуги" },
+  { href: "/services", label: "Послуги для саду" },
   ...(JOURNAL_ENABLED ? [{ href: "/blog", label: "Блог" }] : []),
   { href: "/contacts", label: "Контакти" },
 ];
@@ -14,7 +14,7 @@ export const pageLinks: NavLink[] = [
 export const mobilePageLinks: NavLink[] = [
   { href: "/about", label: "Про нас" },
   ...(JOURNAL_ENABLED ? [{ href: "/blog", label: "Блог" }] : []),
-  { href: "/services", label: "Послуги" },
+  { href: "/services", label: "Послуги для саду" },
   { href: "/payment-delivery", label: "Доставка й оплата" },
   { href: "/returns", label: "Повернення" },
   { href: "/contacts", label: "Контакти" },
