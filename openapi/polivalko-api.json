@@ -5029,6 +5029,149 @@
         }
       }
     },
+    "/api/v1/console/accounting/partners/distinct": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ConsoleDistinctAccountingPartners",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DistinctPair"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ConsoleMarkDistinctAccountingPartners",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DistinctPartners"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/accounting/partners/distinct/remove": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ConsoleUnmarkDistinctAccountingPartners",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DistinctPartners"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/console/accounting/offers": {
       "get": {
         "tags": [
@@ -17910,6 +18053,38 @@
           }
         }
       },
+      "DistinctPair": {
+        "required": [
+          "firstId",
+          "secondId"
+        ],
+        "type": "object",
+        "properties": {
+          "firstId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "secondId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "DistinctPartners": {
+        "required": [
+          "ids"
+        ],
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
       "DnTradeArchiveDetailDto": {
         "required": [
           "id",
@@ -20929,7 +21104,8 @@
         "required": [
           "partner",
           "agreements",
-          "merged"
+          "merged",
+          "distinctFrom"
         ],
         "type": "object",
         "properties": {
@@ -20943,6 +21119,12 @@
             }
           },
           "merged": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartnerRow"
+            }
+          },
+          "distinctFrom": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PartnerRow"

@@ -35,7 +35,9 @@ import { PartnerDocuments } from './PartnerDocuments'
 import { PartnerMergeDialog, unmergePartner } from './PartnerMerges'
 import { PartnerOpeningList } from './PartnerOpenings'
 import { Grid } from './RegisterTable'
-import { currencyLabel, money, read, useRegister, type Page, type Partner, type PartnerCard } from './api'
+import { currencyLabel, money, read, save, useRegister, type Page, type Partner, type PartnerCard } from './api'
+
+type DistinctPair = components['schemas']['DistinctPair']
 import './partners.css'
 
 const directory = '/finance/partners'
@@ -103,13 +105,37 @@ function DirectoryList() {
   const size = normalizePageSize(list.get('pageSize'))
   const rows = useMemo(() => query.data ?? [], [query.data])
   const keys = useMemo(() => new Map(rows.map((row) => [row.id, duplicateKey(row.title)])), [rows])
-  const keyCounts = useMemo(() => {
-    const counts = new Map<string, number>()
-    for (const key of keys.values()) counts.set(key, (counts.get(key) ?? 0) + 1)
-    return counts
-  }, [keys])
+  const distinct = useRegister<DistinctPair[]>('partners/distinct')
+  const { reload: reloadDistinct } = distinct
+  useEffect(() => {
+    window.addEventListener(PARTNER_NAMES_CHANGED, reloadDistinct)
+    return () => window.removeEventListener(PARTNER_NAMES_CHANGED, reloadDistinct)
+  }, [reloadDistinct])
+  const namesakes = useMemo(() => new Set((distinct.data ?? []).flatMap((p) =>
+    [p.firstId + ':' + p.secondId, p.secondId + ':' + p.firstId])), [distinct.data])
+  const byKey = useMemo(() => {
+    const groups = new Map<string, Partner[]>()
+    for (const row of rows) {
+      const key = keys.get(row.id) ?? ''
+      groups.set(key, [...(groups.get(key) ?? []), row])
+    }
+    return groups
+  }, [rows, keys])
   const unclean = useMemo(() => new Set(namesToClean(rows).map(({ row }) => row.id)), [rows])
-  const duplicate = (row: Partner) => (keyCounts.get(keys.get(row.id) ?? '') ?? 0) > 1
+  // A card is a likely duplicate while another card has the same name and nobody confirmed they are different.
+  const duplicate = (row: Partner) =>
+    (byKey.get(keys.get(row.id) ?? '') ?? []).some((other) => other.id !== row.id && !namesakes.has(row.id + ':' + other.id))
+  const group = (row: Partner) => filtered.filter((r) => keys.get(r.id) === keys.get(row.id) && duplicate(r))
+  const [markingDistinct, setMarkingDistinct] = useState<string | null>(null)
+  async function markDistinct(cards: Partner[]) {
+    setMarkingDistinct(cards[0].id)
+    try {
+      const result = await save('partners/distinct', { ids: cards.map((c) => c.id) })
+      if (result.response.ok) window.dispatchEvent(new Event(PARTNER_NAMES_CHANGED))
+    } finally {
+      setMarkingDistinct(null)
+    }
+  }
   const categories = [...new Set(rows.flatMap((row) => (row.category ? [row.category] : [])))].sort((a, b) =>
     a.localeCompare(b, 'uk'),
   )
@@ -263,12 +289,17 @@ function DirectoryList() {
                       </span>
                     </PartnerDetailLink>
                     {duplicate(row) && <TableChip tone="warning" value="Можливий дубль" />}
-                    {check === 'duplicates' && can(PermissionKeys.Accounting.Edit) && duplicate(row) &&
-                      filtered.find((r) => keys.get(r.id) === keys.get(row.id))?.id === row.id && (
-                      <Button size="compact-xs" variant="default" leftSection={<IconArrowMerge size={13} />} ml={6}
-                        onClick={() => setMerging(filtered.filter((r) => keys.get(r.id) === keys.get(row.id)))}>
-                        Об’єднати групу
-                      </Button>
+                    {check === 'duplicates' && can(PermissionKeys.Accounting.Edit) && duplicate(row) && group(row)[0]?.id === row.id && (
+                      <>
+                        <Button size="compact-xs" variant="default" leftSection={<IconArrowMerge size={13} />} ml={6}
+                          onClick={() => setMerging(group(row))}>
+                          Об’єднати групу
+                        </Button>
+                        <Button size="compact-xs" variant="subtle" ml={4} loading={markingDistinct === row.id}
+                          title="Однакова назва, але це різні контрагенти" onClick={() => markDistinct(group(row))}>
+                          Це різні
+                        </Button>
+                      </>
                     )}
                   </td>
                   <td data-label="Код" className="partner-code">{row.sourceId}</td>
@@ -319,6 +350,23 @@ function PartnerProfile({ id }: { id: string }) {
   const [mergeError, setMergeError] = useState('')
   const dialog = operationOpen || renaming || merging
   const [params] = useSearchParams()
+  async function undoDistinct(other: string) {
+    if (unmerging) return
+    setUnmerging(other)
+    setMergeError('')
+    try {
+      const result = await save('partners/distinct/remove', { ids: [id, other] })
+      if (!result.response.ok) setMergeError('Не вдалося зняти позначку.')
+      else {
+        window.dispatchEvent(new Event(PARTNER_NAMES_CHANGED))
+        detail.reload()
+      }
+    } catch {
+      setMergeError('Немає зв’язку з сервером.')
+    } finally {
+      setUnmerging(null)
+    }
+  }
   async function unmerge(card: string) {
     if (unmerging) return
     setUnmerging(card)
@@ -404,6 +452,25 @@ function PartnerProfile({ id }: { id: string }) {
               <Text size="xs" c="dimmed">
                 Скасування повертає на картку лише те, що перейшло під час об’єднання. Нове, створене вже на основній картці, лишається на ній.
               </Text>
+            </section>
+          )}
+          {detail.data.distinctFrom.length > 0 && (
+            <section className="ledger-card partner-block partner-merged-list">
+              <h2><MetricLabel icon={IconUsers}>Інші контрагенти з такою ж назвою · {detail.data.distinctFrom.length}</MetricLabel></h2>
+              {detail.data.distinctFrom.map((m) => (
+                <Group key={m.id} gap="sm" justify="space-between" wrap="nowrap">
+                  <PartnerDetailLink id={m.id} className="partner-name">
+                    <strong>{m.title}</strong>
+                    <small>{[m.note, m.category, m.sourceId].filter(Boolean).join(' · ')}</small>
+                  </PartnerDetailLink>
+                  {can(PermissionKeys.Accounting.Edit) && (
+                    <Button size="compact-xs" variant="default" loading={unmerging === m.id}
+                      title="Знову вважати можливим дублем" onClick={() => undoDistinct(m.id)}>
+                      Зняти позначку
+                    </Button>
+                  )}
+                </Group>
+              ))}
             </section>
           )}
           {mergeError && <Alert color="red" role="alert">{mergeError}</Alert>}

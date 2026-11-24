@@ -24,7 +24,7 @@ public sealed record BalanceRow(long Position, bool Footer, string? PartnerTitle
     long? HeadingPosition, Guid? LinkedPartner, Guid? Candidate, int CandidateCount, Guid? OpeningId, bool HeadingConfirmed,
     string? PartnerName, string? PartnerCategory, bool RowLinked);
 public sealed record AgreementRow(string? Id, string? Title, string? Currency);
-public sealed record PartnerCard(PartnerRow Partner, List<AgreementRow> Agreements, List<PartnerRow> Merged);
+public sealed record PartnerCard(PartnerRow Partner, List<AgreementRow> Agreements, List<PartnerRow> Merged, List<PartnerRow> DistinctFrom);
 public sealed record ProductMovement(Guid DocumentId, int Position, DateOnly? Day, string? Number, string? EntityType,
     string? Kind,string? Status,string? Title,string? Sku,string? Store,string? Quantity,string? Price,string? Total,string? Currency);
 
@@ -93,7 +93,12 @@ public static class AccountingRegisters
             WHERE p.id={id}
             """).ToListAsync(ct);
         var merged = await AllPartners(db).Where(p => p.MergedInto == id).OrderBy(p => p.Title).ToListAsync(ct);
-        return Results.Ok(new PartnerCard(partner, agreements, merged));
+        var namesakes = await db.Database.SqlQuery<PartnerRow>($"""
+            SELECT id,title,kind,source_account,source_id,details->'category'->>'title' AS category,source_title,note,merged_into
+            FROM accounting.partners WHERE id IN (SELECT second_id FROM accounting.partner_distinct WHERE first_id={id}
+                UNION SELECT first_id FROM accounting.partner_distinct WHERE second_id={id})
+            """).OrderBy(p => p.Title).ToListAsync(ct);
+        return Results.Ok(new PartnerCard(partner, agreements, merged, namesakes));
     }
 
     private static bool InvalidPage(int page, string? q) => page is < 1 or > 1_000_000 || q is { Length: > 160 };

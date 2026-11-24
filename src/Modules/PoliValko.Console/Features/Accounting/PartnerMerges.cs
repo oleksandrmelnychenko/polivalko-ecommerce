@@ -10,6 +10,8 @@ using PoliValko.Infrastructure.Security.Permissions;
 namespace PoliValko.Console.Features.Accounting;
 
 public sealed record PartnerMerge(List<Guid> Duplicates);
+public sealed record DistinctPartners(List<Guid> Ids);
+public sealed record DistinctPair(Guid FirstId, Guid SecondId);
 internal sealed record MergeCard(Guid Id, Guid? MergedInto, bool HasMerged);
 
 // Duplicate cards stay in the directory as aliases of their main card, so a merge can be undone.
@@ -21,6 +23,53 @@ internal static class PartnerMerges
             .RequirePermission(PermissionKeys.AccountingEdit).Produces<int>();
         group.MapPost("/partners/{id:guid}/unmerge", Unmerge).WithName("ConsoleUnmergeAccountingPartner")
             .RequirePermission(PermissionKeys.AccountingEdit).Produces<Guid>();
+        group.MapGet("/partners/distinct", (PoliValkoDbContext db, CancellationToken ct) => db.Database.SqlQuery<DistinctPair>($"""
+            SELECT first_id,second_id FROM accounting.partner_distinct
+            """).ToListAsync(ct)).WithName("ConsoleDistinctAccountingPartners").Produces<List<DistinctPair>>();
+        group.MapPost("/partners/distinct", MarkDistinct).WithName("ConsoleMarkDistinctAccountingPartners")
+            .RequirePermission(PermissionKeys.AccountingEdit).Produces<int>();
+        group.MapPost("/partners/distinct/remove", UnmarkDistinct).WithName("ConsoleUnmarkDistinctAccountingPartners")
+            .RequirePermission(PermissionKeys.AccountingEdit).Produces<int>();
+    }
+
+    // Marks every pair of the given cards as different partners.
+    private static async Task<IResult> MarkDistinct(DistinctPartners input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
+    {
+        var ids = (input.Ids ?? []).Distinct().ToArray();
+        if (ids.Length is < 2 or > 20) return Problem("Оберіть від двох до 20 карток.", 400);
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var found = await db.Database.SqlQuery<int>($"""
+            SELECT count(*)::int AS "Value" FROM accounting.partners WHERE id=ANY({ids}) AND merged_into IS NULL
+            """).SingleAsync(ct);
+        if (found != ids.Length) return Problem("Картку не знайдено або її вже об’єднано з іншою.", 404);
+        var added = await db.Database.ExecuteSqlAsync($"""
+            INSERT INTO accounting.partner_distinct(first_id,second_id)
+            SELECT a,b FROM unnest({ids}) a CROSS JOIN unnest({ids}) b WHERE a<b ON CONFLICT DO NOTHING
+            """, ct);
+        if (added > 0)
+        {
+            audit.Record("accounting.partners_marked_distinct", "Partner", string.Join(",", ids.Order()), new { Ids = ids });
+            await db.SaveChangesAsync(ct);
+        }
+        await tx.CommitAsync(ct);
+        return Results.Ok(added);
+    }
+
+    private static async Task<IResult> UnmarkDistinct(DistinctPartners input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
+    {
+        var ids = (input.Ids ?? []).Distinct().ToArray();
+        if (ids.Length != 2) return Problem("Оберіть дві картки.", 400);
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var removed = await db.Database.ExecuteSqlAsync($"""
+            DELETE FROM accounting.partner_distinct WHERE first_id=least({ids[0]},{ids[1]}) AND second_id=greatest({ids[0]},{ids[1]})
+            """, ct);
+        if (removed > 0)
+        {
+            audit.Record("accounting.partners_unmarked_distinct", "Partner", string.Join(",", ids.Order()), new { Ids = ids });
+            await db.SaveChangesAsync(ct);
+        }
+        await tx.CommitAsync(ct);
+        return Results.Ok(removed);
     }
 
     private static IResult Problem(string detail, int status = 409) => Results.Problem(detail: detail, statusCode: status);
@@ -43,6 +92,10 @@ internal static class PartnerMerges
         if (cards.Any(c => c.Id != id && c.HasMerged))
             return Problem("До картки-дубля вже приєднано інші. Спершу скасуйте ті об’єднання або оберіть її основною.");
         Guid[] all = [id, .. duplicates];
+        var namesakes = await db.Database.SqlQuery<int>($"""
+            SELECT 1 AS "Value" FROM accounting.partner_distinct WHERE first_id=ANY({all}) AND second_id=ANY({all})
+            """).AnyAsync(ct);
+        if (namesakes) return Problem("Ці картки позначено як різних контрагентів. Спершу зніміть позначку в картці.");
         var clash = await db.Database.SqlQuery<int>($"""
             SELECT 1 AS "Value" FROM accounting.recommendation_offers a JOIN accounting.recommendation_offers b
                 ON a.product_id=b.product_id AND a.partner_id<b.partner_id

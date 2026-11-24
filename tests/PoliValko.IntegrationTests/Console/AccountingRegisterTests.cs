@@ -245,6 +245,18 @@ public sealed class AccountingRegisterTests(ApiFactory api)
         rows[0].LinkedPartner.ShouldBe(main);
         rows[1].LinkedPartner.ShouldBe(duplicate);
         (await admin.ReadAsync<RegisterPage<PartnerRow>>(Root+"/partners?q=тест")).Items.Count(p=>p.SourceAccount==account).ShouldBe(2);
+
+        // Namesakes confirmed as different partners are no longer offered for a merge.
+        var pair = new DistinctPartners([duplicate,main]);
+        (await clerk.PostAsJsonAsync(Root+"/partners/distinct",pair,Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await (await admin.PostAsJsonAsync(Root+"/partners/distinct",pair,Ct)).ReadAsync<int>()).ShouldBe(1);
+        (await (await admin.PostAsJsonAsync(Root+"/partners/distinct",pair,Ct)).ReadAsync<int>()).ShouldBe(0);
+        (await admin.ReadAsync<List<DistinctPair>>(Root+"/partners/distinct"))
+            .ShouldContain(p=>(p.FirstId==main && p.SecondId==duplicate) || (p.FirstId==duplicate && p.SecondId==main));
+        (await admin.ReadAsync<PartnerCard>(Root+"/partners/"+main)).DistinctFrom.Single().Id.ShouldBe(duplicate);
+        (await admin.PostAsJsonAsync(Root+"/partners/"+main+"/merge",new PartnerMerge([duplicate]),Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await (await admin.PostAsJsonAsync(Root+"/partners/distinct/remove",pair,Ct)).ReadAsync<int>()).ShouldBe(1);
+        (await admin.ReadAsync<PartnerCard>(Root+"/partners/"+main)).DistinctFrom.ShouldBeEmpty();
     }
 
     [Fact]
