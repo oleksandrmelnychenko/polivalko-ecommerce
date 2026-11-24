@@ -6351,6 +6351,8 @@ export interface components {
             change: number;
             /** Format: double */
             balance: number;
+            /** Format: date-time */
+            recordedAt: null | string;
         };
         /** @enum {unknown} */
         WarehouseType: "branch" | "postomat";

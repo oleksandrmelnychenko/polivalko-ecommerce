@@ -98,7 +98,9 @@ public sealed class StockOperationTests(ApiFactory api)
         (await Post(unchanged)).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await admin.ReadAsync<StockOperationState>(Root+"/stock-operations/"+unchanged.Id)).Status.ShouldBe("posted");
         var moves=await admin.ReadAsync<RegisterPage<WarehouseMovement>>(Root+"/warehouse/"+product.Id+"/movements?org="+org+"&store="+store);
-        moves.Items.Select(m=>m.Kind).ShouldBe(["opening","income","writeOff","writeOff","recount"],ignoreOrder:true);
+        // All on one day: newest first in posting order, so each balance follows from the row below it.
+        moves.Items.Select(m=>m.Kind).ShouldBe(["recount","writeOff","writeOff","income","opening"]);
+        moves.Items.Select(m=>m.Balance).ShouldBe([3m,5m,6m,8m,5m]);
 
         // A shop selling from this warehouse follows posted operations.
         var shop=(await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root+"/warehouse?store="+store)).Items.Single();
