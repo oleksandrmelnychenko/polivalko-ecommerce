@@ -32,7 +32,7 @@ internal static class CatalogEndpoints
 
         group.MapGet("/bestsellers", GetBestsellers.HandleAsync)
             .WithName("GetBestsellers")
-            .WithSummary("Товари, які найчастіше замовляли за останні 90 днів (без скасованих), лише видимі й у наявності");
+            .WithSummary("Товари, які найчастіше замовляли за останні 90 днів (без скасованих), лише видимі й у наявності, крім тих, що правило сезону лишає для інших місяців");
 
         group.MapGet("/catalog/photo-credits", GetPhotoCredits.HandleAsync)
             .WithName("GetPhotoCredits")

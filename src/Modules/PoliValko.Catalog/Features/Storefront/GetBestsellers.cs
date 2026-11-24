@@ -2,9 +2,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using PoliValko.Catalog.Contracts;
+using PoliValko.Catalog.Domain;
 using PoliValko.Catalog.Persistence;
 using PoliValko.Infrastructure.Persistence;
+using PoliValko.SharedKernel;
 
 namespace PoliValko.Catalog.Features.Storefront;
 
@@ -22,6 +25,7 @@ internal static class GetBestsellers
         [FromQuery] int? take,
         PoliValkoDbContext db,
         IProductSalesSource sales,
+        IMemoryCache cache,
         TimeProvider time,
         CancellationToken ct)
     {
@@ -40,17 +44,32 @@ internal static class GetBestsellers
             return TypedResults.Ok(new BestsellersResponse([], PeriodDays));
         }
 
-        var ids = top.Select(t => t.ProductId).ToList();
-        var visible = await CatalogVisibility.ProductsAsync(db, ct);
-        var rows = await ProductListing.ListItems(visible.Where(p => ids.Contains(p.Id)).Where(ProductListing.Purchasable))
-            .ToListAsync(ct);
-        var products = (await ProductListing.ToListItemsAsync(db, rows, time, ct)).ToDictionary(p => p.Id);
+        var categories = await CatalogVisibility.CategoriesAsync(db, ct);
+        var purchasable = CatalogVisibility.Products(db, categories.Select(c => c.Id).ToArray()).Where(ProductListing.Purchasable);
+        var items = await PickAsync(top, count, purchasable, categories, db, cache, time, KyivTime.Today(time), ct);
+        return TypedResults.Ok(new BestsellersResponse(items, PeriodDays));
+    }
 
-        var items = top
+    /// <summary>
+    /// The most ordered products that can be bought, in the order of their orders, without those a seasonal rule keeps
+    /// for other months: garlands ordered in December are no bestseller in February. A product that only its receipts
+    /// put out of season stays: it is still ordered on the site, and most of the catalog is out of season in winter.
+    /// </summary>
+    internal static async Task<List<BestsellerDto>> PickAsync(IReadOnlyList<ProductSalesCount> top, int count,
+        IQueryable<Product> purchasable, IReadOnlyList<Category> categories, PoliValkoDbContext db, IMemoryCache cache,
+        TimeProvider time, DateOnly today, CancellationToken ct)
+    {
+        var ids = top.Select(t => t.ProductId).ToArray();
+        var seasons = await SeasonClassifier.ClassifyAsync(purchasable, categories, db, cache, today, today, ct, only: ids);
+        var current = seasons.Products
+            .Where(s => !(s.Season.RuleOff && s.Season.State != (int)Season.In))
+            .Select(s => s.Product);
+        var rows = await ProductListing.ListItems(current).ToListAsync(ct);
+        var products = (await ProductListing.ToListItemsAsync(db, rows, time, ct)).ToDictionary(p => p.Id);
+        return top
             .Where(t => products.ContainsKey(t.ProductId))
             .Take(count)
             .Select(t => new BestsellerDto(products[t.ProductId], t.Orders))
             .ToList();
-        return TypedResults.Ok(new BestsellersResponse(items, PeriodDays));
     }
 }
