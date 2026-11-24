@@ -36,10 +36,9 @@ export function BuyForm({
         {inStock ? (
           <>
             <QuantityStepper value={quantity} onChange={setQuantity} label={`Кількість: ${product.name}`} />
-            {aside}
             <button type="submit" className="btn cart-purchase">
               <PurchaseIcon />
-              Додати до кошика
+              У кошик
             </button>
           </>
         ) : (
@@ -47,7 +46,7 @@ export function BuyForm({
             Немає в наявності
           </button>
         )}
-        {!inStock && aside}
+        {aside}
       </div>
     </form>
   );

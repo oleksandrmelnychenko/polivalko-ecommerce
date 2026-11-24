@@ -1,19 +1,16 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { BuyForm } from "@/features/cart";
-import { discountPercent, ProductLabels, withoutSaleLabel } from "@/features/catalog";
 import { canBuy, hasPrice, PRICE_ON_REQUEST } from "@/shared/lib/price";
 import { FavoriteButton } from "@/features/favorites";
 import { CompareButton } from "@/features/compare";
 import type { ProductDetails } from "@polivalko/shared/api/types";
 import { formatMoney } from "@polivalko/shared/lib/format";
-import type { DeliveryFacts } from "@/shared/lib/delivery-facts";
 import { brandHref } from "../lib/brand-href";
-import { displayAttributes } from "../lib/display-attributes";
-import { ProductDeliveryFacts } from "./product-delivery-facts";
 import { ProductVariants } from "./product-variants";
+import { CopySkuTag } from "./copy-sku-tag";
+import { ChevronRightIcon } from "@polivalko/shared/ui/icons";
 
-export function ProductBuybox({ product, deliveryFacts }: { product: ProductDetails; deliveryFacts: () => Promise<DeliveryFacts | null> }) {
+export function ProductBuybox({ product, discount }: { product: ProductDetails; discount: number | null }) {
   const cartProduct = {
     productId: product.id,
     name: product.name,
@@ -22,13 +19,8 @@ export function ProductBuybox({ product, deliveryFacts }: { product: ProductDeta
     price: product.price.value,
     imageUrl: product.images[0]?.url ?? null,
   };
-  const discount = discountPercent(product.price, product.oldPrice);
   const priced = hasPrice(product.price);
   const buyable = canBuy(product);
-  const highlights = displayAttributes(product).filter(({ name, value }) => {
-    const label = name.trim().toLowerCase();
-    return label !== "штрихкод" && label !== "одиниця виміру" && value.trim() && value.length <= 48;
-  }).slice(0, 2);
   const tools = (
     <div className="buybox__tools">
       <FavoriteButton productId={product.id} variant="box" />
@@ -38,23 +30,17 @@ export function ProductBuybox({ product, deliveryFacts }: { product: ProductDeta
 
   return (
     <div className="buybox">
-      <div className="buybox__top">
-        {product.sku && <p className="buybox__sku" translate="no"><span>Артикул </span>{product.sku}</p>}
-        <span className="product-stock-chip" data-available={product.inStock}>{product.inStock ? "В наявності" : "Немає в наявності"}</span>
-      </div>
-      <h1>{product.name}</h1>
-      <ProductLabels labels={withoutSaleLabel(product.labels, Boolean(discount && product.oldPrice))} className="buybox__labels" />
-      {product.brand && (
-        <p className="buybox__meta">
-          Бренд:{" "}
-          <Link href={brandHref(product)} className="link" translate="no" title={`Усі товари ${product.brand} у розділі «${product.category.name}»`}>
-            {product.brand}
-          </Link>
-        </p>
+      {(product.sku || product.brand) && (
+        <div className="buybox__meta">
+          {product.sku && <CopySkuTag key={product.sku} sku={product.sku} />}
+          {product.brand && (
+            <Link href={brandHref(product)} className="product-meta-tag" title={`Усі товари бренду ${product.brand}`}>
+              Бренд <strong translate="no">{product.brand}</strong><ChevronRightIcon />
+            </Link>
+          )}
+        </div>
       )}
-      {highlights.length > 0 && <dl className="buybox__highlights">
-        {highlights.map(({ name, value }, index) => <div key={index}><dt>{name}</dt><dd>{value}</dd></div>)}
-      </dl>}
+      <h1>{product.name}</h1>
       <div className="buybox__card">
         <div className="buybox__price-row">
           {discount && product.oldPrice && (
@@ -74,17 +60,11 @@ export function ProductBuybox({ product, deliveryFacts }: { product: ProductDeta
               <strong className="price-ask">{PRICE_ON_REQUEST}</strong>
             )}
           </p>
-          {tools}
         </div>
+        <p className={product.inStock ? "stock stock--in" : "stock stock--out"}>{product.inStock ? "В наявності" : "Немає в наявності"}</p>
         {product.variants.length > 1 && <ProductVariants variants={product.variants} />}
-        {priced && (
-          <BuyForm product={cartProduct} inStock={buyable} actionsClassName="buybox__actions" />
-        )}
+        {priced ? <BuyForm product={cartProduct} inStock={buyable} actionsClassName="buybox__actions" aside={tools} /> : tools}
       </div>
-      <a className="buybox__details link" href="#product-specs">Усі характеристики</a>
-      <Suspense fallback={null}>
-        <ProductDeliveryFacts load={deliveryFacts} />
-      </Suspense>
     </div>
   );
 }

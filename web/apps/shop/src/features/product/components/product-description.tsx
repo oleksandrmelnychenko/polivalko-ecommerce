@@ -4,18 +4,15 @@ import { brandHref } from "../lib/brand-href";
 import { displayAttributes } from "../lib/display-attributes";
 
 export function ProductDescription({ product }: { product: ProductDetails }) {
-  const attributes = displayAttributes(product);
-
+  if (!product.descriptionHtml) return null;
   return (
-    <div className="product-details">
-      {product.descriptionHtml && (
-        <section className="product-details__description" aria-labelledby="product-description">
-          <h2 id="product-description">Опис товару</h2>
-          <div className="prose" dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} />
-        </section>
-      )}
-      <section className="product-details__specs" aria-labelledby="product-specs">
-        <h2 id="product-specs">Характеристики</h2>
+    <div className="prose" dangerouslySetInnerHTML={{ __html: product.descriptionHtml }} />
+  );
+}
+
+export function ProductSpecs({ product }: { product: ProductDetails }) {
+  const attributes = displayAttributes(product);
+  return (
         <dl className="specs">
           <div>
             <dt>Артикул</dt>
@@ -38,7 +35,5 @@ export function ProductDescription({ product }: { product: ProductDetails }) {
             </div>
           ))}
         </dl>
-      </section>
-    </div>
   );
 }

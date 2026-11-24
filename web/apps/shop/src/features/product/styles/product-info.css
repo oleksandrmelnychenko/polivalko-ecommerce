@@ -9,16 +9,58 @@
 .buybox__note { padding: 0; background: none; font-size: 0.9375rem; }
 .buybox__note svg { width: 18px; height: 18px; }
 .related h2 { font-size: var(--text-section); }
-.product-details { display: grid; gap: 10px; align-items: start; margin-top: 10px; }
-@media (min-width: 56rem) { .product-details:has(.product-details__description) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.product-details > section { min-width: 0; padding: clamp(12px, 1.2vw, 16px); border: 1px solid var(--color-rule); border-radius: 16px; }
-.product-details h2 { margin: 0 0 8px; font-size: 1.125rem; }
-.product-details__description .prose { padding-bottom: 0; overflow-wrap: anywhere; }
-.product-details__specs h2 { scroll-margin-top: calc(var(--bar-height) + var(--space-lg)); }
-.specs { margin: 0; border-top: var(--rule-hair) solid var(--color-rule); }
-.specs div { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-md); padding-block: 6px; border-bottom: var(--rule-hair) solid var(--color-rule); overflow-wrap: anywhere; }
-.specs dt { color: var(--color-muted); }
-.specs dd { margin: 0; }
+.product__summary { display: grid; min-width: 0; gap: 18px; }
+.product-sheet {
+  --product-fact-bg: #eef1eb;
+  --section-space: clamp(20px, 2.25vw, 36px);
+  container-type: inline-size;
+  display: grid;
+  min-width: 0;
+  padding: clamp(26px, 2.5vw, 40px) clamp(32px, 2.8vw, 44px) clamp(16px, 1.4vw, 22px);
+  border: 1px solid #e9e9ed;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(20 23 30 / 4%);
+}
+.product-sheet__section { min-width: 0; scroll-margin-top: calc(var(--bar-height) + 12px); }
+.product-sheet__section ~ .product-sheet__section::before {
+  --line-width: calc(50% - 24px);
+  content: "";
+  display: block;
+  height: 20px;
+  margin-block: var(--section-space);
+  background:
+    url("/brand/leaf-divider.svg") center / 40px 20px no-repeat,
+    linear-gradient(to right, transparent, #b4c6ae) left center / var(--line-width) 1px no-repeat,
+    linear-gradient(to left, transparent, #b4c6ae) right center / var(--line-width) 1px no-repeat;
+}
+.product-sheet__section > h2 { margin: 0 0 10px; font-size: 1.3125rem; font-weight: 300; color: var(--color-ink); }
+.product-sheet .prose { max-width: none; padding-bottom: 0; color: var(--color-ink-2); overflow-wrap: anywhere; }
+#product-specs { container-type: inline-size; }
+.specs {
+  display: grid;
+  gap: 8px 12px;
+  margin: 0;
+}
+.specs > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) fit-content(60%);
+  align-items: center;
+  gap: 12px;
+  padding: 5px 10px;
+  border: 1px solid var(--color-rule);
+  border-radius: 8px;
+  background: var(--product-fact-bg);
+  font-size: .875rem;
+  overflow-wrap: anywhere;
+}
+.specs dt { color: var(--color-ink-2); }
+.specs dd { min-width: 0; margin: 0; color: var(--color-ink); font-weight: 550; text-align: end; }
+.specs a { text-decoration: none; }
+.specs a:hover { color: var(--color-brand); }
+@container (min-width: 36rem) {
+  .specs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .related { padding-top: clamp(20px, 2vw, 28px); }
 .related h2 { margin-bottom: var(--space-xl); }
 .variants { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin: 0; padding: 0; list-style: none; }
