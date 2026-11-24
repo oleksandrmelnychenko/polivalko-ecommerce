@@ -69,37 +69,49 @@
 .social-links--icons .social-links__item { min-height: 24px; }
 .social-links--icons .social-links__icon { width: 14px; height: 14px; }
 
-.contact-visit, .contact-connect, .contact-form-panel, .contact-seller {
-  min-width: 0; border: 1px solid var(--color-rule); border-radius: 16px; padding: clamp(16px, 2vw, 24px);
+.contact-heading {
+  padding-block: clamp(20px, 3vw, 44px);
 }
-.contact-visit { display: flex; flex-wrap: wrap; align-items: start; gap: 16px 32px; background: var(--color-paper-2); }
-.contact-visit__address, .contact-visit__hours, .contact-phones > div, .contact-pickup { display: flex; align-items: flex-start; gap: 12px; }
-.contact-visit__address { flex: 1 1 320px; }
-.contact-symbol { background: var(--color-paper); }
-.contact-visit__address p, .contact-visit__hours h3, .contact-phones h3 { margin: 0 0 4px; color: var(--color-ink-2); font-size: var(--text-sm); font-weight: 500; }
-.contact-visit h2 { margin: 0; max-width: 48ch; font-size: 1.125rem; line-height: 1.4; }
-.contact-visit__hours > svg, .contact-phones svg, .contact-pickup > svg { width: 20px; height: 20px; flex: none; }
-.contact-visit__hours p, .contact-phones p, .contact-pickup p { margin: 4px 0; font-size: var(--text-sm); line-height: 1.5; }
-.contact-route, .contact-pickup a { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: var(--text-sm); }
-.contact-route svg, .contact-pickup a svg { width: 16px; height: 16px; }
-.contact-columns { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: 12px; align-items: start; margin-top: 12px; }
-.contact-connect:only-child { grid-column: 1 / -1; }
-.contact-connect > h2, .contact-form-panel > h2, .contact-seller h2 { margin: 0 0 12px; font-size: 1.375rem; line-height: 1.25; }
-.contact-connect { display: grid; gap: 12px; }
-.contact-connect > h2 { margin: 0; }
-.contact-phones { display: grid; gap: 12px; }
-.contact-phones:empty { display: none; }
-.contact-phones a { font-size: 1.25rem; font-weight: 600; text-decoration: none; }
-.contact-email { overflow-wrap: anywhere; }
-.contact-social h3, .contact-pickup h3 { margin: 0 0 6px; font-size: 1rem; }
-.contact-social .social-links__item { border: 1px solid var(--color-rule); padding: 4px 10px; border-radius: var(--radius-pill); }
-.contact-form-panel { scroll-margin-top: calc(var(--bar-height) + 12px); }
-.contact-form-panel > p { margin: 0 0 16px; color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.5; }
+.contact-heading h1 { margin: 0; font-size: clamp(2rem, 3vw, 2.8rem); letter-spacing: -.045em; line-height: 1.1; }
+.contact-panel {
+  display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+  border: 1px solid #dfe4dc; border-radius: 20px; background: #f7f8f5; overflow: hidden;
+}
+.contact-info { min-width: 0; padding: clamp(22px, 3vw, 48px); }
+.contact-info h2 { margin: 0 0 8px; color: #48574d; font-size: .95rem; font-weight: 500; }
+.contact-address { max-width: 36ch; margin: 0 0 18px; font-size: clamp(1.35rem, 1.95vw, 2rem); font-weight: 500; line-height: 1.26; letter-spacing: -.025em; }
+.contact-route { display: inline-flex; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 8px; background: #263c30; color: white; font-size: .9rem; font-weight: 550; text-decoration: none; }
+.contact-route:hover { background: #14271b; color: white; }
+.contact-route svg, .contact-service-phone svg { width: 16px; height: 16px; flex: none; }
+.contact-facts { display: grid; gap: 11px; margin: 24px 0 0; }
+.contact-facts > div { display: grid; grid-template-columns: minmax(100px, .75fr) minmax(0, 1.25fr); gap: 12px; align-items: baseline; }
+.contact-facts dt { font-size: .875rem; color: #526058; }
+.contact-facts dd { margin: 0; font-size: .94rem; overflow-wrap: anywhere; }
+.contact-facts a { color: var(--color-ink); font-weight: 550; text-decoration: none; }
+.contact-facts a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.contact-pickup { margin-top: 20px; border-top: 1px solid #d6dfd4; font-size: .875rem; }
+.contact-pickup p { margin: 10px 0; line-height: 1.5; }
+.contact-map { width: 100%; height: 100%; min-height: 340px; border: 0; background: #e9eee6; }
+.contact-info:only-child { grid-column: 1 / -1; }
+.contact-request-sheet, .contact-heading { scroll-margin-top: calc(var(--bar-height) + 12px); }
+.contact-panel + .contact-request-sheet { margin-top: 20px; }
+.contact-request-intro { display: grid; justify-items: start; gap: 10px; }
+.contact-request-intro h2 { margin: 0; font-size: clamp(1.45rem, 1.9vw, 2rem); font-weight: 550; line-height: 1.15; letter-spacing: -.035em; }
+.contact-service-phone { display: inline-flex; align-items: center; gap: 7px; color: #365c43; font-size: .94rem; font-weight: 500; text-decoration: none; }
+.contact-service-phone:hover { text-decoration: underline; text-underline-offset: 3px; }
+.contact-social { display: flex; justify-content: flex-end; padding: 20px 0; }
+.contact-social .social-links__item { padding: 5px 8px; }
 .contact-request-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .contact-request-form > h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .contact-request-form .field:nth-of-type(n+3), .contact-request-form > button, .contact-request-form > [role=status] { grid-column: 1 / -1; }
 .contact-request-form > [role=status]:empty { display: none; }
 .contact-request-form textarea { min-height: 88px; }
-.contact-seller { margin-top: 12px; font-size: var(--text-sm); }
-@media (max-width: 48rem) { .contact-columns { grid-template-columns: minmax(0, 1fr); } }
-@media (max-width: 32rem) { .contact-request-form { grid-template-columns: minmax(0, 1fr); } }
+.contact-seller { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--color-rule); font-size: var(--text-sm); }
+@media (max-width: 48rem) {
+  .contact-panel { grid-template-columns: minmax(0, 1fr); }
+  .contact-map { height: 270px; min-height: 0; }
+  .contact-request-form { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 32rem) {
+  .contact-facts > div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}

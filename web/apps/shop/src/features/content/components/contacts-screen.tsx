@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { breadcrumbJsonLd, contactPageJsonLd, JsonLd } from "@/features/seo";
 import { getServiceDirections, ServiceRequestForm } from "@/features/services/server";
-import { ClockIcon, PhoneIcon, PinIcon, ArrowRightIcon, BagIcon } from "@polivalko/shared/ui/icons";
+import { ArrowRightIcon, PhoneIcon } from "@polivalko/shared/ui/icons";
 import { getContacts, getPickupPoints, getSeller } from "../api/server";
 import { organizationSource } from "../lib/organization";
 import { socialLinks } from "../lib/social-links";
@@ -22,26 +22,44 @@ async function ContactsContent() {
   const schedule = contacts?.schedule || point?.schedule;
   const mapUrl = contacts?.mapUrl || point?.mapUrl;
   const socials = socialLinks(contacts);
-  const hasChannels = Boolean(contacts?.email || contacts?.storePhone || contacts?.servicesPhone || socials.length);
+  const hasServices = Boolean(directions.length || contacts?.servicesPhone);
+  const requestIntro = (
+    <header className="contact-request-intro">
+      <h2 id="contact-services-title">{directions.length ? "Заявка на садові роботи" : "Послуги для саду"}</h2>
+      {contacts?.servicesPhone && <a className="contact-service-phone" href={tel(contacts.servicesPhone)}><PhoneIcon />{contacts.servicesPhone}</a>}
+    </header>
+  );
+  const mapQuery = (mapUrl && URL.canParse(mapUrl) && new URL(mapUrl).searchParams.get("query")) || address;
+  const mapEmbed = "https://maps.google.com/maps?" + new URLSearchParams({ q: mapQuery, z: "16", hl: "uk", output: "embed" });
   return <>
     <JsonLd data={contactPageJsonLd({ name: "Контакти", description: "Адреса й графік магазину, телефони для замовлень і послуг.", path: "/contacts", organization: organizationSource(contacts, seller) })} />
-    <header className="page-head"><h1>Контакти</h1></header>
-    <section className="contact-visit" aria-labelledby="visit-address">
-      <div className="contact-visit__address"><span className="contact-symbol"><PinIcon /></span><div><p>Адреса магазину</p><h2 id="visit-address">{address}</h2>{mapUrl && <a className="contact-route" href={mapUrl} target="_blank" rel="noopener noreferrer">Прокласти маршрут <ArrowRightIcon /></a>}</div></div>
-      {(schedule || contacts?.specialDays?.length) ? <div className="contact-visit__hours"><ClockIcon /><div><h3>Графік роботи</h3>{schedule && <p>{schedule}</p>}<SpecialDays days={contacts?.specialDays} /></div></div> : null}
-    </section>
-    <div className="contact-columns">
-      <section className="contact-connect" aria-labelledby="contact-connect-title"><h2 id="contact-connect-title">{hasChannels ? "Зв’язок із магазином" : "Самовивіз замовлень"}</h2>
-        <div className="contact-phones">
-          {contacts?.storePhone && <div><PhoneIcon /><div><h3>Магазин і замовлення</h3><a href={tel(contacts.storePhone)}>{contacts.storePhone}</a><p>Наявність товару, вибір і доставка</p></div></div>}
-          {contacts?.servicesPhone && <div><PhoneIcon /><div><h3>Послуги для саду</h3><a href={tel(contacts.servicesPhone)}>{contacts.servicesPhone}</a><p>Озеленення, автополив і догляд</p></div></div>}
+    <header className="contact-heading" id="store"><h1>Контакти</h1></header>
+    <section className="contact-panel" aria-labelledby="contact-store-title">
+      <div className="contact-info">
+        <h2 id="contact-store-title">Адреса магазину</h2>
+        <p className="contact-address">{address}</p>
+        {mapUrl && <a className="contact-route" href={mapUrl} target="_blank" rel="noopener noreferrer">Прокласти маршрут <ArrowRightIcon /></a>}
+        <dl className="contact-facts">
+          {contacts?.storePhone && <div><dt>Магазин і замовлення</dt><dd><a href={tel(contacts.storePhone)}>{contacts.storePhone}</a></dd></div>}
+          {(schedule || contacts?.specialDays?.length) ? <div><dt>Графік роботи</dt><dd>{schedule}<SpecialDays days={contacts?.specialDays} /></dd></div> : null}
+          {contacts?.email && <div><dt>Email</dt><dd><a href={"mailto:" + contacts.email}>{contacts.email}</a></dd></div>}
+        </dl>
+        <div className="contact-pickup">
+          <p>Самовивіз безкоштовний. {point?.instructions || "Дочекайтеся повідомлення про готовність і назвіть номер замовлення на касі."}</p>
+          {point?.address && point.address !== address && <p>{point.address}</p>}
+          {point?.schedule && point.schedule !== schedule && <p>{point.schedule}</p>}
+          <Link href="/payment-delivery">Доставка й оплата</Link>
         </div>
-        {contacts?.email && <a className="contact-email" href={"mailto:" + contacts.email}>{contacts.email}</a>}
-        {socials.length > 0 && <div className="contact-social"><h3>Месенджери та соцмережі</h3><nav aria-label="Соціальні мережі"><SocialLinksList links={socials} /></nav></div>}
-        <div className="contact-pickup"><BagIcon /><div>{hasChannels && <h3>Самовивіз замовлень</h3>}<p>Самовивіз безкоштовний. {point?.instructions || "Дочекайтеся повідомлення про готовність і назвіть номер замовлення на касі."}</p>{point?.address && point.address !== address && <p>{point.address}</p>}{point?.schedule && point.schedule !== schedule && <p>{point.schedule}</p>}<Link href="/payment-delivery">Доставка й оплата <ArrowRightIcon /></Link></div></div>
+      </div>
+      {(contacts?.address || point?.address) && <iframe className="contact-map" src={mapEmbed} title="Магазин на карті" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />}
+    </section>
+    {socials.length > 0 && <nav className="contact-social" aria-label="Месенджери та соцмережі"><SocialLinksList links={socials} /></nav>}
+    {hasServices && (
+      <section id="request" className="contact-request-sheet" aria-labelledby="contact-services-title">
+        {requestIntro}
+        {directions.length > 0 && <ServiceRequestForm directions={directions} className="contact-request-form" />}
       </section>
-      {directions.length > 0 && <section id="request" className="contact-form-panel" aria-labelledby="contact-form-title"><h2 id="contact-form-title">Заявка на послугу</h2><p>Оберіть послугу та залиште телефон. Менеджер зв’яжеться з вами, щоб уточнити деталі.</p><ServiceRequestForm directions={directions} className="contact-request-form" /></section>}
-    </div>
+    )}
     {seller && (seller.name || seller.taxId || seller.address) && <section className="contact-seller"><h2>Реквізити продавця</h2>{seller.name && <p>{seller.name}</p>}{seller.taxId && <p>Код: {seller.taxId}</p>}{seller.address && <p>{seller.address}</p>}<Link href="/offer">Публічна оферта</Link></section>}
   </>;
 }
