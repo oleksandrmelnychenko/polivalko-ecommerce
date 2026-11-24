@@ -10,6 +10,8 @@ internal static class OrderTransitions
         OrderStatus.Confirmed when order.PaymentMethod == PaymentMethod.Card => [OrderStatus.AwaitingPayment, OrderStatus.Cancelled],
         OrderStatus.Confirmed => [Fulfilment(order), OrderStatus.Cancelled],
         OrderStatus.AwaitingPayment => [OrderStatus.Cancelled],
+        // All the money went back: the goods must not be written off as sold, only the order closed.
+        OrderStatus.Paid or OrderStatus.Shipped or OrderStatus.ReadyForPickup when order.PaymentStatus == PaymentStatus.Refunded => [OrderStatus.Cancelled],
         OrderStatus.Paid => CanCancel(order) ? [Fulfilment(order), OrderStatus.Cancelled] : [Fulfilment(order)],
         OrderStatus.Shipped or OrderStatus.ReadyForPickup => CanCancel(order) ? [OrderStatus.Completed, OrderStatus.Cancelled] : [OrderStatus.Completed],
         _ => [],
