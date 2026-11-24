@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { carrierPlaces, joinOr, type DeliveryFacts } from "@/shared/lib/delivery-facts";
-import { StoreIcon, TruckIcon } from "@polivalko/shared/ui/icons";
+import { ChevronRightIcon, StoreIcon, TruckIcon } from "@polivalko/shared/ui/icons";
 
 const PAYMENT_WORDS: Record<string, string> = {
   card: "карткою онлайн",
@@ -8,60 +8,42 @@ const PAYMENT_WORDS: Record<string, string> = {
   pay_on_pickup: "під час самовивозу",
 };
 
-export async function ProductDeliveryFacts({ load }: { load: () => Promise<DeliveryFacts | null> }) {
-  const facts = await load();
-  if (!facts) return null;
+export function ProductDeliveryFacts({ facts }: { facts: DeliveryFacts }) {
   const places = carrierPlaces(facts);
   const payments = joinOr(facts.payments.map((code) => PAYMENT_WORDS[code]).filter(Boolean));
   return (
-    <details className="pinfo product-fulfillment">
-      <summary>Доставка, оплата й повернення</summary>
+    <div className="pinfo">
       {(facts.pickup || places) && (
-        <section>
-          <h2>Доставка</h2>
           <ul className="pinfo__rows">
             {facts.pickup && (
               <li className="pinfo__row">
-                <StoreIcon />
-                <p>
-                  Самовивіз
-                  <small>З магазину, коли менеджер повідомить, що замовлення зібране</small>
-                </p>
-                <span>Безкоштовно</span>
+                <h3><StoreIcon />Самовивіз</h3>
+                <p>З магазину після підтвердження готовності замовлення.</p>
+                <strong>Безкоштовно</strong>
               </li>
             )}
             {places && (
               <li className="pinfo__row">
-                <TruckIcon />
-                <p>
-                  Нова пошта
-                  <small>
-                    {places[0].toUpperCase()}
-                    {places.slice(1)} по всій Україні
-                  </small>
-                </p>
-                <span>За тарифом</span>
+                <h3><TruckIcon />Нова пошта</h3>
+                <p>{places[0].toUpperCase()}{places.slice(1)} по всій Україні.</p>
+                <strong>За тарифом перевізника</strong>
               </li>
             )}
           </ul>
-        </section>
       )}
       {payments && (
-        <section>
-          <h2>Оплата</h2>
-          <p className="pinfo__text">
+        <section className="pinfo__policy">
+          <h3>Оплата</h3>
+          <p>
             {payments[0].toUpperCase()}
             {payments.slice(1)}.
           </p>
         </section>
       )}
-      <p className="pinfo__text">
-        Повернення протягом 14 днів, умови на сторінці{" "}
-        <Link href="/returns" className="link">
-          «Повернення й обмін»
-        </Link>
-        .
-      </p>
-    </details>
+      <section className="pinfo__policy">
+        <h3>Повернення</h3>
+        <p>Протягом 14 днів. <Link href="/returns">Умови повернення <ChevronRightIcon /></Link></p>
+      </section>
+    </div>
   );
 }
