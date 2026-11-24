@@ -51,7 +51,7 @@ internal static class SalesOffers
         var added = await db.Database.ExecuteSqlAsync($"""
             INSERT INTO accounting.sales_offers(id,partner_id,day,focus,body,selection_basis)
             SELECT {id},p.id,{input.Day},{input.Focus},{input.Body},{input.SelectionBasis} FROM accounting.partners p
-            WHERE p.id={input.PartnerId} AND {input.Day} <= (now() AT TIME ZONE 'Europe/Kyiv')::date
+            WHERE p.id={input.PartnerId} AND p.merged_into IS NULL AND {input.Day} <= (now() AT TIME ZONE 'Europe/Kyiv')::date
             ON CONFLICT (id) DO NOTHING
             """,ct);
         if (added == 0)

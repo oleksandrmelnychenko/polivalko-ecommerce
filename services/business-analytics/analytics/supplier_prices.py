@@ -13,7 +13,8 @@ WITH positions AS (
            {ORG} AS org,{STORE} AS store,{UNIT} AS unit,
            coalesce(d.native_partner_id::text,nullif(d.partner_ref,''),d.details#>>'{{partner,external_id}}') AS partner,
            coalesce((SELECT nullif(trim(c.title),'') FROM accounting.partners c WHERE c.id=d.native_partner_id),
-                    (SELECT nullif(trim(c.title),'') FROM accounting.partners c WHERE c.source_account=d.source_account
+                    (SELECT nullif(trim(coalesce(m.title,c.title)),'') FROM accounting.partners c
+                        LEFT JOIN accounting.partners m ON m.id=c.merged_into WHERE c.source_account=d.source_account
                         AND lower(c.source_id)=lower(d.partner_ref) LIMIT 1),
                     nullif(trim(d.partner_title),''),nullif(trim(d.details#>>'{{partner,title}}'),'')) AS supplier,
            lower(l#>>'{{product,id}}') AS ref,lower(l#>>'{{product,code}}') AS code,

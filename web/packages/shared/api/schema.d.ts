@@ -1450,6 +1450,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/accounting/partners/{id}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleMergeAccountingPartners"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/partners/{id}/unmerge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleUnmergeAccountingPartner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/accounting/offers": {
         parameters: {
             query?: never;
@@ -5248,6 +5280,10 @@ export interface components {
         PartnerCard: {
             partner: components["schemas"]["PartnerRow"];
             agreements: components["schemas"]["AgreementRow"][];
+            merged: components["schemas"]["PartnerRow"][];
+        };
+        PartnerMerge: {
+            duplicates: string[];
         };
         PartnerNameChange: {
             /** Format: uuid */
@@ -5292,6 +5328,8 @@ export interface components {
             category: null | string;
             sourceTitle: null | string;
             note: null | string;
+            /** Format: uuid */
+            mergedInto: null | string;
         };
         /** @enum {unknown} */
         PaymentAttemptStatus: "created" | "processing" | "succeeded" | "failed" | "expired" | "reversed";
@@ -10057,6 +10095,90 @@ export interface operations {
                 "application/json": components["schemas"]["PostStockOperation"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleMergeAccountingPartners: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PartnerMerge"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": number;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleUnmergeAccountingPartner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {

@@ -4915,6 +4915,120 @@
         }
       }
     },
+    "/api/v1/console/accounting/partners/{id}/merge": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ConsoleMergeAccountingPartners",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartnerMerge"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/accounting/partners/{id}/unmerge": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ConsoleUnmergeAccountingPartner",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/console/accounting/offers": {
       "get": {
         "tags": [
@@ -20814,7 +20928,8 @@
       "PartnerCard": {
         "required": [
           "partner",
-          "agreements"
+          "agreements",
+          "merged"
         ],
         "type": "object",
         "properties": {
@@ -20825,6 +20940,27 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AgreementRow"
+            }
+          },
+          "merged": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartnerRow"
+            }
+          }
+        }
+      },
+      "PartnerMerge": {
+        "required": [
+          "duplicates"
+        ],
+        "type": "object",
+        "properties": {
+          "duplicates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
             }
           }
         }
@@ -20960,7 +21096,8 @@
           "sourceId",
           "category",
           "sourceTitle",
-          "note"
+          "note",
+          "mergedInto"
         ],
         "type": "object",
         "properties": {
@@ -21000,6 +21137,13 @@
               "null",
               "string"
             ]
+          },
+          "mergedInto": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },

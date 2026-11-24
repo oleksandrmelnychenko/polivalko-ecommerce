@@ -21,7 +21,7 @@ RETAIL_PLACEHOLDER = (r"(^| )(роздрібний покупець|роздрі
                       r"( *[(].*[)])?$")
 HISTORY = f"""
 WITH identities AS (
-    SELECT source_account,lower(source_id) AS ref,min(id::text)::uuid AS id FROM accounting.partners
+    SELECT source_account,lower(source_id) AS ref,min(coalesce(merged_into,id)::text)::uuid AS id FROM accounting.partners
     GROUP BY 1,2 HAVING count(*)=1
 ), recent AS (
     SELECT DISTINCT r.partner_id AS client,p.title AS name FROM accounting.document_register r

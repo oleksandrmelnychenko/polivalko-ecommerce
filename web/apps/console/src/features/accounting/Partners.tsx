@@ -1,6 +1,7 @@
-import { Button, Group, SegmentedControl, Select, Table, Text, TextInput } from '@mantine/core'
+import { Alert, Button, Group, SegmentedControl, Select, Table, Text, TextInput } from '@mantine/core'
 import {
   IconBuilding,
+  IconArrowMerge,
   IconChevronRight,
   IconFileDescription,
   IconFilterOff,
@@ -31,6 +32,7 @@ import { EditRegister } from './EditRegister'
 import { duplicateKey, partnerRole, roleOptions } from './lib/partnerNames'
 import { namesToClean, PARTNER_NAMES_CHANGED, PartnerNameCleanup, PartnerNameEditor } from './PartnerNames'
 import { PartnerDocuments } from './PartnerDocuments'
+import { PartnerMergeDialog, unmergePartner } from './PartnerMerges'
 import { PartnerOpeningList } from './PartnerOpenings'
 import { Grid } from './RegisterTable'
 import { currencyLabel, money, read, useRegister, type Page, type Partner, type PartnerCard } from './api'
@@ -85,6 +87,7 @@ function DirectoryList() {
   const navigate = useNavigate()
   const [adding, setAdding] = useState(false)
   const [cleaning, setCleaning] = useState(false)
+  const [merging, setMerging] = useState<Partner[] | null>(null)
   const { can } = usePermissions()
   const query = useApiQuery('partner-directory', loadDirectory)
   const { reload } = query
@@ -260,6 +263,13 @@ function DirectoryList() {
                       </span>
                     </PartnerDetailLink>
                     {duplicate(row) && <TableChip tone="warning" value="Можливий дубль" />}
+                    {check === 'duplicates' && can(PermissionKeys.Accounting.Edit) && duplicate(row) &&
+                      filtered.find((r) => keys.get(r.id) === keys.get(row.id))?.id === row.id && (
+                      <Button size="compact-xs" variant="default" leftSection={<IconArrowMerge size={13} />} ml={6}
+                        onClick={() => setMerging(filtered.filter((r) => keys.get(r.id) === keys.get(row.id)))}>
+                        Об’єднати групу
+                      </Button>
+                    )}
                   </td>
                   <td data-label="Код" className="partner-code">{row.sourceId}</td>
                   <td data-label="Категорія"><TableChip tone={row.category === 'Постачальники' ? 'document' : 'neutral'} value={row.category || 'Без категорії'} /></td>
@@ -270,6 +280,9 @@ function DirectoryList() {
           </table>
         )}
       </section>
+      {merging && (
+        <PartnerMergeDialog initial={merging} close={() => setMerging(null)} saved={() => setMerging(null)} />
+      )}
       {cleaning && (
         <PartnerNameCleanup
           rows={rows}
@@ -301,7 +314,25 @@ function PartnerProfile({ id }: { id: string }) {
   const [opened, setOpened] = useState(true)
   const [operationOpen, setOperationOpen] = useState(false)
   const [renaming, setRenaming] = useState(false)
+  const [merging, setMerging] = useState(false)
+  const [unmerging, setUnmerging] = useState<string | null>(null)
+  const [mergeError, setMergeError] = useState('')
+  const dialog = operationOpen || renaming || merging
   const [params] = useSearchParams()
+  async function unmerge(card: string) {
+    if (unmerging) return
+    setUnmerging(card)
+    setMergeError('')
+    try {
+      const message = await unmergePartner(card)
+      if (message) setMergeError(message)
+      else detail.reload()
+    } catch {
+      setMergeError('Немає зв’язку з сервером. Повторіть скасування.')
+    } finally {
+      setUnmerging(null)
+    }
+  }
   const section = params.get('section')
   const active = section === 'balances' || section === 'agreements' ? section : 'documents'
   const detail = useRegister<PartnerCard>('partners/' + id)
@@ -309,8 +340,7 @@ function PartnerProfile({ id }: { id: string }) {
   const partner = detail.data?.partner
   return (
     <AppEditorModal opened={opened} onClose={() => setOpened(false)} size="wide" className="ledger-editor partner-modal"
-      closeOnEscape={!operationOpen && !renaming} closeOnClickOutside={!operationOpen && !renaming}
-      trapFocus={!operationOpen && !renaming}
+      closeOnEscape={!dialog} closeOnClickOutside={!dialog} trapFocus={!dialog}
       title={<MetricLabel icon={IconUsers}>{partner?.title || 'Картка контрагента'}</MetricLabel>}
       onExitTransitionEnd={() => {
         if (location.state?.documentBackground || location.state?.marketSearch != null || location.state?.balanceSearch != null) navigate(-1)
@@ -332,14 +362,51 @@ function PartnerProfile({ id }: { id: string }) {
               <Text size="xs" className="partner-note">Назва в DNTrade: {partner.sourceTitle.trim()}</Text>
             )}
             <span className="partner-id">Код <code>{partner.sourceId}</code></span>
-            {can(PermissionKeys.Accounting.Edit) && (
-              <Button size="xs" variant="default" leftSection={<IconPencil size={14} />} onClick={() => setRenaming(true)}>
-                Змінити назву
-              </Button>
+            {can(PermissionKeys.Accounting.Edit) && !partner.mergedInto && (
+              <>
+                <Button size="xs" variant="default" leftSection={<IconPencil size={14} />} onClick={() => setRenaming(true)}>
+                  Змінити назву
+                </Button>
+                <Button size="xs" variant="default" leftSection={<IconArrowMerge size={14} />} onClick={() => setMerging(true)}>
+                  Приєднати дубль
+                </Button>
+              </>
             )}
             {can(PermissionKeys.Analytics.ViewProducts) && can(PermissionKeys.Accounting.Edit) &&
               <Button component={Link} size="xs" to={'/analytics/business?tab=offers&partner=' + id}>Підготувати пропозицію</Button>}
           </header>
+          {partner.mergedInto && (
+            <Alert color="yellow" className="partner-merged" title="Картку об’єднано з іншою">
+              Документи, борги й прив’язки цієї картки рахуються на основній.{' '}
+              <PartnerDetailLink id={partner.mergedInto}>Відкрити основну картку</PartnerDetailLink>
+              {can(PermissionKeys.Accounting.Edit) && (
+                <Button size="compact-xs" variant="default" ml="sm" loading={unmerging === partner.id}
+                  onClick={() => unmerge(partner.id)}>Скасувати об’єднання</Button>
+              )}
+            </Alert>
+          )}
+          {detail.data.merged.length > 0 && (
+            <section className="ledger-card partner-block partner-merged-list">
+              <h2><MetricLabel icon={IconArrowMerge}>Об’єднані картки · {detail.data.merged.length}</MetricLabel></h2>
+              {detail.data.merged.map((m) => (
+                <Group key={m.id} gap="sm" justify="space-between" wrap="nowrap">
+                  <span className="partner-name">
+                    <strong>{m.title}</strong>
+                    <small>{[m.sourceTitle?.trim() !== m.title ? m.sourceTitle?.trim() : null, m.category, m.sourceId].filter(Boolean).join(' · ')}</small>
+                  </span>
+                  {can(PermissionKeys.Accounting.Edit) && (
+                    <Button size="compact-xs" variant="default" loading={unmerging === m.id} onClick={() => unmerge(m.id)}>
+                      Скасувати об’єднання
+                    </Button>
+                  )}
+                </Group>
+              ))}
+              <Text size="xs" c="dimmed">
+                Скасування повертає на картку лише те, що перейшло під час об’єднання. Нове, створене вже на основній картці, лишається на ній.
+              </Text>
+            </section>
+          )}
+          {mergeError && <Alert color="red" role="alert">{mergeError}</Alert>}
           <nav className="partner-sections" aria-label="Розділи картки контрагента">
             {Object.entries({ documents: 'Документи', balances: 'Взаєморозрахунки', agreements: 'Договори' }).map(([key, label]) => {
               const next = new URLSearchParams(params)
@@ -402,6 +469,17 @@ function PartnerProfile({ id }: { id: string }) {
             </section>
           )}
         </>
+      )}
+      {merging && partner && (
+        <PartnerMergeDialog
+          initial={[partner]}
+          mainId={partner.id}
+          close={() => setMerging(false)}
+          saved={() => {
+            setMerging(false)
+            detail.reload()
+          }}
+        />
       )}
       {renaming && partner && (
         <PartnerNameEditor

@@ -24,7 +24,7 @@ internal static class AccountingEntry
     {
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         var valid = await db.Database.SqlQuery<int>($"""
-            SELECT 1 AS "Value" FROM accounting.settlements s JOIN accounting.partners p ON p.id={input.PartnerId}
+            SELECT 1 AS "Value" FROM accounting.settlements s JOIN accounting.partners p ON p.id={input.PartnerId} AND p.merged_into IS NULL
                 AND (p.source_account=s.source_account OR p.source_account='polivalko-native')
             WHERE s.report_id={id} AND NOT s.footer AND s.heading_position={input.HeadingPosition}
             """).AnyAsync(ct);
@@ -69,7 +69,7 @@ internal static class AccountingEntry
     {
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         var heading = (await db.Database.SqlQuery<long>($"""
-            SELECT s.heading_position AS "Value" FROM accounting.settlements s JOIN accounting.partners p ON p.id={input.PartnerId}
+            SELECT s.heading_position AS "Value" FROM accounting.settlements s JOIN accounting.partners p ON p.id={input.PartnerId} AND p.merged_into IS NULL
                 AND (p.source_account=s.source_account OR p.source_account='polivalko-native')
             WHERE s.report_id={id} AND NOT s.footer AND s.position={position} AND s.heading_position IS NOT NULL
             """).ToListAsync(ct)).Cast<long?>().SingleOrDefault();
@@ -145,7 +145,7 @@ internal static class AccountingEntry
             var changed = await db.Database.ExecuteSqlAsync($"""
                 UPDATE accounting.partners SET title={c.Title},note={c.Note},
                     source_title=CASE WHEN source_account<>'polivalko-native' THEN coalesce(source_title,title) END
-                WHERE id={c.Id} AND title={c.PreviousTitle} AND note IS NOT DISTINCT FROM {c.PreviousNote}
+                WHERE id={c.Id} AND merged_into IS NULL AND title={c.PreviousTitle} AND note IS NOT DISTINCT FROM {c.PreviousNote}
                     AND (title<>{c.Title} OR note IS DISTINCT FROM {c.Note})
                 """, ct);
             if (changed > 0)
@@ -233,8 +233,8 @@ internal static class AccountingEntry
                 return Results.Problem(detail:"Виберіть організацію та склад, до яких прив’язано залишок товару.",statusCode:409);
         }
         var partner = await db.Database.SqlQuery<PartnerRow>($"""
-            SELECT id,title,kind,source_account,source_id,NULL::text AS category,source_title,note
-            FROM accounting.partners WHERE id={input.PartnerId}
+            SELECT id,title,kind,source_account,source_id,NULL::text AS category,source_title,note,merged_into
+            FROM accounting.partners WHERE id={input.PartnerId} AND merged_into IS NULL
             """).SingleOrDefaultAsync(ct);
         var org = await Organizations(db).SingleOrDefaultAsync(x => x.Id == input.OrganizationId, ct);
         var store = await Stores(db).SingleOrDefaultAsync(x => x.Id == input.StoreId, ct);

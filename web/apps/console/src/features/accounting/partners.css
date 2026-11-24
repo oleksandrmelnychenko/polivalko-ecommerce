@@ -112,3 +112,6 @@
   .partner-table td:first-child > .app-table-chip { margin-inline-start: 0; }
   .partner-role-switch { width: 100%; }
 }
+.partner-merged { border-radius: 14px; }
+.partner-merged-list { gap: 8px; }
+.partner-merge-row .partner-merge-count { margin-inline-start: auto; white-space: nowrap; font-family: var(--font-mono); }

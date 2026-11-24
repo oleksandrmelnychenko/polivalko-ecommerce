@@ -10,7 +10,7 @@ namespace PoliValko.Console.Features.Accounting;
 
 public sealed record RegisterPage<T>(List<T> Items, int Total);
 public sealed record PartnerRow(Guid Id, string Title, string? Kind, string SourceAccount, string SourceId, string? Category,
-    string? SourceTitle, string? Note);
+    string? SourceTitle, string? Note, Guid? MergedInto);
 public sealed record DocumentRow(Guid Id, string EntityType, string? Kind, string? Number, DateOnly? Day, string? Status,
     string SourceAccount, string SourceId, string? Organization, string? OrganizationId,
     string? PartnerTitle, string? PartnerRef, Guid? PartnerId, string? Agreement,
@@ -24,7 +24,7 @@ public sealed record BalanceRow(long Position, bool Footer, string? PartnerTitle
     long? HeadingPosition, Guid? LinkedPartner, Guid? Candidate, int CandidateCount, Guid? OpeningId, bool HeadingConfirmed,
     string? PartnerName, string? PartnerCategory, bool RowLinked);
 public sealed record AgreementRow(string? Id, string? Title, string? Currency);
-public sealed record PartnerCard(PartnerRow Partner, List<AgreementRow> Agreements);
+public sealed record PartnerCard(PartnerRow Partner, List<AgreementRow> Agreements, List<PartnerRow> Merged);
 public sealed record ProductMovement(Guid DocumentId, int Position, DateOnly? Day, string? Number, string? EntityType,
     string? Kind,string? Status,string? Title,string? Sku,string? Store,string? Quantity,string? Price,string? Total,string? Currency);
 
@@ -66,6 +66,7 @@ public static class AccountingRegisters
         InventoryReview.Map(group);
         PartnerOpenings.Map(group);
         StockOperations.Map(group);
+        PartnerMerges.Map(group);
     }
 
     private static IQueryable<DocumentRow> AllDocuments(PoliValkoDbContext db) =>
@@ -77,7 +78,7 @@ public static class AccountingRegisters
 
     private static IQueryable<PartnerRow> AllPartners(PoliValkoDbContext db) =>
         db.Database.SqlQuery<PartnerRow>($"""
-            SELECT id,title,kind,source_account,source_id,details->'category'->>'title' AS category,source_title,note
+            SELECT id,title,kind,source_account,source_id,details->'category'->>'title' AS category,source_title,note,merged_into
             FROM accounting.partners
             """);
 
@@ -91,7 +92,8 @@ public static class AccountingRegisters
                 CASE WHEN jsonb_typeof(p.details->'agreements')='array' THEN p.details->'agreements' ELSE '[]' END) a
             WHERE p.id={id}
             """).ToListAsync(ct);
-        return Results.Ok(new PartnerCard(partner, agreements));
+        var merged = await AllPartners(db).Where(p => p.MergedInto == id).OrderBy(p => p.Title).ToListAsync(ct);
+        return Results.Ok(new PartnerCard(partner, agreements, merged));
     }
 
     private static bool InvalidPage(int page, string? q) => page is < 1 or > 1_000_000 || q is { Length: > 160 };
@@ -123,12 +125,13 @@ public static class AccountingRegisters
         {
             var term = string.Join(" ",q.Split((char[]?)null,StringSplitOptions.RemoveEmptyEntries)).ToLowerInvariant();
             rows = db.Database.SqlQuery<PartnerRow>($"""
-                SELECT id,title,kind,source_account,source_id,details->'category'->>'title' AS category,source_title,note
+                SELECT id,title,kind,source_account,source_id,details->'category'->>'title' AS category,source_title,note,merged_into
                 FROM accounting.partners WHERE strpos(lower(coalesce(note,'')),{term})>0 OR strpos(lower(coalesce(source_title,'')),{term})>0 OR strpos(regexp_replace(lower(title),'[[:space:]  ]+',' ','g'),{term})>0
                     OR strpos(lower(source_id),{term})>0
                 """);
         }
-        return await Page(rows.OrderBy(p => p.Title).ThenBy(p => p.Id), page, ct);
+        // A merged card lives on as an alias of its main card and is no longer offered for a choice.
+        return await Page(rows.Where(p => p.MergedInto == null).OrderBy(p => p.Title).ThenBy(p => p.Id), page, ct);
     }
 
     private static async Task<IResult> Documents(PoliValkoDbContext db, string? register, Guid? partnerId,

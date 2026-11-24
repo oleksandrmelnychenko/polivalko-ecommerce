@@ -185,6 +185,69 @@ public sealed class AccountingRegisterTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Merged_duplicate_moves_its_debts_and_documents_to_the_main_card_and_can_be_undone()
+    {
+        using var admin = await Staff.AdminAsync(api);
+        var account = "merge-" + Guid.NewGuid().ToString("N");
+        object Row(string section,string? level,params string[] values) =>
+            new { section,level,cells=values.Select(value=>new { value }) };
+        var report = new { schemaVersion=1,source="dntrade",entityType="financialReport",sourceId="merge-report",sourceDate="2026-11-20",
+            documentType="Взаєморозрахунки з контрагентами",raw=new { tables=new[] { new[] {
+                Row("TBODY",null,"ТОВ \"Тест\"","","","",""),Row("TBODY","indent","Main","0,00 грн.","10,00 грн.","0,00 грн.","-10,00 грн."),
+                Row("TBODY",null,"ТОВ Тест","","","",""),Row("TBODY","indent","Main","0,00 грн.","20,00 грн.","0,00 грн.","-20,00 грн.")
+            } } } };
+        object Partner(string id,string title) => new { schemaVersion=1,source="dntrade",entityType="partner",sourceId=id,raw=new { title } };
+        object Invoice(string id,string partner) => new { schemaVersion=1,source="dntrade",entityType="invoice",sourceId=id,documentType="in",
+            sourceDate="2026-11-20",organizationId="org-merge",raw=new { number=id,organization=new { title="Org "+account },partner=new { external_id=partner } } };
+        var body = string.Join("\n",new[]{report,Partner("m1","ТОВ \"Тест\""),Partner("m2","ТОВ Тест"),Invoice("inv-1","m1"),Invoice("inv-2","m2")}
+            .Select(x=>System.Text.Json.JsonSerializer.Serialize(x)));
+        (await admin.PostAsync("/api/v1/console/dntrade-archive/import?sourceAccount="+account,
+            new StringContent(body,Encoding.UTF8,"application/x-ndjson"),Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var cards = (await admin.ReadAsync<RegisterPage<PartnerRow>>(Root+"/partners?q=тест")).Items
+            .Where(p=>p.SourceAccount==account).OrderBy(p=>p.SourceId).ToList();
+        var (main,duplicate) = (cards[0].Id,cards[1].Id);
+        var reportId = (await admin.ReadAsync<List<BalanceReport>>(Root+"/balance-reports")).Single(r=>r.SourceAccount==account).Id;
+        var url = Root+"/balance-reports/"+reportId;
+        (await (await admin.PostAsync(url+"/partner-links",null,Ct)).ReadAsync<int>()).ShouldBe(2);
+        var rows = await admin.ReadAsync<List<BalanceRow>>(url);
+        var org = (await admin.ReadAsync<References>(Root+"/references")).Organizations.Single(x=>x.Title=="Org "+account);
+        (await admin.PostAsJsonAsync(url+"/openings",new ConfirmOpening(rows[1].Position,duplicate,Guid.Parse(org.Id),"payable",rows[1].Closing!),Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        async Task<int> Documents(Guid id) => (await admin.ReadAsync<RegisterPage<DocumentRow>>(Root+"/documents?partnerId="+id)).Total;
+        async Task<List<CurrentPartnerBalance>> Debts() =>
+            (await admin.ReadAsync<RegisterPage<CurrentPartnerBalance>>(Root+"/current-balances?org="+org.Id)).Items;
+
+        using var clerk = await TestRoles.LoginWithPermissionsAsync(api,admin,PoliValko.Infrastructure.Security.Permissions.PermissionKeys.AccountingView);
+        (await clerk.PostAsJsonAsync(Root+"/partners/"+main+"/merge",new PartnerMerge([duplicate]),Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await admin.PostAsJsonAsync(Root+"/partners/"+main+"/merge",new PartnerMerge([main]),Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await (await admin.PostAsJsonAsync(Root+"/partners/"+main+"/merge",new PartnerMerge([duplicate]),Ct)).ReadAsync<int>()).ShouldBe(1);
+        (await admin.PostAsJsonAsync(Root+"/partners/"+duplicate+"/merge",new PartnerMerge([main]),Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        (await admin.ReadAsync<RegisterPage<PartnerRow>>(Root+"/partners?q=тест")).Items.Where(p=>p.SourceAccount==account)
+            .Select(p=>p.Id).ToArray().ShouldBe(new[]{main});
+        var card = await admin.ReadAsync<PartnerCard>(Root+"/partners/"+main);
+        card.Merged.Single().Id.ShouldBe(duplicate);
+        (await admin.ReadAsync<PartnerCard>(Root+"/partners/"+duplicate)).Partner.MergedInto.ShouldBe(main);
+        (await Documents(main)).ShouldBe(2);
+        (await Documents(duplicate)).ShouldBe(0);
+        (await Debts()).Single().ShouldSatisfyAllConditions(d=>d.PartnerId.ShouldBe(main),d=>d.Payable.ShouldBe("20.00"));
+        rows = await admin.ReadAsync<List<BalanceRow>>(url);
+        rows.ShouldAllBe(r=>r.LinkedPartner==main);
+        (await admin.PutAsJsonAsync(url+"/rows/"+rows[1].Position+"/partner",new BalanceRowLink(duplicate,null),Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        (await admin.PostAsync(Root+"/partners/"+main+"/unmerge",null,Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await (await admin.PostAsync(Root+"/partners/"+duplicate+"/unmerge",null,Ct)).ReadAsync<Guid>()).ShouldBe(main);
+        (await Documents(main)).ShouldBe(1);
+        (await Documents(duplicate)).ShouldBe(1);
+        (await Debts()).Single().PartnerId.ShouldBe(duplicate);
+        rows = await admin.ReadAsync<List<BalanceRow>>(url);
+        rows[0].LinkedPartner.ShouldBe(main);
+        rows[1].LinkedPartner.ShouldBe(duplicate);
+        (await admin.ReadAsync<RegisterPage<PartnerRow>>(Root+"/partners?q=тест")).Items.Count(p=>p.SourceAccount==account).ShouldBe(2);
+    }
+
+    [Fact]
     public async Task Settlement_keeps_unmarked_currency_and_requires_an_explicit_partner_link()
     {
         using var admin = await Staff.AdminAsync(api);

@@ -67,7 +67,7 @@ WITH returned AS NOT MATERIALIZED (
      AND p.entity_type IN ('invoice','receipt') AND p.day < %s
      AND lower(coalesce(p.kind,'')) NOT IN ('back','7','return') OFFSET 0) d
 ), identities AS (
- SELECT source_account,lower(source_id) AS ref,min(id::text)::uuid AS id FROM accounting.partners
+ SELECT source_account,lower(source_id) AS ref,min(coalesce(merged_into,id)::text)::uuid AS id FROM accounting.partners
  GROUP BY 1,2 HAVING count(*)=1
 ), selected AS (
  SELECT d.source_account AS account,d.entity_type,d.kind,d.status,d.currency,d.details->>'type' AS raw_kind,
