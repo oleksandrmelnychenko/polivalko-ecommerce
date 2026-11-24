@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,9 +31,13 @@ public static class DeliveryModule
         services.AddScoped<NovaPoshtaDbDirectory>();
 
         services.AddScoped<IDeliveryDirectory>(provider =>
-            provider.GetRequiredService<IOptions<NovaPoshtaOptions>>().Value.IsConfigured
-                ? provider.GetRequiredService<NovaPoshtaDbDirectory>()
-                : provider.GetRequiredService<DemoNovaPoshtaDirectory>());
+            NovaPoshtaDirectoryChoices.For(provider.GetRequiredService<IOptions<NovaPoshtaOptions>>().Value.IsConfigured,
+                provider.GetRequiredService<IHostEnvironment>().EnvironmentName) switch
+            {
+                NovaPoshtaDirectoryChoice.Api => provider.GetRequiredService<NovaPoshtaDbDirectory>(),
+                NovaPoshtaDirectoryChoice.Demo => provider.GetRequiredService<DemoNovaPoshtaDirectory>(),
+                _ => new UnavailableNovaPoshtaDirectory(),
+            });
 
         services.AddHttpClient<NovaPoshtaClient>((provider, http) =>
         {
