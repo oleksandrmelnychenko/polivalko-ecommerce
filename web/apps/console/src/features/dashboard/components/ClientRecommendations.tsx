@@ -89,7 +89,7 @@ function SharedStock({ clients, actions }: { clients: SuggestedClient[] } & Acti
             <div><dt>Після резервів</dt><dd>{quantityLabel(product.available, product.unit)}</dd></div>
             <div><dt>Розподілено</dt><dd>{quantityLabel(allocated, product.unit)}</dd></div></dl>
           <ol aria-label={'Черга покупців — ' + product.name}>{buyers.map(({ client, item }) =>
-            <li key={client.id}><div><Link to={'/accounting/partners/' + client.id}>{client.name}</Link>
+            <li key={client.id}><div><Link to={'/finance/partners/' + client.id}>{client.name}</Link>
               <strong>{quantityLabel(item.quantity, item.unit)}</strong></div>
               <div className="client-rec-facts">
                 <TableChip tone={item.signal === 'due' || item.signal === 'season' ? 'success' : 'neutral'} value={signals[item.signal]} />
@@ -155,7 +155,7 @@ function ClientList({ clients, actions }: { clients: SuggestedClient[] } & Actio
         </button></h3>
         <div hidden={!expanded} id={'client-rec-' + c.id}>
           {expanded && <><ul>{c.items.map(item => <Suggestion key={item.id} item={item}>{actions(c, item)}</Suggestion>)}</ul>
-            <div className="client-rec-footer"><Link to={'/accounting/partners/' + c.id}>
+            <div className="client-rec-footer"><Link to={'/finance/partners/' + c.id}>
               <IconFileText size={15} aria-hidden="true" />Документи клієнта</Link></div></>}
         </div>
       </article>
@@ -220,7 +220,7 @@ export function ClientRecommendations({ opened, onClose, days, setPeriod }: {
       setNotice(result.response.ok ? success : problemMessage(result.error, 'Не вдалося зберегти рішення.'))
       if (result.response.ok) {
         notifySummaryStale()
-        if (openInvoice && result.data) navigate('/accounting/documents/' + result.data, { state: { documentBackground: location } })
+        if (openInvoice && result.data) navigate('/finance/documents/' + result.data, { state: { documentBackground: location } })
       }
     } catch { setNotice('Не вдалося підтвердити запис. Перевірте журнал перед повтором.') }
     finally { reload(); busy.current = false; setSaving(false) }

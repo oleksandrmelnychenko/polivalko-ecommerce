@@ -40,7 +40,7 @@ export function DocumentPeriodSummary({ data }: { data: DocumentSales }) {
       <p className="dash-document-counts">Видаткових накладних — <strong>{formatAmount(data.current.invoices)}</strong>,
         повернень — <strong>{formatAmount(data.current.refunds)}</strong>.</p>
       {data.latest && <p className="dash-muted">Останній документ · {dateLabel(data.latest)}</p>}
-      <Link className="dash-link" to={'/sales/business-analytics?tab=invoices&year=' + data.through.slice(0, 4)}>Звірка документів за рік</Link>
+      <Link className="dash-link" to={'/analytics/business?tab=invoices&year=' + data.through.slice(0, 4)}>Звірка документів за рік</Link>
       <footer><span />{dateRange(data.start, data.through)}</footer>
       <div className="dash-period-matrix" aria-hidden="true" />
     </section>

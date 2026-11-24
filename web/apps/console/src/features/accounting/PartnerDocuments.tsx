@@ -55,7 +55,7 @@ export function PartnerDocuments({ id }: { id: string }) {
     if (value) next.set(key, value)
     else next.delete(key)
     navigate(
-      { pathname: '/accounting/partners/' + id, search: next.toString() },
+      { pathname: '/finance/partners/' + id, search: next.toString() },
       { replace: true, state: location.state },
     )
   }

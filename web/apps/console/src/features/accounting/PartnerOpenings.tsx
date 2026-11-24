@@ -190,7 +190,7 @@ export function PartnerOpeningList({ partnerId, refresh, onDialogChange }: {
           {query.data.map((o) => (
             <Table.Tr key={o.id}>
               <Table.Td>
-                <Link to={'/accounting/balances?report=' + o.reportId + '&position=' + o.position}>
+                <Link to={'/finance/balances?report=' + o.reportId + '&position=' + o.position}>
                   {o.day} · рядок {o.position}
                 </Link>
                 <Text size="xs">{o.account}</Text>

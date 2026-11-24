@@ -1,4 +1,4 @@
-import { DocumentOverlayContext } from '@/shared/ui/DocumentLink'
+import { DOCUMENTS_PATH, DocumentOverlayContext, PARTNERS_PATH } from '@/shared/ui/DocumentLink'
 import { matchPath, Route, Routes, useLocation } from 'react-router-dom'
 import { LoginPage, ProtectedRoute, useAuth } from '@/features/auth'
 import { ConsoleLayout } from './layout/ConsoleLayout'
@@ -10,7 +10,7 @@ export function App() {
   const location = useLocation()
   const { isAuthenticated, hasPermission } = useAuth()
   const overlayRoute = isAuthenticated && consoleRoutes.find(route =>
-    (route.path === '/accounting/documents/:id' || route.path === '/accounting/partners/:id') &&
+    (route.path === DOCUMENTS_PATH + '/:id' || route.path === PARTNERS_PATH + '/:id') &&
     matchPath(route.path, location.pathname) && hasPermission(route.permissionKey))
   const background = overlayRoute ? location.state?.documentBackground ?? overlayRoute.path.replace('/:id', '') : location
   return (

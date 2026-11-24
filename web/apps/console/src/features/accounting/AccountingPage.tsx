@@ -1,8 +1,8 @@
 import { DocTable, DocumentStatus, PartnerLink, documentIcon } from './DocumentTable'
 import { TableChip } from '@/shared/ui/TableChip'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
-import { Button, Select, Stack, Table, Text, TextInput } from '@mantine/core'
-import { IconArrowBackUp, IconBox, IconChevronDown, IconFileInvoice, IconFiles, IconLink, IconPackageExport, IconPackageImport, IconPlus, IconSearch } from '@tabler/icons-react'
+import { Button, Group, Select, Stack, Table, Text, TextInput } from '@mantine/core'
+import { IconArrowBackUp, IconBox, IconChevronDown, IconFileInvoice, IconFilePencil, IconFiles, IconLink, IconPackageExport, IconPackageImport, IconPlus, IconSearch } from '@tabler/icons-react'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { MetricLabel } from '@/shared/ui/MetricCard'
@@ -16,7 +16,8 @@ import { EditRegister } from './EditRegister'
 import { Balances } from './Balances'
 import { ProductHistory } from './ProductHistory'
 import { Grid } from './RegisterTable'
-import { Workplace, WarehousePage } from './Workplace'
+import { InventoryPage, Workplace, WarehouseBalances } from './Workplace'
+import { DOCUMENTS_PATH } from '@/shared/ui/DocumentLink'
 import { InvoiceActions } from './InvoiceActions'
 import { PartnersDirectory } from './Partners'
 import {
@@ -45,7 +46,7 @@ function Document({ id }: { id: string }) {
       closeOnEscape={!operationOpen} closeOnClickOutside={!operationOpen} trapFocus={!operationOpen}
       onExitTransitionEnd={() => {
         if (state?.documentBackground) navigate(-1)
-        else navigate('/accounting/documents', { replace: true })
+        else navigate(DOCUMENTS_PATH, { replace: true })
       }}
       title={<MetricLabel icon={card ? documentIcon(card.document) : IconFileInvoice}>{title}</MetricLabel>}>
       {card ? <DocumentDetails card={card} onDialogChange={setOperationOpen} reload={() => {
@@ -93,7 +94,7 @@ function DocumentDetails({ card, reload, onDialogChange }: { card: Card; reload:
                   {l.productRef ? (
                     <Link
                       to={
-                        '/accounting/product-history?' +
+                        '/warehouse/product-history?' +
                         new URLSearchParams({ account: d.sourceAccount, productRef: l.productRef })
                       }
                     >
@@ -152,6 +153,9 @@ function Register({ section, sourceSwitch }: { section: string; sourceSwitch?: R
   else if (direction) filter.set('register', direction)
   else filter.delete('register')
   const query = useRegister<Page<Doc>>('documents?' + filter)
+  // Drafts waiting to be posted are part of the invoice journal, not a separate workplace queue.
+  const drafts = useRegister<Page<Doc>>('documents?' + new URLSearchParams({ register: direction ?? 'in', status: 'draft' }), !!direction)
+  const draftsOnly = params.get('status') === 'draft'
   const page = Math.max(1, Number(params.get('page')) || 1)
   function change(key: string, value: string) {
     const next = new URLSearchParams(params)
@@ -163,8 +167,20 @@ function Register({ section, sourceSwitch }: { section: string; sourceSwitch?: R
   }
   return (
     <Stack gap="sm" className="ledger-workspace doc-register" data-invoice={direction ?? undefined}>
-      <PageHeader title={title} actions={sourceSwitch ?? (direction && can(PermissionKeys.Accounting.Edit) && (
-        <Button radius="xl" leftSection={<IconPlus size={16} />} onClick={() => setEdit(true)}>Створити накладну</Button>
+      <PageHeader title={title} actions={sourceSwitch ?? (direction && (
+        <Group gap="xs">
+          {(draftsOnly || !!drafts.data?.total) && (
+            <Button radius="xl" variant={draftsOnly ? 'filled' : 'default'} leftSection={<IconFilePencil size={16} />}
+              aria-pressed={draftsOnly} onClick={() => change('status', draftsOnly ? '' : 'draft')}>
+              Чернетки · {drafts.data?.total.toLocaleString('uk-UA') ?? '—'}
+            </Button>
+          )}
+          {can(PermissionKeys.Accounting.Edit) && (
+            <Button radius="xl" leftSection={<IconPlus size={16} />} onClick={() => setEdit(true)}>
+              {direction === 'in' ? 'Прийняти товар' : 'Оформити продаж'}
+            </Button>
+          )}
+        </Group>
       ))} />
       <section className={section === 'documents' ? 'ledger-card document-register-list' : 'ledger-card'}>
         <header className="ledger-card-head"><h2><MetricLabel icon={returns ? IconArrowBackUp : direction === 'out' ? IconPackageExport : direction === 'in' ? IconPackageImport : IconFiles}>{returns ? 'Повернення від покупців' : direction === 'in' ? 'Надходження від постачальників' : direction ? 'Відвантаження покупцям' : 'Реєстр документів'}</MetricLabel></h2>
@@ -223,6 +239,7 @@ function Register({ section, sourceSwitch }: { section: string; sourceSwitch?: R
           onSaved={() => {
             setEdit(false)
             query.reload()
+            drafts.reload()
           }}
         />
       )}
@@ -239,8 +256,8 @@ export default function AccountingPage() {
   const { id } = useParams()
   if (section === 'documents' && id) return <Document key={id} id={id} />
   if (section === 'partners') return <PartnersDirectory id={id} />
-  if (section === 'work' || section === 'warehouse')
-    return <div className="accounting-register">{section === 'work' ? <Workplace /> : <WarehousePage />}</div>
+  if (section === 'payments' || section === 'stock' || section === 'inventory')
+    return <div className="accounting-register">{section === 'payments' ? <Workplace /> : section === 'stock' ? <WarehouseBalances /> : <InventoryPage />}</div>
   if (section === 'product-history')
     return (
       <div className="accounting-register">

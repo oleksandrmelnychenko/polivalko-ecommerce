@@ -69,7 +69,7 @@ export function InactiveProductCards({ reportUrl, reloadRows }: { reportUrl: str
                 {query.data.map((row) => (
                   <Table.Tr key={row.position}>
                     <Table.Td>
-                      <Link to={'/accounting/warehouse?view=inventory&report=' + row.evidenceId + '&q=' + row.code}>
+                      <Link to={'/warehouse/inventory?view=inventory&report=' + row.evidenceId + '&q=' + row.code}>
                         {row.code}
                       </Link>
                     </Table.Td>

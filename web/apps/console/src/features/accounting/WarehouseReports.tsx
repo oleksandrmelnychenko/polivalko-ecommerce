@@ -52,7 +52,7 @@ export function WarehouseReports() {
 
   return (
     <Stack gap="sm" className="ledger-workspace doc-register warehouse-page wh-reports">
-      <PageHeader title="Складські залишки" actions={
+      <PageHeader title="Інвентаризація" actions={
         <Button component={Link} radius="xl" variant="default" leftSection={<IconListCheck size={16} />}
           to={'?view=inventory' + (report ? '&report=' + encodeURIComponent(report.id) : '')}>Звірити залишки</Button>
       } />

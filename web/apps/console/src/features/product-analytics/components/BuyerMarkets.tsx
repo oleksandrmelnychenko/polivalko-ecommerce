@@ -246,7 +246,7 @@ function MarketReport({ year, years }: { year: number; years: number[] }) {
             {data.excluded > 0 && <p>Документи з непідтвердженою сумою, валютою або статусом · {formatValue(data.excluded)}.</p>}
             {data.partners.length > 0 ? <div className="ba-table"><table aria-label="Рейтинг контрагентів за чистим оборотом"><thead><tr>
               <th>Контрагент</th><th>Покупок</th><th>Повернень</th><th>Чистий оборот, грн</th><th>Остання покупка</th></tr></thead>
-              <tbody>{data.partners.map(p => <tr key={p.id}><th scope="row"><Link to={'/accounting/partners/' + p.id} state={{ marketSearch: params.toString() }}>{p.name}</Link></th>
+              <tbody>{data.partners.map(p => <tr key={p.id}><th scope="row"><Link to={'/finance/partners/' + p.id} state={{ marketSearch: params.toString() }}>{p.name}</Link></th>
                 <td>{formatValue(p.count)}</td><td>{formatValue(p.returns)}</td><td>{money.format(p.amount)}</td><td>{p.lastPurchase ?? '—'}</td></tr>)}</tbody>
             </table></div> : <p role="status">{search ? 'За цим пошуком контрагентів не знайдено.' : 'За цей рік немає покупок із прив’язкою до контрагента.'}</p>}
             {data.matches > 25 && <nav className="market-pages" aria-label="Сторінки контрагентів">

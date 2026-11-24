@@ -47,7 +47,7 @@ export function RecommendationRankings({ period, options, onChange }: {
       <div className="rec-results-scroll"><table aria-label={customers ? 'Рейтинг клієнтів' : 'Рейтинг товарів'}>
         <thead><tr><th>{customers ? 'Клієнт' : 'Товар'}</th><th>Конверсія пропозицій періоду</th><th>Оборот проведених накладних</th><th>Валовий прибуток</th></tr></thead>
         <tbody>{rows.slice(0,limit).map(row => <tr key={row.id}>
-          <th scope="row"><Link to={(customers ? '/accounting/partners/' : '/catalog/products/') + row.id}>{row.name}</Link>
+          <th scope="row"><Link to={(customers ? '/finance/partners/' : '/catalog/products/') + row.id}>{row.name}</Link>
             {row.sku && <small>{row.sku}</small>}</th>
           <td>{row.conversionRate === null ? '—' : formatPercent(row.conversionRate)}
             <small>{row.offered ? row.sold + ' із ' + row.offered : 'Без нових пропозицій'}</small></td>

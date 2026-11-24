@@ -3,8 +3,12 @@ import { Link, matchPath, useLocation, type LinkProps, type Location } from 'rea
 
 export const DocumentOverlayContext = createContext(false)
 
+// Document and partner cards open as overlays above the register they were opened from.
+export const DOCUMENTS_PATH = '/finance/documents'
+export const PARTNERS_PATH = '/finance/partners'
+
 function registerBackground(location: Location) {
-  for (const path of ['/accounting/documents', '/accounting/partners']) {
+  for (const path of [DOCUMENTS_PATH, PARTNERS_PATH]) {
     if (matchPath(path + '/:id', location.pathname)) return location.state?.documentBackground ?? path
   }
   return location
@@ -12,12 +16,12 @@ function registerBackground(location: Location) {
 
 export function PartnerDetailLink({ id, ...props }: Omit<LinkProps, 'to'> & { id: string }) {
   const location = useLocation()
-  return <Link {...props} to={'/accounting/partners/' + encodeURIComponent(id)} state={{ documentBackground: registerBackground(location) }} />
+  return <Link {...props} to={PARTNERS_PATH + '/' + encodeURIComponent(id)} state={{ documentBackground: registerBackground(location) }} />
 }
 
 export function DocumentLink({ id, ...props }: Omit<LinkProps, 'to'> & { id: string }) {
   const location = useLocation()
-  const withinDocument = Boolean(matchPath('/accounting/documents/:id', location.pathname))
-  return <Link {...props} to={'/accounting/documents/' + encodeURIComponent(id)} replace={withinDocument}
+  const withinDocument = Boolean(matchPath(DOCUMENTS_PATH + '/:id', location.pathname))
+  return <Link {...props} to={DOCUMENTS_PATH + '/' + encodeURIComponent(id)} replace={withinDocument}
     state={{ documentBackground: withinDocument ? location.state?.documentBackground : registerBackground(location) }} />
 }

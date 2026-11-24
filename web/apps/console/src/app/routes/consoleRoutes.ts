@@ -19,17 +19,19 @@ export type ConsoleRedirect = {
 
 export const consoleRoutes: readonly ConsoleRoute[] = [
   ...[
-    ['/accounting/partners', 'Контрагенти'], ['/accounting/partners/:id', 'Документи контрагента'],
-    ['/accounting/incoming', 'Прибуткові накладні'], ['/accounting/outgoing', 'Видаткові накладні'],
-    ['/accounting/documents', 'Документи'], ['/accounting/documents/:id', 'Картка документа'], ['/accounting/balances', 'Взаєморозрахунки'],
-    ['/accounting/product-history', 'Історія товару'],
-    ['/accounting/work', 'Робоче місце'], ['/accounting/warehouse', 'Складські залишки'],
+    ['/sales/outgoing', 'Видаткові накладні'],
+    ['/warehouse/stock', 'Залишки'], ['/warehouse/incoming', 'Прибуткові накладні'],
+    ['/warehouse/inventory', 'Інвентаризація'], ['/warehouse/product-history', 'Історія товару'],
+    ['/finance/payments', 'Оплати й борги'],
+    ['/finance/partners', 'Контрагенти'], ['/finance/partners/:id', 'Документи контрагента'],
+    ['/finance/balances', 'Взаєморозрахунки'],
+    ['/finance/documents', 'Усі документи'], ['/finance/documents/:id', 'Картка документа'],
   ].map(([path, title]) => ({ path, title, permissionKey: PermissionKeys.Accounting.View, page: Pages.AccountingPage })),
   { path: '/', title: 'Дашборд', permissionKey: PermissionKeys.Dashboard.View, page: Pages.DashboardPage, redirectWhenDenied: true },
   { path: '/sales/orders', title: 'Замовлення', permissionKey: PermissionKeys.Orders.View, page: Pages.OrdersPage },
   { path: '/sales/orders/:number', title: 'Замовлення', permissionKey: PermissionKeys.Orders.View, page: Pages.OrderPage },
-  { path: '/sales/product-analytics', title: 'Аналітика товарів', permissionKey: PermissionKeys.Analytics.ViewProducts, page: Pages.ProductAnalyticsPage },
-  { path: '/sales/business-analytics', title: 'Бізнес-аналітика', permissionKey: PermissionKeys.Analytics.ViewProducts, page: Pages.BusinessAnalyticsPage },
+  { path: '/analytics/products', title: 'Аналітика товарів', permissionKey: PermissionKeys.Analytics.ViewProducts, page: Pages.ProductAnalyticsPage },
+  { path: '/analytics/business', title: 'Бізнес-аналітика', permissionKey: PermissionKeys.Analytics.ViewProducts, page: Pages.BusinessAnalyticsPage },
   { path: '/sales/requests', title: 'Заявки', permissionKey: PermissionKeys.Requests.View, page: Pages.RequestsPage },
   { path: '/sales/returns', title: 'Повернення', permissionKey: PermissionKeys.Orders.View, page: Pages.ReturnsPage },
   { path: '/sales/customers', title: 'Покупці', permissionKey: PermissionKeys.Customers.View, page: Pages.CustomersPage },
@@ -93,8 +95,7 @@ export const consoleRedirects: readonly ConsoleRedirect[] = [
   { from: '/staff/roles', to: '/system/roles' },
 ]
 
-export const sectionRedirects: readonly string[] = ['/sales', '/catalog', '/accounting', '/site', '/settings', '/system']
-
+export const sectionRedirects: readonly string[] = ['/sales', '/catalog', '/warehouse', '/finance', '/analytics', '/site', '/settings', '/system']
 export function redirectTarget(to: string, params: Readonly<Record<string, string | undefined>>, search: string, hash: string): string {
   const [pathPart, queryPart = ''] = to.split('?')
   const path = pathPart.replace(/:([A-Za-z]+)/g, (_, name: string) => encodeURIComponent(params[name] ?? ''))

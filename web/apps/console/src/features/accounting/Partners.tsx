@@ -36,10 +36,10 @@ import { Grid } from './RegisterTable'
 import { currencyLabel, money, read, useRegister, type Page, type Partner, type PartnerCard } from './api'
 import './partners.css'
 
-const directory = '/accounting/partners'
+const directory = '/finance/partners'
 // The balance report matches rows by the card's current name as well, so search by it.
 const balancesLink = (partner: Partner) =>
-  '/accounting/balances?' + new URLSearchParams({ q: partner.title.trim() })
+  '/finance/balances?' + new URLSearchParams({ q: partner.title.trim() })
 const checks = [
   { value: 'cleanup', label: 'Назва потребує чистки' },
   { value: 'duplicates', label: 'Можливі дублікати' },
@@ -338,7 +338,7 @@ function PartnerProfile({ id }: { id: string }) {
               </Button>
             )}
             {can(PermissionKeys.Analytics.ViewProducts) && can(PermissionKeys.Accounting.Edit) &&
-              <Button component={Link} size="xs" to={'/sales/business-analytics?tab=offers&partner=' + id}>Підготувати пропозицію</Button>}
+              <Button component={Link} size="xs" to={'/analytics/business?tab=offers&partner=' + id}>Підготувати пропозицію</Button>}
           </header>
           <nav className="partner-sections" aria-label="Розділи картки контрагента">
             {Object.entries({ documents: 'Документи', balances: 'Взаєморозрахунки', agreements: 'Договори' }).map(([key, label]) => {

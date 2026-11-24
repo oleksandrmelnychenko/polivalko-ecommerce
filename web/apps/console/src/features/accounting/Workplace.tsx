@@ -1,8 +1,8 @@
 import { DocTable } from './DocumentTable'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
-import { Button, Group, SegmentedControl, Select, Stack, Table, TextInput } from '@mantine/core'
-import { IconArrowDownLeft, IconArrowUpRight, IconBuildingWarehouse, IconChecklist, IconFilePencil, IconFiles, IconWallet, IconHistory, IconPackage, IconPlus, IconSearch, IconListCheck } from '@tabler/icons-react'
+import { Button, Group, Select, Stack, Table, TextInput } from '@mantine/core'
+import { IconArrowDownLeft, IconBuildingWarehouse, IconChecklist, IconFiles, IconWallet, IconHistory, IconPackage, IconPlus, IconSearch, IconListCheck } from '@tabler/icons-react'
 import type { components } from '@polivalko/shared/api/schema'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -11,7 +11,6 @@ import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { MetricLabel, MetricTrack } from '@/shared/ui/MetricCard'
 import { PageState } from '@/shared/ui/PageState'
-import { EditRegister } from './EditRegister'
 import { Grid } from './RegisterTable'
 import { StockOpeningForm } from './StockOpeningForm'
 import './warehouse.css'
@@ -22,7 +21,6 @@ import { useRegister, type Doc, type Page, type Ref } from './api'
 
 type S = components['schemas']
 const queues = [
-  { id: 'drafts', icon: IconFilePencil, title: 'До проведення', empty: 'Чернеток немає' },
   { id: 'receivable', icon: IconArrowDownLeft, title: 'До отримання', empty: 'Усі проведені продажі оплачені' },
   { id: 'payable', icon: IconWallet, title: 'До сплати', empty: 'Немає відкритих оплат постачальникам' },
   { id: 'settled', icon: IconChecklist, title: 'Закриті', empty: 'Повністю оплачених накладних ще немає' },
@@ -44,16 +42,9 @@ export function Workplace() {
     if (nextPage > 1) next.set('page', String(nextPage))
     setParams(next, { replace: nextQueue === queue.id && nextPage === page })
   }
-  const [create, setCreate] = useState<'in' | 'out' | null>(null)
-  const { can } = usePermissions()
   return (
     <Stack gap="sm" className="ledger-workspace doc-register work-page">
-      <PageHeader title="Робоче місце" actions={can(PermissionKeys.Accounting.Edit) && (
-        <Group gap="xs">
-          <Button radius="xl" variant="default" leftSection={<IconArrowDownLeft size={16} />} onClick={() => setCreate('in')}>Прийняти товар</Button>
-          <Button radius="xl" leftSection={<IconArrowUpRight size={16} />} onClick={() => setCreate('out')}>Оформити продаж</Button>
-        </Group>
-      )} />
+      <PageHeader title="Оплати й борги" />
       <nav aria-label="Черги документів" className="work-queues">
         {queues.map((q) => (
           <button
@@ -72,15 +63,6 @@ export function Workplace() {
       <section className="ledger-card work-documents">
         <header className="ledger-card-head">
           <h2><MetricLabel icon={IconFiles}>{queue.title}</MetricLabel></h2>
-          <Button
-            component={Link}
-            to="/accounting/warehouse"
-            variant="default"
-            size="xs"
-            leftSection={<IconBuildingWarehouse size={16} />}
-          >
-            Залишки на складах
-          </Button>
         </header>
         <FilterBar label="Пошук у черзі" search={<TextInput
           className="app-filter-wide" aria-label="Пошук документів" placeholder="Номер, контрагент, організація"
@@ -104,8 +86,8 @@ export function Workplace() {
               title={search ? 'Документів за цим запитом немає' : queue.empty}
               action={search ? <Button variant="default" onClick={() => updateList(queue.id, '')}>Очистити пошук</Button> :
                 <Group>
-                  <Button component={Link} to="/accounting/incoming" variant="default" size="xs">Журнал надходжень</Button>
-                  <Button component={Link} to="/accounting/outgoing" variant="default" size="xs">Журнал продажів</Button>
+                  <Button component={Link} to="/warehouse/incoming" variant="default" size="xs">Прибуткові накладні</Button>
+                  <Button component={Link} to="/sales/outgoing" variant="default" size="xs">Видаткові накладні</Button>
                 </Group>
               }
             />
@@ -114,37 +96,17 @@ export function Workplace() {
           <PageState kind={docs.status === 'ready' ? 'empty' : docs.status} onRetry={docs.reload} />
         )}
       </section>
-      {create && (
-        <EditRegister
-          kind={create}
-          onClose={() => setCreate(null)}
-          onSaved={() => {
-            setCreate(null)
-            counts.reload()
-            docs.reload()
-          }}
-        />
-      )}
     </Stack>
   )
 }
 
-export function WarehousePage() {
-  const [params, setParams] = useSearchParams()
-  const requested = params.get('view') ?? (params.size ? 'current' : null)
-  const current = useRegister<Page<WarehouseRow>>('warehouse', requested === null)
-  if (requested === 'inventory') return <InventoryReview />
-  const view = requested ?? (current.data ? (current.data.total ? 'current' : 'reports') : null)
-  return <Stack gap="sm">
-    <Group><SegmentedControl className="page-mode-switch" aria-label="Джерело складських залишків" value={view ?? ''}
-      data={[{ value: 'reports', label: 'Звіти DNTrade' }, { value: 'current', label: 'Проведені залишки' }]}
-      onChange={value => setParams({ view: value })} /></Group>
-    {view === 'reports' ? <WarehouseReports /> : view ? <WarehouseBalances /> :
-      <PageState kind={current.status === 'ready' ? 'empty' : current.status} onRetry={current.reload} />}
-  </Stack>
+// DNTrade stock reports and the reconciliation of their rows against the catalog.
+export function InventoryPage() {
+  const [params] = useSearchParams()
+  return params.get('view') === 'inventory' ? <InventoryReview /> : <WarehouseReports />
 }
 
-function WarehouseBalances() {
+export function WarehouseBalances() {
   const [params, setParams] = useSearchParams()
   const [opening, setOpening] = useState(false)
   const [source, setSource] = useState<WarehouseRow | null>(null)
@@ -155,7 +117,6 @@ function WarehouseBalances() {
   const page = Math.max(1, Number(params.get('page')) || 1)
   function filter(key: string, value: string | null) {
     const next = new URLSearchParams(params)
-    next.set('view', 'current')
     next.delete('page')
     if (value) next.set(key, value)
     else next.delete(key)
@@ -163,9 +124,9 @@ function WarehouseBalances() {
   }
   return (
     <Stack gap="sm" className="ledger-workspace warehouse-page wh-current doc-register">
-      <PageHeader title="Складські залишки" actions={
+      <PageHeader title="Залишки" actions={
         <Group gap="xs">
-          <Button component={Link} to="/accounting/warehouse?view=inventory" radius="xl" variant="default"
+          <Button component={Link} to="/warehouse/inventory?view=inventory" radius="xl" variant="default"
             leftSection={<IconListCheck size={16} />}>Звірити залишки</Button>
           {can(PermissionKeys.Accounting.Opening) && <Button radius="xl" leftSection={<IconPlus size={16} />}
             onClick={() => setOpening(true)}>Ввести початковий залишок</Button>}

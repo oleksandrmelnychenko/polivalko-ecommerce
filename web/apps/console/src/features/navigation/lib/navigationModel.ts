@@ -3,9 +3,11 @@ import {
   IconArchive,
   IconBell,
   IconBuildingStore,
+  IconBuildingWarehouse,
   IconCategory,
   IconCertificate,
   IconChartHistogram,
+  IconChartLine,
   IconClipboardList,
   IconCreditCard,
   IconFileText,
@@ -14,6 +16,9 @@ import {
   IconHome,
   IconLayoutDashboard,
   IconLayoutGrid,
+  IconListCheck,
+  IconPackageExport,
+  IconPackageImport,
   IconPhoto,
   IconPlugConnected,
   IconReceiptRefund,
@@ -26,6 +31,7 @@ import {
   IconTruckDelivery,
   IconUserCog,
   IconUsers,
+  IconWallet,
   type Icon,
 } from '@tabler/icons-react'
 import type { components } from '@polivalko/shared/api/schema'
@@ -74,8 +80,6 @@ export const NAV_SECTIONS: readonly NavSection[] = [
         badge: (summary) => summary.newOrders + summary.awaitingConfirmation,
         badgeTone: 'hot',
       },
-      { id: 'product-analytics', label: 'Аналітика товарів', path: '/sales/product-analytics', permissionKey: PermissionKeys.Analytics.ViewProducts, icon: IconChartHistogram },
-      { id: 'business-analytics', label: 'Бізнес-аналітика', path: '/sales/business-analytics', permissionKey: PermissionKeys.Analytics.ViewProducts, icon: IconChartHistogram },
       {
         id: 'requests',
         label: 'Заявки',
@@ -87,25 +91,8 @@ export const NAV_SECTIONS: readonly NavSection[] = [
       },
       { id: 'returns', label: 'Повернення', path: '/sales/returns', permissionKey: PermissionKeys.Orders.View, icon: IconReceiptRefund },
       { id: 'customers', label: 'Покупці', path: '/sales/customers', permissionKey: PermissionKeys.Customers.View, icon: IconUsers },
+      { id: 'outgoing', label: 'Видаткові накладні', path: '/sales/outgoing', permissionKey: PermissionKeys.Accounting.View, icon: IconPackageExport },
     ],
-  },
-  {
-    id: 'accounting',
-    label: 'Облік',
-    prefix: '/accounting',
-    items: [
-      { id: 'accounting-work', label: 'Робоче місце', path: '/accounting/work', permissionKey: PermissionKeys.Accounting.View, icon: IconLayoutDashboard },
-      { id: 'documents', label: 'Документи', path: '/accounting/documents', permissionKey: PermissionKeys.Accounting.View, icon: IconFiles },
-      { id: 'incoming', label: 'Прибуткові накладні', path: '/accounting/incoming', permissionKey: PermissionKeys.Accounting.View, icon: IconClipboardList },
-      { id: 'outgoing', label: 'Видаткові накладні', path: '/accounting/outgoing', permissionKey: PermissionKeys.Accounting.View, icon: IconFileText },
-      { id: 'warehouse', label: 'Складські залишки', path: '/accounting/warehouse', permissionKey: PermissionKeys.Accounting.View, icon: IconBuildingStore },
-      { id: 'balances', label: 'Взаєморозрахунки', path: '/accounting/balances', permissionKey: PermissionKeys.Accounting.View, icon: IconCreditCard },
-    ],
-  },
-  {
-    id: 'partners',
-    label: 'Контрагенти',
-    items: [{ id: 'partners', label: 'Контрагенти', path: '/accounting/partners', permissionKey: PermissionKeys.Accounting.View, icon: IconUsers }],
   },
   {
     id: 'catalog',
@@ -118,6 +105,36 @@ export const NAV_SECTIONS: readonly NavSection[] = [
       { id: 'brands', label: 'Бренди', path: '/catalog/brands', permissionKey: PermissionKeys.Catalog.ManageBrands, icon: IconCertificate },
       { id: 'labels', label: 'Мітки', path: '/catalog/labels', permissionKey: PermissionKeys.Catalog.ManageLabels, icon: IconTags },
       { id: 'collections', label: 'Добірки', path: '/catalog/collections', permissionKey: PermissionKeys.Catalog.ManageCollections, icon: IconLayoutGrid },
+    ],
+  },
+  {
+    id: 'warehouse',
+    label: 'Склад',
+    prefix: '/warehouse',
+    items: [
+      { id: 'stock', label: 'Залишки', path: '/warehouse/stock', permissionKey: PermissionKeys.Accounting.View, icon: IconBuildingWarehouse },
+      { id: 'incoming', label: 'Прибуткові накладні', path: '/warehouse/incoming', permissionKey: PermissionKeys.Accounting.View, icon: IconPackageImport },
+      { id: 'inventory', label: 'Інвентаризація', path: '/warehouse/inventory', permissionKey: PermissionKeys.Accounting.View, icon: IconListCheck },
+    ],
+  },
+  {
+    id: 'finance',
+    label: 'Розрахунки',
+    prefix: '/finance',
+    items: [
+      { id: 'payments', label: 'Оплати й борги', path: '/finance/payments', permissionKey: PermissionKeys.Accounting.View, icon: IconWallet },
+      { id: 'partners', label: 'Контрагенти', path: '/finance/partners', permissionKey: PermissionKeys.Accounting.View, icon: IconUsers },
+      { id: 'balances', label: 'Взаєморозрахунки', path: '/finance/balances', permissionKey: PermissionKeys.Accounting.View, icon: IconCreditCard },
+      { id: 'documents', label: 'Усі документи', path: '/finance/documents', permissionKey: PermissionKeys.Accounting.View, icon: IconFiles },
+    ],
+  },
+  {
+    id: 'analytics',
+    label: 'Аналітика',
+    prefix: '/analytics',
+    items: [
+      { id: 'business-analytics', label: 'Бізнес-аналітика', path: '/analytics/business', permissionKey: PermissionKeys.Analytics.ViewProducts, icon: IconChartLine },
+      { id: 'product-analytics', label: 'Аналітика товарів', path: '/analytics/products', permissionKey: PermissionKeys.Analytics.ViewProducts, icon: IconChartHistogram },
     ],
   },
   {

@@ -308,7 +308,7 @@ function BalanceReports() {
               {report.openingReportId === id ? (
                 'Цей звіт використовується для початкових боргів.'
               ) : (
-                <Link to={'/accounting/balances?report=' + report.openingReportId}>
+                <Link to={'/finance/balances?report=' + report.openingReportId}>
                   Перейти до звіту, вибраного для початкових боргів
                 </Link>
               )}
