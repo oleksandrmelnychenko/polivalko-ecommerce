@@ -53,6 +53,10 @@ internal static class CustomerValidation
         {
             errors[key] = [$"Пароль має містити від {MinPasswordLength} до {MaxPasswordLength} символів."];
         }
+        else if (string.IsNullOrWhiteSpace(password))
+        {
+            errors[key] = ["Пароль не може складатися лише з пробілів."];
+        }
         else if (email is not null && string.Equals(password.Trim(), email.Trim(), StringComparison.OrdinalIgnoreCase))
         {
             errors[key] = ["Пароль не може збігатися з email."];

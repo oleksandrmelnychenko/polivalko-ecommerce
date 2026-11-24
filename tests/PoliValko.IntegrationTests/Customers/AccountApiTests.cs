@@ -74,6 +74,9 @@ public sealed class AccountApiTests(ApiFactory api)
         var sameAsEmail = await client.PostAsJsonAsync("/api/v1/account/register", new RegisterCustomerRequest(email, email.ToUpperInvariant(), "Олена", null), Ct);
         sameAsEmail.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await sameAsEmail.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Errors!["password"].ShouldBe(["Пароль не може збігатися з email."]);
+        var blank = await client.PostAsJsonAsync("/api/v1/account/register", new RegisterCustomerRequest(email, "          ", "Олена", null), Ct);
+        blank.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await blank.Content.ReadFromJsonAsync<ProblemBody>(Ct))!.Errors!["password"].ShouldBe(["Пароль не може складатися лише з пробілів."]);
         api.Mailer.To(email, MailKind.EmailConfirmation).ShouldBeEmpty();
     }
 
