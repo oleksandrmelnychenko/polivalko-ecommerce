@@ -84,6 +84,36 @@ public sealed class ServerCartApiTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task A_guest_cart_that_does_not_fit_merges_what_fits_at_sign_in_and_nothing_later()
+    {
+        var products = new List<Guid>();
+        for (var i = 0; i < 52; i++) products.Add((await api.AddProductAsync("vse-dlia-polyvu", $"Позиція кошика {i}", 10, 10)).Id);
+        var email = Accounts.UniqueEmail();
+        var (customer, _) = await Accounts.RegisterAsync(api, email);
+        var own = await Open(customer);
+        (await customer.PutJsonAsync("/api/v1/cart/", new SaveCartRequest(own.Id, own.Revision,
+            products.Take(48).Select(p => new CartLineRequest(p, 1)).ToArray()))).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var guest = await Accounts.AnonymousAsync(api);
+        var guestCart = await Open(guest);
+        (await guest.PutJsonAsync("/api/v1/cart/", new SaveCartRequest(guestCart.Id, guestCart.Revision,
+            [new(products[0], 1), .. products.Skip(48).Select(p => new CartLineRequest(p, 1))]))).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        (await guest.PostJsonAsync("/api/v1/account/login", new { email, password = Accounts.Password })).StatusCode.ShouldBe(HttpStatusCode.OK);
+        await Accounts.RefreshCsrfAsync(guest);
+
+        // 48 own lines, the shared one summed, and the first two new guest lines: 50, the most a cart holds.
+        var merged = await Open(guest);
+        merged.Items.Count.ShouldBe(50);
+        merged.Items.Single(i => i.ProductId == products[0]).Quantity.ShouldBe(2);
+        merged.Items.Select(i => i.ProductId).ShouldContain(products[49]);
+        // Emptying a few lines later must not bring the rest of the old guest cart back unasked.
+        var trimmed = await (await guest.PutJsonAsync("/api/v1/cart/", new SaveCartRequest(merged.Id, merged.Revision,
+            [new(products[1], 1)]))).ReadAsync<ServerCartDto>();
+        (await Open(guest)).Items.Select(i => i.ProductId).ShouldBe([products[1]]);
+        trimmed.Items.Count.ShouldBe(1);
+    }
+
+    [Fact]
     public async Task Stale_cart_write_is_rejected_and_hidden_products_cannot_be_ordered()
     {
         var p = await api.AddProductAsync("vse-dlia-polyvu", "Версія кошика", 100, 10);

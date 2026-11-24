@@ -63,9 +63,12 @@ internal sealed class ServerCartStore(PoliValkoDbContext db, CheckoutCalculator 
         if (guest is not null && await db.Set<ServerCart>().SingleOrDefaultAsync(c => c.Owner == guest, ct) is { } guestCart)
         {
             // Merge once. The old guest cookie never exposes the signed-in customer's cart or order token.
+            // The customer's own lines come first; guest lines join until the cart is full, and the guest cart is emptied
+            // either way, so that lines that did not fit never appear later on their own.
             var merged = Items(cart).Concat(Items(guestCart)).GroupBy(i => i.ProductId)
-                .Select(g => new CartLineRequest(g.Key, Math.Min(g.Sum(i => i.Quantity), CheckoutCalculator.MaxQuantity))).ToArray();
-            if (merged.Length <= CheckoutCalculator.MaxLines && Items(guestCart).Count > 0)
+                .Select(g => new CartLineRequest(g.Key, Math.Min(g.Sum(i => i.Quantity), CheckoutCalculator.MaxQuantity)))
+                .Take(CheckoutCalculator.MaxLines).ToArray();
+            if (Items(guestCart).Count > 0)
             {
                 Replace(cart, merged);
                 Replace(guestCart, []);
