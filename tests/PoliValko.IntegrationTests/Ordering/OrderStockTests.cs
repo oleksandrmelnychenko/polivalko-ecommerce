@@ -38,6 +38,20 @@ public sealed class OrderStockTests(ApiFactory api)
         (await StockAsync(product.Id)).ShouldBe((8m, 0m));
     }
 
+    [Fact]
+    public async Task A_write_off_never_takes_the_stock_below_zero_after_a_manual_correction()
+    {
+        var product = await api.AddProductAsync("vse-dlia-polyvu", "Лійка після інвентаризації", 100m, stock: 10);
+        var order = await TestOrders.PlaceAsync(api, product.Id, 3, 100m, CheckoutApiTests.UniquePhone());
+        // A count in the shop found only one left while the order waited.
+        await api.WithDbAsync(db => db.Set<ProductStock>().Where(s => s.ProductId == product.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.Quantity, 1m), Ct));
+
+        await MoveAsync(order.Number, OrderStatus.Confirmed, OrderStatus.Shipped);
+
+        (await StockAsync(product.Id)).ShouldBe((0m, 0m));
+    }
+
     private async Task MoveAsync(string number, params OrderStatus[] statuses)
     {
         using var admin = await Staff.AdminAsync(api);

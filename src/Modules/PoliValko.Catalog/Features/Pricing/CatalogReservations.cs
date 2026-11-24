@@ -88,7 +88,8 @@ internal sealed class CatalogReservations(PoliValkoDbContext db, TimeProvider ti
             var writeOff=!managed && !reconciled && !row.Consumed && !row.Released;
             if (writeOff)
                 await db.Set<ProductStock>().Where(s => s.ProductId == row.ProductId)
-                    .ExecuteUpdateAsync(s => s.SetProperty(p => p.Quantity, p => p.Quantity - row.Quantity)
+                    // A count in the shop may have lowered the stock below the reserve: it never goes under zero.
+                    .ExecuteUpdateAsync(s => s.SetProperty(p => p.Quantity, p => p.Quantity >= row.Quantity ? p.Quantity - row.Quantity : 0m)
                         .SetProperty(p => p.ReservedQuantity, p => p.ReservedQuantity - row.Quantity)
                         .SetProperty(p => p.UpdatedAt, time.GetUtcNow()), ct);
             else if (!row.Released)
