@@ -92,7 +92,16 @@ internal static class StockOperations
             """).ToDictionaryAsync(p => p.Id, ct);
         if (products.Count!=ids.Length) return Invalid("Один із товарів відсутній у каталозі.");
         // A recount remembers the recorded quantity it was compared with, so later sales do not change its difference.
-        var book = input.Kind=="recount" ? await StockPosting.QuantitiesAsync(db, input.OrgId, input.StoreId, ids, ct) : [];
+        // Editing the draft keeps that quantity for lines already counted on the same warehouse; only new lines take today's.
+        Dictionary<Guid,decimal> book = [];
+        if (input.Kind=="recount")
+        {
+            if (revision!=null && await Find(input.Id, false, db, ct) is { } saved && saved.OrgId==input.OrgId && saved.StoreId==input.StoreId)
+                foreach (var line in JsonSerializer.Deserialize<StoredOperation>(saved.Details, Json)!.Products)
+                    if (line.Book is { } counted && ids.Contains(line.Product.Id)) book[line.Product.Id] = counted;
+            var fresh = ids.Where(id => !book.ContainsKey(id)).ToArray();
+            foreach (var (id, quantity) in await StockPosting.QuantitiesAsync(db, input.OrgId, input.StoreId, fresh, ct)) book[id] = quantity;
+        }
         var positions = lines.Select(l => new
         {
             product = new { id = l.ProductId, title = products[l.ProductId].Name, sku = products[l.ProductId].Sku },
@@ -124,12 +133,17 @@ internal static class StockOperations
         }
         else
         {
-            var prefix = input.Kind switch { "income" => "ОП-", "writeOff" => "СП-", _ => "ПР-" };
+            var (prefix, sequence) = input.Kind switch
+            {
+                "income" => ("ОП-", "accounting.stock_income_numbers"),
+                "writeOff" => ("СП-", "accounting.stock_write_off_numbers"),
+                _ => ("ПР-", "accounting.stock_recount_numbers"),
+            };
             var inserted = await db.Database.ExecuteSqlAsync($"""
                 INSERT INTO accounting.documents(id,source_account,source_id,entity_type,kind,number,day,status,organization_id,
                     organization,store_ids,currency,total,details,native_org_id,native_store_id)
                 SELECT {input.Id},'polivalko-native',{input.Id.ToString()},'stockOperation',{input.Kind},
-                    {prefix} || nextval('accounting.stock_operation_numbers'),{input.Day},'draft',{org.Id},{org.Title},ARRAY[{store.Id}],
+                    {prefix} || nextval({sequence}::regclass),{input.Day},'draft',{org.Id},{org.Title},ARRAY[{store.Id}],
                     'UAH',{total}::numeric,{details}::jsonb,{input.OrgId},{input.StoreId}
                 WHERE NOT EXISTS (SELECT 1 FROM accounting.documents WHERE id={input.Id})
                 """, ct);

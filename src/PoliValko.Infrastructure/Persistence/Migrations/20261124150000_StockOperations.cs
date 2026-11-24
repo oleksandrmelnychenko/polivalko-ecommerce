@@ -10,7 +10,9 @@ public sealed class StockOperations : Migration
     // Receipts without documents, write-offs and recounts are console documents without a partner,
     // so catalog lines resolve by the native account instead of by the partner.
     protected override void Up(MigrationBuilder migrationBuilder) => migrationBuilder.Sql("""
-        CREATE SEQUENCE accounting.stock_operation_numbers;
+        CREATE SEQUENCE accounting.stock_income_numbers;
+        CREATE SEQUENCE accounting.stock_write_off_numbers;
+        CREATE SEQUENCE accounting.stock_recount_numbers;
         CREATE OR REPLACE VIEW accounting.document_lines AS
         SELECT d.id AS document_id, item.ordinality AS position, item.value#>>'{product,id}' AS product_ref,
                item.value#>>'{product,title}' AS product, item.value#>>'{product,sku}' AS sku,
@@ -42,6 +44,6 @@ public sealed class StockOperations : Migration
             AND imported_product.navkolo_id='dntrade-code:' || (item.value#>>'{product,code}')
         LEFT JOIN catalog.products native_product ON d.native_partner_id IS NOT NULL
             AND native_product.id::text=item.value#>>'{product,id}';
-        DROP SEQUENCE accounting.stock_operation_numbers;
+        DROP SEQUENCE accounting.stock_income_numbers, accounting.stock_write_off_numbers, accounting.stock_recount_numbers;
         """);
 }

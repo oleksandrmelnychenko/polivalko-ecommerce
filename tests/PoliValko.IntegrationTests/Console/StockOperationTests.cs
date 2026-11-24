@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
+using PoliValko.Catalog.Contracts;
 using PoliValko.Console.Features.Accounting;
 
 namespace PoliValko.IntegrationTests;
@@ -73,8 +74,16 @@ public sealed class StockOperationTests(ApiFactory api)
         // Counted 4 while the book said 6; one more is written off before the recount is posted.
         var recount=await Create(Draft("recount",4m));
         recount.Lines.Single().Book.ShouldBe(6m);
+        recount.Number.ShouldStartWith("ПР-");
         var later=await Create(Draft("writeOff",1m,reason:"other",comment:"Подарунок клієнту"));
+        later.Number.ShouldStartWith("СП-");
         (await Post(later)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        // Editing the counted draft after the write-off keeps the book quantity it was counted against.
+        var note=new StockOperationChange(recount.Revision,Draft("recount",4m,comment:"Рахував склад") with {Id=recount.Id});
+        (await admin.PutAsJsonAsync(Root+"/stock-operations/"+recount.Id,note,Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        recount=await admin.ReadAsync<StockOperationState>(Root+"/stock-operations/"+recount.Id);
+        recount.Lines.Single().Book.ShouldBe(6m);
+        recount.Comment.ShouldBe("Рахував склад");
         (await Post(recount)).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await Stock()).ShouldBe(3m);
         var counted=(await admin.ReadAsync<StockOperationState>(Root+"/stock-operations/"+recount.Id)).Lines.Single();
@@ -85,5 +94,13 @@ public sealed class StockOperationTests(ApiFactory api)
         (await admin.ReadAsync<StockOperationState>(Root+"/stock-operations/"+unchanged.Id)).Status.ShouldBe("posted");
         var moves=await admin.ReadAsync<RegisterPage<WarehouseMovement>>(Root+"/warehouse/"+product.Id+"/movements?org="+org+"&store="+store);
         moves.Items.Select(m=>m.Kind).ShouldBe(["opening","income","writeOff","writeOff","recount"],ignoreOrder:true);
+
+        // A shop selling from this warehouse follows posted operations.
+        var shop=(await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root+"/warehouse?store="+store)).Items.Single();
+        (await admin.PutAsJsonAsync(Root+"/warehouse/shop-source/"+product.Id,
+            new ConnectWarehouse(org,store,null,null,3m,shop.ShopQuantity!.Value,shop.Reserved!.Value),Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var restock=await Create(Draft("income",2m,10m));
+        (await Post(restock)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root+"/warehouse?store="+store)).Items.Single().ShopQuantity.ShouldBe(5m);
     }
 }
