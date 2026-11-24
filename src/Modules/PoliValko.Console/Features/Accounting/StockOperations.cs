@@ -19,9 +19,10 @@ public sealed record StockOperationDraft(Guid Id, string Kind, DateOnly Day, Gui
 public sealed record StockOperationChange(string Revision, StockOperationDraft Draft);
 public sealed record PostStockOperation(string Revision);
 // Book is the recorded quantity a recount was compared with; Before/Change/After are the warehouse movement,
-// expected for a draft and recorded once the operation is posted.
+// expected for a draft and recorded once the operation is posted. FirstMovement marks a draft line whose product has
+// never moved on this warehouse: posting it closes the way to an opening balance for that product there.
 public sealed record StockOperationLineState(Guid ProductId, string Title, string Sku, decimal Quantity, decimal? Price,
-    decimal? Book, decimal Before, decimal Change, decimal After);
+    decimal? Book, decimal Before, decimal Change, decimal After, bool FirstMovement);
 public sealed record StockOperationState(Guid Id, string Kind, string Status, string Number, DateOnly Day,
     Guid OrgId, Guid StoreId, string Store, string? Reason, string? Comment, string Revision, string? Total,
     List<StockOperationLineState> Lines);
@@ -199,7 +200,8 @@ internal static class StockOperations
             var change = Delta(row.Kind, p);
             var before = posted.TryGetValue(p.Product.Id, out var done) ? done.Before : current.GetValueOrDefault(p.Product.Id);
             return new StockOperationLineState(p.Product.Id, p.Product.Title, p.Product.Sku, p.Quantity, p.Price, p.Book,
-                before, done?.Change ?? change, done?.After ?? before+change);
+                before, done?.Change ?? change, done?.After ?? before+change,
+                row.Status=="draft" && !current.ContainsKey(p.Product.Id));
         }).ToList();
         return Results.Ok(new StockOperationState(row.Id, row.Kind, row.Status, row.Number, row.Day, row.OrgId, row.StoreId, row.Store,
             stored.Reason, stored.Comment, row.Revision, row.Total?.ToString("F2", System.Globalization.CultureInfo.InvariantCulture), lines));

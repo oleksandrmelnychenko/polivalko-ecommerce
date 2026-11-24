@@ -256,6 +256,18 @@ export function StockOperationActions({ doc, refresh, onDialogChange }: { doc: D
   const kind = state.kind as StockKind
   const draft = state.status === 'draft'
   const negative = state.lines.some((l) => l.after < 0)
+  // Only receipts and write-offs need the opening first; a recount itself states the quantity on the shelf.
+  const unopened = kind === 'recount' ? [] : state.lines.filter((l) => l.firstMovement)
+  const openingWarning = unopened.length > 0 && (
+    <Alert color="orange" title="Спершу введіть початковий залишок">
+      {unopened.length === 1
+        ? <>Товар «{unopened[0].title}» ще не має руху</>
+        : <>Товари {unopened.map((l) => '«' + l.title + '»').join(', ')} ще не мають руху</>} на складі {state.store}. Після
+      проведення ввести для {unopened.length === 1 ? 'нього' : 'них'} початковий залишок
+      уже не вийде, і склад покаже лише кількість із цієї операції. Якщо товар уже лежав на полиці, спершу введіть
+      початковий залишок у «Склад → Залишки» або проведіть перерахунок.
+    </Alert>
+  )
   async function post() {
     if (busy) return
     setBusy(true)
@@ -292,12 +304,14 @@ export function StockOperationActions({ doc, refresh, onDialogChange }: { doc: D
         {state.reason && <>Причина · <b>{writeOffReasons[state.reason] ?? state.reason}</b>{state.comment && ' · '}</>}
         {state.comment}
       </Text>}
+      {draft && openingWarning}
       <Movement state={state} />
       <Modal opened={action === 'post'} onClose={() => { if (!busy) setAction(null) }} title={stockOperationNames[kind]} size="lg">
         <Stack>
           <Text fw={600}>{state.store} · № {state.number}</Text>
           <Movement state={state} />
           {kind === 'recount' && <Text size="sm">Рух — різниця між фактом і обліком на момент збереження чернетки.</Text>}
+          {openingWarning}
           {negative && <Alert color="orange">На цьому складі бракує товару для цієї операції.</Alert>}
           {error && <Alert color="red">{error}</Alert>}
           <Group justify="end">

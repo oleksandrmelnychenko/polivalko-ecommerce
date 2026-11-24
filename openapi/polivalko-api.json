@@ -24419,7 +24419,8 @@
           "book",
           "before",
           "change",
-          "after"
+          "after",
+          "firstMovement"
         ],
         "type": "object",
         "properties": {
@@ -24462,6 +24463,9 @@
           "after": {
             "type": "number",
             "format": "double"
+          },
+          "firstMovement": {
+            "type": "boolean"
           }
         }
       },

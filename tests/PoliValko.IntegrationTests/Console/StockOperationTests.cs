@@ -52,7 +52,12 @@ public sealed class StockOperationTests(ApiFactory api)
         var income=await Create(Draft("income",3m,40.5m));
         income.Number.ShouldStartWith("ОП-");
         income.Total.ShouldBe("121.50");
-        income.Lines.Single().ShouldSatisfyAllConditions(l=>l.Before.ShouldBe(5m),l=>l.Change.ShouldBe(3m),l=>l.After.ShouldBe(8m));
+        income.Lines.Single().ShouldSatisfyAllConditions(l=>l.Before.ShouldBe(5m),l=>l.Change.ShouldBe(3m),l=>l.After.ShouldBe(8m),
+            l=>l.FirstMovement.ShouldBeFalse());
+        // A product that never moved on this warehouse is flagged: posting would close its opening balance.
+        var fresh=await api.AddProductAsync("ruchnyi-instrument","Без початкового залишку",50m,stock:0);
+        var untouched=await Create(Draft("income",1m,10m) with {Lines=[new(fresh.Id,1m,10m)]});
+        untouched.Lines.Single().FirstMovement.ShouldBeTrue();
         foreach (var retry in Enumerable.Range(0,2)) (await Post(income)).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await Stock()).ShouldBe(8m);
         var card=await admin.ReadAsync<DocumentCard>(Root+"/documents/"+income.Id);

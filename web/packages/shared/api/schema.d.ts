@@ -6131,6 +6131,7 @@ export interface components {
             change: number;
             /** Format: double */
             after: number;
+            firstMovement: boolean;
         };
         StockOperationState: {
             /** Format: uuid */

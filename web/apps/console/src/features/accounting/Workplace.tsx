@@ -1,7 +1,7 @@
 import { DocTable } from './DocumentTable'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
-import { Button, Group, SegmentedControl, Select, Stack, Table, TextInput } from '@mantine/core'
+import { Button, Group, Select, Stack, Table, TextInput } from '@mantine/core'
 import { StockOperationRegister } from './StockOperations'
 import { IconArrowDownLeft, IconBuildingWarehouse, IconChecklist, IconFiles, IconWallet, IconHistory, IconPackage, IconPlus, IconSearch, IconListCheck } from '@tabler/icons-react'
 import type { components } from '@polivalko/shared/api/schema'
@@ -16,7 +16,6 @@ import { Grid } from './RegisterTable'
 import { StockOpeningForm } from './StockOpeningForm'
 import './warehouse.css'
 import { InventoryReview } from './InventoryReview'
-import { WarehouseReports } from './WarehouseReports'
 import { activeSource, count, ShopSourceForm, MovementHistory, type WarehouseRow } from './WarehouseShop'
 import { useRegister, type Doc, type Page, type Ref } from './api'
 
@@ -101,17 +100,10 @@ export function Workplace() {
   )
 }
 
-// Console recounts, DNTrade stock reports and the reconciliation of report rows against the catalog.
+// Console recounts; the reconciliation of stock reports against the catalog opens from «Залишки».
 export function InventoryPage() {
-  const [params, setParams] = useSearchParams()
-  const view = params.get('view') ?? 'recounts'
-  if (view === 'inventory') return <InventoryReview />
-  return <Stack gap="sm">
-    <Group><SegmentedControl className="page-mode-switch" aria-label="Інвентаризація" value={view}
-      data={[{ value: 'recounts', label: 'Перерахунки' }, { value: 'reports', label: 'Звіти DNTrade' }]}
-      onChange={value => setParams(value === 'recounts' ? {} : { view: value })} /></Group>
-    {view === 'reports' ? <WarehouseReports /> : <StockOperationRegister kind="recount" />}
-  </Stack>
+  const [params] = useSearchParams()
+  return params.get('view') === 'inventory' ? <InventoryReview /> : <StockOperationRegister kind="recount" />
 }
 
 export function WarehouseBalances() {
