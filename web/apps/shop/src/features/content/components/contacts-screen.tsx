@@ -56,8 +56,7 @@ async function ContactsContent() {
     {socials.length > 0 && <nav className="contact-social" aria-label="Месенджери та соцмережі"><SocialLinksList links={socials} /></nav>}
     {hasServices && (
       <section id="request" className="contact-request-sheet" aria-labelledby="contact-services-title">
-        {requestIntro}
-        {directions.length > 0 && <ServiceRequestForm directions={directions} className="contact-request-form" />}
+        {directions.length > 0 ? <ServiceRequestForm directions={directions} intro={requestIntro} /> : requestIntro}
       </section>
     )}
     {seller && (seller.name || seller.taxId || seller.address) && <section className="contact-seller"><h2>Реквізити продавця</h2>{seller.name && <p>{seller.name}</p>}{seller.taxId && <p>Код: {seller.taxId}</p>}{seller.address && <p>{seller.address}</p>}<Link href="/offer">Публічна оферта</Link></section>}

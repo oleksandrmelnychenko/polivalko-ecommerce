@@ -1,11 +1,10 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { newIdempotencyKey } from "@polivalko/shared/api/browser";
 import type { Problem } from "@polivalko/shared/api/problem";
 import type { ServiceDirection } from "@polivalko/shared/api/types";
-import { DropdownSelect } from "@/shared/ui/dropdown-select";
 import { createServiceRequest } from "../api/client";
 import { DIRECTION_EVENT } from "../lib/direction-event";
 
@@ -13,7 +12,7 @@ type State =
   | { status: "idle" | "sending" | "sent" }
   | { status: "error"; message: string; errors?: Record<string, string[]> };
 
-export function ServiceRequestForm({ directions, className = "summary" }: { directions: ServiceDirection[]; className?: string; }) {
+export function ServiceRequestForm({ directions, intro }: { directions: ServiceDirection[]; intro: ReactNode }) {
   const requested = useSearchParams().get("direction") ?? "";
   const preset = directions.some((d) => d.code === requested) ? requested : "";
   const [syncedPreset, setSyncedPreset] = useState(preset);
@@ -88,57 +87,58 @@ export function ServiceRequestForm({ directions, className = "summary" }: { dire
   const err = (key: string) => errors[key]?.[0];
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} onChange={beginDraft} noValidate className={className} aria-labelledby="request-form-title">
-      <h2 id="request-form-title">Ваші контакти</h2>
-
-      <div className="field">
-        <label htmlFor="name">Ім&apos;я</label>
-        <input id="name" name="name" readOnly={pending} required autoComplete="name" maxLength={100} aria-invalid={Boolean(err("name"))} aria-describedby={err("name") ? "name-error" : undefined} />
-        {err("name") && <p id="name-error" className="field__error">{err("name")}</p>}
+    <form ref={formRef} onSubmit={onSubmit} onChange={beginDraft} noValidate className="contact-request-form" aria-labelledby="contact-services-title">
+      <div className="request-options">
+        {intro}
+        <fieldset disabled={pending} className="direction-list">
+          <legend>Оберіть послугу</legend>
+          {directions.map(({ code, name, description }) => (
+            <label key={code}>
+              <span id={`service-name-${code}`}>{name}</span>
+              <input type="radio" name="direction" value={code} required checked={direction === code}
+                onChange={() => setDirection(code)} aria-invalid={Boolean(err("direction"))}
+                aria-labelledby={`service-name-${code}`}
+                aria-describedby={[err("direction") && "direction-error", description && `service-info-${code}`].filter(Boolean).join(" ") || undefined} />
+              {description && <small id={`service-info-${code}`}>{description}</small>}
+            </label>
+          ))}
+          {err("direction") && <p id="direction-error" className="field__error">{err("direction")}</p>}
+        </fieldset>
       </div>
+      <div className="request-fields">
+        <header>
+          <h3>Ваші контакти</h3>
+          <p>Зателефонуємо в робочий час, щоб узгодити деталі.</p>
+        </header>
 
-      <div className="field">
-        <label htmlFor="phone">Телефон</label>
-        <input id="phone" name="phone" type="tel" readOnly={pending} required inputMode="tel" autoComplete="tel" spellCheck={false} placeholder="+380 67 123 45 67" aria-invalid={Boolean(err("phone"))} aria-describedby={err("phone") ? "phone-error" : undefined} />
-        {err("phone") && <p id="phone-error" className="field__error">{err("phone")}</p>}
-      </div>
+        <div className="field">
+          <label htmlFor="name">Ім&apos;я</label>
+          <input id="name" name="name" readOnly={pending} required autoComplete="name" maxLength={100} aria-invalid={Boolean(err("name"))} aria-describedby={err("name") ? "name-error" : undefined} />
+          {err("name") && <p id="name-error" className="field__error">{err("name")}</p>}
+        </div>
 
-      <div className="field">
-        <label htmlFor="direction">Послуга</label>
-        <DropdownSelect
-          id="direction"
-          name="direction"
-          variant="field"
-          value={direction}
-          placeholder="Оберіть послугу"
-          options={directions.map((d) => ({ value: d.code, label: d.name }))}
-          disabled={pending}
-          onChange={code => {
-            if (sending.current) return;
-            setDirection(code);
-            beginDraft();
-          }}
-          aria-invalid={Boolean(err("direction"))}
-          aria-describedby={err("direction") ? "direction-error" : undefined}
-        />
-        {err("direction") && <p id="direction-error" className="field__error">{err("direction")}</p>}
-      </div>
+        <div className="field">
+          <label htmlFor="phone">Телефон</label>
+          <input id="phone" name="phone" type="tel" readOnly={pending} required inputMode="tel" autoComplete="tel" spellCheck={false} placeholder="+380 67 123 45 67" aria-invalid={Boolean(err("phone"))} aria-describedby={err("phone") ? "phone-error" : undefined} />
+          {err("phone") && <p id="phone-error" className="field__error">{err("phone")}</p>}
+        </div>
 
-      <div className="field">
-        <label htmlFor="comment">Коментар (необов’язково)</label>
-        <textarea id="comment" name="comment" readOnly={pending} autoComplete="off" maxLength={1000} aria-invalid={Boolean(err("comment"))} aria-describedby={err("comment") ? "comment-error" : undefined} />
-        {err("comment") && <p id="comment-error" className="field__error">{err("comment")}</p>}
-      </div>
+        <div className="field">
+          <label htmlFor="comment">Коментар (необов’язково)</label>
+          <textarea id="comment" name="comment" readOnly={pending} autoComplete="off" maxLength={1000} aria-invalid={Boolean(err("comment"))} aria-describedby={err("comment") ? "comment-error" : undefined} />
+          {err("comment") && <p id="comment-error" className="field__error">{err("comment")}</p>}
+        </div>
 
-      <button type="submit" className="btn btn--wide" disabled={pending} aria-busy={pending}>
-        {pending ? "Надсилаємо…" : "Надіслати заявку"}
-      </button>
+        <button type="submit" className="btn btn--wide" disabled={pending} aria-busy={pending}>
+          {pending ? "Надсилаємо…" : "Надіслати заявку"}
+        </button>
 
-      <div role="status" aria-live="polite">
-        {state.status === "sent" && (
-          <p className="notice notice--ok">Заявку надіслано. Менеджер зателефонує, щоб уточнити деталі.</p>
-        )}
-        {state.status === "error" && <p className="notice notice--error">{state.message}</p>}
+        <div role="status" aria-live="polite">
+          {state.status === "sent" && (
+            <p className="notice notice--ok">Заявку надіслано. Менеджер зателефонує, щоб уточнити деталі.</p>
+          )}
+          {state.status === "error" && <p className="notice notice--error">{state.message}</p>}
+        </div>
       </div>
     </form>
   );
