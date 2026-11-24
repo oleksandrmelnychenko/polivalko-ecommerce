@@ -57,6 +57,8 @@ public sealed class Customer
         SecurityStamp = NewStamp();
     }
 
+    public void EndSessions() => SecurityStamp = NewStamp();
+
     public void RehashPassword(string passwordHash) => PasswordHash = passwordHash;
 
     public void RecordFailedLogin(DateTimeOffset now)

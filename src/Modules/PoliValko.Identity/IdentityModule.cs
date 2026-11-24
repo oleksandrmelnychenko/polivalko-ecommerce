@@ -71,7 +71,8 @@ public static class IdentityModule
             options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         });
 
-        services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.FromMinutes(1));
+        // Every request checks the stamp, so a logout, a lock or a role change ends other sessions at once (one indexed read).
+        services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.Zero);
 
         return services;
     }
