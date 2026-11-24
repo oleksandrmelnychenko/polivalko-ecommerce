@@ -3403,6 +3403,109 @@
         }
       }
     },
+    "/api/v1/console/accounting/balance-reports/{id}/partner-links": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ConsoleLinkBalanceCandidates",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/accounting/partners/names": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ConsoleRenameAccountingPartners",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartnerNameChanges"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/console/accounting/drafts": {
       "post": {
         "tags": [
@@ -14321,7 +14424,9 @@
           "candidate",
           "candidateCount",
           "openingId",
-          "headingConfirmed"
+          "headingConfirmed",
+          "partnerName",
+          "partnerCategory"
         ],
         "type": "object",
         "properties": {
@@ -14414,6 +14519,18 @@
           },
           "headingConfirmed": {
             "type": "boolean"
+          },
+          "partnerName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partnerCategory": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -20393,6 +20510,54 @@
           }
         }
       },
+      "PartnerNameChange": {
+        "required": [
+          "id",
+          "title",
+          "note",
+          "previousTitle",
+          "previousNote"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "previousTitle": {
+            "type": "string"
+          },
+          "previousNote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PartnerNameChanges": {
+        "required": [
+          "changes"
+        ],
+        "type": "object",
+        "properties": {
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartnerNameChange"
+            }
+          }
+        }
+      },
       "PartnerOpening": {
         "required": [
           "id",
@@ -20474,7 +20639,9 @@
           "kind",
           "sourceAccount",
           "sourceId",
-          "category"
+          "category",
+          "sourceTitle",
+          "note"
         ],
         "type": "object",
         "properties": {
@@ -20498,6 +20665,18 @@
             "type": "string"
           },
           "category": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sourceTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "note": {
             "type": [
               "null",
               "string"

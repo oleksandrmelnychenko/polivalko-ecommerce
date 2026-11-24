@@ -1,16 +1,18 @@
-import { Button, Select, Table, TextInput } from '@mantine/core'
+import { Button, Group, SegmentedControl, Select, Table, Text, TextInput } from '@mantine/core'
 import {
   IconBuilding,
   IconChevronRight,
   IconFileDescription,
   IconFilterOff,
+  IconPencil,
   IconPlus,
+  IconSparkles,
   IconScale,
   IconSearch,
   IconUser,
   IconUsers,
 } from '@tabler/icons-react'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import type { components } from '@polivalko/shared/api/schema'
 import { usePermissions } from '@/features/auth'
@@ -26,6 +28,8 @@ import { TableChip } from '@/shared/ui/TableChip'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { normalizePageSize } from '@/shared/ui/paginator/pageSize'
 import { EditRegister } from './EditRegister'
+import { duplicateKey, partnerRole, roleOptions } from './lib/partnerNames'
+import { namesToClean, PARTNER_NAMES_CHANGED, PartnerNameCleanup, PartnerNameEditor } from './PartnerNames'
 import { PartnerDocuments } from './PartnerDocuments'
 import { PartnerOpeningList } from './PartnerOpenings'
 import { Grid } from './RegisterTable'
@@ -33,7 +37,13 @@ import { currencyLabel, money, read, useRegister, type Page, type Partner, type 
 import './partners.css'
 
 const directory = '/accounting/partners'
-const balancesLink = (title: string) => '/accounting/balances?' + new URLSearchParams({ q: title })
+// Balance reports name partners as the old system did, so search them by the imported name.
+const balancesLink = (partner: Partner) =>
+  '/accounting/balances?' + new URLSearchParams({ q: (partner.sourceTitle ?? partner.title).trim() })
+const checks = [
+  { value: 'cleanup', label: 'Назва потребує чистки' },
+  { value: 'duplicates', label: 'Можливі дублікати' },
+]
 const kindLabel = (kind: Partner['kind']) =>
   ({ juridical: 'Юридична особа', individual: 'Фізична особа' })[kind ?? ''] ?? (kind || 'Вид не вказано')
 const normalize = (text: string) => text.trim().replace(/\s+/g, ' ').toLocaleLowerCase('uk-UA')
@@ -74,13 +84,29 @@ function DirectoryList() {
   const [list] = useSearchParams()
   const navigate = useNavigate()
   const [adding, setAdding] = useState(false)
+  const [cleaning, setCleaning] = useState(false)
   const { can } = usePermissions()
   const query = useApiQuery('partner-directory', loadDirectory)
+  const { reload } = query
+  useEffect(() => {
+    window.addEventListener(PARTNER_NAMES_CHANGED, reload)
+    return () => window.removeEventListener(PARTNER_NAMES_CHANGED, reload)
+  }, [reload])
   const search = list.get('q') ?? ''
   const category = list.get('category') ?? ''
   const kind = list.get('kind') ?? ''
+  const role = list.get('role') ?? ''
+  const check = list.get('check') ?? ''
   const size = normalizePageSize(list.get('pageSize'))
-  const rows = query.data ?? []
+  const rows = useMemo(() => query.data ?? [], [query.data])
+  const keys = useMemo(() => new Map(rows.map((row) => [row.id, duplicateKey(row.title)])), [rows])
+  const keyCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const key of keys.values()) counts.set(key, (counts.get(key) ?? 0) + 1)
+    return counts
+  }, [keys])
+  const unclean = useMemo(() => new Set(namesToClean(rows).map(({ row }) => row.id)), [rows])
+  const duplicate = (row: Partner) => (keyCounts.get(keys.get(row.id) ?? '') ?? 0) > 1
   const categories = [...new Set(rows.flatMap((row) => (row.category ? [row.category] : [])))].sort((a, b) =>
     a.localeCompare(b, 'uk'),
   )
@@ -90,8 +116,13 @@ function DirectoryList() {
     (row) =>
       (!kind || row.kind === kind) &&
       (!category || row.category === category) &&
-      (!term || normalize(row.title).includes(term) || normalize(row.sourceId).includes(term)),
+      (!role || partnerRole(row.category) === role) &&
+      (check !== 'cleanup' || unclean.has(row.id)) &&
+      (check !== 'duplicates' || duplicate(row)) &&
+      (!term || [row.title, row.sourceId, row.note ?? '', row.sourceTitle ?? ''].some((text) => normalize(text).includes(term))),
   )
+  if (check === 'duplicates')
+    filtered.sort((a, b) => (keys.get(a.id) ?? '').localeCompare(keys.get(b.id) ?? '', 'uk') || a.title.localeCompare(b.title, 'uk'))
   const pages = Math.max(1, Math.ceil(filtered.length / size))
   const requestedPage = Math.trunc(Number(list.get('page'))) || 1
   const page = Math.min(pages, Math.max(1, requestedPage))
@@ -114,31 +145,47 @@ function DirectoryList() {
         <header className="ledger-card-head">
           <h2><MetricLabel icon={IconUsers}>Довідник контрагентів</MetricLabel></h2>
           {can(PermissionKeys.Accounting.Edit) && (
-            <Button size="sm" radius="xl" leftSection={<IconPlus size={15} />} onClick={() => setAdding(true)}>
-              Додати контрагента
-            </Button>
+            <Group gap="xs">
+              {unclean.size > 0 && (
+                <Button size="sm" radius="xl" variant="default" leftSection={<IconSparkles size={15} />} onClick={() => setCleaning(true)}>
+                  Чистка назв · {unclean.size}
+                </Button>
+              )}
+              <Button size="sm" radius="xl" leftSection={<IconPlus size={15} />} onClick={() => setAdding(true)}>
+                Додати контрагента
+              </Button>
+            </Group>
           )}
         </header>
       <FilterBar
-        activeCount={Number(Boolean(kind)) + Number(Boolean(category))}
+        activeCount={[kind, category, check].filter(Boolean).length}
         search={
-          <TextInput
-            className="app-filter-wide"
-            type="search"
-            aria-label="Пошук контрагента"
-            placeholder="Назва або код…"
-            value={search}
-            leftSection={<IconSearch size={16} stroke={1.7} />}
-            onChange={(e) => update({ q: e.currentTarget.value })}
-          />
+          <>
+            <TextInput
+              className="app-filter-wide"
+              type="search"
+              aria-label="Пошук контрагента"
+              placeholder="Назва, опис або код…"
+              value={search}
+              leftSection={<IconSearch size={16} stroke={1.7} />}
+              onChange={(e) => update({ q: e.currentTarget.value })}
+            />
+            <SegmentedControl
+              aria-label="Роль контрагента"
+              className="partner-role-switch"
+              value={role || 'all'}
+              data={[{ value: 'all', label: 'Усі' }, ...roleOptions]}
+              onChange={(value) => update({ role: value === 'all' ? '' : value })}
+            />
+          </>
         }
         actions={
           <>
-            {(kind || category || search) && (
+            {(kind || category || search || role || check) && (
               <Button
                 variant="subtle"
                 aria-label="Скинути фільтри"
-                onClick={() => update({ q: '', kind: '', category: '' })}
+                onClick={() => update({ q: '', kind: '', category: '', role: '', check: '' })}
               >
                 <IconFilterOff size={17} />
               </Button>
@@ -158,6 +205,14 @@ function DirectoryList() {
           </>
         }
       >
+        <Select
+          label="Перевірка"
+          placeholder="Без перевірки"
+          clearable
+          value={check || null}
+          data={checks}
+          onChange={(value) => update({ check: value ?? '' })}
+        />
         <Select
           label="Вид"
           placeholder="Усі види"
@@ -199,8 +254,12 @@ function DirectoryList() {
                       id={row.id}
                     >
                       <PartnerMark kind={row.kind} />
-                      <strong>{row.title}</strong>
+                      <span className="partner-name">
+                        <strong>{row.title}</strong>
+                        {row.note && <small>{row.note}</small>}
+                      </span>
                     </PartnerDetailLink>
+                    {duplicate(row) && <TableChip tone="warning" value="Можливий дубль" />}
                   </td>
                   <td data-label="Код" className="partner-code">{row.sourceId}</td>
                   <td data-label="Категорія"><TableChip tone={row.category === 'Постачальники' ? 'document' : 'neutral'} value={row.category || 'Без категорії'} /></td>
@@ -211,6 +270,16 @@ function DirectoryList() {
           </table>
         )}
       </section>
+      {cleaning && (
+        <PartnerNameCleanup
+          rows={rows}
+          close={() => setCleaning(false)}
+          saved={() => {
+            setCleaning(false)
+            query.reload()
+          }}
+        />
+      )}
       {adding && (
         <EditRegister
           kind="partner"
@@ -231,6 +300,7 @@ function PartnerProfile({ id }: { id: string }) {
   const navigate = useNavigate()
   const [opened, setOpened] = useState(true)
   const [operationOpen, setOperationOpen] = useState(false)
+  const [renaming, setRenaming] = useState(false)
   const [params] = useSearchParams()
   const section = params.get('section')
   const active = section === 'balances' || section === 'agreements' ? section : 'documents'
@@ -239,7 +309,8 @@ function PartnerProfile({ id }: { id: string }) {
   const partner = detail.data?.partner
   return (
     <AppEditorModal opened={opened} onClose={() => setOpened(false)} size="wide" className="ledger-editor partner-modal"
-      closeOnEscape={!operationOpen} closeOnClickOutside={!operationOpen} trapFocus={!operationOpen}
+      closeOnEscape={!operationOpen && !renaming} closeOnClickOutside={!operationOpen && !renaming}
+      trapFocus={!operationOpen && !renaming}
       title={<MetricLabel icon={IconUsers}>{partner?.title || 'Картка контрагента'}</MetricLabel>}
       onExitTransitionEnd={() => {
         if (location.state?.documentBackground || location.state?.marketSearch != null || location.state?.balanceSearch != null) navigate(-1)
@@ -256,7 +327,13 @@ function PartnerProfile({ id }: { id: string }) {
               <span>{kindLabel(partner.kind)}</span>
               <TableChip tone={partner.category === 'Постачальники' ? 'document' : 'neutral'} value={partner.category || 'Без категорії'} />
             </div>
+            {partner.note && <Text size="sm" className="partner-note">{partner.note}</Text>}
             <span className="partner-id">Код <code>{partner.sourceId}</code></span>
+            {can(PermissionKeys.Accounting.Edit) && (
+              <Button size="xs" variant="default" leftSection={<IconPencil size={14} />} onClick={() => setRenaming(true)}>
+                Змінити назву
+              </Button>
+            )}
             {can(PermissionKeys.Analytics.ViewProducts) && can(PermissionKeys.Accounting.Edit) &&
               <Button component={Link} size="xs" to={'/sales/business-analytics?tab=offers&partner=' + id}>Підготувати пропозицію</Button>}
           </header>
@@ -274,7 +351,7 @@ function PartnerProfile({ id }: { id: string }) {
             <section className="ledger-card partner-block">
               <header className="partner-balance-heading">
                 <h2><MetricLabel icon={IconScale}>Взаєморозрахунки</MetricLabel></h2>
-                <Button component={Link} size="xs" rightSection={<IconChevronRight size={15} />} to={balancesLink(partner.title)}>
+                <Button component={Link} size="xs" rightSection={<IconChevronRight size={15} />} to={balancesLink(partner)}>
                   Перейти до звірки
                 </Button>
               </header>
@@ -322,6 +399,16 @@ function PartnerProfile({ id }: { id: string }) {
             </section>
           )}
         </>
+      )}
+      {renaming && partner && (
+        <PartnerNameEditor
+          partner={partner}
+          close={() => setRenaming(false)}
+          saved={() => {
+            setRenaming(false)
+            detail.reload()
+          }}
+        />
       )}
     </div>
     </AppEditorModal>

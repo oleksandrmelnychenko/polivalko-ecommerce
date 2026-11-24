@@ -9,7 +9,8 @@ using PoliValko.Infrastructure.Security.Permissions;
 namespace PoliValko.Console.Features.Accounting;
 
 public sealed record RegisterPage<T>(List<T> Items, int Total);
-public sealed record PartnerRow(Guid Id, string Title, string? Kind, string SourceAccount, string SourceId, string? Category);
+public sealed record PartnerRow(Guid Id, string Title, string? Kind, string SourceAccount, string SourceId, string? Category,
+    string? SourceTitle, string? Note);
 public sealed record DocumentRow(Guid Id, string EntityType, string? Kind, string? Number, DateOnly? Day, string? Status,
     string SourceAccount, string SourceId, string? Organization, string? OrganizationId,
     string? PartnerTitle, string? PartnerRef, Guid? PartnerId, string? Agreement,
@@ -20,7 +21,8 @@ public sealed record DocumentCard(DocumentRow Document, List<LineRow> Lines, Lis
 public sealed record BalanceReport(Guid Id, string SourceAccount, string SourceId, DateOnly? Day, string? CapturedAt, Guid? OpeningReportId);
 public sealed record BalanceRow(long Position, bool Footer, string? PartnerTitle, string? Account, string? Opening,
     string? Incoming, string? Outgoing, string? Closing, string? Difference, string?[] SourceAmounts,
-    long? HeadingPosition, Guid? LinkedPartner, Guid? Candidate, int CandidateCount, Guid? OpeningId, bool HeadingConfirmed);
+    long? HeadingPosition, Guid? LinkedPartner, Guid? Candidate, int CandidateCount, Guid? OpeningId, bool HeadingConfirmed,
+    string? PartnerName, string? PartnerCategory);
 public sealed record AgreementRow(string? Id, string? Title, string? Currency);
 public sealed record PartnerCard(PartnerRow Partner, List<AgreementRow> Agreements);
 public sealed record ProductMovement(Guid DocumentId, int Position, DateOnly? Day, string? Number, string? EntityType,
@@ -49,7 +51,11 @@ public static class AccountingRegisters
         group.MapGet("/balance-reports/{id:guid}", Balances).WithName("ConsoleAccountingBalances").Produces<List<BalanceRow>>();
         group.MapPut("/balance-reports/{id:guid}/partner", AccountingEntry.LinkPartner)
             .WithName("ConsoleLinkBalancePartner").RequirePermission(PermissionKeys.AccountingEdit);
+        group.MapPost("/balance-reports/{id:guid}/partner-links", AccountingEntry.LinkAllCandidates)
+            .WithName("ConsoleLinkBalanceCandidates").RequirePermission(PermissionKeys.AccountingEdit).Produces<int>();
         group.MapPost("/partners", AccountingEntry.CreatePartner).WithName("ConsoleCreateAccountingPartner").RequirePermission(PermissionKeys.AccountingEdit);
+        group.MapPost("/partners/names", AccountingEntry.RenamePartners).WithName("ConsoleRenameAccountingPartners")
+            .RequirePermission(PermissionKeys.AccountingEdit).Produces<int>();
         group.MapPost("/drafts", AccountingEntry.CreateDraft).WithName("ConsoleCreateInvoiceDraft").RequirePermission(PermissionKeys.AccountingEdit);
         group.MapPut("/drafts/{id:guid}", AccountingEntry.UpdateDraft).WithName("ConsoleUpdateInvoiceDraft").RequirePermission(PermissionKeys.AccountingEdit);
         InvoiceWorkflow.Map(group);
@@ -68,7 +74,8 @@ public static class AccountingRegisters
 
     private static IQueryable<PartnerRow> AllPartners(PoliValkoDbContext db) =>
         db.Database.SqlQuery<PartnerRow>($"""
-            SELECT id,title,kind,source_account,source_id,details->'category'->>'title' AS category FROM accounting.partners
+            SELECT id,title,kind,source_account,source_id,details->'category'->>'title' AS category,source_title,note
+            FROM accounting.partners
             """);
 
     private static async Task<IResult> PartnerDetail(Guid id, PoliValkoDbContext db, CancellationToken ct)
@@ -113,8 +120,8 @@ public static class AccountingRegisters
         {
             var term = string.Join(" ",q.Split((char[]?)null,StringSplitOptions.RemoveEmptyEntries)).ToLowerInvariant();
             rows = db.Database.SqlQuery<PartnerRow>($"""
-                SELECT id,title,kind,source_account,source_id,details->'category'->>'title' AS category
-                FROM accounting.partners WHERE strpos(regexp_replace(lower(title),'[[:space:]  ]+',' ','g'),{term})>0
+                SELECT id,title,kind,source_account,source_id,details->'category'->>'title' AS category,source_title,note
+                FROM accounting.partners WHERE strpos(lower(coalesce(note,'')),{term})>0 OR strpos(lower(coalesce(source_title,'')),{term})>0 OR strpos(regexp_replace(lower(title),'[[:space:]  ]+',' ','g'),{term})>0
                     OR strpos(lower(source_id),{term})>0
                 """);
         }
@@ -186,22 +193,19 @@ public static class AccountingRegisters
     private static async Task<IResult> Balances(Guid id, PoliValkoDbContext db, CancellationToken ct)
     {
         var rows = await db.Database.SqlQuery<BalanceRow>($"""
-            WITH candidates AS MATERIALIZED (
-                SELECT p.source_account,trim(regexp_replace(lower(p.title),'[[:space:]  ]+',' ','g')) AS name,
-                    count(*)::int AS candidate_count,CASE WHEN count(*)=1 THEN (array_agg(p.id))[1] END AS candidate
-                FROM accounting.partners p GROUP BY 1,2
-            )
             SELECT s.position,s.footer,CASE WHEN s.footer THEN NULL ELSE s.partner_title END AS partner_title,s.account,
                 opening::text,incoming::text,outgoing::text,closing::text,
                 (closing-(opening+outgoing-incoming))::text AS difference,source_amounts,
                 CASE WHEN s.footer THEN NULL ELSE s.heading_position END AS heading_position,
                 l.partner_id AS linked_partner,c.candidate,coalesce(c.candidate_count,0) AS candidate_count,
                 o.id AS opening_id,EXISTS(SELECT 1 FROM accounting.partner_openings h
-                   WHERE h.report_id=s.report_id AND h.heading_position=s.heading_position) AS heading_confirmed
+                   WHERE h.report_id=s.report_id AND h.heading_position=s.heading_position) AS heading_confirmed,
+                p.title AS partner_name,p.details->'category'->>'title' AS partner_category
             FROM accounting.settlements s LEFT JOIN accounting.balance_partner_links l ON NOT s.footer
                 AND l.report_id=s.report_id AND l.heading_position=s.heading_position
-            LEFT JOIN candidates c ON NOT s.footer AND c.source_account=s.source_account
+            LEFT JOIN accounting.partner_name_candidates c ON NOT s.footer AND c.source_account=s.source_account
                 AND c.name=trim(regexp_replace(lower(s.partner_title),'[[:space:]  ]+',' ','g'))
+            LEFT JOIN accounting.partners p ON p.id=coalesce(l.partner_id,c.candidate)
             LEFT JOIN accounting.partner_openings o ON o.report_id=s.report_id AND o.position=s.position
             WHERE s.report_id={id} ORDER BY s.position
             """).ToListAsync(ct);

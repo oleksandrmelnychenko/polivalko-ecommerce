@@ -105,6 +105,56 @@ public sealed class AccountingRegisterTests(ApiFactory api)
     private sealed record References(List<RegisterReference> Organizations,List<RegisterReference> Stores);
 
     [Fact]
+    public async Task Renamed_partners_keep_matching_report_rows_and_link_in_bulk()
+    {
+        using var admin = await Staff.AdminAsync(api);
+        var account = "names-" + Guid.NewGuid().ToString("N");
+        object Row(string section,string? level,params string[] values) =>
+            new { section,level,cells=values.Select(value=>new { value }) };
+        var report = new { schemaVersion=1,source="dntrade",entityType="financialReport",sourceId="names-report",sourceDate="2026-11-20",
+            documentType="Взаєморозрахунки з контрагентами",raw=new { tables=new[] { new[] {
+                Row("TBODY",null," Іван (Шашлики)","","","",""),Row("TBODY","indent","Main","0,00 грн.","10,00 грн.","0,00 грн.","-10,00 грн."),
+                Row("TBODY",null,"Петро","","","",""),Row("TBODY","indent","Main","0,00 грн.","5,00 грн.","0,00 грн.","-5,00 грн."),
+                Row("TFOOT",null,"Разом","0,00 грн.","15,00 грн.","0,00 грн.","-15,00 грн.")
+            } } } };
+        object Partner(string id,string title) => new { schemaVersion=1,source="dntrade",entityType="partner",sourceId=id,raw=new { title } };
+        var body = string.Join("\n",new[]{report,Partner("p1"," Іван (Шашлики)"),Partner("p2","Петро"),Partner("p3","Петро")}
+            .Select(x=>System.Text.Json.JsonSerializer.Serialize(x)));
+        (await admin.PostAsync("/api/v1/console/dntrade-archive/import?sourceAccount="+account,
+            new StringContent(body,Encoding.UTF8,"application/x-ndjson"),Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var partner = (await admin.ReadAsync<RegisterPage<PartnerRow>>(Root+"/partners?q=шашлики")).Items.Single(p=>p.SourceAccount==account);
+
+        var rename = new PartnerNameChange(partner.Id,"Іван","Шашлики",partner.Title,null);
+        var changes = new PartnerNameChanges([rename]);
+        (await (await admin.PostAsJsonAsync(Root+"/partners/names",changes,Ct)).ReadAsync<int>()).ShouldBe(1);
+        (await (await admin.PostAsJsonAsync(Root+"/partners/names",changes,Ct)).ReadAsync<int>()).ShouldBe(0);
+        (await admin.PostAsJsonAsync(Root+"/partners/names",new PartnerNameChanges([rename with {Title="Інший"}]),Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await admin.PostAsJsonAsync(Root+"/partners/names",new PartnerNameChanges([rename with {Title=" "}]),Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var renamed = (await admin.ReadAsync<RegisterPage<PartnerRow>>(Root+"/partners?q=шашлики")).Items.Single(p=>p.Id==partner.Id);
+        renamed.Title.ShouldBe("Іван");
+        renamed.Note.ShouldBe("Шашлики");
+        renamed.SourceTitle.ShouldBe(" Іван (Шашлики)");
+
+        var reportId = (await admin.ReadAsync<List<BalanceReport>>(Root+"/balance-reports")).Single(r=>r.SourceAccount==account).Id;
+        var url = Root+"/balance-reports/"+reportId;
+        var rows = await admin.ReadAsync<List<BalanceRow>>(url);
+        rows[0].Candidate.ShouldBe(partner.Id);
+        rows[0].PartnerName.ShouldBe("Іван");
+        rows[1].CandidateCount.ShouldBe(2);
+        using var clerk = await TestRoles.LoginWithPermissionsAsync(api,admin,PoliValko.Infrastructure.Security.Permissions.PermissionKeys.AccountingView);
+        (await clerk.PostAsync(url+"/partner-links",null,Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await clerk.PostAsJsonAsync(Root+"/partners/names",changes,Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await (await admin.PostAsync(url+"/partner-links",null,Ct)).ReadAsync<int>()).ShouldBe(1);
+        (await (await admin.PostAsync(url+"/partner-links",null,Ct)).ReadAsync<int>()).ShouldBe(0);
+        rows = await admin.ReadAsync<List<BalanceRow>>(url);
+        rows[0].LinkedPartner.ShouldBe(partner.Id);
+        rows[1].LinkedPartner.ShouldBeNull();
+        rows.Single(r=>r.Footer).LinkedPartner.ShouldBeNull();
+    }
+
+    [Fact]
     public async Task Settlement_keeps_unmarked_currency_and_requires_an_explicit_partner_link()
     {
         using var admin = await Staff.AdminAsync(api);

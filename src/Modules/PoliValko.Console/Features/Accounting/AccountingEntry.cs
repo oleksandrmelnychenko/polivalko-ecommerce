@@ -14,6 +14,8 @@ public sealed record DraftChange(string Revision, NewDraft Draft);
 internal sealed record ProductReference(Guid Id, string Name, string Sku);
 public sealed record RegisterReference(string Id, string Title);
 public sealed record BalancePartnerLink(long HeadingPosition, Guid PartnerId, Guid? Previous);
+public sealed record PartnerNameChange(Guid Id, string Title, string? Note, string PreviousTitle, string? PreviousNote);
+public sealed record PartnerNameChanges(List<PartnerNameChange> Changes);
 
 internal static class AccountingEntry
 {
@@ -61,6 +63,60 @@ internal static class AccountingEntry
         await tx.CommitAsync(ct);
         return Results.Ok(input.PartnerId);
     }
+    // Links every unlinked heading of the report whose name matches exactly one partner.
+    internal static async Task<IResult> LinkAllCandidates(Guid id, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
+    {
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var linked = await db.Database.SqlQuery<long>($"""
+            INSERT INTO accounting.balance_partner_links(report_id,heading_position,partner_id)
+            SELECT DISTINCT s.report_id,s.heading_position,c.candidate FROM accounting.settlements s
+            JOIN accounting.partner_name_candidates c ON c.source_account=s.source_account AND c.candidate_count=1
+                AND c.name=trim(regexp_replace(lower(s.partner_title),'[[:space:]  ]+',' ','g'))
+            WHERE s.report_id={id} AND NOT s.footer AND s.heading_position IS NOT NULL
+            ON CONFLICT DO NOTHING RETURNING heading_position AS "Value"
+            """).ToListAsync(ct);
+        if (linked.Count > 0)
+        {
+            audit.Record("accounting.balance_partners_linked", "BalanceReport", id.ToString(), new { Headings = linked });
+            await db.SaveChangesAsync(ct);
+        }
+        await tx.CommitAsync(ct);
+        return Results.Ok(linked.Count);
+    }
+
+    internal static async Task<IResult> RenamePartners(PartnerNameChanges input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
+    {
+        if (input.Changes is not { Count: > 0 and <= 500 } || input.Changes.Select(c => c.Id).Distinct().Count() != input.Changes.Count)
+            return Invalid("Оберіть від одного до 500 контрагентів.");
+        var changes = input.Changes.Select(c => c with { Title = (c.Title ?? "").Trim(), Note = string.IsNullOrWhiteSpace(c.Note) ? null : c.Note.Trim() }).ToList();
+        if (changes.Any(c => c.Title.Length is 0 or > 300 || c.Note is { Length: > 500 }))
+            return Invalid("Назва має бути від 1 до 300 символів, опис — до 500.");
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var applied = 0;
+        foreach (var c in changes)
+        {
+            var changed = await db.Database.ExecuteSqlAsync($"""
+                UPDATE accounting.partners SET title={c.Title},note={c.Note},
+                    source_title=CASE WHEN source_account<>'polivalko-native' THEN coalesce(source_title,title) END
+                WHERE id={c.Id} AND title={c.PreviousTitle} AND note IS NOT DISTINCT FROM {c.PreviousNote}
+                    AND (title<>{c.Title} OR note IS DISTINCT FROM {c.Note})
+                """, ct);
+            if (changed > 0)
+            {
+                applied++;
+                audit.Record("accounting.partner_renamed", "Partner", c.Id.ToString(), c);
+                continue;
+            }
+            var current = await db.Database.SqlQuery<int>($"""
+                SELECT 1 AS "Value" FROM accounting.partners WHERE id={c.Id} AND title={c.Title} AND note IS NOT DISTINCT FROM {c.Note}
+                """).AnyAsync(ct);
+            if (!current) return Results.Problem(detail: "Назву контрагента вже змінили. Оновіть сторінку.", statusCode: 409);
+        }
+        await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+        return Results.Ok(applied);
+    }
+
     internal static async Task<IResult> CreatePartner(NewPartner input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
     {
         if (input.Id == Guid.Empty || string.IsNullOrWhiteSpace(input.Title) || input.Title.Length > 300 ||
@@ -130,7 +186,8 @@ internal static class AccountingEntry
                 return Results.Problem(detail:"Виберіть організацію та склад, до яких прив’язано залишок товару.",statusCode:409);
         }
         var partner = await db.Database.SqlQuery<PartnerRow>($"""
-            SELECT id,title,kind,source_account,source_id,NULL::text AS category FROM accounting.partners WHERE id={input.PartnerId}
+            SELECT id,title,kind,source_account,source_id,NULL::text AS category,source_title,note
+            FROM accounting.partners WHERE id={input.PartnerId}
             """).SingleOrDefaultAsync(ct);
         var org = await Organizations(db).SingleOrDefaultAsync(x => x.Id == input.OrganizationId, ct);
         var store = await Stores(db).SingleOrDefaultAsync(x => x.Id == input.StoreId, ct);

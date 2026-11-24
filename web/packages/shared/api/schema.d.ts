@@ -1066,6 +1066,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/accounting/balance-reports/{id}/partner-links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleLinkBalanceCandidates"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/partners/names": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleRenameAccountingPartners"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/accounting/drafts": {
         parameters: {
             query?: never;
@@ -3665,6 +3697,8 @@ export interface components {
             /** Format: uuid */
             openingId: null | string;
             headingConfirmed: boolean;
+            partnerName: null | string;
+            partnerCategory: null | string;
         };
         BannerDto: {
             /** Format: uuid */
@@ -5144,6 +5178,17 @@ export interface components {
             partner: components["schemas"]["PartnerRow"];
             agreements: components["schemas"]["AgreementRow"][];
         };
+        PartnerNameChange: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            note: null | string;
+            previousTitle: string;
+            previousNote: null | string;
+        };
+        PartnerNameChanges: {
+            changes: components["schemas"]["PartnerNameChange"][];
+        };
         PartnerOpening: {
             /** Format: uuid */
             id: string;
@@ -5174,6 +5219,8 @@ export interface components {
             sourceAccount: string;
             sourceId: string;
             category: null | string;
+            sourceTitle: null | string;
+            note: null | string;
         };
         /** @enum {unknown} */
         PaymentAttemptStatus: "created" | "processing" | "succeeded" | "failed" | "expired" | "reversed";
@@ -8800,6 +8847,88 @@ export interface operations {
             };
         };
         responses: {
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleLinkBalanceCandidates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": number;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleRenameAccountingPartners: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PartnerNameChanges"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": number;
+                };
+            };
             /** @description Unauthorized */
             401: {
                 headers: {

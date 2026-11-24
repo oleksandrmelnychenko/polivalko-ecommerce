@@ -43,3 +43,4 @@
 @media (max-width: 380px) {
   .balance-summary dl { grid-template-columns: minmax(0, 1fr); }
 }
+.balance-source-name { display: block; color: var(--mantine-color-gray-7); font-size: 12px; }

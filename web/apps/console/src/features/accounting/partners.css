@@ -96,3 +96,19 @@
   .partner-directory .app-paginator-divider,
   .partner-directory .app-paginator-divider + .app-paginator-label { display: none; }
 }
+
+.partner-name { display: grid; gap: 1px; min-width: 0; }
+.partner-name small, .partner-note { color: var(--mantine-color-gray-7); font-size: 12px; font-weight: 400; }
+.partner-table td:first-child > .app-table-chip { margin: 4px 0 0 42px; }
+.partner-role-switch { align-self: center; flex: none; border-radius: 999px; }
+.partner-role-switch .mantine-SegmentedControl-indicator { border-radius: 999px; }
+.partner-cleanup-table td { vertical-align: top; }
+.partner-cleanup-table th:first-child, .partner-cleanup-table td:first-child { width: 36px; }
+.partner-cleanup-table tr[data-off] .partner-cleanup-was { opacity: .55; }
+.partner-cleanup-was { display: grid; gap: 2px; overflow-wrap: anywhere; }
+.partner-cleanup-was code { white-space: pre-wrap; font-size: 13px; }
+.partner-cleanup-was small { color: var(--mantine-color-gray-7); font-size: 12px; }
+@media (max-width: 700px) {
+  .partner-table td:first-child > .app-table-chip { margin-inline-start: 0; }
+  .partner-role-switch { width: 100%; }
+}

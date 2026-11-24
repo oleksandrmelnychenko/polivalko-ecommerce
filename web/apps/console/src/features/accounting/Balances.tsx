@@ -15,7 +15,9 @@ import { PageHeader } from '@/shared/ui/PageHeader'
 import { PageState } from '@/shared/ui/PageState'
 import { Grid } from './RegisterTable'
 import { OpeningConfirmation } from './PartnerOpenings'
-import { money, read, useRegister, type Balance, type Report, type Page, type Partner, type Ref } from './api'
+import { partnerRole, roleOptions } from './lib/partnerNames'
+import { problemMessage } from '@/shared/api/problem'
+import { money, read, save, useRegister, type Balance, type Report, type Page, type Partner, type Ref } from './api'
 
 const columns = ['Контрагент', 'Аналітичний рахунок', 'На початок', 'Прихід', 'Розхід', 'Залишок', 'Розбіжність']
 const amounts = ['opening', 'incoming', 'outgoing', 'closing', 'difference'] as const
@@ -51,7 +53,7 @@ export function Balances() {
   const [params, setParams] = useSearchParams()
   const history =
     params.get('view') === 'reports' ||
-    (!params.has('view') && ['report', 'position', 'q', 'mode'].some((k) => params.has(k)))
+    (!params.has('view') && ['report', 'position', 'q', 'mode', 'role'].some((k) => params.has(k)))
   return (
     <Stack gap="sm" className="ledger-workspace balance-workspace">
       <PageHeader title="Взаєморозрахунки" />
@@ -190,6 +192,8 @@ function BalanceReports() {
   }
   const term = (params.get('q') ?? '').trim().toLocaleLowerCase('uk')
   const mode = params.get('mode') || 'all'
+  const role = params.get('role') || ''
+  const [linkingAll, setLinkingAll] = useState(false)
   const position = params.get('position')
   const eligible = (r: Balance) =>
     !!report?.day &&
@@ -204,7 +208,8 @@ function BalanceReports() {
     (r) =>
       !r.footer &&
       (!position || String(r.position) === position) &&
-      (r.partnerTitle ?? '').toLocaleLowerCase('uk').includes(term) &&
+      (!role || partnerRole(r.partnerCategory) === role) &&
+      [r.partnerTitle, r.partnerName].some((t) => (t ?? '').toLocaleLowerCase('uk').includes(term)) &&
       (mode === 'all' ||
         (mode === 'unavailable' && r.difference === null) ||
         (mode === 'difference' && r.difference !== null && !zero(r.difference)) ||
@@ -214,6 +219,9 @@ function BalanceReports() {
         (mode === 'confirmed' && !!r.openingId)),
   )
   const footer = data.data?.find((r) => r.footer)
+  const linkable = new Set(
+    (data.data ?? []).filter((r) => !r.footer && !r.linkedPartner && r.candidateCount === 1).map((r) => r.headingPosition),
+  ).size
   return (
     <Stack gap="sm">
       {reports.data && reports.data.length > 0 && (
@@ -237,6 +245,14 @@ function BalanceReports() {
             value={params.get('q') || ''}
             placeholder="Пошук за назвою"
             onChange={(e) => change('q', e.currentTarget.value)}
+          />
+          <Select
+            label="Роль"
+            placeholder="Усі"
+            clearable
+            value={role || null}
+            data={roleOptions}
+            onChange={(v) => change('role', v || '')}
           />
           <Select
             label="Звірка"
@@ -299,6 +315,11 @@ function BalanceReports() {
             <header className="ledger-card-head">
               <h2><MetricLabel icon={IconFileCheck}>Рядки звіту</MetricLabel></h2>
               <Group gap="xs"><TableChip value={`Рядків · ${selected.length}`} />
+              {linkable > 0 && can(PermissionKeys.Accounting.Edit) && (
+                <Button size="compact-sm" leftSection={<IconLink size={14} />} onClick={() => setLinkingAll(true)}>
+                  Прив’язати єдині збіги · {linkable}
+                </Button>
+              )}
               {position && (
                 <Button size="compact-xs" variant="subtle" onClick={() => change('position', '')}>
                   Показати весь звіт
@@ -312,16 +333,19 @@ function BalanceReports() {
                   <Table.Tr key={r.position}>
                     <Table.Td>
                       {r.linkedPartner ? (
-                        <PartnerDetailLink id={r.linkedPartner}>{r.partnerTitle}</PartnerDetailLink>
+                        <PartnerDetailLink id={r.linkedPartner}>{r.partnerName || r.partnerTitle}</PartnerDetailLink>
                       ) : (
                         r.partnerTitle || 'Без назви'
                       )}
+                      {r.linkedPartner && r.partnerName && r.partnerName !== r.partnerTitle?.trim() && (
+                        <small className="balance-source-name">у звіті: {r.partnerTitle}</small>
+                      )}
                       <div className="balance-row-actions">
                         {!r.linkedPartner && (
-                          <TableChip tone={r.candidateCount > 1 ? 'warning' : 'neutral'} value={r.candidateCount === 1
-                              ? 'Один збіг за назвою'
+                          <TableChip tone={r.candidateCount === 1 ? 'neutral' : 'warning'} value={r.candidateCount === 1
+                              ? 'Збіг: ' + (r.partnerName ?? '')
                               : r.candidateCount > 1
-                                ? 'Кілька збігів за назвою'
+                                ? `Збігів за назвою: ${r.candidateCount}`
                                 : 'Без зв’язку з довідником'} />
                         )}
                         {r.headingPosition && !r.headingConfirmed && can(PermissionKeys.Accounting.Edit) && (
@@ -365,6 +389,17 @@ function BalanceReports() {
           }}
         />
       )}
+      {id && linkingAll && (
+        <LinkCandidates
+          report={id}
+          count={linkable}
+          close={() => setLinkingAll(false)}
+          saved={() => {
+            setLinkingAll(false)
+            data.reload()
+          }}
+        />
+      )}
       {id && linking && (
         <LinkPartner
           report={id}
@@ -377,6 +412,49 @@ function BalanceReports() {
         />
       )}
     </Stack>
+  )
+}
+
+function LinkCandidates({ report, count, close, saved }: {
+  report: string
+  count: number
+  close: () => void
+  saved: () => void
+}) {
+  const [dialog, setDialog] = useState<'open' | 'closed' | 'saved'>('open')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  async function confirm() {
+    if (busy) return
+    setBusy(true)
+    setError('')
+    try {
+      const result = await save('balance-reports/' + report + '/partner-links', {})
+      if (result.response.ok) setDialog('saved')
+      else setError(problemMessage(result.error, 'Не вдалося прив’язати контрагентів.'))
+    } catch {
+      setError('Немає зв’язку з сервером.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <AppEditorModal opened={dialog === 'open'} className="ledger-editor balance-editor"
+      onClose={() => { if (!busy) setDialog('closed') }} onExitTransitionEnd={dialog === 'saved' ? saved : close}
+      title={<MetricLabel icon={IconLink}>Прив’язати єдині збіги</MetricLabel>}
+      footer={<Group gap="xs">
+        <Button variant="default" disabled={busy} onClick={() => setDialog('closed')}>Скасувати</Button>
+        <Button loading={busy} onClick={confirm}>Прив’язати · {count}</Button>
+      </Group>}>
+      <section className="ledger-form-block">
+        <Text size="sm">
+          Кожен контрагент цього звіту, чия назва збігається рівно з однією карткою довідника, буде прив’язаний до неї.
+          Рядки з кількома збігами або без збігу залишаться для ручної прив’язки.
+        </Text>
+        <Text size="sm" c="dimmed">Прив’язку можна змінити, доки за нею не підтверджено початковий борг.</Text>
+        {error && <Alert color="red" role="alert">{error}</Alert>}
+      </section>
+    </AppEditorModal>
   )
 }
 
@@ -447,7 +525,10 @@ function LinkPartner({
           label="Контрагент і код"
           value={choice}
           onChange={setChoice}
-          data={(query.data?.items ?? []).map((p) => ({ value: p.id, label: p.title + ' · ' + p.sourceId }))}
+          data={(query.data?.items ?? []).map((p) => ({
+            value: p.id,
+            label: [p.title, p.note, p.category, p.sourceId].filter(Boolean).join(' · '),
+          }))}
         />
         {error && <Alert color="red">{error}</Alert>}
         {query.status === 'error' && <Button variant="default" onClick={query.reload}>Повторити пошук</Button>}
