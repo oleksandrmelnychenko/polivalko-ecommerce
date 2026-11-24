@@ -24,6 +24,7 @@ SELECT d.source_account AS account, lower(d.source_id) AS ref, d.entity_type,d.k
 FROM jsonb_to_recordset(%s::jsonb) n(a text,r text) JOIN accounting.documents d
  ON d.source_account=n.a AND lower(d.source_id)=n.r AND d.entity_type IN ('receipt','invoice')
 """
+# Console receipts without documents (stockOperation/income) price stock like a purchase invoice.
 # Only transfer invoices for requested products and dates. Keep one previous buying day
 # per stock key as the opening price, including an unpriced day if its checks failed.
 def checked_purchases(document_filter=""):
@@ -36,7 +37,7 @@ def checked_purchases(document_filter=""):
     d.details->>'extra_costs' AS extras
   FROM accounting.documents d CROSS JOIN LATERAL jsonb_array_elements(
     CASE WHEN jsonb_typeof(d.details->'products')='array' THEN d.details->'products' ELSE '[]'::jsonb END) l
-  WHERE d.entity_type='invoice' AND d.kind='in' AND d.day <= (SELECT max(last_day) FROM needed)
+  WHERE (d.entity_type,d.kind) IN (('invoice','in'),('stockOperation','income')) AND d.day <= (SELECT max(last_day) FROM needed)
     AND ((d.source_account='polivalko-native' AND d.status='posted') OR (d.source_account<>'polivalko-native'
          AND lower(d.status) IN ('active','активний','активна','posted')
          AND coalesce(lower(d.details->>'status'),'active') IN ('active','активний','активна','posted')

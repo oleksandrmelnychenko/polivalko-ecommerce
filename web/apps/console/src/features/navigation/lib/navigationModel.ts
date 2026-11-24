@@ -28,6 +28,8 @@ import {
   IconTag,
   IconTags,
   IconTool,
+  IconTransferIn,
+  IconTrashX,
   IconTruckDelivery,
   IconUserCog,
   IconUsers,
@@ -114,6 +116,8 @@ export const NAV_SECTIONS: readonly NavSection[] = [
     items: [
       { id: 'stock', label: 'Залишки', path: '/warehouse/stock', permissionKey: PermissionKeys.Accounting.View, icon: IconBuildingWarehouse },
       { id: 'incoming', label: 'Прибуткові накладні', path: '/warehouse/incoming', permissionKey: PermissionKeys.Accounting.View, icon: IconPackageImport },
+      { id: 'income', label: 'Оприбуткування', path: '/warehouse/income', permissionKey: PermissionKeys.Accounting.View, icon: IconTransferIn },
+      { id: 'write-offs', label: 'Списання', path: '/warehouse/write-offs', permissionKey: PermissionKeys.Accounting.View, icon: IconTrashX },
       { id: 'inventory', label: 'Інвентаризація', path: '/warehouse/inventory', permissionKey: PermissionKeys.Accounting.View, icon: IconListCheck },
     ],
   },

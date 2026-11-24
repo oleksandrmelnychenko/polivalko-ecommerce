@@ -1402,6 +1402,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/accounting/stock-operations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleCreateStockOperation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/stock-operations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleStockOperation"];
+        put: operations["ConsoleUpdateStockOperation"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/stock-operations/{id}/post": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsolePostStockOperation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/accounting/offers": {
         parameters: {
             query?: never;
@@ -5297,6 +5345,9 @@ export interface components {
         PostInvoice: {
             revision: string;
         };
+        PostStockOperation: {
+            revision: string;
+        };
         ProblemDetails: {
             type?: null | string;
             title?: null | string;
@@ -6036,6 +6087,69 @@ export interface components {
             /** Format: date */
             day: string;
             reference: string;
+        };
+        StockOperationChange: {
+            revision: string;
+            draft: components["schemas"]["StockOperationDraft"];
+        };
+        StockOperationDraft: {
+            /** Format: uuid */
+            id: string;
+            kind: string;
+            /** Format: date */
+            day: string;
+            /** Format: uuid */
+            orgId: string;
+            /** Format: uuid */
+            storeId: string;
+            reason: null | string;
+            comment: null | string;
+            lines: null | components["schemas"]["StockOperationLine"][];
+        };
+        StockOperationLine: {
+            /** Format: uuid */
+            productId: string;
+            /** Format: double */
+            quantity: number;
+            /** Format: double */
+            price: null | number;
+        };
+        StockOperationLineState: {
+            /** Format: uuid */
+            productId: string;
+            title: string;
+            sku: string;
+            /** Format: double */
+            quantity: number;
+            /** Format: double */
+            price: null | number;
+            /** Format: double */
+            book: null | number;
+            /** Format: double */
+            before: number;
+            /** Format: double */
+            change: number;
+            /** Format: double */
+            after: number;
+        };
+        StockOperationState: {
+            /** Format: uuid */
+            id: string;
+            kind: string;
+            status: string;
+            number: string;
+            /** Format: date */
+            day: string;
+            /** Format: uuid */
+            orgId: string;
+            /** Format: uuid */
+            storeId: string;
+            store: string;
+            reason: null | string;
+            comment: null | string;
+            revision: string;
+            total: null | string;
+            lines: components["schemas"]["StockOperationLineState"][];
         };
         StorefrontModeDto: {
             mode: string;
@@ -9770,6 +9884,176 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["InvoicePayment"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleCreateStockOperation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StockOperationDraft"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleStockOperation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockOperationState"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleUpdateStockOperation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StockOperationChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsolePostStockOperation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostStockOperation"];
             };
         };
         responses: {

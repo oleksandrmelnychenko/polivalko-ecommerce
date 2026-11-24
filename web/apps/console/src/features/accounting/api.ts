@@ -19,7 +19,22 @@ export function money(value: string | null, currency?: string | null) {
     formatted + (currency ? ' ' + currencyLabel(currency) : '')
   )
 }
+export const stockOperationNames: Record<string, string> = {
+  income: 'Оприбуткування',
+  writeOff: 'Списання',
+  recount: 'Перерахунок',
+}
+
+export const writeOffReasons: Record<string, string> = {
+  defect: 'Брак',
+  loss: 'Втрата',
+  regrade: 'Пересорт',
+  own: 'Власні потреби',
+  other: 'Інше',
+}
+
 export function kindName(d: { entityType: string | null; kind: string | null }) {
+  if (d.entityType === 'stockOperation') return stockOperationNames[d.kind ?? ''] ?? 'Складська операція'
   if (d.entityType === 'invoice')
     return (
       {

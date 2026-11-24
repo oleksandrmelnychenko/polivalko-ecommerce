@@ -177,23 +177,9 @@ internal static class InvoiceWorkflow
         var lines = await Impact(id,db,ct);
         if (lines.Count==0) return Conflict("Додайте товарні позиції.");
         var ids = lines.Select(l=>l.ProductId).ToArray();
-        await reservations.LockAsync(ids, ct);
-        // Create and lock stock keys in a stable order across concurrent multi-product invoices.
-        await db.Database.ExecuteSqlAsync($"""
-            INSERT INTO accounting.warehouse_stock(org_id,store_id,product_id,quantity)
-            SELECT {invoice.OrgId},{invoice.StoreId},p.id,0 FROM catalog.products p WHERE p.id=ANY({ids}) ORDER BY p.id
-            ON CONFLICT DO NOTHING
-            """,ct);
-        var locked = await db.Database.SqlQuery<Guid>($"""
-            SELECT product_id AS "Value" FROM accounting.warehouse_stock WHERE org_id={invoice.OrgId}
-                AND store_id={invoice.StoreId} AND product_id=ANY({ids}) ORDER BY product_id FOR UPDATE
-            """).ToListAsync(ct);
-        if (locked.Count!=ids.Length) return Conflict("Один із товарів більше не доступний у каталозі.");
-        var backdated=await db.Database.SqlQuery<int>($"""
-            SELECT 1 AS "Value" FROM accounting.stock_openings WHERE org_id={invoice.OrgId} AND store_id={invoice.StoreId}
-                AND product_id=ANY({ids}) AND day>{invoice.Day}
-            """).AnyAsync(ct);
-        if (backdated) return Conflict("Дата накладної передує початковому залишку на цьому складі.");
+        var lockConflict = await StockPosting.LockAsync(db, reservations, invoice.OrgId, invoice.StoreId, ids, invoice.Day,
+            "Дата накладної передує початковому залишку на цьому складі.", ct);
+        if (lockConflict != null) return Conflict(lockConflict);
         lines = await Impact(id,db,ct);
         var shortage = lines.FirstOrDefault(l=>l.After < 0);
         if (shortage != null) return Conflict($"Недостатньо товару «{shortage.Title}» на вибраному складі. Доступно {shortage.Before}.");
@@ -221,27 +207,8 @@ internal static class InvoiceWorkflow
             audit.Record("recommendation.fulfilled","RecommendationOffer",offer.Id.ToString(),new { invoiceId=id,offer.ProductId,offer.Quantity });
         }
         var deltas = lines.Select(l=>l.Change).ToArray();
-        var invalidShopQuantity=await db.Database.SqlQuery<int>($"""
-            SELECT 1 AS "Value" FROM catalog.product_stock s
-            JOIN accounting.warehouse_stock w ON (w.org_id,w.store_id,w.product_id)=(s.warehouse_org_id,s.warehouse_store_id,s.product_id)
-            JOIN unnest({ids}::uuid[],{deltas}::numeric[]) m(product_id,delta) ON m.product_id=s.product_id
-            WHERE w.org_id={invoice.OrgId} AND w.store_id={invoice.StoreId}
-                AND (w.quantity+m.delta<s.reserved_quantity OR w.quantity+m.delta>999999999.999)
-            """).AnyAsync(ct);
-        if (invalidShopQuantity) return Conflict("Перевірте кількість: залишок магазину має покривати резерви і не перевищувати 999 999 999,999.");
-        await db.Database.ExecuteSqlAsync($"""
-            WITH changes AS (
-                UPDATE accounting.warehouse_stock w SET quantity=w.quantity+m.delta
-                FROM unnest({ids}::uuid[],{deltas}::numeric[]) AS m(product_id,delta)
-                WHERE w.org_id={invoice.OrgId} AND w.store_id={invoice.StoreId} AND w.product_id=m.product_id
-                RETURNING w.product_id,m.delta,w.quantity
-            ) INSERT INTO accounting.stock_movements SELECT {id},product_id,delta,quantity FROM changes
-            """,ct);
-        var synced=await db.Database.ExecuteSqlAsync($"""
-            UPDATE catalog.product_stock c SET quantity=w.quantity,updated_at=now()
-            FROM accounting.warehouse_stock w WHERE (w.org_id,w.store_id,w.product_id)=(c.warehouse_org_id,c.warehouse_store_id,c.product_id)
-                AND w.org_id={invoice.OrgId} AND w.store_id={invoice.StoreId} AND w.product_id=ANY({ids})
-            """,ct);
+        var (applied, synced) = await StockPosting.ApplyAsync(db, id, invoice.OrgId, invoice.StoreId, ids, deltas, ct);
+        if (!applied) return Conflict(StockPosting.ShopConflict);
         if (synced>0 || offer != null) outbox.Enqueue(new StockAvailabilityChanged());
         await db.Database.ExecuteSqlAsync($"UPDATE accounting.documents SET status='posted' WHERE id={id}",ct);
         audit.Record("accounting.invoice_posted","AccountingDocument",id.ToString(),new {invoice.Kind,invoice.Total,invoice.StoreId});

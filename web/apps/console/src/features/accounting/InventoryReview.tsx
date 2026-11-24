@@ -67,7 +67,7 @@ export function InventoryReview() {
   return (
     <Stack gap="sm" className="ledger-workspace doc-register inventory-review">
       <PageHeader title="Звірка складських залишків" actions={
-        <Button component={Link} to="/warehouse/inventory" variant="default" radius="xl" leftSection={<IconArrowLeft size={16} />}>
+        <Button component={Link} to="/warehouse/inventory?view=reports" variant="default" radius="xl" leftSection={<IconArrowLeft size={16} />}>
           Звіти про залишки
         </Button>
       } />

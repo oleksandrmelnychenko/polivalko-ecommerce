@@ -10,7 +10,7 @@ import { MetricLabel } from '@/shared/ui/MetricCard'
 import { PageState } from '@/shared/ui/PageState'
 import { problemMessage } from '@/shared/api/problem'
 import { Grid } from './RegisterTable'
-import { save, useRegister, type Page } from './api'
+import { save, stockOperationNames, useRegister, type Page } from './api'
 
 export type WarehouseRow = components['schemas']['WarehouseBalance']
 type Movement = components['schemas']['WarehouseMovement']
@@ -110,6 +110,7 @@ export function MovementHistory({ row, close, onRefresh }: { row: WarehouseRow; 
     in: 'Надходження',
     out: 'Видаткова накладна',
     order: 'Відвантаження замовлення',
+    ...stockOperationNames,
   }
   return (
     <AppEditorModal opened={opened} size="standard" className="ledger-editor warehouse-modal" onClose={() => setOpened(false)}
@@ -144,7 +145,7 @@ export function MovementHistory({ row, close, onRefresh }: { row: WarehouseRow; 
                     <Table.Tr key={m.kind + m.id}>
                       <Table.Td data-label="Дата">{m.day}</Table.Td>
                       <Table.Td data-label="Операція">{kinds[m.kind] ?? m.kind}</Table.Td>
-                      <Table.Td data-label="Документ">{m.kind === 'in' || m.kind === 'out' ? <DocumentLink id={m.id}>{m.reference || m.id}</DocumentLink> : url ? <Link to={url}>{m.reference || m.id}</Link> : m.reference || '—'}</Table.Td>
+                      <Table.Td data-label="Документ">{m.kind === 'in' || m.kind === 'out' || m.kind in stockOperationNames ? <DocumentLink id={m.id}>{m.reference || m.id}</DocumentLink> : url ? <Link to={url}>{m.reference || m.id}</Link> : m.reference || '—'}</Table.Td>
                       <Table.Td data-label="Зміна"><span className="wh-change" data-direction={Math.sign(m.change)}>
                         {m.change > 0 ? '+' : ''}
                         {count(m.change)}</span>

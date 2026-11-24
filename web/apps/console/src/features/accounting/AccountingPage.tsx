@@ -19,6 +19,7 @@ import { Grid } from './RegisterTable'
 import { InventoryPage, Workplace, WarehouseBalances } from './Workplace'
 import { DOCUMENTS_PATH } from '@/shared/ui/DocumentLink'
 import { InvoiceActions } from './InvoiceActions'
+import { StockOperationActions, StockOperationRegister } from './StockOperations'
 import { PartnersDirectory } from './Partners'
 import {
   ACCOUNTING_DOCUMENT_CHANGED,
@@ -70,15 +71,20 @@ function DocumentDetails({ card, reload, onDialogChange }: { card: Card; reload:
           <time dateTime={d.day ?? undefined}>{d.day ?? '—'}</time>
         </div>
         <dl className="doc-facts">
-          <div><dt>{partnerLabel}</dt><dd><PartnerLink doc={d} chip /></dd></div>
+          {d.entityType !== 'stockOperation' && <div><dt>{partnerLabel}</dt><dd><PartnerLink doc={d} chip /></dd></div>}
           <div><dt>Організація</dt><dd>{d.organization || '—'}</dd></div>
-          <div><dt>Договір</dt><dd>{d.agreement || '—'}</dd></div>
-          <div><dt>Оплата</dt><dd>{paymentNames[d.paymentStatus ?? ''] ?? d.paymentStatus ?? '—'}</dd></div>
+          {d.entityType !== 'stockOperation' && <>
+            <div><dt>Договір</dt><dd>{d.agreement || '—'}</dd></div>
+            <div><dt>Оплата</dt><dd>{paymentNames[d.paymentStatus ?? ''] ?? d.paymentStatus ?? '—'}</dd></div>
+          </>}
           <div><dt>Код документа</dt><dd className="doc-code">{d.sourceId}</dd></div>
         </dl>
       </section>
       {d.sourceAccount === 'polivalko-native' && d.entityType === 'invoice' && (
         <InvoiceActions key={d.id} doc={d} lines={lines} refresh={reload} onDialogChange={onDialogChange} />
+      )}
+      {d.sourceAccount === 'polivalko-native' && d.entityType === 'stockOperation' && (
+        <StockOperationActions key={d.id} doc={d} refresh={reload} onDialogChange={onDialogChange} />
       )}
       {d.partnerRef && !d.partnerId && (
         <Text c="orange">Контрагента з кодом {d.partnerRef} потрібно звірити з довідником.</Text>
@@ -258,6 +264,8 @@ export default function AccountingPage() {
   if (section === 'partners') return <PartnersDirectory id={id} />
   if (section === 'payments' || section === 'stock' || section === 'inventory')
     return <div className="accounting-register">{section === 'payments' ? <Workplace /> : section === 'stock' ? <WarehouseBalances /> : <InventoryPage />}</div>
+  if (section === 'income' || section === 'write-offs')
+    return <div className="accounting-register"><StockOperationRegister key={section} kind={section === 'income' ? 'income' : 'writeOff'} /></div>
   if (section === 'product-history')
     return (
       <div className="accounting-register">

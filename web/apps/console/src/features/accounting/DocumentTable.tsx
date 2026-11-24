@@ -1,5 +1,5 @@
 import { Table } from '@mantine/core'
-import { IconArrowBackUp, IconFileInvoice, IconPackageExport, IconPackageImport, IconReceipt } from '@tabler/icons-react'
+import { IconArrowBackUp, IconFileInvoice, IconListCheck, IconPackageExport, IconPackageImport, IconReceipt, IconTransferIn, IconTrashX } from '@tabler/icons-react'
 import { DocumentLink, PartnerDetailLink } from '@/shared/ui/DocumentLink'
 import { TableChip } from '@/shared/ui/TableChip'
 import { Grid } from './RegisterTable'
@@ -22,6 +22,7 @@ export function documentIcon(doc: Doc) {
   if (doc.entityType === 'receipt') return IconReceipt
   if (doc.entityType === 'invoice' && doc.kind === 'out') return IconPackageExport
   if (doc.entityType === 'invoice' && doc.kind === 'in') return IconPackageImport
+  if (doc.entityType === 'stockOperation') return doc.kind === 'income' ? IconTransferIn : doc.kind === 'writeOff' ? IconTrashX : IconListCheck
   return IconFileInvoice
 }
 
