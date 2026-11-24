@@ -20,6 +20,7 @@ public static class ContentModule
             .AddMemoryCache()
             .AddModelConfigurator<ContentModelConfigurator>()
             .AddScoped<IServiceRequestStats, ServiceRequestStats>()
+            .AddScoped<IStoreAddress, StoreAddress>()
             .AddScoped<ActiveBanners>()
             .AddOutboxHandler<ServiceRequestSubmitted, NotifyManagerOnServiceRequest>();
 

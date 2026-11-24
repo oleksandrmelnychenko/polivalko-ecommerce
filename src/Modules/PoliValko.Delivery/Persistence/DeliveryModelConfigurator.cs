@@ -53,8 +53,8 @@ internal sealed class DeliveryModelConfigurator : IModelConfigurator
             {
                 Code = BuchaStoreCode,
                 Name = "Магазин Poli Valko",
-                Address = "м. Буча (точну адресу надає замовник)",
-                Schedule = "Пн–Нд, 9:00–19:00 (уточнюється)",
+                Address = "м. Буча, вул. Депутатська, 1-В, ТК «Варшавський», фасадний ряд, приміщення №8",
+                Schedule = "Пн–Сб 09:00–17:30, Нд — вихідний",
                 Instructions = "Дочекайтеся повідомлення, що замовлення готове, і назвіть номер замовлення на касі.",
                 MapUrl = null,
                 IsActive = true,

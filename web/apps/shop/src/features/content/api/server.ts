@@ -16,8 +16,18 @@ export async function getPhotoCredits() {
 export async function getPickupPoints() {
   "use cache";
   cacheLife("hours");
-  cacheTag("delivery");
-  return loaded(await api.GET("/api/v1/delivery/pickup-points"), "пункти самовивозу") ?? [];
+  cacheTag("delivery", "content");
+  const [directory, contacts] = await Promise.all([
+    api.GET("/api/v1/delivery/pickup-points"),
+    getContacts().catch(() => null),
+  ]);
+  const points = loaded(directory, "пункти самовивозу") ?? [];
+  return points.map((point) => point.code === "bucha-store" && contacts ? {
+    ...point,
+    address: contacts.address?.trim() || point.address,
+    schedule: contacts.schedule?.trim() || point.schedule,
+    mapUrl: contacts.mapUrl || point.mapUrl,
+  } : point);
 }
 
 export async function getDeliveryMethods() {

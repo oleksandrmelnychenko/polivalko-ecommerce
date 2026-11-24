@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using PoliValko.Catalog.Contracts;
+using PoliValko.Content.Contracts;
 using PoliValko.Customers.Contracts;
 using PoliValko.Delivery.Contracts;
 using PoliValko.Infrastructure.Outbox;
@@ -23,6 +24,7 @@ internal sealed class OrderWriter(
     CheckoutCalculator calculator,
     IDeliveryDirectory directory,
     IDeliveryAvailability delivery,
+    IStoreAddress storeAddress,
     ICatalogFreshness freshness,
     IOptions<SellerOptions> sellerOptions,
     ISettingsStore settings,
@@ -86,6 +88,12 @@ internal sealed class OrderWriter(
         var (token, tokenHash) = OrderTokens.Create();
         var orderId = Guid.CreateVersion7(now);
         var pickup = valid.Delivery == DeliveryMethod.Pickup ? availability.Pickup : null;
+        if (pickup?.Code == "bucha-store")
+        {
+            var address = await storeAddress.ReadAsync(ct);
+            if (!string.IsNullOrWhiteSpace(address)) pickup = pickup with { Address = address.Trim() };
+        }
+
         var seller = await ShopSettingsStore.LoadSellerAsync(settings, sellerOptions.Value, ct);
 
         var order = new Order

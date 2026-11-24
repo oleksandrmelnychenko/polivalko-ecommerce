@@ -56,8 +56,8 @@ internal sealed class ContentModelConfigurator : IModelConfigurator
             builder.HasData(new SiteContacts
             {
                 Id = SiteContacts.SingletonId,
-                Address = "м. Буча, Київська обл. (точну адресу надає магазин)",
-                Schedule = "Пн–Нд, 9:00–19:00 (уточнюється)",
+                Address = "м. Буча, вул. Депутатська, 1-В, ТК «Варшавський», фасадний ряд, приміщення №8",
+                Schedule = "Пн–Сб 09:00–17:30, Нд — вихідний",
                 UpdatedAt = Seeded,
             });
         });

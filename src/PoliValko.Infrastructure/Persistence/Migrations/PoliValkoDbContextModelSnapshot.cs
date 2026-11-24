@@ -1278,8 +1278,8 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         new
                         {
                             Id = 1,
-                            Address = "м. Буча, Київська обл. (точну адресу надає магазин)",
-                            Schedule = "Пн–Нд, 9:00–19:00 (уточнюється)",
+                            Address = "м. Буча, вул. Депутатська, 1-В, ТК «Варшавський», фасадний ряд, приміщення №8",
+                            Schedule = "Пн–Сб 09:00–17:30, Нд — вихідний",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 10, 28, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
                         });
                 });
@@ -1632,11 +1632,11 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         new
                         {
                             Code = "bucha-store",
-                            Address = "м. Буча (точну адресу надає замовник)",
+                            Address = "м. Буча, вул. Депутатська, 1-В, ТК «Варшавський», фасадний ряд, приміщення №8",
                             Instructions = "Дочекайтеся повідомлення, що замовлення готове, і назвіть номер замовлення на касі.",
                             IsActive = true,
                             Name = "Магазин Poli Valko",
-                            Schedule = "Пн–Нд, 9:00–19:00 (уточнюється)"
+                            Schedule = "Пн–Сб 09:00–17:30, Нд — вихідний"
                         });
                 });
 
