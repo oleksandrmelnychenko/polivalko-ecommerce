@@ -14,7 +14,7 @@ import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableSortingState } from '@/shared/ui/data-table/types'
 import { usePageSelection } from '@/shared/ui/data-table/usePageSelection'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
-import { MetricLabel } from '@/shared/ui/MetricCard'
+import { SalesRegister } from '@/shared/sales/SalesRegister'
 import { notifyError, notifySuccess } from '@/shared/ui/notify'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
@@ -144,10 +144,7 @@ export function OrdersPage() {
       <PageHeader title="Замовлення" />
       {showCarts && <OpenCarts onClose={() => setShowCarts(false)} />}
       <OrdersStatusTabs status={state.status} counts={counts.status === 'ready' ? counts.data : undefined} onChange={(status) => update({ status })} />
-      <section className="orders-register" aria-labelledby="orders-register-title">
-        <header className="orders-register-head">
-          <h2 id="orders-register-title"><MetricLabel icon={IconShoppingBag}>Замовлення</MetricLabel></h2>
-          <div className="orders-register-actions">
+      <SalesRegister title="Замовлення" icon={IconShoppingBag} actions={<>
           <Button size="xs" radius="xl" leftSection={<IconShoppingCart size={16} />} onClick={() => setShowCarts(true)}>
             Відкриті кошики
           </Button>
@@ -156,8 +153,7 @@ export function OrdersPage() {
               Експорт CSV
             </Button>
           </Can>
-          </div>
-        </header>
+      </>}>
 
       <OrdersFilters
         state={state}
@@ -210,7 +206,7 @@ export function OrdersPage() {
         />
       ) : null}
 
-      </section>
+      </SalesRegister>
       <OrdersBulkConfirm
         opened={confirming && selected.size > 0}
         status={bulkStatus}

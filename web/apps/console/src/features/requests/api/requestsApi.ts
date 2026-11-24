@@ -14,6 +14,10 @@ export function getServiceRequests(query: RequestsQuery) {
   return api.GET('/api/v1/console/service-requests', { params: { query } })
 }
 
+export function getServiceRequest(id: string) {
+  return api.GET('/api/v1/console/service-requests/{id}', { params: { path: { id } } })
+}
+
 export async function getServiceRequestCounts(): Promise<ApiResult<RequestCounts>> {
   const results = await Promise.all(REQUEST_STATUSES.map((status) => getServiceRequests({ status, page: 1, pageSize: 1 })))
   const failed = results.find((result) => !result.response.ok)

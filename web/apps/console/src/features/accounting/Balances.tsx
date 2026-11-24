@@ -3,6 +3,7 @@ import type { components } from '@polivalko/shared/api/schema'
 import { IconArrowsExchange, IconBuildingStore, IconFileCheck, IconLink, IconSearch, IconWallet } from '@tabler/icons-react'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { MetricLabel } from '@/shared/ui/MetricCard'
+import { PartnerDetailLink } from '@/shared/ui/DocumentLink'
 import { TableChip } from '@/shared/ui/TableChip'
 import './balances.css'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -125,16 +126,22 @@ function CurrentBalances() {
       <section className="ledger-card balance-list">
         <header className="ledger-card-head">
           <h2><MetricLabel icon={IconWallet}>Борги за контрагентами</MetricLabel></h2>
-          {query.data && <span className="ledger-count">Позицій · {query.data.total}</span>}
+          {query.data && query.status !== 'forbidden' && <span className="ledger-count">Позицій · {query.data.total}</span>}
         </header>
-        {query.data ? (
+        {query.data && query.status === 'error' && (
+          <Alert color="orange" role="alert" title="Не вдалося оновити борги">
+            Показано дані попереднього завантаження.{' '}
+            <Button variant="default" size="xs" onClick={query.reload}>Повторити</Button>
+          </Alert>
+        )}
+        {query.data && query.status !== 'forbidden' ? (
           query.data.total > 0 ? (
             <>
               <Grid columns={['Контрагент', 'Організація', 'До отримання', 'До сплати']}>
                 {query.data.items.map((r) => (
                   <Table.Tr key={[r.partnerId, r.orgId, r.currency].join(':')}>
                     <Table.Td>
-                      <Link to={'/accounting/partners/' + r.partnerId} state={{ balanceSearch: params.toString() }}>{r.partner}</Link>
+                      <PartnerDetailLink id={r.partnerId}>{r.partner}</PartnerDetailLink>
                     </Table.Td>
                     <Table.Td data-label="Організація">{r.organization}</Table.Td>
                     <Table.Td data-label="До отримання" className="register-money">{money(r.receivable, r.currency)}</Table.Td>
@@ -305,7 +312,7 @@ function BalanceReports() {
                   <Table.Tr key={r.position}>
                     <Table.Td>
                       {r.linkedPartner ? (
-                        <Link to={'/accounting/partners/' + r.linkedPartner} state={{ balanceSearch: params.toString() }}>{r.partnerTitle}</Link>
+                        <PartnerDetailLink id={r.linkedPartner}>{r.partnerTitle}</PartnerDetailLink>
                       ) : (
                         r.partnerTitle || 'Без назви'
                       )}

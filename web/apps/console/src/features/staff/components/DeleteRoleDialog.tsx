@@ -59,7 +59,7 @@ export function DeleteRoleDialog({ role, canOpenStaff, onClose, onDeleted, onSta
         <FailureAlert failure={failure} />
       </Stack>
       <AppModalFooter>
-        <Button variant="default" disabled={busy} onClick={close}>
+        <Button variant="default" disabled={busy} onClick={close} data-autofocus>
           {inUse ? 'Закрити' : 'Скасувати'}
         </Button>
         {inUse ? (
@@ -69,7 +69,7 @@ export function DeleteRoleDialog({ role, canOpenStaff, onClose, onDeleted, onSta
             </Button>
           ) : null
         ) : (
-          <Button color="red" loading={busy} leftSection={<IconTrash size={16} stroke={1.8} />} onClick={() => void confirm()} data-autofocus>
+          <Button color="red" loading={busy} leftSection={<IconTrash size={16} stroke={1.8} />} onClick={() => void confirm()}>
             Видалити роль
           </Button>
         )}

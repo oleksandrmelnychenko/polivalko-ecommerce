@@ -21,7 +21,8 @@
 .storefront-mode-card h3 { margin: 0; font-size: 1rem; color: var(--brand-ink); }
 .storefront-mode-card > p { margin-top: 4px; }
 .storefront-mode-options { max-width: 100%; margin-block: 10px 4px; background: var(--app-ground); }
-.storefront-mode-options .mantine-SegmentedControl-label { white-space: normal; }
+.storefront-mode-options .mantine-SegmentedControl-control { flex: 0 0 auto; }
+.storefront-mode-options .mantine-SegmentedControl-label { white-space: nowrap; }
 .storefront-mode-options .mantine-SegmentedControl-control::before { display: none; }
 .storefront-preview-tools { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 16px; background: var(--app-ground); border-radius: 12px; padding: 10px 12px; margin-block: 12px; }
 .storefront-preview-tools > * { min-width: 0; flex: 2 1 280px; }

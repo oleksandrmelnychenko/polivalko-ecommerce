@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Content.Features.ServiceRequests;
+using PoliValko.Content.Features.ServiceRequests.Console;
 using PoliValko.Content.Domain;
 using PoliValko.Infrastructure.Outbox;
 using PoliValko.Infrastructure.Persistence;
@@ -15,6 +16,22 @@ public sealed class ServiceRequestApiTests(ApiFactory api)
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private readonly HttpClient _client = api.CreateClient();
+
+    [Fact]
+    public async Task Staff_can_open_a_service_request_by_id()
+    {
+        var input = ValidRequest();
+        var response = await PostAsync(input, Guid.NewGuid().ToString());
+        var created = (await response.Content.ReadFromJsonAsync<ServiceRequestCreated>(Ct))!;
+        var staff = await Staff.SignInAsync(api, ApiFactory.ManagerEmail);
+        var path = "/api/v1/console/service-requests/";
+
+        var detail = await staff.GetFromJsonAsync<ConsoleServiceRequestDto>(path + created.Id, TestJson.Options, Ct);
+        detail!.Id.ShouldBe(created.Id);
+        detail.Name.ShouldBe(input.Name);
+        (await staff.GetAsync(path + Guid.NewGuid(), Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await _client.GetAsync(path + created.Id, Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
 
     [Fact]
     public async Task Request_without_idempotency_key_is_rejected()

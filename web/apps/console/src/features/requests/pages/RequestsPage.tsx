@@ -1,3 +1,5 @@
+import { IconClipboardList } from '@tabler/icons-react'
+import { SalesRegister } from '@/shared/sales/SalesRegister'
 import { Button, Stack, Text } from '@mantine/core'
 import { useCallback, useMemo, useState } from 'react'
 import { useMediaQuery } from '@mantine/hooks'
@@ -13,8 +15,10 @@ import { FilterBar } from '@/shared/ui/FilterBar'
 import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { notifyError } from '@/shared/ui/notify'
 import { PageHeader } from '@/shared/ui/PageHeader'
+import { PageState } from '@/shared/ui/PageState'
+import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
-import { changeServiceRequestStatus, getServiceRequestCounts, getServiceRequests, type RequestStatus, type ServiceRequest } from '../api/requestsApi'
+import { changeServiceRequestStatus, getServiceRequest, getServiceRequestCounts, getServiceRequests, type RequestStatus, type ServiceRequest } from '../api/requestsApi'
 import { RequestDetailPane } from '../components/RequestDetailPane'
 import { requestsColumns } from '../components/requestsColumns'
 import { RequestsStatusTabs } from '../components/RequestsStatusTabs'
@@ -42,7 +46,9 @@ export function RequestsPage() {
   const page = requests.data
   const failed = requests.status === 'error' || requests.status === 'forbidden'
   const rows = useMemo(() => (failed ? [] : (page?.items ?? [])), [failed, page])
-  const selected = rows.find((row) => row.id === pickedId) ?? (snapshot?.id === pickedId ? snapshot : null)
+  const local = rows.find((row) => row.id === pickedId) ?? (snapshot?.id === pickedId ? snapshot : null)
+  const lookup = useApiQuery(`request:${pickedId}`, () => getServiceRequest(pickedId!), { enabled: Boolean(pickedId && !local && requests.status !== 'forbidden') })
+  const selected = local ?? (lookup.status === 'ready' && lookup.data?.id === pickedId ? lookup.data : null)
   const detail = selected ?? snapshot
   const compact = useMediaQuery('(max-width: 48em)')
 
@@ -80,6 +86,7 @@ export function RequestsPage() {
         const next = result.data
         setSnapshot(next)
         if (page) requests.setData({ ...page, items: page.items.map((item) => (item.id === next.id ? next : item)) })
+        lookup.setData(next)
         reloadAll()
       } else {
         notifyError(problemMessage(result.error, 'Статус не змінено.'))
@@ -110,39 +117,48 @@ export function RequestsPage() {
 
       <RequestsStatusTabs status={state.status} counts={counts.status === 'ready' ? counts.data : undefined} onChange={(status) => update({ status })} />
 
-      <FilterBar
-        label="Сторінки заявок"
-        actions={
-          <>
-            {page ? <span className="app-filter-summary">Знайдено: {countFormat.format(page.totalItems)}</span> : null}
-            <Paginator
-              page={state.page}
-              pageSize={state.pageSize}
-              totalPages={page?.totalPages}
-              isLoading={requests.isFetching}
-              onPageChange={(next) => update({ page: next })}
-              onPageSizeChange={(size) => update({ pageSize: size })}
-              onRefresh={reloadAll}
-            />
-          </>
-        }
-      />
-
-      <ListPageBody>
-        <DataTable
-          ariaLabel="Заявки на послуги"
-          columns={columns}
-          data={rows}
-          getRowId={getRowId}
-          isLoading={requests.isLoading}
-          isFetching={requests.isFetching}
-          minWidth={compact ? 255 : 670}
-          height="100%"
-          onRowClick={select}
-          emptyText={emptyText}
+      <SalesRegister title="Заявки на послуги" icon={IconClipboardList}>
+        <FilterBar
+          label="Сторінки заявок"
+          actions={
+            <>
+              {page ? <span className="app-filter-summary">Знайдено: {countFormat.format(page.totalItems)}</span> : null}
+              <Paginator
+                page={state.page}
+                pageSize={state.pageSize}
+                totalPages={page?.totalPages}
+                isLoading={requests.isFetching}
+                onPageChange={(next) => update({ page: next })}
+                onPageSizeChange={(size) => update({ pageSize: size })}
+                onRefresh={reloadAll}
+              />
+            </>
+          }
         />
-      </ListPageBody>
 
+        <ListPageBody>
+          <DataTable
+            ariaLabel="Заявки на послуги"
+            columns={columns}
+            data={rows}
+            getRowId={getRowId}
+            isLoading={requests.isLoading}
+            isFetching={requests.isFetching}
+            minWidth={compact ? 255 : 670}
+            height="100%"
+            onRowClick={select}
+            emptyText={emptyText}
+          />
+        </ListPageBody>
+      </SalesRegister>
+
+      {pickedId && !selected && requests.status !== 'forbidden' && (
+        <AppEditorModal opened title="Заявка на послугу" onClose={close}>
+          <PageState kind={lookup.status === 'ready' ? 'empty' : lookup.status}
+            title={lookup.problem?.status === 404 ? 'Заявку не знайдено' : undefined}
+            onRetry={lookup.status === 'error' && lookup.problem?.status !== 404 ? lookup.reload : undefined} />
+        </AppEditorModal>
+      )}
       {detail && requests.status !== 'forbidden' && (
         <RequestDetailPane
           opened={Boolean(selected)}

@@ -1,3 +1,4 @@
+import { SalesRegister } from '@/shared/sales/SalesRegister'
 import { Button, Stack, Text } from '@mantine/core'
 import { useCallback, useMemo, useState } from 'react'
 import { useMediaQuery } from '@mantine/hooks'
@@ -65,42 +66,44 @@ export function OrderCustomersTab({ onOpenAccount }: { onOpenAccount: (account: 
 
   return (
     <>
-      <CustomersFilters
-        state={state}
-        update={update}
-        actions={
-          <>
-            {page ? <span className="app-filter-summary">Знайдено: {countFormat.format(page.totalItems)}</span> : null}
-            <Paginator
-              page={state.page}
-              pageSize={state.pageSize}
-              totalPages={page?.totalPages}
-              isLoading={customers.isFetching}
-              onPageChange={(next) => update({ page: next })}
-              onPageSizeChange={(size) => update({ pageSize: size })}
-              onRefresh={customers.reload}
-            />
-          </>
-        }
-      />
-
-      <ListPageBody>
-        <DataTable
-          ariaLabel="Покупці за замовленнями"
-          columns={columns}
-          data={rows}
-          getRowId={getRowId}
-          isLoading={customers.isLoading}
-          isFetching={customers.isFetching}
-          minWidth={compact ? 245 : 670}
-          height="100%"
-          manualSorting
-          sorting={sorting}
-          onSortingChange={onSortingChange}
-          onRowClick={select}
-          emptyText={emptyText}
+      <SalesRegister title="Покупці за замовленнями" icon={IconUser}>
+        <CustomersFilters
+          state={state}
+          update={update}
+          actions={
+            <>
+              {page ? <span className="app-filter-summary">Знайдено: {countFormat.format(page.totalItems)}</span> : null}
+              <Paginator
+                page={state.page}
+                pageSize={state.pageSize}
+                totalPages={page?.totalPages}
+                isLoading={customers.isFetching}
+                onPageChange={(next) => update({ page: next })}
+                onPageSizeChange={(size) => update({ pageSize: size })}
+                onRefresh={customers.reload}
+              />
+            </>
+          }
         />
-      </ListPageBody>
+
+        <ListPageBody>
+          <DataTable
+            ariaLabel="Покупці за замовленнями"
+            columns={columns}
+            data={rows}
+            getRowId={getRowId}
+            isLoading={customers.isLoading}
+            isFetching={customers.isFetching}
+            minWidth={compact ? 245 : 670}
+            height="100%"
+            manualSorting
+            sorting={sorting}
+            onSortingChange={onSortingChange}
+            onRowClick={select}
+            emptyText={emptyText}
+          />
+        </ListPageBody>
+      </SalesRegister>
       <AppEditorModal
         opened={Boolean(selected) && !failed}
         onClose={close}

@@ -4,6 +4,10 @@ type LeaveAttempt = (to: string) => void
 
 const guards: LeaveAttempt[] = []
 
+export function hasUnsavedChanges() {
+  return guards.length > 0
+}
+
 function currentPath(): string {
   return `${window.location.pathname}${window.location.search}${window.location.hash}`
 }

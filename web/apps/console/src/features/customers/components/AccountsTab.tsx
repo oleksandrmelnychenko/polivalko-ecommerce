@@ -1,3 +1,4 @@
+import { SalesRegister } from '@/shared/sales/SalesRegister'
 import { Button, Stack, Text } from '@mantine/core'
 import { useCallback, useMemo, useState } from 'react'
 import { useMediaQuery } from '@mantine/hooks'
@@ -66,39 +67,41 @@ export function AccountsTab() {
 
   return (
     <>
-      <AccountsFilters
-        state={state}
-        update={update}
-        actions={
-          <>
-            {page ? <span className="app-filter-summary">Знайдено: {countFormat.format(page.totalItems)}</span> : null}
-            <Paginator
-              page={state.page}
-              pageSize={state.pageSize}
-              totalPages={page?.totalPages}
-              isLoading={accounts.isFetching}
-              onPageChange={(next) => update({ page: next })}
-              onPageSizeChange={(size) => update({ pageSize: size })}
-              onRefresh={accounts.reload}
-            />
-          </>
-        }
-      />
-
-      <ListPageBody>
-        <DataTable
-          ariaLabel="Кабінети покупців"
-          columns={columns}
-          data={rows}
-          getRowId={getRowId}
-          isLoading={accounts.isLoading}
-          isFetching={accounts.isFetching}
-          minWidth={compact ? 245 : 710}
-          height="100%"
-          onRowClick={select}
-          emptyText={emptyText}
+      <SalesRegister title="Кабінети покупців" icon={IconId}>
+        <AccountsFilters
+          state={state}
+          update={update}
+          actions={
+            <>
+              {page ? <span className="app-filter-summary">Знайдено: {countFormat.format(page.totalItems)}</span> : null}
+              <Paginator
+                page={state.page}
+                pageSize={state.pageSize}
+                totalPages={page?.totalPages}
+                isLoading={accounts.isFetching}
+                onPageChange={(next) => update({ page: next })}
+                onPageSizeChange={(size) => update({ pageSize: size })}
+                onRefresh={accounts.reload}
+              />
+            </>
+          }
         />
-      </ListPageBody>
+
+        <ListPageBody>
+          <DataTable
+            ariaLabel="Кабінети покупців"
+            columns={columns}
+            data={rows}
+            getRowId={getRowId}
+            isLoading={accounts.isLoading}
+            isFetching={accounts.isFetching}
+            minWidth={compact ? 245 : 710}
+            height="100%"
+            onRowClick={select}
+            emptyText={emptyText}
+          />
+        </ListPageBody>
+      </SalesRegister>
       <AppEditorModal
         opened={Boolean(selected) && !failed}
         onClose={close}

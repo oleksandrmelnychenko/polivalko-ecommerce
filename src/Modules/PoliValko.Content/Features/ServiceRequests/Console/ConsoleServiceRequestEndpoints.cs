@@ -19,6 +19,11 @@ internal static class ConsoleServiceRequestEndpoints
             .WithEnumQuery<ServiceRequestStatus>("status")
             .WithSummary("Заявки на послуги");
 
+        group.MapGet("/{id:guid}", GetServiceRequest.HandleAsync)
+            .WithName("ConsoleGetServiceRequest")
+            .WithSummary("Заявка на послугу")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         group.MapPost("/{id:guid}/status", ChangeServiceRequestStatus.HandleAsync)
             .RequirePermission(PermissionKeys.RequestsStatusChange)
             .WithName("ConsoleChangeServiceRequestStatus")
