@@ -56,6 +56,13 @@ internal static class ProductSearchText
     {
         foreach (var word in words)
         {
+            // Apostrophes become wildcards, so a word of punctuation alone would match every product.
+            if (!word.Any(char.IsLetterOrDigit))
+            {
+                products = products.Where(p => p.Sku == term);
+                continue;
+            }
+
             var pattern = Like(Stem(word));
             products = IsLatin(word)
                 ? products.Where(p => p.Sku == term

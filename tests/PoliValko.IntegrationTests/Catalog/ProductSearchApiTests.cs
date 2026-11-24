@@ -24,6 +24,19 @@ public sealed class ProductSearchApiTests(ApiFactory api)
         page.Approximate.ShouldBeFalse();
     }
 
+    [Theory]
+    [InlineData("'")]
+    [InlineData("’")]
+    [InlineData("'' ?")]
+    public async Task A_query_of_punctuation_alone_finds_nothing_instead_of_the_whole_catalog(string q)
+    {
+        await api.AddProductAsync("vse-dlia-polyvu", "Лійка для апострофа", 100m);
+
+        var found = await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={Uri.EscapeDataString(q)}", TestJson.Options, Ct);
+
+        found!.TotalItems.ShouldBe(0);
+    }
+
     [Fact]
     public async Task Words_match_in_any_order()
     {
