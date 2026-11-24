@@ -1,6 +1,6 @@
-import { ActionIcon, Alert, Button, Group, NativeSelect, SegmentedControl, Text, TextInput } from '@mantine/core'
+import { ActionIcon, Alert, Button, Group, NativeSelect, SegmentedControl, Text, TextInput, Tooltip } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
-import { IconArrowDown, IconArrowUp, IconBuildingStore, IconChevronDown, IconGripVertical, IconPackage, IconPlus, IconSearch, IconX } from '@tabler/icons-react'
+import { IconArrowDown, IconArrowUp, IconBuildingStore, IconChevronDown, IconGripVertical, IconInfoCircle, IconPackage, IconPlus, IconSearch, IconX } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import type { components } from '@polivalko/shared/api/schema'
 import { formatMoney } from '@polivalko/shared/lib/format'
@@ -74,6 +74,8 @@ export function StorefrontModeControl() {
 function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: () => void; onSaved: (value: Setting) => void }) {
   const [baseline, setBaseline] = useState(initial)
   const [mode, setMode] = useState(initial.mode)
+  const selectedMode = modes.find(option => option.value === mode)
+  const [hintTapped, setHintTapped] = useState(false)
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null)
   const today = kyivDate()
   const [year, currentMonth] = today.split('-').map(Number)
@@ -152,12 +154,22 @@ function ModeEditor({ initial, onClose, onSaved }: { initial: Setting; onClose: 
     footer={<Group justify="flex-end"><Button variant="default" disabled={busy} onClick={onClose}>Закрити</Button>
       <Button loading={busy} disabled={!dirty || invalid || missing.length > 0 || preview.status !== 'ready'} onClick={() => void save()}>Застосувати</Button></Group>}>
     <div className="storefront-mode-layout">
-      <section className="storefront-mode-card"><Group justify="space-between" gap="xs"><h3 id="storefront-order-label">Порядок товарів</h3>
+      <section className="storefront-mode-card"><Group justify="space-between" gap="xs">
+        <Group gap={4} wrap="nowrap">
+          <h3 id="storefront-order-label">Порядок товарів</h3>
+          {selectedMode && <Tooltip label={selectedMode.description} multiline w="min(280px, calc(100vw - 32px))" withArrow
+            withinPortal={false} opened={hintTapped || undefined} events={{ hover: true, focus: true, touch: false }}>
+            <ActionIcon variant="subtle" color="gray" radius="xl" size="sm" aria-label={'Як працює режим «' + selectedMode.title + '»'}
+              onPointerUp={event => { if (event.pointerType === 'touch') setHintTapped(tapped => !tapped) }}
+              onBlur={() => setHintTapped(false)}>
+              <IconInfoCircle size={18} aria-hidden="true" />
+            </ActionIcon>
+          </Tooltip>}
+        </Group>
         <TableChip tone="success" dot value={'Зараз · ' + titleOf(baseline.mode) + (baseline.through ? ' до ' + dateLabel(baseline.through) : '')} /></Group>
       <SegmentedControl className="storefront-mode-options" aria-labelledby="storefront-order-label"
         size="xs" radius="xl" color="dark" value={mode} onChange={setMode} disabled={busy}
         data={modes.map(option => ({ value: option.value, label: option.title }))} />
-      <Text size="sm" c="dimmed">{modes.find(option => option.value === mode)?.description}</Text>
       {mode !== 'seasonal' && <TextInput type="date" label="Діє до кінця дня за Києвом" description="Без дати режим діятиме до ручної зміни."
         value={through} min={kyivDate()} disabled={busy} onChange={event => setThrough(event.currentTarget.value)}
         error={invalid ? 'Оберіть сьогоднішню або майбутню дату.' : undefined} mt="sm" maw={360} />}</section>
