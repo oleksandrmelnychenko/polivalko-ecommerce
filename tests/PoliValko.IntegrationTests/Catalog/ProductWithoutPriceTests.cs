@@ -40,6 +40,25 @@ public sealed class ProductWithoutPriceTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Products_without_price_neither_lead_the_cheapest_first_order_nor_pass_a_price_filter()
+    {
+        var token = Guid.NewGuid().ToString("N")[..8];
+        var dear = await api.AddProductAsync("novyi-rik", $"Гірлянда {token} дорога", 2500m, stock: 4);
+        var cheap = await api.AddProductAsync("novyi-rik", $"Гірлянда {token} дешева", 300m, stock: 4);
+        var unpriced = await api.AddProductAsync("novyi-rik", $"Гірлянда {token} без ціни", 0m, stock: 6);
+
+        var ascending = await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={token}&sort=price_asc", TestJson.Options, Ct);
+        ascending!.Items.Select(p => p.Id).ShouldBe([cheap.Id, dear.Id, unpriced.Id]);
+        var descending = await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={token}&sort=price_desc", TestJson.Options, Ct);
+        descending!.Items.Select(p => p.Id).ShouldBe([dear.Id, cheap.Id, unpriced.Id]);
+
+        // "Up to 500" means a price of 500 or less, not "price on request".
+        var upTo = await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={token}&priceMax=500", TestJson.Options, Ct);
+        upTo!.Items.Select(p => p.Id).ShouldBe([cheap.Id]);
+        ascending.Facets.PriceMin.ShouldBe(new MoneyDto("300.00", "UAH"));
+    }
+
+    [Fact]
     public async Task Variant_without_price_is_not_offered_as_in_stock()
     {
         var group = $"group-{Guid.NewGuid():N}";

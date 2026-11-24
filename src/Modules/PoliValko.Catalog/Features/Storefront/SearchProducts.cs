@@ -119,7 +119,8 @@ internal static class SearchProducts
 
         if (query.PriceMax is { } max)
         {
-            products = products.Where(p => p.Price.Amount <= max);
+            // A price of 0 means "price on request": it is not a price within any range.
+            products = products.Where(p => p.Price.Amount > 0 && p.Price.Amount <= max);
         }
 
         var page = PageRequest.From(query.Page, query.PageSize);
@@ -131,8 +132,9 @@ internal static class SearchProducts
                 await merchandising.SortAsync(products, categories, query.Q?.Trim(), db, today, ct, sort,
                     acrossCategories: string.IsNullOrWhiteSpace(query.Category),
                     pinned: string.IsNullOrWhiteSpace(query.Q) && string.IsNullOrWhiteSpace(query.Category) ? setting?.PinnedProductIds : null),
-            ProductSort.PriceAsc => products.OrderBy(p => p.Price.Amount).ThenBy(p => p.Id),
-            ProductSort.PriceDesc => products.OrderByDescending(p => p.Price.Amount).ThenBy(p => p.Id),
+            // Products without a price go last in both directions.
+            ProductSort.PriceAsc => products.OrderByDescending(p => p.Price.Amount > 0).ThenBy(p => p.Price.Amount).ThenBy(p => p.Id),
+            ProductSort.PriceDesc => products.OrderByDescending(p => p.Price.Amount > 0).ThenByDescending(p => p.Price.Amount).ThenBy(p => p.Id),
             ProductSort.NameDesc => products.OrderByDescending(p => p.DisplayName ?? p.Name).ThenBy(p => p.Id),
             _ => products.OrderBy(p => p.DisplayName ?? p.Name).ThenBy(p => p.Id),
         };

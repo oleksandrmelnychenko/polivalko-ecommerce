@@ -39,7 +39,8 @@ internal static class ProductFacetBuilder
             .GroupBy(_ => 1)
             .Select(g => new
             {
-                Min = g.Min(x => x.Amount),
+                // The range covers real prices: "price on request" (0) would pull its lower end down to nothing.
+                Min = g.Where(x => x.Amount > 0).Min(x => (decimal?)x.Amount) ?? 0m,
                 Max = g.Max(x => x.Amount),
                 InStock = g.Count(x => x.InStock),
             })
