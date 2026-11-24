@@ -16,12 +16,13 @@
 .store-visit__contacts a { color: #111; font-size: 16px; font-weight: 600; text-decoration: none; white-space: nowrap; }
 .store-visit__actions { display: flex; align-items: center; flex-wrap: wrap; gap: 24px; margin-top: 28px; }
 .store-visit__actions .btn svg { color: inherit; width: 16px; height: 16px; }
-.store-visit__pickup { grid-column: 1 / -1; display: flex; align-items: center; gap: 18px; margin-top: 36px; padding-top: 24px; border-top: 1px solid #e5e5e5; }
-.store-visit__pickup > svg { flex: none; width: 24px; height: 24px; color: #007d37; }
-.store-visit__pickup p { display: grid; gap: 4px; margin: 0; font-size: 14px; }
-.store-visit__pickup strong { font-weight: 500; color: #111; }
+.store-visit__pickup { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px 14px; margin-top: 16px; padding: 12px 16px; border: 1px solid var(--color-rule); border-radius: 16px; }
+.store-visit__pickup > svg { box-sizing: content-box; width: 20px; height: 20px; padding: 9px; border-radius: 12px; background: var(--color-paper-2); }
+.store-visit__pickup p { display: grid; gap: 3px; margin: 0; font-size: var(--text-sm); }
+.store-visit__pickup strong { font-size: var(--text-md); }
 .store-visit__pickup span { color: var(--color-ink-2); }
-.store-visit__pickup a { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; color: #111; white-space: nowrap; font-size: 14px; text-decoration: none; }
-.store-visit__pickup a svg { width: 16px; height: 16px; }
+.store-visit__pickup-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
+.store-visit__pickup .store-visit__pickup-actions a { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; font-size: var(--text-sm); }
+.store-visit__pickup-actions svg, .store-visit__contact-link svg { width: 16px; height: 16px; }
 @media (max-width: 70rem) { .store-visit { gap: 0 32px; } .store-visit__details { padding: 28px; } .store-visit__contacts { grid-template-columns: 1fr; } }
-@media (max-width: 48rem) { .store-visit { grid-template-columns: 1fr; padding-block: 24px 40px; } .store-visit__intro { padding-block: 0 28px; } .store-visit__intro h2 { max-width: 16ch; } .store-visit__details { padding: 24px; border-radius: 20px; } .store-visit__address p { font-size: 17px; } .store-visit__pickup { flex-wrap: wrap; gap: 12px; margin-top: 24px; } .store-visit__pickup p { flex: 1; } .store-visit__pickup a { margin-left: 36px; } }
+@media (max-width: 48rem) { .store-visit { grid-template-columns: 1fr; padding-block: 24px 40px; } .store-visit__intro { padding-block: 0 28px; } .store-visit__intro h2 { max-width: 16ch; } .store-visit__details { padding: 24px; border-radius: 20px; } .store-visit__address p { font-size: 17px; } .store-visit__pickup { grid-template-columns: auto minmax(0, 1fr); padding: 12px; } .store-visit__pickup-actions { grid-column: 1 / -1; } }

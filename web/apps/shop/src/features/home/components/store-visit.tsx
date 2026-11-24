@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { directionsUrl } from "@/shared/lib/directions-url";
 import { connection } from "next/server";
 import { getContacts, SpecialDays, type TextItem } from "@/features/content/server";
 import { ArrowRightIcon, ClockIcon, PhoneIcon, PinIcon, BagIcon } from "@polivalko/shared/ui/icons";
@@ -6,6 +7,7 @@ import { ArrowRightIcon, ClockIcon, PhoneIcon, PinIcon, BagIcon } from "@polival
 export async function StoreVisit({ visit }: { visit?: TextItem | null }) {
   await connection();
   const contacts = await getContacts().catch(() => null);
+  const route = directionsUrl(contacts?.mapUrl, contacts?.address);
   return (
     <section className="store-visit container" aria-labelledby="visit-title">
       <div className="store-visit__intro">
@@ -21,11 +23,17 @@ export async function StoreVisit({ visit }: { visit?: TextItem | null }) {
           {contacts?.storePhone && <div><PhoneIcon /><div><h3>Телефон</h3><a href={"tel:" + contacts.storePhone.replace(/[^\d+]/g, "")}>{contacts.storePhone}</a></div></div>}
         </div>
         <div className="store-visit__actions">
-          {contacts?.mapUrl ? <a href={contacts.mapUrl} target="_blank" rel="noopener noreferrer" className="btn">Прокласти маршрут <ArrowRightIcon /></a> : <Link href="/contacts" className="btn">Як нас знайти <ArrowRightIcon /></Link>}
-          {contacts?.mapUrl && <Link href="/contacts" className="store-visit__contact-link">Усі контакти</Link>}
+          <Link href="/contacts" className="store-visit__contact-link">Усі контакти <ArrowRightIcon /></Link>
         </div>
       </div>
-      <div className="store-visit__pickup"><BagIcon /><p><strong>Самовивіз — безкоштовно</strong><span>Оформіть замовлення онлайн та дочекайтеся підтвердження готовності.</span></p><Link href="/payment-delivery">Про доставку й оплату <ArrowRightIcon /></Link></div>
+      <div className="store-visit__pickup">
+        <BagIcon />
+        <p><strong>Безкоштовний самовивіз</strong><span>Забирайте замовлення після повідомлення про готовність.</span></p>
+        <div className="store-visit__pickup-actions">
+          {route && <a className="btn" href={route} target="_blank" rel="noopener noreferrer">Прокласти маршрут <ArrowRightIcon /></a>}
+          <Link className="link" href="/payment-delivery">Про доставку й оплату</Link>
+        </div>
+      </div>
     </section>
   );
 }
