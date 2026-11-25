@@ -119,9 +119,10 @@ html:has(.request-dialog[open]) { overflow: hidden; }
 .request-choices label:has(:checked), .request-selected { background: var(--color-paper-2); border-radius: 10px; }
 .request-choices input { appearance: auto; accent-color: var(--color-ink); width: 16px; height: 16px; margin: 0; }
 .request-choices small { grid-column: 2; color: var(--color-ink-2); line-height: 1.45; }
-.request-selected { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 2px 12px; }
+.request-selected { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 6px 6px 12px; }
 .request-selected strong { overflow-wrap: anywhere; }
-.request-selected button, .request-comment summary { min-height: 44px; }
+.request-selected .btn { flex: none; border-radius: 8px; padding-inline: 12px; }
+.request-comment summary { min-height: 44px; }
 .request-comment summary { align-content: center; cursor: pointer; }
 .request-dialog textarea { min-height: 76px; }
 .request-dialog .btn { min-height: 44px; }

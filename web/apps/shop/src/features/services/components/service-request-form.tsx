@@ -146,7 +146,7 @@ function RequestWizard({ directions, intro, preset, linked }: Props & { preset: 
         </div>}
         <form className="request-dialog__body" hidden={step !== 2} onSubmit={submit}>
           <div className="request-selected"><strong>{selected?.name}</strong>
-            <button className="link" type="button" disabled={pending} onClick={() => { setState({ status: "idle" }); setStep(1); }}>Змінити</button>
+            <button className="btn btn--quiet btn--small" type="button" disabled={pending} onClick={() => { setState({ status: "idle" }); setStep(1); }}>Змінити</button>
           </div>
           <div className="field"><label htmlFor="request-name">Ім’я</label>
             <input id="request-name" name="name" required readOnly={pending} autoComplete="name" maxLength={100}
