@@ -1,4 +1,5 @@
 import { request as httpRequest } from "node:http";
+import { request as httpsRequest } from "node:https";
 
 const args = Object.fromEntries(
   process.argv.slice(2).map((arg) => {
@@ -7,12 +8,13 @@ const args = Object.fromEntries(
   }),
 );
 const BASE = args.base ?? "http://127.0.0.1:8080";
-const HOST = args.host ?? "localhost:8080";
+const HOST = args.host ?? (args.base ? new URL(BASE).host : "localhost:8080");
 
 function send(path) {
   const url = new URL(path, BASE);
   return new Promise((resolve, reject) => {
-    const req = httpRequest(
+    const request = url.protocol === "https:" ? httpsRequest : httpRequest;
+    const req = request(
       {
         hostname: url.hostname,
         port: url.port,
@@ -47,8 +49,9 @@ function attributes(tag) {
 }
 
 function parse(html) {
-  const metas = [...html.matchAll(/<meta\b[^>]*>/gi)].map(([tag]) => attributes(tag));
-  const links = [...html.matchAll(/<link\b[^>]*>/gi)].map(([tag]) => attributes(tag));
+  const head = html.match(/<head\b[^>]*>([\s\S]*?)<\/head>/i)?.[1] ?? "";
+  const metas = [...head.matchAll(/<meta\b[^>]*>/gi)].map(([tag]) => attributes(tag));
+  const links = [...head.matchAll(/<link\b[^>]*>/gi)].map(([tag]) => attributes(tag));
   const meta = (key) => metas.find((m) => m.name === key || m.property === key)?.content;
   const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(([, body]) => body);
   const types = new Set();
@@ -66,12 +69,13 @@ function parse(html) {
     }
   }
   return {
-    title: decode(html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "").trim(),
+    title: decode(head.match(/<title>([^<]*)<\/title>/)?.[1] ?? "").trim(),
     description: meta("description"),
     robots: meta("robots") ?? "",
     canonical: links.find((l) => l.rel === "canonical")?.href,
     ogTitle: meta("og:title"),
     ogUrl: meta("og:url"),
+    ogImage: meta("og:image"),
     types,
     jsonErrors: errors,
   };
@@ -106,7 +110,7 @@ async function inspect(path, expect) {
     const actual = canonical ? canonical.pathname + canonical.search : "";
     check(path, "canonical", actual === expect.canonical, actual || "немає");
   }
-  if (expect.og) check(path, "og:title і og:url", Boolean(seo.ogTitle && seo.ogUrl), `${seo.ogTitle ?? "—"} · ${seo.ogUrl ?? "—"}`);
+  if (expect.og) check(path, "og:title, og:url та og:image", Boolean(seo.ogTitle && seo.ogUrl && seo.ogImage), `${seo.ogTitle ?? "—"} · ${seo.ogUrl ?? "—"}`);
   check(path, "JSON-LD без помилок", seo.jsonErrors.length === 0, seo.jsonErrors.join("; "));
   for (const type of expect.types ?? []) check(path, `JSON-LD ${type}`, seo.types.has(type), [...seo.types].join(", ") || "немає");
 }
