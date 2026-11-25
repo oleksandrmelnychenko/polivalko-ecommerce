@@ -1,0 +1,570 @@
+[
+  {
+    "sku": "11503",
+    "catalogName": "Граблі аераційні двосторонні Urchin 36см без ручки  GRUNTEC",
+    "displayName": "Двосторонні граблі GRÜNTEK Urchin для газону, 36 см",
+    "brand": "GRÜNTEK",
+    "description": "Насадка для вичісування газону та прибирання рослинних решток. Дві робочі сторони дають змогу перейти від прочісування дернини до згрібання залишків. Руків’я підбирається окремо.",
+    "sourceUrl": "https://yourgarden.com.ua/ua/gtuntek-urchin-grabli-frezerujuchi-dvostoronni-dlja-gazoniv-bez-ruchki-36-sm-4061349202742-ua/",
+    "sourceLabel": "Характеристики постачальника",
+    "attributes": [
+      {
+        "name": "Артикул виробника",
+        "value": "295032036"
+      },
+      {
+        "name": "Робоча ширина",
+        "value": "36 см"
+      },
+      {
+        "name": "Комплектація",
+        "value": "Насадка без руків’я"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/tools/urchin.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/gtuntek-urchin-grabli-frezerujuchi-dvostoronni-dlja-gazoniv-bez-ruchki-36-sm-4061349202742-ua/",
+        "alt": "Двосторонні граблі GRÜNTEK Urchin для газону, 36 см"
+      }
+    ]
+  },
+  {
+    "sku": "8879",
+    "catalogName": "Добриво Дозрівання 250г",
+    "displayName": "Супер Добриво Дозрівання, 250 г",
+    "brand": "Сімейний Сад",
+    "description": "Підживлення з високою часткою фосфору й калію для стадії дозрівання плодів. Пакет містить 250 г добрива.",
+    "sourceUrl": "https://yourgarden.com.ua/ua/dobrivo-super-dlja-dozrivannja-250-g-4823114402456-ua/",
+    "sourceLabel": "Характеристики постачальника",
+    "attributes": [
+      {
+        "name": "Фасування",
+        "value": "250 г"
+      },
+      {
+        "name": "NPK",
+        "value": "5–20–35"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/fertilizers/mineral/super%20dozrivannya%20250g.png",
+        "sourceUrl": "https://yourgarden.com.ua/ua/dobrivo-super-dlja-dozrivannja-250-g-4823114402456-ua/",
+        "alt": "Супер Добриво Дозрівання, 250 г"
+      }
+    ]
+  },
+  {
+    "sku": "7282",
+    "catalogName": "Добриво Магнолія Гортензія Рододендрон",
+    "brand": "Сімейний Сад",
+    "displayName": "Супер Добриво для магнолій, гортензій і рододендронів",
+    "description": "Гранульоване підживлення з сіркою для квітучих декоративних кущів, які віддають перевагу кислому ґрунту. Призначене для магнолій, гортензій і рододендронів.",
+    "sourceUrl": "https://s-sad.com.ua/udobrenia/super-dobrivo-dlya-magnoliyi-gortenziyi-rododendronu/",
+    "attributes": [
+      {
+        "name": "Форма",
+        "value": "Гранульоване добриво"
+      },
+      {
+        "name": "Фасування",
+        "value": "1 кг"
+      },
+      {
+        "name": "NPK",
+        "value": "13–8–18"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/fertilizers/mineral/super%20magnolia%201%20kg.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/dobrivo-super-dlja-magnoliji-gortenziji-ta-rododendronu-1-kg-4823114402548-ua/",
+        "alt": "Супер Добриво для магнолій, гортензій і рододендронів"
+      }
+    ]
+  },
+  {
+    "sku": "7276",
+    "catalogName": "Добриво Хвоя",
+    "brand": "Сімейний Сад",
+    "displayName": "Супер Добриво для хвойних і декоративних багаторічників",
+    "description": "Гранульоване підживлення для хвойних і декоративних багаторічників. Комплекс основних елементів живлення доповнений бором.",
+    "sourceUrl": "https://s-sad.com.ua/udobrenia/super-dobrivo-dlya-hvojnih-ta-dekorativnih-bagatorichnih-roslin-super-scandic/",
+    "attributes": [
+      {
+        "name": "Форма",
+        "value": "Гранульоване добриво"
+      },
+      {
+        "name": "Фасування",
+        "value": "1 кг"
+      },
+      {
+        "name": "NPK",
+        "value": "9–12–25"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/fertilizers/mineral/super%20hvoya%201%20kg.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/dobrivo-super-dlja-hvojnih-ta-dekorativnih-roslin-super-scandic-1-kg-4823073727591-ua/",
+        "alt": "Супер Добриво для хвойних і декоративних багаторічників"
+      }
+    ]
+  },
+  {
+    "sku": "10291",
+    "catalogName": "Петрушка Врожайна коренева Seedera, 3 г",
+    "brand": "SeedEra",
+    "displayName": "Петрушка Врожайна (коренева) SeedEra, 3 г",
+    "description": "Строк достигання — ранньостиглий. Фасування — 3 г.",
+    "sourceUrl": "https://s-sad.com.ua/ovoshy/vrozhajna-koreneva/",
+    "attributes": [
+      {
+        "name": "Фасування",
+        "value": "3 г"
+      },
+      {
+        "name": "Строк достигання",
+        "value": "Ранньостиглий"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/nasinnia/greens/vrozhayna%20seedera.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/petrushka-vrozhajna-korneva-nasinnja-seed-era-3-g-4823073704097-ua/",
+        "alt": "Петрушка Врожайна (коренева) SeedEra, 3 г"
+      }
+    ]
+  },
+  {
+    "sku": "11496",
+    "catalogName": "Пилка висотна Kaiman 330мм GRUNTEC",
+    "displayName": "Висотна садова пилка GRÜNTEK Kaiman, 330 мм",
+    "brand": "GRÜNTEK",
+    "description": "Садова пилка для обрізання гілок. Полотно 330 мм підходить для догляду за деревами й високими кущами.",
+    "sourceUrl": "https://yourgarden.com.ua/ua/gruntek-kaiman-pilka-visotna-330-mm-4061349201318-ua/",
+    "sourceLabel": "Характеристики постачальника",
+    "attributes": [
+      {
+        "name": "Артикул виробника",
+        "value": "295205056"
+      },
+      {
+        "name": "Довжина полотна",
+        "value": "330 мм"
+      },
+      {
+        "name": "Призначення",
+        "value": "Обрізання садових гілок"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/tools/kaiman.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/gruntek-kaiman-pilka-visotna-330-mm-4061349201318-ua/",
+        "alt": "Висотна садова пилка GRÜNTEK Kaiman, 330 мм"
+      }
+    ]
+  },
+  {
+    "sku": "11495",
+    "catalogName": "Пилка розкладна 180мм GRUNTEC",
+    "displayName": "Складана садова пилка GRÜNTEK Hai, 180 мм",
+    "brand": "GRÜNTEK",
+    "description": "Складана пилка з прямим полотном для обрізання гілок. Для перенесення лезо завдовжки 180 мм складається в руків’я.",
+    "sourceUrl": "https://yourgarden.com.ua/ua/gruntek-hai-rozkladna-pilka-iz-prjamim-lezom-180-sm-4061349200748-ua/",
+    "sourceLabel": "Характеристики постачальника",
+    "attributes": [
+      {
+        "name": "Артикул виробника",
+        "value": "295500180"
+      },
+      {
+        "name": "Довжина полотна",
+        "value": "180 мм"
+      },
+      {
+        "name": "Конструкція",
+        "value": "Складана"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/tools/gruntek%20hai.png",
+        "sourceUrl": "https://yourgarden.com.ua/ua/gruntek-hai-rozkladna-pilka-iz-prjamim-lezom-180-sm-4061349200748-ua/",
+        "alt": "Складана садова пилка GRÜNTEK Hai, 180 мм"
+      }
+    ]
+  },
+  {
+    "sku": "11498",
+    "catalogName": "Пилка садова Barrakuda  300мм GRUNTEC",
+    "displayName": "Садова пилка GRÜNTEK Barrakuda, 300 мм, із чохлом",
+    "brand": "GRÜNTEK",
+    "description": "Пилка з прямим полотном для обрізання садових гілок. Для перенесення та зберігання в комплекті є захисний чохол.",
+    "sourceUrl": "https://yourgarden.com.ua/ua/gruntek-barrakuda-sadova-pilka-300mm-prjame-lezo-u-nozhnah-4061349200755-ua/",
+    "sourceLabel": "Характеристики постачальника",
+    "attributes": [
+      {
+        "name": "Артикул виробника",
+        "value": "295500300"
+      },
+      {
+        "name": "Довжина полотна",
+        "value": "300 мм"
+      },
+      {
+        "name": "Комплектація",
+        "value": "Пилка і чохол"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/tools/barrakuda.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/gruntek-barrakuda-sadova-pilka-300mm-prjame-lezo-u-nozhnah-4061349200755-ua/",
+        "alt": "Садова пилка GRÜNTEK Barrakuda, 300 мм, із чохлом"
+      }
+    ]
+  },
+  {
+    "sku": "11919",
+    "catalogName": "Пістолет розпилювалювач для поливу 10 режимів, курок GRUNTEK",
+    "displayName": "Пістолет для поливу GRÜNTEK, 10 режимів",
+    "brand": "GRÜNTEK",
+    "description": "Розпилювач для поливу зі шланга. Поворотна насадка дає змогу вибрати один із десяти режимів. Подача води керується курком.",
+    "sourceUrl": "https://yourgarden.com.ua/ua/gruntek-pistolet-dlja-polivu-10-rezhimiv-z-kurkom-4061349203428-ua/",
+    "sourceLabel": "Характеристики постачальника",
+    "attributes": [
+      {
+        "name": "Артикул виробника",
+        "value": "296692702"
+      },
+      {
+        "name": "Режими розпилення",
+        "value": "10"
+      },
+      {
+        "name": "Керування",
+        "value": "Курок"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/watering/gruntek%20296692702.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/gruntek-pistolet-dlja-polivu-10-rezhimiv-z-kurkom-4061349203428-ua/",
+        "alt": "Пістолет для поливу GRÜNTEK, 10 режимів"
+      }
+    ]
+  },
+  {
+    "sku": "10328",
+    "catalogName": "Пряно-ароматична культура Розмарин Seedеra, 0,05 г",
+    "displayName": "Розмарин SeedEra, 0,05 г",
+    "brand": "SeedEra",
+    "description": "Насіння пряно-ароматичного розмарину для вирощування в саду або в контейнері. Ароматне листя використовують як приправу. Фасування — 0,05 г.",
+    "sourceUrl": "https://yourgarden.com.ua/ua/rozmarin-prjano-aromatichna-kultura-nasinnja-seed-era-005-g-4823073723142-ua/",
+    "sourceLabel": "Характеристики постачальника",
+    "attributes": [
+      {
+        "name": "Фасування",
+        "value": "0,05 г"
+      },
+      {
+        "name": "Культура",
+        "value": "Розмарин"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/nasinnia/greens/rozmarin%20seedera.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/rozmarin-prjano-aromatichna-kultura-nasinnja-seed-era-005-g-4823073723142-ua/",
+        "alt": "Розмарин SeedEra, 0,05 г"
+      }
+    ]
+  },
+  {
+    "sku": "10332",
+    "catalogName": "Пряно-ароматична культура Рута духм’яна Seedera, 0,2 г",
+    "brand": "SeedEra",
+    "displayName": "Рута Духмяна SeedEra, 0,2 г",
+    "description": "Ароматний напівкущ, який висівають навесні в ґрунт або через розсаду. Виробник радить доглядати за рослиною в рукавичках. Фасування — 0,2 г.",
+    "sourceUrl": "https://s-sad.com.ua/semenaa/ruta-zapashna/",
+    "attributes": [
+      {
+        "name": "Фасування",
+        "value": "0,2 г"
+      },
+      {
+        "name": "Форма рослини",
+        "value": "Напівкущ"
+      },
+      {
+        "name": "Вирощування",
+        "value": "Відкритий ґрунт або через розсаду"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/nasinnia/greens/ruta%20seedera.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/ruta-duhmjana-seed-era-02-g-4823073707418-ua/",
+        "alt": "Рута Духмяна SeedEra, 0,2 г"
+      }
+    ]
+  },
+  {
+    "sku": "11501",
+    "catalogName": "Ручна сіялка Tulip 2.5л  GRUNTEC",
+    "displayName": "Ручна сівалка-розкидач GRÜNTEK Tulip, 2,5 л",
+    "brand": "GRÜNTEK",
+    "description": "Ручний розкидач у формі глечика для внесення насіння або гранульованих матеріалів. Місткість 2,5 л зручна для роботи на невеликих ділянках.",
+    "sourceUrl": "https://yourgarden.com.ua/ua/gruntek-tulip-ruchna-rozkiduvach-sijalka-25-l-kuvshin-4061349202902-ua/",
+    "sourceLabel": "Характеристики постачальника",
+    "attributes": [
+      {
+        "name": "Місткість",
+        "value": "2,5 л"
+      },
+      {
+        "name": "Тип",
+        "value": "Ручний розкидач"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/tools/tulip%202,5l.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/gruntek-tulip-ruchna-rozkiduvach-sijalka-25-l-kuvshin-4061349202902-ua/",
+        "alt": "Ручна сівалка-розкидач GRÜNTEK Tulip, 2,5 л"
+      }
+    ]
+  },
+  {
+    "sku": "9910",
+    "catalogName": "Салат балконний зелений Seedera, 1 г",
+    "brand": "SeedEra",
+    "displayName": "Салат Листовий Балконний Зелений SeedEra, 1 г",
+    "description": "Висота рослини — 10-15 см. Фасування — 1 г.",
+    "sourceUrl": "https://s-sad.com.ua/semenaa/salat-balkonnij-zelenij/",
+    "attributes": [
+      {
+        "name": "Фасування",
+        "value": "1 г"
+      },
+      {
+        "name": "Висота рослини",
+        "value": "10-15 см"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/nasinnia/greens/salat%20zeleniy.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/salat-zelenij-balkonnij-nasinnja-seedera-1-g-4823073725405-ua/",
+        "alt": "Салат Листовий Балконний Зелений SeedEra, 1 г"
+      }
+    ]
+  },
+  {
+    "sku": "10383",
+    "catalogName": "Салат Кучерявець Одеський (листовий) Seedera, 1 г",
+    "brand": "SeedEra",
+    "displayName": "Салат Листовий Кучерявець Одеський SeedEra, 1 г",
+    "description": "Строк достигання — середньостиглий. Колір плоду — зелений. Фасування — 1 г.",
+    "sourceUrl": "https://s-sad.com.ua/ovoshy/kucheryavets-odeskij-listovij/",
+    "attributes": [
+      {
+        "name": "Фасування",
+        "value": "1 г"
+      },
+      {
+        "name": "Строк достигання",
+        "value": "середньостиглий"
+      },
+      {
+        "name": "Колір плоду",
+        "value": "зелений"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/nasinnia/greens/odeskiy%20kucheryavets%20seedera%201g.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/salat-odeskij-kucherjavec-listovij-serednostiglij-nasinnja-seedera-1-g-4823073703205-ua/",
+        "alt": "Салат Листовий Кучерявець Одеський SeedEra, 1 г"
+      }
+    ]
+  },
+  {
+    "sku": "9379",
+    "catalogName": "Салат ЛОЛО РОСА (листовий, ч/зелений) Seedеra, 10 г",
+    "displayName": "Салат Лолло Росса SeedEra, 10 г",
+    "brand": "SeedEra",
+    "description": "Листовий салат із гофрованим листям червонуватого відтінку. Утворює розетку, яку вирощують для свіжої зелені. Фасування — 10 г.",
+    "sourceUrl": "https://yourgarden.com.ua/ua/salat-lollo-rossa-chervonij-nasinnja-seed-era-10-g-4823073721292-ua/",
+    "sourceLabel": "Характеристики постачальника",
+    "attributes": [
+      {
+        "name": "Фасування",
+        "value": "10 г"
+      },
+      {
+        "name": "Тип салату",
+        "value": "Листовий"
+      },
+      {
+        "name": "Колір листя",
+        "value": "Червонуватий"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/nasinnia/greens/lollo%20rosa%20seedera.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/salat-lollo-rossa-chervonij-nasinnja-seed-era-10-g-4823073721292-ua/",
+        "alt": "Салат Лолло Росса SeedEra, 10 г"
+      }
+    ]
+  },
+  {
+    "sku": "9913",
+    "catalogName": "Томат Балконне диво Seedera, 0,1 г",
+    "brand": "SeedEra",
+    "displayName": "Томат Балконне Диво SeedEra, 0,1 г",
+    "description": "Строк до збору врожаю — 85-90 днів від сходів. Маса плоду — 50-65 г. Висота рослини — 30-50 см. Фасування — 0,1 г.",
+    "sourceUrl": "https://s-sad.com.ua/semenaa/tomat-balkonne-divo/",
+    "attributes": [
+      {
+        "name": "Фасування",
+        "value": "0,1 г"
+      },
+      {
+        "name": "Маса плоду",
+        "value": "50-65 г"
+      },
+      {
+        "name": "Висота рослини",
+        "value": "30-50 см"
+      },
+      {
+        "name": "Строк до збору врожаю",
+        "value": "85-90 днів від сходів"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/nasinnia/tomato/balconne%20divo%20seedera.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/tomat-balkonne-divo-dlja-kimnatnogo-viroschuvannja-nasinnja-seedera-01-g-4823073725429-ua/",
+        "alt": "Томат Балконне Диво SeedEra, 0,1 г"
+      }
+    ]
+  },
+  {
+    "sku": "9392",
+    "catalogName": "Томат ЕФЕМЕР Seedеra, 3 г",
+    "brand": "SeedEra",
+    "displayName": "Томат Ефемер SeedEra, 3 г",
+    "description": "Строк достигання — ранній. Маса плоду — 90-115 г. Колір плоду — Червоний. Фасування — 3 г.",
+    "sourceUrl": "https://s-sad.com.ua/ovoshy/efemer/",
+    "attributes": [
+      {
+        "name": "Фасування",
+        "value": "3 г"
+      },
+      {
+        "name": "Маса плоду",
+        "value": "90-115 г"
+      },
+      {
+        "name": "Строк достигання",
+        "value": "Ранній"
+      },
+      {
+        "name": "Колір плоду",
+        "value": "Червоний"
+      },
+      {
+        "name": "Висота рослини",
+        "value": "Низькорослі"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/nasinnia/efemer3g.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/efemer-tomat-determinantnij-3g-4823073721575-ua/",
+        "alt": "Томат Ефемер SeedEra, 3 г"
+      }
+    ]
+  },
+  {
+    "sku": "10490",
+    "catalogName": "Томат Мікадо рожевий Seedera, 0,1 г",
+    "brand": "SeedEra",
+    "displayName": "Томат Мікадо Рожевий SeedEra, 0,1 г",
+    "description": "Томат Мікадо Рожевий від SeedEra. Сорт середньораннього строку достигання. Маса плоду — 300-600 г. Висота рослини — Високорослі. Фасування — 0,1 г.",
+    "sourceUrl": "https://s-sad.com.ua/ovoshy/tomat-mikado-rozhevij/",
+    "attributes": [
+      {
+        "name": "Фасування",
+        "value": "0,1 г"
+      },
+      {
+        "name": "Маса плоду",
+        "value": "300-600 г"
+      },
+      {
+        "name": "Строк достигання",
+        "value": "Середньоранній"
+      },
+      {
+        "name": "Колір плоду",
+        "value": "Червоний"
+      },
+      {
+        "name": "Висота рослини",
+        "value": "Високорослі"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/nasinnia/mikadorose.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/mikado-rozhevij-tomat-indeterminantnij-01g-4823114400629-ua/",
+        "alt": "Томат Мікадо Рожевий SeedEra, 0,1 г"
+      }
+    ]
+  },
+  {
+    "sku": "9400",
+    "catalogName": "Томат ЧОРНИЙ ПРИНЦ Seedеra, 3 г",
+    "brand": "SeedEra",
+    "displayName": "Томат Чорний Принц SeedEra, 3 г",
+    "description": "Строк достигання — середній. Маса плоду — 150-250 г. Колір плоду — чорний. Фасування — 3 г.",
+    "sourceUrl": "https://s-sad.com.ua/ovoshy/chornij-prints/",
+    "attributes": [
+      {
+        "name": "Фасування",
+        "value": "3 г"
+      },
+      {
+        "name": "Маса плоду",
+        "value": "150-250 г"
+      },
+      {
+        "name": "Строк достигання",
+        "value": "середній"
+      },
+      {
+        "name": "Колір плоду",
+        "value": "чорний"
+      },
+      {
+        "name": "Висота рослини",
+        "value": "високорослі"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://yourgarden.com.ua/image/catalog/nasinnia/blackprinc3g.jpg",
+        "sourceUrl": "https://yourgarden.com.ua/ua/chornyj-princ-tomat-indeterminantnij-3-g-4823073721506-ua/",
+        "alt": "Томат Чорний Принц SeedEra, 3 г"
+      }
+    ]
+  }
+]

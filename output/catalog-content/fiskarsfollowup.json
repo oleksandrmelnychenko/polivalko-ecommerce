@@ -1,0 +1,394 @@
+[
+  {
+    "sku": "11864",
+    "catalogName": "АдаптерQuikFit до Fiskars One Click  1080703",
+    "brand": "Fiskars",
+    "model": "1080703",
+    "displayName": "Адаптер Fiskars QuikFit для руків’я OneClick",
+    "description": "Дає змогу під’єднати наявні насадки Fiskars QuikFit до руків’я або держака OneClick. Зручний, якщо в господарстві є інструменти обох серій.",
+    "sourceUrl": "https://cdn.shopify.com/s/files/1/0960/3140/8515/files/2026-fiskars-gardening-catalogue.pdf?v=1777538801#page=68",
+    "attributes": [
+      {
+        "name": "Модель виробника",
+        "value": "1080703"
+      },
+      {
+        "name": "Сумісність",
+        "value": "Насадки QuikFit, руків’я та держаки OneClick"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://fiskars-ukraine.com.ua/storage/fiskars-oneclick-1080703.jpg",
+        "sourceUrl": "https://fiskars-ukraine.com.ua/fiskars-oneclick-1080703/",
+        "alt": "Адаптер Fiskars QuikFit для руків’я OneClick"
+      }
+    ]
+  },
+  {
+    "sku": "8537",
+    "catalogName": "Гілкоріз Площинний Fiskars з сил.механ.(М серед.)",
+    "brand": "Fiskars",
+    "model": "1000582",
+    "displayName": "Площинний гілкоріз Fiskars PowerGear L76, до 38 мм",
+    "description": "Гілкоріз для обрізання свіжих гілок дерев і кущів діаметром до 38 мм. Конструкція FiberComp зменшує вагу, а механізм PowerGear додає зусилля на лезах.",
+    "sourceUrl": "https://cdn.shopify.com/s/files/1/0960/3140/8515/files/2026-fiskars-gardening-catalogue.pdf?v=1777538801#page=17",
+    "attributes": [
+      {
+        "name": "Модель виробника",
+        "value": "1000582"
+      },
+      {
+        "name": "Тип різу",
+        "value": "Площинний"
+      },
+      {
+        "name": "Максимальний діаметр гілки",
+        "value": "38 мм"
+      },
+      {
+        "name": "Робоча частина",
+        "value": "Площинні леза, корпус FiberComp"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://fiskars-ukraine.com.ua/storage/fiskars-powergear-l74-112290.jpg",
+        "sourceUrl": "https://fiskars-ukraine.com.ua/fiskars-powergear-l74-112290/",
+        "alt": "Площинний гілкоріз Fiskars PowerGear L76, до 38 мм"
+      }
+    ]
+  },
+  {
+    "sku": "11852",
+    "catalogName": "Насадка-граблі садові металеві   Fiskars One Click 16зуб 1080678",
+    "brand": "Fiskars",
+    "model": "1080678",
+    "displayName": "Садові граблі на 16 зубців Fiskars OneClick 1080678",
+    "description": "Широка насадка для вирівнювання й розбивання грудок на грядці перед посівом. Зубці виготовлені із загартованої вуглецевої сталі. Насадка фіксується на сумісному держаку Fiskars OneClick, який підбирають окремо.",
+    "sourceUrl": "https://cdn.shopify.com/s/files/1/0960/3140/8515/files/2026-fiskars-gardening-catalogue.pdf?v=1777538801#page=65",
+    "attributes": [
+      {
+        "name": "Модель виробника",
+        "value": "1080678"
+      },
+      {
+        "name": "Система",
+        "value": "OneClick"
+      },
+      {
+        "name": "Комплектація",
+        "value": "Насадка"
+      },
+      {
+        "name": "Кількість зубців",
+        "value": "16"
+      },
+      {
+        "name": "Матеріал зубців",
+        "value": "Загартована вуглецева сталь"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://fiskars-ukraine.com.ua/storage/fiskars-oneclick-1080678.jpg",
+        "sourceUrl": "https://fiskars-ukraine.com.ua/fiskars-oneclick-1080678/",
+        "alt": "Садові граблі на 16 зубців Fiskars OneClick 1080678"
+      }
+    ]
+  },
+  {
+    "sku": "11851",
+    "catalogName": "Насадка-граблі садовіметалеві   Fiskars One Click 14зуб 1080677",
+    "brand": "Fiskars",
+    "model": "1080677",
+    "displayName": "Садові граблі на 14 зубців Fiskars OneClick 1080677",
+    "description": "Насадка для згрібання й вирівнювання ґрунту перед посівом. Зубці із загартованої вуглецевої сталі розподіляють землю по поверхні грядки. Насадка фіксується на сумісному держаку Fiskars OneClick, який підбирають окремо.",
+    "sourceUrl": "https://cdn.shopify.com/s/files/1/0960/3140/8515/files/2026-fiskars-gardening-catalogue.pdf?v=1777538801#page=65",
+    "attributes": [
+      {
+        "name": "Модель виробника",
+        "value": "1080677"
+      },
+      {
+        "name": "Система",
+        "value": "OneClick"
+      },
+      {
+        "name": "Комплектація",
+        "value": "Насадка"
+      },
+      {
+        "name": "Кількість зубців",
+        "value": "14"
+      },
+      {
+        "name": "Матеріал зубців",
+        "value": "Загартована вуглецева сталь"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://fiskars-ukraine.com.ua/storage/fiskars-oneclick-1080677.jpg",
+        "sourceUrl": "https://fiskars-ukraine.com.ua/fiskars-oneclick-1080677/",
+        "alt": "Садові граблі на 14 зубців Fiskars OneClick 1080677"
+      }
+    ]
+  },
+  {
+    "sku": "11863",
+    "catalogName": "Насадка-мітла вулична Fiskars One Click  1080701",
+    "brand": "Fiskars",
+    "model": "1080701",
+    "displayName": "Універсальна вулична мітла Fiskars OneClick 1080701",
+    "description": "М’які й жорсткі щетинки допомагають зібрати і дрібний пил, і крупніше сміття з двору та садових доріжок. Насадка фіксується на сумісному держаку Fiskars OneClick, який підбирають окремо.",
+    "sourceUrl": "https://cdn.shopify.com/s/files/1/0960/3140/8515/files/2026-fiskars-gardening-catalogue.pdf?v=1777538801#page=65",
+    "attributes": [
+      {
+        "name": "Модель виробника",
+        "value": "1080701"
+      },
+      {
+        "name": "Система",
+        "value": "OneClick"
+      },
+      {
+        "name": "Комплектація",
+        "value": "Насадка"
+      },
+      {
+        "name": "Щетина",
+        "value": "М’яка та жорстка"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://fiskars-ukraine.com.ua/storage/fiskars-oneclick-1080701.jpg",
+        "sourceUrl": "https://fiskars-ukraine.com.ua/fiskars-oneclick-1080701/",
+        "alt": "Універсальна вулична мітла Fiskars OneClick 1080701"
+      }
+    ]
+  },
+  {
+    "sku": "8501",
+    "catalogName": "Сапа подвійна Fiskars QikFit",
+    "brand": "Fiskars",
+    "model": "1000735",
+    "displayName": "Подвійна сапка Fiskars QuikFit",
+    "description": "Комбінована насадка для догляду за грядками. Лезом підрізають бур’яни, а зубцями розпушують поверхню ґрунту між рослинами. Насадка встановлюється на руків’я Fiskars QuikFit.",
+    "sourceUrl": "https://fiskars-ukraine.com.ua/fiskars-quikfit-137572/",
+    "attributes": [
+      {
+        "name": "Модель виробника",
+        "value": "1000735"
+      },
+      {
+        "name": "Система кріплення",
+        "value": "Fiskars QuikFit"
+      },
+      {
+        "name": "Робочі частини",
+        "value": "Лезо та зубці"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://fiskars-ukraine.com.ua/storage/fiskars-quikfit-137572.jpg",
+        "sourceUrl": "https://fiskars-ukraine.com.ua/fiskars-quikfit-137572/",
+        "alt": "Подвійна сапка Fiskars QuikFit"
+      }
+    ]
+  },
+  {
+    "sku": "8145",
+    "catalogName": "Сокира колун Fiskars X17 M (1015641)",
+    "brand": "Fiskars",
+    "model": "1015641",
+    "displayName": "Сокира-колун Fiskars X17, розмір M",
+    "description": "Колун для заготівлі дров. Клин розсуває волокна деревини під час розколювання, а руків’я з композитного матеріалу зручно тримати обома руками.",
+    "sourceUrl": "https://fiskars-ukraine.com.ua/fiskars-x17-m-122463/",
+    "attributes": [
+      {
+        "name": "Модель виробника",
+        "value": "1015641"
+      },
+      {
+        "name": "Призначення",
+        "value": "Колоття дров"
+      },
+      {
+        "name": "Серія",
+        "value": "X-series"
+      },
+      {
+        "name": "Розмір",
+        "value": "M"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://fiskars-ukraine.com.ua/storage/fiskars-x17-m-122463.jpg",
+        "sourceUrl": "https://fiskars-ukraine.com.ua/fiskars-x17-m-122463/",
+        "alt": "Сокира-колун Fiskars X17, розмір M"
+      }
+    ]
+  },
+  {
+    "sku": "8144",
+    "catalogName": "Сокира плотницька Fiskars S-X10 (1015619)",
+    "brand": "Fiskars",
+    "model": "1015619",
+    "displayName": "Теслярська сокира Fiskars X10, розмір S",
+    "description": "Сокира для теслярських і садових робіт, де потрібні контрольовані короткі рухи. Компактний розмір зручний для обробки деревини й підготовки розпалювання.",
+    "sourceUrl": "https://fiskars-ukraine.com.ua/fiskars-x10-s-121443/",
+    "attributes": [
+      {
+        "name": "Модель виробника",
+        "value": "1015619"
+      },
+      {
+        "name": "Призначення",
+        "value": "Теслярські роботи"
+      },
+      {
+        "name": "Серія",
+        "value": "X-series"
+      },
+      {
+        "name": "Розмір",
+        "value": "S"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://fiskars-ukraine.com.ua/storage/fiskars-x10-s-121443.jpg",
+        "sourceUrl": "https://fiskars-ukraine.com.ua/fiskars-x10-s-121443/",
+        "alt": "Теслярська сокира Fiskars X10, розмір S"
+      }
+    ]
+  },
+  {
+    "sku": "11861",
+    "catalogName": "Насадка- мітла для підмітання Fiskars One Click  1080699",
+    "brand": "Fiskars",
+    "model": "1080699",
+    "displayName": "Мітла з довгою щетиною Fiskars OneClick 1080699",
+    "description": "Довгі щетинки прибирають листя й крупніше сміття з доріжок та інших поверхонь у дворі. Насадка фіксується на сумісному держаку Fiskars OneClick, який підбирають окремо.",
+    "sourceUrl": "https://cdn.shopify.com/s/files/1/0960/3140/8515/files/2026-fiskars-gardening-catalogue.pdf?v=1777538801#page=65",
+    "attributes": [
+      {
+        "name": "Модель виробника",
+        "value": "1080699"
+      },
+      {
+        "name": "Система",
+        "value": "OneClick"
+      },
+      {
+        "name": "Комплектація",
+        "value": "Насадка"
+      },
+      {
+        "name": "Щетина",
+        "value": "Довга"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://fiskars-ukraine.com.ua/storage/fiskars-oneclick-1080699.jpg",
+        "sourceUrl": "https://fiskars-ukraine.com.ua/fiskars-oneclick-1080699/",
+        "alt": "Мітла з довгою щетиною Fiskars OneClick 1080699"
+      }
+    ]
+  },
+  {
+    "sku": "8271",
+    "catalogName": "Пила садова пилка з кобурою Fiskars Xtract SW84",
+    "brand": "Fiskars",
+    "model": "1001620",
+    "displayName": "Садова пилка Fiskars SW84, 320 мм",
+    "description": "Пилка з нерухомим полотном для обрізання гілок і стебел. Полотно завдовжки 320 мм розраховане на гілки діаметром до 150 мм.",
+    "sourceUrl": "https://cdn.shopify.com/s/files/1/0960/3140/8515/files/2026-fiskars-gardening-catalogue.pdf?v=1777538801#page=83",
+    "attributes": [
+      {
+        "name": "Модель виробника",
+        "value": "1001620"
+      },
+      {
+        "name": "Довжина полотна",
+        "value": "320 мм"
+      },
+      {
+        "name": "Максимальний діаметр гілки",
+        "value": "150 мм"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://fiskars-ukraine.com.ua/storage/fiskars-sw84-123840.jpg",
+        "sourceUrl": "https://fiskars-ukraine.com.ua/fiskars-sw84-123840/",
+        "alt": "Садова пилка Fiskars SW84, 320 мм"
+      }
+    ]
+  },
+  {
+    "sku": "8539",
+    "catalogName": "Секатор Fiskars  P83",
+    "brand": "Fiskars",
+    "model": "1000575",
+    "displayName": "Контактний секатор Fiskars PowerStep P83, до 24 мм",
+    "description": "Садовий секатор для гілок діаметром до 24 мм. Лезо притискає гілку до опори. Механізм зменшує зусилля під час зрізання гілки, а м’яка накладка SoftGrip поліпшує хват.",
+    "sourceUrl": "https://cdn.shopify.com/s/files/1/0960/3140/8515/files/2026-fiskars-gardening-catalogue.pdf?v=1777538801#page=15",
+    "attributes": [
+      {
+        "name": "Модель виробника",
+        "value": "1000575"
+      },
+      {
+        "name": "Тип різу",
+        "value": "Контактний"
+      },
+      {
+        "name": "Максимальний діаметр гілки",
+        "value": "24 мм"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://fiskars-ukraine.com.ua/storage/fiskars-powerstep-p83-111670.jpg",
+        "sourceUrl": "https://fiskars-ukraine.com.ua/fiskars-powerstep-p83-111670/",
+        "alt": "Контактний секатор Fiskars PowerStep P83, до 24 мм"
+      }
+    ]
+  },
+  {
+    "sku": "8146",
+    "catalogName": "Точилка для сокир  Fiskars (1000601)",
+    "brand": "Fiskars",
+    "model": "1000601",
+    "displayName": "Точилка Fiskars Xsharp для сокир і ножів",
+    "description": "Точилка для регулярного догляду за ножами й сокирами Fiskars. Керамічний елемент має окремі напрямні для ножа й сокири, щоб провести лезо по потрібній канавці.",
+    "sourceUrl": "https://cdn.shopify.com/s/files/1/0960/3140/8515/files/2026-fiskars-gardening-catalogue.pdf?v=1777538801#page=75",
+    "attributes": [
+      {
+        "name": "Модель виробника",
+        "value": "1000601"
+      },
+      {
+        "name": "Абразив",
+        "value": "Керамічний"
+      },
+      {
+        "name": "Призначення",
+        "value": "Сокири й ножі"
+      }
+    ],
+    "photos": [
+      {
+        "url": "https://fiskars-ukraine.com.ua/storage/fiskars-xsharp-120740.jpg",
+        "sourceUrl": "https://fiskars-ukraine.com.ua/fiskars-xsharp-120740/",
+        "alt": "Точилка Fiskars Xsharp для сокир і ножів"
+      }
+    ]
+  }
+]
