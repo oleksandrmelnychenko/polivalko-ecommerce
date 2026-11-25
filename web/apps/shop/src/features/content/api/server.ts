@@ -1,4 +1,5 @@
 import "server-only";
+import { PHASE_PRODUCTION_BUILD } from "next/constants";
 import { cacheLife, cacheTag } from "next/cache";
 import { api } from "@polivalko/shared/api/server";
 import { loaded } from "@/shared/lib/api-result";
@@ -74,7 +75,13 @@ export async function getSiteHome(): Promise<SiteHome | null> {
   "use cache";
   cacheLife("minutes");
   cacheTag("content", "site", "home");
-  return loaded(await api.GET("/api/v1/site/home"), "головну");
+  try {
+    return loaded(await api.GET("/api/v1/site/home"), "головну");
+  } catch (error) {
+    // The static shell can use its default slides while the build runs outside the API network.
+    if (process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD) return null;
+    throw error;
+  }
 }
 
 export async function getAnnouncement(): Promise<Announcement | null> {

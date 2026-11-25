@@ -2,6 +2,7 @@
 :root { --shop-page-heading-space: clamp(20px, 3vw, 44px); }
 main .page-head, .delivery-header, .contact-heading, .cabinet-heading { padding-block: var(--shop-page-heading-space); }
 main .page-head, .delivery-header { gap: 8px; }
+main .page-head:not(:has(.page-head__subs)) { padding-block-end: 12px; }
 .page-head + .doc, .delivery-header + .delivery-section { margin-block-start: 0; }
 main .page-head h1, .compare-page > .page-head h1, .delivery-page .delivery-header h1, .auth-card h1 {
   margin: 0; font: 600 clamp(1.75rem, 3vw, 2.5rem)/1.12 var(--font-body); letter-spacing: -.035em;
