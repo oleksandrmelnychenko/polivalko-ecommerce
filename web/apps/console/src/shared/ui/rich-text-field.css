@@ -1,0 +1,10 @@
+.rich-text-field { display: grid; gap: 6px; }
+.rich-text-field__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rich-text-field__editor .ProseMirror { padding: 10px 14px; font-size: 15px; line-height: 1.65; outline: none; }
+.rich-text-field__editor .ProseMirror > * + * { margin-top: 10px; }
+.rich-text-field__editor .ProseMirror h2 { font-size: 20px; font-weight: 600; line-height: 1.25; }
+.rich-text-field__editor .ProseMirror h3,
+.rich-text-field__editor .ProseMirror h4 { font-size: 17px; font-weight: 600; line-height: 1.3; }
+.rich-text-field__editor .ProseMirror ul,
+.rich-text-field__editor .ProseMirror ol { padding-left: 1.25em; }
+.rich-text-field__code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }

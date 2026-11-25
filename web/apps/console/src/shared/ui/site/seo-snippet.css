@@ -1,0 +1,16 @@
+.seo-snippet {
+  background: var(--mantine-color-white);
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, Helvetica, sans-serif;
+  gap: 2px;
+  margin: 4px 0 0;
+  max-width: 600px;
+  padding: 12px 14px;
+}
+.seo-snippet-site { color: #202124; font-size: 14px; }
+.seo-snippet-url { color: #4d5156; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seo-snippet-title { color: #1a0dab; font-size: 19px; line-height: 1.3; margin-top: 4px; overflow-wrap: anywhere; }
+.seo-snippet-description { color: #4d5156; font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; }

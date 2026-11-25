@@ -1,6 +1,8 @@
 import { siteUrl } from '@/shared/lib/siteUrl'
 import { CatalogSectionTitle } from './CatalogSectionTitle'
-import { Alert, Button, Select, SimpleGrid, Switch, Textarea, TextInput } from '@mantine/core'
+import { RichTextField } from '@/shared/ui/RichTextField'
+import { SeoSnippetFields } from '@/shared/ui/site/SeoSnippetFields'
+import { Alert, Button, Select, SimpleGrid, Switch, TextInput } from '@mantine/core'
 import { IconAlertCircle, IconBuildingStore, IconAlignLeft, IconSearch, IconBarcode, IconChartHistogram, IconExternalLink } from '@tabler/icons-react'
 import { useMemo, useState, type ReactNode, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
@@ -244,47 +246,28 @@ export function ProductEditorForm({ gallery, formId, product, categories, brands
 
           <section className="catalog-card" aria-labelledby="description-title">
             <CatalogSectionTitle id="description-title" icon={IconAlignLeft}>Опис</CatalogSectionTitle>
-            <Textarea
-              aria-label="Опис товару"
-              classNames={{ input: 'catalog-code-area' }}
-              autosize
-              minRows={3}
-              maxRows={9}
-              spellCheck={false}
+            <RichTextField
+              label="Опис товару"
               value={description}
               error={errors.descriptionHtml}
-              onChange={(event) => setDescription(event.currentTarget.value)}
+              hint="Абзаци, списки й підзаголовки так і з’являться на сторінці товару."
+              onChange={setDescription}
             />
-            {description.trim() ? (
-              <details className="catalog-preview">
-                <summary>Попередній перегляд</summary>
-                <iframe title="Попередній перегляд опису" sandbox="" srcDoc={description} />
-              </details>
-            ) : null}
           </section>
 
           <ProductEditorAttributes attributes={attributes} setAttributes={setAttributes} categoryId={fields.categoryId} readOnly={readOnly} error={errors.attributes} />
 
           <section className="catalog-card" aria-labelledby="seo-title">
             <CatalogSectionTitle id="seo-title" icon={IconSearch}>SEO</CatalogSectionTitle>
-            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm" verticalSpacing="xs">
-              <TextInput
-                label="SEO: заголовок"
-                value={fields.seoTitle}
-                maxLength={200}
-                placeholder="Як назва на вітрині"
-                error={errors.seoTitle}
-                onChange={(event) => set('seoTitle', event.currentTarget.value)}
-              />
-              <TextInput
-                label="SEO: опис"
-                value={fields.seoDescription}
-                maxLength={500}
-                placeholder="Перші речення опису"
-                error={errors.seoDescription}
-                onChange={(event) => set('seoDescription', event.currentTarget.value)}
-              />
-            </SimpleGrid>
+            <SeoSnippetFields
+              path={`/product/${fields.slug || product.slug}`}
+              seoTitle={fields.seoTitle}
+              seoDescription={fields.seoDescription}
+              fallbackTitle={fields.displayName || account.name}
+              fallbackDescription={plainText(description)}
+              errors={{ seoTitle: errors.seoTitle, seoDescription: errors.seoDescription }}
+              onChange={(field, value) => set(field, value)}
+            />
           </section>
 
         </fieldset>
@@ -323,4 +306,8 @@ export function ProductEditorForm({ gallery, formId, product, categories, brands
       </aside>
     </div>
   )
+}
+
+function plainText(html: string): string {
+  return html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160)
 }

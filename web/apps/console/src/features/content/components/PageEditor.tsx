@@ -8,6 +8,7 @@ import { siteUrl } from '@/shared/lib/siteUrl'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import { LeaveGuard } from '@/shared/ui/LeaveGuard'
 import { PageHeader } from '@/shared/ui/PageHeader'
+import { RichTextField } from '@/shared/ui/RichTextField'
 import { TableChip } from '@/shared/ui/TableChip'
 import { savePage, type ContentPage } from '../api/contentApi'
 import { previewDocument } from '../lib/previewDocument'
@@ -128,18 +129,13 @@ export function PageEditor({ initial, onSaved }: PageEditorProps) {
                 form.clearField('lead')
               }}
             />
-            <Textarea
-              label="Текст сторінки, HTML"
-              classNames={{ input: 'content-code-input' }}
+            <RichTextField
+              label="Текст сторінки"
               value={body}
-              autosize
               minRows={9}
-              spellCheck={false}
-              autoCapitalize="off"
-              autoCorrect="off"
               error={form.errors.bodyHtml}
-              onChange={(event) => {
-                setBody(event.currentTarget.value)
+              onChange={(html) => {
+                setBody(html)
                 form.clearField('bodyHtml')
               }}
             />

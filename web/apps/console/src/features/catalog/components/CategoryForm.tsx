@@ -12,6 +12,7 @@ import { getAttributeNames, saveCategory, type ConsoleCategory } from '../api/ca
 import type { AttributeDefinition } from '../api/dictionariesApi'
 import { descendantIds, MAX_CATEGORY_FILTERS, orderCategories } from '../lib/categoryTree'
 import { categoryIcon } from '../lib/categoryIcons'
+import { SeoSnippetFields } from '@/shared/ui/site/SeoSnippetFields'
 import { CatalogSectionTitle } from './CatalogSectionTitle'
 import { CategoryGlyph } from './CategoryMark'
 import { ImageUploadField } from './ImageUploadField'
@@ -240,6 +241,7 @@ export function CategoryForm({ formId, category, focusFilters, all, attributes, 
             />
             <Textarea
               label="Опис категорії"
+              description={`Простий текст без HTML: кожен рядок стане окремим абзацом під заголовком розділу на сайті (лише на першій сторінці). ${fields.description.length} / ${MAX_DESCRIPTION} символів.`}
               autosize
               minRows={3}
               maxRows={10}
@@ -252,16 +254,15 @@ export function CategoryForm({ formId, category, focusFilters, all, attributes, 
         </section>
         <section className="catalog-card" aria-labelledby="category-seo-title">
           <CatalogSectionTitle id="category-seo-title" icon={IconSearch}>SEO</CatalogSectionTitle>
-          <Stack gap="xs">
-            <TextInput label="SEO: заголовок" maxLength={200} value={fields.seoTitle} error={errors.seoTitle || undefined} onChange={(event) => set('seoTitle', event.currentTarget.value)} />
-            <TextInput
-              label="SEO: опис"
-              maxLength={500}
-              value={fields.seoDescription}
-              error={errors.seoDescription || undefined}
-              onChange={(event) => set('seoDescription', event.currentTarget.value)}
-            />
-          </Stack>
+          <SeoSnippetFields
+            path={`/catalog/${fields.slug}`}
+            seoTitle={fields.seoTitle}
+            seoDescription={fields.seoDescription}
+            fallbackTitle={fields.name}
+            fallbackDescription={fields.description.replace(/\s+/g, ' ').trim().slice(0, 160)}
+            errors={{ seoTitle: errors.seoTitle || undefined, seoDescription: errors.seoDescription || undefined }}
+            onChange={(field, value) => set(field, value)}
+          />
         </section>
       </div>
       {shownError ? (

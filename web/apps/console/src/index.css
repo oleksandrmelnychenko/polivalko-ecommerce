@@ -6,6 +6,7 @@
 @import '@mantine/core/styles.css';
 @import '@mantine/dates/styles.css';
 @import '@mantine/notifications/styles.css';
+@import '@mantine/tiptap/styles.css';
 
 :root {
   --font-sans: var(--font-digits), Onest, system-ui, -apple-system, 'Segoe UI', sans-serif;
