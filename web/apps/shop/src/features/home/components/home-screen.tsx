@@ -42,23 +42,10 @@ export function HomeScreen() {
 function HomeSkeleton() {
   return (
     <>
-      <HeroShell />
+      <div className="hero" aria-hidden="true" />
       <LookSkeleton />
     </>
   );
-}
-
-/**
- * The first slides in the prerendered shell. The page content streams behind `connection()` after several API
- * calls, and the hero photo, the page's LCP, used to wait for all of them inside a hidden streamed block
- * (PageSpeed mobile: render delay 0.4–1.8 s). The banners come from the cached site settings; the deals, sections
- * and featured products on the slides arrive with the content, which then replaces this shell.
- */
-async function HeroShell() {
-  const home = await getSiteHome().catch(() => null);
-  if (!homeBlocks(home?.blocks).includes("hero")) return <div className="hero" aria-hidden="true" />;
-  const fromBanners = bannerSlides(home?.banners ?? [], {});
-  return <HeroSlider slides={fromBanners.length ? fromBanners : heroSlides({})} />;
 }
 
 async function HomeContent() {
