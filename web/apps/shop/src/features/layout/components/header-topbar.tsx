@@ -1,7 +1,7 @@
 import { connection } from "next/server";
 import Link from "next/link";
 import { getContacts, socialLinks, SocialLinksList } from "@/features/content/server";
-import { PhoneIcon, PinIcon } from "@polivalko/shared/ui/icons";
+import { PinIcon } from "@polivalko/shared/ui/icons";
 import { contactPhones } from "../lib/contact-phones";
 
 export async function HeaderTopbar() {
@@ -28,11 +28,8 @@ export async function HeaderTopbar() {
           )}
           {phones.map(({ label, number, dial, schedule }) => (
             <span className="site-header__phone" key={dial}>
-              <PhoneIcon />
-              <span>
-                <a href={`tel:${dial}`}><span className="site-header__phone-label">{label}</span> {number}</a>
-                {schedule && <small>{schedule}</small>}
-              </span>
+              <a href={`tel:${dial}`} aria-label={`${label}: ${number}`}>{number}</a>
+              {schedule && <small title={schedule}>{schedule}</small>}
             </span>
           ))}
         </div>
