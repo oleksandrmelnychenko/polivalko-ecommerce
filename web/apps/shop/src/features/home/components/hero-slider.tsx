@@ -46,14 +46,15 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
       onBlurCapture={() => setPaused(false)}
     >
       <div className="hero-mobile">
-        <ul ref={mobileRail} aria-label="Колекції" className="hero-mobile__slides" onScroll={(event) => setMobileIndex(Math.round(event.currentTarget.scrollLeft / (event.currentTarget.clientWidth + 12)))}>
+        <ul ref={mobileRail} aria-label="Колекції" className="hero-mobile__slides" onScroll={(event) => { setLoadRest(true); setMobileIndex(Math.round(event.currentTarget.scrollLeft / (event.currentTarget.clientWidth + 12))); }}>
           {slides.map((slide, i) => <li key={slide.key} className="hero-mobile__slide">
             <div className="hero-mobile__content">
               <h2>{slide.title}</h2>
               {(slide.sub || slide.kicker) && <p>{slide.sub || slide.kicker}</p>}
               {slide.cta && <Link href={slide.cta.href} className="hero-panel__btn">{slide.cta.label}<ArrowRightIcon /></Link>}
             </div>
-            <div className="hero-mobile__photo"><HeroPhoto slide={slide} first={i === 0} /></div>
+            {/* Hidden slides wait like the desktop ones: on a phone their photos shared the slow first load with the LCP photo. */}
+            <div className="hero-mobile__photo">{(i === 0 || loadRest) && <HeroPhoto slide={slide} first={i === 0} />}</div>
           </li>)}
         </ul>
         {count > 1 && <div className="hero-mobile__dots" aria-label="Слайди">{slides.map((slide, i) => <button key={slide.key} type="button" aria-label={`Слайд ${i + 1}`} aria-pressed={i === mobileIndex} onClick={() => mobileRail.current?.children[i]?.scrollIntoView({ block: "nearest", inline: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" })} />)}</div>}
