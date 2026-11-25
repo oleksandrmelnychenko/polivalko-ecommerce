@@ -1,5 +1,8 @@
 /* Shared storefront page headers, primary actions and form panels. */
-main .page-head, .delivery-page .delivery-header { gap: 8px; padding-block: 16px 12px; }
+:root { --shop-page-heading-space: clamp(20px, 3vw, 44px); }
+main .page-head, .delivery-header, .contact-heading, .cabinet-heading { padding-block: var(--shop-page-heading-space); }
+main .page-head, .delivery-header { gap: 8px; }
+.page-head + .doc, .delivery-header + .delivery-section { margin-block-start: 0; }
 main .page-head h1, .compare-page > .page-head h1, .delivery-page .delivery-header h1, .auth-card h1 {
   margin: 0; font: 600 clamp(1.75rem, 3vw, 2.5rem)/1.12 var(--font-body); letter-spacing: -.035em;
 }
@@ -23,6 +26,5 @@ main .btn:not(:where(.btn--outline, .btn--quiet, .btn--text, .btn--soft, .btn--l
 .journal-card__more { min-height: 32px; }
 .delivery-option, .delivery-help, .doc__seller { border-radius: 16px; }
 @media (max-width: 40rem) {
-  main .page-head, .delivery-page .delivery-header { padding-block: 12px; }
   .contact-page .contact-columns { gap: 10px; }
 }

@@ -57,13 +57,10 @@
 .social-links--icons .social-links__item { min-height: 24px; }
 .social-links--icons .social-links__icon { width: 14px; height: 14px; }
 
-.contact-heading {
-  padding-block: clamp(20px, 3vw, 44px);
-}
 .contact-heading h1 { margin: 0; font-size: clamp(2rem, 3vw, 2.8rem); letter-spacing: -.045em; line-height: 1.1; }
 .contact-panel {
   display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
-  border: 1px solid #dfe4dc; border-radius: 20px; background: #f7f8f5; overflow: hidden;
+  border: 1px solid var(--color-rule); border-radius: 20px; background: var(--color-paper-2); overflow: hidden;
 }
 .contact-info { min-width: 0; padding: clamp(22px, 3vw, 48px); }
 .contact-info h2 { margin: 0 0 8px; color: #48574d; font-size: .95rem; font-weight: 500; }

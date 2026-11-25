@@ -1,4 +1,3 @@
-.compare-page > .compare-page__head { padding-block: 16px 12px; }
 .compare-hint { color: var(--color-ink-2); font-size: 14px; }
 .compare-toolbar, .compare-toolbar__actions, .compare-groups { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .compare-toolbar { justify-content: space-between; padding: 8px; border-radius: 14px; background: var(--color-paper-2); }
