@@ -6,7 +6,7 @@ import { MobileMenu } from "./mobile-menu";
 
 export async function HeaderMobileMenu() {
   await connection();
-  const [categories, sale] = await Promise.all([getCategoryTree().catch(() => []), searchProducts({ onSale: true, pageSize: 1 }).catch(() => null)]);
+  const [categories, sale] = await Promise.all([getCategoryTree().catch(() => []), searchProducts({ onSale: true, sort: "price_asc", pageSize: 1 }).catch(() => null)]);
   return (
     <MobileMenu
       categories={categories.map(toMenuCategory)}

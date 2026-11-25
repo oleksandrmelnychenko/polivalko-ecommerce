@@ -16,8 +16,21 @@ function optimized(url: string, width: number, sizes?: string): stock.Sized {
   return { src: props.src, srcSet: props.srcSet, sizes: props.sizes };
 }
 
+/**
+ * Next.js lists every configured width from 256 up to 1600 for a `sizes` image. A photo drawn at most
+ * `fallbackWidth` wide never needs more than twice that even on a 2x screen, so wider candidates only make the
+ * page heavier (each is written twice, in the HTML and in the RSC payload) and src pointed at the 1600 one.
+ */
+function capped(image: stock.Sized, maxWidth: number): stock.Sized {
+  const candidates = image.srcSet?.split(", ").map((entry) => ({ entry, width: Number(entry.slice(entry.lastIndexOf(" ") + 1, -1)) }));
+  const kept = candidates?.filter((candidate) => candidate.width <= maxWidth);
+  if (!kept?.length) return image;
+  const widest = kept[kept.length - 1].entry;
+  return { ...image, src: widest.slice(0, widest.lastIndexOf(" ")), srcSet: kept.map((candidate) => candidate.entry).join(", ") };
+}
+
 export function sized(url: string, sizes: string, fallbackWidth: 330 | 500 | 960 = 500): stock.Sized {
-  return isCatalogPhoto(url) ? optimized(url, fallbackWidth, sizes) : stock.sized(url, sizes, fallbackWidth);
+  return isCatalogPhoto(url) ? capped(optimized(url, fallbackWidth, sizes), fallbackWidth * 2) : stock.sized(url, sizes, fallbackWidth);
 }
 
 export function portrait(url: string, sizes: string): stock.Sized {

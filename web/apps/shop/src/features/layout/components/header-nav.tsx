@@ -8,7 +8,7 @@ import { NavItemLink } from "./nav-item-link";
 
 export async function HeaderNav() {
   await connection();
-  const [categories, sale] = await Promise.all([getCategoryTree().catch(() => null), searchProducts({ onSale: true, pageSize: 1 }).catch(() => null)]);
+  const [categories, sale] = await Promise.all([getCategoryTree().catch(() => null), searchProducts({ onSale: true, sort: "price_asc", pageSize: 1 }).catch(() => null)]);
   if (!categories) return <NavFallback />;
   const links = sale && sale.totalItems > 0 ? [saleLink, ...pageLinks] : pageLinks;
 
