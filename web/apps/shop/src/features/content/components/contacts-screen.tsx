@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { breadcrumbJsonLd, contactPageJsonLd, JsonLd } from "@/features/seo";
 import { getServiceDirections, ServiceRequestForm } from "@/features/services/server";
-import { ArrowRightIcon, PhoneIcon } from "@polivalko/shared/ui/icons";
+import { ArrowRightIcon, ClockIcon, PinIcon } from "@polivalko/shared/ui/icons";
 import { directionsUrl } from "@/shared/lib/directions-url";
 import { getContacts, getPickupPoints, getSeller } from "../api/server";
 import { organizationSource } from "../lib/organization";
@@ -33,41 +33,48 @@ async function ContactsContent() {
   const mapUrl = contacts?.mapUrl || point?.mapUrl;
   const route = directionsUrl(mapUrl, contacts?.address || point?.address);
   const socials = socialLinks(contacts);
-  const hasServices = Boolean(directions.length || contacts?.servicesPhone);
-  const requestIntro = (
-    <header className="contact-request-intro">
-      <h2 id="contact-services-title">{directions.length ? "Заявка на садові роботи" : "Послуги для саду"}</h2>
-      {contacts?.servicesPhone && <a className="contact-service-phone" href={tel(contacts.servicesPhone)}><PhoneIcon />{contacts.servicesPhone}</a>}
-    </header>
-  );
   const mapQuery = (mapUrl && URL.canParse(mapUrl) && new URL(mapUrl).searchParams.get("query")) || address;
   const mapEmbed = "https://maps.google.com/maps?" + new URLSearchParams({ q: mapQuery, z: "16", hl: "uk", output: "embed" });
   return <>
     <JsonLd data={contactPageJsonLd({ name: "Контакти", description: "Адреса й графік магазину, телефони для замовлень і послуг.", path: "/contacts", organization: organizationSource(contacts, seller) })} />
-    <header className="contact-heading" id="store"><h1>Контакти</h1></header>
-    <section className="contact-panel" aria-labelledby="contact-store-title">
-      <div className="contact-info">
-        <h2 id="contact-store-title">Адреса магазину</h2>
-        <p className="contact-address">{address}</p>
-        {route && <a className="btn btn--graphite" href={route} target="_blank" rel="noopener noreferrer">Прокласти маршрут <ArrowRightIcon /></a>}
-        <dl className="contact-facts">
+    <header className="contact-poster">
+      <picture className="contact-poster__art">
+        <source media="(max-width: 42rem)" srcSet="/brand/garden-telephone-small.webp" />
+        <img src="/brand/garden-telephone.webp" width={1200} height={800} alt="" fetchPriority="high" />
+      </picture>
+      <div className="contact-directory">
+        <h1>Контакти</h1>
+        <dl className="contact-lines">
           {contacts?.storePhone && <div><dt>Магазин і замовлення</dt><dd><a href={tel(contacts.storePhone)}>{contacts.storePhone}</a></dd></div>}
-          {(schedule || contacts?.specialDays?.length) ? <div><dt>Графік роботи</dt><dd>{schedule}<SpecialDays days={contacts?.specialDays} /></dd></div> : null}
-          {contacts?.email && <div><dt>Email</dt><dd><a href={"mailto:" + contacts.email}>{contacts.email}</a></dd></div>}
+          {contacts?.servicesPhone && <div><dt>Послуги для саду</dt><dd><a href={tel(contacts.servicesPhone)}>{contacts.servicesPhone}</a></dd></div>}
+          {contacts?.email && <div><dt>Електронна пошта</dt><dd><a href={"mailto:" + contacts.email}>{contacts.email}</a></dd></div>}
         </dl>
-        <div className="contact-pickup">
-          <p>Самовивіз безкоштовний. {point?.instructions || "Дочекайтеся повідомлення про готовність і назвіть номер замовлення на касі."}</p>
-          {point?.address && point.address !== address && <p>{point.address}</p>}
-          {point?.schedule && point.schedule !== schedule && <p>{point.schedule}</p>}
-          <Link href="/payment-delivery">Доставка й оплата</Link>
-        </div>
+        <nav className="contact-jumps" aria-label="На цій сторінці">
+          <a href="#store"><PinIcon /> Як нас знайти</a>
+          {directions.length > 0 && <a href="#request">Заявка на послугу <ArrowRightIcon /></a>}
+        </nav>
       </div>
-      {(contacts?.address || point?.address) && <iframe className="contact-map" src={mapEmbed} title="Магазин на карті" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />}
-    </section>
+    </header>
     {socials.length > 0 && <nav className="contact-social" aria-label="Месенджери та соцмережі"><SocialLinksList links={socials} /></nav>}
-    {hasServices && (
+    <section id="store" className="contact-visit" aria-labelledby="contact-store-title">
+        <div className="contact-location">
+          <h2 id="contact-store-title">Адреса магазину</h2>
+          <address>{address}</address>
+          {(schedule || contacts?.specialDays?.length) ? <div className="contact-hours">
+            <ClockIcon /><span className="visually-hidden">Графік роботи</span>
+            {schedule && <p>{schedule}</p>}
+            <SpecialDays days={contacts?.specialDays} />
+          </div> : null}
+          <div className="contact-visit-actions">
+            {route && <a className="contact-route btn btn--graphite" href={route} target="_blank" rel="noopener noreferrer">Прокласти маршрут <ArrowRightIcon /></a>}
+            <Link href="/payment-delivery">Умови самовивозу</Link>
+          </div>
+        </div>
+        {(contacts?.address || point?.address) && <iframe className="contact-map" src={mapEmbed} title="Магазин на карті" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />}
+    </section>
+    {directions.length > 0 && (
       <section id="request" className="contact-request-sheet" aria-labelledby="contact-services-title">
-        {directions.length > 0 ? <ServiceRequestForm directions={directions} intro={requestIntro} /> : requestIntro}
+        <ServiceRequestForm directions={directions} />
       </section>
     )}
     {seller && (seller.name || seller.taxId || seller.address) && <section className="contact-seller"><h2>Реквізити продавця</h2>{seller.name && <p>{seller.name}</p>}{seller.taxId && <p>Код: {seller.taxId}</p>}{seller.address && <p>{seller.address}</p>}<Link href="/offer">Публічна оферта</Link></section>}
