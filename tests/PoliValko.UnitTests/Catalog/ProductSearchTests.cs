@@ -52,6 +52,22 @@ public sealed class ProductSearchTests
         ProductSearch.Rank(q, [.. Catalog, product], Categories).Ids.ShouldBe([product.Id]);
     }
 
+    [Theory]
+    [InlineData("от мышей", "Гранули від мишей і пацюків, 250 г")]
+    [InlineData("крысы", "Гранули від мишей і пацюків, 250 г")]
+    [InlineData("бархатцы", "Чорнобривці низькорослі Seedera")]
+    [InlineData("подсолнух", "Соняшник декоративний Seedera")]
+    [InlineData("стремянка", "Драбина алюмінієва 3 сходинки")]
+    [InlineData("переходник 3/4", "Перехідник Cellfast 3/4 на 1/2")]
+    [InlineData("елочные шары", "Ялинкові кулі Devilon, 6 см")]
+    [InlineData("от кротов", "Відлякувач кротів сонячний")]
+    public void Added_synonyms_find_the_catalog_word(string q, string name)
+    {
+        var product = Entry(name, Tools);
+
+        ProductSearch.Rank(q, [.. Catalog, product], Categories).Ids.ShouldContain(product.Id);
+    }
+
     [Fact]
     public void A_product_is_about_the_word_only_before_dlia()
     {
