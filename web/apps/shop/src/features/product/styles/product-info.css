@@ -12,11 +12,11 @@
 .product__summary { display: grid; min-width: 0; gap: 18px; }
 .product-sheet {
   --product-fact-bg: #f4f4f4;
-  --section-space: clamp(20px, 2.25vw, 36px);
+  --section-space: clamp(8px, 1vw, 12px);
   container-type: inline-size;
   display: grid;
   min-width: 0;
-  padding: clamp(26px, 2.5vw, 40px) clamp(32px, 2.8vw, 44px) clamp(16px, 1.4vw, 22px);
+  padding: clamp(14px, 1.5vw, 20px) clamp(14px, 1.8vw, 24px);
   border: 1px solid #e9e9ed;
   border-radius: 18px;
   background: #fff;
@@ -33,7 +33,7 @@
     linear-gradient(to right, transparent, #b4c6ae) left center / var(--line-width) 1px no-repeat,
     linear-gradient(to left, transparent, #b4c6ae) right center / var(--line-width) 1px no-repeat;
 }
-.product-sheet__section > h2 { margin: 0 0 10px; font-size: 1.3125rem; font-weight: 300; color: var(--color-ink); }
+.product-sheet__section > h2 { margin: 0 0 8px; font-size: 1.3125rem; font-weight: 300; color: var(--color-ink); }
 .product-sheet .prose { max-width: none; padding-bottom: 0; color: var(--color-ink-2); overflow-wrap: anywhere; }
 #product-specs { container-type: inline-size; }
 .specs {

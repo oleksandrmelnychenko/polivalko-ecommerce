@@ -371,6 +371,7 @@
 .co-option input:checked + label { border-color: #656569; background: #f4f4f4; box-shadow: none; }
 .co-option input:checked + label::after { box-shadow: inset 0 0 0 5px #333337; }
 .co-option input:checked + label .co-option__icon { background: #333337; }
+.co-option input + label .co-option__icon:has(> .np-mark) { background: #fff; }
 .co-info { padding: 10px 12px; border-radius: 10px; }
 .co-summary .co-summary__lines { padding: 0 var(--co-pad); }
 .co-summary .line { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 8px; padding-block: 12px; }
