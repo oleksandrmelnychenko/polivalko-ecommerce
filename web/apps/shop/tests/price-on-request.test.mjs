@@ -35,8 +35,9 @@ test("comparison shows «Ціну уточнюйте» instead of 0 and does not
 test("product structured data has no Offer when the price is 0", () => {
   const price = load("../src/shared/lib/price.ts", () => ({}));
   const seo = { absoluteUrl: (path) => `https://shop.test${path}`, organizationId: () => "https://shop.test/#organization", SITE_NAME: "Shop" };
+  const gtin = load("../src/features/product/lib/gtin.ts", () => ({}));
   const { productJsonLd } = load("../src/features/product/lib/json-ld.ts", (name) =>
-    name === "@/features/seo" ? seo : name === "@/shared/lib/price" ? price : { descriptionText: () => "" });
+    name === "@/features/seo" ? seo : name === "@/shared/lib/price" ? price : name === "./gtin" ? gtin : { descriptionText: () => "" });
   const product = {
     slug: "yalynka", name: "Ялинка", sku: "12254", seoDescription: null, descriptionHtml: null, images: [], brand: null, attributes: [],
     category: { name: "Новий рік" }, inStock: false, price: money("0.00"),
@@ -46,4 +47,8 @@ test("product structured data has no Offer when the price is 0", () => {
   const priced = productJsonLd({ ...product, inStock: true, price: money("2500.00") }).offers;
   assert.equal(priced.price, "2500.00");
   assert.equal(priced.availability, "https://schema.org/InStock");
+
+  const withBarcode = productJsonLd({ ...product, attributes: [{ name: "Штрихкод", value: "4823067702320" }] });
+  assert.equal(withBarcode.gtin13, "4823067702320");
+  assert.equal(productJsonLd({ ...product, attributes: [{ name: "Штрихкод", value: "12254" }] }).gtin13, undefined);
 });
