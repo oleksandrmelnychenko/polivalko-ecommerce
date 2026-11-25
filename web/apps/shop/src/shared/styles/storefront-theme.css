@@ -101,8 +101,9 @@
 .buybox__price-row .buybox__was { order: 1; margin: 0; }
 .buybox__actions { flex-wrap: wrap; }
 .buybox .buybox__actions .btn { width: auto; min-height: 48px; border-radius: var(--radius-pill); }
-.btn.btn--graphite { width: auto; min-height: 48px; border-radius: var(--radius-pill); }
-.btn.btn--graphite, .btn.btn--graphite:hover { box-shadow: none; }
+.listing-page .tile--shop .cart-purchase, .btn.btn--graphite { min-height: 40px; height: 40px; }
+.btn.btn--graphite { width: auto; }
+.buybox .buybox__actions .cart-purchase { box-shadow: none; }
 .buybox__actions .stepper { border-radius: var(--radius-pill); }
 @media (max-width: 42rem) {
   .product-page .product { grid-template-columns: minmax(0, 1fr); gap: 24px; }

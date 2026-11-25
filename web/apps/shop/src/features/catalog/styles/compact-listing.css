@@ -35,7 +35,6 @@
 .listing-page .tile--shop .tile__body { gap: 5px; padding: 10px 12px 12px; }
 .listing-page .tile__name { font-size: .9375rem; }
 .listing-page .tile--shop .tile__price { padding-block: 2px; }
-.listing-page .tile--shop .cart-purchase { min-height: 40px; height: 40px; }
 .listing-page .pager { margin-block: 20px; }
 .listing-page .pager [aria-current="page"] { background: var(--shop-graphite); border-color: rgb(255 255 255 / 8%); }
 .sale-controls-skeleton { height: 56px; border-radius: 16px; margin-bottom: 12px; }

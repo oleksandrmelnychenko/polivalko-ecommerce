@@ -10,10 +10,10 @@ main .page-head h1, .compare-page > .page-head h1, .delivery-page .delivery-head
 .crumbs { padding-block: 12px; overflow-wrap: anywhere; }
 main .crumbs ~ .page-head, main .crumbs ~ .delivery-header, main .crumbs ~ .contact-heading, main .crumbs + .cabinet-heading { padding-top: 0; }
 main .crumbs ol { font-size: var(--text-xs); }
-main .btn:not(:where(.btn--outline, .btn--quiet, .btn--text, .btn--soft, .btn--light, .btn--danger, .btn--chrome)), .hero-panel__btn {
+main .btn:not(:where(.btn--outline, .btn--quiet, .btn--text, .btn--soft, .btn--light, .btn--danger, .btn--chrome, .btn--graphite)), .hero-panel__btn {
   min-height: 42px; border-color: transparent; border-radius: 10px; background: var(--shop-graphite); color: white;
 }
-main .btn:not(:where(.btn--outline, .btn--quiet, .btn--text, .btn--soft, .btn--light, .btn--danger, .btn--chrome)):hover:not(:disabled), .hero-panel__btn:hover {
+main .btn:not(:where(.btn--outline, .btn--quiet, .btn--text, .btn--soft, .btn--light, .btn--danger, .btn--chrome, .btn--graphite)):hover:not(:disabled), .hero-panel__btn:hover {
   background: linear-gradient(145deg, #444449, #222227); color: white;
 }
 .auth-card { width: min(500px, calc(100% - 32px)); margin-block: 24px 40px; padding: clamp(16px, 3vw, 28px); border-radius: 16px; }
