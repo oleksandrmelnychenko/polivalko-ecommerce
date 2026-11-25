@@ -98,7 +98,46 @@ public sealed class ProductSearchApiTests(ApiFactory api)
         page.Approximate.ShouldBeFalse();
     }
 
+    [Fact]
+    public async Task Name_matches_come_before_section_matches_and_both_are_found()
+    {
+        var token = Token();
+        var bySection = await api.AddProductAsync("vse-dlia-polyvu", $"Конектор {token}", 50m, stock: 20);
+        var byName = await api.AddProductAsync("ruchnyi-instrument", $"Лійка поливальна {token}", 120m, stock: 0);
+
+        var page = await SearchAsync($"полив {token}");
+
+        // Out of stock, the name match still leads: the words come before stock and season.
+        page.Items.Select(p => p.Id).ShouldBe([byName.Id, bySection.Id]);
+        page.Approximate.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Russian_words_and_the_wrong_keyboard_layout_find_the_product()
+    {
+        var token = Digits();
+        var product = await api.AddProductAsync("ruchnyi-instrument", $"Граблі віялові {token}", 300m);
+
+        (await SearchAsync($"грабли {token}")).Items.ShouldHaveSingleItem().Id.ShouldBe(product.Id);
+        (await SearchAsync($"uhf,ks {token}")).Items.ShouldHaveSingleItem().Id.ShouldBe(product.Id);
+    }
+
+    [Fact]
+    public async Task An_extra_unknown_word_does_not_empty_the_result()
+    {
+        var token = Digits();
+        var product = await api.AddProductAsync("ruchnyi-instrument", $"Сапка садова {token}", 200m);
+
+        var page = await SearchAsync($"сапка {token} найдешевша");
+
+        page.Items.ShouldHaveSingleItem().Id.ShouldBe(product.Id);
+        page.Approximate.ShouldBeTrue();
+    }
+
     private static string Token() => Guid.NewGuid().ToString("N")[..8];
+
+    /// <summary>A token that stays itself on either keyboard layout.</summary>
+    private static string Digits() => Random.Shared.NextInt64(10_000_000, 99_999_999).ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     private async Task<ProductSearchResponse> SearchAsync(string q) =>
         (await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={Uri.EscapeDataString(q)}", TestJson.Options, Ct))!;

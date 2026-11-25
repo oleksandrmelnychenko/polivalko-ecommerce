@@ -79,14 +79,19 @@ internal static class SearchProducts
         }
 
         var approximate = false;
+        IReadOnlyList<Guid[]>? relevance = null;
         if (!string.IsNullOrWhiteSpace(query.Q))
         {
-            var term = query.Q.Trim();
-            var words = ProductSearchText.Words(term);
-            var matching = ProductSearchText.Matching(scope, term, words);
-            var similar = await matching.AnyAsync(ct) ? null : ProductSearchText.Similar(scope, visibleProducts, words);
-            approximate = similar is not null;
-            scope = similar ?? matching;
+            // The visible catalog is a few thousand short rows: matching them in memory lets search understand word
+            // forms, synonyms, layouts and typos, while SQL keeps visibility, filters, facets and prices.
+            var entries = await scope
+                .Select(p => new SearchEntry(p.Id, p.Name, p.DisplayName, p.Brand, p.Slug, p.Sku, p.CategoryId))
+                .ToListAsync(ct);
+            var ranking = ProductSearch.Rank(query.Q, entries, categories);
+            var ids = ranking.Ids.ToArray();
+            approximate = ranking.Approximate;
+            relevance = ranking.Better;
+            scope = scope.Where(p => ids.Contains(p.Id));
         }
 
         if (query.OnSale == true)
@@ -131,7 +136,8 @@ internal static class SearchProducts
             ProductSort.Seasonal or ProductSort.StockCover =>
                 await merchandising.SortAsync(products, categories, query.Q?.Trim(), db, today, ct, sort,
                     acrossCategories: string.IsNullOrWhiteSpace(query.Category),
-                    pinned: string.IsNullOrWhiteSpace(query.Q) && string.IsNullOrWhiteSpace(query.Category) ? setting?.PinnedProductIds : null),
+                    pinned: string.IsNullOrWhiteSpace(query.Q) && string.IsNullOrWhiteSpace(query.Category) ? setting?.PinnedProductIds : null,
+                    relevance: relevance),
             // Products without a price go last in both directions.
             ProductSort.PriceAsc => products.OrderByDescending(p => p.Price.Amount > 0).ThenBy(p => p.Price.Amount).ThenBy(p => p.Id),
             ProductSort.PriceDesc => products.OrderByDescending(p => p.Price.Amount > 0).ThenByDescending(p => p.Price.Amount).ThenBy(p => p.Id),

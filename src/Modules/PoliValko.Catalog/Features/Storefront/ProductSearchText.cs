@@ -9,7 +9,6 @@ internal static class ProductSearchText
     private const string Escape = "\\";
     private const int MaxWords = 6;
     private const int MinStemLength = 4;
-    private const int MinSimilarLength = 3;
 
     private static readonly string[] Endings =
     [
@@ -77,29 +76,6 @@ internal static class ProductSearchText
         }
 
         return products;
-    }
-
-    public static IQueryable<Product>? Similar(IQueryable<Product> products, IQueryable<Product> catalog, IReadOnlyList<string> words)
-    {
-        var similar = false;
-        foreach (var word in words)
-        {
-            var stem = Stem(word);
-            if (stem.Length < MinSimilarLength || stem.Any(char.IsAsciiDigit))
-            {
-                var pattern = Like(stem);
-                products = products.Where(p => EF.Functions.ILike(p.Name, pattern, Escape));
-                continue;
-            }
-
-            var slug = IsLatin(stem) ? stem : Transliteration.ToSlug(stem);
-            var ids = catalog.Where(p => EF.Functions.TrigramsAreWordSimilar(stem, p.Name)).Select(p => p.Id)
-                .Concat(catalog.Where(p => EF.Functions.TrigramsAreWordSimilar(slug, p.Slug)).Select(p => p.Id));
-            products = products.Where(p => ids.Contains(p.Id));
-            similar = true;
-        }
-
-        return similar ? products : null;
     }
 
     private static string Like(string text)

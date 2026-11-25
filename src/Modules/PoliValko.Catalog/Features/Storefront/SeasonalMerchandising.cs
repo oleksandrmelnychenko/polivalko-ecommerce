@@ -30,7 +30,8 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
     /// <param name="seasonDate">The day the season is asked about, when another month is looked at ahead.</param>
     public async Task<IQueryable<Product>> SortAsync(IQueryable<Product> products, IReadOnlyList<Category> categories,
         string? term, PoliValkoDbContext db, DateOnly today, CancellationToken ct, string mode = ProductSort.Seasonal,
-        bool acrossCategories = true, Guid[]? pinned = null, DateOnly? seasonDate = null)
+        bool acrossCategories = true, Guid[]? pinned = null, DateOnly? seasonDate = null,
+        IReadOnlyList<Guid[]>? relevance = null)
     {
         var season = seasonDate ?? today;
         var seasons = await SeasonClassifier.ClassifyAsync(products, categories, db, cache, today, season, ct);
@@ -74,6 +75,9 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
             }
         }
         var ordered = scored.OrderByDescending(s => term != null && s.p.Sku == term);
+        // Search results: how well a product matches the words comes before stock and season.
+        foreach (var tier in relevance ?? [])
+            ordered = ordered.ThenByDescending(s => tier.Contains(s.p.Id));
         if (pinned is { Length: > 0 })
             ordered = ordered.ThenByDescending(s => pinned.Contains(s.p.Id)).ThenBy(s => Array.IndexOf(pinned, s.p.Id));
         ordered = ordered.ThenByDescending(s => s.available >= 1 && s.p.Price.Amount > 0);
