@@ -115,7 +115,7 @@ function RequestWizard({ directions, intro, preset, linked }: Props & { preset: 
   return <>
     <div className="request-launch">
       {intro}
-      <button ref={trigger} type="button" className="btn" aria-haspopup="dialog" onClick={() => open()}>Обрати послугу</button>
+      <button ref={trigger} type="button" className="btn btn--graphite" aria-haspopup="dialog" onClick={() => open()}>Обрати послугу</button>
     </div>
     <dialog ref={modal} className="request-dialog" aria-labelledby="request-title"
       onCancel={event => { if (sending.current) event.preventDefault(); }}

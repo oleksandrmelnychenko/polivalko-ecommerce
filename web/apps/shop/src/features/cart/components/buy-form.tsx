@@ -36,7 +36,7 @@ export function BuyForm({
         {inStock ? (
           <>
             <QuantityStepper value={quantity} onChange={setQuantity} label={`Кількість: ${product.name}`} />
-            <button type="submit" className="btn cart-purchase">
+            <button type="submit" className="btn btn--graphite cart-purchase">
               <PurchaseIcon />
               До кошика
             </button>

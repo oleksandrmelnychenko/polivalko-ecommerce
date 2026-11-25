@@ -65,9 +65,7 @@
 .contact-info { min-width: 0; padding: clamp(22px, 3vw, 48px); }
 .contact-info h2 { margin: 0 0 8px; color: #48574d; font-size: .95rem; font-weight: 500; }
 .contact-address { max-width: 36ch; margin: 0 0 18px; font-size: clamp(1.35rem, 1.95vw, 2rem); font-weight: 500; line-height: 1.26; letter-spacing: -.025em; }
-.contact-route { display: inline-flex; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 8px; background: #263c30; color: white; font-size: .9rem; font-weight: 550; text-decoration: none; }
-.contact-route:hover { background: #14271b; color: white; }
-.contact-route svg, .contact-service-phone svg { width: 16px; height: 16px; flex: none; }
+.contact-service-phone svg { width: 16px; height: 16px; flex: none; }
 .contact-facts { display: grid; gap: 11px; margin: 24px 0 0; }
 .contact-facts > div { display: grid; grid-template-columns: minmax(100px, .75fr) minmax(0, 1.25fr); gap: 12px; align-items: baseline; }
 .contact-facts dt { font-size: .875rem; color: #526058; }

@@ -64,7 +64,7 @@
 .tile__discount { color: #b02525; font: 600 .75rem/1.4 var(--font-money); }
 .tile--shop .tile__buy, .buybox__actions .btn { border-radius: 10px; }
 .tile--shop .tile__price { padding-block: 4px; }
-.tile--shop .cart-purchase, .buybox__actions .cart-purchase {
+.tile--shop .cart-purchase, .btn.btn--graphite {
   width: 100%; height: 44px; min-height: 44px; gap: 8px; padding: 8px 20px;
   border: 1px solid rgb(255 255 255 / 8%); border-radius: 10px;
   background: var(--shop-graphite);
@@ -72,15 +72,15 @@
   color: rgb(255 255 255 / 90%); font: 400 14px/20px var(--font-body);
   transition: background 250ms ease, box-shadow 250ms ease, color 250ms ease;
 }
-.cart-purchase svg { width: 16px; height: 16px; flex: none; }
-.tile--shop .cart-purchase:hover, .buybox__actions .cart-purchase:hover {
+.cart-purchase svg, .btn--graphite svg { width: 16px; height: 16px; flex: none; }
+.tile--shop .cart-purchase:hover, .btn.btn--graphite:hover {
   background: linear-gradient(145deg, #444449 0%, #303035 52%, #222227 100%);
   box-shadow: 6px 6px 16px rgb(0 0 0 / 50%), -2px -2px 8px rgb(255 255 255 / 3%), inset 0 1px 0 rgb(255 255 255 / 3%);
   color: #fff;
 }
-.cart-purchase:active:not(:disabled) { scale: none; }
+.cart-purchase:active:not(:disabled), .btn--graphite:active:not(:disabled) { scale: none; }
 @media (prefers-reduced-motion: reduce) {
-  .tile--shop .cart-purchase, .buybox__actions .cart-purchase { transition: none; }
+  .tile--shop .cart-purchase, .btn.btn--graphite { transition: none; }
 }
 .tile__buy { min-height: 44px; }
 .catalog { grid-template-columns: 256px minmax(0, 1fr); gap: 32px; }
@@ -101,7 +101,8 @@
 .buybox__price-row .buybox__was { order: 1; margin: 0; }
 .buybox__actions { flex-wrap: wrap; }
 .buybox .buybox__actions .btn { width: auto; min-height: 48px; border-radius: var(--radius-pill); }
-.buybox .buybox__actions .cart-purchase { box-shadow: none; }
+.btn.btn--graphite { width: auto; min-height: 48px; border-radius: var(--radius-pill); }
+.btn.btn--graphite, .btn.btn--graphite:hover { box-shadow: none; }
 .buybox__actions .stepper { border-radius: var(--radius-pill); }
 @media (max-width: 42rem) {
   .product-page .product { grid-template-columns: minmax(0, 1fr); gap: 24px; }

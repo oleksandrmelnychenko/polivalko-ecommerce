@@ -49,7 +49,7 @@ async function ContactsContent() {
       <div className="contact-info">
         <h2 id="contact-store-title">Адреса магазину</h2>
         <p className="contact-address">{address}</p>
-        {route && <a className="contact-route" href={route} target="_blank" rel="noopener noreferrer">Прокласти маршрут <ArrowRightIcon /></a>}
+        {route && <a className="btn btn--graphite" href={route} target="_blank" rel="noopener noreferrer">Прокласти маршрут <ArrowRightIcon /></a>}
         <dl className="contact-facts">
           {contacts?.storePhone && <div><dt>Магазин і замовлення</dt><dd><a href={tel(contacts.storePhone)}>{contacts.storePhone}</a></dd></div>}
           {(schedule || contacts?.specialDays?.length) ? <div><dt>Графік роботи</dt><dd>{schedule}<SpecialDays days={contacts?.specialDays} /></dd></div> : null}
