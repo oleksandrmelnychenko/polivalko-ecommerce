@@ -49,7 +49,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
         <ul ref={mobileRail} aria-label="Колекції" className="hero-mobile__slides" onScroll={(event) => setMobileIndex(Math.round(event.currentTarget.scrollLeft / (event.currentTarget.clientWidth + 12)))}>
           {slides.map((slide, i) => <li key={slide.key} className="hero-mobile__slide">
             <div className="hero-mobile__content">
-              {i === 0 ? <h1>{slide.title}</h1> : <h2>{slide.title}</h2>}
+              <h2>{slide.title}</h2>
               {(slide.sub || slide.kicker) && <p>{slide.sub || slide.kicker}</p>}
               {slide.cta && <Link href={slide.cta.href} className="hero-panel__btn">{slide.cta.label}<ArrowRightIcon /></Link>}
             </div>
@@ -60,7 +60,6 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
       </div>
       {slides.map((slide, i) => {
         const active = i === index;
-        const Title = i === 0 ? "h1" : "p";
         return (
           <div
             key={slide.key}
@@ -72,10 +71,10 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
             inert={!active}
           >
             <div className="hero-slide__panel">
-              <Title className="hero-panel__title">
+              <h2 className="hero-panel__title">
                 {slide.title}
                 {slide.kicker && !slide.featured && <span className="hero-panel__kicker">{slide.kicker}</span>}
-              </Title>
+              </h2>
               {slide.sub && <p className="hero-panel__sub">{slide.sub}</p>}
               <div className="hero-panel__actions">
                 {slide.cta && (

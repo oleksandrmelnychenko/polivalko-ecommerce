@@ -63,7 +63,7 @@ async function HomeContent() {
   return (
     <>
       <SiteJsonLd />
-      {!blocks.includes("hero") && <h1 className="visually-hidden">Poli Valko: товари для саду, городу й дому</h1>}
+      <h1 className="visually-hidden">Poli Valko: товари для саду, городу й дому</h1>
       {blocks.map((block) => (
         <HomeBlock key={block} block={block} home={home} slides={slides} facts={facts} />
       ))}
