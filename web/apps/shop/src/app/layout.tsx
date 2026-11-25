@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   },
   description: "Товари для саду, городу й дому: полив, інструмент, садова техніка. Доставка Новою поштою по Україні або самовивіз з магазину.",
   openGraph: defaultOpenGraph,
-  twitter: { card: "summary" },
+  twitter: { card: "summary", images: defaultOpenGraph.images },
   formatDetection: { telephone: false, email: false, address: false },
   robots: {
     index: true,

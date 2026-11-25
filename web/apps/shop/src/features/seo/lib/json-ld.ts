@@ -1,4 +1,5 @@
 import type { Contacts } from "@polivalko/shared/api/types";
+import { directionsUrl } from "@/shared/lib/directions-url";
 import { openingHours, specialOpeningHours } from "./opening-hours";
 import { absoluteUrl, organizationId, SITE_LANGUAGE, SITE_NAME, siteUrl, websiteId } from "./site";
 
@@ -63,6 +64,19 @@ export function webSiteJsonLd() {
   };
 }
 
+function postalAddress(value?: string | null) {
+  const address = value?.trim();
+  if (!address) return undefined;
+  // Store settings use a single address line, e.g. "м. Буча, вул. Депутатська, 1-В".
+  const parts = /^(?:м\.|с\.|селище\s+)\s*([^,]+),\s*(\S.*)$/iu.exec(address);
+  return {
+    "@type": "PostalAddress",
+    addressLocality: parts?.[1].trim(),
+    streetAddress: parts?.[2] ?? address,
+    addressCountry: "UA",
+  };
+}
+
 function organizationEntity({ contacts, seller, sameAs }: OrganizationSource) {
   const telephone = contacts?.storePhone || seller?.phone || undefined;
   const email = contacts?.email || seller?.email || undefined;
@@ -82,8 +96,8 @@ function organizationEntity({ contacts, seller, sameAs }: OrganizationSource) {
     url: absoluteUrl("/"),
     telephone: telephone ? phone(telephone) : undefined,
     email,
-    address: contacts?.address ? { "@type": "PostalAddress", streetAddress: contacts.address, addressCountry: "UA" } : undefined,
-    hasMap: contacts?.mapUrl || undefined,
+    address: postalAddress(contacts?.address),
+    hasMap: directionsUrl(contacts?.mapUrl, contacts?.address) ?? undefined,
     openingHoursSpecification: hours.length > 0 ? hours : undefined,
     specialOpeningHoursSpecification: special.length > 0 ? special : undefined,
     contactPoint: points.length > 0 ? points : undefined,
