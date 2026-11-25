@@ -1,87 +1,83 @@
 "use client";
 
 import Form from "next/form";
-import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
-import type { ProductListItem } from "@polivalko/shared/api/types";
-import { formatMoney } from "@polivalko/shared/lib/format";
-import { hasPrice, PRICE_ON_REQUEST } from "@/shared/lib/price";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState, useTransition } from "react";
 import { CloseIcon, SearchIcon } from "@polivalko/shared/ui/icons";
 
+const SEARCH_PATH = "/search";
+const MIN_LENGTH = 2;
+const DEBOUNCE_MS = 300;
+
 export function SearchButton() {
-  return <Suspense fallback={<SearchField initialQuery="" />}><SearchWithLocation /></Suspense>;
+  return <Suspense fallback={<SearchField urlQuery="" onSearchPage={false} />}><SearchWithLocation /></Suspense>;
 }
 
 function SearchWithLocation() {
   const pathname = usePathname();
   const params = useSearchParams();
-  const query = pathname === "/search" ? params.get("q")?.trim() ?? "" : "";
-  return <SearchField key={JSON.stringify([pathname, query])} initialQuery={query} />;
+  const onSearchPage = pathname === SEARCH_PATH;
+  const urlQuery = onSearchPage ? params.get("q")?.trim() ?? "" : "";
+  return <SearchField urlQuery={urlQuery} onSearchPage={onSearchPage} />;
 }
 
-function SearchField({ initialQuery }: { initialQuery: string }) {
-  const root = useRef<HTMLDivElement>(null);
+/**
+ * Typing shows the results on the search page itself, not in a dropdown: after a short pause the field opens
+ * /search?q=… (a new history entry from another page, a replaced one while typing on the search page).
+ */
+function SearchField({ urlQuery, onSearchPage }: { urlQuery: string; onSearchPage: boolean }) {
+  const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
-  const [query, setQuery] = useState(initialQuery);
-  const [attempt, setAttempt] = useState(0);
-  const [open, setOpen] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [result, setResult] = useState<{ query: string; items: ProductListItem[]; failed?: boolean }>({ query: "", items: [] });
+  const [query, setQuery] = useState(urlQuery);
+  const [mobileOpen, setMobileOpen] = useState(onSearchPage);
+  const [pending, startTransition] = useTransition();
+  // The query this field last put into the address bar: a different one there came from Back, Forward or a link,
+  // and only then does the address overwrite what is typed (never while typing, which would eat letters).
+  const [sent, setSent] = useState(urlQuery);
+  const [seenUrl, setSeenUrl] = useState(urlQuery);
+  if (urlQuery !== seenUrl) {
+    setSeenUrl(urlQuery);
+    if (urlQuery !== sent) {
+      setSent(urlQuery);
+      setQuery(urlQuery);
+      if (!onSearchPage) setMobileOpen(false);
+    }
+  }
   const term = query.trim();
-  const loading = term.length >= 2 && result.query !== term;
 
   useEffect(() => {
-    const onPointer = (e: PointerEvent) => { if (!root.current?.contains(e.target as Node)) setOpen(false); };
+    if (term === sent) return;
+    if (term.length < MIN_LENGTH && !(onSearchPage && term.length === 0)) return;
+    const timer = setTimeout(() => {
+      setSent(term);
+      const href = term ? `${SEARCH_PATH}?q=${encodeURIComponent(term)}` : SEARCH_PATH;
+      startTransition(() => {
+        if (onSearchPage) router.replace(href, { scroll: false });
+        else router.push(href);
+      });
+    }, DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [term, sent, onSearchPage, router]);
+
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { setOpen(false); setMobileOpen(false); }
+      if (e.key === "Escape" && !onSearchPage) setMobileOpen(false);
       if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey && !(e.target as HTMLElement).closest("input,textarea,select,[contenteditable]")) {
-        e.preventDefault(); setMobileOpen(true); setOpen(true); requestAnimationFrame(() => input.current?.focus());
+        e.preventDefault(); setMobileOpen(true); requestAnimationFrame(() => input.current?.focus());
       }
     };
-    document.addEventListener("pointerdown", onPointer);
     document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("pointerdown", onPointer); document.removeEventListener("keydown", onKey); };
-  }, []);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onSearchPage]);
 
-  useEffect(() => {
-    if (!open || term.length < 2) return;
-    const controller = new AbortController();
-    const timer = setTimeout(async () => {
-      try {
-        const response = await fetch(`/api/v1/products?q=${encodeURIComponent(term)}&pageSize=5`, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]) });
-        if (!response.ok) throw new Error("search");
-        const data = await response.json();
-        if (!controller.signal.aborted) setResult({ query: term, items: data.items ?? [] });
-      } catch {
-        if (!controller.signal.aborted) setResult({ query: term, items: [], failed: true });
-      }
-    }, 250);
-    return () => { clearTimeout(timer); controller.abort(); };
-  }, [term, open, attempt]);
-
-  const close = () => { setOpen(false); setMobileOpen(false); };
-  return <div ref={root} className="header-search" data-open={mobileOpen} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}>
-    <button type="button" className="icon-btn header-search__toggle" aria-label={mobileOpen ? "Закрити пошук" : "Пошук"} aria-expanded={mobileOpen} aria-controls="header-search-form" onClick={() => { setMobileOpen(!mobileOpen); setOpen(!mobileOpen); if (!mobileOpen) requestAnimationFrame(() => input.current?.focus()); }}>{mobileOpen ? <CloseIcon /> : <SearchIcon />}</button>
-    <Form id="header-search-form" action="/search" role="search" className="header-search__form" onSubmit={close}>
+  return <div className="header-search" data-open={mobileOpen} data-pending={pending || undefined}>
+    <button type="button" className="icon-btn header-search__toggle" aria-label={mobileOpen ? "Закрити пошук" : "Пошук"} aria-expanded={mobileOpen} aria-controls="header-search-form"
+      onClick={() => { setMobileOpen(!mobileOpen); if (!mobileOpen) requestAnimationFrame(() => input.current?.focus()); }}>{mobileOpen ? <CloseIcon /> : <SearchIcon />}</button>
+    <Form id="header-search-form" action={SEARCH_PATH} role="search" className="header-search__form" onSubmit={() => { setSent(term); input.current?.blur(); }}>
       <SearchIcon />
-      <input ref={input} name="q" type="search" value={query} onChange={(e) => { setQuery(e.target.value); setOpen(true); }} onFocus={() => setOpen(true)}
-        onKeyDown={(event) => { if (event.key === "Escape" && open) event.preventDefault(); }}
-        placeholder="Пошук товарів…" aria-label="Пошук у каталозі" aria-controls={open ? "search-suggestions" : undefined} autoComplete="off" spellCheck={false} enterKeyHint="search" />
+      <input ref={input} name="q" type="search" value={query} onChange={(e) => setQuery(e.target.value)}
+        placeholder="Пошук товарів…" aria-label="Пошук у каталозі" autoComplete="off" spellCheck={false} enterKeyHint="search" />
       {query && <button type="button" className="header-search__clear" aria-label="Очистити пошук" onClick={() => { setQuery(""); input.current?.focus(); }}><CloseIcon /></button>}
     </Form>
-    {open && <div id="search-suggestions" className="search-suggestions">
-      {term.length < 2 ? <p className="search-suggestions__message">Введіть щонайменше 2 символи назви або артикулу.</p> : loading ? <p className="search-suggestions__message" role="status">Шукаємо…</p> : result.failed ? <div className="search-suggestions__message">
-        <p role="status">Пошук тимчасово недоступний.</p>
-        <button type="button" className="link" onClick={() => {
-          input.current?.focus();
-          setResult({ query: "", items: [] });
-          setAttempt(value => value + 1);
-        }}>Спробувати ще раз</button>
-      </div> : <>
-        {result.items.length ? <ul>{result.items.map((p) => <li key={p.id}><Link href={`/product/${p.slug}`} onClick={close}>{p.imageUrl && <img src={p.imageUrl} alt="" width={48} height={56} />}<span><span>{p.name}</span><strong>{hasPrice(p.price) ? formatMoney(p.price) : PRICE_ON_REQUEST}</strong></span></Link></li>)}</ul> : <p className="search-suggestions__message" role="status">Товарів не знайдено.</p>}
-        <Link href={`/search?q=${encodeURIComponent(term)}`} className="search-suggestions__all" onClick={close}>Усі результати пошуку</Link>
-      </>}
-    </div>}
   </div>;
 }
