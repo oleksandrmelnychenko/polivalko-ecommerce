@@ -15,8 +15,8 @@ export function CartSummary({ quote, count, blocking }: { quote: Quote | null; c
       </dl>
 
       {quote && quote.deliveryMethods.length > 0 && (
-        <details className="cart-ways">
-          <summary>Отримання й оплата</summary>
+        <section className="cart-ways" aria-labelledby="cart-ways-title">
+          <h3 id="cart-ways-title">Отримання й оплата</h3>
           <ul>
             {quote.deliveryMethods.map((d) => (
               <li key={d.code}>
@@ -31,7 +31,7 @@ export function CartSummary({ quote, count, blocking }: { quote: Quote | null; c
             ))}
           </ul>
           <p className="field__help">Спосіб отримання й оплати оберете під час оформлення.</p>
-        </details>
+        </section>
       )}
 
       {blocking && <p className="notice notice--error">Частини товарів не вистачає. Змініть кількість або приберіть позначені позиції.</p>}
