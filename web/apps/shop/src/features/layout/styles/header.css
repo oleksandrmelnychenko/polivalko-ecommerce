@@ -7,10 +7,10 @@
 .site-header__socials { display: flex; gap: var(--space-sm); margin: 0; padding: 0; list-style: none; }
 .site-header__socials a { color: var(--color-ink-2); font-size: 0.75rem; text-decoration: none; }
 .site-header__socials a:hover { color: var(--color-ink); text-decoration: underline; text-underline-offset: 3px; }
-.site-header__phone { min-width: 0; gap: 10px; white-space: nowrap; }
+.site-header__phone { min-width: 0; gap: 12px; white-space: nowrap; }
 .site-header__phone a { color: var(--color-ink); font-family: var(--font-money); font-weight: 600; text-decoration: none; }
 .site-header__phone a:hover { text-decoration: underline; text-underline-offset: 3px; }
-.site-header__phone small { overflow: hidden; text-overflow: ellipsis; color: var(--color-ink); font-size: 0.75rem; font-weight: 400; }
+.site-header__phone small { padding-inline-start: 12px; border-inline-start: 1px solid var(--color-control); overflow: hidden; text-overflow: ellipsis; color: var(--color-ink); font-size: 0.75rem; font-weight: 400; }
 .site-header__bar { --header-bar-padding: 10px; position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; min-height: 84px; padding-block: var(--header-bar-padding); }
 .brand-logo { display: inline-flex; align-items: center; gap: 8px; width: fit-content; min-width: 0; color: var(--color-ink); text-decoration: none; border-radius: 8px; }
 .brand-logo__wordmark { display: grid; gap: 3px; }

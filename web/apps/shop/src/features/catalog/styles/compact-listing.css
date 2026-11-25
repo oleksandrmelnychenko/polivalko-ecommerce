@@ -1,5 +1,4 @@
-.catalog-page .page-head:has(> .crumbs) { padding-block-start: 12px; row-gap: 12px; }
-.catalog-page .page-head:has(> .page-head__subs) { padding-block-end: 12px; }
+.catalog-page .page-head:has(> .crumbs) { padding-block: 12px; row-gap: 12px; }
 .listing-page .page-head h1 { margin: 0; font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.1; }
 .listing-page .catalog { grid-template-columns: clamp(244px, 21vw, 308px) minmax(0, 1fr); gap: 16px; }
 .listing-page .catalog__main { grid-area: 1 / 2; }
