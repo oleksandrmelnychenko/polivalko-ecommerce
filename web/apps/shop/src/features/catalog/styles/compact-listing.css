@@ -21,6 +21,8 @@
 .listing-page .filters { display: block; padding: 0 16px; }
 .listing-page .fw { margin: 0; padding: 12px 0; border: 0; }
 .listing-page .fw + .fw { border-top: 1px solid var(--color-rule); }
+/* The price group stands without rules above and below it. */
+.listing-page .fw:has(.range), .listing-page .fw:has(.range) + .fw { border-top: 0; }
 .listing-page .fw__title { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; font-weight: 600; }
 .listing-page .fw__title svg { box-sizing: border-box; flex: none; width: 26px; height: 26px; padding: 5px; border-radius: 50%; background: var(--color-paper-2); }
 .listing-page .filters-panel__toggle svg { flex: none; width: 16px; height: 16px; }
