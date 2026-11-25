@@ -53,12 +53,14 @@ export function MainNav({ categories, children }: { categories: MenuCategory[]; 
               <div className="catalog-panel__rail">
                 <Link href="/catalog" className="catalog-panel__all">Увесь каталог <ArrowRightIcon /></Link>
                 {categories.map(category => (
-                  <button type="button" key={category.id} aria-pressed={category.id === active.id}
+                  <Link key={category.id} href={`/catalog/${category.slug}`} className="catalog-panel__category"
+                    aria-current={pathname === `/catalog/${category.slug}` ? "page" : undefined}
+                    data-active={category.id === active.id || undefined}
                     aria-controls="catalog-section"
                     onPointerEnter={event => { if (event.pointerType === "mouse") setSelected(category.slug); }}
-                    onClick={() => setSelected(category.slug)}>
+                    onFocus={() => setSelected(category.slug)}>
                     <CategoryPicture category={category} />{category.name}<ChevronRightIcon />
-                  </button>
+                  </Link>
                 ))}
               </div>
               <section id="catalog-section" className="catalog-panel__section" aria-labelledby="catalog-section-name">
