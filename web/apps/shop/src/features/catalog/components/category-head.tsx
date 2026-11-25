@@ -1,9 +1,10 @@
 import Link from "next/link";
 import type { Category } from "@polivalko/shared/api/types";
 import { breadcrumbJsonLd, JsonLd } from "@/features/seo";
-import { CategoryIntro } from "./category-intro";
+import type { SearchParams } from "../lib/listing-params";
+import { FirstPageIntro } from "./category-intro";
 
-export function CategoryHead({ category }: { category: Category }) {
+export function CategoryHead({ category, searchParams }: { category: Category; searchParams: Promise<SearchParams> }) {
   const trail = [
     { name: "Каталог", path: "/catalog" },
     ...category.breadcrumbs.map((c) => ({ name: c.name, path: `/catalog/${c.slug}` })),
@@ -25,7 +26,7 @@ export function CategoryHead({ category }: { category: Category }) {
         </ol>
       </nav>
       <h1>{category.name}</h1>
-      <CategoryIntro description={category.description} />
+      <FirstPageIntro description={category.description} searchParams={searchParams} />
       {category.children.length > 0 && (
         <nav aria-label="Підрозділи" className="page-head__subs">
           <ul className="chips chips--grey">

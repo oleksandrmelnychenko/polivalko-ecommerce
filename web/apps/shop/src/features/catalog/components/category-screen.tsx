@@ -11,7 +11,7 @@ type CategoryScreenProps = { category: Category; searchParams: Promise<SearchPar
 export function CategoryScreen({ category, searchParams }: CategoryScreenProps) {
   return (
     <div className="container catalog-page listing-page">
-      <CategoryHead category={category} />
+      <CategoryHead category={category} searchParams={searchParams} />
       <Suspense fallback={<ListingSkeleton head={false} />}>
         <CategoryListing category={category} searchParams={searchParams} />
       </Suspense>
