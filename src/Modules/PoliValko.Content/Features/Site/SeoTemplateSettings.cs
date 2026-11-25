@@ -18,7 +18,7 @@ internal static partial class SeoTemplateSettings
             "{name}: ціна {price}, купити з доставкою",
             "{name} у магазині Poli Valko: ціна {price}, доставка Новою поштою по Україні або самовивіз з магазину."),
         new SeoTemplateDto(
-            "{name}: купити з доставкою по Україні",
+            "{name}: купити з доставкою",
             "{name}: ціни, наявність і доставка по Україні."));
 
     public static async Task<SeoTemplatesDto> LoadAsync(ISettingsStore settings, CancellationToken ct)
