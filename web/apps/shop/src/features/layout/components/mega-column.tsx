@@ -14,8 +14,7 @@ export function CategoryPicture({ category }: { category: MenuCategory }) {
   </span>;
 }
 
-function CategorySymbol({ name }: { name: string }) {
-  const Glyph = categoryIcon(name, true);
+function CategorySymbol({ glyph: Glyph }: { glyph: ReturnType<typeof categoryIcon> }) {
   return <span className="menu-category-symbol" aria-hidden="true"><Glyph size={17} stroke={1.7} /></span>;
 }
 
@@ -26,7 +25,7 @@ export function CategoryLinks({ categories, pathname, nested = false }: { catego
       const href = `/catalog/${category.slug}`;
       return <li key={category.id}>
         <Link href={href} className={nested ? undefined : "menu-category-heading"} aria-current={href === pathname ? "page" : undefined}>
-          {!nested && <CategorySymbol name={category.name} />}
+          {!nested && <CategorySymbol glyph={categoryIcon(category.name, true)} />}
           {category.name}
         </Link>
         <CategoryLinks categories={category.children} pathname={pathname} nested />
