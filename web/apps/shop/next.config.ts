@@ -16,6 +16,8 @@ const nextConfig: NextConfig = {
   turbopack: { root: workspaceRoot },
   transpilePackages: ["@polivalko/shared"],
   poweredByHeader: false,
+  // Keep canonical URLs and robots directives in the initial head for every HTML reader.
+  htmlLimitedBots: /.*/,
   cacheComponents: true,
   partialPrefetching: true,
   // Catalog photos from Vercel Blob are resized here (src/shared/lib/images.ts). Few widths and one format keep
