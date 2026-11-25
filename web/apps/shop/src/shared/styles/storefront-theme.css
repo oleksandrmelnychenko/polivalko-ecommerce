@@ -145,15 +145,15 @@
 .mobile-dock { display: none; }
 .home-faq { display: grid; gap: 14px; }
 .home-faq__list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
-.home-faq__list > div { overflow: clip; border: 1px solid var(--color-rule); border-radius: 16px; }
+.home-faq__list > div { border-top: 1px solid var(--color-rule); }
 .home-faq details + details { border-top: 1px solid var(--color-rule); }
-.home-faq summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 10px 14px; font-weight: 500; cursor: pointer; list-style: none; }
+.home-faq summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 10px 0; font-weight: 500; cursor: pointer; list-style: none; }
 .home-faq summary::-webkit-details-marker { display: none; }
 .home-faq summary::after { content: "+"; flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px; background: var(--color-paper-2); font: 500 18px/1 var(--font-body); }
 .home-faq details[open] summary::after { content: "−"; }
 .home-faq summary:focus-visible { outline-offset: -3px; }
-.home-faq details p { margin: 0; padding: 0 14px 12px; color: var(--color-ink-2); line-height: 1.5; }
-.home-faq__location { display: flex; flex-wrap: wrap; column-gap: 16px; padding: 0 14px 4px; }
+.home-faq details p { margin: 0; padding: 0 28px 12px 0; color: var(--color-ink-2); line-height: 1.5; }
+.home-faq__location { display: flex; flex-wrap: wrap; column-gap: 16px; padding: 0 0 4px; }
 .home-faq .home-faq__location p { width: 100%; padding: 0 0 4px; }
 .home-faq__location a { display: inline-flex; align-items: center; min-height: 44px; }
 
@@ -190,7 +190,7 @@
   .filters-panel[data-open="false"] .filters-panel__body { display: none; }
   .filters-panel__body { margin-top: 16px; padding: 24px; border: 1px solid #e5e5e5; border-radius: 20px; }
   .product { grid-template-columns: minmax(0, .85fr) minmax(0, 1fr); }
-  .home-faq__list { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .home-faq__list { grid-template-columns: minmax(0, 1fr); gap: 0; }
 }
 @media (max-width: 40rem) {
   :root { --gutter: 16px; --bar-height: 112px; --text-section: 28px; --section-gap-s: 40px; }

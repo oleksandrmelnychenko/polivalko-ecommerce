@@ -77,17 +77,16 @@
   .home-sale__supporting .tile__photo { aspect-ratio: .95; }
 }
 
-.home-section, .home-recommendations, .home-feature, .home-feature + .home-feature, .steps, .home-faq, .store-visit { padding-block: clamp(18px, 2.5vw, 36px); }
+.home-section, .home-recommendations, .home-feature, .home-feature + .home-feature { padding-block: clamp(18px, 2.5vw, 36px); }
+.steps, .home-faq, .store-visit { padding-block: clamp(12px, 1.4vw, 20px); }
 .home-section .home-section__head, .home-recommendations .home-section__head { gap: 12px; margin-bottom: 14px; }
 .home-section .home-section__titles h2, .steps h2, .store-visit__intro h2, .home-faq h2 { font-size: clamp(1.45rem, 2.2vw, 2rem); line-height: 1.16; }
 .home-section .ctiles { margin-bottom: 0; }
 .mobile-bestsellers__no-photo { display: grid; place-items: center; height: 130px; border-radius: 10px; background: var(--color-paper-2); color: var(--color-ink-2); font-size: var(--text-xs); }
 .home-feature__layout { gap: 12px; }
-.home-feature__story, .steps__list li, .service-card, .store-visit__details { border-radius: 16px; }
+.home-feature__story, .service-card { border-radius: 16px; }
 .home-feature__links { gap: 6px; margin-bottom: 12px; }
 .home-feature__links a { min-height: 30px; padding: 4px 10px; border: 1px solid var(--color-rule); border-radius: var(--radius-pill); background: var(--color-paper-2); }
-.steps__list li, .store-visit__details { padding: clamp(14px, 2vw, 24px); }
-.store-visit__details { background: var(--color-paper-2); }
 .service-card:not(.service-card--featured) { min-height: 0; padding: 16px; background: white; }
 .service-card:not(.service-card--featured):hover { background: var(--color-paper-2); }
 .service-card__name { font-size: 1.0625rem; }
@@ -116,10 +115,6 @@
   .home-recommendations .tiles > li:nth-child(5) { display: flex; }
 }
 @media (max-width: 40rem) {
-  .steps__list { gap: 8px; }
-  .steps__list li { display: grid; grid-template-columns: 28px 1fr; gap: 4px 10px; }
-  .steps__list li::before { grid-row: span 2; width: 28px; height: 28px; margin: 0; }
-  .steps__list li p { grid-column: 2; margin: 0; }
   .hero-mobile__slide { border: 1px solid var(--color-rule); border-radius: 16px; }
 }
 

@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { TextItem } from "@/features/content/server";
-import { Heading } from "./heading";
+import Link from "next/link";
 
 const DEFAULT_STEPS: TextItem[] = [
   { title: "Оберіть товари", text: "Знайдіть товар за назвою чи артикулом або відкрийте потрібний розділ каталогу." },
@@ -14,7 +14,10 @@ export function Steps({ items }: { items?: TextItem[] | null }) {
   return (
     <section className="steps" aria-labelledby="steps-title">
       <div className="container">
-        <Heading id="steps-title" title="Як замовити" />
+        <header className="steps__head">
+          <h2 id="steps-title">Як замовити</h2>
+          <Link className="link" href="/catalog">До каталогу</Link>
+        </header>
         <ol className="steps__list" style={{ "--steps": Math.min(steps.length, 3) } as CSSProperties}>
           {steps.map((s, i) => (
             <li key={`${i}-${s.title}`}>
