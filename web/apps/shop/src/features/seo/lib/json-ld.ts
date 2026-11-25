@@ -3,6 +3,8 @@ import { directionsUrl } from "@/shared/lib/directions-url";
 import { openingHours, specialOpeningHours } from "./opening-hours";
 import { absoluteUrl, organizationId, SITE_LANGUAGE, SITE_NAME, siteUrl, websiteId } from "./site";
 
+const STORE_PHOTO = "/brand/polivalko-bucha.jpg";
+
 const CONTEXT = "https://schema.org";
 
 export type Crumb = { name: string; path?: string };
@@ -94,6 +96,8 @@ function organizationEntity({ contacts, seller, sameAs }: OrganizationSource) {
     name: SITE_NAME,
     legalName: seller?.name || undefined,
     url: absoluteUrl("/"),
+    // Photo of the shop front in Bucha; the same picture is the site-wide social preview (see metadata.ts).
+    image: absoluteUrl(STORE_PHOTO),
     telephone: telephone ? phone(telephone) : undefined,
     email,
     address: postalAddress(contacts?.address),
