@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/shared/ui/idle-link";
 import { Suspense } from "react";
 import { CartButton } from "@/features/cart";
 import { AccountButton } from "@/features/customer";

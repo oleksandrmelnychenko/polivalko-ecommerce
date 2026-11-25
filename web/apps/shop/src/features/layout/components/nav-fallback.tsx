@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/shared/ui/idle-link";
 import { ChevronDownIcon } from "@polivalko/shared/ui/icons";
 import { pageLinks, saleLink } from "../lib/nav-links";
 

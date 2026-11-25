@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import Link from "next/link";
+import Link from "@/shared/ui/idle-link";
 import { getContacts, socialLinks, SocialLinksList } from "@/features/content/server";
 import { PinIcon } from "@polivalko/shared/ui/icons";
 import { contactPhones } from "../lib/contact-phones";

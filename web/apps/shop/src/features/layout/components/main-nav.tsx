@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/shared/ui/idle-link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowRightIcon, ChevronDownIcon, ChevronRightIcon, GridIcon } from "@polivalko/shared/ui/icons";

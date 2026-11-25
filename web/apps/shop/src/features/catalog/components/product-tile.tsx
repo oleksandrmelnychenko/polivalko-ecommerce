@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/shared/ui/idle-link";
 import { AddToCart } from "@/features/cart";
 import { FavoriteButton } from "@/features/favorites";
 import { CompareButton } from "@/features/compare";

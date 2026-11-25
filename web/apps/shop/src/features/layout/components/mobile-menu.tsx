@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/shared/ui/idle-link";
 import { useRef, type MouseEvent } from "react";
 import { usePathname } from "next/navigation";
 import { CategoryLinks, CategoryPicture, containsCategory } from "./mega-column";

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/shared/ui/idle-link";
 
 export function FooterLinks({ links }: { links: { href: string; label: string }[] }) {
   return (

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/shared/ui/idle-link";
 import { categoryIcon } from "@polivalko/shared/ui/category-icon";
 import { GridIcon } from "@polivalko/shared/ui/icons";
 import { thumb } from "@/shared/lib/images";

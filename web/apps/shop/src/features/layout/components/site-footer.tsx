@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/shared/ui/idle-link";
 import { JOURNAL_ENABLED } from "@/features/journal";
 import { Suspense } from "react";
 import { FooterColumn } from "./footer-column";

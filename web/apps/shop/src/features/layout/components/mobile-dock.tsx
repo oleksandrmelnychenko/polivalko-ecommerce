@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/shared/ui/idle-link";
 import { usePathname } from "next/navigation";
 import { GridIcon, PhoneIcon, StoreIcon, UserIcon } from "@polivalko/shared/ui/icons";
 import { CompareIcon } from "@/features/compare";

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/shared/ui/idle-link";
 import { connection } from "next/server";
 import { getAnnouncement } from "@/features/content/server";
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { sized } from "@/shared/lib/images";
+import { thumb } from "@/shared/lib/images";
 import { ArrowRightIcon, ChevronDownIcon, GridIcon } from "@polivalko/shared/ui/icons";
 import { categoryPhotoUrl } from "../lib/category-photo";
 
@@ -17,7 +17,8 @@ export function CategoryCards({ categories, nested = false }: { categories: Cate
 
 function CategoryCard({ category, priority, heading: Heading }: { category: CategoryCardItem; priority: boolean; heading: "h2" | "h3" }) {
   const photo = categoryPhotoUrl(category);
-  const image = photo ? sized(photo, "(max-width: 36rem) 36px, 52px", 330) : null;
+  // Drawn 36–52 px: a 120 px crop (~5 KB) instead of the 360 px and wider srcset of a full photo (40–56 KB each).
+  const image = photo ? { src: thumb(photo, 120) } : null;
   const children = category.children ?? [];
   const href = `/catalog/${category.slug}`;
 
