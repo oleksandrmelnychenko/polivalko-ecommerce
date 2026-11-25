@@ -8,6 +8,8 @@ import { CloseIcon, SearchIcon } from "@polivalko/shared/ui/icons";
 const SEARCH_PATH = "/search";
 const MIN_LENGTH = 2;
 const DEBOUNCE_MS = 300;
+const RECENT = 5;
+const remember = (value: string) => (list: string[]) => [...list.slice(-(RECENT - 1)), value];
 
 export function SearchButton() {
   return <Suspense fallback={<SearchField urlQuery="" onSearchPage={false} />}><SearchWithLocation /></Suspense>;
@@ -33,23 +35,25 @@ function SearchField({ urlQuery, onSearchPage }: { urlQuery: string; onSearchPag
   const [pending, startTransition] = useTransition();
   // The query this field last put into the address bar: a different one there came from Back, Forward or a link,
   // and only then does the address overwrite what is typed (never while typing, which would eat letters).
-  const [sent, setSent] = useState(urlQuery);
+  // The last few count: on a slow connection an older address can arrive after a newer one was sent.
+  const [recent, setRecent] = useState([urlQuery]);
   const [seenUrl, setSeenUrl] = useState(urlQuery);
   if (urlQuery !== seenUrl) {
     setSeenUrl(urlQuery);
-    if (urlQuery !== sent) {
-      setSent(urlQuery);
+    if (!onSearchPage || !recent.includes(urlQuery)) {
+      setRecent([urlQuery]);
       setQuery(urlQuery);
       if (!onSearchPage) setMobileOpen(false);
     }
   }
+  const sent = recent[recent.length - 1];
   const term = query.trim();
 
   useEffect(() => {
     if (term === sent) return;
     if (term.length < MIN_LENGTH && !(onSearchPage && term.length === 0)) return;
     const timer = setTimeout(() => {
-      setSent(term);
+      setRecent(remember(term));
       const href = term ? `${SEARCH_PATH}?q=${encodeURIComponent(term)}` : SEARCH_PATH;
       startTransition(() => {
         if (onSearchPage) router.replace(href, { scroll: false });
@@ -73,7 +77,7 @@ function SearchField({ urlQuery, onSearchPage }: { urlQuery: string; onSearchPag
   return <div className="header-search" data-open={mobileOpen} data-pending={pending || undefined}>
     <button type="button" className="icon-btn header-search__toggle" aria-label={mobileOpen ? "Закрити пошук" : "Пошук"} aria-expanded={mobileOpen} aria-controls="header-search-form"
       onClick={() => { setMobileOpen(!mobileOpen); if (!mobileOpen) requestAnimationFrame(() => input.current?.focus()); }}>{mobileOpen ? <CloseIcon /> : <SearchIcon />}</button>
-    <Form id="header-search-form" action={SEARCH_PATH} role="search" className="header-search__form" onSubmit={() => { setSent(term); input.current?.blur(); }}>
+    <Form id="header-search-form" action={SEARCH_PATH} role="search" className="header-search__form" onSubmit={() => { setRecent(remember(term)); input.current?.blur(); }}>
       <SearchIcon />
       <input ref={input} name="q" type="search" value={query} onChange={(e) => setQuery(e.target.value)}
         placeholder="Пошук товарів…" aria-label="Пошук у каталозі" autoComplete="off" spellCheck={false} enterKeyHint="search" />
