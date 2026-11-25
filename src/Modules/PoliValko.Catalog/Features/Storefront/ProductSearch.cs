@@ -276,6 +276,7 @@ internal static class ProductSearch
             : token.StartsWith(variant.Text, StringComparison.Ordinal)));
 
         private const int WordForm = 3;
+        private const int MinInsideLength = 4;
         private const int MaxEndingLength = 3;
 
         private int? Level(Doc doc, Variant variant)
@@ -298,7 +299,8 @@ internal static class ProductSearch
             if (prefix > 0) return prefix;
             if (Latin && doc.Slug.Contains(text, StringComparison.Ordinal)) return WordForm;
             // A synonym inside another word is more often a different word («роза» in «мороза»).
-            if (variant.Penalty == 0 && doc.Name.Contains(text, StringComparison.Ordinal)) return 1;
+            // Inside a word only for words long enough to mean something there: «тли» is in «світлий».
+            if (variant.Penalty == 0 && text.Length >= MinInsideLength && doc.Name.Contains(text, StringComparison.Ordinal)) return 1;
             if (doc.Brand.Contains(text, StringComparison.Ordinal)) return 0;
             if (WordIn(doc.Category, text)) return 0;
             if (variant.Penalty == 0 && text.Length >= 3 && doc.Sku.StartsWith(text, StringComparison.Ordinal)) return 0;
