@@ -1,6 +1,7 @@
 import path from "node:path";
 import { apiInternalUrl } from "@polivalko/shared/api/origin";
 import type { NextConfig } from "next";
+import { CATALOG_PHOTO_HOST } from "./src/shared/lib/catalog-photo-host";
 
 const workspaceRoot = path.join(__dirname, "../..");
 const storefrontAreas = [
@@ -20,7 +21,7 @@ const nextConfig: NextConfig = {
   // Catalog photos from Vercel Blob are resized here (src/shared/lib/images.ts). Few widths and one format keep
   // the number of optimized variants, which hosting plans count, small; a Blob URL never changes its content.
   images: {
-    remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/catalog/**" }],
+    remotePatterns: [{ protocol: "https", hostname: CATALOG_PHOTO_HOST, pathname: "/catalog/**" }],
     imageSizes: [64, 128, 256, 384],
     deviceSizes: [640, 828, 1080, 1600],
     qualities: [75],

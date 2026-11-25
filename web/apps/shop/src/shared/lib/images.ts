@@ -1,14 +1,15 @@
 import { getImageProps } from "next/image";
 import * as stock from "@polivalko/shared/lib/images";
+import { CATALOG_PHOTO_HOST } from "./catalog-photo-host";
 
 export type { Sized } from "@polivalko/shared/lib/images";
 
 // Catalog photos sit in Vercel Blob as uploaded: up to 1400 px and 2 MB for a 320 px tile. These go through
 // the Next.js image optimizer (/_next/image, allowed in next.config.ts) at the width the layout needs.
 // Blob names are never reused (a new upload gets a new name), so the optimizer may cache them for a long time.
-const CATALOG_PHOTO = /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\/catalog\//;
+const CATALOG_PHOTO = `https://${CATALOG_PHOTO_HOST}/catalog/`;
 
-export const isCatalogPhoto = (url: string) => CATALOG_PHOTO.test(url);
+export const isCatalogPhoto = (url: string) => url.startsWith(CATALOG_PHOTO);
 
 function optimized(url: string, width: number, sizes?: string): stock.Sized {
   const { props } = getImageProps({ src: url, alt: "", width, height: width, sizes });
