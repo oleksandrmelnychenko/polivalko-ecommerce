@@ -61,6 +61,12 @@ public sealed class ProductSearchTests
     [InlineData("переходник 3/4", "Перехідник Cellfast 3/4 на 1/2")]
     [InlineData("елочные шары", "Ялинкові кулі Devilon, 6 см")]
     [InlineData("от кротов", "Відлякувач кротів сонячний")]
+    [InlineData("леска для триммера", "Ліска для тримерів 15м")]
+    [InlineData("бензокоса", "Тример бензиновий")]
+    [InlineData("черенок", "Держак дерев'яний 1,2 м")]
+    [InlineData("плоскогубцы", "Плоскогубці слюсарні 200 мм")]
+    [InlineData("скарификатор", "Аератор-розпушувач Combi Care 36 E")]
+    [InlineData("высоторез", "Сучкоріз телескопічний Fiskars")]
     public void Added_synonyms_find_the_catalog_word(string q, string name)
     {
         var product = Entry(name, Tools);
