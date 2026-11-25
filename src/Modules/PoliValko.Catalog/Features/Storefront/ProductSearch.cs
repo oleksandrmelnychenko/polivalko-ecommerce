@@ -12,9 +12,10 @@ internal sealed record SearchEntry(Guid Id, string Name, string? DisplayName, st
 /// What a query found: every product id, and the same ids split into groups from the best match down, the last group
 /// left out (it is whatever is not in the others).
 /// </summary>
-internal sealed record SearchRanking(IReadOnlyList<Guid> Ids, IReadOnlyList<Guid[]> Better, bool Approximate)
+/// <param name="About">Products whose name is about the first word («Шланг …», not «Перехідник для шланга»).</param>
+internal sealed record SearchRanking(IReadOnlyList<Guid> Ids, IReadOnlyList<Guid[]> Better, IReadOnlyList<Guid> About, bool Approximate)
 {
-    public static readonly SearchRanking None = new([], [], false);
+    public static readonly SearchRanking None = new([], [], [], false);
 }
 
 /// <summary>
@@ -29,6 +30,9 @@ internal static class ProductSearch
     private const int MaxParsed = 50_000;
 
     private static readonly ConcurrentDictionary<(SearchEntry Entry, string Category), Doc> Parsed = new();
+
+    /// <summary>Words after which a name tells what the product is for, not what it is: «Перехідник для шланга».</summary>
+    private static readonly HashSet<string> HeadEnds = ["для", "на", "до", "від", "під", "з", "із", "зі", "в", "у", "без"];
 
     private static readonly char[] Apostrophes = ['’', 'ʼ', '`', '‘'];
     private static readonly char[] Edges = ['.', ',', ';', ':', '!', '?', '(', ')', '[', ']', '«', '»', '"', '“', '”', '\'', '-', '+', '*'];
@@ -94,14 +98,14 @@ internal static class ProductSearch
         {
             if (doc.Sku == sku)
             {
-                hits.Add(new Hit(doc.Id, SkuTier));
+                hits.Add(new Hit(doc.Id, SkuTier, About: true));
                 continue;
             }
 
             if (words.Count == 0) continue;
             var levels = words.Select(word => word.Match(doc)).ToList();
             if (levels.Any(level => level is null)) continue;
-            hits.Add(new Hit(doc.Id, Tier(levels.Min(level => level!.Value), StartsWith(doc, words[0]))));
+            hits.Add(new Hit(doc.Id, levels.Min(level => level!.Value), words[0].About(doc)));
         }
 
         return hits;
@@ -136,7 +140,7 @@ internal static class ProductSearch
             var matched = levels.Count(level => level is not null);
             if (matched == 0) continue;
             var best = levels.Where(level => level is not null).Min(level => level!.Value);
-            hits.Add(new Hit(doc.Id, matched * 10 + Tier(best, StartsWith(doc, words[0]))));
+            hits.Add(new Hit(doc.Id, matched * 10 + best, words[0].About(doc)));
         }
 
         // When every remaining word meets in some product, only those products count.
@@ -144,16 +148,12 @@ internal static class ProductSearch
         return hits.Any(hit => hit.Tier >= all) ? hits.Where(hit => hit.Tier >= all).ToList() : hits;
     }
 
-    private static int Tier(int nameLevel, bool startsWith) => nameLevel * 2 + (startsWith ? 1 : 0);
-
-    private static bool StartsWith(Doc doc, Query first) =>
-        doc.Lead is { } lead && first.Variants.Any(v => v.Penalty == 0 && lead.StartsWith(v.Text, StringComparison.Ordinal));
-
     private static SearchRanking Build(List<Hit> hits, bool approximate)
     {
         var tiers = hits.GroupBy(hit => hit.Tier).OrderByDescending(group => group.Key)
             .Select(group => group.Select(hit => hit.Id).ToArray()).ToList();
-        return new SearchRanking(hits.Select(hit => hit.Id).ToList(), tiers.Take(tiers.Count - 1).ToList(), approximate);
+        return new SearchRanking(hits.Select(hit => hit.Id).ToList(), tiers.Take(tiers.Count - 1).ToList(),
+            hits.Where(hit => hit.About).Select(hit => hit.Id).ToList(), approximate);
     }
 
     private static List<Doc> Documents(IReadOnlyList<SearchEntry> entries, IReadOnlyList<Category> categories)
@@ -177,14 +177,14 @@ internal static class ProductSearch
         return entries.Select(e => Parsed.GetOrAdd((e, PathOf(e.CategoryId)), key => Doc.Of(key.Entry, key.Category))).ToList();
     }
 
-    private sealed record Hit(Guid Id, int Tier);
+    private sealed record Hit(Guid Id, int Tier, bool About);
 
     private sealed class Doc
     {
         public required Guid Id { get; init; }
         public required string Name { get; init; }
         public required string[] NameTokens { get; init; }
-        public required string? Lead { get; init; }
+        public required string[] Head { get; init; }
         public required string Brand { get; init; }
         public required string Category { get; init; }
         public required string Slug { get; init; }
@@ -203,7 +203,7 @@ internal static class ProductSearch
                 Id = e.Id,
                 Name = name,
                 NameTokens = nameTokens,
-                Lead = Split(shown).FirstOrDefault(),
+                Head = Split(shown).TakeWhile(token => !HeadEnds.Contains(token)).ToArray(),
                 Brand = brand,
                 Category = category,
                 Slug = slug,
@@ -269,6 +269,11 @@ internal static class ProductSearch
 
             return best;
         }
+
+        /// <summary>Whether the word is among the name's words before «для», «на» and the like.</summary>
+        public bool About(Doc doc) => Variants.Any(variant => doc.Head.Any(token => variant.WholeToken
+            ? token == variant.Text
+            : token.StartsWith(variant.Text, StringComparison.Ordinal)));
 
         private const int WordForm = 3;
         private const int MaxEndingLength = 3;

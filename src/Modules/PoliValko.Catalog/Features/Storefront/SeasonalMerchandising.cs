@@ -31,7 +31,7 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
     public async Task<IQueryable<Product>> SortAsync(IQueryable<Product> products, IReadOnlyList<Category> categories,
         string? term, PoliValkoDbContext db, DateOnly today, CancellationToken ct, string mode = ProductSort.Seasonal,
         bool acrossCategories = true, Guid[]? pinned = null, DateOnly? seasonDate = null,
-        IReadOnlyList<Guid[]>? relevance = null)
+        IReadOnlyList<Guid[]>? relevance = null, Guid[]? about = null)
     {
         var season = seasonDate ?? today;
         var seasons = await SeasonClassifier.ClassifyAsync(products, categories, db, cache, today, season, ct);
@@ -81,6 +81,8 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
         if (pinned is { Length: > 0 })
             ordered = ordered.ThenByDescending(s => pinned.Contains(s.p.Id)).ThenBy(s => Array.IndexOf(pinned, s.p.Id));
         ordered = ordered.ThenByDescending(s => s.available >= 1 && s.p.Price.Amount > 0);
+        // Among what can be bought, the thing itself before what goes with it: «Шланг …» before «… для шланга».
+        if (about is { Length: > 0 }) ordered = ordered.ThenByDescending(s => about.Contains(s.p.Id));
         if (monthlyLeader is { } leader) ordered = ordered.ThenByDescending(s => s.p.Id == leader);
         if (leaders.Length > 0)
             ordered = ordered.ThenByDescending(s => leaders.Contains(s.p.Id)).ThenBy(s => Array.IndexOf(leaders, s.p.Id));

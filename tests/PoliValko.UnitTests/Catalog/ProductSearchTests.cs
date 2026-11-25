@@ -53,6 +53,18 @@ public sealed class ProductSearchTests
     }
 
     [Fact]
+    public void A_product_is_about_the_word_only_before_dlia()
+    {
+        var hose = Entry("Поливальний шланг Plus 1/2", Tools);
+        var adapter = Entry("Перехідник Cellfast для шлангів 3/4", Tools);
+
+        var found = ProductSearch.Rank("шланг", [hose, adapter], Categories);
+
+        found.Ids.ShouldBe([hose.Id, adapter.Id], ignoreOrder: true);
+        found.About.ShouldBe([hose.Id]);
+    }
+
+    [Fact]
     public void Grabli_in_russian_find_the_rake() =>
         Find("грабли").Ids.ShouldBe([Rake.Id]);
 

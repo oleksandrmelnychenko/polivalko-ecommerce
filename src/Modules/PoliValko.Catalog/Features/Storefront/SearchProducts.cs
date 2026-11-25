@@ -80,6 +80,7 @@ internal static class SearchProducts
 
         var approximate = false;
         IReadOnlyList<Guid[]>? relevance = null;
+        Guid[]? about = null;
         if (!string.IsNullOrWhiteSpace(query.Q))
         {
             // The visible catalog is a few thousand short rows: matching them in memory lets search understand word
@@ -91,6 +92,7 @@ internal static class SearchProducts
             var ids = ranking.Ids.ToArray();
             approximate = ranking.Approximate;
             relevance = ranking.Better;
+            about = ranking.About.ToArray();
             scope = scope.Where(p => ids.Contains(p.Id));
         }
 
@@ -137,7 +139,7 @@ internal static class SearchProducts
                 await merchandising.SortAsync(products, categories, query.Q?.Trim(), db, today, ct, sort,
                     acrossCategories: string.IsNullOrWhiteSpace(query.Category),
                     pinned: string.IsNullOrWhiteSpace(query.Q) && string.IsNullOrWhiteSpace(query.Category) ? setting?.PinnedProductIds : null,
-                    relevance: relevance),
+                    relevance: relevance, about: about),
             // Products without a price go last in both directions.
             ProductSort.PriceAsc => products.OrderByDescending(p => p.Price.Amount > 0).ThenBy(p => p.Price.Amount).ThenBy(p => p.Id),
             ProductSort.PriceDesc => products.OrderByDescending(p => p.Price.Amount > 0).ThenByDescending(p => p.Price.Amount).ThenBy(p => p.Id),
