@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
+import { getCategory } from "@/features/catalog/server";
 import { Suspense } from "react";
 import type { ProductDetails } from "@polivalko/shared/api/types";
 import type { DeliveryFacts } from "@/shared/lib/delivery-facts";
@@ -23,7 +24,13 @@ async function DeliverySection({ deliveryFacts }: { deliveryFacts: () => Promise
 }
 
 /** The page resolves the product first (see requireProduct), so a missing one is a real 404. */
-export function ProductScreen({ product, deliveryFacts }: { product: ProductDetails; deliveryFacts: () => Promise<DeliveryFacts | null> }) {
+export async function ProductScreen({ product, deliveryFacts }: { product: ProductDetails; deliveryFacts: () => Promise<DeliveryFacts | null> }) {
+  const category = await getCategory(product.category.slug).catch(() => null);
+  const parents = [
+    { name: "Каталог", path: "/catalog" },
+    ...(category?.breadcrumbs ?? []).map(c => ({ name: c.name, path: `/catalog/${c.slug}` })),
+    { name: product.category.name, path: `/catalog/${product.category.slug}` },
+  ];
   const discount = discountPercent(product.price, product.oldPrice);
   const overview = (
     <div className="product">
@@ -52,19 +59,9 @@ export function ProductScreen({ product, deliveryFacts }: { product: ProductDeta
   );
   return (
     <div className="container product-page">
-      <ProductJsonLd product={product} />
+      <ProductJsonLd product={product} parents={parents} />
       <TrackViewItem item={{ item_id: product.sku, item_name: product.name, price: Number(product.price.value), quantity: 1 }} />
-      <nav className="crumbs product-crumbs" aria-label="Хлібні крихти">
-        <ol>
-          <li>
-            <Link href="/catalog">Каталог</Link>
-          </li>
-          <li>
-            <Link href={`/catalog/${product.category.slug}`}>{product.category.name}</Link>
-          </li>
-          <li aria-current="page">{product.name}</li>
-        </ol>
-      </nav>
+      <Breadcrumbs current={product.name} parents={parents} />
 
       {overview}
       <Suspense fallback={null}>

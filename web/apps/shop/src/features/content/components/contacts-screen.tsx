@@ -1,3 +1,4 @@
+import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
@@ -13,7 +14,15 @@ import { SocialLinksList } from "./social-links";
 
 const tel = (value: string) => "tel:" + value.replace(/[^\d+]/g, "");
 export function ContactsScreen() {
-  return <div className="container contact-page"><JsonLd data={breadcrumbJsonLd([{ name: "Контакти", path: "/contacts" }])} /><Suspense fallback={<div className="skeleton" style={{ height: 680, marginBlock: 64 }} />}><ContactsContent /></Suspense></div>;
+  return (
+    <div className="container contact-page">
+      <Breadcrumbs current="Контакти" />
+      <JsonLd data={breadcrumbJsonLd([{ name: "Контакти", path: "/contacts" }])} />
+      <Suspense fallback={<div className="skeleton" style={{ height: 680, marginBlock: 64 }} />}>
+        <ContactsContent />
+      </Suspense>
+    </div>
+  );
 }
 async function ContactsContent() {
   await connection();

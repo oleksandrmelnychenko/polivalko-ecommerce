@@ -1,3 +1,4 @@
+import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import type { ReactNode } from "react";
 import { UserIcon } from "@polivalko/shared/ui/icons";
 
@@ -5,8 +6,9 @@ export function AuthFrame({ title, crumb, lead, children }: { title: string; cru
   return (
     <div className="auth-card">
       <header>
+        <Breadcrumbs current={crumb} parents={[{ name: "Особистий кабінет", path: "/account" }]} />
         <span className="auth-card__icon"><UserIcon /></span>
-        <p className="auth-card__eyebrow">Особистий кабінет · {crumb}</p>
+
         <h1>{title}</h1>
         {typeof lead === "string" ? <p className="lead">{lead}</p> : lead}
       </header>

@@ -1,3 +1,4 @@
+import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import Link from "next/link";
 import { seoMetadata, JsonLd, breadcrumbJsonLd } from "@/features/seo";
 import { categoryPhotos, pagePhotos } from "@polivalko/shared/lib/stand-in-photos";
@@ -22,6 +23,7 @@ const benefits = [
 
 export default function AboutPage() {
   return <div className="container story-page">
+      <Breadcrumbs current="Про нас" />
     <JsonLd data={breadcrumbJsonLd([{ name: "Про нас", path: "/about" }])} />
     <header className="page-head"><h1>Про Полі-Валько</h1></header>
     <section className="story-intro">

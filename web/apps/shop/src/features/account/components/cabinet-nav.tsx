@@ -1,5 +1,7 @@
 "use client";
 
+import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
+
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { HeartIcon } from "@/features/favorites";
@@ -11,6 +13,16 @@ const items: { href: string; label: string; icon: ReactNode; match: (path: strin
   { href: "/account/addresses", label: "Адреси", icon: <PinIcon />, match: (p) => p.startsWith("/account/addresses") },
   { href: "/account/profile", label: "Профіль", icon: <UserIcon />, match: (p) => p.startsWith("/account/profile") },
 ];
+
+export function CabinetBreadcrumbs({ pathname }: { pathname: string }) {
+  if (pathname === "/account") return <Breadcrumbs current="Особистий кабінет" />;
+  const parents = [{ name: "Особистий кабінет", path: "/account" }];
+  if (pathname.startsWith("/account/orders/")) {
+    parents.push({ name: "Замовлення", path: "/account/orders" });
+    return <Breadcrumbs current={`Замовлення №${pathname.split("/").at(-1)}`} parents={parents} />;
+  }
+  return <Breadcrumbs current={items.find(item => item.match(pathname))?.label ?? "Кабінет"} parents={parents} />;
+}
 
 export function CabinetNav({ pathname, onLogout }: { pathname: string; onLogout: () => Promise<void> }) {
   const [busy, setBusy] = useState(false);

@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { currentPath, loginHref, signOut, useCustomer } from "@/features/customer";
-import { CabinetNav } from "./cabinet-nav";
+import { CabinetBreadcrumbs, CabinetNav } from "./cabinet-nav";
 import { ConfirmBanner } from "./confirm-banner";
 
 export function CabinetFrame({ mailDelivers, children }: { mailDelivers: boolean; children: ReactNode }) {
@@ -37,6 +37,7 @@ export function CabinetFrame({ mailDelivers, children }: { mailDelivers: boolean
   return (
     <div className="cabinet-workspace">
       <div className="container">
+        <CabinetBreadcrumbs pathname={pathname} />
         <header className="cabinet-heading">
           <h1>Особистий кабінет</h1>
         </header>

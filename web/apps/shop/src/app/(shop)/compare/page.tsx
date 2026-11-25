@@ -1,3 +1,4 @@
+import { Breadcrumbs } from "@/features/layout/server";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CompareScreen } from "@/features/compare";
@@ -7,6 +8,7 @@ export const metadata: Metadata = { title: "Порівняння товарів"
 export default function ComparePage() {
   return (
     <div className="container compare-page">
+      <Breadcrumbs current="Порівняння товарів" />
       <header className="page-head compare-page__head">
         <h1>Порівняння товарів</h1>
       </header>

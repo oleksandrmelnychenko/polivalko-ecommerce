@@ -1,3 +1,4 @@
+import { Breadcrumbs } from "@/features/layout/server";
 import type { Metadata } from "next";
 import { Suspense, type ReactNode } from "react";
 
@@ -10,8 +11,11 @@ export const metadata: Metadata = {
 
 export default function PayLayout({ children }: { children: ReactNode }) {
   return (
-    <main id="main" className="paypage">
-      <Suspense fallback={<div className="paypage__card skeleton" style={{ height: "20rem" }} aria-busy="true" />}>{children}</Suspense>
-    </main>
+    <>
+      <div className="container"><Breadcrumbs current="Тестова оплата" /></div>
+      <main id="main" className="paypage">
+        <Suspense fallback={<div className="paypage__card skeleton" style={{ height: "20rem" }} aria-busy="true" />}>{children}</Suspense>
+      </main>
+    </>
   );
 }

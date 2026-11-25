@@ -37,6 +37,7 @@
 }
 .ctile__subs a:hover, .catalog-page .page-head__subs a:hover { color: var(--color-ink); border-color: var(--color-control); }
 .ctile__subs .ctile__more { background: var(--color-paper); }
+.catalog-page .page-head__subs a[aria-current="page"] { background: var(--shop-graphite); color: white; border-color: transparent; }
 .catalog-page .page-head__subs { display: block; }
 .catalog-page .page-head__subs ul { gap: 6px; margin: 0; }
 .catalog-page .category-intro { font-size: var(--text-sm); line-height: 1.5; }

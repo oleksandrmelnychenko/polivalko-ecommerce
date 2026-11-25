@@ -1,3 +1,4 @@
+import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import { Suspense } from "react";
 import { breadcrumbJsonLd, JsonLd } from "@/features/seo";
 import type { SearchParams } from "../lib/listing-params";
@@ -10,6 +11,7 @@ export const SALE_LEAD = "Акційні пропозиції Полі-Валь�
 export function SaleScreen({ searchParams }: { searchParams: Promise<SearchParams> }) {
   return (
     <div className="container sale-page listing-page">
+      <Breadcrumbs current="Акції" />
       <JsonLd data={breadcrumbJsonLd([{ name: SALE_TITLE, path: "/sale" }])} />
       <header className="page-head">
         <h1>{SALE_TITLE}</h1>

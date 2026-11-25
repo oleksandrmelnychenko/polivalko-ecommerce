@@ -1,7 +1,4 @@
-.product-crumbs { padding-top: 12px; }
-.product-crumbs ol { font-size: .8125rem; }
-.product-crumbs a:is(:hover, :focus-visible) { text-decoration: underline; text-underline-offset: .2em; }
-.product { display: grid; gap: clamp(24px, 3.4vw, 56px); align-items: start; margin-top: 12px; }
+.product { display: grid; gap: clamp(24px, 3.4vw, 56px); align-items: start; }
 .gallery { display: grid; gap: 8px; min-width: 0; }
 .gallery-photo__previous { position: absolute; inset: 0; pointer-events: none; object-fit: cover; }
 .gallery { --slide-from: 100%; --slide-to: -100%; --slide-timing: 440ms cubic-bezier(.4, 0, .2, 1) both; }

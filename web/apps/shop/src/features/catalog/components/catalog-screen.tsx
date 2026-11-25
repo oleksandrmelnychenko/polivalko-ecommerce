@@ -1,3 +1,4 @@
+import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import { Suspense } from "react";
 import { breadcrumbJsonLd, itemListJsonLd, JsonLd } from "@/features/seo";
 import { getCategoryTree } from "../api/server";
@@ -10,6 +11,7 @@ import { ListingSkeleton } from "./listing-skeleton";
 export function CatalogScreen({ searchParams }: { searchParams: Promise<SearchParams> }) {
   return (
     <div className="container catalog-page listing-page">
+      <Breadcrumbs current="Каталог" />
       <JsonLd data={breadcrumbJsonLd([{ name: "Каталог", path: "/catalog" }])} />
       <header className="page-head">
         <h1>Каталог</h1>

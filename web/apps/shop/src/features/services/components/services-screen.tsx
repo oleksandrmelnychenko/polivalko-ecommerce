@@ -1,3 +1,4 @@
+import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
@@ -20,6 +21,7 @@ const STEPS = [
 
 export function ServicesScreen() {
   return <div className="container garden-services">
+      <Breadcrumbs current="Послуги для саду" />
     <JsonLd data={breadcrumbJsonLd([{ name: "Послуги", path: "/services" }])} />
     <header className="page-head">
       <h1>Послуги для саду</h1>

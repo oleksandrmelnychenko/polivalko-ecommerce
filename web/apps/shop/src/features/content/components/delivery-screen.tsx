@@ -1,3 +1,4 @@
+import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
@@ -59,6 +60,7 @@ async function DeliveryContent() {
   return (
     <>
       <JsonLd data={breadcrumbJsonLd([{ name: title, path: `/${SLUG}` }])} />
+      <Breadcrumbs current={title} />
       <header className="delivery-header">
         <h1>{title}</h1>
         <p>{page.lead || "Нова пошта по Україні або самовивіз з магазину. Спосіб отримання й оплати обираєте під час оформлення."}</p>

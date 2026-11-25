@@ -1,3 +1,4 @@
+import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import Form from "next/form";
 import Link from "next/link";
 import { SearchIcon } from "@polivalko/shared/ui/icons";
@@ -5,6 +6,7 @@ import { SearchIcon } from "@polivalko/shared/ui/icons";
 export function NotFoundContent() {
   return (
     <div className="container not-found">
+      <Breadcrumbs current="Сторінку не знайдено" />
       <h1>Сторінку не знайдено</h1>
       <p className="lead">Можливо, товар більше не продається або адреса змінилася. Спробуйте знайти його за назвою чи артикулом.</p>
       <Form action="/search" role="search" className="search not-found__search">

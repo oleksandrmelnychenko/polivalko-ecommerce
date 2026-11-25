@@ -1,3 +1,4 @@
+import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import { Suspense } from "react";
 import { ListingSkeleton, type SearchParams } from "@/features/catalog";
 import { CatalogListing } from "@/features/catalog/server";
@@ -8,6 +9,7 @@ type SearchScreenProps = { searchParams: Promise<SearchParams> };
 export function SearchScreen(props: SearchScreenProps) {
   return (
     <div className="container listing-page">
+      <Breadcrumbs current="Пошук" />
       <Suspense fallback={<ListingSkeleton />}>
         <SearchResults {...props} />
       </Suspense>

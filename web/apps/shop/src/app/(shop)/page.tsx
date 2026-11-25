@@ -1,3 +1,4 @@
+import { Breadcrumbs } from "@/features/layout/server";
 import { HomeScreen } from "@/features/home/server";
 import { seoMetadata } from "@/features/seo";
 
@@ -9,5 +10,10 @@ export const metadata = seoMetadata({
 });
 
 export default function HomePage() {
-  return <HomeScreen />;
+  return (
+    <>
+      <div className="container"><Breadcrumbs /></div>
+      <HomeScreen />
+    </>
+  );
 }

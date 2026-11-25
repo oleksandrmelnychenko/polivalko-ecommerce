@@ -1,3 +1,4 @@
+import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { TrackPurchase } from "@/features/analytics";
@@ -44,6 +45,7 @@ export async function OrderScreen({ params, searchParams, mailDelivers, getPicku
 
   return (
     <div className="container order-page">
+      <Breadcrumbs current={`Замовлення №${order.number}`} />
       {(paid || (order.paymentMethod !== "card" && order.status !== "cancelled")) && (
         <TrackPurchase
           orderNumber={order.number}
