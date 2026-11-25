@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { gtinFromAttributes, isGlobalGtin } from "../src/features/product/lib/gtin.ts";
+import { gtinFromAttributes, isGlobalGtin } from "../../../packages/shared/lib/gtin.ts";
 
 test("real Ukrainian EAN-13 barcodes from the catalog are GTINs", () => {
   assert.equal(isGlobalGtin("4823067702320"), true);

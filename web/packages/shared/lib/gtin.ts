@@ -10,11 +10,16 @@ export type GtinProperty = "gtin8" | "gtin12" | "gtin13" | "gtin14";
  */
 export function gtinFromAttributes(attributes: readonly { name: string; value: string }[]): { property: GtinProperty; value: string } | null {
   for (const attribute of attributes) {
-    if (!BARCODE_ATTRIBUTES.has(attribute.name.trim().toLowerCase())) continue;
+    if (!isBarcodeAttribute(attribute.name)) continue;
     const value = attribute.value.trim();
     if (isGlobalGtin(value)) return { property: `gtin${value.length}` as GtinProperty, value };
   }
   return null;
+}
+
+/** Whether the shop reads this attribute as the barcode (case and spacing ignored). */
+export function isBarcodeAttribute(name: string): boolean {
+  return BARCODE_ATTRIBUTES.has(name.trim().toLowerCase());
 }
 
 export function isGlobalGtin(value: string): boolean {

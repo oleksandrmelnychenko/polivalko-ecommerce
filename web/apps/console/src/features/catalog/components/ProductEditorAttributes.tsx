@@ -2,6 +2,7 @@ import { CatalogSectionTitle } from './CatalogSectionTitle'
 import { ActionIcon, Autocomplete, Button, Text, TextInput, Tooltip } from '@mantine/core'
 import { IconPlus, IconTrash, IconListDetails } from '@tabler/icons-react'
 import { useMemo, type Dispatch, type SetStateAction } from 'react'
+import { isBarcodeAttribute, isGlobalGtin } from '@polivalko/shared/lib/gtin'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { getAttributeNames, type ProductAttribute } from '../api/catalogApi'
 import { newAttributeRow, type AttributeRow } from '../lib/attributeRows'
@@ -59,6 +60,11 @@ export function ProductEditorAttributes({ attributes, setAttributes, categoryId,
                   </ActionIcon>
                 </Tooltip>
               )}
+              {isBarcodeAttribute(attribute.name) && attribute.value.trim() && !isGlobalGtin(attribute.value.trim()) ? (
+                <Text size="xs" c="orange.8" className="catalog-attr-note">
+                  Це не схоже на заводський штрихкод (EAN-13 з правильною контрольною цифрою), тому Google його не отримає. Якщо це внутрішній код, перейменуйте характеристику, наприклад на «Артикул».
+                </Text>
+              ) : null}
             </div>
           ))}
         </div>
@@ -67,6 +73,9 @@ export function ProductEditorAttributes({ attributes, setAttributes, categoryId,
           Характеристик ще немає.
         </Text>
       )}
+      <Text size="xs" c="dimmed" mt={6}>
+        Порядок тут такий самий, як на сторінці товару. Заводський штрихкод записуйте в характеристику «Штрихкод»: сайт передасть його в Google.
+      </Text>
       {error ? (
         <Text size="xs" c="red" mt={6} role="alert">
           {error}

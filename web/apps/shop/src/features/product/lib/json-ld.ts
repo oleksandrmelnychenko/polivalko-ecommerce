@@ -2,7 +2,7 @@ import type { ProductDetails } from "@polivalko/shared/api/types";
 import { absoluteUrl, organizationId, SITE_NAME } from "@/features/seo";
 import { hasPrice } from "@/shared/lib/price";
 import { descriptionText } from "./description";
-import { gtinFromAttributes } from "./gtin";
+import { gtinFromAttributes } from "@polivalko/shared/lib/gtin";
 
 export function productJsonLd(product: ProductDetails) {
   const url = absoluteUrl(`/product/${product.slug}`);

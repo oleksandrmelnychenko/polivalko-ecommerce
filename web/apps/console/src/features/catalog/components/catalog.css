@@ -426,6 +426,10 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) 36px;
 }
 
+.catalog-attr-row > .catalog-attr-note {
+  grid-column: 1 / -1;
+}
+
 .catalog-attr-head {
   color: var(--mantine-color-gray-7);
   font-size: 12px;

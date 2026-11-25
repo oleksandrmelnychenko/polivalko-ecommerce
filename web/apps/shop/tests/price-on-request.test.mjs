@@ -35,9 +35,9 @@ test("comparison shows «Ціну уточнюйте» instead of 0 and does not
 test("product structured data has no Offer when the price is 0", () => {
   const price = load("../src/shared/lib/price.ts", () => ({}));
   const seo = { absoluteUrl: (path) => `https://shop.test${path}`, organizationId: () => "https://shop.test/#organization", SITE_NAME: "Shop" };
-  const gtin = load("../src/features/product/lib/gtin.ts", () => ({}));
+  const gtin = load("../../../packages/shared/lib/gtin.ts", () => ({}));
   const { productJsonLd } = load("../src/features/product/lib/json-ld.ts", (name) =>
-    name === "@/features/seo" ? seo : name === "@/shared/lib/price" ? price : name === "./gtin" ? gtin : { descriptionText: () => "" });
+    name === "@/features/seo" ? seo : name === "@/shared/lib/price" ? price : name === "@polivalko/shared/lib/gtin" ? gtin : { descriptionText: () => "" });
   const product = {
     slug: "yalynka", name: "Ялинка", sku: "12254", seoDescription: null, descriptionHtml: null, images: [], brand: null, attributes: [],
     category: { name: "Новий рік" }, inStock: false, price: money("0.00"),
