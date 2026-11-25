@@ -29,7 +29,11 @@
 .cart-page .cart-empty__icon { width: 52px; height: 52px; margin-bottom: 12px; background: #f4f4f4; color: var(--color-ink); }
 .cart-page .cart-empty__icon svg { width: 26px; height: 26px; }
 .cart-page .cart-empty__suggestions { margin-top: 16px; }
-.cart-ways li { display: flex; flex-direction: column; padding-block: var(--space-xs); line-height: 1.5; }
+.cart-ways li { display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: start; gap: 8px; padding-block: 8px; line-height: 1.4; }
+.cart-ways li + li { border-top: 1px solid var(--color-rule); }
+.cart-ways__icon { display: grid; place-items: center; }
+.cart-ways__icon :is(img, svg) { width: 20px; height: 20px; }
+.cart-ways__info { display: grid; gap: 2px; overflow-wrap: anywhere; }
 .cart-ways b { color: var(--color-ink); }
 .cart-ways span { color: var(--color-ink-2); font-size: var(--text-sm); }
 .cart-ways small { color: var(--color-muted); font-size: var(--text-sm); }

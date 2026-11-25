@@ -16,6 +16,7 @@
 .fw__links a { display: flex; align-items: center; min-height: 35px; padding: 0 8px; border-radius: 8px; color: var(--color-ink); font-size: 0.9375rem; text-decoration: none; }
 .fw__links a:hover { background: var(--color-paper-2); color: var(--color-ink); }
 .fcheck { display: flex; align-items: center; gap: 10px; min-height: 35px; padding: 0 8px; border-radius: 8px; color: var(--color-ink); font-size: 0.9375rem; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out); }
+@media (pointer: fine) { .fcheck { min-height: 30px; } }
 .fcheck input { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; }
 .fcheck__box { border-radius: 5px; position: relative; flex: none; width: 18px; height: 18px; border: 1px solid var(--color-control); background: var(--color-paper); transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
 .fcheck__box::after { content: ""; position: absolute; left: 5px; top: 2px; width: 5px; height: 9px; border: solid var(--color-accent-ink); border-width: 0 2px 2px 0; transform: rotate(45deg); opacity: 0; }

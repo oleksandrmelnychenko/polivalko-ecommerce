@@ -1,0 +1,50 @@
+import {
+  IconAssembly, IconAxe, IconBox, IconBucket, IconBug, IconCar, IconCategory, IconChristmasTree,
+  IconCut, IconDroplet, IconDroplets, IconEngine, IconFeather, IconFence, IconFlame,
+  IconGardenCart, IconGrain, IconGrill, IconHome, IconLayersIntersect, IconPipeline,
+  IconPlant2, IconPool, IconRecycle, IconSeeding, IconShield, IconShovel,
+  IconSnowflake, IconSpiral, IconSpray, IconStack2, IconSun, IconTent,
+  IconTool, IconToolsKitchen2, IconTrees, type Icon,
+} from '@tabler/icons-react'
+
+const categorySymbols: [RegExp, Icon][] = [
+  [/візк|візок|котуш/iu, IconGardenCart],
+  [/з[’'ʼ`]?єдн|конектор|фітинг|перехідник/iu, IconAssembly],
+  [/шланг/iu, IconSpiral],
+  [/кр?апел|краплин/iu, IconDroplets],
+  [/підзем|труби|трубопров/iu, IconPipeline],
+  [/назем|дощувач|обприску|hunter|irritec/iu, IconSpray],
+  [/полив|насос/iu, IconDroplet],
+  [/брикет|вугіл|мангал|грил/iu, IconGrill],
+  [/газов|пальник/iu, IconFlame],
+  [/ізотерм|термос|холод/iu, IconSnowflake],
+  [/пригот|посуд/iu, IconToolsKitchen2],
+  [/басейн/iu, IconPool],
+  [/відпочин|намет|туризм/iu, IconTent],
+  [/шкідник/iu, IconBug],
+  [/захист/iu, IconShield],
+  [/[гґ]рунт|грядк/iu, IconShovel],
+  [/добрив/iu, IconGrain],
+  [/опори|бордюр/iu, IconFence],
+  [/укривн|покриття/iu, IconLayersIntersect],
+  [/господарч/iu, IconHome],
+  [/автотовар/iu, IconCar],
+  [/пакуван|витратні/iu, IconBox],
+  [/обігрів/iu, IconFlame],
+  [/компост|септик/iu, IconRecycle],
+  [/годівниц/iu, IconFeather],
+  [/новий рік/iu, IconChristmasTree],
+  [/секатор|ножиці/iu, IconCut],
+  [/сокири|пили/iu, IconAxe],
+  [/техніка/iu, IconEngine],
+  [/насін|розсад/iu, IconSeeding],
+  [/рослин|квіт/iu, IconPlant2],
+  [/інстр/iu, IconTool],
+  [/горщик|відр|прибиран/iu, IconBucket],
+  [/освітл/iu, IconSun],
+  [/ландшафт|сад|дерев/iu, IconTrees],
+]
+
+export function categoryIcon(name: string, isSubcategory: boolean): Icon {
+  return categorySymbols.find(([pattern]) => pattern.test(name))?.[1] ?? (isSubcategory ? IconStack2 : IconCategory)
+}

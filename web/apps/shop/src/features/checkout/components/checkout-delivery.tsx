@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { PickupPoint, Quote, Settlement, Warehouse } from "@polivalko/shared/api/types";
 import { StoreIcon, TruckIcon } from "@polivalko/shared/ui/icons";
+import { DeliveryIcon } from "@/shared/ui/delivery-icon";
 import { directionsUrl } from "@/shared/lib/directions-url";
 import { deliveryHint, deliveryTitle } from "../lib/delivery";
 import type { FieldProps } from "../lib/field-props";
@@ -12,9 +13,6 @@ import { CheckoutStep } from "./checkout-step";
 import { CheckoutWarehouseSelect } from "./checkout-warehouse-select";
 import { SettlementPicker } from "./settlement-picker";
 import type { WarehouseStatus } from "../hooks/use-delivery-point";
-
-const carrierMark = <img className="np-mark" src="/brand/nova-poshta.svg" width={24} height={24} alt="" />;
-const ICONS: Record<string, ReactNode> = { nova_poshta: carrierMark, nova_poshta_courier: carrierMark, pickup: <StoreIcon /> };
 
 function stepHint(codes: string[]) {
   const carrier = codes.some((code) => code !== "pickup");
@@ -66,7 +64,7 @@ export function CheckoutDelivery({
   const options = methods.map((d) => ({
     code: d.code,
     title: deliveryTitle[d.code] ?? d.name,
-    icon: ICONS[d.code] ?? <TruckIcon />,
+    icon: <DeliveryIcon code={d.code} />,
     notes: [deliveryHint[d.code] ?? "", d.description ?? "", d.priceNote ?? ""],
   }));
 

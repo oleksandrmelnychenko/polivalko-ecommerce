@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { categoryIcon } from "@polivalko/shared/ui/category-icon";
 import { GridIcon } from "@polivalko/shared/ui/icons";
 import { thumb } from "@/shared/lib/images";
 import type { MenuCategory } from "../lib/menu-category";
@@ -13,14 +14,22 @@ export function CategoryPicture({ category }: { category: MenuCategory }) {
   </span>;
 }
 
-export function CategoryLinks({ categories, pathname }: { categories: MenuCategory[]; pathname: string }) {
+function CategorySymbol({ name }: { name: string }) {
+  const Glyph = categoryIcon(name, true);
+  return <span className="menu-category-symbol" aria-hidden="true"><Glyph size={17} stroke={1.7} /></span>;
+}
+
+export function CategoryLinks({ categories, pathname, nested = false }: { categories: MenuCategory[]; pathname: string; nested?: boolean }) {
   if (!categories.length) return null;
   return <ul className="menu-category-links">
     {categories.map(category => {
       const href = `/catalog/${category.slug}`;
       return <li key={category.id}>
-        <Link href={href} aria-current={href === pathname ? "page" : undefined}>{category.name}</Link>
-        <CategoryLinks categories={category.children} pathname={pathname} />
+        <Link href={href} className={nested ? undefined : "menu-category-heading"} aria-current={href === pathname ? "page" : undefined}>
+          {!nested && <CategorySymbol name={category.name} />}
+          {category.name}
+        </Link>
+        <CategoryLinks categories={category.children} pathname={pathname} nested />
       </li>;
     })}
   </ul>;
