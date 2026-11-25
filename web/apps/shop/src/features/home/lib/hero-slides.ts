@@ -2,7 +2,7 @@ import { categoryPhotoUrl, discountPercent } from "@/features/catalog";
 import type { Banner } from "@/features/content/server";
 import type { Bestsellers, CategoryNode, ProductSearch } from "@polivalko/shared/api/types";
 import { countProducts, formatMoney, plural } from "@polivalko/shared/lib/format";
-import { sized, thumb, type Sized } from "@polivalko/shared/lib/images";
+import { sized, thumb, type Sized } from "@/shared/lib/images";
 import { pagePhotos } from "@polivalko/shared/lib/stand-in-photos";
 
 export type HeroDeal = { id: string; href: string; name: string; image: string | null; price: string; oldPrice: string; percent: number };

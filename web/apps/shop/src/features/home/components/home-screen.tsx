@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { formatMoney } from "@polivalko/shared/lib/format";
-import { thumb } from "@polivalko/shared/lib/images";
+import { thumb } from "@/shared/lib/images";
 import { Suspense } from "react";
 import { getBestsellers, getCategoryTree, searchProducts } from "@/features/catalog/server";
 import type { ProductListItem } from "@polivalko/shared/api/types";

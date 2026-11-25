@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Order } from "@polivalko/shared/api/types";
 import { countProducts, formatMoney } from "@polivalko/shared/lib/format";
-import { thumb } from "@polivalko/shared/lib/images";
+import { thumb } from "@/shared/lib/images";
 
 export function OrderItems({ order }: { order: Order }) {
   const pieces = order.items.reduce((sum, item) => sum + item.quantity, 0);

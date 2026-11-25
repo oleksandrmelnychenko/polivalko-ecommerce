@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Quote } from "@polivalko/shared/api/types";
-import { thumb } from "@polivalko/shared/lib/images";
+import { thumb } from "@/shared/lib/images";
 import { CloseIcon } from "@polivalko/shared/ui/icons";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper";
 import type { CartRow } from "../lib/cart-rows";

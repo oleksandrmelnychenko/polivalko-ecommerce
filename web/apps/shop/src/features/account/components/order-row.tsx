@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { components } from "@polivalko/shared/api/schema";
 import { countProducts, formatDateTime, formatMoney } from "@polivalko/shared/lib/format";
-import { thumb } from "@polivalko/shared/lib/images";
+import { thumb } from "@/shared/lib/images";
 import { ClipboardIcon } from "@polivalko/shared/ui/icons";
 import { orderStatusLabel, paymentMethodLabel, paymentStatusLabel } from "@polivalko/shared/lib/labels";
 import { orderTone } from "../lib/order-tone";

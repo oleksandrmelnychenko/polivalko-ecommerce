@@ -4,7 +4,7 @@ import { JOURNAL_ENABLED } from "./config";
 import { articles } from "./articles";
 import { ArticleCards } from "./journal";
 import { seoMetadata } from "@/features/seo";
-import { sized } from "@polivalko/shared/lib/images";
+import { sized } from "@/shared/lib/images";
 
 export function generateStaticParams() { return articles.map(({ slug }) => ({ slug })); }
 

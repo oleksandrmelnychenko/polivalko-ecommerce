@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useHydrated } from "@/shared/hooks/use-hydrated";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { formatMoney } from "@polivalko/shared/lib/format";
-import { sized } from "@polivalko/shared/lib/images";
+import { sized } from "@/shared/lib/images";
 import { hasPrice, PRICE_ON_REQUEST } from "@/shared/lib/price";
 import { CloseIcon, PlusIcon } from "@polivalko/shared/ui/icons";
 import { comparisonGroup, comparisonRows, type CompareProduct } from "./model";

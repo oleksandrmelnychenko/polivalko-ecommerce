@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { sized } from "@polivalko/shared/lib/images";
+import { sized } from "@/shared/lib/images";
 import { ArrowRightIcon } from "@polivalko/shared/ui/icons";
 import { articles, type Article } from "./articles";
 import { JOURNAL_ENABLED } from "./config";

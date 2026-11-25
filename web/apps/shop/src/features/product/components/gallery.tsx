@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { sized, thumb } from "@polivalko/shared/lib/images";
+import { sized, thumb } from "@/shared/lib/images";
 import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from "@polivalko/shared/ui/icons";
 import { PhotoViewer } from "./photo-viewer";
 import { GalleryPhoto } from "./gallery-photo";

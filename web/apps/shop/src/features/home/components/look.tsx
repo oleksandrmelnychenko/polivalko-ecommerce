@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { portrait } from "@polivalko/shared/lib/images";
+import { portrait } from "@/shared/lib/images";
 import { ArrowRightIcon } from "@polivalko/shared/ui/icons";
 import { Heading } from "./heading";
 

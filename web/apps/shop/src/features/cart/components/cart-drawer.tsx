@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { formatPrice } from "@polivalko/shared/lib/format";
-import { thumb } from "@polivalko/shared/lib/images";
+import { thumb } from "@/shared/lib/images";
 import { CloseIcon } from "@polivalko/shared/ui/icons";
 import { CartEmpty } from "./cart-empty";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper";

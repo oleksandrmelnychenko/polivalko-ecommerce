@@ -17,6 +17,16 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   cacheComponents: true,
   partialPrefetching: true,
+  // Catalog photos from Vercel Blob are resized here (src/shared/lib/images.ts). Few widths and one format keep
+  // the number of optimized variants, which hosting plans count, small; a Blob URL never changes its content.
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/catalog/**" }],
+    imageSizes: [64, 128, 256, 384],
+    deviceSizes: [640, 828, 1080, 1600],
+    qualities: [75],
+    formats: ["image/webp"],
+    minimumCacheTTL: 2678400,
+  },
   async headers() {
     return ["/order/:number", "/account/:path*", "/pay/sandbox/:id"].map((source) => ({
       source,

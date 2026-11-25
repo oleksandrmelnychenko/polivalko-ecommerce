@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { GridIcon } from "@polivalko/shared/ui/icons";
-import { thumb } from "@polivalko/shared/lib/images";
+import { thumb } from "@/shared/lib/images";
 import type { MenuCategory } from "../lib/menu-category";
 
 export function containsCategory(category: MenuCategory, pathname: string): boolean {

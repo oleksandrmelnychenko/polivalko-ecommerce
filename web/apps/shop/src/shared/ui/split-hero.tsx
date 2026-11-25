@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { sized } from "@polivalko/shared/lib/images";
+import { sized } from "@/shared/lib/images";
 
 type SplitHeroProps = {
   title: string;

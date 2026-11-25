@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
-import { sized, thumb } from "@polivalko/shared/lib/images";
+import { sized, thumb } from "@/shared/lib/images";
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon } from "@polivalko/shared/ui/icons";
 import { GalleryPhoto } from "./gallery-photo";
 

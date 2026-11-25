@@ -4,7 +4,7 @@ import { FavoriteButton } from "@/features/favorites";
 import { CompareButton } from "@/features/compare";
 import type { ProductListItem } from "@polivalko/shared/api/types";
 import { formatMoney } from "@polivalko/shared/lib/format";
-import { sized } from "@polivalko/shared/lib/images";
+import { sized } from "@/shared/lib/images";
 import { toCartProduct } from "../lib/cart-product";
 import { discountPercent } from "../lib/discount";
 import { canBuy, hasPrice, PRICE_ON_REQUEST } from "@/shared/lib/price";

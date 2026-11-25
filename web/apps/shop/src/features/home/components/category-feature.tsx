@@ -3,6 +3,7 @@ import type { CategoryNode, ProductListItem } from "@polivalko/shared/api/types"
 import { categoryPhotos, pagePhotos } from "@polivalko/shared/lib/stand-in-photos";
 import { ArrowRightIcon } from "@polivalko/shared/ui/icons";
 import { ProductTiles } from "@/features/catalog";
+import { sized } from "@/shared/lib/images";
 
 export function CategoryFeature({ category, products, reverse = false }: { category: CategoryNode; products: ProductListItem[]; reverse?: boolean }) {
   const photo = category.slug === "vse-dlia-vidpochynku" ? pagePhotos.collection : categoryPhotos[category.slug];
@@ -10,7 +11,7 @@ export function CategoryFeature({ category, products, reverse = false }: { categ
   return <section className={`home-feature${reverse ? " home-feature--reverse" : ""}`} aria-labelledby={`category-${category.slug}-title`}>
     <div className="container home-feature__layout">
       <div className="home-feature__story">
-        {image && <img src={image} alt="" width={800} height={800} loading="lazy" />}
+        {image && <img {...sized(image, "(max-width: 64rem) 100vw, 34vw", 960)} alt="" width={800} height={800} loading="lazy" />}
         <div className="home-feature__copy">
           <h2 id={`category-${category.slug}-title`}>{category.name}</h2>
           <Link href={`/catalog/${category.slug}`}>Переглянути розділ <ArrowRightIcon /></Link>

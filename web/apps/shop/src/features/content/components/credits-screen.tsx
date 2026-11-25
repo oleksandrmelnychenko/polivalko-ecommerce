@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { thumb } from "@polivalko/shared/lib/images";
+import { thumb } from "@/shared/lib/images";
 import { categoryPhotos, pagePhotos } from "@polivalko/shared/lib/stand-in-photos";
 import { getPhotoCredits } from "../api/server";
 import { sourcePage } from "../lib/source-page";
