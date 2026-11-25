@@ -7,7 +7,7 @@ namespace PoliValko.Catalog.Features.Console.Products;
 internal static class ConsoleProductFilter
 {
     public static IQueryable<Product> NeedsFilling(this IQueryable<Product> products) =>
-        products.Where(p => !p.Images.Any() || p.DescriptionHtml == null || p.DescriptionHtml == string.Empty || !p.Attributes.Any());
+        products.Where(p => !p.Images.Any() || p.DescriptionHtml == null || ProductFillFilters.EmptyDescriptions.Contains(p.DescriptionHtml.Trim()) || !p.Attributes.Any());
 
     public static IQueryable<Product> CreatedSince(this IQueryable<Product> products, DateTimeOffset now, int days)
     {
@@ -35,7 +35,9 @@ internal static class ConsoleProductFilter
     {
         null or "" => products,
         ProductFillFilters.MissingPhoto => products.Where(p => !p.Images.Any()),
-        ProductFillFilters.MissingDescription => products.Where(p => p.DescriptionHtml == null || p.DescriptionHtml == string.Empty),
+        ProductFillFilters.MissingDescription => products.Where(p => p.DescriptionHtml == null || ProductFillFilters.EmptyDescriptions.Contains(p.DescriptionHtml.Trim())),
+        ProductFillFilters.ShortDescription => products.Where(p => p.DescriptionHtml != null && !ProductFillFilters.EmptyDescriptions.Contains(p.DescriptionHtml.Trim()) && p.DescriptionHtml.Trim().Length < ProductFillFilters.ShortDescriptionLength),
+        ProductFillFilters.MissingBrand => products.Where(p => p.Brand == null || p.Brand.Trim() == string.Empty),
         ProductFillFilters.MissingAttributes => products.Where(p => !p.Attributes.Any()),
         ProductFillFilters.AnyMissing => products.NeedsFilling(),
         _ => null,

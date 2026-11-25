@@ -30,7 +30,7 @@ public sealed record ConsoleProductQuery(
     [FromQuery(Name = "stock")] string? Stock,
     [FromQuery(Name = "brand")] string? Brand,
     [FromQuery(Name = "labelId")] Guid? LabelId,
-    [property: Description("missing-photo | missing-description | missing-attributes | any-missing")] [FromQuery(Name = "fill")] string? Fill,
+    [property: Description("missing-photo | missing-description | short-description | missing-attributes | missing-brand | any-missing")] [FromQuery(Name = "fill")] string? Fill,
     [property: Description("Створені за останні N днів")] [FromQuery(Name = "newDays")] int? NewDays,
     [property: Description("Приховані товари, що є в наявності")] [FromQuery(Name = "hiddenWithStock")] bool? HiddenWithStock,
     [FromQuery(Name = "page")] int? Page,

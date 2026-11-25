@@ -7336,7 +7336,7 @@
           {
             "name": "fill",
             "in": "query",
-            "description": "missing-photo | missing-description | missing-attributes | any-missing",
+            "description": "missing-photo | missing-description | short-description | missing-attributes | missing-brand | any-missing",
             "schema": {
               "type": "string"
             }

@@ -4,6 +4,7 @@ import { formatDateTime } from '@polivalko/shared/lib/format'
 import { siteUrl } from '@/shared/lib/siteUrl'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
 import { Money } from '@/shared/ui/Money'
+import { TableChip } from '@/shared/ui/TableChip'
 import type { ProductRow } from '../api/catalogApi'
 import { productHref, productName } from '../lib/productFilters'
 import { LabelChip } from './LabelChip'
@@ -25,9 +26,10 @@ function CategoryAndLabels({ row }: { row: ProductRow }) {
   return (
     <div className="catalog-row-category">
       <span>{row.categoryName}</span>
-      {!!row.labels?.length && (
+      {(!!row.labels?.length || !row.hasDescription) && (
         <span className="catalog-label-list">
-          {row.labels.map((label) => <LabelChip key={label.id} name={label.name} tone={label.tone} />)}
+          {row.labels?.map((label) => <LabelChip key={label.id} name={label.name} tone={label.tone} />)}
+          {row.hasDescription ? null : <TableChip tone="warning" value="Без опису" />}
         </span>
       )}
     </div>

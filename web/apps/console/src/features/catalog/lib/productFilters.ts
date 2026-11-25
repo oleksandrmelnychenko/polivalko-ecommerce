@@ -31,7 +31,9 @@ export const FILL_OPTIONS: { value: ProductFill; label: string }[] = [
   { value: 'any-missing', label: 'Чогось бракує' },
   { value: 'missing-photo', label: 'Немає фото' },
   { value: 'missing-description', label: 'Немає опису' },
+  { value: 'short-description', label: 'Короткий опис' },
   { value: 'missing-attributes', label: 'Немає характеристик' },
+  { value: 'missing-brand', label: 'Немає бренду' },
 ]
 
 const STOCKS = STOCK_OPTIONS.map((option) => option.value)

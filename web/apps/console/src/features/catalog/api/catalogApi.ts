@@ -9,7 +9,7 @@ type S = components['schemas']
 
 export type ProductLabelRef = S['ConsoleProductLabelDto']
 
-export type ProductFill = 'missing-photo' | 'missing-description' | 'missing-attributes' | 'any-missing'
+export type ProductFill = 'missing-photo' | 'missing-description' | 'short-description' | 'missing-attributes' | 'missing-brand' | 'any-missing'
 
 export type ProductsQuery = NonNullable<paths['/api/v1/console/catalog/products']['get']['parameters']['query']>
 export type ProductRow = S['ConsoleProductListItemDto']

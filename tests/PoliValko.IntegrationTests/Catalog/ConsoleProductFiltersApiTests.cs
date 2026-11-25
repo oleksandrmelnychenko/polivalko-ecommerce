@@ -23,15 +23,23 @@ public sealed class ConsoleProductFiltersApiTests(ApiFactory api)
         var admin = await Staff.AdminAsync(api);
         var product = await api.AddProductAsync("hospodarchi-tovary", "Совок для заповнення", 80m);
 
-        foreach (var fill in new[] { "missing-photo", "missing-description", "missing-attributes", "any-missing" })
+        foreach (var fill in new[] { "missing-photo", "missing-description", "missing-attributes", "missing-brand", "any-missing" })
         {
             (await ListAsync(admin, $"q={product.Sku}&fill={fill}")).Items.ShouldHaveSingleItem().Id.ShouldBe(product.Id);
         }
+
+        // A description the editor left empty is still "no description", not a short one.
+        await (await admin.PutAsJsonAsync($"{Products}/{product.Id}", new UpdateProductRequest(
+                null, null, null, null, "<p><br></p>", true, null, null, []), TestJson.Options, Ct))
+            .ReadAsync<ConsoleProductDto>();
+        (await ListAsync(admin, $"q={product.Sku}&fill=missing-description")).Items.ShouldHaveSingleItem();
+        (await ListAsync(admin, $"q={product.Sku}&fill=short-description")).Items.ShouldBeEmpty();
 
         await (await admin.PutAsJsonAsync($"{Products}/{product.Id}", new UpdateProductRequest(
                 null, null, null, null, "<p>Опис</p>", true, null, null, [new ProductAttributeDto("Матеріал", "Метал")]), TestJson.Options, Ct))
             .ReadAsync<ConsoleProductDto>();
         (await ListAsync(admin, $"q={product.Sku}&fill=missing-description")).Items.ShouldBeEmpty();
+        (await ListAsync(admin, $"q={product.Sku}&fill=short-description")).Items.ShouldHaveSingleItem();
         (await ListAsync(admin, $"q={product.Sku}&fill=missing-attributes")).Items.ShouldBeEmpty();
         (await ListAsync(admin, $"q={product.Sku}&fill=any-missing")).Items.ShouldHaveSingleItem();
 

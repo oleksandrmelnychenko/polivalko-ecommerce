@@ -11854,7 +11854,7 @@ export interface operations {
                 stock?: string;
                 brand?: string;
                 labelId?: string;
-                /** @description missing-photo | missing-description | missing-attributes | any-missing */
+                /** @description missing-photo | missing-description | short-description | missing-attributes | missing-brand | any-missing */
                 fill?: string;
                 /** @description Створені за останні N днів */
                 newDays?: number;

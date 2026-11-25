@@ -38,7 +38,7 @@ internal static class ConsoleProductQueries
                 p.Stock.Quantity,
                 p.IsVisible,
                 p.Images.OrderBy(i => i.SortOrder).Select(i => i.Url).FirstOrDefault(),
-                p.DescriptionHtml != null,
+                p.DescriptionHtml != null && !ProductFillFilters.EmptyDescriptions.Contains(p.DescriptionHtml.Trim()),
                 p.UpdatedAt,
                 p.CreatedAt))
             .ToListAsync(ct);
