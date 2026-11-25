@@ -29,7 +29,6 @@ html:has(.drawer[open]) { overflow: hidden; }
 .drawer .line__controls { flex-wrap: wrap; gap: 4px 10px; }
 .drawer__foot { display: grid; gap: 8px; border-top: 1px solid var(--color-rule); }
 .drawer__foot .totals { margin: 0; }
-.drawer__foot .muted { margin: 0; font-size: var(--text-xs); line-height: 1.45; }
 .drawer__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
 .drawer__actions .btn { flex: 1 1 auto; min-height: 42px; padding: 8px 12px; border-radius: 12px; font-size: 14px; }
 .drawer__actions .drawer__checkout { background: var(--shop-graphite); color: #fff; border-color: transparent; }

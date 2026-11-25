@@ -110,9 +110,6 @@ export function CartDrawer() {
               <dt>Разом, {count} шт.</dt>
               <dd className="num"><span className="money">{formatPrice(subtotal)}</span></dd>
             </dl>
-            <p className="muted">
-              Ціни й наявність ще раз перевіримо під час оформлення. Доставка за тарифами перевізника.
-            </p>
             <div className="drawer__actions">
               <Link href="/cart" className="btn btn--quiet" onClick={close}>Перейти в кошик</Link>
               {!blocked && <Link href="/checkout" className="btn drawer__checkout" onClick={close}>
