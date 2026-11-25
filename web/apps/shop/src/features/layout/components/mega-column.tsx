@@ -18,17 +18,17 @@ function CategorySymbol({ glyph: Glyph }: { glyph: ReturnType<typeof categoryIco
   return <span className="menu-category-symbol" aria-hidden="true"><Glyph size={17} stroke={1.7} /></span>;
 }
 
-export function CategoryLinks({ categories, pathname, nested = false }: { categories: MenuCategory[]; pathname: string; nested?: boolean }) {
+export function CategoryLinks({ categories, pathname }: { categories: MenuCategory[]; pathname: string }) {
   if (!categories.length) return null;
   return <ul className="menu-category-links">
     {categories.map(category => {
       const href = `/catalog/${category.slug}`;
       return <li key={category.id}>
-        <Link href={href} className={nested ? undefined : "menu-category-heading"} aria-current={href === pathname ? "page" : undefined}>
-          {!nested && <CategorySymbol glyph={categoryIcon(category.name, true)} />}
+        <Link href={href} aria-current={href === pathname ? "page" : undefined}>
+          <CategorySymbol glyph={categoryIcon(category.name, true)} />
           {category.name}
         </Link>
-        <CategoryLinks categories={category.children} pathname={pathname} nested />
+        <CategoryLinks categories={category.children} pathname={pathname} />
       </li>;
     })}
   </ul>;
