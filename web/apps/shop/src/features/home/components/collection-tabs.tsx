@@ -1,13 +1,31 @@
 "use client";
 
-import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 
 export type CollectionTab = { key: string; label: string; panel: ReactNode };
 
-export function CollectionTabs({ tabs, label }: { tabs: CollectionTab[]; label: string }) {
+export function CollectionTabs({ tabs, label, linkable = false }: { tabs: CollectionTab[]; label: string; linkable?: boolean }) {
   const [active, setActive] = useState(tabs[0]?.key);
   const buttons = useRef(new Map<string, HTMLButtonElement>());
   const base = useId();
+  useEffect(() => {
+    if (!linkable) return;
+    const sync = () => {
+      const key = window.location.hash.slice(1);
+      if (buttons.current.has(key)) {
+        setActive(key);
+        buttons.current.get(key)?.scrollIntoView({ block: "nearest" });
+      }
+    };
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, [linkable]);
+
+  function select(key: string) {
+    setActive(key);
+    if (linkable) window.history.replaceState(window.history.state, "", "#" + key);
+  }
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const index = tabs.findIndex((tab) => tab.key === active);
@@ -19,7 +37,7 @@ export function CollectionTabs({ tabs, label }: { tabs: CollectionTab[]; label: 
       : -1;
     if (next < 0) return;
     event.preventDefault();
-    setActive(tabs[next].key);
+    select(tabs[next].key);
     buttons.current.get(tabs[next].key)?.focus();
   };
 
@@ -35,19 +53,19 @@ export function CollectionTabs({ tabs, label }: { tabs: CollectionTab[]; label: 
             }}
             type="button"
             role="tab"
-            id={`${base}-tab-${tab.key}`}
+            id={linkable ? tab.key : `${base}-tab-${tab.key}`}
             className="ctabs__tab"
             aria-selected={tab.key === active}
             aria-controls={`${base}-panel-${tab.key}`}
             tabIndex={tab.key === active ? 0 : -1}
-            onClick={() => setActive(tab.key)}
+            onClick={() => select(tab.key)}
           >
             {tab.label}
           </button>
         ))}
       </div>
       {tabs.map((tab) => (
-        <div key={tab.key} role="tabpanel" id={`${base}-panel-${tab.key}`} aria-labelledby={`${base}-tab-${tab.key}`} hidden={tab.key !== active}>
+        <div key={tab.key} role="tabpanel" id={`${base}-panel-${tab.key}`} aria-labelledby={linkable ? tab.key : `${base}-tab-${tab.key}`} hidden={tab.key !== active} tabIndex={0}>
           {tab.panel}
         </div>
       ))}
