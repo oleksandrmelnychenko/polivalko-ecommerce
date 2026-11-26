@@ -21,7 +21,7 @@ export function ProductTile({ product, priority }: { product: ProductListItem; p
   const packs = product.packSizes ?? 0;
   const priceFrom = packs > 1 && product.priceFrom?.value === product.price.value;
   return (
-    <li className="tile tile--product tile--shop">
+    <li className="tile tile--product tile--shop" data-sku={product.sku}>
       <figure className="tile__photo">
         {image ? (
           <span className="tile__image">
