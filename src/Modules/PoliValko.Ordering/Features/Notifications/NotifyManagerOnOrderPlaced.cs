@@ -26,8 +26,9 @@ internal sealed class NotifyManagerOnOrderPlaced(PoliValkoDbContext db, IManager
             PaymentMethod.CashOnDelivery => "післяплата",
             _ => "під час самовивозу",
         };
-        var attention = order.Status == OrderStatus.AwaitingConfirmation ? "\nПотрібно підтвердити ціну й наявність." : string.Empty;
-        var body = $"{order.Items.Count} поз. на {OrderMoney.Money(order.Total)}\n{delivery}\nОплата: {payment}\n{order.CustomerName}, {order.CustomerPhone}{attention}";
+        var noCallback = order.NoCallback ? "\nПросить не передзвонювати." : string.Empty;
+        var attention =order.Status == OrderStatus.AwaitingConfirmation ? "\nПотрібно підтвердити ціну й наявність." : string.Empty;
+        var body = $"{order.Items.Count} поз. на {OrderMoney.Money(order.Total)}\n{delivery}\nОплата: {payment}\n{order.CustomerName}, {order.CustomerPhone}{noCallback}{attention}";
 
         await notifier.NotifyAsync(new ManagerNotification($"Нове замовлення {order.Number}", body, ManagerEvent.NewOrder), cancellationToken);
     }

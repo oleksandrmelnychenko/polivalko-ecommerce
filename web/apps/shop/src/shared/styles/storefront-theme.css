@@ -17,6 +17,13 @@
   --bar-height: 103px;
 }
 
+.shop-action-link {
+  display: flex; align-items: center; gap: 9px; min-height: 42px; padding: 5px 12px;
+  border: 1px solid transparent; border-radius: 10px; background: var(--shop-graphite);
+  color: #fff; font: 500 14px/1.35 var(--font-body); text-align: left; text-decoration: none;
+}
+.shop-action-link > svg { flex: none; width: 15px; height: 15px; margin-inline-start: auto; }
+
 .site-header__top-inner { min-height: 36px; }
 .site-header__bar { --header-bar-padding: 8px; min-height: 65px; padding-block: var(--header-bar-padding); }
 .header-mascot { width: 34px; height: 44px; }

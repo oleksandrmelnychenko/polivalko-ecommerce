@@ -25,7 +25,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   return <div className="container journal-page">
     <Breadcrumbs current={article.title} parents={[{ name: "Блог", path: "/blog" }]} />
     <article className="journal-article">
-      <header><p className="journal-card__category">{article.category} · Полі-Валько</p><h1>{article.title}</h1><p className="lead">{article.intro}</p></header>
+      <header><p className="journal-card__category">{article.category} · Полі-Валко</p><h1>{article.title}</h1><p className="lead">{article.intro}</p></header>
       <img className="journal-article__cover" {...sized(article.image.url, "(max-width: 64rem) 100vw, 960px", 960)} alt={article.image.alt} width={1200} height={720} fetchPriority="high" />
       <div className="journal-article__body">{article.sections.map((section) => <section key={section.title}><h2>{section.title}</h2>{section.text.map((text) => <p key={text}>{text}</p>)}</section>)}
         <Link className="btn" href={article.link.href}>{article.link.label}</Link>

@@ -4,7 +4,7 @@ import { seoMetadata } from "@/features/seo";
 import { notFound } from "next/navigation";
 import { JOURNAL_ENABLED } from "./config";
 
-export const metadata = seoMetadata({ title: "Блог Полі-Валько", description: "Поради з вибору товарів для саду, поливу й дому. Підготовка до садових робіт і послуги Полі-Валько в Бучі.", path: "/blog" });
+export const metadata = seoMetadata({ title: "Блог Полі-Валко", description: "Поради з вибору товарів для саду, поливу й дому. Підготовка до садових робіт і послуги Полі-Валко в Бучі.", path: "/blog" });
 
 export default function BlogPage() {
   if (!JOURNAL_ENABLED) notFound();

@@ -122,7 +122,7 @@ internal static class OrderValidator
             return (errors, null);
         }
 
-        return (errors, new ValidatedOrder(name!, phone, email, delivery!.Value, settlement, warehouse, address, payment!.Value, decimal.Round(expectedTotal, 2), comment, recipientName, recipientPhone));
+        return (errors, new ValidatedOrder(name!, phone, email, delivery!.Value, settlement, warehouse, address, payment!.Value, decimal.Round(expectedTotal, 2), comment, recipientName, recipientPhone, request.NoCallback));
     }
 
     private static bool HasControl(string? value, bool multiline = false) =>
@@ -168,5 +168,6 @@ internal static class OrderValidator
         decimal ExpectedTotal,
         string? Comment,
         string? RecipientName,
-        string? RecipientPhone);
+        string? RecipientPhone,
+        bool NoCallback);
 }

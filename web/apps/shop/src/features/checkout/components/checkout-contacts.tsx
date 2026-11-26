@@ -27,6 +27,10 @@ export function CheckoutContacts({ field, fieldError, mailDelivers }: FieldProps
       </div>
       <div className="co-recipient">
         <label className="consent co-recipient__toggle">
+          <input type="checkbox" name="noCallback" />
+          <span>Мені не передзвонювати</span>
+        </label>
+        <label className="consent co-recipient__toggle">
           <input type="checkbox" name="otherRecipient" checked={otherRecipient} onChange={event => setOtherRecipient(event.target.checked)} aria-controls="recipient-fields" aria-expanded={otherRecipient} />
           <span>Замовлення отримає інша людина</span>
         </label>

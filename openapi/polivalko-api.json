@@ -16503,6 +16503,10 @@
               "null",
               "string"
             ]
+          },
+          "noCallback": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -17265,7 +17269,8 @@
           "directionCode",
           "directionName",
           "comment",
-          "status"
+          "status",
+          "directionNames"
         ],
         "type": "object",
         "properties": {
@@ -17297,6 +17302,12 @@
           },
           "status": {
             "$ref": "#/components/schemas/ServiceRequestStatus"
+          },
+          "directionNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -17561,6 +17572,10 @@
                 "$ref": "#/components/schemas/RecipientRequest"
               }
             ]
+          },
+          "noCallback": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -17641,6 +17656,15 @@
               "null",
               "string"
             ]
+          },
+          "additionalDirections": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

@@ -69,7 +69,8 @@ public sealed record ConsoleOrderDto(
     DateTimeOffset? NavkoloShippedAt = null,
     DateTimeOffset? NavkoloCancelledAt = null,
     string? RecipientName = null,
-    string? RecipientPhone = null);
+    string? RecipientPhone = null,
+    bool NoCallback = false);
 
 public sealed record ChangeOrderStatusRequest(OrderStatus? Status, string? Reason);
 

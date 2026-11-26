@@ -17,3 +17,11 @@
 .mega__pages { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 4px; }
 .mega__pages a { display: flex; align-items: center; min-height: 40px; padding-inline: 8px; border-radius: 8px; color: var(--color-ink-2); font-size: 14px; text-decoration: none; }
 .mega__pages a:hover { background: var(--color-paper-2); }
+
+.mobile-services { margin-block: 6px 8px; padding: 2px 6px; border-radius: 10px; background: var(--color-paper-2); }
+.mobile-services summary, .mobile-services__all { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding-inline: 8px; font-weight: 600; list-style: none; cursor: pointer; }
+.mobile-services summary { justify-content: flex-start; }
+.mobile-services summary > svg:last-child { margin-inline-start: auto; }
+.mobile-services summary::-webkit-details-marker { display: none; }
+.mobile-services__all { color: var(--color-ink); text-decoration: none; font-size: 14px; }
+.mobile-services .service-menu-links { margin: 0 2px 6px; background: var(--color-paper); border-radius: 8px; }

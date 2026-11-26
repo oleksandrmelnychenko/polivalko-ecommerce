@@ -101,6 +101,9 @@
 .contact-request-sheet { margin-top: var(--space-lg);  }
 .contact-request-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(24px, 4vw, 64px); }
 .request-options, .request-fields { min-width: 0; }
+.request-options__head { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
+.request-options__head h2 { margin: 0; }
+.request-options__head button { min-height: 36px; padding: 0 12px; border: 0; border-radius: 10px; background: var(--color-paper-2); color: var(--color-ink); font: inherit; font-size: var(--text-sm); cursor: pointer; }
 .direction-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: 12px 24px; min-width: 0; padding: 0; margin: 20px 0 0; border: 0; }
 .direction-list label { display: grid; grid-template-columns: auto minmax(0, 1fr); align-content: start; align-items: start; gap: 3px 10px; padding-block: 4px; font-size: .875rem; overflow-wrap: anywhere; cursor: pointer; }
 .direction-list label > span, .direction-list label > small { grid-column: 2; }
@@ -109,14 +112,8 @@
 .direction-list label:has(:checked) { color: #204731; }
 .direction-list label:has(:checked) > span { font-weight: 600; }
 .direction-list small { font-size: .85rem; line-height: 1.45; color: var(--color-ink-2); }
-.direction-list input { grid-column: 1; grid-row: 1 / span 2; }
-.direction-list input { appearance: none; flex: none; width: 32px; height: 19px; padding: 2px; margin: 0; border: 1px solid #859488; border-radius: 12px; background: white; cursor: pointer; }
-.direction-list input::before { content: ""; display: block; width: 13px; height: 13px; border-radius: 50%; background: #687a6c; }
-.direction-list input:checked { background: #305b41; border-color: #305b41; }
-.direction-list input:checked::before { background: white; translate: 13px 0; }
-@media (prefers-reduced-motion: no-preference) { .direction-list input::before { transition: translate 130ms ease; } }
-.direction-list input:focus-visible { outline: 2px solid #305b41; outline-offset: 3px; }
-@media (forced-colors: active) { .direction-list input { appearance: auto; } .direction-list input::before { display: none; } }
+.direction-list input { grid-column: 1; grid-row: 1 / span 2; width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--color-ink); cursor: pointer; }
+.direction-list input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
 .request-fields { display: grid; align-content: start; gap: 16px; }
 .request-fields h3 { margin: 0; font-size: clamp(1.32rem, 1.65vw, 1.65rem); }
 .request-fields header p { margin: 6px 0 4px; font-size: .94rem; line-height: 1.5; color: #526058; }

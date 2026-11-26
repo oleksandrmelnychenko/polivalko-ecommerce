@@ -2,6 +2,8 @@ import { JOURNAL_ENABLED } from "@/features/journal";
 
 export type NavLink = { href: string; label: string };
 
+export type ServiceNavLink = NavLink & { code: string };
+
 export const saleLink: NavLink = { href: "/sale", label: "Акції" };
 
 export const pageLinks: NavLink[] = [

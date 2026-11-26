@@ -13,7 +13,7 @@ const shop = [
   { href: "/catalog", label: "Каталог" },
   { href: "/sale", label: "Акції" },
   { href: "/services", label: "Послуги" },
-  { href: "/about", label: "Про Полі-Валько" },
+  { href: "/about", label: "Про Полі-Валко" },
   ...(JOURNAL_ENABLED ? [{ href: "/blog", label: "Блог" }] : []),
   { href: "/contacts", label: "Контакти" },
 ];
@@ -54,9 +54,13 @@ export function SiteFooter() {
             <p>© <Suspense fallback={null}><FooterYear /></Suspense> Poli-Valko. Усі права захищені.</p>
             <Suspense fallback={null}><FooterSeller /></Suspense>
           </div>
+          <a className="footer__credit" href="https://www.horizon-dynamics.tech/" lang="en">
+            <span>Powered by</span>
+            <img src="/brand/horizon-emblem.svg" width={16} height={19} alt="" />
+            <img src="/brand/horizon-wordmark.svg" width={150} height={11} alt="Horizon Dynamics" />
+          </a>
           <div className="footer__legal-links">
             <Link href={privacyPage.href}>{privacyPage.label}</Link>
-            <Link href="/credits">Автори фото</Link>
           </div>
         </div>
       </div>

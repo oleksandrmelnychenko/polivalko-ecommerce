@@ -7,13 +7,6 @@ import type { Announcement, SiteHome } from "../lib/site-types";
 
 const PENDING = /уточнюється/i;
 
-export async function getPhotoCredits() {
-  "use cache";
-  cacheLife("hours");
-  cacheTag("catalog", "products");
-  return loaded(await api.GET("/api/v1/catalog/photo-credits"), "авторів фото") ?? [];
-}
-
 export async function getPickupPoints() {
   "use cache";
   cacheLife("hours");

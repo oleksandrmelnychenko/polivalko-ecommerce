@@ -4173,6 +4173,8 @@ export interface components {
             navkoloCancelledAt?: null | string;
             recipientName?: null | string;
             recipientPhone?: null | string;
+            /** @default false */
+            noCallback: boolean;
         };
         ConsoleOrderHistoryDto: {
             from: null | components["schemas"]["OrderStatus"];
@@ -4377,6 +4379,7 @@ export interface components {
             directionName: string;
             comment: null | string;
             status: components["schemas"]["ServiceRequestStatus"];
+            directionNames: string[];
         };
         ConsoleSummaryDto: {
             /** Format: int32 */
@@ -4429,6 +4432,8 @@ export interface components {
             comment: null | string;
             acceptOffer: boolean;
             recipient?: null | components["schemas"]["RecipientRequest"];
+            /** @default false */
+            noCallback: boolean;
         };
         CreateRedirectRequest: {
             fromPath: null | string;
@@ -4443,6 +4448,7 @@ export interface components {
             phone: null | string;
             direction: null | string;
             comment: null | string;
+            additionalDirections?: null | string[];
         };
         CreateStaffUserRequest: {
             email: null | string;

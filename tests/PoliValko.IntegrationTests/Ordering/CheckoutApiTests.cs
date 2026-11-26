@@ -26,6 +26,7 @@ public sealed class CheckoutApiTests(ApiFactory api)
         {
             Recipient = new RecipientRequest("  Іван Отримувач  ", "067 123 45 67"),
             Comment = "  Передати після 15:00  ",
+            NoCallback = true,
         };
         var response = await PostOrderAsync(request, Guid.NewGuid().ToString());
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
@@ -36,6 +37,7 @@ public sealed class CheckoutApiTests(ApiFactory api)
         stored.RecipientName.ShouldBe("Іван Отримувач");
         stored.RecipientPhone.ShouldBe("+380671234567");
         stored.Comment.ShouldBe("Передати після 15:00");
+        stored.NoCallback.ShouldBeTrue();
         var view = await _client.GetFromJsonAsync<OrderDto>($"/api/v1/orders/{created.Number}?token={Uri.EscapeDataString(created.AccessToken)}", TestJson.Options, Ct);
         view!.Delivery.RecipientName.ShouldBe("Іван Отримувач");
         view.Delivery.RecipientPhone.ShouldBe("+380 67 *** ** 67");

@@ -3,7 +3,7 @@ import { ArrowRightIcon, PinIcon } from "@polivalko/shared/ui/icons";
 import { breadcrumbJsonLd, JsonLd, seoMetadata } from "@/features/seo";
 import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 
-export const metadata = seoMetadata({ title: "Про Полі-Валько", description: "Полі-Валько — магазин товарів для саду й городу. У нас можна придбати садові інструменти, насіння й добрива, замовити озеленення та монтаж системи поливу.", path: "/about" });
+export const metadata = seoMetadata({ title: "Про Полі-Валко", description: "Полі-Валко — магазин товарів для саду й городу. У нас можна придбати садові інструменти, насіння й добрива, замовити озеленення та монтаж системи поливу.", path: "/about" });
 
 const ranges = [
   { slug: "vse-dlia-polyvu", title: "Полив", examples: "Шланги, з’єднувачі, дощувачі" },
@@ -20,7 +20,7 @@ export default function AboutPage() {
       <div className="story-intro">
         <header className="story-cover garden-print">
           <div className="story-cover__text">
-            <h1>Полі-Валько</h1>
+            <h1>Полі-Валко</h1>
             <p>Магазин для тих, хто вирощує овочі, доглядає сад і любить проводити час на подвір’ї.</p>
             <Link href="/contacts#store"><PinIcon /> Де нас знайти</Link>
           </div>

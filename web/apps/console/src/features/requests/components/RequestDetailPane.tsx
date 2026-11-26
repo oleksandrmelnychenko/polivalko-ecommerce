@@ -49,8 +49,8 @@ export function RequestDetailPane({ opened, onClose, request, canChange, canView
 
         <dl className="request-facts">
           <div className="request-panel">
-            <dt><MetricLabel icon={IconTools}>Напрямок</MetricLabel></dt>
-            <dd>{request.directionName}<small>{request.directionCode}</small></dd>
+            <dt><MetricLabel icon={IconTools}>Послуги</MetricLabel></dt>
+            <dd>{request.directionNames?.join(', ') || request.directionName}</dd>
           </div>
           <div className="request-panel">
             <dt><MetricLabel icon={IconCalendar}>Отримано</MetricLabel></dt>

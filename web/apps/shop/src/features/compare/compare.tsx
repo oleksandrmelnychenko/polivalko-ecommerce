@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { CircleCheckIcon } from "@polivalko/shared/ui/icons";
+import { CircleCheckIcon, ComparisonBarsIcon } from "@polivalko/shared/ui/icons";
 import { addComparison, removeComparison, useComparison } from "./store";
 import type { CompareProduct } from "./model";
 import { notifyComparison } from "./notice";
@@ -14,7 +14,7 @@ export function CompareIcon() {
 
 export function CompareLink() {
   const products = useComparison();
-  return <Link href="/compare" className="icon-btn icon-btn--chrome compare-link" title="Перейти до порівняння" aria-label={`Порівняти товари: ${products.length}`}><CompareIcon />{products.length > 0 && <span className="cart-button__count">{products.length}</span>}</Link>;
+  return <Link href="/compare" className="icon-btn icon-btn--chrome compare-link" title="Перейти до порівняння" aria-label={`Порівняти товари: ${products.length}`}><ComparisonBarsIcon />{products.length > 0 && <span className="cart-button__count">{products.length}</span>}</Link>;
 }
 
 export function CompareButton({ product, text = false, showLink = false }: { product: CompareProduct; text?: boolean; showLink?: boolean }) {

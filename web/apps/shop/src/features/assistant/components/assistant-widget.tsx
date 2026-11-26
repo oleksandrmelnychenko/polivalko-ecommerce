@@ -21,7 +21,7 @@ export function AssistantWidget() {
 
   return (
     <>
-      <button type="button" className="assistant-launcher" onClick={open} aria-label="Відкрити помічника Полі-Вальку" aria-haspopup="dialog" aria-expanded={isOpen} aria-controls={id}>
+      <button type="button" className="assistant-launcher" onClick={open} aria-label="Відкрити помічника Полі-Валку" aria-haspopup="dialog" aria-expanded={isOpen} aria-controls={id}>
         <img src="/mascot/poli-valka-poster.png" width={253} height={450} alt="" />
         <span>Помічник</span>
       </button>
@@ -40,7 +40,7 @@ export function AssistantWidget() {
         <div className="assistant-panel__inner">
           <header className="assistant-panel__header">
             <div>
-              <h2 id={`${id}-title`}>Полі-Валька</h2>
+              <h2 id={`${id}-title`}>Полі-Валка</h2>
               <p>Ваш садовий помічник</p>
             </div>
             <button type="button" className="icon-btn" onClick={close} aria-label="Закрити помічника" autoFocus>

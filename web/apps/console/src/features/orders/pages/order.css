@@ -575,6 +575,16 @@
   font-size: 12px;
 }
 
+.order-buyer-tag--warn {
+  background: var(--mantine-color-orange-0);
+  border-radius: 6px;
+  color: var(--mantine-color-orange-9);
+  display: inline-block;
+  font-weight: 600;
+  margin: 0 0 8px;
+  padding: 2px 8px;
+}
+
 .order-note-text {
   color: var(--mantine-color-gray-9);
   font-size: 13.5px;

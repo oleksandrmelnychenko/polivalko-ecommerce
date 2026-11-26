@@ -9,3 +9,7 @@
 .icon-btn--chrome:hover { background: var(--color-paper-2); color: var(--color-ink); }
 .icon-btn.site-header__menu { display: none; }
 .cart-button__count { position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding-inline: 5px; border-radius: var(--radius-pill); background: var(--color-brand); color: #fff; font: 500 11px/18px var(--font-body); font-variant-numeric: tabular-nums; text-align: center; }
+
+.site-header__actions :is(.compare-link, .account-button, .cart-button) { color: var(--color-ink); }
+.site-header__actions :is(.compare-link, .account-button, .cart-button) > svg { width: 24px; height: 24px; stroke-width: 1.9; }
+.site-header__actions .cart-button__count { top: -1px; right: -2px; min-width: 16px; height: 16px; padding-inline: 4px; font-weight: 600; line-height: 16px; box-shadow: 0 0 0 1.5px var(--color-paper); pointer-events: none; }
