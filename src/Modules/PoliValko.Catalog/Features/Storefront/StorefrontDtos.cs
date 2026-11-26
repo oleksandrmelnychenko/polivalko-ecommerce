@@ -86,6 +86,21 @@ public sealed record CollectionDto(string Code, string Title, IReadOnlyList<Prod
 
 public sealed record SitemapEntryDto(string Slug, DateTimeOffset UpdatedAt);
 
+/// <summary>What a product feed for a shopping service needs to know about one product.</summary>
+public sealed record MerchantFeedItemDto(
+    Guid Id,
+    string Slug,
+    string Sku,
+    string Name,
+    string? Brand,
+    string? DescriptionHtml,
+    MoneyDto Price,
+    MoneyDto? OldPrice,
+    bool InStock,
+    IReadOnlyList<string> CategoryPath,
+    IReadOnlyList<string> Images,
+    IReadOnlyList<ProductAttributeDto> Attributes);
+
 public sealed record SitemapDto(IReadOnlyList<SitemapEntryDto> Categories, IReadOnlyList<SitemapEntryDto> Products);
 
 public sealed record RedirectDto(string From, string To);

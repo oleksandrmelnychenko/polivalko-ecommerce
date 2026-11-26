@@ -63,6 +63,43 @@ public sealed class StorefrontSeoApiTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Merchant_feed_lists_priced_products_with_a_photo_and_what_the_feed_needs()
+    {
+        var marker = Guid.NewGuid().ToString("N")[..6];
+        var listed = await api.AddProductAsync("hospodarchi-tovary", $"Відро для фіда {marker}", 120m, stock: 3, brand: "Garden");
+        var soldOut = await api.AddProductAsync("hospodarchi-tovary", $"Відро розпродане {marker}", 120m, stock: 0);
+        var noPrice = await api.AddProductAsync("hospodarchi-tovary", $"Відро без ціни {marker}", 0m, stock: 3);
+        var noPhoto = await api.AddProductAsync("hospodarchi-tovary", $"Відро без фото {marker}", 120m, stock: 3);
+        var categoryName = await api.WithDbAsync(async db =>
+        {
+            foreach (var product in new[] { listed, soldOut, noPrice })
+            {
+                db.Add(new ProductImage { Id = Guid.CreateVersion7(), ProductId = product.Id, Url = $"https://example.test/{product.Slug}.jpg", Alt = "Відро" });
+            }
+
+            db.Add(new ProductAttribute { Id = Guid.CreateVersion7(), ProductId = listed.Id, Name = "Штрихкод", Value = "4823067702320" });
+            await db.SaveChangesAsync(Ct);
+            return await db.Set<Category>().Where(c => c.Slug == "hospodarchi-tovary").Select(c => c.Name).SingleAsync(Ct);
+        });
+
+        var feed = (await api.CreateClient().GetFromJsonAsync<List<MerchantFeedItemDto>>("/api/v1/catalog/merchant-feed", TestJson.Options, Ct))!;
+
+        var item = feed.Single(i => i.Slug == listed.Slug);
+        item.Sku.ShouldBe(listed.Sku);
+        item.Brand.ShouldBe("Garden");
+        item.Price.Value.ShouldBe("120.00");
+        item.InStock.ShouldBeTrue();
+        item.Images.ShouldBe([$"https://example.test/{listed.Slug}.jpg"]);
+        item.CategoryPath.Last().ShouldBe(categoryName);
+        item.Attributes.ShouldContain(a => a.Name == "Штрихкод" && a.Value == "4823067702320");
+        // Sold out stays in the feed, marked as such: the listing keeps its history.
+        feed.Single(i => i.Slug == soldOut.Slug).InStock.ShouldBeFalse();
+        // A shopping service takes neither a product without a price nor one without a photo.
+        feed.ShouldNotContain(i => i.Slug == noPrice.Slug);
+        feed.ShouldNotContain(i => i.Slug == noPhoto.Slug);
+    }
+
+    [Fact]
     public async Task Product_meta_description_uses_its_own_text_when_there_is_enough_of_it()
     {
         var product = await api.AddProductAsync("vse-dlia-polyvu", "Зрошувач з описом", 450m);

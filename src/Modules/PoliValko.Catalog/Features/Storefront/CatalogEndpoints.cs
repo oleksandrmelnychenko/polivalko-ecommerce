@@ -46,6 +46,10 @@ internal static class CatalogEndpoints
             .WithName("GetSitemap")
             .WithSummary("Адреси видимих розділів і товарів для sitemap.xml");
 
+        group.MapGet("/catalog/merchant-feed", GetMerchantFeed.HandleAsync)
+            .WithName("GetMerchantFeed")
+            .WithSummary("Товари з ціною і фото для товарного фіда сервісів покупок");
+
         group.MapGet("/redirects/resolve", ResolveRedirect.HandleAsync)
             .WithName("ResolveRedirect")
             .WithSummary("Нова адреса для старого опублікованого шляху (постійне перенаправлення)")

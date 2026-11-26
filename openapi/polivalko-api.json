@@ -375,6 +375,30 @@
         }
       }
     },
+    "/api/v1/catalog/merchant-feed": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Товари з ціною і фото для товарного фіда сервісів покупок",
+        "operationId": "GetMerchantFeed",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MerchantFeedItemDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/redirects/resolve": {
       "get": {
         "tags": [
@@ -20501,6 +20525,84 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "MerchantFeedItemDto": {
+        "required": [
+          "id",
+          "slug",
+          "sku",
+          "name",
+          "brand",
+          "descriptionHtml",
+          "price",
+          "oldPrice",
+          "inStock",
+          "categoryPath",
+          "images",
+          "attributes"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "brand": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "descriptionHtml": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "price": {
+            "$ref": "#/components/schemas/MoneyDto"
+          },
+          "oldPrice": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "inStock": {
+            "type": "boolean"
+          },
+          "categoryPath": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductAttributeDto"
+            }
           }
         }
       },

@@ -156,6 +156,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/catalog/merchant-feed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Товари з ціною і фото для товарного фіда сервісів покупок */
+        get: operations["GetMerchantFeed"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/redirects/resolve": {
         parameters: {
             query?: never;
@@ -5126,6 +5143,21 @@ export interface components {
             password: null | string;
             twoFactorCode?: null | string;
         };
+        MerchantFeedItemDto: {
+            /** Format: uuid */
+            id: string;
+            slug: string;
+            sku: string;
+            name: string;
+            brand: null | string;
+            descriptionHtml: null | string;
+            price: components["schemas"]["MoneyDto"];
+            oldPrice: null | components["schemas"]["MoneyDto"];
+            inStock: boolean;
+            categoryPath: string[];
+            images: string[];
+            attributes: components["schemas"]["ProductAttributeDto"][];
+        };
         MergeBrandRequest: {
             /** Format: uuid */
             intoId: null | string;
@@ -6902,6 +6934,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SitemapDto"];
+                };
+            };
+        };
+    };
+    GetMerchantFeed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MerchantFeedItemDto"][];
                 };
             };
         };
