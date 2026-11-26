@@ -192,6 +192,20 @@ export function heroSlides({ deals, sections, featured, storeFeatured }: HeroDat
   ];
 }
 
+/**
+ * The photo of the first hero slide, known as soon as the banners are: the slider itself waits for prices, best sellers
+ * and subsections, so its photo was only requested after all of them (2.6 s on a fast line). Mirrors bannerSlides and
+ * heroSlides; a best-seller banner first in the list is skipped, as bannerSlides does when there is no best seller.
+ */
+export function firstHeroPhoto(banners: Banner[]): { image: Sized; mobileImage?: Sized } {
+  const banner = banners.find((item) => !BESTSELLER_LINK.test(item.link?.trim() ?? ""));
+  if (!banner) return { image: sized(pagePhotos.hero.url, HERO_SIZES, 960) };
+  return {
+    image: sized(banner.imageUrl, HERO_SIZES, 960),
+    mobileImage: banner.mobileImageUrl?.trim() ? sized(banner.mobileImageUrl.trim(), "100vw", 500) : undefined,
+  };
+}
+
 export function bannerSlides(banners: Banner[], { deals, sections, featured, storeFeatured, categories, categoryFeatured }: HeroData): HeroSlide[] {
   const shown = featured ? banners : banners.filter((banner) => !BESTSELLER_LINK.test(banner.link?.trim() ?? ""));
   return shown.map((banner, i) => {

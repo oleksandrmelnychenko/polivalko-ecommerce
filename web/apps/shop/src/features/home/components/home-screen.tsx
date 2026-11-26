@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import { formatMoney } from "@polivalko/shared/lib/format";
 import { thumb } from "@/shared/lib/images";
 import { Suspense } from "react";
+import { preload } from "react-dom";
 import { getBestsellers, getCategoryTree, searchProducts } from "@/features/catalog/server";
 import type { ProductListItem } from "@polivalko/shared/api/types";
 import { enabledDeliveryFacts, getSiteHome, SiteJsonLd, type SiteHome, type Banner } from "@/features/content/server";
@@ -12,6 +13,7 @@ import {
   bannerCategorySlugs,
   categorySubsections,
   findCategory,
+  firstHeroPhoto,
   bestsellerFeature,
   heroSlides,
   saleDeals,
@@ -53,6 +55,7 @@ async function HomeContent() {
   const home = await getSiteHome().catch(() => null);
   const blocks = homeBlocks(home?.blocks);
   const banners = home?.banners ?? [];
+  if (blocks.includes("hero")) preloadHeroPhoto(banners);
   const needsFacts = blocks.includes("perks") && !home?.perks?.some((p) => p.title?.trim());
   const [data, facts] = await Promise.all([
     blocks.includes("hero") ? heroData(banners) : Promise.resolve<HeroData>({}),
@@ -71,6 +74,19 @@ async function HomeContent() {
       <HomeFaq />
     </>
   );
+}
+
+/** Starts the LCP photo download now instead of after the hero data (see firstHeroPhoto). */
+function preloadHeroPhoto(banners: Banner[]) {
+  const { image, mobileImage } = firstHeroPhoto(banners);
+  const hint = (photo: typeof image, media?: string) =>
+    preload(photo.src, { as: "image", fetchPriority: "high", imageSrcSet: photo.srcSet, imageSizes: photo.sizes, media });
+  if (mobileImage) {
+    hint(mobileImage, "(max-width: 40rem)");
+    hint(image, "(min-width: 40.0625rem)");
+  } else {
+    hint(image);
+  }
 }
 
 async function heroData(banners: Banner[]): Promise<HeroData> {
