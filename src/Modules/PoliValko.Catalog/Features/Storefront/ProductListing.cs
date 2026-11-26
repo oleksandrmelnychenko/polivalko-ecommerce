@@ -50,11 +50,13 @@ internal static class ProductListing
         TimeProvider time,
         CancellationToken ct)
     {
-        var labels = await ProductLabelSet.LoadAsync(db, rows.Select(r => r.Id).ToList(), time.GetUtcNow(), ct);
-        return rows.Select(r => ToListItem(r, labels)).ToList();
+        var ids = rows.Select(r => r.Id).ToList();
+        var labels = await ProductLabelSet.LoadAsync(db, ids, time.GetUtcNow(), ct);
+        var sizes = await PackGroups.SizesAsync(await CatalogVisibility.ProductsAsync(db, ct), ids, ct);
+        return rows.Select(r => ToListItem(r, labels, sizes.GetValueOrDefault(r.Id))).ToList();
     }
 
-    public static ProductListItemDto ToListItem(ListItemRow r, ProductLabelSet labels) => new(
+    public static ProductListItemDto ToListItem(ListItemRow r, ProductLabelSet labels, (int Count, decimal? PriceFrom) sizes = default) => new(
         r.Id,
         r.CategoryId,
         r.Slug,
@@ -65,7 +67,9 @@ internal static class ProductListing
         OldPrice(r.Amount, r.OldAmount),
         IsPurchasable(r.Quantity, r.Amount),
         r.ImageUrl,
-        Badges(labels.For(r.Id, r.Amount, r.OldAmount, r.CreatedAt)));
+        Badges(labels.For(r.Id, r.Amount, r.OldAmount, r.CreatedAt)),
+        sizes.Count,
+        sizes.PriceFrom is { } from ? MoneyDto.Hryvnia(from) : null);
 
     public static IReadOnlyList<ProductLabelBadgeDto> Badges(IReadOnlyList<ProductLabel> labels) =>
         labels.Select(l => new ProductLabelBadgeDto(l.Name, l.Tone, l.Kind)).ToList();

@@ -141,6 +141,17 @@ if (category) {
   await inspect(`${category}?sort=price_desc`, { noindex: true, follow: true, canonical: category });
 }
 
+// Бренди: список і сторінка бренду з sitemap індексуються; сторінка з фільтром — ні.
+await inspect("/brands", { canonical: "/brands", og: true, types: ["BreadcrumbList", "ItemList"] });
+const brand = paths.find((p) => p.startsWith("/brands/"));
+check("/sitemap.xml", "є сторінки брендів", Boolean(brand));
+if (brand) {
+  await inspect(brand, { canonical: brand, og: true, types: ["BreadcrumbList", "ItemList"] });
+  await inspect(`${brand}?inStock=true`, { noindex: true, follow: true, canonical: brand });
+}
+const missingBrand = await send("/brands/brenda-takoho-nemaie");
+check("/brands/brenda-takoho-nemaie", "HTTP 404", missingBrand.status === 404, String(missingBrand.status));
+
 // Sitemap і сторінки застосовують одне правило (GetSitemap.cs, isIndexableProduct): у пошуку товар, який має фото.
 // Sitemap кешується на години, тож товар, який щойно втратив фото, може недовго бути і в sitemap, і з noindex: одна
 // така помилка — привід запустити перевірку ще раз, а не дефект.

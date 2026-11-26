@@ -3,7 +3,7 @@ import { AddToCart } from "@/features/cart";
 import { FavoriteButton } from "@/features/favorites";
 import { CompareButton } from "@/features/compare";
 import type { ProductListItem } from "@polivalko/shared/api/types";
-import { formatMoney } from "@polivalko/shared/lib/format";
+import { formatMoney, plural } from "@polivalko/shared/lib/format";
 import { sized } from "@/shared/lib/images";
 import { toCartProduct } from "../lib/cart-product";
 import { discountPercent } from "../lib/discount";
@@ -17,6 +17,9 @@ export function ProductTile({ product, priority }: { product: ProductListItem; p
   const buyable = canBuy(product);
   const image = product.imageUrl ? sized(product.imageUrl, "(max-width: 48rem) 46vw, (max-width: 80rem) 30vw, 320px", 330) : null;
   const href = `/product/${product.slug}`;
+  // A pack group is one card in a listing; the size is picked on the product page.
+  const packs = product.packSizes ?? 0;
+  const priceFrom = packs > 1 && product.priceFrom?.value === product.price.value;
   return (
     <li className="tile tile--product tile--shop">
       <figure className="tile__photo">
@@ -43,10 +46,12 @@ export function ProductTile({ product, priority }: { product: ProductListItem; p
         <p className="tile__name">
           <Link href={href}>{product.name}</Link>
         </p>
+        {packs > 1 && <p className="tile__packs">{packs} {plural(packs, "фасування", "фасування", "фасувань")}</p>}
         {hasPrice(product.price) ? (
           <p className="tile__price">
             <strong className={discount ? "price-sale" : undefined}>
               {discount && <span className="visually-hidden">Нова ціна </span>}
+              {priceFrom && "від "}
               <span className="money">{formatMoney(product.price)}</span>
             </strong>
             {product.oldPrice && discount && (
@@ -64,7 +69,11 @@ export function ProductTile({ product, priority }: { product: ProductListItem; p
             <strong className="price-ask">{PRICE_ON_REQUEST}</strong>
           </p>
         )}
-        {buyable ? (
+        {packs > 1 ? (
+          <Link href={href} className="tile__buy">
+            Обрати фасування
+          </Link>
+        ) : buyable ? (
           <AddToCart product={toCartProduct(product)} inStock />
         ) : (
           <Link href={href} className="tile__buy tile__buy--off">

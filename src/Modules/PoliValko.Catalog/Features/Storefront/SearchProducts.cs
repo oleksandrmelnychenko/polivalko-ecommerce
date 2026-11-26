@@ -78,6 +78,18 @@ internal static class SearchProducts
             filterNames = ProductFacetBuilder.FilterAttributesOf(root, categories.ToDictionary(c => c.Id));
         }
 
+        if (!string.IsNullOrWhiteSpace(query.BrandPage))
+        {
+            // Like a category, a brand page narrows the scope itself, so its facets describe the brand's products.
+            var names = await BrandPages.NamesAsync(db, visibleProducts, query.BrandPage, ct);
+            if (names is null)
+            {
+                return BrandPages.NotFound(query.BrandPage);
+            }
+
+            scope = scope.Where(p => p.Brand != null && names.Contains(p.Brand));
+        }
+
         var approximate = false;
         IReadOnlyList<Guid[]>? relevance = null;
         Guid[]? about = null;
@@ -129,6 +141,8 @@ internal static class SearchProducts
             // A price of 0 means "price on request": it is not a price within any range.
             products = products.Where(p => p.Price.Amount > 0 && p.Price.Amount <= max);
         }
+
+        products = await PackGroups.OneCardEachAsync(products, ct);
 
         var page = PageRequest.From(query.Page, query.PageSize);
         var total = await products.CountAsync(ct);

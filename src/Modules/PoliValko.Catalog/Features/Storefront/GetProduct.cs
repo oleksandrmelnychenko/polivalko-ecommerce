@@ -87,6 +87,7 @@ internal static class GetProduct
             variants.Count > 1 ? variants : [],
             seoTitle,
             seoDescription,
-            ProductListing.Badges(labels.For(row.Id, row.Amount, row.OldAmount, row.CreatedAt))));
+            ProductListing.Badges(labels.For(row.Id, row.Amount, row.OldAmount, row.CreatedAt)),
+            await BrandPages.SlugForAsync(db, visibleProducts, row.Brand, ct)));
     }
 }

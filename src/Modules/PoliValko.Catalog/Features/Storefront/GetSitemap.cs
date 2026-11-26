@@ -40,6 +40,9 @@ internal static class GetSitemap
         DateTimeOffset ChangedAt(Category category) => CategoryQueries.Descendants(category.Id, byParent).Prepend(category.Id)
             .Where(changedIn.ContainsKey).Select(id => changedIn[id]).DefaultIfEmpty(latest).Max();
 
-        return TypedResults.Ok(new SitemapDto(categories.Select(c => new SitemapEntryDto(c.Slug, ChangedAt(c))).ToList(), products));
+        // A brand page lists every visible product of the brand, so it changed when the latest of them did.
+        var brands = (await BrandPages.LoadAsync(db, visibleProducts, ct)).Select(b => new SitemapEntryDto(b.Brand.Slug, b.UpdatedAt)).ToList();
+
+        return TypedResults.Ok(new SitemapDto(categories.Select(c => new SitemapEntryDto(c.Slug, ChangedAt(c))).ToList(), products, brands));
     }
 }

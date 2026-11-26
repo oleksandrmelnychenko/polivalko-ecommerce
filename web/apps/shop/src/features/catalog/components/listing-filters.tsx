@@ -200,7 +200,8 @@ export function ListingFilters({
         )}
       </fieldset>
 
-      {facets.brands.length > 0 && (
+      {/* One brand is no choice: on a brand page, or in a section that sells one brand. */}
+      {facets.brands.length > 1 && (
         <FacetGroup
           title="Бренд"
           icon={compact && <TagIcon />}

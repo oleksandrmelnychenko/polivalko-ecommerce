@@ -28,6 +28,8 @@ export type ProductQuery = {
   q?: string;
   category?: string;
   brand?: string;
+  /** Slug of a brand page: its products in any spelling of the brand. */
+  brandPage?: string;
   inStock?: boolean;
   onSale?: boolean;
   priceMin?: number;
@@ -80,6 +82,24 @@ async function searchSortedProducts({ query }: { query: ProductQuery; modeRevisi
   });
   if (response.status === 404 || response.status === 400) return null;
   if (!data) throw new Error("API: не вдалося завантажити товари");
+  return data;
+}
+
+export async function getBrandPages() {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("catalog", "products", "brands");
+  return loaded(await api.GET("/api/v1/catalog/brands"), "бренди") ?? [];
+}
+
+/** A brand with its own page; null when it has none (fewer than five products with a photo, or no such brand). */
+export async function getBrandPage(slug: string) {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("catalog", "products", "brands", `brand:${slug}`);
+  const { data, response } = await api.GET("/api/v1/catalog/brands/{slug}", { params: { path: { slug } } });
+  if (response.status === 404) return null;
+  if (!data) throw new Error(`API: не вдалося завантажити бренд ${slug}`);
   return data;
 }
 

@@ -139,6 +139,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/catalog/brands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Бренди з власною сторінкою: щонайменше 5 видимих товарів із фото */
+        get: operations["GetBrandPages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalog/brands/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Сторінка бренду */
+        get: operations["GetBrandPage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/catalog/sitemap": {
         parameters: {
             query?: never;
@@ -4001,6 +4035,23 @@ export interface components {
             /** Format: int32 */
             count: number;
         };
+        BrandPageDto: {
+            name: string;
+            slug: string;
+            description: null | string;
+            logoUrl: null | string;
+            /** Format: int32 */
+            productCount: number;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        BrandSummaryDto: {
+            name: string;
+            slug: string;
+            logoUrl: null | string;
+            /** Format: int32 */
+            productCount: number;
+        };
         BulkUpdateProductsRequest: {
             productIds: null | string[];
             /** Format: uuid */
@@ -5819,6 +5870,8 @@ export interface components {
             seoTitle: null | string;
             seoDescription: null | string;
             labels: components["schemas"]["ProductLabelBadgeDto"][];
+            /** @description Адреса сторінки бренду; null, якщо в бренду немає своєї сторінки */
+            brandSlug?: null | string;
         };
         ProductFacets: {
             brands: components["schemas"]["BrandFacet"][];
@@ -5856,6 +5909,13 @@ export interface components {
             inStock: boolean;
             imageUrl: null | string;
             labels: components["schemas"]["ProductLabelBadgeDto"][];
+            /**
+             * Format: int32
+             * @description Скільки фасувань у групі товару; 0, якщо товар не в групі
+             * @default 0
+             */
+            packSizes: number;
+            priceFrom?: null | components["schemas"]["MoneyDto"];
         };
         ProductMovement: {
             /** Format: uuid */
@@ -6352,6 +6412,7 @@ export interface components {
         SitemapDto: {
             categories: components["schemas"]["SitemapEntryDto"][];
             products: components["schemas"]["SitemapEntryDto"][];
+            brands: components["schemas"]["SitemapEntryDto"][];
         };
         SitemapEntryDto: {
             slug: string;
@@ -6769,6 +6830,8 @@ export interface operations {
                 category?: string;
                 /** @description Бренди через кому, точний збіг */
                 brand?: string;
+                /** @description Slug сторінки бренду: лише товари цього бренду, у будь-якому написанні */
+                brandPage?: string;
                 inStock?: boolean;
                 /** @description Лише товари зі старою ціною, більшою за поточну */
                 onSale?: boolean;
@@ -6914,6 +6977,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CollectionDto"][];
+                };
+            };
+        };
+    };
+    GetBrandPages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandSummaryDto"][];
+                };
+            };
+        };
+    };
+    GetBrandPage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandPageDto"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };

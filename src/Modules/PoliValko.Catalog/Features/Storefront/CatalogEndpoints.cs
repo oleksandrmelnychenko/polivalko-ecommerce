@@ -42,6 +42,15 @@ internal static class CatalogEndpoints
             .WithName("GetCollections")
             .WithSummary("Редакційні колекції головної з видимими товарами в погодженому порядку");
 
+        group.MapGet("/catalog/brands", BrandPages.ListAsync)
+            .WithName("GetBrandPages")
+            .WithSummary("Бренди з власною сторінкою: щонайменше 5 видимих товарів із фото");
+
+        group.MapGet("/catalog/brands/{slug}", BrandPages.GetAsync)
+            .WithName("GetBrandPage")
+            .WithSummary("Сторінка бренду")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         group.MapGet("/catalog/sitemap", GetSitemap.HandleAsync)
             .WithName("GetSitemap")
             .WithSummary("Адреси видимих розділів і товарів для sitemap.xml");

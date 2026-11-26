@@ -124,6 +124,14 @@
             }
           },
           {
+            "name": "brandPage",
+            "in": "query",
+            "description": "Slug сторінки бренду: лише товари цього бренду, у будь-якому написанні",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "inStock",
             "in": "query",
             "schema": {
@@ -347,6 +355,71 @@
                   "items": {
                     "$ref": "#/components/schemas/CollectionDto"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/brands": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Бренди з власною сторінкою: щонайменше 5 видимих товарів із фото",
+        "operationId": "GetBrandPages",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BrandSummaryDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/catalog/brands/{slug}": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Сторінка бренду",
+        "operationId": "GetBrandPage",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandPageDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -15732,6 +15805,72 @@
           }
         }
       },
+      "BrandPageDto": {
+        "required": [
+          "name",
+          "slug",
+          "description",
+          "logoUrl",
+          "productCount",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "logoUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "productCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BrandSummaryDto": {
+        "required": [
+          "name",
+          "slug",
+          "logoUrl",
+          "productCount"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "logoUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "productCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "BulkUpdateProductsRequest": {
         "required": [
           "productIds",
@@ -23095,6 +23234,13 @@
             "items": {
               "$ref": "#/components/schemas/ProductLabelBadgeDto"
             }
+          },
+          "brandSlug": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Адреса сторінки бренду; null, якщо в бренду немає своєї сторінки"
           }
         }
       },
@@ -23265,6 +23411,23 @@
             "items": {
               "$ref": "#/components/schemas/ProductLabelBadgeDto"
             }
+          },
+          "packSizes": {
+            "type": "integer",
+            "description": "Скільки фасувань у групі товару; 0, якщо товар не в групі",
+            "format": "int32",
+            "default": 0
+          },
+          "priceFrom": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Найнижча ціна серед фасувань, якщо вони коштують по-різному",
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
           }
         }
       },
@@ -25468,7 +25631,8 @@
       "SitemapDto": {
         "required": [
           "categories",
-          "products"
+          "products",
+          "brands"
         ],
         "type": "object",
         "properties": {
@@ -25479,6 +25643,12 @@
             }
           },
           "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SitemapEntryDto"
+            }
+          },
+          "brands": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SitemapEntryDto"

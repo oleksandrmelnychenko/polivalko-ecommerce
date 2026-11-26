@@ -6,7 +6,7 @@ import { hrefFor, parseListingParams, toQuery, type SearchParams } from "./lib/l
 /**
  * A listing page past the last one (an old link, fewer products now) answers a 307 to the last page,
  * before the prebuilt shell can answer 200. src/proxy.ts calls it for document requests to /catalog, /catalog/<slug>,
- * /sale and /search; undefined lets the page render. Only pages after the first pay for the extra API request.
+ * /brands/<slug>, /sale and /search; undefined lets the page render. Only pages after the first pay for the extra API request.
  */
 export async function redirectPastLastPage(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
@@ -18,8 +18,9 @@ export async function redirectPastLastPage(request: NextRequest) {
   const search = pathname === "/search";
   const q = first(sp.q)?.trim() ?? "";
   if (search && !q) return undefined;
-  const slug = pathname.split("/")[2];
-  const base = search ? { q } : pathname === "/sale" ? { onSale: true } : { category: slug ? safeDecode(slug) : undefined };
+  const [, section, slug] = pathname.split("/");
+  const segment = slug ? safeDecode(slug) : undefined;
+  const base = search ? { q } : pathname === "/sale" ? { onSale: true } : section === "brands" ? { brandPage: segment } : { category: segment };
 
   const totalPages = await countPages(toQuery(base, parsed));
   if (totalPages === undefined) return undefined;

@@ -8,14 +8,14 @@ import { latestChange, siteUrl, staticSitemapEntries } from "@/features/seo";
 import { articles } from "@/features/journal/server";
 import { JOURNAL_ENABLED } from "@/features/journal";
 
-const STATIC_PAGES = ["", "/catalog", "/sale", "/services", "/contacts", "/payment-delivery", "/returns", "/offer", "/privacy", "/about", ...(JOURNAL_ENABLED ? ["/blog", ...articles.map((article) => `/blog/${article.slug}`)] : [])];
+const STATIC_PAGES = ["", "/catalog", "/brands", "/sale", "/services", "/contacts", "/payment-delivery", "/returns", "/offer", "/privacy", "/about", ...(JOURNAL_ENABLED ? ["/blog", ...articles.map((article) => `/blog/${article.slug}`)] : [])];
 // Pages whose text is edited in the console: each keeps the date of its last change.
 const TEXT_PAGES = ["payment-delivery", "returns", "offer", "privacy"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   await connection();
   const site = siteUrl();
-  const [{ categories, products }, services, saleProducts, textPageDates] = await Promise.all([
+  const [{ categories, products, brands }, services, saleProducts, textPageDates] = await Promise.all([
     getSitemap(),
     getServiceDirections().catch(() => []),
     countSaleProducts(),
@@ -27,7 +27,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const pages = saleIsEmpty(saleProducts) ? STATIC_PAGES.filter((path) => path !== "/sale") : STATIC_PAGES;
   // «Послуги» lists every service, so it changed when the latest of them did. The home page, the catalog, contacts
   // and «Про нас» have no stored change date and go without one.
-  const changedAt = { ...Object.fromEntries(textPageDates), "/services": latestChange([...serviceDates.values()]) };
+  // «Бренди» lists every brand page, so it changed when the latest of them did.
+  const changedAt = {
+    ...Object.fromEntries(textPageDates),
+    "/services": latestChange([...serviceDates.values()]),
+    "/brands": latestChange(brands.map((b) => b.updatedAt)),
+  };
   return [
     ...staticSitemapEntries(site, pages, changedAt),
     // Only service pages with their own text: a stub page is noindex (see services/[slug]).
@@ -36,6 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       return { url: `${site}/services/${s.slug}`, ...(lastModified ? { lastModified } : {}), changeFrequency: "monthly" as const, priority: 0.7 };
     }),
     ...categories.map((c) => ({ url: `${site}/catalog/${c.slug}`, lastModified: c.updatedAt, changeFrequency: "daily" as const, priority: 0.8 })),
+    ...brands.map((b) => ({ url: `${site}/brands/${b.slug}`, lastModified: b.updatedAt, changeFrequency: "daily" as const, priority: 0.7 })),
     ...products.map((p) => ({ url: `${site}/product/${p.slug}`, lastModified: p.updatedAt, changeFrequency: "daily" as const, priority: 0.6 })),
   ];
 }

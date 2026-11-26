@@ -11,6 +11,7 @@ import { HeaderMascot } from "./header-mascot";
 const shop = [
   { href: "/catalog", label: "Каталог" },
   { href: "/sale", label: "Акції" },
+  { href: "/brands", label: "Бренди" },
   { href: "/services", label: "Послуги" },
   { href: "/about", label: "Про Полі-Валко" },
   ...(JOURNAL_ENABLED ? [{ href: "/blog", label: "Блог" }] : []),

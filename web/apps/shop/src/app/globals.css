@@ -44,6 +44,7 @@
 @import url("../../../../packages/shared/styles/ui/page-head.css");
 @import url("../features/catalog/styles/listing.css");
 @import url("../features/catalog/styles/category-intro.css");
+@import url("../features/catalog/styles/brands.css");
 @import url("../../../../packages/shared/styles/ui/check.css");
 @import url("../features/catalog/styles/listing-toolbar.css");
 @import url("../shared/styles/ui/dropdown-select.css");

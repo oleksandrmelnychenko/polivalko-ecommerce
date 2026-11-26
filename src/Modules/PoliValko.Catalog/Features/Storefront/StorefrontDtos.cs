@@ -34,7 +34,9 @@ public sealed record ProductListItemDto(
     MoneyDto? OldPrice,
     bool InStock,
     string? ImageUrl,
-    IReadOnlyList<ProductLabelBadgeDto> Labels);
+    IReadOnlyList<ProductLabelBadgeDto> Labels,
+    [property: Description("Скільки фасувань у групі товару; 0, якщо товар не в групі")] int PackSizes = 0,
+    [property: Description("Найнижча ціна серед фасувань, якщо вони коштують по-різному")] MoneyDto? PriceFrom = null);
 
 public sealed record ProductImageDto(string Url, string Alt);
 
@@ -56,7 +58,8 @@ public sealed record ProductDetailsDto(
     IReadOnlyList<ProductVariantDto> Variants,
     string? SeoTitle,
     string? SeoDescription,
-    IReadOnlyList<ProductLabelBadgeDto> Labels);
+    IReadOnlyList<ProductLabelBadgeDto> Labels,
+    [property: Description("Адреса сторінки бренду; null, якщо в бренду немає своєї сторінки")] string? BrandSlug = null);
 
 public sealed record BrandFacet(string Name, int Count);
 
@@ -101,7 +104,12 @@ public sealed record MerchantFeedItemDto(
     IReadOnlyList<string> Images,
     IReadOnlyList<ProductAttributeDto> Attributes);
 
-public sealed record SitemapDto(IReadOnlyList<SitemapEntryDto> Categories, IReadOnlyList<SitemapEntryDto> Products);
+public sealed record SitemapDto(IReadOnlyList<SitemapEntryDto> Categories, IReadOnlyList<SitemapEntryDto> Products, IReadOnlyList<SitemapEntryDto> Brands);
+
+public sealed record BrandSummaryDto(string Name, string Slug, string? LogoUrl, int ProductCount);
+
+/// <summary>A brand with its own storefront page; its products come from the product search with <c>brandPage</c>.</summary>
+public sealed record BrandPageDto(string Name, string Slug, string? Description, string? LogoUrl, int ProductCount, DateTimeOffset UpdatedAt);
 
 public sealed record RedirectDto(string From, string To);
 
@@ -109,6 +117,7 @@ public sealed record ProductSearchQuery(
     [property: Description("Пошук за назвою або точним артикулом")] [FromQuery(Name = "q")] string? Q,
     [property: Description("Slug категорії; включає підкатегорії")] [FromQuery(Name = "category")] string? Category,
     [property: Description("Бренди через кому, точний збіг")] [FromQuery(Name = "brand")] string? Brand,
+    [property: Description("Slug сторінки бренду: лише товари цього бренду, у будь-якому написанні")] [FromQuery(Name = "brandPage")] string? BrandPage,
     [FromQuery(Name = "inStock")] bool? InStock,
     [property: Description("Лише товари зі старою ціною, більшою за поточну")] [FromQuery(Name = "onSale")] bool? OnSale,
     [FromQuery(Name = "priceMin")] decimal? PriceMin,

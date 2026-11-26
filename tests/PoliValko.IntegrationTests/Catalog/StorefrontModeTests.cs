@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Catalog.Domain;
 using PoliValko.Catalog.Features.Storefront;
+using PoliValko.Catalog.Persistence;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Settings;
 using PoliValko.SharedKernel;
@@ -318,7 +319,6 @@ public sealed class StorefrontModeTests(ApiFactory api)
     [Fact]
     public async Task Preview_tells_each_products_season_and_reason_counts_the_catalog_and_finds_a_product_by_name()
     {
-        using var shop = api.CreateClient();
         using var manager = await Staff.ManagerAsync(api);
         var token = Guid.NewGuid().ToString("N")[..10];
         // A department of its own: receipts that other tests leave in the shared ones cannot speak for its products.
@@ -342,9 +342,14 @@ public sealed class StorefrontModeTests(ApiFactory api)
             // A lookup tells the season of what it found. The counts belong to the catalog as a whole.
             december.Counts.ShouldBeNull();
             var whole = await manager.ReadAsync<StorefrontPreviewDto>($"{Editor}/preview?mode=seasonal&month=12");
-            var catalog = await shop.ReadAsync<ProductSearchResponse>("/api/v1/products?pageSize=12");
+            // Products, not listing cards: a listing shows a pack group as one card.
+            var visible = await api.WithDbAsync(async db =>
+            {
+                var ids = (await CatalogVisibility.CategoriesAsync(db, Ct)).Select(c => c.Id).ToArray();
+                return await CatalogVisibility.Products(db, ids).CountAsync(Ct);
+            });
             var counts = whole.Counts.ShouldNotBeNull();
-            (counts.InSeason + counts.AllYear + counts.OffSeason).ShouldBe(catalog.TotalItems);
+            (counts.InSeason + counts.AllYear + counts.OffSeason).ShouldBe(visible);
             counts.InSeason.ShouldBeGreaterThan(0);
             whole.MissingSections.ShouldNotBeNull();
             foreach (var unreadable in new[] { new string((char)1093, 129), "a%07b" })
