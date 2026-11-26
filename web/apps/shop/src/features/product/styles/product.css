@@ -10,8 +10,8 @@
 .gallery__main { border-radius: var(--radius-card); position: relative; width: 100%; aspect-ratio: 5 / 4; margin: 0; border: 1px solid var(--color-rule); background: #fff; overflow: hidden; isolation: isolate; }
 .gallery__main img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 @media (max-width: 48rem) {
-  /* The tall Sportsmaster bag needs its full label visible in the mobile preview. */
-  .product[data-sku="11417"] .gallery__main img { object-fit: contain; scale: 1; }
+  /* Keep the tall ProTurf and Sportsmaster bags fully visible in mobile previews. */
+  .product:is([data-sku="10754"], [data-sku="11417"]) .gallery__main img { object-fit: contain; scale: 1; }
 }
 .gallery__open { position: absolute; inset: 0; display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
 .gallery__open:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -4px; border-radius: inherit; }
