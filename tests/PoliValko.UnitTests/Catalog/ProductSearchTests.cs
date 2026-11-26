@@ -85,6 +85,18 @@ public sealed class ProductSearchTests
     [InlineData("плоскогубцы", "Плоскогубці слюсарні 200 мм")]
     [InlineData("скарификатор", "Аератор-розпушувач Combi Care 36 E")]
     [InlineData("высоторез", "Сучкоріз телескопічний Fiskars")]
+    [InlineData("хантер", "Клапан електромагнітний Hunter PGV")]
+    [InlineData("сідера", "Томат Бичаче серце Seedera")]
+    [InlineData("сидера", "Томат Бичаче серце Seedera")]
+    [InlineData("гардена", "Пістолет-розпилювач Gardena")]
+    [InlineData("фіскарс", "Сучкоріз телескопічний Fiskars")]
+    [InlineData("целфаст", "Дощувач осцилюючий Cellfast")]
+    [InlineData("ірітек", "Крапельниця Irritec NDC, 4 л/год")]
+    [InlineData("ірритек", "Крапельниця Irritec NDC, 4 л/год")]
+    [InlineData("трупер", "Лопата штикова Truper")]
+    [InlineData("сінгента", "Фунгіцид Ридоміл Голд Syngenta, 25 г")]
+    [InlineData("валагро", "Добриво Plantafol Valagro, 250 г")]
+    [InlineData("агрекол", "Добриво осіннє Agrecol, 1,2 кг")]
     public void Added_synonyms_find_the_catalog_word(string q, string name)
     {
         var product = Entry(name, Tools);
