@@ -8,6 +8,14 @@ export function typeWord(name: string): string | null {
 }
 
 /**
+ * The products a search by the type word found, unless the search had to guess: an approximate match (a cucumber for
+ * a cranberry) is not the same kind and must not lead the block.
+ */
+export function sameKindItems<T>(result: { items: T[]; approximate: boolean } | null | undefined): T[] {
+  return result && !result.approximate ? result.items : [];
+}
+
+/**
  * Up to `count` related products: those of the same kind first, then the rest of the category, without the product
  * itself or repeats.
  */

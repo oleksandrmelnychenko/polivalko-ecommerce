@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ProductTiles } from "@/features/catalog";
 import { searchProducts } from "@/features/catalog/server";
-import { relatedItems, typeWord } from "../lib/related";
+import { relatedItems, sameKindItems, typeWord } from "../lib/related";
 
 export async function RelatedProducts({ category, exclude, name }: { category: string; exclude: string; name: string }) {
   // The first tiles of the category were the same for every product in it: a controller got fittings, a tomato got
@@ -11,7 +11,7 @@ export async function RelatedProducts({ category, exclude, name }: { category: s
     kind ? searchProducts({ category, q: kind, pageSize: 6, inStock: true }).catch(() => null) : null,
     searchProducts({ category, pageSize: 6, inStock: true }),
   ]);
-  const items = relatedItems(sameKind?.items ?? [], sameCategory?.items ?? [], exclude);
+  const items = relatedItems(sameKindItems(sameKind), sameCategory?.items ?? [], exclude);
   if (items.length === 0) return null;
   return (
     <section className="related" aria-labelledby="related-title">

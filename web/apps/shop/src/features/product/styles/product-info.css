@@ -10,7 +10,9 @@
 .buybox__note svg { width: 18px; height: 18px; }
 .buybox__ask { display: flex; align-items: flex-start; gap: 8px; margin: 0; color: var(--color-muted); }
 .buybox__ask svg { flex: none; margin-top: 2px; }
-.buybox__ask a { color: var(--color-ink); font-weight: 600; white-space: nowrap; }
+.buybox__ask a, .buybox__ask-wait { font-weight: 600; white-space: nowrap; }
+.buybox__ask a { color: var(--color-ink); }
+.buybox__ask-wait { visibility: hidden; }
 .related h2 { font-size: var(--text-section); }
 .product__summary { display: grid; min-width: 0; gap: 18px; }
 .product-sheet, .info-sheet {

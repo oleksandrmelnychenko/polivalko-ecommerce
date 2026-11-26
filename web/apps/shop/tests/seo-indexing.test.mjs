@@ -278,3 +278,12 @@ test("a phone number as shown in the shop becomes a dialable link", () => {
 
   assert.equal(telHref("+38 (073) 818-52-22"), "tel:+380738185222");
 });
+
+test("a search that had to guess does not pass for products of the same kind", () => {
+  const { sameKindItems } = src("features/product/lib/related.ts");
+  const items = [{ id: "cucumber" }];
+
+  assert.deepEqual(sameKindItems({ items, approximate: true }), []);
+  assert.deepEqual(sameKindItems({ items, approximate: false }), items);
+  assert.deepEqual(sameKindItems(null), []);
+});

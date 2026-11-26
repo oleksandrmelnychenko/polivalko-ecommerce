@@ -6,7 +6,7 @@ import type { DeliveryFacts } from "@/shared/lib/delivery-facts";
 import { TrackViewItem } from "@/features/analytics";
 import { discountPercent, ProductLabels, withoutSaleLabel } from "@/features/catalog";
 import { Gallery } from "./gallery";
-import { ProductAsk } from "./product-ask";
+import { ProductAsk, ProductAskPending } from "./product-ask";
 import { ProductBuybox } from "./product-buybox";
 import { ProductDescription, ProductSpecs } from "./product-description";
 import { ProductDeliveryFacts } from "./product-delivery-facts";
@@ -44,7 +44,7 @@ export async function ProductScreen({ product, deliveryFacts, askPhone }: {
       />
       <div className="product__summary">
         <ProductBuybox product={product} discount={discount} />
-        <Suspense fallback={null}>
+        <Suspense fallback={<ProductAskPending product={product} />}>
           <ProductAsk product={product} phone={askPhone} />
         </Suspense>
         <div className="product-sheet leaf-separated">
