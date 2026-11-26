@@ -69,6 +69,10 @@ internal sealed class ContentModelConfigurator : IModelConfigurator
             builder.Property(d => d.Code).HasMaxLength(50);
             builder.Property(d => d.Description).HasMaxLength(1000);
             builder.Property(d => d.ImageUrl).HasMaxLength(ImageUrls.MaxLength);
+            builder.Property(d => d.Slug).HasMaxLength(ServiceDirectionContent.SlugLength);
+            builder.HasIndex(d => d.Slug).IsUnique();
+            builder.Property(d => d.SeoTitle).HasMaxLength(200);
+            builder.Property(d => d.SeoDescription).HasMaxLength(500);
             builder.HasData(ServiceDirections.All.Select((d, i) => new ServiceDirectionContent
             {
                 Code = d.Code,
