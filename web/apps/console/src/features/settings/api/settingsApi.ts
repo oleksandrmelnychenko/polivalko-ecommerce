@@ -70,3 +70,9 @@ export type NavkoloStatus = S['NavkoloStatusDto']
 export function getNavkoloSettings() { return api.GET('/api/v1/console/settings/navkolo') }
 export function checkNavkolo(headers: CsrfHeaders, body: S['CheckNavkoloRequest']) { return api.POST('/api/v1/console/settings/navkolo/check', { headers, body }) }
 export function saveNavkoloSettings(headers: CsrfHeaders, body: S['SaveNavkoloConnectionRequest']) { return api.PUT('/api/v1/console/settings/navkolo', { headers, body }) }
+
+export type PaymentGateways = S['PaymentGatewaysDto']
+export type SavePaymentGatewaysRequest = S['SavePaymentGatewaysRequest']
+export function getPaymentGateways() { return api.GET('/api/v1/console/settings/payments/gateways') }
+export function checkPaymentGateway(headers: CsrfHeaders, body: S['CheckPaymentGatewayRequest']) { return api.POST('/api/v1/console/settings/payments/gateways/check', { headers, body }) }
+export function savePaymentGateways(headers: CsrfHeaders, body: SavePaymentGatewaysRequest) { return api.PUT('/api/v1/console/settings/payments/gateways', { headers, body }) }

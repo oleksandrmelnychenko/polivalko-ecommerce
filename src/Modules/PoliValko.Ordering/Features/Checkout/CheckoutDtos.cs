@@ -25,7 +25,10 @@ public sealed record QuoteLineDto(
     MoneyDto LineTotal,
     string? Issue);
 
-public sealed record PaymentMethodOptionDto(string Code, string Name);
+public sealed record PaymentMethodOptionDto(string Code, string Name, IReadOnlyList<CardPaymentOptionDto>? Providers = null);
+
+/// <summary>A bank or wallet for online payment: <c>mono</c>, <c>liqpay</c>, <c>wallet</c> (Apple Pay / Google Pay), <c>sandbox</c>.</summary>
+public sealed record CardPaymentOptionDto(string Code, string Name, string Hint);
 
 public sealed record DeliveryMethodOptionDto(
     string Code,

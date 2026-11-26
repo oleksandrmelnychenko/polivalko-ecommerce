@@ -1140,6 +1140,30 @@
         }
       }
     },
+    "/api/v1/payments/options": {
+      "get": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "Способи онлайн-оплати, з яких обирає покупець: monobank, ПриватБанк, Apple Pay / Google Pay. Порожньо — онлайн-оплата вимкнена.",
+        "operationId": "PaymentOptions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PaymentOptionDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/payments/webhooks/{provider}": {
       "post": {
         "tags": [
@@ -7198,6 +7222,177 @@
           },
           "403": {
             "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/settings/payments/gateways": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Банки онлайн-оплати: monobank, LiqPay (ПриватБанк), Apple Pay і Google Pay. Ключі не повертаються, лише чи вони збережені.",
+        "operationId": "ConsoleGetPaymentGateways",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentGatewaysDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Зберегти банки й ключі. Ключі ввімкненого банку спершу перевіряються в банку; ключі шифруються.",
+        "operationId": "ConsoleSavePaymentGateways",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePaymentGatewaysRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentGatewaysDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/settings/payments/gateways/check": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Перевірити ключі банку запитом до нього, нічого не зберігаючи",
+        "operationId": "ConsoleCheckPaymentGateway",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckPaymentGatewayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckPaymentGatewayDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -14167,6 +14362,22 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/StartAccountPaymentRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -15400,6 +15611,25 @@
           }
         }
       },
+      "CardPaymentOptionDto": {
+        "required": [
+          "code",
+          "name",
+          "hint"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "hint": {
+            "type": "string"
+          }
+        }
+      },
       "CartCheckoutRequest": {
         "required": [
           "cartId",
@@ -15708,6 +15938,56 @@
         "type": "object",
         "properties": {
           "apiKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "CheckPaymentGatewayDto": {
+        "required": [
+          "provider",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "CheckPaymentGatewayRequest": {
+        "required": [
+          "provider",
+          "monoToken",
+          "liqPayPublicKey",
+          "liqPayPrivateKey"
+        ],
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "monoToken": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "liqPayPublicKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "liqPayPrivateKey": {
             "type": [
               "null",
               "string"
@@ -19873,6 +20153,40 @@
           }
         }
       },
+      "LiqPayGatewayDto": {
+        "required": [
+          "enabled",
+          "publicKey",
+          "hasPrivateKey",
+          "signature",
+          "verifiedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "publicKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "hasPrivateKey": {
+            "type": "boolean"
+          },
+          "signature": {
+            "type": "string"
+          },
+          "verifiedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
       "LockStaffUserRequest": {
         "required": [
           "locked"
@@ -19938,6 +20252,29 @@
           },
           "currency": {
             "type": "string"
+          }
+        }
+      },
+      "MonoGatewayDto": {
+        "required": [
+          "enabled",
+          "hasToken",
+          "verifiedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "hasToken": {
+            "type": "boolean"
+          },
+          "verifiedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -21441,6 +21778,48 @@
           "reversed"
         ]
       },
+      "PaymentGatewaysDto": {
+        "required": [
+          "revision",
+          "source",
+          "sandboxEnabled",
+          "mono",
+          "liqPay",
+          "wallets",
+          "options"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "source": {
+            "type": "string"
+          },
+          "sandboxEnabled": {
+            "type": "boolean"
+          },
+          "mono": {
+            "$ref": "#/components/schemas/MonoGatewayDto"
+          },
+          "liqPay": {
+            "$ref": "#/components/schemas/LiqPayGatewayDto"
+          },
+          "wallets": {
+            "$ref": "#/components/schemas/WalletsGatewayDto"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentOptionDto"
+            }
+          }
+        }
+      },
       "PaymentMethodOptionDto": {
         "required": [
           "code",
@@ -21452,6 +21831,34 @@
             "type": "string"
           },
           "name": {
+            "type": "string"
+          },
+          "providers": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CardPaymentOptionDto"
+            }
+          }
+        }
+      },
+      "PaymentOptionDto": {
+        "required": [
+          "code",
+          "name",
+          "hint"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "hint": {
             "type": "string"
           }
         }
@@ -23931,6 +24338,69 @@
           }
         }
       },
+      "SavePaymentGatewaysRequest": {
+        "required": [
+          "revision",
+          "monoEnabled",
+          "monoToken",
+          "clearMonoToken",
+          "liqPayEnabled",
+          "liqPayPublicKey",
+          "liqPayPrivateKey",
+          "clearLiqPayKeys",
+          "walletsEnabled",
+          "walletsProvider"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "monoEnabled": {
+            "type": "boolean"
+          },
+          "monoToken": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "clearMonoToken": {
+            "type": "boolean"
+          },
+          "liqPayEnabled": {
+            "type": "boolean"
+          },
+          "liqPayPublicKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "liqPayPrivateKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "clearLiqPayKeys": {
+            "type": "boolean"
+          },
+          "walletsEnabled": {
+            "type": "boolean"
+          },
+          "walletsProvider": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "SaveServiceDirectionRequest": {
         "required": [
           "description",
@@ -24729,6 +25199,17 @@
           }
         }
       },
+      "StartAccountPaymentRequest": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "StartPaymentDto": {
         "required": [
           "paymentId",
@@ -24757,6 +25238,12 @@
         "type": "object",
         "properties": {
           "token": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "method": {
             "type": [
               "null",
               "string"
@@ -25607,6 +26094,21 @@
         "type": "object",
         "properties": {
           "url": {
+            "type": "string"
+          }
+        }
+      },
+      "WalletsGatewayDto": {
+        "required": [
+          "enabled",
+          "provider"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "provider": {
             "type": "string"
           }
         }

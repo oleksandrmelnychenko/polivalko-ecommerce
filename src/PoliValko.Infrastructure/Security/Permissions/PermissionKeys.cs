@@ -63,6 +63,8 @@ public static class PermissionKeys
 
     public const string SettingsNotificationsManage = "settings.notifications.manage";
 
+    public const string SettingsPaymentsManage = "settings.payments.manage";
+
     public const string IntegrationStatusView = "integration.status.view";
 
     public const string IntegrationJobsRun = "integration.jobs.run";

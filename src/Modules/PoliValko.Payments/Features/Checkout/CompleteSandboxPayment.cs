@@ -22,7 +22,7 @@ internal static class CompleteSandboxPayment
         TimeProvider time,
         CancellationToken ct)
     {
-        if (providers.Active is not SandboxPaymentProvider provider)
+        if (providers.Find(PaymentProviderNames.Sandbox) is not SandboxPaymentProvider provider)
         {
             return Problems.NotFound("http.not_found", "Не знайдено");
         }

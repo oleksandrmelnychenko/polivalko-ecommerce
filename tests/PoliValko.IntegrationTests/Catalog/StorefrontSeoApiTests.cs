@@ -10,20 +10,31 @@ public sealed class StorefrontSeoApiTests(ApiFactory api)
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task Sitemap_leaves_out_products_without_a_price_or_out_of_stock_without_a_photo()
+    public async Task Sitemap_lists_the_products_that_have_a_photo()
     {
         var marker = Guid.NewGuid().ToString("N")[..6];
-        var inStock = await api.AddProductAsync("hospodarchi-tovary", $"Відро в наявності {marker}", 120m, stock: 3);
-        var noPrice = await api.AddProductAsync("hospodarchi-tovary", $"Відро без ціни {marker}", 0m, stock: 3);
-        var gone = await api.AddProductAsync("hospodarchi-tovary", $"Відро без фото {marker}", 120m, stock: 0);
+        var soldOutWithPhoto = await api.AddProductAsync("hospodarchi-tovary", $"Відро з фото {marker}", 120m, stock: 0);
+        var inStockNoPhoto = await api.AddProductAsync("hospodarchi-tovary", $"Відро без фото {marker}", 120m, stock: 3);
+        var noPriceWithPhoto = await api.AddProductAsync("hospodarchi-tovary", $"Відро без ціни {marker}", 0m, stock: 3);
+        await api.WithDbAsync(async db =>
+        {
+            foreach (var product in new[] { soldOutWithPhoto, noPriceWithPhoto })
+            {
+                db.Add(new ProductImage { Id = Guid.CreateVersion7(), ProductId = product.Id, Url = $"https://example.test/{product.Slug}.jpg", Alt = "Відро" });
+            }
+
+            return await db.SaveChangesAsync(Ct);
+        });
 
         var sitemap = await api.CreateClient().GetStringAsync("/api/v1/catalog/sitemap", Ct);
 
-        sitemap.ShouldContain(inStock.Slug);
-        sitemap.ShouldNotContain(noPrice.Slug);
-        sitemap.ShouldNotContain(gone.Slug);
+        // A photo is enough, whatever the stock or the price: the page shows the product even when it cannot be bought.
+        sitemap.ShouldContain(soldOutWithPhoto.Slug);
+        sitemap.ShouldContain(noPriceWithPhoto.Slug);
+        // Shown on the site, but not offered to search engines until it has a photo.
+        sitemap.ShouldNotContain(inStockNoPhoto.Slug);
         // The pages themselves stay reachable.
-        (await api.CreateClient().GetAsync($"/api/v1/products/{gone.Slug}", Ct)).IsSuccessStatusCode.ShouldBeTrue();
+        (await api.CreateClient().GetAsync($"/api/v1/products/{inStockNoPhoto.Slug}", Ct)).IsSuccessStatusCode.ShouldBeTrue();
     }
 
     [Fact]

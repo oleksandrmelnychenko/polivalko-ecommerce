@@ -20,9 +20,12 @@ public sealed class PublicationSecurityTests(ApiFactory api)
         await api.WithDbAsync(async db => { db.AddRange(parent, child, leaf); return await db.SaveChangesAsync(Ct); });
         var product = await api.AddProductAsync(leaf.Slug, "Visibility " + suffix, 100m);
         var collection = new HomeCollection { Id = Guid.NewGuid(), Code = suffix, Title = suffix, ProductIds = [product.Id] };
-        await api.WithDbAsync(async db => { db.Add(collection); return await db.SaveChangesAsync(Ct); });
+        // With a price and a photo the product is in the sitemap, so only the hidden ancestor can take it out below.
+        var photo = new ProductImage { Id = Guid.CreateVersion7(), ProductId = product.Id, Url = "https://example.test/visibility.jpg", Alt = "Visibility" };
+        await api.WithDbAsync(async db => { db.AddRange(collection, photo); return await db.SaveChangesAsync(Ct); });
         var (client, _) = await Accounts.RegisterAsync(api);
         (await client.GetAsync($"/api/v1/products/{product.Slug}", Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await client.GetStringAsync("/api/v1/catalog/sitemap", Ct)).ShouldContain(product.Slug);
         (await client.PutAsync($"/api/v1/account/favorites/{product.Id}", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
         await api.WithDbAsync(db => db.Set<Category>().Where(c => c.Id == parent.Id).ExecuteUpdateAsync(s => s.SetProperty(c => c.IsVisible, false), Ct));
 

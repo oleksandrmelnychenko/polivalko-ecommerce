@@ -13,5 +13,8 @@ public sealed record ProviderPaymentStatus(
     /// </summary>
     public decimal? RemainingAmount { get; init; }
 
+    /// <summary>The message as JSON for the event log, when the provider's own body is not JSON (LiqPay posts a form).</summary>
+    public string? Payload { get; init; }
+
     public string EventKey => $"{ProviderPaymentId}:{State}:{ModifiedAt?.ToUnixTimeMilliseconds()}";
 }

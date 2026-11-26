@@ -47,8 +47,8 @@ export function getOrder(number: string) {
   ]);
 }
 
-export function postOrderPayment(headers: CsrfHeaders, number: string) {
-  return browserApi.POST("/api/v1/account/orders/{number}/payments", { headers, params: { path: { number } } });
+export function postOrderPayment(headers: CsrfHeaders, number: string, method?: string | null) {
+  return browserApi.POST("/api/v1/account/orders/{number}/payments", { headers, params: { path: { number } }, body: { method: method ?? null } });
 }
 
 export function postQuote(items: { productId: string; quantity: number }[]) {

@@ -459,6 +459,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/payments/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Способи онлайн-оплати, з яких обирає покупець: monobank, ПриватБанк, Apple Pay / Google Pay. Порожньо — онлайн-оплата вимкнена. */
+        get: operations["PaymentOptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payments/webhooks/{provider}": {
         parameters: {
             query?: never;
@@ -2082,6 +2099,41 @@ export interface paths {
         get: operations["ConsoleListOrderPayments"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/settings/payments/gateways": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Банки онлайн-оплати: monobank, LiqPay (ПриватБанк), Apple Pay і Google Pay. Ключі не повертаються, лише чи вони збережені. */
+        get: operations["ConsoleGetPaymentGateways"];
+        /** Зберегти банки й ключі. Ключі ввімкненого банку спершу перевіряються в банку; ключі шифруються. */
+        put: operations["ConsoleSavePaymentGateways"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/settings/payments/gateways/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Перевірити ключі банку запитом до нього, нічого не зберігаючи */
+        post: operations["ConsoleCheckPaymentGateway"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3910,6 +3962,11 @@ export interface components {
             /** Format: int32 */
             updated: number;
         };
+        CardPaymentOptionDto: {
+            code: string;
+            name: string;
+            hint: string;
+        };
         CartCheckoutRequest: {
             /** Format: uuid */
             cartId: string;
@@ -3979,6 +4036,16 @@ export interface components {
         };
         CheckNavkoloRequest: {
             apiKey: null | string;
+        };
+        CheckPaymentGatewayDto: {
+            provider: string;
+            message: string;
+        };
+        CheckPaymentGatewayRequest: {
+            provider: null | string;
+            monoToken: null | string;
+            liqPayPublicKey: null | string;
+            liqPayPrivateKey: null | string;
         };
         CollectionDto: {
             code: string;
@@ -4984,6 +5051,14 @@ export interface components {
             evidencePosition: number;
             code: string;
         };
+        LiqPayGatewayDto: {
+            enabled: boolean;
+            publicKey: null | string;
+            hasPrivateKey: boolean;
+            signature: string;
+            /** Format: date-time */
+            verifiedAt: null | string;
+        };
         LockStaffUserRequest: {
             locked: boolean;
         };
@@ -4999,6 +5074,12 @@ export interface components {
         MoneyDto: {
             value: string;
             currency: string;
+        };
+        MonoGatewayDto: {
+            enabled: boolean;
+            hasToken: boolean;
+            /** Format: date-time */
+            verifiedAt: null | string;
         };
         MyPermissionsDto: {
             roleId: string;
@@ -5405,9 +5486,25 @@ export interface components {
         };
         /** @enum {unknown} */
         PaymentAttemptStatus: "created" | "processing" | "succeeded" | "failed" | "expired" | "reversed";
+        PaymentGatewaysDto: {
+            /** Format: uuid */
+            revision: null | string;
+            source: string;
+            sandboxEnabled: boolean;
+            mono: components["schemas"]["MonoGatewayDto"];
+            liqPay: components["schemas"]["LiqPayGatewayDto"];
+            wallets: components["schemas"]["WalletsGatewayDto"];
+            options: components["schemas"]["PaymentOptionDto"][];
+        };
         PaymentMethodOptionDto: {
             code: string;
             name: string;
+            providers?: null | components["schemas"]["CardPaymentOptionDto"][];
+        };
+        PaymentOptionDto: {
+            code: string;
+            name: string;
+            hint: string;
         };
         PaymentRequest: {
             method: null | string;
@@ -5997,6 +6094,19 @@ export interface components {
             seoTitle?: null | string;
             seoDescription?: null | string;
         };
+        SavePaymentGatewaysRequest: {
+            /** Format: uuid */
+            revision: null | string;
+            monoEnabled: boolean;
+            monoToken: null | string;
+            clearMonoToken: boolean;
+            liqPayEnabled: boolean;
+            liqPayPublicKey: null | string;
+            liqPayPrivateKey: null | string;
+            clearLiqPayKeys: boolean;
+            walletsEnabled: boolean;
+            walletsProvider: null | string;
+        };
         SaveServiceDirectionRequest: {
             description: null | string;
             /** Format: int32 */
@@ -6180,6 +6290,9 @@ export interface components {
             lockedOut: boolean;
             twoFactorEnabled: boolean;
         };
+        StartAccountPaymentRequest: {
+            method?: null | string;
+        };
         StartPaymentDto: {
             /** Format: uuid */
             paymentId: string;
@@ -6189,6 +6302,7 @@ export interface components {
         };
         StartPaymentRequest: {
             token: null | string;
+            method?: null | string;
         };
         StockImpact: {
             /** Format: uuid */
@@ -6394,6 +6508,10 @@ export interface components {
         };
         UploadedImageDto: {
             url: string;
+        };
+        WalletsGatewayDto: {
+            enabled: boolean;
+            provider: string;
         };
         WarehouseBalance: {
             /** Format: uuid */
@@ -7300,6 +7418,26 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    PaymentOptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentOptionDto"][];
                 };
             };
         };
@@ -11875,6 +12013,155 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleGetPaymentGateways: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentGatewaysDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleSavePaymentGateways: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavePaymentGatewaysRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentGatewaysDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleCheckPaymentGateway: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckPaymentGatewayRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckPaymentGatewayDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17436,7 +17723,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": null | components["schemas"]["StartAccountPaymentRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

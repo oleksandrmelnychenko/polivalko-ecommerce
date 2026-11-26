@@ -10,15 +10,18 @@ internal sealed class CheckoutCalculator(ICatalogPricing pricing)
     public const int MaxLines = 50;
     public const int MaxQuantity = 999;
 
-    public static IReadOnlyList<DeliveryMethodOptionDto> DeliveryOptions(DeliveryAvailability availability, bool card)
+    public static IReadOnlyList<DeliveryMethodOptionDto> DeliveryOptions(IReadOnlyList<CardPaymentOption> cards, DeliveryAvailability availability) =>
+        DeliveryOptions(availability, cards.Count > 0, cards);
+
+    public static IReadOnlyList<DeliveryMethodOptionDto> DeliveryOptions(DeliveryAvailability availability, bool card, IReadOnlyList<CardPaymentOption>? cardOptions = null)
     {
         var options = new List<DeliveryMethodOptionDto>(3);
-        if (availability.NovaPoshta && Payments(availability, card, "Післяплата у відділенні") is { Count: > 0 } branch)
+        if (availability.NovaPoshta && Payments(availability, card, cardOptions, "Післяплата у відділенні") is { Count: > 0 } branch)
         {
             options.Add(new(DeliveryCodes.NovaPoshta, "Нова пошта: відділення або поштомат", branch));
         }
 
-        if (availability.Courier && Payments(availability, card, "Післяплата кур'єру") is { Count: > 0 } courier)
+        if (availability.Courier && Payments(availability, card, cardOptions, "Післяплата кур'єру") is { Count: > 0 } courier)
         {
             options.Add(new(
                 DeliveryCodes.NovaPoshtaCourier,
@@ -34,7 +37,7 @@ internal sealed class CheckoutCalculator(ICatalogPricing pricing)
                 DeliveryCodes.Pickup,
                 "Самовивіз",
                 card
-                    ? [new(PaymentCodes.Card, "Онлайн карткою"), new(PaymentCodes.PayOnPickup, "Під час самовивозу")]
+                    ? [CardOption(cardOptions), new(PaymentCodes.PayOnPickup, "Під час самовивозу")]
                     : [new(PaymentCodes.PayOnPickup, "Під час самовивозу")]));
         }
 
@@ -112,12 +115,18 @@ internal sealed class CheckoutCalculator(ICatalogPricing pricing)
         MoneyDto.Hryvnia(line.LineTotal),
         line.Issue);
 
-    private static List<PaymentMethodOptionDto> Payments(DeliveryAvailability availability, bool card, string cashOnDelivery)
+    /// <summary>Online payment, with the banks and wallets the buyer picks from when they are known.</summary>
+    private static PaymentMethodOptionDto CardOption(IReadOnlyList<CardPaymentOption>? options) => new(
+        PaymentCodes.Card,
+        options?.Any(o => o.Code == "wallet") == true ? "Онлайн: картка, Apple Pay, Google Pay" : "Онлайн карткою",
+        options?.Select(o => new CardPaymentOptionDto(o.Code, o.Name, o.Hint)).ToList());
+
+    private static List<PaymentMethodOptionDto> Payments(DeliveryAvailability availability, bool card, IReadOnlyList<CardPaymentOption>? cardOptions, string cashOnDelivery)
     {
         var methods = new List<PaymentMethodOptionDto>(2);
         if (card)
         {
-            methods.Add(new(PaymentCodes.Card, "Онлайн карткою"));
+            methods.Add(CardOption(cardOptions));
         }
 
         if (availability.CashOnDelivery)

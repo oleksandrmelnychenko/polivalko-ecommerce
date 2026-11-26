@@ -30,7 +30,7 @@ internal static class QuoteCheckout
             MoneyDto.Hryvnia(subtotal),
             MoneyDto.Hryvnia(subtotal),
             "Доставку оплачуєте за тарифами перевізника",
-            CheckoutCalculator.DeliveryOptions(await delivery.GetAsync(ct), cards.Available),
+            CheckoutCalculator.DeliveryOptions(await cards.GetOptionsAsync(ct), await delivery.GetAsync(ct)),
             await freshness.IsFreshAsync(ct)));
     }
 }

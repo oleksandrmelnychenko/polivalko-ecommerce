@@ -41,7 +41,7 @@ internal static class ReceiveWebhook
             return Problems.Create(StatusCodes.Status400BadRequest, "payments.webhook_rejected", "Повідомлення не прийнято");
         }
 
-        await processor.ApplyAsync(handler.Name, status, "webhook", Encoding.UTF8.GetString(body), ct);
+        await processor.ApplyAsync(handler.Name, status, "webhook", status.Payload ?? Encoding.UTF8.GetString(body), ct);
         return TypedResults.Ok();
     }
 

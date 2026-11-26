@@ -2,7 +2,10 @@ namespace PoliValko.Payments.Configuration;
 
 public sealed class PaymentsOptions
 {
-    /// <summary>Empty or <c>Disabled</c> — card payments are off; otherwise <c>Sandbox</c> or <c>Mono</c>.</summary>
+    /// <summary>
+    /// Server default until the console saves payment settings: empty or <c>Disabled</c> — off, <c>Sandbox</c> or <c>Mono</c>.
+    /// After that the console decides which banks the buyer sees; <c>Sandbox</c> stays server-only.
+    /// </summary>
     public string? Provider { get; set; }
 
     /// <summary>
@@ -16,4 +19,6 @@ public sealed class PaymentsOptions
     public SandboxOptions Sandbox { get; set; } = new();
 
     public MonoOptions Mono { get; set; } = new();
+
+    public LiqPayOptions LiqPay { get; set; } = new();
 }

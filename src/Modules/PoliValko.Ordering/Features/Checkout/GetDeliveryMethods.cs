@@ -9,5 +9,5 @@ internal static class GetDeliveryMethods
 {
     public static async Task<Ok<IReadOnlyList<DeliveryMethodOptionDto>>> HandleAsync(
         IDeliveryAvailability delivery, ICardPayments cards, CancellationToken ct) =>
-        TypedResults.Ok(CheckoutCalculator.DeliveryOptions(await delivery.GetAsync(ct), cards.Available));
+        TypedResults.Ok(CheckoutCalculator.DeliveryOptions(await cards.GetOptionsAsync(ct), await delivery.GetAsync(ct)));
 }

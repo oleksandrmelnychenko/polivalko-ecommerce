@@ -22,7 +22,7 @@ export function OrderPayment({ owner, order, returned, reload }: { owner: string
       number={order.number}
       failed={order.paymentStatus === "failed"}
       amount={formatMoney(order.total)}
-      start={() => withAccountCsrf((h) => postOrderPayment(h, order.number), owner)}
+      start={(_key, method) => withAccountCsrf((h) => postOrderPayment(h, order.number, method), owner)}
     />
   );
   if (returned && order.paymentStatus === "pending") return <PaymentPending onRefresh={reload}>{payButton}</PaymentPending>;

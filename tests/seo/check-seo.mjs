@@ -72,6 +72,7 @@ function parse(html) {
     title: decode(head.match(/<title>([^<]*)<\/title>/)?.[1] ?? "").trim(),
     description: meta("description"),
     robots: meta("robots") ?? "",
+    googlebot: meta("googlebot") ?? "",
     canonical: links.find((l) => l.rel === "canonical")?.href,
     ogTitle: meta("og:title"),
     ogUrl: meta("og:url"),
@@ -101,9 +102,11 @@ async function inspect(path, expect) {
   if (expect.noindex) {
     check(path, "noindex", !indexed, seo.robots || "немає meta robots");
     if (expect.follow) check(path, "follow", /(^|,\s*)follow/i.test(seo.robots), seo.robots);
+    check(path, "googlebot не дозволяє індексацію", !/(^|,\s*)index/i.test(seo.googlebot), seo.googlebot || "немає meta googlebot");
   } else {
     check(path, "індексується", indexed, seo.robots || "за замовчуванням");
     check(path, "description", Boolean(seo.description?.trim()), seo.description ?? "");
+    check(path, "великі прев'ю зображень", /max-image-preview:large/i.test(seo.googlebot), seo.googlebot || "немає meta googlebot");
   }
   if (expect.canonical) {
     const canonical = seo.canonical ? new URL(seo.canonical) : null;
@@ -126,7 +129,6 @@ check("/sitemap.xml", "HTTP 200", sitemap.status === 200, String(sitemap.status)
 const paths = urlsFromSitemap(sitemap.text);
 check("/sitemap.xml", "є розділи й товари", paths.some((p) => p.startsWith("/catalog/")) && paths.some((p) => p.startsWith("/product/")), `${paths.length} адрес`);
 const category = args.category ? `/catalog/${args.category}` : paths.find((p) => p.startsWith("/catalog/"));
-const product = args.product ? `/product/${args.product}` : paths.find((p) => p.startsWith("/product/"));
 
 await inspect("/", { canonical: "/", og: true, types: ["Organization", "Store", "WebSite"] });
 await inspect("/catalog", { canonical: "/catalog", og: true, types: ["BreadcrumbList", "ItemList"] });
@@ -136,7 +138,27 @@ if (category) {
   await inspect(`${category}?inStock=true`, { noindex: true, follow: true, canonical: category });
   await inspect(`${category}?sort=price_desc`, { noindex: true, follow: true, canonical: category });
 }
+
+// Sitemap і сторінки застосовують одне правило (GetSitemap.cs, isIndexableProduct): у пошуку товар, який має фото.
+// Sitemap кешується на години, тож товар, який щойно втратив фото, може недовго бути і в sitemap, і з noindex: одна
+// така помилка — привід запустити перевірку ще раз, а не дефект.
+const productPaths = paths.filter((p) => p.startsWith("/product/"));
+const sampleSize = Number(args.sample ?? 10);
+const step = Math.max(1, Math.floor(productPaths.length / sampleSize));
+let pricedSample;
+for (const path of productPaths.filter((_, index) => index % step === 0).slice(0, sampleSize)) {
+  const response = await send(path);
+  const seo = response.status === 200 ? parse(response.text) : null;
+  check(path, "адреса зі sitemap індексується", Boolean(seo) && !/noindex/i.test(seo.robots), seo ? seo.robots || "за замовчуванням" : String(response.status));
+  // Товар із фото, але без ціни теж є в sitemap і не має розмітки Product; повну перевірку робимо на товарі з ціною.
+  if (seo?.types.has("Product")) pricedSample ??= path;
+}
+const product = args.product ? `/product/${args.product}` : (pricedSample ?? productPaths[0]);
 if (product) await inspect(product, { canonical: product, og: true, types: ["Product", "Offer", "BreadcrumbList"] });
+// Товар, якого sitemap не містить (без фото): --thin=<slug>.
+if (args.thin) await inspect(`/product/${args.thin}`, { noindex: true, follow: true, canonical: `/product/${args.thin}` });
+// Порожня сторінка акцій — noindex і поза sitemap; з акційними товарами вона в sitemap і індексується.
+await inspect("/sale", paths.includes("/sale") ? { canonical: "/sale", og: true } : { noindex: true, follow: true });
 await inspect("/contacts", { canonical: "/contacts", og: true, types: ["ContactPage", "Organization", "BreadcrumbList"] });
 await inspect("/services", { canonical: "/services", og: true, types: ["BreadcrumbList"] });
 for (const page of ["/payment-delivery", "/returns", "/offer", "/privacy"]) await inspect(page, { canonical: page, og: true, types: ["BreadcrumbList"] });

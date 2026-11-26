@@ -4,6 +4,7 @@ using PoliValko.Infrastructure.Security.Permissions;
 
 namespace PoliValko.IntegrationTests;
 
+[Collection("Payment settings")]
 public sealed class PaymentSettingsApiTests(ApiFactory api)
 {
     private const string Payments = "/api/v1/console/settings/payments";
@@ -16,7 +17,9 @@ public sealed class PaymentSettingsApiTests(ApiFactory api)
         var manager = await Staff.ManagerAsync(api);
         var settings = await manager.ReadAsync<PaymentSettingsDto>(Payments);
 
-        (settings.Provider, settings.Mode).ShouldBe(("Sandbox", "Test"));
+        // Codes of the banks the buyer can choose; another test may add LiqPay test keys in the console.
+        settings.Provider.Split(',').ShouldContain("sandbox");
+        settings.Mode.ShouldBe("Test");
         (settings.FiscalProvider, settings.FiscalMode).ShouldBe(("Stub", "Stub"));
         settings.IssueOn.ShouldBe(new ReceiptIssueDto("payment", "completion", "none"));
 

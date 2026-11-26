@@ -3,3 +3,10 @@
 .pay > p { font-size: var(--text-sm); }
 .pay__actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
 @media (max-width: 40rem) { .pay__actions .btn { width: 100%; white-space: normal; } }
+.pay__methods { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; }
+.pay__methods legend { margin-bottom: 4px; font-size: var(--text-sm); font-weight: 600; }
+.pay__method { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--color-rule); border-radius: 12px; background: #fff; cursor: pointer; }
+.pay__method:has(input:checked) { border-color: currentColor; }
+.pay__method input { flex: none; margin: 0; }
+.pay__method span { display: grid; gap: 2px; }
+.pay__method small { font-size: var(--text-sm); opacity: 0.75; }

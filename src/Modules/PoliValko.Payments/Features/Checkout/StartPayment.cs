@@ -10,6 +10,7 @@ using PoliValko.Infrastructure.Web;
 using PoliValko.Ordering.Contracts;
 using PoliValko.Payments.Configuration;
 using PoliValko.Payments.Domain;
+using PoliValko.Payments.Features.Settings;
 using PoliValko.Payments.Integrations.Providers;
 
 namespace PoliValko.Payments.Features.Checkout;
@@ -22,6 +23,7 @@ internal static class StartPayment
         PoliValkoDbContext db,
         [FromServices] IOrderPayments orders,
         IPaymentProviders providers,
+        PaymentGateways gateways,
         IOptions<PaymentsOptions> options,
         IOptions<SiteOptions> site,
         TimeProvider time,
@@ -35,15 +37,17 @@ internal static class StartPayment
         }
 
         var returnUrl = site.Value.Url($"/order/{order.Number}?token={Uri.EscapeDataString(request.Token!)}&payment=return");
-        return await StartAsync(order, returnUrl, db, orders, providers, options, site, time, loggers, ct);
+        return await StartAsync(order, request.Method, returnUrl, db, orders, providers, gateways, options, site, time, loggers, ct);
     }
 
     public static async Task<Results<Ok<StartPaymentDto>, ProblemHttpResult>> StartAsync(
         PayableOrder order,
+        string? method,
         string returnUrl,
         PoliValkoDbContext db,
         IOrderPayments orders,
         IPaymentProviders providers,
+        PaymentGateways gateways,
         IOptions<PaymentsOptions> options,
         IOptions<SiteOptions> site,
         TimeProvider time,
@@ -55,9 +59,12 @@ internal static class StartPayment
             return NotPayable(order);
         }
 
-        if (providers.Active is not { } provider)
+        var option = await gateways.ResolveAsync(method, ct);
+        if (option is null || providers.Find(option.Provider) is not { } provider)
         {
-            return Problems.Create(StatusCodes.Status503ServiceUnavailable, "payments.not_configured", "Онлайн-оплата тимчасово недоступна", "Зверніться до менеджера.");
+            return string.IsNullOrWhiteSpace(method) || (await gateways.OptionsAsync(ct)).Count == 0
+                ? Problems.Create(StatusCodes.Status503ServiceUnavailable, "payments.not_configured", "Онлайн-оплата тимчасово недоступна", "Зверніться до менеджера.")
+                : Problems.Create(StatusCodes.Status409Conflict, "payments.method_unavailable", "Цей спосіб оплати зараз недоступний", "Оберіть інший спосіб оплати.");
         }
 
         // One payment start per order at a time, invoice call included: a second click (another tab, a double tap)
@@ -80,6 +87,12 @@ internal static class StartPayment
         if (active is not null)
         {
             return TypedResults.Ok(new StartPaymentDto(active.Id, active.PageUrl!, active.ExpiresAt));
+        }
+
+        // The buyer switched banks: an invoice still open at the other bank could take the money a second time.
+        if (await WithdrawOtherInvoicesAsync(db, providers, order.Id, provider.Name, time, ct) is { } blocked)
+        {
+            return blocked;
         }
 
         var payment = new Payment
@@ -127,6 +140,62 @@ internal static class StartPayment
             return Problems.Create(StatusCodes.Status503ServiceUnavailable, "payments.provider_unavailable", "Платіжна система недоступна", "Спробуйте ще раз за кілька хвилин.");
         }
     }
+
+    private static async Task<ProblemHttpResult?> WithdrawOtherInvoicesAsync(
+        PoliValkoDbContext db, IPaymentProviders providers, Guid orderId, string provider, TimeProvider time, CancellationToken ct)
+    {
+        var others = await db.Set<Payment>()
+            .Where(p => p.OrderId == orderId && p.Provider != provider
+                        && (p.Status == PaymentAttemptStatus.Created || p.Status == PaymentAttemptStatus.Processing))
+            .ToListAsync(ct);
+        var now = time.GetUtcNow();
+        foreach (var other in others)
+        {
+            // Long past its deadline the other page can no longer take money (an abandoned 3-D Secure, say): do not
+            // let it lock the order. A payment that still arrives goes through the extra-payment alert.
+            var stale = other.ExpiresAt + StaleAfter < now;
+            if (other.Status == PaymentAttemptStatus.Processing && !stale)
+            {
+                return InProgress();
+            }
+
+            if (!stale && other.ProviderPaymentId is { } invoiceId)
+            {
+                if (providers.Find(other.Provider) is not { } otherProvider)
+                {
+                    return InProgress();
+                }
+
+                try
+                {
+                    if (!await otherProvider.CancelInvoiceAsync(invoiceId, ct))
+                    {
+                        return InProgress();
+                    }
+                }
+                catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidOperationException && !ct.IsCancellationRequested)
+                {
+                    return Problems.Create(StatusCodes.Status503ServiceUnavailable, "payments.provider_unavailable", "Платіжна система недоступна", "Спробуйте ще раз за кілька хвилин.");
+                }
+            }
+
+            other.Status = PaymentAttemptStatus.Expired;
+            other.FailureReason = SwitchedReason;
+            other.UpdatedAt = time.GetUtcNow();
+        }
+
+        return null;
+    }
+
+    private static readonly TimeSpan StaleAfter = TimeSpan.FromMinutes(15);
+
+    public const string SwitchedReason = "Рахунок анульовано: покупець обрав інший спосіб оплати";
+
+    private static ProblemHttpResult InProgress() => Problems.Create(
+        StatusCodes.Status409Conflict,
+        "payments.in_progress",
+        "Оплата вже розпочата іншим способом",
+        "Якщо ви вже оплатили, дочекайтеся підтвердження кілька хвилин і оновіть сторінку.");
 
     private static ProblemHttpResult NotPayable(PayableOrder order) => Problems.Create(
         StatusCodes.Status409Conflict,

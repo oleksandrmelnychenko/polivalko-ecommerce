@@ -1,7 +1,7 @@
 import "../styles/service-page.css";
 import Link from "next/link";
 import { connection } from "next/server";
-import { Suspense } from "react";
+import { createElement, Suspense } from "react";
 import { ArrowRightIcon } from "@polivalko/shared/ui/icons";
 import { serviceIcon } from "@polivalko/shared/ui/service-icon";
 import { breadcrumbJsonLd, JsonLd, serviceJsonLd } from "@/features/seo";
@@ -30,7 +30,9 @@ async function ServicePageContent({ page }: { page: ServiceDirectionPage }) {
   const related = (await getServiceDirections().catch(() => []))
     .filter((service) => service.code !== page.code && group.codes.includes(service.code));
   const photo = page.imageUrl ? sized(page.imageUrl, "(max-width: 48rem) 100vw, (max-width: 107rem) 53vw, 880px", 960) : { src: group.photo };
-  const Icon = serviceIcon(page.code);
+  // The icon component is looked up, not declared here: createElement keeps the linter from reading it as a component
+  // created during render.
+  const icon = createElement(serviceIcon(page.code), { "aria-hidden": true, size: 18, stroke: 1.7 });
   const path = servicePath(page.slug);
 
   return (
@@ -41,7 +43,7 @@ async function ServicePageContent({ page }: { page: ServiceDirectionPage }) {
 
       <header className="service-page__head" data-group={group.key}>
         <div className="service-page__intro">
-          <p className="service-page__group"><Icon aria-hidden="true" size={18} stroke={1.7} />{group.title}</p>
+          <p className="service-page__group">{icon}{group.title}</p>
           <h1>{page.name}</h1>
           {page.description && <p className="lead">{page.description}</p>}
           <Link href={serviceRequestHref(page.code)} className="btn btn--graphite">Залишити заявку <ArrowRightIcon /></Link>

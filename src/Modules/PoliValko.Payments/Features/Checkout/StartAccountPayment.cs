@@ -8,6 +8,7 @@ using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Storefront;
 using PoliValko.Ordering.Contracts;
 using PoliValko.Payments.Configuration;
+using PoliValko.Payments.Features.Settings;
 using PoliValko.Payments.Integrations.Providers;
 
 namespace PoliValko.Payments.Features.Checkout;
@@ -22,11 +23,13 @@ internal static class StartAccountPayment
         PoliValkoDbContext db,
         [FromServices] IOrderPayments orders,
         IPaymentProviders providers,
+        PaymentGateways gateways,
         IOptions<PaymentsOptions> options,
         IOptions<SiteOptions> site,
         TimeProvider time,
         ILoggerFactory loggers,
-        CancellationToken ct)
+        CancellationToken ct,
+        [FromBody] StartAccountPaymentRequest? request = null)
     {
         var order = http.User.CustomerId() is { } customerId
             ? await orders.FindPayableForCustomerAsync(number, customerId, ct)
@@ -37,6 +40,6 @@ internal static class StartAccountPayment
         }
 
         var returnUrl = site.Value.Url($"{ReturnPath}/{order.Number}?payment=return");
-        return await StartPayment.StartAsync(order, returnUrl, db, orders, providers, options, site, time, loggers, ct);
+        return await StartPayment.StartAsync(order, request?.Method, returnUrl, db, orders, providers, gateways, options, site, time, loggers, ct);
     }
 }
