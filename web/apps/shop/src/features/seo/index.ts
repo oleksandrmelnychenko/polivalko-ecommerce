@@ -3,4 +3,5 @@ export { breadcrumbJsonLd, contactPageJsonLd, itemListJsonLd, organizationJsonLd
 export type { Crumb, ListEntry, OrganizationSource } from "./lib/json-ld";
 export { defaultOpenGraph, seoMetadata } from "./lib/metadata";
 export type { SeoInput } from "./lib/metadata";
+export { latestChange, staticSitemapEntries } from "./lib/sitemap-entries";
 export { absoluteUrl, organizationId, SITE_LANGUAGE, SITE_LOCALE, SITE_NAME, siteUrl, websiteId } from "./lib/site";

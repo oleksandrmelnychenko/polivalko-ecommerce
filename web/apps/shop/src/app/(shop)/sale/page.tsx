@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { listingIndexState } from "@/features/catalog";
-import { SALE_LEAD, SALE_TITLE, SaleScreen } from "@/features/catalog/server";
+import { listingIndexState, saleIsEmpty } from "@/features/catalog";
+import { countSaleProducts, SALE_LEAD, SALE_TITLE, SaleScreen } from "@/features/catalog/server";
 import { seoMetadata } from "@/features/seo";
 
 export async function generateMetadata({ searchParams }: PageProps<"/sale">): Promise<Metadata> {
@@ -10,7 +10,8 @@ export async function generateMetadata({ searchParams }: PageProps<"/sale">): Pr
     title: paged ? `${SALE_TITLE}, сторінка ${page}` : "Акції й знижки на товари для саду",
     description: SALE_LEAD,
     path: paged ? `/sale?page=${page}` : "/sale",
-    noIndex: filtered,
+    // With no sale products the page has nothing to show; the sitemap leaves it out by the same check.
+    noIndex: filtered || saleIsEmpty(await countSaleProducts()),
   });
 }
 

@@ -65,6 +65,11 @@ export async function searchProducts(query: ProductQuery) {
   return searchSortedProducts({ query, modeRevision: query.sort ? undefined : await currentMode() });
 }
 
+/** How many products are on sale now, by the query the menu uses to show «Акції»; null when the catalog did not answer. */
+export async function countSaleProducts(): Promise<number | null> {
+  return searchProducts({ onSale: true, sort: "price_asc", pageSize: 1 }).then((result) => result?.totalItems ?? null, () => null);
+}
+
 // Include the effective mode and revision in the cache key, including after a scheduled expiry.
 async function searchSortedProducts({ query }: { query: ProductQuery; modeRevision?: string }) {
   "use cache";

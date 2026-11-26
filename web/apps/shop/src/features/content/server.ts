@@ -1,4 +1,4 @@
-export { getAnnouncement, getContacts, getSeller, getSiteHome } from "./api/server";
+export { getAnnouncement, getContacts, getPage, getSeller, getSiteHome } from "./api/server";
 export { pageMetadata } from "./lib/page-metadata";
 export { customerMailDelivers, enabledDeliveryFacts, storePhone } from "./lib/shop-facts";
 export { socialLinks } from "./lib/social-links";
