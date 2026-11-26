@@ -10,9 +10,16 @@ import { FormAlert } from './FormAlert'
 import { ImageField } from '@/shared/ui/site/ImageField'
 import { DrawerCancelButton } from '@/shared/ui/DrawerCancelButton'
 import { RichTextField } from '@/shared/ui/RichTextField'
-import { SeoSnippetFields } from '@/shared/ui/site/SeoSnippetFields'
+import { SeoSnippetFields, type EmptyHints } from '@/shared/ui/site/SeoSnippetFields'
 
 const FORM_ID = 'content-direction-form'
+
+// Service pages have no SEO templates: the shop falls back to the service name and short description.
+const SERVICE_SEO_HINTS: EmptyHints = {
+  title: 'Порожньо: заголовком стане назва послуги',
+  description: 'Порожньо: описом стане короткий опис послуги',
+  note: 'Порожні поля сайт заповнює назвою й коротким описом послуги. Заповнюйте їх, лише коли хочете окремий текст для пошуку.',
+}
 
 type ServiceDirectionDrawerProps = {
   direction: ServiceDirection | null
@@ -193,6 +200,7 @@ function DirectionForm({ initial, uploading, onUploading, onBusy, onSaved, onDir
           seoDescription={seoDescription}
           fallbackTitle={initial.name}
           fallbackDescription={description}
+          emptyHints={SERVICE_SEO_HINTS}
           errors={{ seoTitle: form.errors.seoTitle, seoDescription: form.errors.seoDescription }}
           onChange={(field, value) => {
             if (field === 'seoTitle') setSeoTitle(value)

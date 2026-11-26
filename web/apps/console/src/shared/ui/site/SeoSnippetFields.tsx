@@ -15,16 +15,26 @@ type SeoSnippetFieldsProps = {
   /** What the shop shows when the title is empty (roughly: the template fills in the details). */
   fallbackTitle: string
   fallbackDescription: string
+  /** What fills empty fields on this page; the default is the SEO templates of products and categories. */
+  emptyHints?: EmptyHints
   errors?: { seoTitle?: string; seoDescription?: string }
   disabled?: boolean
   onChange: (field: 'seoTitle' | 'seoDescription', value: string) => void
+}
+
+export type EmptyHints = { title: string; description: string; note: string }
+
+const TEMPLATE_HINTS: EmptyHints = {
+  title: 'Порожньо: заголовок складе SEO-шаблон',
+  description: 'Порожньо: опис складе SEO-шаблон',
+  note: 'Порожні поля сайт заповнює за SEO-шаблоном (Сайт → SEO-шаблони), тож перегляд тут приблизний. Заповнюйте їх, лише коли хочете окремий текст для пошуку.',
 }
 
 /**
  * SEO title and description with length counters and a search-result preview. Empty fields are fine:
  * the shop then fills them from the SEO templates (Сайт → SEO-шаблони).
  */
-export function SeoSnippetFields({ path, seoTitle, seoDescription, fallbackTitle, fallbackDescription, errors, disabled, onChange }: SeoSnippetFieldsProps) {
+export function SeoSnippetFields({ path, seoTitle, seoDescription, fallbackTitle, fallbackDescription, emptyHints = TEMPLATE_HINTS, errors, disabled, onChange }: SeoSnippetFieldsProps) {
   const ownTitle = seoTitle.trim()
   const ownDescription = seoDescription.trim()
   const shownTitle = `${ownTitle || fallbackTitle.trim() || 'Без заголовка'}${SHOP_SUFFIX}`
@@ -34,7 +44,7 @@ export function SeoSnippetFields({ path, seoTitle, seoDescription, fallbackTitle
     <Stack gap="sm">
       <TextInput
         label="SEO-заголовок"
-        placeholder="Порожньо: заголовок складе SEO-шаблон"
+        placeholder={emptyHints.title}
         description={<SnippetLength length={shownTitle.length} target={TITLE_LIMIT} />}
         inputWrapperOrder={['label', 'input', 'description', 'error']}
         value={seoTitle}
@@ -45,7 +55,7 @@ export function SeoSnippetFields({ path, seoTitle, seoDescription, fallbackTitle
       />
       <Textarea
         label="SEO-опис"
-        placeholder="Порожньо: опис складе SEO-шаблон"
+        placeholder={emptyHints.description}
         description={<SnippetLength length={shownDescription.length} target={DESCRIPTION_LIMIT} />}
         inputWrapperOrder={['label', 'input', 'description', 'error']}
         value={seoDescription}
@@ -64,7 +74,7 @@ export function SeoSnippetFields({ path, seoTitle, seoDescription, fallbackTitle
       </figure>
       {!ownTitle || !ownDescription ? (
         <Text size="xs" c="dimmed">
-          Порожні поля сайт заповнює за SEO-шаблоном (Сайт → SEO-шаблони), тож перегляд тут приблизний. Заповнюйте їх, лише коли хочете окремий текст для пошуку.
+          {emptyHints.note}
         </Text>
       ) : null}
     </Stack>
