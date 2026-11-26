@@ -37,7 +37,7 @@ export function ServiceDetailPane({ direction, position, visibleCount, onEdit }:
               Змінити
             </Button>
             <Tooltip label="Сторінка послуг на сайті">
-              <ActionIcon component="a" href={siteUrl('/services')} target="_blank" rel="noopener" variant="subtle" color="gray" size="lg" aria-label="Відкрити сторінку послуг на сайті">
+              <ActionIcon component="a" href={siteUrl(`/services/${direction.slug}`)} target="_blank" rel="noopener" variant="subtle" color="gray" size="lg" aria-label="Відкрити сторінку послуги на сайті">
                 <IconExternalLink size={17} stroke={1.7} />
               </ActionIcon>
             </Tooltip>
