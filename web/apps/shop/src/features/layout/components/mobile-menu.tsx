@@ -7,7 +7,11 @@ import { CategoryLinks, CategoryPicture, containsCategory } from "./mega-column"
 import type { MenuCategory } from "../lib/menu-category";
 import { ArrowRightIcon, ChevronDownIcon, CloseIcon } from "@polivalko/shared/ui/icons";
 
-export function MobileMenu({ categories, pages }: { categories: MenuCategory[]; pages: { href: string; label: string }[] }) {
+import { GardenServicesIcon } from "@polivalko/shared/ui/service-icon";
+import type { NavLink, ServiceNavLink } from "../lib/nav-links";
+import { ServiceMenuLinks } from "./service-menu-links";
+
+export function MobileMenu({ categories, pages, services }: { categories: MenuCategory[]; pages: NavLink[]; services: ServiceNavLink[] }) {
   const menu = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
@@ -24,6 +28,13 @@ export function MobileMenu({ categories, pages }: { categories: MenuCategory[]; 
           <CloseIcon />
         </button>
       </div>
+      {services.length > 0 && (
+        <details className="mobile-services" name="mobile-catalog-section" open={pathname.startsWith("/services")}>
+          <summary><GardenServicesIcon aria-hidden="true" stroke={1.75} />Послуги для саду <ChevronDownIcon /></summary>
+          <Link href="/services" className="mobile-services__all">Усі послуги <ArrowRightIcon /></Link>
+          <ServiceMenuLinks services={services} pathname={pathname} />
+        </details>
+      )}
       <nav aria-label="Розділи каталогу">
         <ul className="mega__grid">
           {categories.map((c) => {
@@ -56,7 +67,7 @@ export function MobileMenu({ categories, pages }: { categories: MenuCategory[]; 
       </nav>
       <div className="mega__foot">
         <nav aria-label="Покупцям" className="mega__pages">
-          {pages.map((p) => (
+          {pages.filter(p => !services.length || p.href !== "/services").map((p) => (
             <Link key={p.href} href={p.href}>
               {p.label}
             </Link>
