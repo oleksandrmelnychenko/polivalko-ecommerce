@@ -11,4 +11,5 @@ export { discountPercent } from "./lib/discount";
 export { categoryPhotoUrl } from "./lib/category-photo";
 export { listingIndexState } from "./lib/listing-params";
 export { saleIsEmpty } from "./lib/sale";
+export { merchantFeedXml } from "./lib/merchant-feed";
 export type { SearchParams } from "./lib/listing-params";

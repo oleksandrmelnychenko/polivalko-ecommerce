@@ -99,6 +99,16 @@ export async function getSitemap() {
   return data;
 }
 
+/** Products for the feed a shopping service fetches; it throws when the catalog does not answer. */
+export async function getMerchantFeed() {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("catalog", "products", "categories");
+  const data = loaded(await api.GET("/api/v1/catalog/merchant-feed"), "товарний фід");
+  if (!data) throw new Error("API: не вдалося завантажити товарний фід");
+  return data;
+}
+
 export async function resolveRedirect(path: string) {
   "use cache";
   cacheLife("minutes");

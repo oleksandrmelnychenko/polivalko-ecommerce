@@ -167,6 +167,22 @@ for (const page of ["/payment-delivery", "/returns", "/offer", "/privacy"]) awai
 await inspect("/search?q=%D0%BF%D0%BE%D0%BB%D0%B8%D0%B2", { noindex: true, follow: true });
 for (const page of ["/cart", "/checkout", "/account/login"]) await inspect(page, { noindex: true });
 
+// Товарний фід для Merchant Center: XML із товарами, у кожного обов'язкові поля. Порожній фід — помилка.
+const feed = await send("/feeds/google-merchant.xml");
+check("/feeds/google-merchant.xml", "HTTP 200", feed.status === 200, String(feed.status));
+if (feed.status === 200) {
+  const items = [...feed.text.matchAll(/<item>([\s\S]*?)<\/item>/g)].map(([, body]) => body);
+  check("/feeds/google-merchant.xml", "простір імен g:", feed.text.includes('xmlns:g="http://base.google.com/ns/1.0"'));
+  check("/feeds/google-merchant.xml", "є товари", items.length > 0, `${items.length} товарів`);
+  const required = ["g:id", "title", "description", "link", "g:image_link", "g:availability", "g:price", "g:condition"];
+  const incomplete = items.filter((body) => required.some((name) => !body.includes(`<${name}>`)));
+  check("/feeds/google-merchant.xml", "у кожного товару обов'язкові поля", incomplete.length === 0, `без поля: ${incomplete.length}`);
+  const ids = items.map((body) => body.match(/<g:id>([^<]*)<\/g:id>/)?.[1]);
+  check("/feeds/google-merchant.xml", "ідентифікатори не повторюються", new Set(ids).size === ids.length, `${ids.length - new Set(ids).size} повторів`);
+  // Символи, які ламають XML: керівні, крім табуляції й переносів, і амперсанд без сутності.
+  check("/feeds/google-merchant.xml", "без недопустимих символів", !/[\u0000-\u0008\u000B\u000C\u000E-\u001F]|&(?!(amp|lt|gt|quot|apos|#\d+);)/.test(feed.text));
+}
+
 const failed = results.filter((r) => !r.ok);
 let current = "";
 for (const r of results) {

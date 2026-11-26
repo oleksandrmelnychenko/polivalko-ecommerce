@@ -58,6 +58,27 @@ Poli Valko: одна мова (українська), адреси без пре
 Опис у розмітці `Product` — власний текст товару повністю (до 5 000 символів), без обрізання на 160-му символі;
 `<meta name="description">` обрізається по межі слова.
 
+## Товарний фід
+
+`/feeds/google-merchant.xml` — фід для Google Merchant Center (безкоштовні товарні оголошення). RSS 2.0 з простором
+імен `g:`; дані — `GET /api/v1/catalog/merchant-feed` (`GetMerchantFeed.cs`), XML складає `merchantFeedXml` у
+`features/catalog`, маршрут — `app/feeds/google-merchant.xml/route.ts`. Дизайн:
+`docs/superpowers/specs/2026-11-26-merchant-feed-design.md`.
+
+- У фіді видимі товари з ціною понад нуль і хоча б одним фото; розпродані — з `out_of_stock`.
+- `g:id` — артикул. Якщо артикул колись повториться, його лишає товар із меншим ідентифікатором, решта йдуть під
+  власним ідентифікатором: так `g:id` не залежить від порядку.
+- `g:gtin` — лише справжній штрихкод (та сама перевірка, що в розмітці товару); `g:mpn` — «Модель виробника».
+  `g:identifier_exists` `no` — тільки для товару без бренду, GTIN і моделі.
+- Зі старою ціною: `g:price` — стара, `g:sale_price` — поточна.
+- Доставку налаштовують у самому Merchant Center; `google_product_category` Google визначає сам.
+- Якщо API не відповів або повернув порожній список, маршрут відповідає 500: порожній файл з кодом 200 змусив би
+  Merchant Center прибрати всі товари.
+
+`Organization` у розмітці має `hasMerchantReturnPolicy`: Україна, 14 днів (зі сторінки «Повернення й обмін»).
+
+## Службова адреса хостингу
+
 Службова адреса хостингу `polivalko.vercel.app` віддавала весь магазин удруге. Тепер запит із цим хостом отримує 308
 на ту саму адресу основного домену зі збереженням шляху й параметрів (`duplicateHostRedirects` у
 `shared/lib/duplicate-hosts.ts`, підключено в `next.config.ts`). Правило потрапляє у збірку, лише коли задано
@@ -127,5 +148,5 @@ node tests/seo/check-seo.mjs --base=https://www.poli-valko.com --thin=<slug то
 
 - Зображення для соцмереж за замовчуванням (1200×630) і логотип для `Organization` — потрібні файли від магазину.
 - Фото товарів у `sitemap.xml` — API sitemap віддає лише адреси й дати.
-- `Offer` без `priceValidUntil`, доставки й умов повернення (`shippingDetails`, `hasMerchantReturnPolicy`) — додати,
-  коли тарифи доставки й правила повернення будуть остаточні.
+- `Offer` без `priceValidUntil` і доставки (`shippingDetails`) — додати, коли тарифи доставки будуть остаточні.
+  Повернення вже є на рівні `Organization`.
