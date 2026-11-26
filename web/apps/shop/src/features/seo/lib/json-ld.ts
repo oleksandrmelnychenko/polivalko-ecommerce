@@ -7,6 +7,10 @@ const STORE_PHOTO = "/brand/polivalko-bucha.jpg";
 
 const CONTEXT = "https://schema.org";
 
+// The window stated on the «Повернення й обмін» page: 14 days for goods of proper quality. Who pays for the way back
+// is not stated there, so the markup says nothing about return fees.
+const RETURN_WINDOW_DAYS = 14;
+
 export type Crumb = { name: string; path?: string };
 export type ListEntry = { name: string; path: string; image?: string | null };
 export type OrganizationSource = {
@@ -107,6 +111,12 @@ function organizationEntity({ contacts, seller, sameAs }: OrganizationSource) {
     contactPoint: points.length > 0 ? points : undefined,
     taxID: seller?.taxId || undefined,
     sameAs: sameAs.length > 0 ? sameAs : undefined,
+    hasMerchantReturnPolicy: {
+      "@type": "MerchantReturnPolicy",
+      applicableCountry: "UA",
+      returnPolicyCategory: `${CONTEXT}/MerchantReturnFiniteReturnWindow`,
+      merchantReturnDays: RETURN_WINDOW_DAYS,
+    },
   };
 }
 

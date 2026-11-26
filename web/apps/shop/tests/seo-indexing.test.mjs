@@ -287,3 +287,14 @@ test("a search that had to guess does not pass for products of the same kind", (
   assert.deepEqual(sameKindItems({ items, approximate: false }), items);
   assert.deepEqual(sameKindItems(null), []);
 });
+
+test("the shop's markup states the 14-day return window for Ukraine", () => {
+  const { organizationJsonLd } = src("features/seo/lib/json-ld.ts");
+
+  assert.deepEqual(organizationJsonLd({ contacts: null, seller: null, sameAs: [] }).hasMerchantReturnPolicy, {
+    "@type": "MerchantReturnPolicy",
+    applicableCountry: "UA",
+    returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+    merchantReturnDays: 14,
+  });
+});
