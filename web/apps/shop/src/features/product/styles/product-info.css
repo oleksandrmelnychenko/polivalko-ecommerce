@@ -22,7 +22,9 @@
 }
 .product-sheet { display: grid; }
 .product-sheet__section { min-width: 0; scroll-margin-top: calc(var(--bar-height) + 12px); }
-.product-sheet__section > h2, .info-sheet h2 { margin: 0 0 8px; font-size: 1.3125rem; font-weight: 300; color: var(--color-ink); }
+.product-sheet__section > h2, .info-sheet h2 { margin: 0 0 8px; font-size: 1.3125rem; color: var(--color-ink); }
+.product-sheet__section > h2 { font-weight: 300; }
+.info-sheet h2 { font-weight: 600; }
 .product-sheet .prose { max-width: none; padding-bottom: 0; color: var(--color-ink-2); overflow-wrap: anywhere; }
 #product-specs { container-type: inline-size; }
 .specs {
