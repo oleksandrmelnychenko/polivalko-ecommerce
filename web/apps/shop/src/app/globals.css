@@ -52,6 +52,7 @@
 @import url("../features/product/styles/product.css");
 @import url("../features/product/styles/viewer.css");
 @import url("../../../../packages/shared/styles/ui/buybox-meta.css");
+@import url("../shared/styles/ui/leaf-separated.css");
 @import url("../features/product/styles/product-info.css");
 @import url("../features/cart/styles/drawer.css");
 @import url("../shared/styles/ui/lines.css");

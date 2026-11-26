@@ -39,7 +39,7 @@ export async function ProductScreen({ product, deliveryFacts }: { product: Produ
       />
       <div className="product__summary">
         <ProductBuybox product={product} discount={discount} />
-        <div className="product-sheet">
+        <div className="product-sheet leaf-separated">
           {product.descriptionHtml && (
             <section className="product-sheet__section" id="product-description">
               <h2>Опис товару</h2>
