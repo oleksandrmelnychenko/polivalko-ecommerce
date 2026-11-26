@@ -6,20 +6,15 @@ export async function FooterSeller() {
   const seller = await getSeller().catch(() => null);
   if (!seller?.name?.trim()) return null;
   return (
-    <p className="footer__seller">
-      {seller.name}
+    <details className="footer__seller">
+      <summary>Реквізити продавця</summary>
+      <p>{seller.name}</p>
       {seller.taxId && (
-        <>
-          <br />
-          Код: <span translate="no">{seller.taxId}</span>
-        </>
+        <p>Код: <span translate="no">{seller.taxId}</span></p>
       )}
       {seller.address && (
-        <>
-          <br />
-          Адреса: {seller.address}
-        </>
+        <p>Адреса: {seller.address}</p>
       )}
-    </p>
+    </details>
   );
 }

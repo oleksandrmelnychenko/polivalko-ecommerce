@@ -1,16 +1,22 @@
 import { Suspense, type ReactNode } from "react";
+import { categoryIcon } from "@polivalko/shared/ui/category-icon";
 import { introParagraphs } from "../lib/category-intro";
 import { parsePage, type SearchParams } from "../lib/listing-params";
 
-export function CategoryIntro({ description }: { description?: string | null }) {
+type IntroProps = { name: string; description?: string | null; isSubcategory: boolean };
+
+export function CategoryIntro({ name, description, isSubcategory }: IntroProps) {
   const paragraphs = introParagraphs(description);
   if (paragraphs.length === 0) return null;
+  const Icon = categoryIcon(name, isSubcategory);
   return (
     <section className="category-intro" aria-labelledby="category-intro-heading">
-      <h2 id="category-intro-heading">Про розділ</h2>
-      {paragraphs.map((text, i) => (
-        <p key={i}>{text}</p>
-      ))}
+      <h2 id="category-intro-heading"><Icon aria-hidden="true" stroke={1.7} />Про розділ</h2>
+      <div className="category-intro__text">
+        {paragraphs.map((text, i) => (
+          <p key={i}>{text}</p>
+        ))}
+      </div>
     </section>
   );
 }
@@ -20,8 +26,8 @@ export function CategoryIntro({ description }: { description?: string | null }) 
  * duplicate content. The shell renders the intro (no layout shift on page 1); a later page removes it once its
  * search params are known.
  */
-export function FirstPageIntro({ description, searchParams }: { description?: string | null; searchParams: Promise<SearchParams> }) {
-  const intro = <CategoryIntro description={description} />;
+export function FirstPageIntro({ searchParams, ...props }: IntroProps & { searchParams: Promise<SearchParams> }) {
+  const intro = <CategoryIntro {...props} />;
   return (
     <Suspense fallback={intro}>
       <IntroOnFirstPage searchParams={searchParams}>{intro}</IntroOnFirstPage>

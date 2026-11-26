@@ -30,7 +30,10 @@ main:has(> .strip:last-child) + .footer { margin-top: 0; }
 .footer__statement { margin: clamp(32px, 4.5vw, 68px) 0 24px; color: #fff; font: 600 clamp(28px, 3.4vw, 54px)/1.12 var(--font-body); letter-spacing: -.04em; text-wrap: balance; }
 .footer__legal { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px 24px; padding-top: 18px; border-top: 1px solid var(--footer-line); color: var(--footer-muted); font-size: 13px; line-height: 1.6; }
 .footer__legal p { margin: 0; }
-.footer__legal .footer__seller { margin-top: 6px; }
+.footer__seller { max-width: 34ch; margin-top: 8px; color: var(--footer-muted); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.footer__seller summary { width: fit-content; padding-block: 6px; cursor: pointer; }
+.footer__seller summary:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.footer__seller p { margin: 2px 0 0; }
 .footer__credit { display: inline-flex; justify-self: center; align-items: center; gap: 7px; min-height: 44px; }
 .footer__credit span { margin-inline-end: 3px; }
 .footer__legal-links { justify-self: end; text-align: end; }

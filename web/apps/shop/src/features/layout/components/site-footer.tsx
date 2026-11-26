@@ -37,6 +37,7 @@ export function SiteFooter() {
             <Suspense fallback={null}>
               <FooterContacts />
             </Suspense>
+            <Suspense fallback={null}><FooterSeller /></Suspense>
           </div>
           <FooterColumn id="footer-shop" title="Магазин">
             <FooterLinks links={shop} />
@@ -50,10 +51,7 @@ export function SiteFooter() {
         </div>
         <p className="footer__statement">Магазин для саду, городу й дому в Бучі.</p>
         <div className="footer__legal">
-          <div>
-            <p>© <Suspense fallback={null}><FooterYear /></Suspense> Poli-Valko. Усі права захищені.</p>
-            <Suspense fallback={null}><FooterSeller /></Suspense>
-          </div>
+          <p>© <Suspense fallback={null}><FooterYear /></Suspense> Poli-Valko. Усі права захищені.</p>
           <a className="footer__credit" href="https://www.horizon-dynamics.tech/" lang="en">
             <span>Powered by</span>
             <img src="/brand/horizon-emblem.svg" width={16} height={19} alt="" />

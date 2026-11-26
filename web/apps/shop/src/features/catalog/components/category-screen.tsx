@@ -19,7 +19,7 @@ export function CategoryScreen({ category, searchParams, after }: CategoryScreen
       <Suspense fallback={<ListingSkeleton head={false} />}>
         <CategoryListing category={category} searchParams={searchParams} />
       </Suspense>
-      <FirstPageIntro description={category.description} searchParams={searchParams} />
+      <FirstPageIntro name={category.name} description={category.description} isSubcategory={category.breadcrumbs.length > 0} searchParams={searchParams} />
       {after}
     </div>
   );
