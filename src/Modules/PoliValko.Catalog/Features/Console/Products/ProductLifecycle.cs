@@ -56,7 +56,7 @@ internal static class ProductLifecycle
     {
         var now = time.GetUtcNow();
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
-        var product = await db.Set<Product>().FromSqlInterpolated($"SELECT * FROM catalog.products WHERE id = {id} FOR UPDATE").SingleOrDefaultAsync(ct);
+        var product = await db.Set<Product>().FromSql($"SELECT * FROM catalog.products WHERE id = {id} FOR UPDATE").SingleOrDefaultAsync(ct);
         if (product is null) return ConsoleProductQueries.ProductNotFound();
         if (product.IsArchived != input.Archived)
         {

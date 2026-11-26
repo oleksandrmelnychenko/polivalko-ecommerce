@@ -29,17 +29,21 @@ internal static class BrandPages
             {
                 Name = g.Key,
                 Count = g.Count(),
-                WithPhoto = g.Count(p => p.Images.Any()),
                 Product = g.Max(p => p.UpdatedAt),
                 Price = g.Max(p => p.Price.UpdatedAt),
             })
             .ToListAsync(ct);
+        var withPhoto = await visibleProducts
+            .Where(p => p.Brand != null && p.Images.Any())
+            .GroupBy(p => p.Brand!)
+            .Select(g => new { Name = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Name, x => x.Count, ct);
         var brands = await db.Set<Brand>().AsNoTracking().ToListAsync(ct);
         var byName = brands.ToDictionary(b => b.NormalizedName);
 
         return counts
             .GroupBy(c => Brand.Normalize(c.Name))
-            .Where(g => byName.ContainsKey(g.Key) && g.Sum(c => c.WithPhoto) >= MinProductsWithPhoto)
+            .Where(g => byName.ContainsKey(g.Key) && g.Sum(c => withPhoto.GetValueOrDefault(c.Name)) >= MinProductsWithPhoto)
             .Select(g => new Page(
                 byName[g.Key],
                 g.Select(c => c.Name).Order(StringComparer.Ordinal).ToList(),
