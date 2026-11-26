@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { enabledDeliveryFacts } from "@/features/content/server";
+import { enabledDeliveryFacts, storePhone } from "@/features/content/server";
 import { productSeo } from "@/features/product";
 import { getProduct, ProductScreen, requireProduct } from "@/features/product/server";
 import { seoMetadata } from "@/features/seo";
@@ -19,5 +19,5 @@ export const instant = false;
 
 export default async function ProductPage({ params }: PageProps<"/product/[slug]">) {
   const { slug } = await params;
-  return <ProductScreen product={await requireProduct(slug)} deliveryFacts={enabledDeliveryFacts} />;
+  return <ProductScreen product={await requireProduct(slug)} deliveryFacts={enabledDeliveryFacts} askPhone={storePhone} />;
 }

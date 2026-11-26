@@ -6,6 +6,7 @@ import type { DeliveryFacts } from "@/shared/lib/delivery-facts";
 import { TrackViewItem } from "@/features/analytics";
 import { discountPercent, ProductLabels, withoutSaleLabel } from "@/features/catalog";
 import { Gallery } from "./gallery";
+import { ProductAsk } from "./product-ask";
 import { ProductBuybox } from "./product-buybox";
 import { ProductDescription, ProductSpecs } from "./product-description";
 import { ProductDeliveryFacts } from "./product-delivery-facts";
@@ -24,7 +25,11 @@ async function DeliverySection({ deliveryFacts }: { deliveryFacts: () => Promise
 }
 
 /** The page resolves the product first (see requireProduct), so a missing one is a real 404. */
-export async function ProductScreen({ product, deliveryFacts }: { product: ProductDetails; deliveryFacts: () => Promise<DeliveryFacts | null> }) {
+export async function ProductScreen({ product, deliveryFacts, askPhone }: {
+  product: ProductDetails;
+  deliveryFacts: () => Promise<DeliveryFacts | null>;
+  askPhone: () => Promise<string | null>;
+}) {
   const category = await getCategory(product.category.slug).catch(() => null);
   const parents = [
     { name: "Каталог", path: "/catalog" },
@@ -39,6 +44,9 @@ export async function ProductScreen({ product, deliveryFacts }: { product: Produ
       />
       <div className="product__summary">
         <ProductBuybox product={product} discount={discount} />
+        <Suspense fallback={null}>
+          <ProductAsk product={product} phone={askPhone} />
+        </Suspense>
         <div className="product-sheet leaf-separated">
           {product.descriptionHtml && (
             <section className="product-sheet__section" id="product-description">
@@ -65,7 +73,7 @@ export async function ProductScreen({ product, deliveryFacts }: { product: Produ
 
       {overview}
       <Suspense fallback={null}>
-        <RelatedProducts category={product.category.slug} exclude={product.id} />
+        <RelatedProducts category={product.category.slug} exclude={product.id} name={product.name} />
       </Suspense>
     </div>
   );

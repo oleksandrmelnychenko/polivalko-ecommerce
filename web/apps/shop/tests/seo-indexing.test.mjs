@@ -242,3 +242,39 @@ test("without its own text the product markup falls back to the SEO description,
   assert.equal(markupDescription({ descriptionHtml: null, seoDescription: " Зрошувач у магазині " }), "Зрошувач у магазині");
   assert.equal(markupDescription({ descriptionHtml: "", seoDescription: null }), undefined);
 });
+
+test("the kind of a product is the first real word of its name, past any leading code", () => {
+  const { typeWord } = src("features/product/lib/related.ts");
+
+  assert.equal(typeWord("Томат Балконне Диво SeedEra, 0,1 г"), "Томат");
+  assert.equal(typeWord("Контролер поливу Hunter X-Core XC-401-E, 4 зони"), "Контролер");
+  assert.equal(typeWord("1101 Зерно від мишей і пацюків Bross 300гр"), "Зерно");
+  assert.equal(typeWord('8000 "Лінивка з ручкою хром (36 шт)'), "Лінивка");
+  assert.equal(typeWord("5101"), null);
+  assert.equal(typeWord(""), null);
+});
+
+test("related products are the same kind first, then the rest of the category, without the product itself or repeats", () => {
+  const { relatedItems } = src("features/product/lib/related.ts");
+  const product = (id) => ({ id });
+  const sameKind = ["current", "tomato-1", "tomato-2"].map(product);
+  const sameCategory = ["tomato-1", "parsley", "current", "pepper", "carrot", "mustard"].map(product);
+
+  assert.deepEqual(relatedItems(sameKind, sameCategory, "current").map((item) => item.id), ["tomato-1", "tomato-2", "parsley", "pepper", "carrot"]);
+  assert.deepEqual(relatedItems([], sameCategory, "current", 2).map((item) => item.id), ["tomato-1", "parsley"]);
+  assert.deepEqual(relatedItems([], [product("current")], "current"), []);
+});
+
+test("a product that cannot be bought tells the visitor what to ask the shop by phone", () => {
+  const { askLine } = src("features/product/lib/ask.ts");
+
+  assert.equal(askLine({ inStock: false, price: money("130.00") }), "Наявність і строк поставки уточніть телефоном");
+  assert.equal(askLine({ inStock: false, price: money("0.00") }), "Ціну й наявність уточніть телефоном");
+  assert.equal(askLine({ inStock: true, price: money("130.00") }), null);
+});
+
+test("a phone number as shown in the shop becomes a dialable link", () => {
+  const { telHref } = src("features/product/lib/ask.ts");
+
+  assert.equal(telHref("+38 (073) 818-52-22"), "tel:+380738185222");
+});
