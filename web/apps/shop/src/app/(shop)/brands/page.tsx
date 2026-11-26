@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
+import { Suspense } from "react";
 import { BrandsScreen, getBrandPages } from "@/features/catalog/server";
 import { seoMetadata } from "@/features/seo";
 
@@ -8,6 +10,16 @@ export const metadata: Metadata = seoMetadata({
   path: "/brands",
 });
 
-export default async function BrandsPage() {
+export default function BrandsPage() {
+  return (
+    <Suspense fallback={<div className="container brands-page"><div className="skeleton" style={{ height: 320 }} /></div>}>
+      <Brands />
+    </Suspense>
+  );
+}
+
+// At request time, like the other catalog pages: the build has no API to ask for the brand list.
+async function Brands() {
+  await connection();
   return <BrandsScreen brands={await getBrandPages()} />;
 }
