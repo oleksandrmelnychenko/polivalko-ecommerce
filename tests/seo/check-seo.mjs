@@ -122,7 +122,9 @@ const robots = await send("/robots.txt");
 check("/robots.txt", "HTTP 200", robots.status === 200, String(robots.status));
 check("/robots.txt", "Sitemap", /^Sitemap:\s*\S+\/sitemap\.xml$/m.test(robots.text));
 check("/robots.txt", "пошук не закритий", !/^Disallow:\s*\/search/m.test(robots.text));
-check("/robots.txt", "кошик закритий", /^Disallow:\s*\/cart/m.test(robots.text));
+// Кошик, оформлення й кабінет мають noindex у розмітці: робот побачить його, лише якщо сторінку можна завантажити.
+check("/robots.txt", "кошик, оформлення й кабінет не закриті", !/^Disallow:\s*\/(cart|checkout|account)/m.test(robots.text));
+check("/robots.txt", "API закритий", /^Disallow:\s*\/api\//m.test(robots.text));
 
 const sitemap = await send("/sitemap.xml");
 check("/sitemap.xml", "HTTP 200", sitemap.status === 200, String(sitemap.status));
