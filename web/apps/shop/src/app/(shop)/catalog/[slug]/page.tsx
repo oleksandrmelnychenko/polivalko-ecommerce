@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { categoryPhotoUrl, listingIndexState } from "@/features/catalog";
 import { CategoryScreen, getCategory, requireCategory } from "@/features/catalog/server";
 import { seoMetadata } from "@/features/seo";
+import { CategoryServiceLink } from "@/features/services/server";
 
 function listingState(sp: Record<string, string | string[] | undefined>) {
   const { page, filtered } = listingIndexState(sp);
@@ -30,5 +31,12 @@ export const instant = false;
 
 export default async function CategoryPage({ params, searchParams }: PageProps<"/catalog/[slug]">) {
   const { slug } = await params;
-  return <CategoryScreen category={await requireCategory(slug)} searchParams={searchParams} />;
+  const category = await requireCategory(slug);
+  return (
+    <CategoryScreen
+      category={category}
+      searchParams={searchParams}
+      after={<CategoryServiceLink slug={category.slug} ancestors={category.breadcrumbs} />}
+    />
+  );
 }

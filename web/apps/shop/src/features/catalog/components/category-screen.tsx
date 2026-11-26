@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import type { Category } from "@polivalko/shared/api/types";
 import type { SearchParams } from "../lib/listing-params";
 import { CatalogListing } from "./catalog-listing";
@@ -8,8 +8,11 @@ import { ListingSkeleton } from "./listing-skeleton";
 
 type CategoryScreenProps = { category: Category; searchParams: Promise<SearchParams> };
 
+/** `after` goes under the section text, e.g. the matching service from another feature. */
+type CategoryScreenSlots = { after?: ReactNode };
+
 /** The page resolves the category first (see requireCategory), so a missing one is a real 404. */
-export function CategoryScreen({ category, searchParams }: CategoryScreenProps) {
+export function CategoryScreen({ category, searchParams, after }: CategoryScreenProps & CategoryScreenSlots) {
   return (
     <div className="container catalog-page listing-page">
       <CategoryHead category={category} />
@@ -17,6 +20,7 @@ export function CategoryScreen({ category, searchParams }: CategoryScreenProps) 
         <CategoryListing category={category} searchParams={searchParams} />
       </Suspense>
       <FirstPageIntro description={category.description} searchParams={searchParams} />
+      {after}
     </div>
   );
 }
