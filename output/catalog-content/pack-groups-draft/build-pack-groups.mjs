@@ -83,8 +83,19 @@ for (const rows of byKey.values()) {
   if (linked.length) reasons.push(`уже має групу: ${linked.map(r => details[r.item.id].variantGroup).join(", ")}`);
 
   rows.sort((a, b) => (a.amount ?? 0) - (b.amount ?? 0));
-  const units = new Set(single.map(r => r.label.split(" ")[1]));
-  const orderNote = units.size > 1 ? "; у перемикачі мітки стануть за природним порядком тексту (напр. «1 кг» перед «500 г»)" : "";
+  // The storefront sorts labels with uk-UA NumericOrdering (CategoryQueries.NaturalOrder): digit runs compare as
+  // integers, so "1 кг" < "500 г" and "0,5 г" < "0,25 г". Flag groups whose shown order would differ from the sizes.
+  const natural = (a, b) => {
+    const x = a.match(/\d+|\D+/g), y = b.match(/\d+|\D+/g);
+    for (let i = 0; i < Math.min(x.length, y.length); i++) {
+      const c = /^\d/.test(x[i]) && /^\d/.test(y[i]) ? Number(x[i]) - Number(y[i]) : x[i].localeCompare(y[i], "uk");
+      if (c) return c;
+    }
+    return x.length - y.length;
+  };
+  const labels = single.length === rows.length ? rows.map(r => r.label) : [];
+  const shown = [...labels].sort(natural);
+  const orderNote = shown.some((l, i) => l !== labels[i]) ? `; увага: перемикач покаже кнопки в порядку ${shown.join(" / ")}` : "";
   const shortest = rows.map(r => tidy(r.base)).sort((a, b) => a.length - b.length)[0];
   groups.push({
     name: shortest,
@@ -97,9 +108,9 @@ for (const rows of byKey.values()) {
 groups.sort((a, b) => (a.confidence === b.confidence ? 0 : a.confidence === "high" ? -1 : 1) || a.rows[0].cat.path.localeCompare(b.rows[0].cat.path, "uk") || a.name.localeCompare(b.name, "uk"));
 
 const csv = v => { const s = String(v ?? ""); return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
-const out = [["group_name", "group_key", "product_id", "sku", "current_name", "pack_size", "proposed_label", "category", "brand", "confidence", "reason"].join(",")];
+const out = [["group_name", "group_key", "product_id", "sku", "current_name", "pack_size", "proposed_label", "category", "brand", "confidence", "reason"].join(";")];
 for (const g of groups) for (const r of g.rows) {
-  out.push([g.name, g.groupKey, r.item.id, r.item.sku, r.item.name, r.sizes.map(m => m[0].trim()).join(" + "), r.label ?? "", r.cat.path, r.brand, g.confidence, g.reason].map(csv).join(","));
+  out.push([g.name, g.groupKey, r.item.id, r.item.sku, r.item.name, r.sizes.map(m => m[0].trim()).join(" + "), r.label ?? "", r.cat.path, r.brand, g.confidence, g.reason].map(csv).join(";"));
 }
 process.stdout.write("﻿" + out.join("\r\n") + "\r\n");
 
