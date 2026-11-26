@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import Link from "@/shared/ui/idle-link";
 import { getContacts, socialLinks, SpecialDays } from "@/features/content/server";
 import { ClockIcon, PhoneIcon, PinIcon } from "@polivalko/shared/ui/icons";
 import { SocialLinksList } from "@/features/content/server";
@@ -25,7 +26,12 @@ export async function FooterContacts() {
           </li>
         )}
         {socials.length > 0 && <li className="footer__social-row"><SocialLinksList links={socials} /></li>}
-        <li><PinIcon />{contacts?.mapUrl ? <a href={contacts.mapUrl} target="_blank" rel="noopener noreferrer">{contacts.address}</a> : <span>{contacts?.address ?? "Буча, Київська область"}</span>}</li>
+        <li>
+          <PinIcon />
+          {contacts?.mapUrl
+            ? <a href={contacts.mapUrl} target="_blank" rel="noopener noreferrer">Як нас знайти</a>
+            : <Link href="/contacts">Як нас знайти</Link>}
+        </li>
       </ul>
     </>
   );

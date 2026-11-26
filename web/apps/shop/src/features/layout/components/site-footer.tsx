@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import { FooterColumn } from "./footer-column";
 import { FooterContacts } from "./footer-contacts";
 import { FooterLinks } from "./footer-links";
-import { FooterSeller } from "./footer-seller";
 import { FooterYear } from "./footer-year";
 import { HeaderMascot } from "./header-mascot";
 
@@ -37,7 +36,6 @@ export function SiteFooter() {
             <Suspense fallback={null}>
               <FooterContacts />
             </Suspense>
-            <Suspense fallback={null}><FooterSeller /></Suspense>
           </div>
           <FooterColumn id="footer-shop" title="Магазин">
             <FooterLinks links={shop} />
