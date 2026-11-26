@@ -32,6 +32,28 @@ export const CloseIcon = ({ className }: IconProps) => (
   </svg>
 );
 
+export const ProfileCircleIcon = () => (
+  <svg {...base}>
+    <circle cx="12" cy="12" r="9.5" />
+    <circle cx="12" cy="9" r="3" />
+    <path d="M5.6 18.8a7 7 0 0 1 12.8 0" />
+  </svg>
+);
+
+export const ShoppingBagIcon = () => (
+  <svg {...base}>
+    <rect x="3.5" y="6.5" width="17" height="15" rx="3.5" />
+    <path d="M8.5 8.5V6a3.5 3.5 0 0 1 7 0v2.5" />
+  </svg>
+);
+
+export const ComparisonBarsIcon = () => (
+  <svg {...base}>
+    <rect x="3" y="9" width="7" height="12" rx="2" />
+    <rect x="14" y="3" width="7" height="18" rx="2" />
+  </svg>
+);
+
 export const BagIcon = ({ className }: IconProps) => (
   <svg {...base} aria-hidden="true" className={className}>
     <path d="M5 8h14l-1 12H6zM9 8V6.5a3 3 0 0 1 6 0V8" />
