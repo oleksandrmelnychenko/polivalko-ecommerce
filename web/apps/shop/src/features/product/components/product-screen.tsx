@@ -38,7 +38,7 @@ export async function ProductScreen({ product, deliveryFacts, askPhone }: {
   ];
   const discount = discountPercent(product.price, product.oldPrice);
   const overview = (
-    <div className="product">
+    <div className="product" data-sku={product.sku}>
       <Gallery key={product.id} images={product.images} name={product.name}
         labels={<ProductLabels labels={withoutSaleLabel(product.labels, discount !== null)} className="gallery__labels" />}
       />
