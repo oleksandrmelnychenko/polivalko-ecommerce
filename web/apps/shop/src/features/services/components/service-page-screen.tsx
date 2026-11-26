@@ -49,7 +49,7 @@ async function ServicePageContent({ page }: { page: ServiceDirectionPage }) {
           <Link href={serviceRequestHref(page.code)} className="btn btn--graphite">Залишити заявку <ArrowRightIcon /></Link>
         </div>
         <div className="service-page__photo">
-          <img {...photo} alt="" width={960} height={640} fetchPriority="high" decoding="async" />
+          <img {...photo} alt={page.name} width={960} height={640} fetchPriority="high" decoding="async" />
         </div>
       </header>
 

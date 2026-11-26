@@ -31,6 +31,7 @@ import { ServicesLook } from "./services-look";
 import { Steps } from "./steps";
 import { StoreVisit } from "./store-visit";
 import { HomeFaq } from "./home-faq";
+import { HomeSeoBlock } from "./home-seo-block";
 import { JournalPreview } from "@/features/journal/server";
 
 export function HomeScreen() {
@@ -66,11 +67,12 @@ async function HomeContent() {
   return (
     <>
       <SiteJsonLd />
-      <h1 className="visually-hidden">Poli Valko: товари для саду, городу й дому</h1>
+      {!blocks.includes("hero") && <h1 className="visually-hidden">Poli Valko: товари для саду, городу й дому</h1>}
       {blocks.map((block) => (
         <HomeBlock key={block} block={block} home={home} slides={slides} facts={facts} />
       ))}
       <JournalPreview />
+      <HomeSeoBlock />
       <HomeFaq />
     </>
   );

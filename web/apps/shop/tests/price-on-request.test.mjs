@@ -34,7 +34,14 @@ test("comparison shows «Ціну уточнюйте» instead of 0 and does not
 
 test("product structured data has no Offer when the price is 0", () => {
   const price = load("../src/shared/lib/price.ts", () => ({}));
-  const seo = { absoluteUrl: (path) => `https://shop.test${path}`, organizationId: () => "https://shop.test/#organization", SITE_NAME: "Shop" };
+  const seo = {
+    absoluteUrl: (path) => `https://shop.test${path}`,
+    organizationId: () => "https://shop.test/#organization",
+    SITE_NAME: "Shop",
+    computePriceValidUntil: () => "2027-02-24",
+    productShippingDetails: (currency = "UAH") => [{ "@type": "OfferShippingDetails", shippingRate: { "@type": "MonetaryAmount", value: "0", currency } }],
+    merchantReturnPolicy: () => ({ "@type": "MerchantReturnPolicy", "@id": "https://shop.test/#return-policy", applicableCountry: "UA", merchantReturnDays: 14 }),
+  };
   const gtin = load("../../../packages/shared/lib/gtin.ts", () => ({}));
   const { productJsonLd } = load("../src/features/product/lib/json-ld.ts", (name) =>
     name === "@/features/seo" ? seo : name === "@/shared/lib/price" ? price : name === "@polivalko/shared/lib/gtin" ? gtin : { markupDescription: () => undefined });

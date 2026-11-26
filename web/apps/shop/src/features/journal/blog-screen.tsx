@@ -1,12 +1,37 @@
-import { PageHead } from "@/features/content/server";
-import { ArticleCards } from "./journal";
-import { seoMetadata } from "@/features/seo";
 import { notFound } from "next/navigation";
+import { PageHead } from "@/features/content/server";
+import { itemListJsonLd, JsonLd, seoMetadata } from "@/features/seo";
+import { articles } from "./articles";
 import { JOURNAL_ENABLED } from "./config";
+import { ArticleCards } from "./journal";
 
-export const metadata = seoMetadata({ title: "Блог Полі-Валко", description: "Поради з вибору товарів для саду, поливу й дому. Підготовка до садових робіт і послуги Полі-Валко в Бучі.", path: "/blog" });
+export const metadata = seoMetadata({
+  title: "Блог про полив, догляд за садом і городом",
+  description:
+    "Експертні гіди Poli Valko: як обрати крапельний полив, садові шланги, інструмент, ґрунти та підготувати автополив у Бучі й по Україні.",
+  path: "/blog",
+});
 
 export default function BlogPage() {
   if (!JOURNAL_ENABLED) notFound();
-  return <div className="container journal-page"><PageHead path="/blog" title="Блог" lead="Про сад, полив і речі, з якими легше доглядати свою ділянку." /><ArticleCards /></div>;
+  return (
+    <div className="container journal-page">
+      <JsonLd
+        data={itemListJsonLd(
+          "Статті блогу Poli Valko",
+          articles.map((article) => ({
+            name: article.title,
+            path: `/blog/${article.slug}`,
+            image: article.image.url,
+          })),
+        )}
+      />
+      <PageHead
+        path="/blog"
+        title="Блог Poli Valko"
+        lead="Практичні інструкції з поливу, вибору садового інструменту, догляду за газоном і підготовки ділянки до сезону."
+      />
+      <ArticleCards />
+    </div>
+  );
 }

@@ -49,7 +49,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
         <ul ref={mobileRail} aria-label="Колекції" className="hero-mobile__slides" onScroll={(event) => { setLoadRest(true); setMobileIndex(Math.round(event.currentTarget.scrollLeft / (event.currentTarget.clientWidth + 12))); }}>
           {slides.map((slide, i) => <li key={slide.key} className="hero-mobile__slide">
             <div className="hero-mobile__content">
-              <h2>{slide.title}</h2>
+              {i === 0 ? <h1>{slide.title}</h1> : <h2>{slide.title}</h2>}
               {(slide.sub || slide.kicker) && <p>{slide.sub || slide.kicker}</p>}
               {slide.cta && <Link href={slide.cta.href} className="hero-panel__btn">{slide.cta.label}<ArrowRightIcon /></Link>}
             </div>
@@ -72,10 +72,17 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
             inert={!active}
           >
             <div className="hero-slide__panel">
-              <h2 className="hero-panel__title">
-                {slide.title}
-                {slide.kicker && !slide.featured && <span className="hero-panel__kicker">{slide.kicker}</span>}
-              </h2>
+              {i === 0 ? (
+                <h1 className="hero-panel__title">
+                  {slide.title}
+                  {slide.kicker && !slide.featured && <span className="hero-panel__kicker">{slide.kicker}</span>}
+                </h1>
+              ) : (
+                <h2 className="hero-panel__title">
+                  {slide.title}
+                  {slide.kicker && !slide.featured && <span className="hero-panel__kicker">{slide.kicker}</span>}
+                </h2>
+              )}
               {slide.sub && <p className="hero-panel__sub">{slide.sub}</p>}
               <div className="hero-panel__actions">
                 {slide.cta && (
@@ -91,12 +98,12 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
               </div>
               {slide.subsections ? <nav className="hero-shortcuts" aria-label="Категорії колекції">
                 {slide.subsections.items.slice(0, 3).map(item => <Link key={item.id} href={item.href}>
-                  {item.image && <img src={item.image} alt="" width={48} height={48} />}
+                  {item.image && <img src={item.image} alt={item.name} width={48} height={48} loading="lazy" decoding="async" />}
                   <span>{item.name}</span><ArrowRightIcon />
                 </Link>)}
               </nav> : (slide.cta?.href === "/catalog" || slide.featured) && <nav className="hero-shortcuts" aria-label="Популярні категорії">
                 {QUICK_CATEGORIES.map(({ slug, label }) => <Link key={slug} href={`/catalog/${slug}`}>
-                  <img src={categoryPhotos[slug].url.replace("w=1200", "w=120")} alt="" width={48} height={48} />
+                  <img src={categoryPhotos[slug].url} alt={categoryPhotos[slug].alt || label} width={48} height={48} loading="lazy" decoding="async" />
                   <span>{label}</span><ArrowRightIcon />
                 </Link>)}
               </nav>}
@@ -130,7 +137,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
 function HeroChip({ product, label }: { product: HeroFeatured; label?: string }) {
   return (
     <Link href={product.href} className="hero-chip">
-      <span className="hero-chip__photo">{product.image && <img src={product.image} alt="" width={44} height={44} loading="lazy" decoding="async" />}</span>
+      <span className="hero-chip__photo">{product.image && <img src={product.image} alt={product.name} width={44} height={44} loading="lazy" decoding="async" />}</span>
       <span className="hero-chip__text">
         {(label || product.note === "З нашого каталогу") && <span className="hero-chip__label">{label || product.note}</span>}
         <span className="hero-chip__name">{product.name}</span>

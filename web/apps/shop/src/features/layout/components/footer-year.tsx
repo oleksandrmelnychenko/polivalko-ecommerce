@@ -1,7 +1,12 @@
-import { connection } from "next/server";
+import { cacheLife } from "next/cache";
 import { currentYear } from "../lib/current-year";
 
+async function cachedYear() {
+  "use cache";
+  cacheLife("days");
+  return currentYear();
+}
+
 export async function FooterYear() {
-  await connection();
-  return <>{currentYear()} </>;
+  return <>{await cachedYear()} </>;
 }

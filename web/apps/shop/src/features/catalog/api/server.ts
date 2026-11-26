@@ -1,7 +1,6 @@
 import "server-only";
 import { cache } from "react";
 import { cacheLife, cacheTag } from "next/cache";
-import { connection } from "next/server";
 import { api } from "@polivalko/shared/api/server";
 import { loaded } from "@/shared/lib/api-result";
 
@@ -42,26 +41,18 @@ export type ProductQuery = {
 
 export const PAGE_SIZE = 24;
 
-const kyivDay = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Kyiv" }).format(new Date());
-
-// The mode changes only when the console saves it (the API then invalidates the "catalog" tag) or when a mode
-// saved "through" a date ends at Kyiv midnight, which the day in the cache key covers. Fetching it uncached
-// cost every listing view one more API round trip (~40 ms of the ~190 ms to the first product tile).
-async function storefrontMode(day: string) {
+// The mode changes when the console saves it (invalidating the "catalog" / "storefront-mode" tags) or when a
+// scheduled mode ends; cacheLife("minutes") revalidates every 60 seconds without forcing dynamic connection().
+async function storefrontMode() {
   "use cache";
   cacheLife("minutes");
-  cacheTag("catalog", "storefront-mode", `storefront-mode:${day}`);
+  cacheTag("catalog", "storefront-mode");
   const { data } = await api.GET("/api/v1/catalog/storefront-mode");
   if (!data) throw new Error("Не вдалося завантажити режим вітрини");
   return data.mode + "/" + data.revision;
 }
 
-// connection(): reading the clock during a prerender fails the route, and these listings were request-time
-// already (the lookup used to be uncached), so the render stays as dynamic as before, minus the API call.
-const currentMode = cache(async () => {
-  await connection();
-  return storefrontMode(kyivDay());
-});
+const currentMode = cache(() => storefrontMode());
 
 export async function searchProducts(query: ProductQuery) {
   return searchSortedProducts({ query, modeRevision: query.sort ? undefined : await currentMode() });

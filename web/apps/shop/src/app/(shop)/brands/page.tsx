@@ -5,8 +5,8 @@ import { BrandsScreen, getBrandPages } from "@/features/catalog/server";
 import { seoMetadata } from "@/features/seo";
 
 export const metadata: Metadata = seoMetadata({
-  title: "Бренди",
-  description: "Бренди товарів для саду, городу й поливу в Poli Valko: Hunter, SeedEra, Gardena, Fiskars, Irritec та інші. Доставка Новою поштою по Україні.",
+  title: "Бренди товарів для поливу, саду й городу",
+  description: "Офіційні бренди в Poli Valko: Hunter, Irritec, Cellfast, Fiskars, Gardena, SeedEra та понад 60 виробників для саду. Доставка по Україні.",
   path: "/brands",
 });
 

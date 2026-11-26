@@ -40,7 +40,7 @@ export async function CollectionPairs() {
   }).slice(0, 2);
 
   return <>
-    {popular.length > 0 && <section className="mobile-bestsellers container" aria-labelledby="mobile-bestsellers-title"><header><h2 id="mobile-bestsellers-title">Топ продажів</h2><Link href="/catalog">Усі ›</Link></header><ul>{popular.slice(0, 5).map((product) => <li key={product.id}><Link href={`/product/${product.slug}`}>{product.imageUrl ? <img src={thumb(product.imageUrl, 250)} alt="" width={150} height={150} loading="lazy" /> : <small className="mobile-bestsellers__no-photo">Фото відсутнє</small>}<span>{product.name}</span><strong>{hasPrice(product.price) ? formatMoney(product.price) : PRICE_ON_REQUEST}</strong></Link></li>)}</ul></section>}
+    {popular.length > 0 && <section className="mobile-bestsellers container" aria-labelledby="mobile-bestsellers-title"><header><h2 id="mobile-bestsellers-title">Топ продажів</h2><Link href="/catalog">Усі ›</Link></header><ul>{popular.slice(0, 5).map((product) => <li key={product.id}><Link href={`/product/${product.slug}`}>{product.imageUrl ? <img src={thumb(product.imageUrl, 250)} alt={product.name} width={150} height={150} loading="lazy" decoding="async" /> : <small className="mobile-bestsellers__no-photo">Фото відсутнє</small>}<span>{product.name}</span><strong>{hasPrice(product.price) ? formatMoney(product.price) : PRICE_ON_REQUEST}</strong></Link></li>)}</ul></section>}
     {recommended.length > 0 && <HomeSection id="collection-title" title="Рекомендуємо зараз" className="home-recommendations" more={{ href: "/catalog", label: "Увесь каталог" }}>
       <ProductTiles products={recommended} />
     </HomeSection>}

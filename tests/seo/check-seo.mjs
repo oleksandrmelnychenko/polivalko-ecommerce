@@ -128,8 +128,20 @@ check("/robots.txt", "API закритий", /^Disallow:\s*\/api\//m.test(robots
 
 const sitemap = await send("/sitemap.xml");
 check("/sitemap.xml", "HTTP 200", sitemap.status === 200, String(sitemap.status));
-const paths = urlsFromSitemap(sitemap.text);
+let paths = [];
+if (/<sitemapindex\b/i.test(sitemap.text)) {
+  const childPaths = urlsFromSitemap(sitemap.text);
+  check("/sitemap.xml", "індекс містить дочірні карти", childPaths.length >= 4, `${childPaths.length} карт`);
+  for (const childPath of childPaths) {
+    const child = await send(childPath);
+    check(childPath, "HTTP 200", child.status === 200, String(child.status));
+    if (child.status === 200) paths.push(...urlsFromSitemap(child.text));
+  }
+} else {
+  paths = urlsFromSitemap(sitemap.text);
+}
 check("/sitemap.xml", "є розділи й товари", paths.some((p) => p.startsWith("/catalog/")) && paths.some((p) => p.startsWith("/product/")), `${paths.length} адрес`);
+check("/sitemap.xml", "без юридичних сторінок /offer та /privacy", !paths.includes("/offer") && !paths.includes("/privacy"));
 const category = args.category ? `/catalog/${args.category}` : paths.find((p) => p.startsWith("/catalog/"));
 
 await inspect("/", { canonical: "/", og: true, types: ["Organization", "Store", "WebSite"] });

@@ -2,6 +2,8 @@ import { getMe } from "../api/client";
 import type { CustomerMe, Session } from "./types";
 
 export const SESSION_SIGNAL = "pv-customer";
+export const SESSION_HINT_COOKIE = "pv_customer_hint";
+const SESSION_HINT_RE = /(?:^|;\s*)pv_customer_hint=1(?:;|$)/;
 const UNKNOWN: Session = { status: "unknown", me: null };
 const UNVERIFIED: Session = { status: "unknown", me: null, failed: true };
 const GUEST: Session = { status: "guest", me: null };
@@ -15,6 +17,37 @@ let generation = 0;
 let retryDelay = RETRY_FIRST;
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
 const listeners = new Set<() => void>();
+
+function hasSessionHint(): boolean {
+  try {
+    return typeof document !== "undefined" && SESSION_HINT_RE.test(document.cookie ?? "");
+  } catch {
+    return false;
+  }
+}
+
+function writeSessionHint(present: boolean) {
+  try {
+    if (typeof document === "undefined") return;
+    const secure = typeof window !== "undefined" && window.location?.protocol === "https:" ? "; Secure" : "";
+    document.cookie = present
+      ? `${SESSION_HINT_COOKIE}=1; Path=/; SameSite=Lax; Max-Age=2592000${secure}`
+      : `${SESSION_HINT_COOKIE}=; Path=/; SameSite=Lax; Max-Age=0${secure}`;
+  } catch {}
+}
+
+function isAccountPath(): boolean {
+  try {
+    const pathname = typeof window !== "undefined" ? window.location?.pathname : undefined;
+    return typeof pathname === "string" && pathname.startsWith("/account");
+  } catch {
+    return false;
+  }
+}
+
+function canSkipGuestBootstrap(): boolean {
+  return typeof document !== "undefined" && !hasSessionHint() && !isAccountPath();
+}
 
 function signalSessionChange() {
   try {
@@ -54,6 +87,7 @@ export function subscribeSession(listener: () => void) {
 
 export function setSignedIn(me: CustomerMe) {
   if (session.me?.id !== me.id) signalSessionChange();
+  writeSessionHint(true);
   generation += 1;
   pending = null;
   stopRetry();
@@ -66,6 +100,7 @@ export function updateCustomerDetails(me: CustomerMe) {
 
 export function setSignedOut() {
   signalSessionChange();
+  writeSessionHint(false);
   generation += 1;
   pending = null;
   stopRetry();
@@ -92,11 +127,13 @@ async function fetchSession(current: number): Promise<Session> {
     if (signal !== readSessionSignal()) return refreshChangedSession();
     if (data) {
       if (session.me?.id !== data.id) generation += 1;
+      writeSessionHint(true);
       pending = null;
       stopRetry();
       set({ status: "signedIn", me: data }, signal);
     } else if (response.status === 401) {
       if (session.status !== "guest") generation += 1;
+      writeSessionHint(false);
       pending = null;
       stopRetry();
       set(GUEST, signal);
@@ -111,6 +148,10 @@ async function fetchSession(current: number): Promise<Session> {
 
 export function loadSession(): Promise<Session> {
   if (session.status !== "unknown") return Promise.resolve(session);
+  if (canSkipGuestBootstrap()) {
+    set(GUEST);
+    return Promise.resolve(session);
+  }
   return refreshSession();
 }
 

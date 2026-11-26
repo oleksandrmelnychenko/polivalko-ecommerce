@@ -14,13 +14,17 @@ internal static class SiteSeeder
 
     public static async Task SeedAsync(PoliValkoDbContext db, ISettingsStore settings, TimeProvider time, CancellationToken ct)
     {
+        var now = time.GetUtcNow();
+        var dirty = false;
+
         if (await settings.GetAsync<JsonElement?>(HomeSettingsStore.SettingsKey, ct) is null)
         {
             if (!await db.Set<Banner>().AnyAsync(ct))
             {
-                db.AddRange(Banners(time.GetUtcNow()));
+                db.AddRange(Banners(now));
             }
 
+            await UpgradeDefaultServicesAsync(db, now, ct);
             await settings.SaveAsync(HomeSettingsStore.SettingsKey, HomeSettingsStore.Defaults, SeedActor, ct);
         }
 
@@ -28,9 +32,91 @@ internal static class SiteSeeder
         {
             await settings.SaveAsync(SeoTemplateSettings.SettingsKey, SeoTemplateSettings.Defaults, SeedActor, ct);
         }
+
+        var contacts = await db.Set<SiteContacts>().FirstOrDefaultAsync(c => c.Id == SiteContacts.SingletonId, ct);
+        if (contacts is not null && IsRootSocialPlaceholder(contacts.Facebook))
+        {
+            contacts.Facebook = null;
+            contacts.UpdatedAt = now;
+            dirty = true;
+        }
+
+        if (dirty)
+        {
+            await db.SaveChangesAsync(ct);
+        }
     }
 
-    private static Banner[] Banners(DateTimeOffset now) =>
+    internal sealed record DefaultServiceSeo(string Description, string SeoTitle, string SeoDescription);
+
+    internal static readonly IReadOnlyDictionary<string, DefaultServiceSeo> DefaultServices = new Dictionary<string, DefaultServiceSeo>
+    {
+        ["landscape-design"] = new(
+            "Проєктування ландшафтного дизайну в Бучі, Ірпені, Гостомелі, Ворзелі та Київській області: зонування, доріжки, освітлення й дендроплан.",
+            "Ландшафтний дизайн у Бучі й Ірпені під ключ | Poli Valko",
+            "Проєктування ландшафтного дизайну в Бучі, Ірпені, Гостомелі, Ворзелі та Київській області: зонування, доріжки, освітлення й дендроплан у Poli Valko."),
+        ["irrigation-installation"] = new(
+            "Проєктування й монтаж автополиву під ключ у Бучі, Ірпені, Гостомелі, Ворзелі та Київській області на обладнанні Hunter та Irritec.",
+            "Монтаж автополиву в Бучі, Ірпені й Київщині | Poli Valko",
+            "Проєктування й монтаж автополиву під ключ у Бучі, Ірпені, Гостомелі, Ворзелі та Київській області на обладнанні Hunter та Irritec. Гарантія Poli Valko."),
+        ["greening"] = new(
+            "Професійне озеленення у Бучі, Ірпені, Гостомелі, Ворзелі та Київській області: підбір і висадка дерев, кущів і квітників під ваш ґрунт і освітлення.",
+            "Озеленення ділянок у Бучі, Ірпені й Київщині | Poli Valko",
+            "Професійне озеленення у Бучі, Ірпені, Гостомелі, Ворзелі та Київській області: підбір і висадка дерев, кущів, квітників під ваш ґрунт і освітлення."),
+        ["lawns"] = new(
+            "Укладання рулонного та посівного газону в Бучі, Ірпені, Гостомелі, Ворзелі та Київській області: підготовка основи, вирівнювання й перший догляд.",
+            "Укладання рулонного й посівного газону в Бучі | Poli Valko",
+            "Укладання рулонного та посівного газону в Бучі, Ірпені, Гостомелі, Ворзелі та Київській області: підготовка ґрунту, вирівнювання, посів і перший догляд."),
+        ["garden-care"] = new(
+            "Комплексний сезонний догляд за садом у Бучі, Ірпені, Гостомелі, Ворзелі та Київській області: обрізка, підживлення, аерація газону й прибирання.",
+            "Догляд за садом у Бучі, Ірпені й Гостомелі | Poli Valko",
+            "Комплексний сезонний догляд за садом у Бучі, Ірпені, Гостомелі, Ворзелі та Київській області: обрізка, підживлення, аерація газону й прибирання."),
+        ["irrigation-service"] = new(
+            "Весняний запуск, продувка й консервація автополиву на зиму, ремонт форсунок і контролерів у Бучі, Ірпені, Гостомелі, Ворзелі та Київській області.",
+            "Сервіс, запуск і консервація автополиву в Бучі | Poli Valko",
+            "Весняний запуск, продувка й консервація автополиву на зиму, ремонт форсунок і контролерів у Бучі, Ірпені, Гостомелі, Ворзелі та Київській області."),
+        ["plant-treatment"] = new(
+            "Професійна обробка саду від шкідників і хвороб у Бучі, Ірпені, Гостомелі, Ворзелі та Київській області сертифікованими препаратами.",
+            "Обробка саду й рослин у Бучі та Київщині | Poli Valko",
+            "Професійна обробка саду від шкідників і хвороб у Бучі, Ірпені, Гостомелі, Ворзелі та Київській області сертифікованими препаратами. Виїзд Poli Valko."),
+    };
+
+    private static async Task UpgradeDefaultServicesAsync(PoliValkoDbContext db, DateTimeOffset now, CancellationToken ct)
+    {
+        var services = await db.Set<ServiceDirectionContent>().ToListAsync(ct);
+        foreach (var service in services)
+        {
+            if (service.SeoDescription is not null || !DefaultServices.TryGetValue(service.Code, out var defaults))
+            {
+                continue;
+            }
+
+            service.Description = defaults.Description;
+            service.SeoTitle = defaults.SeoTitle;
+            service.SeoDescription = defaults.SeoDescription;
+            service.UpdatedAt = now;
+        }
+    }
+
+    internal static bool IsRootSocialPlaceholder(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url) || !Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        if (uri.Scheme is not ("https" or "http"))
+        {
+            return false;
+        }
+
+        var host = uri.Host.ToLowerInvariant();
+        var isKnownSocialHost = host is "facebook.com" or "www.facebook.com" or "m.facebook.com"
+            or "instagram.com" or "www.instagram.com" or "youtube.com" or "www.youtube.com";
+        return isKnownSocialHost && uri.AbsolutePath.Trim('/').Length == 0 && string.IsNullOrEmpty(uri.Query);
+    }
+
+    internal static Banner[] Banners(DateTimeOffset now) =>
     [
         new()
         {
@@ -39,7 +125,7 @@ internal static class SiteSeeder
             Text = "Відправляємо Новою поштою по всій Україні. Самовивіз з магазину безкоштовний.",
             ButtonLabel = "Перейти до каталогу",
             Link = "/catalog",
-            ImageUrl = "https://images.unsplash.com/photo-1719324923613-ff0884b031ed?auto=format&fit=crop&q=80&w=1200",
+            ImageUrl = "/brand/about-garden.webp",
             SortOrder = 1,
             IsActive = true,
             UpdatedAt = now,
@@ -51,7 +137,7 @@ internal static class SiteSeeder
             Title = "Найчастіше купують",
             ButtonLabel = "Переглянути товар",
             Link = "/bestseller",
-            ImageUrl = "https://images.unsplash.com/photo-1729603596055-22a2c182903b?auto=format&fit=crop&q=80&w=1200",
+            ImageUrl = "/brand/service-irrigation.webp",
             SortOrder = 2,
             IsActive = true,
             UpdatedAt = now,
@@ -64,7 +150,7 @@ internal static class SiteSeeder
             Text = "Ялинки, гірлянди й прикраси. Відправляємо Новою поштою по всій Україні.",
             ButtonLabel = "Усе до Нового року",
             Link = "/catalog/novyi-rik",
-            ImageUrl = "https://images.unsplash.com/photo-1482517967863-00e15c9b44be?auto=format&fit=crop&q=80&w=1200",
+            ImageUrl = "/brand/polivalko-bucha.jpg",
             StartsAt = NewYearSeason(now).StartsAt,
             EndsAt = NewYearSeason(now).EndsAt,
             SortOrder = 3,

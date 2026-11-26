@@ -3,11 +3,11 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import ts from "typescript";
 
-function load(getMe, window) {
+function load(getMe, window, document) {
   const source = readFileSync(new URL("../src/features/customer/lib/session-store.ts", import.meta.url), "utf8");
   const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const loaded = { exports: {} };
-  new Function("exports", "module", "require", "window", js)(loaded.exports, loaded, () => ({ getMe }), window);
+  new Function("exports", "module", "require", "window", "document", js)(loaded.exports, loaded, () => ({ getMe }), window, document);
   return loaded.exports;
 }
 
@@ -99,4 +99,57 @@ test("a cross-tab session change supersedes the current refresh and protects the
   privateQuery.resolve({ response: new Response(null, { status: 401 }) });
   await assert.rejects(read, /Сеанс змінився/);
   assert.equal(store.getSession().me.id, "incoming");
+});
+
+test("an anonymous visitor on a public page resolves to guest without calling /api/v1/account/me", async () => {
+  let calls = 0;
+  const document = { cookie: "" };
+  const window = { location: { pathname: "/", protocol: "https:" } };
+  const store = load(async () => {
+    calls += 1;
+    return { response: new Response(null, { status: 401 }) };
+  }, window, document);
+
+  const result = await store.loadSession();
+  assert.equal(result.status, "guest");
+  assert.equal(result.me, null);
+  assert.equal(calls, 0);
+});
+
+test("a visitor with the pv_customer_hint cookie verifies their session via /api/v1/account/me", async () => {
+  let calls = 0;
+  const document = { cookie: "pv_customer_hint=1" };
+  const window = { location: { pathname: "/catalog/vse-dlia-polyvu", protocol: "https:" } };
+  const store = load(async () => {
+    calls += 1;
+    return { data: { id: "signed-in-customer" }, response: new Response() };
+  }, window, document);
+
+  const result = await store.loadSession();
+  assert.equal(result.status, "signedIn");
+  assert.equal(result.me.id, "signed-in-customer");
+  assert.equal(calls, 1);
+});
+
+test("an /account route still checks /api/v1/account/me even without the hint cookie and backfills it on success", async () => {
+  let calls = 0;
+  const document = { cookie: "" };
+  const window = { location: { pathname: "/account/orders", protocol: "https:" } };
+  const store = load(async () => {
+    calls += 1;
+    return { data: { id: "legacy-cookie-customer" }, response: new Response() };
+  }, window, document);
+
+  const result = await store.loadSession();
+  assert.equal(result.status, "signedIn");
+  assert.equal(calls, 1);
+  assert.match(document.cookie, /^pv_customer_hint=1;/);
+});
+
+test("signing out clears the pv_customer_hint cookie", () => {
+  const document = { cookie: "pv_customer_hint=1" };
+  const window = { location: { pathname: "/", protocol: "https:" } };
+  const store = load(async () => { throw new Error("Unexpected getMe"); }, window, document);
+  store.setSignedOut();
+  assert.match(document.cookie, /^pv_customer_hint=;.*Max-Age=0/);
 });

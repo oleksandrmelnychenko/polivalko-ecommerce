@@ -27,9 +27,6 @@ export const viewport: Viewport = { themeColor: "#ffffff" };
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="uk" data-scroll-behavior="smooth">
-      <head>
-        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="" />
-      </head>
       <body>
         <a href="#main" className="skip-link">
           Перейти до вмісту

@@ -7,8 +7,10 @@ export async function generateMetadata({ searchParams }: PageProps<"/catalog">):
   const { page, filtered } = listingIndexState(await searchParams);
   const paged = page > 1 && !filtered;
   return seoMetadata({
-    title: paged ? `Каталог, сторінка ${page}` : "Каталог товарів для саду, городу й дому",
-    description: "Каталог товарів Poli Valko для саду, городу й дому з доставкою Новою поштою по Україні або самовивозом з магазину.",
+    title: paged ? `Каталог товарів для саду — стор. ${page}` : "Каталог товарів для поливу, саду й городу",
+    description: paged
+      ? `Сторінка ${page}. Каталог Poli Valko: полив, насіння, добрива, садовий інструмент і техніка. Доставка Новою поштою по Україні та самовивіз у Бучі.`
+      : "Каталог Poli Valko: усе для поливу, насіння, добрива, садовий інструмент і техніка. Доставка Новою поштою по Україні та самовивіз у Бучі.",
     path: paged ? `/catalog?page=${page}` : "/catalog",
     noIndex: filtered,
   });

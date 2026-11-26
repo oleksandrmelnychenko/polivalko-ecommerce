@@ -1,11 +1,43 @@
 import Link from "next/link";
-import { getContacts } from "@/features/content/server";
+import { FaqJsonLd, getContacts } from "@/features/content/server";
 import { directionsUrl } from "@/shared/lib/directions-url";
+
+const DEFAULT_STORE_ADDRESS = "м. Буча, вул. Депутатська, 1-В, ТК «Варшавський», фасадний ряд, приміщення №8-12";
+const DEFAULT_STORE_SCHEDULE = "Пн–Сб 09:00–18:00, Нд 10:00–17:00";
 
 export async function HomeFaq() {
   const contacts = await getContacts().catch(() => null);
   const route = directionsUrl(contacts?.mapUrl, contacts?.address);
+  const address = contacts?.address?.trim() || DEFAULT_STORE_ADDRESS;
+  const schedule = contacts?.schedule?.trim() || DEFAULT_STORE_SCHEDULE;
+  const faqItems = [
+    {
+      question: "Як знайти потрібний товар?",
+      answer: "Відкрийте потрібний розділ каталогу або введіть назву чи артикул у пошуку. Використовуйте фільтри для пошуку та порівняння характеристик товарів одного типу.",
+    },
+    {
+      question: "Чи потрібна реєстрація для замовлення?",
+      answer: "Замовлення можна оформити без реєстрації. У кабінеті доступні історія замовлень, обрані товари та збережені адреси доставки.",
+    },
+    {
+      question: "Як дізнатися про доставку й оплату?",
+      answer: "Доступні способи та умови наведено на сторінці «Доставка й оплата». Під час оформлення оберіть зручний варіант.",
+    },
+    {
+      question: "Де розташований магазин?",
+      answer: `${address}. Графік роботи: ${schedule}.`,
+    },
+    {
+      question: "Як повернути або обміняти товар?",
+      answer: "Умови й порядок звернення описано на сторінці «Повернення й обмін».",
+    },
+    {
+      question: "Як замовити послугу для саду?",
+      answer: "Перегляньте перелік послуг і залиште заявку. Менеджер зв’яжеться з вами в робочий час.",
+    },
+  ];
   return <section className="container home-faq" aria-labelledby="home-faq-title">
+    <FaqJsonLd items={faqItems} />
     <h2 id="home-faq-title">Часті запитання</h2>
     <div className="home-faq__list">
       <div>
@@ -17,8 +49,8 @@ export async function HomeFaq() {
         <details>
           <summary>Де розташований магазин?</summary>
           <div className="home-faq__location">
-            {contacts?.address && <p>{contacts.address}</p>}
-            {contacts?.schedule && <p>{contacts.schedule}</p>}
+            <p>{address}</p>
+            <p>{schedule}</p>
             {route && <a className="link" href={route} target="_blank" rel="noopener noreferrer">Прокласти маршрут</a>}
             <Link className="link" href="/contacts">Усі контакти</Link>
           </div>

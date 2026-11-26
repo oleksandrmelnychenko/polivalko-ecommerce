@@ -5,10 +5,17 @@ import { ClockIcon, PhoneIcon, PinIcon } from "@polivalko/shared/ui/icons";
 import { SocialLinksList } from "@/features/content/server";
 import { contactPhones } from "../lib/contact-phones";
 
+function isRealSocialProfile(url: string): boolean {
+  if (!/^https?:/i.test(url)) return true;
+  if (!URL.canParse(url)) return false;
+  const parsed = new URL(url);
+  return parsed.pathname.replace(/\/+$/, "").length > 0 || Boolean(parsed.search || parsed.hash);
+}
+
 export async function FooterContacts() {
   await connection();
   const contacts = await getContacts().catch(() => null);
-  const socials = socialLinks(contacts);
+  const socials = socialLinks(contacts).filter((item) => !item.placeholder && isRealSocialProfile(item.url));
   return (
     <>
       <ul className="footer__contacts">

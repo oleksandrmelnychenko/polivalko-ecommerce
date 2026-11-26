@@ -9,6 +9,7 @@ export { DeliveryScreen } from "./components/delivery-screen";
 export { OfferScreen } from "./components/offer-screen";
 export { SpecialDays } from "./components/special-days";
 export { SiteJsonLd } from "./components/site-json-ld";
+export { FaqJsonLd } from "./components/faq-json-ld";
 export { SocialLinksList } from "./components/social-links";
 export { PageHead } from "./components/page-head";
 export { getDeliveryMethods, getPickupPoints } from "./api/server";

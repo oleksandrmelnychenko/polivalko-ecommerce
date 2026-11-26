@@ -25,7 +25,7 @@ export function ProductTile({ product, priority }: { product: ProductListItem; p
       <figure className="tile__photo">
         {image ? (
           <span className="tile__image">
-            <img {...image} alt="" width={320} height={240} loading={priority ? "eager" : "lazy"} fetchPriority={priority ? undefined : "low"} decoding="async" />
+            <img {...image} alt={product.name} width={320} height={240} loading={priority ? "eager" : "lazy"} fetchPriority={priority ? undefined : "low"} decoding="async" />
           </span>
         ) : (
           <span className="tile__photo-empty">Фото відсутнє</span>

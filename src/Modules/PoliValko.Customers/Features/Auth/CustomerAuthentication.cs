@@ -13,6 +13,26 @@ internal static class CustomerAuthentication
     public const string SelectorScheme = "PoliValko";
     public const string StaffPathPrefix = "/api/v1/console";
     public const string CookieName = "pv_customer";
+    public const string HintCookieName = "pv_customer_hint";
+
+    public static CookieOptions HintCookieOptions(HttpContext http) => new()
+    {
+        HttpOnly = false,
+        SameSite = SameSiteMode.Lax,
+        Secure = http.Request.IsHttps,
+        Path = "/",
+        IsEssential = true,
+        MaxAge = TimeSpan.FromDays(30),
+    };
+
+    public static CookieOptions HintCookieDeleteOptions(HttpContext http) => new()
+    {
+        HttpOnly = false,
+        SameSite = SameSiteMode.Lax,
+        Secure = http.Request.IsHttps,
+        Path = "/",
+        IsEssential = true,
+    };
 
     public static IServiceCollection AddCustomerAuthentication(this IServiceCollection services)
     {
@@ -28,11 +48,28 @@ internal static class CustomerAuthentication
                 options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
                 options.ExpireTimeSpan = TimeSpan.FromDays(30);
                 options.SlidingExpiration = true;
+                options.Events.OnSigningIn = context =>
+                {
+                    context.HttpContext.Response.Cookies.Append(HintCookieName, "1", HintCookieOptions(context.HttpContext));
+                    return Task.CompletedTask;
+                };
+                options.Events.OnSigningOut = context =>
+                {
+                    context.HttpContext.Response.Cookies.Delete(HintCookieName, HintCookieDeleteOptions(context.HttpContext));
+                    return Task.CompletedTask;
+                };
                 options.Events.OnRedirectToLogin = context => AuthProblems.WriteAsync(
                     context.HttpContext, StatusCodes.Status401Unauthorized, "auth.unauthorized", "Потрібен вхід", "Увійдіть до особистого кабінету.");
                 options.Events.OnRedirectToAccessDenied = context => AuthProblems.WriteAsync(
                     context.HttpContext, StatusCodes.Status403Forbidden, "auth.forbidden", "Недостатньо прав", "Ця дія недоступна.");
-                options.Events.OnValidatePrincipal = CustomerSessionValidator.ValidateAsync;
+                options.Events.OnValidatePrincipal = async context =>
+                {
+                    await CustomerSessionValidator.ValidateAsync(context);
+                    if (context.Principal is not null && !string.Equals(context.HttpContext.Request.Cookies[HintCookieName], "1", StringComparison.Ordinal))
+                    {
+                        context.HttpContext.Response.Cookies.Append(HintCookieName, "1", HintCookieOptions(context.HttpContext));
+                    }
+                };
             });
 
         services.AddAuthorizationBuilder()

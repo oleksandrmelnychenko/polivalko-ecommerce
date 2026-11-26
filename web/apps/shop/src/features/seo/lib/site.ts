@@ -1,4 +1,5 @@
 export const SITE_NAME = "Poli Valko";
+export const SITE_ALTERNATE_NAMES = ["Poli-Valko", "Полі-Валко"] as const;
 export const SITE_LOCALE = "uk_UA";
 export const SITE_LANGUAGE = "uk-UA";
 
@@ -16,4 +17,8 @@ export function organizationId(): string {
 
 export function websiteId(): string {
   return `${siteUrl()}/#website`;
+}
+
+export function returnPolicyId(base = siteUrl()): string {
+  return `${base.replace(/\/+$/, "")}/#return-policy`;
 }

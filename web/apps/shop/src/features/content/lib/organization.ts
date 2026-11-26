@@ -1,5 +1,5 @@
 import type { Contacts } from "@polivalko/shared/api/types";
-import type { OrganizationSource } from "@/features/seo";
+import { isConcreteSocialProfileUrl, type OrganizationSource } from "@/features/seo";
 import { socialLinks } from "./social-links";
 
 export function organizationSource(contacts: Contacts | null, seller: OrganizationSource["seller"]): OrganizationSource {
@@ -9,6 +9,6 @@ export function organizationSource(contacts: Contacts | null, seller: Organizati
     sameAs: socialLinks(contacts)
       .filter((link) => !link.placeholder)
       .map((link) => link.url.trim())
-      .filter((url) => /^https?:\/\//i.test(url)),
+      .filter(isConcreteSocialProfileUrl),
   };
 }

@@ -32,13 +32,46 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 2678400,
   },
   async headers() {
-    return ["/order/:number", "/account/:path*", "/pay/sandbox/:id"].map((source) => ({
-      source,
-      headers: [
-        { key: "Referrer-Policy", value: "no-referrer" },
-        { key: "Cache-Control", value: "private, no-store" },
-      ],
-    }));
+    const publicHtmlCache = [
+      { key: "CDN-Cache-Control", value: "public, s-maxage=300, stale-while-revalidate=3600" },
+      { key: "Vercel-CDN-Cache-Control", value: "public, s-maxage=300, stale-while-revalidate=3600" },
+    ];
+    const immutableAssetCache = [
+      { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+    ];
+    const privateNoStore = [
+      { key: "Referrer-Policy", value: "no-referrer" },
+      { key: "Cache-Control", value: "private, no-store" },
+      { key: "CDN-Cache-Control", value: "private, no-store" },
+      { key: "Vercel-CDN-Cache-Control", value: "private, no-store" },
+    ];
+    return [
+      { source: "/brand/:path*", headers: immutableAssetCache },
+      { source: "/mascot/:path*", headers: immutableAssetCache },
+      ...[
+        "/",
+        "/about",
+        "/blog",
+        "/blog/:slug",
+        "/brands",
+        "/brands/:slug",
+        "/catalog",
+        "/catalog/:path*",
+        "/contacts",
+        "/offer",
+        "/payment-delivery",
+        "/privacy",
+        "/product/:slug",
+        "/returns",
+        "/sale",
+        "/services",
+        "/services/:slug",
+      ].map((source) => ({ source, headers: publicHtmlCache })),
+      ...["/cart", "/checkout", "/compare", "/order/:number", "/account/:path*", "/pay/sandbox/:id", "/api/:path*", "/internal/:path*"].map((source) => ({
+        source,
+        headers: privateNoStore,
+      })),
+    ];
   },
   async rewrites() {
     return {

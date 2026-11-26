@@ -218,7 +218,7 @@ export function bannerSlides(banners: Banner[], { deals, sections, featured, sto
     const bannerSubsections = categorySlug ? categories?.[categorySlug] : undefined;
     return {
       key: banner.id ?? `${i}-${banner.title}`,
-      image: { ...sized(banner.imageUrl, HERO_SIZES, 960), alt: "" },
+      image: { ...sized(banner.imageUrl, HERO_SIZES, 960), alt: banner.title.trim() || pagePhotos.hero.alt },
       mobileImage: banner.mobileImageUrl?.trim() ? sized(banner.mobileImageUrl.trim(), "100vw", 500) : undefined,
       side,
       kicker: banner.kicker?.trim() || undefined,

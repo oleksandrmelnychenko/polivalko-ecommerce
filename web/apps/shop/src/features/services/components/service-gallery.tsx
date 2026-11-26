@@ -54,7 +54,7 @@ export function ServiceGallery({ groups }: { groups: ServiceGroup[] }) {
     <div className="garden-scenes">
       {groups.map(group => <section key={group.key} className={`garden-scene garden-scene--${group.key}`}
         id={group.key} aria-labelledby={`title-${group.key}`}>
-        <div className="garden-scene__photo"><img src={group.photo} alt="" width={1080} height={740} loading="lazy" /></div>
+        <div className="garden-scene__photo"><img src={group.photo} alt={group.title} width={1080} height={740} loading="lazy" decoding="async" /></div>
         <div className="garden-scene__body">
           <h2 id={`title-${group.key}`}>{group.title}</h2>
           <ul className="garden-works">

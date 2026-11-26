@@ -109,11 +109,32 @@ test("a sitemap page carries a change date only when the real one is known", () 
   });
 
   assert.deepEqual(entries, [
-    { url: "https://shop.test", changeFrequency: "weekly", priority: 1 },
+    { url: "https://shop.test/", changeFrequency: "weekly", priority: 1 },
     { url: "https://shop.test/services", lastModified: "2026-11-26T13:35:22.586198+00:00", changeFrequency: "weekly", priority: 0.5 },
     { url: "https://shop.test/returns", changeFrequency: "weekly", priority: 0.5 },
     { url: "https://shop.test/contacts", changeFrequency: "weekly", priority: 0.5 },
   ]);
+});
+
+test("sitemapXml and sitemapIndexXml serialize valid escaped XML documents", () => {
+  const { sitemapIndexXml, sitemapXml } = src("features/seo/lib/sitemap-entries.ts");
+
+  const index = sitemapIndexXml([
+    { url: "https://shop.test/sitemap-pages.xml", lastModified: "2026-11-26T12:00:00+00:00" },
+    { url: "https://shop.test/sitemap-products.xml" },
+  ]);
+  assert.match(index, /^<\?xml version="1\.0" encoding="UTF-8"\?>/);
+  assert.match(index, /<sitemapindex xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+  assert.match(index, /<sitemap><loc>https:\/\/shop\.test\/sitemap-pages\.xml<\/loc><lastmod>2026-11-26T12:00:00\+00:00<\/lastmod><\/sitemap>/);
+  assert.match(index, /<sitemap><loc>https:\/\/shop\.test\/sitemap-products\.xml<\/loc><\/sitemap>/);
+
+  const urls = sitemapXml([
+    { url: "https://shop.test/", lastModified: "2026-11-26T12:00:00+00:00", changeFrequency: "weekly", priority: 1 },
+    { url: "https://shop.test/catalog?a=1&b=2", changeFrequency: "daily", priority: 0.8 },
+  ]);
+  assert.match(urls, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+  assert.match(urls, /<loc>https:\/\/shop\.test\/<\/loc><lastmod>2026-11-26T12:00:00\+00:00<\/lastmod><changefreq>weekly<\/changefreq><priority>1<\/priority>/);
+  assert.match(urls, /<loc>https:\/\/shop\.test\/catalog\?a=1&amp;b=2<\/loc>/);
 });
 
 test("the latest change is picked by the moment in time, whatever the time zone it is written in", () => {
@@ -290,11 +311,16 @@ test("a search that had to guess does not pass for products of the same kind", (
 
 test("the shop's markup states the 14-day return window for Ukraine", () => {
   const { organizationJsonLd } = src("features/seo/lib/json-ld.ts");
+  const { absoluteUrl, returnPolicyId } = src("features/seo/lib/site.ts");
 
   assert.deepEqual(organizationJsonLd({ contacts: null, seller: null, sameAs: [] }).hasMerchantReturnPolicy, {
     "@type": "MerchantReturnPolicy",
+    "@id": returnPolicyId(),
     applicableCountry: "UA",
     returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
     merchantReturnDays: 14,
+    returnMethod: ["https://schema.org/ReturnByMail", "https://schema.org/ReturnInStore"],
+    returnFees: "https://schema.org/ReturnFeesCustomerResponsibility",
+    merchantReturnLink: absoluteUrl("/returns"),
   });
 });

@@ -3,7 +3,7 @@ import { seoMetadata } from "@/features/seo";
 
 export const metadata = seoMetadata({
   title: "Контакти магазину в Бучі: адреса й графік",
-  description: "Адреса, графік і телефони магазину й послуг Poli Valko.",
+  description: "Контакти Poli Valko в Бучі: вул. Депутатська, 1-В, ТК «Варшавський». Телефон +38 (073) 818-52-22, графік роботи, маршрут і заявка на послуги.",
   path: "/contacts",
 });
 

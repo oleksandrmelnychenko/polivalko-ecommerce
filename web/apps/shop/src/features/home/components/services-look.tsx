@@ -16,7 +16,7 @@ export async function ServicesLook() {
         {directions.map((d, index) => (
           <li key={d.code} className={index === 0 ? "service-cards__featured" : undefined}>
             <Link href={servicePath(d.slug)} className={index === 0 ? "service-card service-card--featured" : "service-card"}>
-              {index === 0 && <img className="service-card__photo" {...sized(pagePhotos.services.url, "(max-width: 48rem) 100vw, 40vw", 960)} alt="" width={640} height={800} loading="lazy" decoding="async" />}
+              {index === 0 && <img className="service-card__photo" {...sized(pagePhotos.services.url, "(max-width: 48rem) 100vw, 40vw", 960)} alt={d.name || pagePhotos.services.alt} width={640} height={800} loading="lazy" decoding="async" />}
               <span className="service-card__name">{d.name}</span>
               {d.description && <span className="service-card__text">{d.description}</span>}
               <span className="service-card__go" aria-hidden="true">

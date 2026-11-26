@@ -26,8 +26,8 @@ function CategoryCard({ category, priority, heading: Heading }: { category: Cate
     <li className="ctile">
       <Heading className="ctile__name">
         <Link href={href} className="ctile__link">
-          <span className="ctile__photo" aria-hidden="true">
-            {image ? <img {...image} alt="" width={96} height={96} loading={priority ? "eager" : "lazy"} decoding="async" /> : <GridIcon />}
+          <span className="ctile__photo" aria-hidden={!image || undefined}>
+            {image ? <img {...image} alt={category.name} width={96} height={96} loading={priority ? "eager" : "lazy"} decoding="async" /> : <GridIcon />}
           </span>
           <span>{category.name}</span>
           {children.length === 0 && <ArrowRightIcon className="ctile__go" />}

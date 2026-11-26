@@ -1,13 +1,91 @@
 import type { ProductDetails } from "@polivalko/shared/api/types";
-import { absoluteUrl, organizationId, SITE_NAME } from "@/features/seo";
+import {
+  absoluteUrl,
+  computePriceValidUntil,
+  merchantReturnPolicy,
+  organizationId,
+  productShippingDetails,
+  SITE_NAME,
+} from "@/features/seo";
 import { hasPrice } from "@/shared/lib/price";
 import { markupDescription } from "./description";
 import { gtinFromAttributes } from "@polivalko/shared/lib/gtin";
 
-export function productJsonLd(product: ProductDetails) {
+export type ProductRatingInput = {
+  ratingValue: number;
+  reviewCount: number;
+  bestRating?: number;
+  worstRating?: number;
+};
+
+export type ProductReviewInput = {
+  authorName: string;
+  ratingValue: number;
+  reviewBody?: string;
+  datePublished?: string;
+};
+
+export type ProductJsonLdOptions = {
+  priceValidUntil?: string;
+  referenceDate?: Date | string;
+  aggregateRating?: ProductRatingInput | null;
+  reviews?: ReadonlyArray<ProductReviewInput> | null;
+};
+
+function buildAggregateRating(rating?: ProductRatingInput | null) {
+  if (!rating) return undefined;
+  const bestRating = rating.bestRating ?? 5;
+  const worstRating = rating.worstRating ?? 1;
+  if (
+    !Number.isInteger(rating.reviewCount) ||
+    rating.reviewCount < 1 ||
+    !Number.isFinite(rating.ratingValue) ||
+    rating.ratingValue < worstRating ||
+    rating.ratingValue > bestRating
+  ) {
+    return undefined;
+  }
+  return {
+    "@type": "AggregateRating",
+    ratingValue: Number(rating.ratingValue.toFixed(2)),
+    reviewCount: rating.reviewCount,
+    bestRating,
+    worstRating,
+  };
+}
+
+function buildReviews(reviews?: ReadonlyArray<ProductReviewInput> | null) {
+  if (!reviews || reviews.length === 0) return undefined;
+  const valid = reviews
+    .filter(
+      (review) =>
+        review.authorName.trim().length > 0 &&
+        Number.isFinite(review.ratingValue) &&
+        review.ratingValue >= 1 &&
+        review.ratingValue <= 5,
+    )
+    .map((review) => ({
+      "@type": "Review",
+      author: { "@type": "Person", name: review.authorName.trim() },
+      reviewRating: {
+        "@type": "Rating",
+        ratingValue: review.ratingValue,
+        bestRating: 5,
+        worstRating: 1,
+      },
+      reviewBody: review.reviewBody?.trim() || undefined,
+      datePublished: review.datePublished || undefined,
+    }));
+  return valid.length > 0 ? valid : undefined;
+}
+
+export function productJsonLd(product: ProductDetails, options?: ProductJsonLdOptions) {
   const url = absoluteUrl(`/product/${product.slug}`);
   const description = markupDescription(product);
   const gtin = gtinFromAttributes(product.attributes);
+  const aggregateRating = buildAggregateRating(options?.aggregateRating);
+  const review = buildReviews(options?.reviews);
+
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -24,6 +102,8 @@ export function productJsonLd(product: ProductDetails) {
       product.attributes.length > 0
         ? product.attributes.map((attribute) => ({ "@type": "PropertyValue", name: attribute.name, value: attribute.value }))
         : undefined,
+    aggregateRating,
+    review,
     // Пропозиції з ціною 0 не буває: товар без ціни не продається, тож Offer не публікуємо.
     offers: hasPrice(product.price)
       ? {
@@ -32,9 +112,12 @@ export function productJsonLd(product: ProductDetails) {
           url,
           price: product.price.value,
           priceCurrency: product.price.currency,
+          priceValidUntil: options?.priceValidUntil ?? computePriceValidUntil(options?.referenceDate),
           availability: product.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
           itemCondition: "https://schema.org/NewCondition",
           seller: { "@type": "Organization", "@id": organizationId(), name: SITE_NAME, url: absoluteUrl("/") },
+          shippingDetails: productShippingDetails(product.price.currency),
+          hasMerchantReturnPolicy: merchantReturnPolicy(),
         }
       : undefined,
   };

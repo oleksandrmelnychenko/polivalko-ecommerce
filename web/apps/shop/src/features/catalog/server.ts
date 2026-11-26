@@ -6,4 +6,6 @@ export { brandSeoDescription } from "./lib/brand-seo";
 export { CatalogListing } from "./components/catalog-listing";
 export { CatalogScreen } from "./components/catalog-screen";
 export { CategoryScreen } from "./components/category-screen";
+export { CategoryBrandLinks, CategoryBrandScreen } from "./components/category-brand-links";
+export type { CategoryBrandLinkItem } from "./components/category-brand-links";
 export { SALE_LEAD, SALE_TITLE, SaleScreen } from "./components/sale-screen";

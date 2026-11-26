@@ -2,8 +2,8 @@ import { seoMetadata } from "@/features/seo";
 import { ServicesScreen } from "@/features/services/server";
 
 export const metadata = seoMetadata({
-  title: "Послуги для саду в Бучі: автополив і газони",
-  description: "Ландшафтний дизайн, автополив, озеленення, газони, догляд за садом і обробка рослин.",
+  title: "Послуги для саду в Бучі та Київській області",
+  description: "Проєктування й монтаж автополиву, рулонні газони, ландшафтний дизайн і догляд за садом у Бучі, Ірпені, Гостомелі, Ворзелі та Київській області.",
   path: "/services",
 });
 

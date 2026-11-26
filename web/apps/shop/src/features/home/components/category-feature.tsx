@@ -11,7 +11,7 @@ export function CategoryFeature({ category, products, reverse = false }: { categ
   return <section className={`home-feature${reverse ? " home-feature--reverse" : ""}`} aria-labelledby={`category-${category.slug}-title`}>
     <div className="container home-feature__layout">
       <div className="home-feature__story">
-        {image && <img {...sized(image, "(max-width: 64rem) 100vw, 34vw", 960)} alt="" width={800} height={800} loading="lazy" />}
+        {image && <img {...sized(image, "(max-width: 64rem) 100vw, 34vw", 960)} alt={photo?.alt || category.name} width={800} height={800} loading="lazy" decoding="async" />}
         <div className="home-feature__copy">
           <h2 id={`category-${category.slug}-title`}>{category.name}</h2>
           <Link href={`/catalog/${category.slug}`}>Переглянути розділ <ArrowRightIcon /></Link>
