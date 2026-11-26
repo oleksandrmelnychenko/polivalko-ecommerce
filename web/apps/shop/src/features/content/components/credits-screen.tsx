@@ -10,7 +10,7 @@ export function CreditsScreen() {
   return (
     <div className="container credits-page">
       <PageHead path="/credits" title="Автори фото" lead="Тимчасові фото з Unsplash за ліцензією Unsplash. Згодом їх замінять фото товарів магазину." />
-      <p>Фірмове зображення Полі-Валько — зі <a className="link" href="https://wtkb.com.ua/dim-sad-gorod-poli-valko" target="_blank" rel="noopener noreferrer">сторінки магазину в ТК «Варшавський»</a>. Персонаж Полі-Валька — з матеріалів проєкту.</p>
+      <p>Фірмове зображення Полі-Валко — зі <a className="link" href="https://wtkb.com.ua/dim-sad-gorod-poli-valko" target="_blank" rel="noopener noreferrer">сторінки магазину в ТК «Варшавський»</a>. Персонаж Полі-Валка — з матеріалів проєкту.</p>
       <Suspense fallback={<div className="skeleton" style={{ height: "var(--space-4xl)" }} />}>
         <Credits />
       </Suspense>

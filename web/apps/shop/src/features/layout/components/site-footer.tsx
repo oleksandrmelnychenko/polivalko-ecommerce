@@ -13,7 +13,7 @@ const shop = [
   { href: "/catalog", label: "Каталог" },
   { href: "/sale", label: "Акції" },
   { href: "/services", label: "Послуги" },
-  { href: "/about", label: "Про Полі-Валько" },
+  { href: "/about", label: "Про Полі-Валко" },
   ...(JOURNAL_ENABLED ? [{ href: "/blog", label: "Блог" }] : []),
   { href: "/contacts", label: "Контакти" },
 ];

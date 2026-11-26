@@ -6,7 +6,7 @@ import { CatalogListing } from "./catalog-listing";
 import { ProductTilesSkeleton } from "./product-tiles-skeleton";
 
 export const SALE_TITLE = "Акції";
-export const SALE_LEAD = "Акційні пропозиції Полі-Валько для дому, саду й городу.";
+export const SALE_LEAD = "Акційні пропозиції Полі-Валко для дому, саду й городу.";
 
 export function SaleScreen({ searchParams }: { searchParams: Promise<SearchParams> }) {
   return (

@@ -26,7 +26,7 @@ export function AssistantCharacter() {
 
   return (
     <>
-      <div className="assistant-character" data-ready={status === "ready" || undefined} role="img" aria-label="3D-персонаж Полі-Валька — зелена лійка">
+      <div className="assistant-character" data-ready={status === "ready" || undefined} role="img" aria-label="3D-персонаж Полі-Валка — зелена лійка">
         <img className="assistant-character__poster" src="/mascot/poli-valka-poster.png" width={253} height={450} alt="" />
         <div className="assistant-character__stage" ref={stage} aria-hidden="true" />
       </div>
@@ -39,7 +39,7 @@ export function AssistantCharacter() {
             {paused ? "Відновити рух" : "Призупинити рух"}
           </button>
         ) : (
-          <p role="status">{status === "loading" ? "Завантажую персонажа…" : "3D зараз недоступне. Полі-Валька залишається з вами."}</p>
+          <p role="status">{status === "loading" ? "Завантажую персонажа…" : "3D зараз недоступне. Полі-Валка залишається з вами."}</p>
         )}
       </div>
     </>

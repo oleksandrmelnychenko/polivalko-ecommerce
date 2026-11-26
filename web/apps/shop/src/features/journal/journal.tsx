@@ -18,7 +18,7 @@ export function ArticleCards({ items = articles }: { items?: Article[] }) {
 export function JournalPreview() {
   if (!JOURNAL_ENABLED) return null;
   return <section className="container home-section journal-preview" aria-labelledby="journal-title">
-    <div className="home-section__head"><div className="home-section__titles"><h2 id="journal-title">Блог Полі-Валько</h2></div><Link href="/blog" className="home-section__more">Усі статті <ArrowRightIcon /></Link></div>
+    <div className="home-section__head"><div className="home-section__titles"><h2 id="journal-title">Блог Полі-Валко</h2></div><Link href="/blog" className="home-section__more">Усі статті <ArrowRightIcon /></Link></div>
     <ArticleCards items={articles.slice(0, 3)} />
   </section>;
 }
