@@ -1,16 +1,16 @@
-import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { ArrowRightIcon, StoreIcon } from "@polivalko/shared/ui/icons";
 import { directionsUrl } from "@/shared/lib/directions-url";
-import { breadcrumbJsonLd, JsonLd } from "@/features/seo";
 import { getContacts, getDeliveryMethods, getPage, getPickupPoints } from "../api/server";
 import { htmlSections } from "../lib/html-sections";
+import { PageHead } from "./page-head";
 
 const SLUG = "payment-delivery";
 const FALLBACK_TITLE = "Доставка й оплата";
+const FALLBACK_LEAD = "Як отримати й оплатити замовлення?";
 const CARRIER_RATE = "за тарифами перевізника";
 
 type Method = Awaited<ReturnType<typeof getDeliveryMethods>>[number];
@@ -34,7 +34,7 @@ const PAYMENTS: Record<string, { title: string; text: string }> = {
 export function DeliveryScreen() {
   return (
     <div className="container delivery-page">
-      <Suspense fallback={<div className="skeleton" style={{ height: 420, marginBlock: "var(--space-xl)" }} />}>
+      <Suspense fallback={<PageHead path="/payment-delivery" title={FALLBACK_TITLE} lead={FALLBACK_LEAD} />}>
         <DeliveryContent />
       </Suspense>
     </div>
@@ -58,71 +58,63 @@ async function DeliveryContent() {
   const payments = [...new Set(methods.flatMap((m) => m.paymentMethods.map((p) => p.code)))].filter((code) => PAYMENTS[code]);
 
   return (
-    <>
-      <JsonLd data={breadcrumbJsonLd([{ name: title, path: `/${SLUG}` }])} />
-      <Breadcrumbs current={title} />
-      <header className="delivery-header">
-        <h1>{title}</h1>
-        <p>{page.lead || "Нова пошта по Україні або самовивіз з магазину. Спосіб отримання й оплати обираєте під час оформлення."}</p>
-      </header>
-
-      {methods.length > 0 && (
-        <section className="delivery-section" aria-labelledby="delivery-title">
-          <div className="delivery-section__head">
+    <PageHead
+      path="/payment-delivery"
+      title={title}
+      lead={page.lead || FALLBACK_LEAD}
+      actions={methods.length > 0 && <a href="#delivery-title" className="btn btn--graphite">Способи отримання</a>}
+    >
+      <div className="leaf-separated">
+        {methods.length > 0 && (
+          <section className="delivery-section" aria-labelledby="delivery-title">
             <h2 id="delivery-title">Способи отримання</h2>
-          </div>
-          <ul className="delivery-options">
-            {orderedMethods.map((method) => (
-              <DeliveryOption key={method.code} method={method} location={location} />
-            ))}
-          </ul>
-        </section>
-      )}
+            <ul className="delivery-options">
+              {orderedMethods.map((method) => (
+                <DeliveryOption key={method.code} method={method} location={location} />
+              ))}
+            </ul>
+          </section>
+        )}
 
-      {payments.length > 0 && (
-        <section className="delivery-section" aria-labelledby="payment-title">
-          <div className="delivery-section__head">
+        {payments.length > 0 && (
+          <section className="delivery-section" aria-labelledby="payment-title">
             <h2 id="payment-title">Способи оплати</h2>
-          </div>
-          <ul className="delivery-options">
-            {payments.map((code) => (
-              <li key={code} className="delivery-option">
-                <h3>{PAYMENTS[code].title}</h3>
-                <div className="delivery-option__body">
-                  <p>{PAYMENTS[code].text}</p>
-                  <p className="delivery-option__availability">
-                    Доступно для: {methods
-                      .filter((method) => method.paymentMethods.some((payment) => payment.code === code))
-                      .map(shortName)
-                      .join(", ")}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+            <ul className="payment-list">
+              {payments.map((code) => (
+                <li key={code}>
+                  <h3>{PAYMENTS[code].title}</h3>
+                  <div className="delivery-option__body">
+                    <p>{PAYMENTS[code].text}</p>
+                    <ul className="payment-availability" aria-label="Для яких способів отримання">
+                      {methods.filter(method => method.paymentMethods.some(payment => payment.code === code))
+                        .map(method => <li key={method.code}>{shortName(method)}</li>)}
+                    </ul>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
-      {terms && (
-        <section className="delivery-section delivery-terms" aria-labelledby="terms-title">
-          <div className="delivery-section__head">
+        {terms && (
+          <section className="delivery-section delivery-terms" aria-labelledby="terms-title">
             <h2 id="terms-title">Після оформлення</h2>
-          </div>
-          <div>
-            {terms.intro && <div className="prose" dangerouslySetInnerHTML={{ __html: terms.intro }} />}
-            {terms.sections.length > 0 && (
-              <div className="ib-faq">
-                {terms.sections.map((section, index) => (
-                  <details key={index}>
-                    <summary>{section.title}</summary>
-                    <div className="ib-faq__answer prose" dangerouslySetInnerHTML={{ __html: section.html }} />
-                  </details>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-      )}
+            <div>
+              {terms.intro && <div className="prose" dangerouslySetInnerHTML={{ __html: terms.intro }} />}
+              {terms.sections.length > 0 && (
+                <div className="ib-faq">
+                  {terms.sections.map((section, index) => (
+                    <details key={index} open>
+                      <summary>{section.title}</summary>
+                      <div className="ib-faq__answer prose" dangerouslySetInnerHTML={{ __html: section.html }} />
+                    </details>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+      </div>
 
       <section className="delivery-help" aria-labelledby="delivery-help-title">
         <h2 id="delivery-help-title">Є питання щодо замовлення?</h2>
@@ -133,10 +125,11 @@ async function DeliveryContent() {
             </a>
           )}
           <Link className="delivery-link" href="/contacts">Контакти магазину</Link>
-          <Link className="delivery-link" href="/catalog">Перейти до каталогу</Link>
+          <Link className="delivery-link" href="/returns">Повернення й обмін</Link>
+          <Link className="delivery-link" href="/catalog">Каталог</Link>
         </div>
       </section>
-    </>
+    </PageHead>
   );
 }
 
@@ -155,31 +148,32 @@ function DeliveryOption({ method, location }: { method: Method; location: Pickup
     ? location.instructions || "Дочекайтеся повідомлення, що замовлення готове, і заберіть його в магазині."
     : courier
       ? "Кур'єр Нової пошти привезе посилку за вказаною адресою."
-      : "Доставка у відділення або поштомат Нової пошти. Доступні населені пункти й відділення обираєте під час оформлення.";
+      : method.code === "nova_poshta"
+        ? "Оберіть населений пункт і відділення або поштомат під час оформлення."
+        : method.description;
   const facts: { label: string; value: string }[] = [];
   if (pickup && location.address) facts.push({ label: "Адреса", value: location.address });
   if (pickup && location.schedule) facts.push({ label: "Графік", value: location.schedule });
   if (courier && method.description) facts.push({ label: "Зона", value: method.description });
-  facts.push({ label: "Оплата", value: method.paymentMethods.map((p) => p.name).join(", ") });
 
   return (
-    <li className="delivery-option">
+    <li className={pickup ? "delivery-option delivery-option--pickup" : "delivery-option"}>
       <div className="delivery-option__head">
         {pickup ? <StoreIcon /> : (courier || method.code === "nova_poshta") && <img src="/brand/nova-poshta.svg" width={20} height={20} alt="" />}
         <h3>{method.name}</h3>
       </div>
-      <span className="delivery-option__rate">{pickup ? "Безкоштовно" : method.priceNote || CARRIER_RATE}</span>
+      <span className="delivery-option__rate">{method.priceNote || (pickup ? "Безкоштовно" : CARRIER_RATE)}</span>
       <div className="delivery-option__body">
-        <p>{text}</p>
-        <dl className="delivery-facts">
+        {text && <p>{text}</p>}
+        {facts.length > 0 && <dl className="delivery-facts">
           {facts.map((fact) => (
             <div key={fact.label}>
               <dt>{fact.label}</dt>
               <dd>{fact.value}</dd>
             </div>
           ))}
-        </dl>
-        {route && <a className="btn delivery-route" href={route} target="_blank" rel="noopener noreferrer">Прокласти маршрут <ArrowRightIcon /></a>}
+        </dl>}
+        {route && <a className="delivery-route" href={route} target="_blank" rel="noopener noreferrer">Прокласти маршрут <ArrowRightIcon /></a>}
       </div>
     </li>
   );

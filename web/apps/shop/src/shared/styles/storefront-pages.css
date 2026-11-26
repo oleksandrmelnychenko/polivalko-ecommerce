@@ -27,7 +27,7 @@ main .btn:not(:where(.btn--outline, .btn--quiet, .btn--text, .btn--soft, .btn--l
 .journal-card > img, .journal-article__cover { border-radius: 12px; }
 .journal-card h2 { font-size: var(--text-lg); }
 .journal-card__more { min-height: 32px; }
-.delivery-option, .delivery-help, .doc__seller { border-radius: 16px; }
+.delivery-option, .doc__seller { border-radius: 16px; }
 @media (max-width: 40rem) {
   .contact-page .contact-columns { gap: 10px; }
 }
