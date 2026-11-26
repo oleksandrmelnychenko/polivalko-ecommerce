@@ -16,6 +16,10 @@ internal static class GetSitemap
         var products = await visibleProducts
             .AsNoTracking()
             .Where(p => p.IsVisible)
+            // A product without a price has no offer for search engines, and one that is out of stock with no photo is
+            // a thin page: both stay reachable on the site but are not advertised in the sitemap.
+            .Where(p => p.Price.Amount > 0)
+            .Where(p => p.Stock.Quantity - p.Stock.ReservedQuantity > 0 || p.Images.Any())
             .OrderBy(p => p.Slug)
             .Select(p => new SitemapEntryDto(p.Slug, p.UpdatedAt > p.Price.UpdatedAt ? p.UpdatedAt : p.Price.UpdatedAt))
             .ToListAsync(ct);
