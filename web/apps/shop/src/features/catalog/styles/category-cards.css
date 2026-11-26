@@ -40,7 +40,6 @@
 .catalog-page .page-head__subs a[aria-current="page"] { background: var(--shop-graphite); color: white; border-color: transparent; }
 .catalog-page .page-head__subs { display: block; }
 .catalog-page .page-head__subs ul { gap: 6px; margin: 0; }
-.catalog-page .category-intro { font-size: var(--text-sm); line-height: 1.5; }
 @media (min-width: 75rem) {
   .ctiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }

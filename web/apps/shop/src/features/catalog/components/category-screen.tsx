@@ -3,6 +3,7 @@ import type { Category } from "@polivalko/shared/api/types";
 import type { SearchParams } from "../lib/listing-params";
 import { CatalogListing } from "./catalog-listing";
 import { CategoryHead } from "./category-head";
+import { FirstPageIntro } from "./category-intro";
 import { ListingSkeleton } from "./listing-skeleton";
 
 type CategoryScreenProps = { category: Category; searchParams: Promise<SearchParams> };
@@ -11,10 +12,11 @@ type CategoryScreenProps = { category: Category; searchParams: Promise<SearchPar
 export function CategoryScreen({ category, searchParams }: CategoryScreenProps) {
   return (
     <div className="container catalog-page listing-page">
-      <CategoryHead category={category} searchParams={searchParams} />
+      <CategoryHead category={category} />
       <Suspense fallback={<ListingSkeleton head={false} />}>
         <CategoryListing category={category} searchParams={searchParams} />
       </Suspense>
+      <FirstPageIntro description={category.description} searchParams={searchParams} />
     </div>
   );
 }

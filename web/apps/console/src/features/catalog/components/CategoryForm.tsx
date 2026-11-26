@@ -241,7 +241,7 @@ export function CategoryForm({ formId, category, focusFilters, all, attributes, 
             />
             <Textarea
               label="Опис категорії"
-              description={`Простий текст без HTML: кожен рядок стане окремим абзацом під заголовком розділу на сайті (лише на першій сторінці). ${fields.description.length} / ${MAX_DESCRIPTION} символів.`}
+              description={`Опис з’явиться під списком товарів на першій сторінці категорії. Кожен рядок утворює окремий абзац. HTML не підтримується. ${fields.description.length} / ${MAX_DESCRIPTION} символів.`}
               autosize
               minRows={3}
               maxRows={10}
