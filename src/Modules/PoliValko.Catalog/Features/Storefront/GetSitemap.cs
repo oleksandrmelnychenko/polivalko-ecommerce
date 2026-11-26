@@ -16,10 +16,11 @@ internal static class GetSitemap
         var products = await visibleProducts
             .AsNoTracking()
             .Where(p => p.IsVisible)
-            // A product without a price has no offer for search engines, and one that is out of stock with no photo is
-            // a thin page: both stay reachable on the site but are not advertised in the sitemap.
-            .Where(p => p.Price.Amount > 0)
-            .Where(p => p.Stock.Quantity - p.Stock.ReservedQuantity > 0 || p.Images.Any())
+            // Search engines are offered a product once it has a photo; neither stock nor price matters. A product
+            // without a photo stays reachable on the site, and the storefront marks its page noindex by the same rule
+            // (isIndexableProduct in web/apps/shop). The storefront caches this list for hours, so a product that has
+            // just lost its only photo can be listed and noindex until the cache refreshes.
+            .Where(p => p.Images.Any())
             .OrderBy(p => p.Slug)
             .Select(p => new SitemapEntryDto(p.Slug, p.UpdatedAt > p.Price.UpdatedAt ? p.UpdatedAt : p.Price.UpdatedAt))
             .ToListAsync(ct);

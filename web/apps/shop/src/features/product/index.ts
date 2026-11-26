@@ -1,1 +1,1 @@
-export { descriptionText } from "./lib/description";
+export { productSeo } from "./lib/product-seo";
