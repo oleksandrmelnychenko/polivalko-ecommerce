@@ -17,37 +17,39 @@ export default function AboutPage() {
     <div className="container story-page">
       <Breadcrumbs current="Про нас" />
       <JsonLd data={breadcrumbJsonLd([{ name: "Про нас", path: "/about" }])} />
-      <header className="story-cover garden-print">
-        <div className="story-cover__text">
-          <h1>Полі-Валько</h1>
-          <p>Магазин для тих, хто вирощує овочі, доглядає сад і любить проводити час на подвір’ї.</p>
-          <Link href="/contacts#store"><PinIcon /> Де нас знайти</Link>
-        </div>
-      </header>
-      <section className="story-shop" aria-labelledby="story-shop-title">
-        <div className="story-copy">
-          <h2 id="story-shop-title">У нашому магазині</h2>
-          <p>Завітайте, щоб оглянути товар і порадитися з продавцем. Онлайн-замовлення надсилаємо Новою поштою по Україні.</p>
-          <Link className="story-link" href="/catalog">Переглянути каталог <ArrowRightIcon /></Link>
-        </div>
-        <ul className="story-index">
-          {ranges.map(range => (
-            <li key={range.slug}>
-              <Link href={`/catalog/${range.slug}`}>
-                <strong>{range.title}</strong><span>{range.examples}</span><ArrowRightIcon />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section className="story-garden garden-print" aria-labelledby="story-garden-title">
+      <div className="story-intro">
+        <header className="story-cover garden-print">
+          <div className="story-cover__text">
+            <h1>Полі-Валько</h1>
+            <p>Магазин для тих, хто вирощує овочі, доглядає сад і любить проводити час на подвір’ї.</p>
+            <Link href="/contacts#store"><PinIcon /> Де нас знайти</Link>
+          </div>
+        </header>
+        <section className="story-shop" aria-labelledby="story-shop-title">
+          <div className="story-copy">
+            <h2 id="story-shop-title">У нашому магазині</h2>
+            <p>Завітайте, щоб оглянути товар і порадитися з продавцем. Онлайн-замовлення надсилаємо Новою поштою по Україні.</p>
+            <Link className="story-link" href="/catalog">Переглянути каталог <ArrowRightIcon /></Link>
+          </div>
+          <ul className="story-index">
+            {ranges.map(range => (
+              <li key={range.slug}>
+                <Link href={`/catalog/${range.slug}`}>
+                  <strong>{range.title}</strong><span>{range.examples}</span><ArrowRightIcon />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+      <section className="story-garden" aria-labelledby="story-garden-title">
         <div className="story-copy">
           <h2 id="story-garden-title">Садові роботи</h2>
           <p>Добираємо дерева й кущі з урахуванням ґрунту та освітлення на ділянці. Закладаємо газони, монтуємо системи поливу й готуємо їх до зими.</p>
-          <div className="story-garden__links">
-            <Link className="btn" href="/services">Усі послуги <ArrowRightIcon /></Link>
-            <Link className="story-link" href="/contacts#request">Залишити заявку</Link>
-          </div>
+        </div>
+        <div className="story-garden__links">
+          <Link className="btn" href="/services">Усі послуги <ArrowRightIcon /></Link>
+          <Link className="story-link" href="/contacts#request">Залишити заявку</Link>
         </div>
       </section>
     </div>

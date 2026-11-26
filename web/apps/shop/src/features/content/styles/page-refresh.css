@@ -1,22 +1,21 @@
 .story-page, .contact-page, .garden-services { padding-bottom: var(--section-gap-s); }
+.story-intro { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: stretch; gap: clamp(24px, 4vw, 64px); }
 .story-cover {
   position: relative;
   isolation: isolate;
   display: flex;
-  align-items: flex-end;
-  min-height: clamp(280px, 26vw, 420px);
+  align-items: flex-start;
   padding: clamp(22px, 3.8vw, 64px);
-  margin-block-start: 18px;
   overflow: hidden;
   border-radius: 18px;
   color: #203d37;
 }
 .story-cover__text { max-width: 100%; }
-.story-cover h1 { margin: 0; font-size: clamp(3.4rem, 6.8vw, 7.1rem); line-height: 1; font-weight: 550; letter-spacing: -.065em; color: inherit; }
+.story-cover h1 { margin: 0; font-size: clamp(2.6rem, 4.6vw, 5rem); line-height: 1; font-weight: 550; letter-spacing: -.065em; color: inherit; }
 .story-cover p { max-width: 42ch; margin: 16px 0 22px; line-height: 1.52; font-size: clamp(1rem, 1.22vw, 1.25rem); }
 .story-cover a { display: inline-flex; align-items: center; gap: 8px; color: inherit; font-size: .93rem; text-decoration: underline; text-underline-offset: 5px; }
 .story-page svg { width: 16px; height: 16px; flex: none; }
-.story-shop { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; gap: clamp(28px, 6vw, 110px); margin-top: clamp(38px, 4.3vw, 72px); }
+.story-shop { align-self: center; display: grid; gap: var(--space-lg); }
 .story-copy h2 { margin: 0; color: #21392b; font-size: clamp(1.95rem, 3.2vw, 3.65rem); font-weight: 520; letter-spacing: -.055em; line-height: 1.06; }
 .story-copy p { max-width: 54ch; margin: 14px 0 18px; color: var(--color-ink-2); line-height: 1.6; }
 .story-link { display: inline-flex; align-items: center; gap: 9px; font-size: .95rem; color: var(--color-ink); text-underline-offset: 4px; }
@@ -26,14 +25,16 @@
 .story-index span { color: var(--color-ink-2); font-size: .875rem; }
 .story-index svg { align-self: center; transform: rotate(-35deg); }
 .story-index a:is(:hover,:focus-visible) strong { text-decoration: underline; text-underline-offset: 4px; }
-.story-garden { margin-top: clamp(38px, 4.3vw, 72px); padding: clamp(22px, 3vw, 46px); border-radius: 16px; }
+.story-garden { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); margin-top: var(--space-2xl); padding: clamp(22px, 3vw, 40px); border-radius: 16px; background: #f2f5ef; }
+.story-garden .story-copy p { margin-bottom: 0; }
 .story-garden .story-copy { width: min(100%, 58ch); }
 .story-garden__links { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; }
 @media (max-width: 48rem) {
-  .story-shop { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .story-intro { grid-template-columns: minmax(0, 1fr); }
+  .story-garden { flex-direction: column; align-items: start; }
 }
 @media (max-width: 42rem) {
-  .story-cover { min-height: 260px; }
+  .story-cover { min-height: 220px; }
   .story-cover h1 { font-size: clamp(2.65rem, 13.4vw, 4rem); }
   .story-index a { grid-template-columns: 1fr auto; gap: 4px 12px; }
   .story-index span { grid-column: 1; }
