@@ -61,8 +61,8 @@
 .tile__bar .round-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .tile__bar .fav-toggle[aria-pressed="true"] { color: var(--color-price-sale); }
 @media (max-width: 48rem) {
-  /* Keep the product and the actions in separate columns for these catalog packshots. */
-  .listing-page .tile:is([data-sku="10754"], [data-sku="11417"], [data-sku="7761"]) .tile__photo {
+  /* Reserve a separate column for actions beside each catalog photo. */
+  .listing-page .tile--shop .tile__photo:has(> .tile__image) {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
