@@ -38,6 +38,31 @@ public sealed class StorefrontSeoApiTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task Sitemap_dates_a_category_by_the_latest_change_among_its_own_products()
+    {
+        var marker = Guid.NewGuid().ToString("N")[..6];
+        var hose = await api.AddProductAsync("vse-dlia-polyvu", $"Шланг із датою {marker}", 120m);
+        var changed = new DateTimeOffset(2031, 3, 1, 10, 0, 0, TimeSpan.Zero);
+        Task<int> SetChangedAsync(DateTimeOffset at) => api.WithDbAsync(db => db.Set<Product>().Where(p => p.Id == hose.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.UpdatedAt, at), Ct));
+        await SetChangedAsync(changed);
+        try
+        {
+            var sitemap = await api.CreateClient().GetFromJsonAsync<SitemapDto>("/api/v1/catalog/sitemap", TestJson.Options, Ct);
+
+            // The product has no photo, so it is not listed itself, but the category page shows it.
+            sitemap!.Categories.Single(c => c.Slug == "vse-dlia-polyvu").UpdatedAt.ShouldBe(changed);
+            // A change in one department does not date another.
+            sitemap.Categories.Single(c => c.Slug == "hospodarchi-tovary").UpdatedAt.ShouldBeLessThan(changed);
+        }
+        finally
+        {
+            // Other tests share the database: a date in the future would lead their «latest change» too.
+            await SetChangedAsync(DateTimeOffset.UtcNow);
+        }
+    }
+
+    [Fact]
     public async Task Product_meta_description_uses_its_own_text_when_there_is_enough_of_it()
     {
         var product = await api.AddProductAsync("vse-dlia-polyvu", "Зрошувач з описом", 450m);

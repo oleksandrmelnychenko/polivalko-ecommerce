@@ -24,8 +24,22 @@ internal static class GetSitemap
             .OrderBy(p => p.Slug)
             .Select(p => new SitemapEntryDto(p.Slug, p.UpdatedAt > p.Price.UpdatedAt ? p.UpdatedAt : p.Price.UpdatedAt))
             .ToListAsync(ct);
-        var latest = products.Count > 0 ? products.Max(p => p.UpdatedAt) : DateTimeOffset.UnixEpoch;
 
-        return TypedResults.Ok(new SitemapDto(categories.Select(c => new SitemapEntryDto(c.Slug, latest)).ToList(), products));
+        // A category page lists the visible products of the category and of everything under it, with or without a
+        // photo, so it changed when the latest of them did. One date for every category would tell search engines
+        // nothing; a category with no products at all keeps the catalog-wide date.
+        var changes = await visibleProducts
+            .AsNoTracking()
+            .Where(p => p.IsVisible)
+            .GroupBy(p => p.CategoryId)
+            .Select(g => new { CategoryId = g.Key, Product = g.Max(p => p.UpdatedAt), Price = g.Max(p => p.Price.UpdatedAt) })
+            .ToListAsync(ct);
+        var changedIn = changes.ToDictionary(c => c.CategoryId, c => c.Product > c.Price ? c.Product : c.Price);
+        var latest = changedIn.Count > 0 ? changedIn.Values.Max() : DateTimeOffset.UnixEpoch;
+        var byParent = categories.ToLookup(c => c.ParentId);
+        DateTimeOffset ChangedAt(Category category) => CategoryQueries.Descendants(category.Id, byParent).Prepend(category.Id)
+            .Where(changedIn.ContainsKey).Select(id => changedIn[id]).DefaultIfEmpty(latest).Max();
+
+        return TypedResults.Ok(new SitemapDto(categories.Select(c => new SitemapEntryDto(c.Slug, ChangedAt(c))).ToList(), products));
     }
 }
