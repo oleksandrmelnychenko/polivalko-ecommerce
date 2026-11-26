@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Text.RegularExpressions;
 using PoliValko.Infrastructure.Settings;
 
@@ -21,6 +22,43 @@ internal static partial class SeoTemplates
     /// <summary>Ціна для шаблону; у товару без ціни (0) — null, і шаблон із <c>{price}</c> не застосовується.</summary>
     public static string? Price(decimal amount) =>
         amount > 0 ? $"{amount.ToString(amount % 1 == 0 ? "N0" : "N2", Ukrainian)} грн" : null;
+
+    public const int SnippetMinLength = 120;
+    public const int SnippetMaxLength = 160;
+
+    /// <summary>
+    /// The start of the product description as a search snippet: plain text, cut at the last full sentence (or word)
+    /// within 160 characters. Null when the text is too short to beat the template.
+    /// </summary>
+    public static string? DescriptionSnippet(string? html)
+    {
+        if (string.IsNullOrWhiteSpace(html))
+        {
+            return null;
+        }
+
+        var text = WebUtility.HtmlDecode(Tags().Replace(html, " "));
+        text = AnySpace().Replace(text, " ").Trim();
+        if (text.Length < SnippetMinLength)
+        {
+            return null;
+        }
+
+        if (text.Length <= SnippetMaxLength)
+        {
+            return text;
+        }
+
+        var head = text[..SnippetMaxLength];
+        var sentence = head.LastIndexOfAny(['.', '!', '?']);
+        if (sentence >= SnippetMinLength - 1)
+        {
+            return head[..(sentence + 1)];
+        }
+
+        var word = head[..(SnippetMaxLength - 1)].LastIndexOf(' ');
+        return (word > 0 ? head[..word] : head[..(SnippetMaxLength - 1)]).TrimEnd(',', ';', ':') + "…";
+    }
 
     private static string? Pick(string? own, string? template, Values values)
     {
@@ -56,6 +94,12 @@ internal static partial class SeoTemplates
 
     [GeneratedRegex(@"\s{2,}")]
     private static partial Regex Spaces();
+
+    [GeneratedRegex(@"\s+")]
+    private static partial Regex AnySpace();
+
+    [GeneratedRegex("<[^>]*>")]
+    private static partial Regex Tags();
 
     // A clause holding {price}: no other placeholder, no punctuation; a following comma or semicolon goes with it.
     [GeneratedRegex(@"\s*[^:;,.!?—–|{}]*\{price\}[^:;,.!?—–|{}]*(?:[,;]\s*)?")]

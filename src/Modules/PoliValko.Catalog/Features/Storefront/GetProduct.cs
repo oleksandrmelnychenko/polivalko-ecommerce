@@ -67,7 +67,8 @@ internal static class GetProduct
         var (seoTitle, seoDescription) = SeoTemplates.Fill(
             templates.Product,
             row.SeoTitle,
-            row.SeoDescription,
+            // The product's own text says more in search results than the shop-wide template, when there is enough of it.
+            string.IsNullOrWhiteSpace(row.SeoDescription) ? SeoTemplates.DescriptionSnippet(row.DescriptionHtml) : row.SeoDescription,
             new SeoTemplates.Values(row.Name, SeoTemplates.Price(row.Amount), row.Category.Name, row.Brand));
 
         return TypedResults.Ok(new ProductDetailsDto(
