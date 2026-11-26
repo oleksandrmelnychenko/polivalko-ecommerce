@@ -37,6 +37,12 @@
 .listing-page .tile--shop .tile__price { padding-block: 2px; }
 .listing-page .pager { margin-block: 20px; }
 .listing-page .pager [aria-current="page"] { background: var(--shop-graphite); border-color: rgb(255 255 255 / 8%); }
+/* Pager extras (two more neighbours, a jump halfway to each end) need a wide row; below it the pager stays compact. */
+.pager [data-show="wide"] { display: none; }
+@media (min-width: 72rem) {
+  .pager [data-show="wide"] { display: inline-grid; }
+  .pager [data-show="narrow"] { display: none; }
+}
 .sale-controls-skeleton { height: 56px; border-radius: 16px; margin-bottom: 12px; }
 @media (min-width: 40rem) { .listing-page .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-width: 72rem) { .listing-page .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
