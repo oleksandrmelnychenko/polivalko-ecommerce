@@ -17,11 +17,7 @@ export default function AboutPage() {
     <div className="container story-page">
       <Breadcrumbs current="Про нас" />
       <JsonLd data={breadcrumbJsonLd([{ name: "Про нас", path: "/about" }])} />
-      <header className="story-cover">
-        <picture>
-          <source media="(max-width: 42rem)" srcSet="/brand/about-garden-mobile.webp" />
-          <img src="/brand/about-garden.webp" alt="" fetchPriority="high" />
-        </picture>
+      <header className="story-cover garden-print">
         <div className="story-cover__text">
           <h1>Полі-Валько</h1>
           <p>Магазин для тих, хто вирощує овочі, доглядає сад і любить проводити час на подвір’ї.</p>
@@ -44,8 +40,7 @@ export default function AboutPage() {
           ))}
         </ul>
       </section>
-      <section className="story-garden" aria-labelledby="story-garden-title">
-        <img src="/brand/service-planting.webp" alt="Висаджування рослини у ґрунт" width={1080} height={740} loading="lazy" />
+      <section className="story-garden garden-print" aria-labelledby="story-garden-title">
         <div className="story-copy">
           <h2 id="story-garden-title">Садові роботи</h2>
           <p>Добираємо дерева й кущі з урахуванням ґрунту та освітлення на ділянці. Закладаємо газони, монтуємо системи поливу й готуємо їх до зими.</p>

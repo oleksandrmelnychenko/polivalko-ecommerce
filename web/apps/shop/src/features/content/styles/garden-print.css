@@ -1,0 +1,48 @@
+/* Two cropped leaf forms share the same baseline across the shop's information pages. */
+.garden-print {
+  --paper: #e7eee2;
+  --leaf: #b4cbb5;
+  --fold: #c6d8c4;
+  --outline: #9fbba7;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: var(--paper);
+}
+.garden-print[data-tone="sand"], .contact-poster.garden-print {
+  --paper: #f1ecdd;
+  --leaf: #c6c8a2;
+  --fold: #d5d6b7;
+  --outline: #b2b797;
+}
+.garden-print[data-tone="mist"] {
+  --paper: #e5edec;
+  --leaf: #afc8c3;
+  --fold: #c1d5cf;
+  --outline: #9eb8b2;
+}
+.garden-print::before, .garden-print::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  width: min(53%, 510px);
+  aspect-ratio: 1;
+  right: -5%;
+  bottom: -15%;
+  border-radius: 100% 0;
+}
+.garden-print::before {
+  border: 1px solid var(--outline);
+  transform: translate(-40%, 8%) rotate(-24deg);
+}
+.garden-print::after {
+  background: linear-gradient(135deg, var(--leaf) 50%, var(--fold) 50%);
+}
+.customer-banner.garden-print::before, .customer-banner.garden-print::after {
+  width: 68%;
+  bottom: -8%;
+}
+@media (max-width: 48rem) {
+  .garden-print::before, .garden-print::after { right: -12%; opacity: .6; }
+}

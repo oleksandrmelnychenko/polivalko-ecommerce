@@ -12,16 +12,6 @@
   width: 100%;
   aspect-ratio: 1;
   border-radius: 18px;
-  background: #e8ede8;
-}
-.customer-banner img {
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  mask-image: linear-gradient(155deg, transparent 12%, rgb(0 0 0 / .1) 34%, black 68%);
 }
 .customer-layout__info {
   container-type: inline-size;

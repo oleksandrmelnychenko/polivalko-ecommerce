@@ -1,8 +1,8 @@
 export const purchasePages = [
-  { href: "/payment-delivery", label: "Доставка й оплата", cover: "/brand/delivery-parcel.webp" },
-  { href: "/returns", label: "Повернення й обмін", cover: "/brand/returns-parcel.webp" },
-  { href: "/offer", label: "Публічна оферта", cover: "/brand/offer-folder.webp" },
+  { href: "/payment-delivery", label: "Доставка й оплата", tone: "sage" },
+  { href: "/returns", label: "Повернення й обмін", tone: "sand" },
+  { href: "/offer", label: "Публічна оферта", tone: "mist" },
 ];
 
-export const privacyPage = { href: "/privacy", label: "Політика приватності", cover: "/brand/privacy-ledger.webp" };
+export const privacyPage = { href: "/privacy", label: "Політика приватності", tone: "sage" };
 export const customerPages = [...purchasePages, privacyPage];

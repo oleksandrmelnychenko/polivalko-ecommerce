@@ -37,11 +37,7 @@ async function ContactsContent() {
   const mapEmbed = "https://maps.google.com/maps?" + new URLSearchParams({ q: mapQuery, z: "16", hl: "uk", output: "embed" });
   return <>
     <JsonLd data={contactPageJsonLd({ name: "Контакти", description: "Адреса й графік магазину, телефони для замовлень і послуг.", path: "/contacts", organization: organizationSource(contacts, seller) })} />
-    <header className="contact-poster">
-      <picture className="contact-poster__art">
-        <source media="(max-width: 42rem)" srcSet="/brand/garden-telephone-small.webp" />
-        <img src="/brand/garden-telephone.webp" width={1200} height={800} alt="" fetchPriority="high" />
-      </picture>
+    <header className="contact-poster garden-print">
       <div className="contact-directory">
         <h1>Контакти</h1>
         <dl className="contact-lines">
