@@ -4379,6 +4379,7 @@ export interface components {
             directionName: string;
             comment: null | string;
             status: components["schemas"]["ServiceRequestStatus"];
+            directionNames: string[];
         };
         ConsoleSummaryDto: {
             /** Format: int32 */
@@ -4447,6 +4448,7 @@ export interface components {
             phone: null | string;
             direction: null | string;
             comment: null | string;
+            additionalDirections?: null | string[];
         };
         CreateStaffUserRequest: {
             email: null | string;

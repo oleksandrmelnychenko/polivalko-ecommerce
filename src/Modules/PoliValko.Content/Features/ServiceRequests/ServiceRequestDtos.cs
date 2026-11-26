@@ -15,6 +15,6 @@ public sealed record ServiceDirectionPageDto(
     string? SeoDescription,
     DateTimeOffset? UpdatedAt);
 
-public sealed record CreateServiceRequest(string? Name, string? Phone, string? Direction, string? Comment);
+public sealed record CreateServiceRequest(string? Name, string? Phone, string? Direction, string? Comment, string[]? AdditionalDirections = null);
 
 public sealed record ServiceRequestCreated(Guid Id);

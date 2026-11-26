@@ -34,6 +34,33 @@ public sealed class ServiceRequestApiTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task All_services_are_saved_in_one_request_and_sent_in_one_notification()
+    {
+        var services = ServiceDirections.All;
+        var input = ValidRequest() with
+        {
+            Direction = services[0].Code,
+            AdditionalDirections = services.Skip(1).Select(service => service.Code).ToArray(),
+        };
+        var key = Guid.NewGuid().ToString();
+        var response = await PostAsync(input, key);
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await PostAsync(input, key)).Headers.GetValues("Idempotent-Replayed").ShouldBe(["true"]);
+        var created = (await response.Content.ReadFromJsonAsync<ServiceRequestCreated>(Ct))!;
+        var staff = await Staff.SignInAsync(api, ApiFactory.ManagerEmail);
+        var detail = await staff.GetFromJsonAsync<ConsoleServiceRequestDto>($"/api/v1/console/service-requests/{created.Id}", TestJson.Options, Ct);
+        detail!.DirectionNames.ShouldBe(services.Select(service => service.Name).ToArray());
+        detail.Comment.ShouldBe(input.Comment);
+
+        await api.ProcessOutboxAsync();
+        var notification = api.Notifier.Sent.Single(n => n.Body.Contains(input.Phone!));
+        foreach (var service in services)
+        {
+            notification.Body.ShouldContain(service.Name);
+        }
+    }
+
+    [Fact]
     public async Task Request_without_idempotency_key_is_rejected()
     {
         var response = await _client.PostAsJsonAsync("/api/v1/service-requests", ValidRequest(), Ct);

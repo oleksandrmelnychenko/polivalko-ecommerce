@@ -11,7 +11,8 @@ public sealed record ConsoleServiceRequestDto(
     string DirectionCode,
     string DirectionName,
     string? Comment,
-    ServiceRequestStatus Status);
+    ServiceRequestStatus Status,
+    string[] DirectionNames);
 
 public sealed record ChangeServiceRequestStatusRequest(ServiceRequestStatus? Status);
 

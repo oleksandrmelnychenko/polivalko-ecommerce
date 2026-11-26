@@ -73,7 +73,7 @@ export function MainNav({ categories, links, services }: { categories: MenuCateg
             <div id="catalog-panel" className="catalog-panel" hidden={!open}
               onClick={event => { if ((event.target as Element).closest("a")) setMenu(null); }}>
               <div className="catalog-panel__rail">
-                <Link href="/catalog" className="catalog-panel__all">Увесь каталог <ArrowRightIcon /></Link>
+                <Link href="/catalog" className="shop-action-link">Увесь каталог <ArrowRightIcon /></Link>
                 {categories.map(category => (
                   <Link key={category.id} href={`/catalog/${category.slug}`} className="catalog-panel__category"
                     aria-current={pathname === `/catalog/${category.slug}` ? "page" : undefined}
@@ -108,7 +108,7 @@ export function MainNav({ categories, links, services }: { categories: MenuCateg
             </button>
             <div id="service-panel" className="service-panel" hidden={!servicesOpen}
               onClick={event => { if ((event.target as Element).closest("a")) setMenu(null); }}>
-              <Link href={link.href} className="catalog-panel__all" aria-current={pathname === link.href ? "page" : undefined}>
+              <Link href={link.href} className="shop-action-link" aria-current={pathname === link.href ? "page" : undefined}>
                 Усі послуги <ArrowRightIcon />
               </Link>
               <ServiceMenuLinks services={services} pathname={pathname} />

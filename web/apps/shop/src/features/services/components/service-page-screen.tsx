@@ -3,13 +3,13 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { ArrowRightIcon } from "@polivalko/shared/ui/icons";
+import { serviceIcon } from "@polivalko/shared/ui/service-icon";
 import { breadcrumbJsonLd, JsonLd, serviceJsonLd } from "@/features/seo";
 import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import { sized } from "@/shared/lib/images";
 import { getServiceDirections } from "../api/server";
 import type { ServiceDirectionPage } from "@polivalko/shared/api/types";
 import { serviceGroupOf, servicePath, serviceRequestHref } from "../lib/service-groups";
-import { DirectionRequestLink } from "./direction-request-link";
 
 const PARENTS = [{ name: "Послуги для саду", path: "/services" }];
 
@@ -29,7 +29,8 @@ async function ServicePageContent({ page }: { page: ServiceDirectionPage }) {
   const group = serviceGroupOf(page.code);
   const related = (await getServiceDirections().catch(() => []))
     .filter((service) => service.code !== page.code && group.codes.includes(service.code));
-  const photo = page.imageUrl ? sized(page.imageUrl, "(max-width: 60rem) 100vw, 560px", 960) : { src: group.photo };
+  const photo = page.imageUrl ? sized(page.imageUrl, "(max-width: 42rem) 100vw, (max-width: 107rem) 44vw, 740px", 960) : { src: group.photo };
+  const Icon = serviceIcon(page.code);
   const path = servicePath(page.slug);
 
   return (
@@ -40,35 +41,50 @@ async function ServicePageContent({ page }: { page: ServiceDirectionPage }) {
 
       <header className="service-page__head">
         <div className="service-page__intro">
-          <p className="service-page__group">{group.title}</p>
+          <p className="service-page__group"><Icon aria-hidden="true" size={18} stroke={1.7} />{group.title}</p>
           <h1>{page.name}</h1>
           {page.description && <p className="lead">{page.description}</p>}
-          <div className="service-page__actions">
-            <Link href={serviceRequestHref(page.code)} className="btn">Залишити заявку <ArrowRightIcon /></Link>
-            <Link href="/services" className="btn btn--outline">Усі послуги</Link>
-          </div>
+          <Link href={serviceRequestHref(page.code)} className="shop-action-link">Залишити заявку <ArrowRightIcon /></Link>
         </div>
-        <img className="service-page__photo" {...photo} alt="" width={960} height={640} fetchPriority="high" decoding="async" />
+        <div className="service-page__photo">
+          <img {...photo} alt="" width={960} height={640} fetchPriority="high" decoding="async" />
+        </div>
       </header>
 
-      {page.bodyHtml ? (
-        <div className="prose service-page__body" dangerouslySetInnerHTML={{ __html: page.bodyHtml }} />
-      ) : (
-        <p className="service-page__body">Докладний опис послуги готуємо. Залиште заявку, і ми зателефонуємо, щоб обговорити вашу ділянку.</p>
-      )}
-
-      <section className="service-page__cta" aria-labelledby="service-cta-title">
-        <h2 id="service-cta-title">Обговорімо вашу ділянку</h2>
-        <p>Залиште заявку: ми зателефонуємо, уточнимо задачу й узгодимо обсяг робіт, вартість і строки.</p>
-        <Link href={serviceRequestHref(page.code)} className="btn">Залишити заявку <ArrowRightIcon /></Link>
-      </section>
-
-      {related.length > 0 && (
-        <section className="service-page__related" aria-labelledby="service-related-title">
-          <h2 id="service-related-title">{group.title}: інші послуги</h2>
+      <div className="service-page__details">
+        <div>
+          {page.bodyHtml ? (
+            <div className="prose service-page__body" dangerouslySetInnerHTML={{ __html: page.bodyHtml }} />
+          ) : (
+            <p>Докладний опис послуги готуємо. Залиште заявку, і ми зателефонуємо, щоб обговорити вашу ділянку.</p>
+          )}
+        </div>
+        <nav className="service-page__related" aria-labelledby="service-related-title">
+          <h2 id="service-related-title">Інші послуги</h2>
           <ul>
-            {related.map((service) => <li key={service.code}><DirectionRequestLink service={service} /></li>)}
+            {related.map((service) => {
+              const RelatedIcon = serviceIcon(service.code);
+              return (
+                <li key={service.code}>
+                  <Link href={servicePath(service.slug)}>
+                    <span className="service-page__icon"><RelatedIcon aria-hidden="true" size={18} stroke={1.7} /></span>
+                    {service.name}
+                    <ArrowRightIcon />
+                  </Link>
+                </li>
+              );
+            })}
+            <li><Link href="/services">Усі послуги <ArrowRightIcon /></Link></li>
           </ul>
+        </nav>
+      </div>
+      {page.bodyHtml && (
+        <section className="service-page__contact" aria-labelledby="service-cta-title">
+          <div>
+            <h2 id="service-cta-title">Обговорімо вашу ділянку</h2>
+            <p>Ми зателефонуємо, щоб уточнити обсяг робіт, вартість і строки.</p>
+          </div>
+          <Link href={serviceRequestHref(page.code)} className="shop-action-link">Залишити заявку <ArrowRightIcon /></Link>
         </section>
       )}
     </>

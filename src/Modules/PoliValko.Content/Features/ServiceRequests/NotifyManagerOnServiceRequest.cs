@@ -16,7 +16,7 @@ internal sealed class NotifyManagerOnServiceRequest(PoliValkoDbContext db, IMana
             .AsNoTracking()
             .SingleAsync(r => r.Id == message.ServiceRequestId, cancellationToken);
 
-        var direction = ServiceDirections.Find(request.DirectionCode)?.Name ?? request.DirectionCode;
+        var direction = string.Join(", ", request.GetDirectionNames());
         var body = $"{direction}\n{request.Name}, {request.Phone}";
         if (request.Comment is not null)
         {

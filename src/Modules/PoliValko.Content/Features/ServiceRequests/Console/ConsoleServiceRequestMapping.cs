@@ -12,5 +12,6 @@ internal static class ConsoleServiceRequestMapping
         r.DirectionCode,
         ServiceDirections.Find(r.DirectionCode)?.Name ?? r.DirectionCode,
         r.Comment,
-        r.Status);
+        r.Status,
+        r.GetDirectionNames());
 }

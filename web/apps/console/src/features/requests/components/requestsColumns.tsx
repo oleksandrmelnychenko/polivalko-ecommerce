@@ -14,12 +14,12 @@ export function requestsColumns(open: (request: ServiceRequest) => void, compact
           <span>
             <b>{row.name}</b>
             <small className="request-number">{row.phone}</small>
-            {compact && <small>{row.directionName}</small>}
+            {compact && <small>{row.directionNames?.join(', ') || row.directionName}</small>}
           </span>
         </button>
       ),
     },
-    { id: 'direction', header: 'Напрямок', width: 220, cell: (row) => row.directionName },
+    { id: 'direction', header: 'Послуги', width: 220, cell: (row) => row.directionNames?.join(', ') || row.directionName },
     { id: 'status', header: 'Статус', width: compact ? 110 : 145, cell: (row) => (
       <div className="request-row-status">
         <RequestStatusChip status={row.status} />

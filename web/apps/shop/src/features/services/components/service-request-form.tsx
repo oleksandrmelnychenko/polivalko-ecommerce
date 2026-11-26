@@ -16,7 +16,7 @@ export function ServiceRequestForm({ directions }: { directions: ServiceDirectio
   const requested = useSearchParams().get("direction") ?? "";
   const preset = directions.some((d) => d.code === requested) ? requested : "";
   const [syncedPreset, setSyncedPreset] = useState(preset);
-  const [direction, setDirection] = useState(preset);
+  const [selected, setSelected] = useState<string[]>(preset ? [preset] : []);
   const [state, setState] = useState<State>({ status: "idle" });
   const formRef = useRef<HTMLFormElement>(null);
   const sending = useRef(false);
@@ -35,7 +35,7 @@ export function ServiceRequestForm({ directions }: { directions: ServiceDirectio
     const pick = (event: Event) => {
       const code = (event as CustomEvent<string>).detail;
       if (!sending.current && directions.some((d) => d.code === code)) {
-        setDirection(code);
+        setSelected(current => current.includes(code) ? current : [...current, code]);
         beginDraft();
       }
     };
@@ -45,7 +45,7 @@ export function ServiceRequestForm({ directions }: { directions: ServiceDirectio
 
   if (syncedPreset !== preset) {
     setSyncedPreset(preset);
-    setDirection(preset);
+    setSelected(preset ? [preset] : []);
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -53,10 +53,16 @@ export function ServiceRequestForm({ directions }: { directions: ServiceDirectio
     if (sending.current) return;
     const form = event.currentTarget;
     const data = new FormData(form);
+    const [direction, ...additionalDirections] = data.getAll("direction").map(String);
+    if (!direction) {
+      setState({ status: "error", message: "Оберіть хоча б одну послугу.", errors: { direction: ["Оберіть хоча б одну послугу."] } });
+      return;
+    }
     const body = {
       name: String(data.get("name") ?? ""),
       phone: String(data.get("phone") ?? ""),
-      direction: String(data.get("direction") ?? ""),
+      direction,
+      additionalDirections,
       comment: String(data.get("comment") ?? "") || null,
     };
     const fingerprint = JSON.stringify(body);
@@ -70,7 +76,7 @@ export function ServiceRequestForm({ directions }: { directions: ServiceDirectio
       if (response.ok) {
         attempt.current = null;
         form.reset();
-        setDirection("");
+        setSelected([]);
         setState({ status: "sent" });
         return;
       }
@@ -91,14 +97,27 @@ export function ServiceRequestForm({ directions }: { directions: ServiceDirectio
   return (
     <form ref={formRef} onSubmit={onSubmit} onChange={beginDraft} className="contact-request-form" aria-labelledby="contact-services-title">
       <div className="request-options">
-        <h2 id="contact-services-title">Заявка на садові роботи</h2>
+        <div className="request-options__head">
+          <h2 id="contact-services-title">Заявка на садові роботи</h2>
+          {directions.length > 1 && (
+            <button type="button" disabled={pending} onClick={() => {
+              setSelected(selected.length === directions.length ? [] : directions.map(item => item.code));
+              beginDraft();
+            }}>
+              {selected.length === directions.length ? "Зняти вибір" : "Обрати всі"}
+            </button>
+          )}
+        </div>
         <fieldset disabled={pending} className="direction-list">
-          <legend className="visually-hidden">Оберіть послугу</legend>
+          <legend className="visually-hidden">Оберіть одну або кілька послуг</legend>
           {directions.map(({ code, name, description }) => (
             <label key={code}>
               <span id={`service-name-${code}`}>{name}</span>
-              <input type="radio" name="direction" value={code} required checked={direction === code}
-                onChange={() => setDirection(code)} aria-invalid={Boolean(err("direction"))}
+              <input type="checkbox" name="direction" value={code} checked={selected.includes(code)}
+                onChange={event => {
+                  const checked = event.currentTarget.checked;
+                  setSelected(current => checked ? [...current, code] : current.filter(item => item !== code));
+                }} aria-invalid={Boolean(err("direction"))}
                 aria-labelledby={`service-name-${code}`}
                 aria-describedby={[err("direction") && "direction-error", description && `service-info-${code}`].filter(Boolean).join(" ") || undefined} />
               {description && <small id={`service-info-${code}`}>{description}</small>}

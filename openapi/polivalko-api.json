@@ -17269,7 +17269,8 @@
           "directionCode",
           "directionName",
           "comment",
-          "status"
+          "status",
+          "directionNames"
         ],
         "type": "object",
         "properties": {
@@ -17301,6 +17302,12 @@
           },
           "status": {
             "$ref": "#/components/schemas/ServiceRequestStatus"
+          },
+          "directionNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -17649,6 +17656,15 @@
               "null",
               "string"
             ]
+          },
+          "additionalDirections": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

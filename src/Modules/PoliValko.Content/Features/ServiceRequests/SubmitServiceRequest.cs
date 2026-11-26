@@ -30,6 +30,8 @@ internal static class SubmitServiceRequest
             Name = request.Name!.Trim(),
             Phone = phone,
             DirectionCode = request.Direction!,
+            AdditionalDirectionCodes = (request.AdditionalDirections ?? [])
+                .Where(code => code != request.Direction).Distinct().ToArray(),
             Comment = string.IsNullOrWhiteSpace(request.Comment) ? null : request.Comment.Trim(),
             Status = ServiceRequestStatus.New,
             CreatedAt = now,
@@ -57,9 +59,10 @@ internal static class SubmitServiceRequest
             errors["phone"] = ["Вкажіть український номер телефону, наприклад +380 67 123 45 67."];
         }
 
-        if (ServiceDirections.Find(request.Direction) is null)
+        if (ServiceDirections.Find(request.Direction) is null ||
+            request.AdditionalDirections?.Any(code => ServiceDirections.Find(code) is null) == true)
         {
-            errors["direction"] = ["Оберіть напрямок послуги."];
+            errors["direction"] = ["Оберіть одну або кілька послуг зі списку."];
         }
 
         if (request.Comment is { Length: > 1000 })

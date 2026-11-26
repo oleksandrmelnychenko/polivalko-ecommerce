@@ -28,10 +28,16 @@ main:has(> .strip:last-child) + .footer { margin-top: 0; }
 .footer__phone a, .footer__seller [translate="no"] { font-family: var(--font-money); }
 .footer .special-days { margin-top: 4px; color: inherit; font-size: 13px; }
 .footer__statement { margin: clamp(32px, 4.5vw, 68px) 0 24px; color: #fff; font: 600 clamp(28px, 3.4vw, 54px)/1.12 var(--font-body); letter-spacing: -.04em; text-wrap: balance; }
-.footer__legal { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 12px 24px; padding-top: 18px; border-top: 1px solid var(--footer-line); color: var(--footer-muted); font-size: 13px; line-height: 1.6; }
+.footer__legal { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px 24px; padding-top: 18px; border-top: 1px solid var(--footer-line); color: var(--footer-muted); font-size: 13px; line-height: 1.6; }
 .footer__legal p { margin: 0; }
 .footer__legal .footer__seller { margin-top: 6px; }
-.footer__legal-links { display: flex; flex-wrap: wrap; gap: 8px 20px; padding-inline-end: 72px; }
+.footer__credit { display: inline-flex; justify-self: center; align-items: center; gap: 7px; min-height: 44px; }
+.footer__credit span { margin-inline-end: 3px; }
+.footer__legal-links { justify-self: end; text-align: end; }
+@media (max-width: 50rem) {
+  .footer__legal { grid-template-columns: 1fr; justify-items: center; gap: 4px; text-align: center; }
+  .footer__legal-links { justify-self: center; text-align: center; }
+}
 @media (min-width: 40.001rem) and (max-width: 60rem) {
   .footer__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .footer__about { grid-column: 1 / -1; }

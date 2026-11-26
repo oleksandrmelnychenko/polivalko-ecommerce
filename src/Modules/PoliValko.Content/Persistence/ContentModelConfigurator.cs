@@ -19,6 +19,7 @@ internal sealed class ContentModelConfigurator : IModelConfigurator
             builder.Property(r => r.Name).HasMaxLength(100);
             builder.Property(r => r.Phone).HasMaxLength(20);
             builder.Property(r => r.DirectionCode).HasMaxLength(50);
+            builder.PrimitiveCollection(r => r.AdditionalDirectionCodes).HasDefaultValueSql("'{}'::text[]");
             builder.Property(r => r.Comment).HasMaxLength(1000);
             builder.Property(r => r.Status).HasConversion<string>().HasMaxLength(20);
             builder.HasIndex(r => new { r.Status, r.CreatedAt });
