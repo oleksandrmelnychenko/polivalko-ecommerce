@@ -37,7 +37,7 @@ test("product structured data has no Offer when the price is 0", () => {
   const seo = { absoluteUrl: (path) => `https://shop.test${path}`, organizationId: () => "https://shop.test/#organization", SITE_NAME: "Shop" };
   const gtin = load("../../../packages/shared/lib/gtin.ts", () => ({}));
   const { productJsonLd } = load("../src/features/product/lib/json-ld.ts", (name) =>
-    name === "@/features/seo" ? seo : name === "@/shared/lib/price" ? price : name === "@polivalko/shared/lib/gtin" ? gtin : { descriptionText: () => "" });
+    name === "@/features/seo" ? seo : name === "@/shared/lib/price" ? price : name === "@polivalko/shared/lib/gtin" ? gtin : { markupDescription: () => undefined });
   const product = {
     slug: "yalynka", name: "Ялинка", sku: "12254", seoDescription: null, descriptionHtml: null, images: [], brand: null, attributes: [],
     category: { name: "Новий рік" }, inStock: false, price: money("0.00"),

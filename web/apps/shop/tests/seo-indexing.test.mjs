@@ -216,3 +216,29 @@ test("no host redirect without a site address, and never from the shop's own hos
   assert.deepEqual(duplicateHostRedirects("  "), []);
   assert.deepEqual(duplicateHostRedirects("https://polivalko.vercel.app"), []);
 });
+
+test("a long text is clipped at a word boundary and marked with an ellipsis", () => {
+  const { clip } = src("features/product/lib/description.ts");
+
+  assert.equal(clip("Шланг для поливу саду", 18), "Шланг для поливу…");
+  assert.equal(clip("Шланг, який не перекручується", 8), "Шланг…");
+  assert.equal(clip("Шланг", 18), "Шланг");
+});
+
+test("structured data describes the product with its own text in full, not the first 160 characters", () => {
+  const { markupDescription } = src("features/product/lib/description.ts");
+  const first = "Металевий імпульсний зрошувач на кілку для поливу великих газонів, городу й саду.";
+  const second = "Сектор поливу налаштовується від двадцяти до трьохсот шістдесяти градусів, а радіус сягає дванадцяти метрів за нормального тиску води в системі.";
+
+  const description = markupDescription({ descriptionHtml: `<p>${first}</p><p>${second}</p>`, seoDescription: "Шаблон магазину" });
+
+  assert.equal(description, `${first} ${second}`);
+  assert.ok(description.length > 160);
+});
+
+test("without its own text the product markup falls back to the SEO description, or leaves the field out", () => {
+  const { markupDescription } = src("features/product/lib/description.ts");
+
+  assert.equal(markupDescription({ descriptionHtml: null, seoDescription: " Зрошувач у магазині " }), "Зрошувач у магазині");
+  assert.equal(markupDescription({ descriptionHtml: "", seoDescription: null }), undefined);
+});

@@ -1,13 +1,12 @@
 import type { ProductDetails } from "@polivalko/shared/api/types";
 import { absoluteUrl, organizationId, SITE_NAME } from "@/features/seo";
 import { hasPrice } from "@/shared/lib/price";
-import { descriptionText } from "./description";
+import { markupDescription } from "./description";
 import { gtinFromAttributes } from "@polivalko/shared/lib/gtin";
 
 export function productJsonLd(product: ProductDetails) {
   const url = absoluteUrl(`/product/${product.slug}`);
-  // The product's own text first: the SEO description is usually the shop-wide template (name, price, delivery).
-  const description = descriptionText(product.descriptionHtml) || product.seoDescription?.trim() || undefined;
+  const description = markupDescription(product);
   const gtin = gtinFromAttributes(product.attributes);
   return {
     "@context": "https://schema.org",
