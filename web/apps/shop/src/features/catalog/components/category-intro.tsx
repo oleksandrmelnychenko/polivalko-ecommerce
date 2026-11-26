@@ -6,7 +6,7 @@ import { parsePage, type SearchParams } from "../lib/listing-params";
 type IntroProps = { name: string; description?: string | null; isSubcategory: boolean };
 
 function IntroHeading({ icon: Icon }: { icon: ReturnType<typeof categoryIcon> }) {
-  return <h2 id="category-intro-heading"><Icon aria-hidden="true" stroke={1.7} />Про розділ</h2>;
+  return <h2 id="category-intro-heading"><Icon aria-hidden="true" stroke={1.7} />Як обрати</h2>;
 }
 
 export function CategoryIntro({ name, description, isSubcategory }: IntroProps) {
