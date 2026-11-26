@@ -4,17 +4,19 @@ import { UserIcon } from "@polivalko/shared/ui/icons";
 
 export function AuthFrame({ title, crumb, lead, children }: { title: string; crumb: string; lead?: ReactNode; perks?: boolean; children: ReactNode }) {
   return (
-    <div className="auth-card">
-      <header>
-        <Breadcrumbs current={crumb} parents={[{ name: "Особистий кабінет", path: "/account" }]} />
-        <span className="auth-card__icon"><UserIcon /></span>
+    <>
+      <div className="container"><Breadcrumbs current={crumb} parents={[{ name: "Особистий кабінет", path: "/account" }]} /></div>
+      <div className="auth-card">
+        <header>
+          <span className="auth-card__icon"><UserIcon /></span>
 
-        <h1>{title}</h1>
-        {typeof lead === "string" ? <p className="lead">{lead}</p> : lead}
-      </header>
-      <div className="auth auth--single">
-        <div className="auth__main">{children}</div>
+          <h1>{title}</h1>
+          {typeof lead === "string" ? <p className="lead">{lead}</p> : lead}
+        </header>
+        <div className="auth auth--single">
+          <div className="auth__main">{children}</div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

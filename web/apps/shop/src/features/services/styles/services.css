@@ -4,7 +4,6 @@
   --garden-paper: #f4f4ec;
 }
 .garden-cover, .garden-cover-placeholder {
-  margin-block-start: 20px;
   border-radius: 22px;
   background-color: #17382c;
 }

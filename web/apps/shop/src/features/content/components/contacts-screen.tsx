@@ -18,7 +18,7 @@ export function ContactsScreen() {
     <div className="container contact-page">
       <Breadcrumbs current="Контакти" />
       <JsonLd data={breadcrumbJsonLd([{ name: "Контакти", path: "/contacts" }])} />
-      <Suspense fallback={<div className="skeleton" style={{ height: 680, marginBlock: 64 }} />}>
+      <Suspense fallback={<div className="skeleton" style={{ height: 680 }} />}>
         <ContactsContent />
       </Suspense>
     </div>
