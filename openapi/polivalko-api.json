@@ -439,6 +439,47 @@
         }
       }
     },
+    "/api/v1/service-directions/{slug}": {
+      "get": {
+        "tags": [
+          "Services"
+        ],
+        "summary": "Сторінка послуги за адресою",
+        "operationId": "GetServiceDirectionPage",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceDirectionPageDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/service-requests": {
       "post": {
         "tags": [
@@ -17147,7 +17188,13 @@
           "description",
           "sortOrder",
           "isVisible",
-          "imageUrl"
+          "imageUrl",
+          "slug",
+          "defaultSlug",
+          "bodyHtml",
+          "seoTitle",
+          "seoDescription",
+          "updatedAt"
         ],
         "type": "object",
         "properties": {
@@ -17175,6 +17222,37 @@
               "null",
               "string"
             ]
+          },
+          "slug": {
+            "type": "string"
+          },
+          "defaultSlug": {
+            "type": "string"
+          },
+          "bodyHtml": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "seoTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "seoDescription": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "updatedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -23855,6 +23933,30 @@
               "null",
               "string"
             ]
+          },
+          "slug": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bodyHtml": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "seoTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "seoDescription": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -24086,7 +24188,9 @@
           "code",
           "name",
           "description",
-          "imageUrl"
+          "imageUrl",
+          "slug",
+          "hasPage"
         ],
         "type": "object",
         "properties": {
@@ -24107,6 +24211,74 @@
               "null",
               "string"
             ]
+          },
+          "slug": {
+            "type": "string"
+          },
+          "hasPage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ServiceDirectionPageDto": {
+        "required": [
+          "code",
+          "slug",
+          "name",
+          "description",
+          "imageUrl",
+          "bodyHtml",
+          "seoTitle",
+          "seoDescription",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "imageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bodyHtml": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "seoTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "seoDescription": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "updatedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },

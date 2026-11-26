@@ -1,4 +1,4 @@
-import { Button, Switch, Group, NumberInput, Textarea } from '@mantine/core'
+import { Button, Switch, Group, NumberInput, Text, Textarea, TextInput } from '@mantine/core'
 import { IconDeviceFloppy, IconTools } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { useReportDirty } from '@/shared/lib/useReportDirty'
@@ -9,8 +9,17 @@ import { useSaveForm } from '../lib/useSaveForm'
 import { FormAlert } from './FormAlert'
 import { ImageField } from '@/shared/ui/site/ImageField'
 import { DrawerCancelButton } from '@/shared/ui/DrawerCancelButton'
+import { RichTextField } from '@/shared/ui/RichTextField'
+import { SeoSnippetFields, type EmptyHints } from '@/shared/ui/site/SeoSnippetFields'
 
 const FORM_ID = 'content-direction-form'
+
+// Service pages have no SEO templates: the shop falls back to the service name and short description.
+const SERVICE_SEO_HINTS: EmptyHints = {
+  title: 'Порожньо: заголовком стане назва послуги',
+  description: 'Порожньо: описом стане короткий опис послуги',
+  note: 'Порожні поля сайт заповнює назвою й коротким описом послуги. Заповнюйте їх, лише коли хочете окремий текст для пошуку.',
+}
 
 type ServiceDirectionDrawerProps = {
   direction: ServiceDirection | null
@@ -35,7 +44,7 @@ export function ServiceDirectionDrawer({ direction, opened, onClose, onSaved }: 
       closeOnClickOutside={!locked}
       className="site-record-modal service-editor-modal"
       title={<MetricLabel icon={IconTools}>{direction?.name ?? 'Напрямок послуг'}</MetricLabel>}
-      size="standard"
+      size="wide"
       footer={
         <Group justify="flex-end" gap="sm">
           <DrawerCancelButton disabled={locked} onCancel={onClose} />
@@ -65,7 +74,12 @@ function DirectionForm({ initial, uploading, onUploading, onBusy, onSaved, onDir
   const [sortOrder, setSortOrder] = useState<string | number>(initial.sortOrder)
   const [visible, setVisible] = useState(initial.isVisible)
   const [imageUrl, setImageUrl] = useState(initial.imageUrl ?? '')
-  const snapshot = JSON.stringify([description, String(sortOrder), visible, imageUrl])
+  const [slug, setSlug] = useState(initial.slug === initial.defaultSlug ? '' : initial.slug)
+  const [body, setBody] = useState(initial.bodyHtml ?? '')
+  const [seoTitle, setSeoTitle] = useState(initial.seoTitle ?? '')
+  const [seoDescription, setSeoDescription] = useState(initial.seoDescription ?? '')
+  const snapshot = JSON.stringify([description, String(sortOrder), visible, imageUrl, slug, body, seoTitle, seoDescription])
+  const pagePath = `/services/${slug.trim().toLowerCase() || initial.defaultSlug}`
   const [pristine] = useState(snapshot)
   useReportDirty(snapshot !== pristine, onDirty)
 
@@ -79,7 +93,17 @@ function DirectionForm({ initial, uploading, onUploading, onBusy, onSaved, onDir
     }
     onBusy(true)
     const result = await form.submit(
-      (headers) => saveService(headers, initial.code, { description: description.trim() || null, sortOrder: order, isVisible: visible, imageUrl: imageUrl || null }),
+      (headers) => saveService(headers, initial.code, {
+        description: description.trim() || null,
+        sortOrder: order,
+        isVisible: visible,
+        imageUrl: imageUrl || null,
+        // Empty strings clear a field (an empty address returns to the default one); null would keep the saved value.
+        slug: slug.trim().toLowerCase(),
+        bodyHtml: body,
+        seoTitle: seoTitle.trim(),
+        seoDescription: seoDescription.trim(),
+      }),
       { done: 'Напрямок збережено.', failed: 'Напрямок не збережено.' },
     )
     onBusy(false)
@@ -142,6 +166,48 @@ function DirectionForm({ initial, uploading, onUploading, onBusy, onSaved, onDir
             }}
           />
         </div>
+      </fieldset>
+      <fieldset className="service-page-fields" disabled={form.busy}>
+        <legend>Сторінка послуги на сайті</legend>
+        <TextInput
+          label="Адреса сторінки"
+          description={`Порожньо: ${"/services/" + initial.defaultSlug}. Малі латинські літери, цифри й дефіси.`}
+          leftSection={<Text size="xs" c="dimmed" pl={6}>/services/</Text>}
+          leftSectionWidth={74}
+          placeholder={initial.defaultSlug}
+          value={slug}
+          maxLength={100}
+          error={form.errors.slug}
+          onChange={(event) => {
+            setSlug(event.currentTarget.value)
+            form.clearField('slug')
+          }}
+        />
+        <RichTextField
+          label="Текст сторінки"
+          value={body}
+          minRows={10}
+          error={form.errors.bodyHtml}
+          hint="Що входить у послугу, як проходить робота, для кого вона. Без тексту сторінка не показується в пошуку Google."
+          onChange={(html) => {
+            setBody(html)
+            form.clearField('bodyHtml')
+          }}
+        />
+        <SeoSnippetFields
+          path={pagePath}
+          seoTitle={seoTitle}
+          seoDescription={seoDescription}
+          fallbackTitle={initial.name}
+          fallbackDescription={description}
+          emptyHints={SERVICE_SEO_HINTS}
+          errors={{ seoTitle: form.errors.seoTitle, seoDescription: form.errors.seoDescription }}
+          onChange={(field, value) => {
+            if (field === 'seoTitle') setSeoTitle(value)
+            else setSeoDescription(value)
+            form.clearField(field)
+          }}
+        />
       </fieldset>
       <FormAlert error={form.error} />
     </form>

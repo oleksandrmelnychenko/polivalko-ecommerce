@@ -190,6 +190,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/service-directions/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Сторінка послуги за адресою */
+        get: operations["GetServiceDirectionPage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/service-requests": {
         parameters: {
             query?: never;
@@ -4341,6 +4358,13 @@ export interface components {
             sortOrder: number;
             isVisible: boolean;
             imageUrl: null | string;
+            slug: string;
+            defaultSlug: string;
+            bodyHtml: null | string;
+            seoTitle: null | string;
+            seoDescription: null | string;
+            /** Format: date-time */
+            updatedAt: null | string;
         };
         ConsoleServiceRequestDto: {
             /** Format: uuid */
@@ -5973,6 +5997,10 @@ export interface components {
             sortOrder: number;
             isVisible: boolean;
             imageUrl?: null | string;
+            slug?: null | string;
+            bodyHtml?: null | string;
+            seoTitle?: null | string;
+            seoDescription?: null | string;
         };
         SaveStaffRoleRequest: {
             name: null | string;
@@ -6032,6 +6060,20 @@ export interface components {
             name: string;
             description: null | string;
             imageUrl: null | string;
+            slug: string;
+            hasPage: boolean;
+        };
+        ServiceDirectionPageDto: {
+            code: string;
+            slug: string;
+            name: string;
+            description: null | string;
+            imageUrl: null | string;
+            bodyHtml: null | string;
+            seoTitle: null | string;
+            seoDescription: null | string;
+            /** Format: date-time */
+            updatedAt: null | string;
         };
         ServiceRequestCreated: {
             /** Format: uuid */
@@ -6713,6 +6755,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ServiceDirectionDto"][];
+                };
+            };
+        };
+    };
+    GetServiceDirectionPage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceDirectionPageDto"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };

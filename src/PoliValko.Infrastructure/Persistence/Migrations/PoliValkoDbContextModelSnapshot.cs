@@ -18,7 +18,7 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.14")
+                .HasAnnotation("ProductVersion", "10.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
@@ -868,9 +868,6 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("released");
 
-                    b.HasKey("OrderId", "ProductId")
-                        .HasName("pk_stock_reservations");
-
                     b.Property<Guid?>("WarehouseOrgId")
                         .HasColumnType("uuid")
                         .HasColumnName("warehouse_org_id");
@@ -878,6 +875,9 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("WarehouseStoreId")
                         .HasColumnType("uuid")
                         .HasColumnName("warehouse_store_id");
+
+                    b.HasKey("OrderId", "ProductId")
+                        .HasName("pk_stock_reservations");
 
                     b.HasIndex("ProductId", "Released")
                         .HasDatabaseName("ix_stock_reservations_product_id_released");
@@ -1081,6 +1081,10 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("code");
 
+                    b.Property<string>("BodyHtml")
+                        .HasColumnType("text")
+                        .HasColumnName("body_html");
+
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)")
@@ -1095,12 +1099,35 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_visible");
 
+                    b.Property<string>("SeoDescription")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("seo_description");
+
+                    b.Property<string>("SeoTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("seo_title");
+
+                    b.Property<string>("Slug")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("slug");
+
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer")
                         .HasColumnName("sort_order");
 
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
                     b.HasKey("Code")
                         .HasName("pk_service_directions");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("ix_service_directions_slug");
 
                     b.ToTable("service_directions", "content");
 

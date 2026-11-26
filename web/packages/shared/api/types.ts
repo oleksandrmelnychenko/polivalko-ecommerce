@@ -14,6 +14,7 @@ export type ProductSearch = S["ProductSearchResponse"];
 export type Bestsellers = S["BestsellersResponse"];
 export type Money = S["MoneyDto"];
 export type ServiceDirection = S["ServiceDirectionDto"];
+export type ServiceDirectionPage = S["ServiceDirectionPageDto"];
 export type PickupPoint = S["PickupPointDto"];
 export type Order = S["OrderDto"];
 export type OrderStatus = S["OrderStatus"];

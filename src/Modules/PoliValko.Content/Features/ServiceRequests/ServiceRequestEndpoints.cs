@@ -16,6 +16,11 @@ internal static class ServiceRequestEndpoints
             .WithName("GetServiceDirections")
             .WithSummary("Напрямки послуг");
 
+        group.MapGet("/service-directions/{slug}", GetServiceDirectionPage.HandleAsync)
+            .WithName("GetServiceDirectionPage")
+            .WithSummary("Сторінка послуги за адресою")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         group.MapPost("/service-requests", SubmitServiceRequest.HandleAsync)
             .RequireIdempotency<CreateServiceRequest>()
             .RequireRateLimiting(RateLimitPolicies.Forms)

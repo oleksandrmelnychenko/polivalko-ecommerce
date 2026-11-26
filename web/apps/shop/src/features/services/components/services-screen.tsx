@@ -4,12 +4,8 @@ import { breadcrumbJsonLd, JsonLd } from "@/features/seo";
 import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import { getServiceDirections } from "../api/server";
 import { ServiceGallery } from "./service-gallery";
+import { otherServicesGroup, serviceGroups as groups } from "../lib/service-groups";
 
-const groups = [
-  { key: "landscape", label: "Облаштування", title: "Облаштування ділянки", photo: "/brand/garden-services.webp", codes: ["landscape-design", "greening", "lawns"] },
-  { key: "irrigation", label: "Автополив", title: "Системи поливу", photo: "/brand/service-irrigation.webp", codes: ["irrigation-installation", "irrigation-service"] },
-  { key: "care", label: "Догляд", title: "Догляд за рослинами", photo: "/brand/service-planting.webp", codes: ["garden-care", "plant-treatment"] },
-];
 
 export function ServicesScreen() {
   return (
@@ -31,7 +27,7 @@ async function ServicesContent() {
     services: directions.filter(direction => group.codes.includes(direction.code)),
   }));
   const other = directions.filter(direction => !groups.some(group => group.codes.includes(direction.code)));
-  const catalogue = [...sections, { key: "other", label: "Інші роботи", title: "Інші садові роботи", photo: "/brand/garden-services.webp", services: other }]
+  const catalogue = [...sections, { ...otherServicesGroup, services: other }]
     .filter(group => group.services.length);
 
   return <ServiceGallery groups={catalogue} />;
