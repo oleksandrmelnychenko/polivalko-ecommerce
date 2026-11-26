@@ -9,7 +9,7 @@ export async function HeaderTopbar() {
   const contacts = await getContacts().catch(() => null);
   const socials = socialLinks(contacts);
   const city = contacts?.address?.split(",")[0]?.trim();
-  const phones = contactPhones(contacts);
+  const phones = contactPhones({ storePhone: contacts?.storePhone, schedule: contacts?.schedule });
   if (!city && phones.length === 0 && socials.length === 0) return null;
   return (
     <div className="site-header__top">
