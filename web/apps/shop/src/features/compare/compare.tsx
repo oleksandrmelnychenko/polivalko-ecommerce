@@ -14,7 +14,7 @@ export function CompareIcon() {
 
 export function CompareLink() {
   const products = useComparison();
-  return <Link href="/compare" className="icon-btn icon-btn--chrome compare-link" title="Перейти до порівняння" aria-label={`Порівняти товари: ${products.length}`}><ComparisonBarsIcon />{products.length > 0 && <span className="cart-button__count">{products.length}</span>}</Link>;
+  return <Link href="/compare" prefetch={false} className="icon-btn icon-btn--chrome compare-link" title="Перейти до порівняння" aria-label={`Порівняти товари: ${products.length}`}><ComparisonBarsIcon />{products.length > 0 && <span className="cart-button__count">{products.length}</span>}</Link>;
 }
 
 export function CompareButton({ product, text = false, showLink = false }: { product: CompareProduct; text?: boolean; showLink?: boolean }) {
@@ -39,5 +39,5 @@ export function CompareButton({ product, text = false, showLink = false }: { pro
   }
   const label = selected ? "Прибрати з порівняння" : "Додати до порівняння";
   const button = <button type="button" className={text ? "compare-toggle compare-toggle--text" : "round-btn compare-toggle"} aria-pressed={selected} aria-label={`${label}: ${product.name}`} title={label} disabled={busy} aria-busy={busy} onClick={() => void toggle()}>{selected && text ? <CircleCheckIcon /> : <CompareIcon />}{text && (busy ? "Додаємо…" : selected ? "У порівнянні" : label)}</button>;
-  return <div className={showLink ? "compare-actions" : "compare-control"}>{button}{showLink && selected && <Link href="/compare" className="compare-actions__link">Перейти до порівняння →</Link>}{error && <div className="compare-control__feedback" role="alert"><p className="compare-control__error">{error}</p><Link href="/compare" className="compare-actions__link">Перейти до порівняння →</Link></div>}</div>;
+  return <div className={showLink ? "compare-actions" : "compare-control"}>{button}{showLink && selected && <Link href="/compare" prefetch={false} className="compare-actions__link">Перейти до порівняння →</Link>}{error && <div className="compare-control__feedback" role="alert"><p className="compare-control__error">{error}</p><Link href="/compare" className="compare-actions__link">Перейти до порівняння →</Link></div>}</div>;
 }

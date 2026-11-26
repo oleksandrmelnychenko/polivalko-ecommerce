@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/shared/ui/idle-link";
 
 export type Breadcrumb = { name: string; path: string };
 

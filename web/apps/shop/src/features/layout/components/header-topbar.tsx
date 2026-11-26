@@ -15,7 +15,7 @@ export async function HeaderTopbar() {
     <div className="site-header__top">
       <div className="container site-header__top-inner">
         {city ? (
-          <Link href="/contacts" className="site-header__city">
+          <Link href="/contacts" prefetch={false} className="site-header__city">
             <PinIcon />
             {city}
           </Link>

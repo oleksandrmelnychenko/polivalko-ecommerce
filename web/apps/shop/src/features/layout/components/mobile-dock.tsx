@@ -6,6 +6,9 @@ import { GridIcon, PhoneIcon, StoreIcon, UserIcon } from "@polivalko/shared/ui/i
 import { CompareIcon } from "@/features/compare";
 import { loginHref, useCustomer } from "@/features/customer";
 
+// Pages a visitor opens now and then: prefetching them on every page view only loads the server.
+const ON_DEMAND = new Set(["/compare", "/contacts", "/account"]);
+
 const links = [
   { href: "/", label: "Головна", Icon: StoreIcon },
   { href: "/catalog", label: "Каталог", Icon: GridIcon },
@@ -20,7 +23,7 @@ export function MobileDock() {
   return (
     <nav className="mobile-dock" aria-label="Мобільна навігація">
       {links.map(({ href, label, Icon }) => (
-        <Link key={href} href={href === "/account" && status === "guest" ? loginHref(href) : href}
+        <Link key={href} href={href === "/account" && status === "guest" ? loginHref(href) : href} prefetch={ON_DEMAND.has(href) ? false : undefined}
           aria-current={(href === "/" ? pathname === "/" : pathname.startsWith(href)) ? "page" : undefined}>
           <Icon /><span>{label}</span>
         </Link>
