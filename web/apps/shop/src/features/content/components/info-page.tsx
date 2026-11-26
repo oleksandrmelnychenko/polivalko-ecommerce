@@ -1,3 +1,4 @@
+import "../styles/offer.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";

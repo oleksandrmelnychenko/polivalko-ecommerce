@@ -1,4 +1,3 @@
-import "../styles/offer.css";
 import { InfoPage } from "./info-page";
 import { SellerDetails } from "./seller-details";
 
