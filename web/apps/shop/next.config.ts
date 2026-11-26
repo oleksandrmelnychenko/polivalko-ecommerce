@@ -2,6 +2,7 @@ import path from "node:path";
 import { apiInternalUrl } from "@polivalko/shared/api/origin";
 import type { NextConfig } from "next";
 import { CATALOG_PHOTO_HOST } from "./src/shared/lib/catalog-photo-host";
+import { duplicateHostRedirects } from "./src/shared/lib/duplicate-hosts";
 
 const workspaceRoot = path.join(__dirname, "../..");
 const storefrontAreas = [
@@ -54,6 +55,7 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      ...duplicateHostRedirects(process.env.SITE_URL),
       { source: "/koshyk", destination: "/cart", permanent: true },
       { source: "/product-category/:slug", destination: "/catalog/:slug", permanent: true },
       { source: "/info/dostavka-i-oplata", destination: "/payment-delivery", permanent: true },
