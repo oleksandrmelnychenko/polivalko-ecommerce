@@ -26,8 +26,10 @@
 .catalog-panel__head a:hover, .mega__all:hover { text-decoration: underline; }
 .catalog-panel__head a svg, .mega__all svg, .mega__subs > a svg { width: 16px; height: 16px; }
 .menu-category-links { list-style: none; margin: 0; padding: 0; }
-.catalog-panel__section > .menu-category-links { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; gap: 8px; }
-.catalog-panel__section > .menu-category-links > li { padding: 4px; border-radius: 10px; border: 1px solid var(--color-rule); }
+/* Columns rather than a grid: a category with a long list of subcategories would make its whole grid row that tall
+   and leave a gap beside it. In columns each card sits right under the previous one. */
+.catalog-panel__section > .menu-category-links { columns: 2; column-gap: 8px; }
+.catalog-panel__section > .menu-category-links > li { break-inside: avoid; margin-bottom: 8px; padding: 4px; border-radius: 10px; border: 1px solid var(--color-rule); }
 .menu-category-links a { display: flex; align-items: center; gap: 8px; border-radius: 6px; padding: 3px 9px; color: var(--color-ink); font: 500 14px/1.35 var(--font-body); text-decoration: none; }
 .menu-category-symbol { display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; color: var(--color-ink); background: var(--color-paper-2); }
 .menu-category-links .menu-category-links { margin-left: 12px; padding-left: 4px; border-left: 1px solid var(--color-rule); }
