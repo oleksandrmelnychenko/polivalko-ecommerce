@@ -8,7 +8,7 @@ import { ListingSkeleton } from "./listing-skeleton";
 
 type CategoryScreenProps = { category: Category; searchParams: Promise<SearchParams> };
 
-/** `after` goes under the section text, e.g. the matching service from another feature. */
+/** Optional companion to the category description, such as a related service. */
 type CategoryScreenSlots = { after?: ReactNode };
 
 /** The page resolves the category first (see requireCategory), so a missing one is a real 404. */
@@ -19,8 +19,10 @@ export function CategoryScreen({ category, searchParams, after }: CategoryScreen
       <Suspense fallback={<ListingSkeleton head={false} />}>
         <CategoryListing category={category} searchParams={searchParams} />
       </Suspense>
-      <FirstPageIntro name={category.name} description={category.description} isSubcategory={category.breadcrumbs.length > 0} searchParams={searchParams} />
-      {after}
+      <div className="category-notes">
+        <FirstPageIntro name={category.name} description={category.description} isSubcategory={category.breadcrumbs.length > 0} searchParams={searchParams} />
+        {after}
+      </div>
     </div>
   );
 }

@@ -1,16 +1,16 @@
 .category-service {
-  align-items: center;
-  background: var(--color-surface-alt, #f3f2ec);
+  align-content: start;
+  justify-items: start;
+  background: var(--color-paper-2);
   border-radius: 16px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px 24px;
-  justify-content: space-between;
-  margin-block: 8px 32px;
-  padding: 20px 24px;
+  display: grid;
+  gap: 6px;
+  padding: clamp(14px, 2vw, 24px);
+  overflow-wrap: anywhere;
 }
 .category-service p { margin: 0; }
-.category-service__kicker { color: var(--color-ink-2); font-size: var(--text-sm); }
-.category-service__name { color: var(--color-ink); font-size: 1.125rem; font-weight: 600; margin-top: 2px; }
-.category-service__text { color: var(--color-ink-2); font-size: var(--text-sm); margin-top: 4px; max-width: 60ch; }
+.category-service__kicker { color: var(--color-ink-2); font-size: .8125rem; }
+.category-service__name { margin: 0; color: var(--color-ink); font-size: 1.125rem; line-height: 1.25; }
+.category-service__text { color: var(--color-ink-2); font-size: var(--text-sm); line-height: 1.5; }
+.category-service__go { margin-top: 6px; }
 .category-service__go svg { height: 16px; width: 16px; }

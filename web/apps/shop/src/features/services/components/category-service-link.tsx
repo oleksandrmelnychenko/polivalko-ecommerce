@@ -27,12 +27,10 @@ async function ServiceCard({ slug, ancestors }: Props) {
 
   return (
     <aside className="category-service" aria-label="Послуга">
-      <div>
-        <p className="category-service__kicker">Не хочете робити самі?</p>
-        <p className="category-service__name">{service.name}: наша команда в Бучі</p>
-        {service.description && <p className="category-service__text">{service.description}</p>}
-      </div>
-      <Link href={servicePath(service.slug)} className="btn btn--outline category-service__go">
+      <p className="category-service__kicker">Садові послуги в Бучі</p>
+      <h2 className="category-service__name">{service.name}</h2>
+      {service.description && <p className="category-service__text">{service.description}</p>}
+      <Link href={servicePath(service.slug)} className="btn btn--graphite category-service__go">
         Про послугу <ArrowRightIcon />
       </Link>
     </aside>
