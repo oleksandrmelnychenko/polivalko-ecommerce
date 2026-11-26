@@ -5,13 +5,16 @@ import { parsePage, type SearchParams } from "../lib/listing-params";
 
 type IntroProps = { name: string; description?: string | null; isSubcategory: boolean };
 
+function IntroHeading({ icon: Icon }: { icon: ReturnType<typeof categoryIcon> }) {
+  return <h2 id="category-intro-heading"><Icon aria-hidden="true" stroke={1.7} />Про розділ</h2>;
+}
+
 export function CategoryIntro({ name, description, isSubcategory }: IntroProps) {
   const paragraphs = introParagraphs(description);
   if (paragraphs.length === 0) return null;
-  const Icon = categoryIcon(name, isSubcategory);
   return (
     <section className="category-intro" aria-labelledby="category-intro-heading">
-      <h2 id="category-intro-heading"><Icon aria-hidden="true" stroke={1.7} />Про розділ</h2>
+      <IntroHeading icon={categoryIcon(name, isSubcategory)} />
       <div className="category-intro__text">
         {paragraphs.map((text, i) => (
           <p key={i}>{text}</p>
