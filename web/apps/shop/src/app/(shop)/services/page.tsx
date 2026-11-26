@@ -2,7 +2,7 @@ import { seoMetadata } from "@/features/seo";
 import { ServicesScreen } from "@/features/services/server";
 
 export const metadata = seoMetadata({
-  title: "Послуги",
+  title: "Послуги для саду в Бучі: автополив і газони",
   description: "Ландшафтний дизайн, автополив, озеленення, газони, догляд за садом і обробка рослин.",
   path: "/services",
 });

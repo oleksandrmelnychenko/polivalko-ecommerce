@@ -114,6 +114,22 @@ export function organizationJsonLd(source: OrganizationSource) {
   return { "@context": CONTEXT, ...organizationEntity(source) };
 }
 
+/** A garden service the shop provides; the shop (Organization/Store) is its provider. */
+export function serviceJsonLd({ name, description, path, image }: { name: string; description?: string | null; path: string; image?: string | null }) {
+  const url = absoluteUrl(path);
+  return {
+    "@context": CONTEXT,
+    "@type": "Service",
+    "@id": `${url}#service`,
+    name,
+    serviceType: name,
+    description: description || undefined,
+    url,
+    image: image ? absoluteUrl(image) : undefined,
+    provider: { "@id": organizationId() },
+  };
+}
+
 export function contactPageJsonLd({ name, description, path, organization }: { name: string; description?: string; path: string; organization: OrganizationSource }) {
   const url = absoluteUrl(path);
   return {

@@ -1,5 +1,5 @@
 export { JsonLd } from "./components/json-ld";
-export { breadcrumbJsonLd, contactPageJsonLd, itemListJsonLd, organizationJsonLd, webSiteJsonLd } from "./lib/json-ld";
+export { breadcrumbJsonLd, contactPageJsonLd, itemListJsonLd, organizationJsonLd, serviceJsonLd, webSiteJsonLd } from "./lib/json-ld";
 export type { Crumb, ListEntry, OrganizationSource } from "./lib/json-ld";
 export { defaultOpenGraph, seoMetadata } from "./lib/metadata";
 export type { SeoInput } from "./lib/metadata";
