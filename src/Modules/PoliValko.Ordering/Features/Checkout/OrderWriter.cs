@@ -117,6 +117,7 @@ internal sealed class OrderWriter(
             DeliveryAddress = valid.Address,
             PickupAddress = pickup is null ? null : $"{pickup.Name}, {pickup.Address}",
             Comment = valid.Comment,
+            NoCallback = valid.NoCallback,
             SellerName = seller.Name,
             SellerTaxId = seller.TaxId,
             Subtotal = subtotal,

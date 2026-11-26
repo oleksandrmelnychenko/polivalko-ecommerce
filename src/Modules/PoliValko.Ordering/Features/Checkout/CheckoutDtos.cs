@@ -59,7 +59,8 @@ public sealed record CreateOrderRequest(
     PaymentRequest? Payment,
     string? Comment,
     bool AcceptOffer,
-    RecipientRequest? Recipient = null);
+    RecipientRequest? Recipient = null,
+    bool NoCallback = false);
 
 public sealed record OrderCreatedDto(
     string Number,

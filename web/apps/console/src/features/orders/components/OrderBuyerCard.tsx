@@ -33,6 +33,7 @@ export function OrderBuyerCard({ order }: { order: ConsoleOrder }) {
       <div className="order-buyer">
         <div className="order-buyer-person">
           <p className="order-buyer-name">{order.customerName}</p>
+          {order.noCallback ? <span className="order-buyer-tag order-buyer-tag--warn">Просить не передзвонювати</span> : null}
           <ul className="order-buyer-contacts">
             <BuyerContact icon={<IconPhone size={15} stroke={1.8} />} href={`tel:${order.phone}`} copy={order.phone} label="телефон">
               {formatPhone(order.phone)}

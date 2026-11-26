@@ -46,6 +46,9 @@ public sealed class Order
 
     public string? Comment { get; init; }
 
+    /// <summary>The buyer asked not to be called about the order.</summary>
+    public bool NoCallback { get; init; }
+
     public string? InternalNote { get; private set; }
 
     public required string SellerName { get; init; }

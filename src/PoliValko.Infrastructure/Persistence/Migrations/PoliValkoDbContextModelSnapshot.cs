@@ -2471,6 +2471,10 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("navkolo_shipped_at");
 
+                    b.Property<bool>("NoCallback")
+                        .HasColumnType("boolean")
+                        .HasColumnName("no_callback");
+
                     b.Property<string>("Number")
                         .IsRequired()
                         .HasMaxLength(20)

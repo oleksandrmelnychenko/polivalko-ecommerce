@@ -16503,6 +16503,10 @@
               "null",
               "string"
             ]
+          },
+          "noCallback": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -17561,6 +17565,10 @@
                 "$ref": "#/components/schemas/RecipientRequest"
               }
             ]
+          },
+          "noCallback": {
+            "type": "boolean",
+            "default": false
           }
         }
       },

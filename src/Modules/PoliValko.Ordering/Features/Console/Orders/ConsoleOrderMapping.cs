@@ -76,7 +76,7 @@ internal static class ConsoleOrderMapping
             method,
             method is null ? [] : Refundable(order).ToList(),
             order.InternalNote,
-            order.CustomerId, order.NavkoloCancellationRequestedAt, order.NavkoloCancellationSynchronizedAt, order.NavkoloShippedAt, order.NavkoloCancelledAt, order.RecipientName, order.RecipientPhone);
+            order.CustomerId, order.NavkoloCancellationRequestedAt, order.NavkoloCancellationSynchronizedAt, order.NavkoloShippedAt, order.NavkoloCancelledAt, order.RecipientName, order.RecipientPhone, order.NoCallback);
     }
 
     public static ProblemHttpResult NotFound(string number) =>

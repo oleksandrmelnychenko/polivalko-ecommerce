@@ -47,5 +47,6 @@ export function orderRequest(
     payment: { method: payment },
     comment: String(form.get("comment") ?? "").trim() || null,
     acceptOffer: form.get("acceptOffer") === "on",
+    noCallback: form.get("noCallback") === "on",
   };
 }
