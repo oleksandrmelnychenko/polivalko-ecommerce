@@ -94,7 +94,6 @@ export function CheckoutSummary({
         <button type="submit" className="btn btn--wide" disabled={sending || !canConfirm} aria-busy={sending}>
           {sending ? "Оформлюємо…" : "Підтвердити замовлення"}
         </button>
-        <p className="field__help">Ціни ще раз звіримо зі складом. Якщо щось зміниться, покажемо нову суму до підтвердження.</p>
       </div>
     </aside>
   );
