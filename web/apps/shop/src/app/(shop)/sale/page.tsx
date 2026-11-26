@@ -7,7 +7,7 @@ export async function generateMetadata({ searchParams }: PageProps<"/sale">): Pr
   const { page, filtered } = listingIndexState(await searchParams, "/sale");
   const paged = page > 1 && !filtered;
   return seoMetadata({
-    title: paged ? `${SALE_TITLE}, сторінка ${page}` : SALE_TITLE,
+    title: paged ? `${SALE_TITLE}, сторінка ${page}` : "Акції й знижки на товари для саду",
     description: SALE_LEAD,
     path: paged ? `/sale?page=${page}` : "/sale",
     noIndex: filtered,
