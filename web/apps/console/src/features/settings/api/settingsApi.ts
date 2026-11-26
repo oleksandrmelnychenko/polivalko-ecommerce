@@ -76,3 +76,9 @@ export type SavePaymentGatewaysRequest = S['SavePaymentGatewaysRequest']
 export function getPaymentGateways() { return api.GET('/api/v1/console/settings/payments/gateways') }
 export function checkPaymentGateway(headers: CsrfHeaders, body: S['CheckPaymentGatewayRequest']) { return api.POST('/api/v1/console/settings/payments/gateways/check', { headers, body }) }
 export function savePaymentGateways(headers: CsrfHeaders, body: SavePaymentGatewaysRequest) { return api.PUT('/api/v1/console/settings/payments/gateways', { headers, body }) }
+
+export type FiscalGateway = S['FiscalGatewayDto']
+export type ReceiptMoments = S['ReceiptMomentsDto']
+export function getFiscalSettings() { return api.GET('/api/v1/console/settings/fiscal') }
+export function checkFiscal(headers: CsrfHeaders, body: S['CheckFiscalRequest']) { return api.POST('/api/v1/console/settings/fiscal/check', { headers, body }) }
+export function saveFiscalSettings(headers: CsrfHeaders, body: S['SaveFiscalSettingsRequest']) { return api.PUT('/api/v1/console/settings/fiscal', { headers, body }) }

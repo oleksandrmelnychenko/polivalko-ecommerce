@@ -47,7 +47,7 @@ public static class PermissionCatalog
         new(PermissionKeys.PickupManage, "Доставка й самовивіз", "Способи доставки, точки самовивозу: адреса, графік, інструкція, видимість.", "settings", "Налаштування", PermissionRisk.Medium),
         new(PermissionKeys.SettingsNavkoloManage, "Навколо: підключення", "Ключ API, склад і ввімкнення синхронізації.", "settings", "Налаштування", PermissionRisk.High),
         new(PermissionKeys.SettingsNotificationsManage, "Сповіщення", "Куди й про які події надсилати сповіщення працівникам.", "settings", "Налаштування", PermissionRisk.Medium),
-        new(PermissionKeys.SettingsPaymentsManage, "Оплата: банки й ключі", "Які банки приймають оплату на сайті (monobank, ПриватБанк), їхні ключі, Apple Pay і Google Pay.", "settings", "Налаштування", PermissionRisk.High),
+        new(PermissionKeys.SettingsPaymentsManage, "Оплата й каса: банки, Checkbox, ключі", "Які банки приймають оплату на сайті (monobank, ПриватБанк), Apple Pay і Google Pay, каса Checkbox, коли видається чек, і їхні ключі.", "settings", "Налаштування", PermissionRisk.High),
 
         new(PermissionKeys.IntegrationStatusView, "Стан синхронізацій", "Останні запуски, помилки, стан Нової пошти, оплати й чеків.", "integration", "Інтеграції", PermissionRisk.Low),
         new(PermissionKeys.IntegrationJobsRun, "Запуск синхронізацій вручну", "Позаплановий запуск фонових завдань.", "integration", "Інтеграції", PermissionRisk.Medium),

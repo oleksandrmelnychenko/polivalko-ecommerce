@@ -1,34 +1,30 @@
-using Microsoft.Extensions.Options;
-using PoliValko.Fiscal.Configuration;
 using PoliValko.Fiscal.Contracts;
 using PoliValko.Fiscal.Domain;
 using PoliValko.Ordering.Contracts;
 
 namespace PoliValko.Fiscal.Features.Settings;
 
-internal sealed class FiscalSettings(IOptions<FiscalOptions> options) : IFiscalSettings
+internal sealed class FiscalSettings(FiscalGateway gateway) : IFiscalSettings
 {
-    public string Provider => options.Value.Provider?.Trim().ToLowerInvariant() switch
+    public async Task<FiscalSettingsSummary> GetAsync(CancellationToken ct)
     {
-        "checkbox" => "Checkbox",
-        "stub" => "Stub",
-        _ => "Disabled",
-    };
+        var value = await gateway.LoadAsync(ct);
+        var mode = value.Provider switch
+        {
+            FiscalGateway.Checkbox => "Live",
+            FiscalGateway.Stub => "Stub",
+            _ => "Disabled",
+        };
+        return new(value.Provider, mode, Moment(PaymentMethod.Card), Moment(PaymentMethod.CashOnDelivery), Moment(PaymentMethod.PayOnPickup));
 
-    public string Mode => Provider switch
+        string Moment(PaymentMethod method) =>
+            value.Provider == FiscalGateway.Disabled ? "none" : MomentCode(value.IssueOn.GetValueOrDefault(method, ReceiptMoment.None));
+    }
+
+    internal static string MomentCode(ReceiptMoment moment) => moment switch
     {
-        "Checkbox" => "Live",
-        "Stub" => "Stub",
-        _ => "Disabled",
+        ReceiptMoment.Payment => "payment",
+        ReceiptMoment.Completion => "completion",
+        _ => "none",
     };
-
-    public string IssueOn(PaymentMethod method) =>
-        Provider == "Disabled"
-            ? "none"
-            : options.Value.IssueOn.GetValueOrDefault(method, ReceiptMoment.None) switch
-            {
-                ReceiptMoment.Payment => "payment",
-                ReceiptMoment.Completion => "completion",
-                _ => "none",
-            };
 }

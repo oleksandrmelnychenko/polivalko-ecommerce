@@ -2140,6 +2140,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/settings/fiscal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Каса Checkbox (ПРРО) і коли сайт видає чек. Ключ ліцензії й пароль касира не повертаються. */
+        get: operations["ConsoleGetFiscalSettings"];
+        /** Зберегти касу й моменти видачі чека. Ключі ввімкненої каси спершу перевіряються в Checkbox; секрети шифруються. */
+        put: operations["ConsoleSaveFiscalSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/settings/fiscal/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Перевірити ключі Checkbox: вхід касира й каса за ключем ліцензії, нічого не зберігаючи */
+        post: operations["ConsoleCheckFiscal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/orders/{number}/receipts": {
         parameters: {
             query?: never;
@@ -4030,6 +4065,15 @@ export interface components {
             expectedRevision: string;
             pinnedProductIds?: null | string[];
         };
+        CheckFiscalDto: {
+            fiscalNumber: string;
+            message: string;
+        };
+        CheckFiscalRequest: {
+            licenseKey: null | string;
+            cashierLogin: null | string;
+            cashierPassword: null | string;
+        };
         CheckNavkoloDto: {
             stores: components["schemas"]["NavkoloStoreDto"][];
             statuses: components["schemas"]["NavkoloStatusDto"][];
@@ -4797,6 +4841,21 @@ export interface components {
         DraftChange: {
             revision: string;
             draft: components["schemas"]["NewDraft"];
+        };
+        FiscalGatewayDto: {
+            /** Format: uuid */
+            revision: null | string;
+            source: string;
+            provider: string;
+            stubAvailable: boolean;
+            enabled: boolean;
+            hasLicenseKey: boolean;
+            cashierLogin: null | string;
+            hasPassword: boolean;
+            /** Format: date-time */
+            verifiedAt: null | string;
+            fiscalNumber: null | string;
+            issueOn: components["schemas"]["ReceiptMomentsDto"];
         };
         ForgotPasswordRequest: {
             email: null | string;
@@ -5853,6 +5912,11 @@ export interface components {
         };
         /** @enum {unknown} */
         ReceiptKind: "sell" | "return";
+        ReceiptMomentsDto: {
+            card: string;
+            cashOnDelivery: string;
+            pickup: string;
+        };
         /** @enum {unknown} */
         ReceiptStatus: "pending" | "issued" | "failed";
         RecipientRequest: {
@@ -6061,6 +6125,16 @@ export interface components {
             /** Format: uuid */
             sourceRecordId: null | string;
             data: components["schemas"]["DnTradeWorkFormData"];
+        };
+        SaveFiscalSettingsRequest: {
+            /** Format: uuid */
+            revision: null | string;
+            enabled: boolean;
+            licenseKey: null | string;
+            cashierLogin: null | string;
+            cashierPassword: null | string;
+            clearKeys: boolean;
+            issueOn: components["schemas"]["ReceiptMomentsDto"];
         };
         SaveLabelRequest: {
             name: null | string;
@@ -12140,6 +12214,155 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CheckPaymentGatewayDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleGetFiscalSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FiscalGatewayDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleSaveFiscalSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveFiscalSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FiscalGatewayDto"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleCheckFiscal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckFiscalRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckFiscalDto"];
                 };
             };
             /** @description Unauthorized */

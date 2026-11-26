@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PoliValko.Fiscal.Configuration;
 using PoliValko.Fiscal.Domain;
+using PoliValko.Fiscal.Features.Settings;
 using PoliValko.Fiscal.Integrations.Providers;
 using PoliValko.Infrastructure.Outbox;
 using PoliValko.Infrastructure.Persistence;
@@ -15,13 +15,14 @@ internal sealed class IssueReceiptOnRequest(
     PoliValkoDbContext db,
     IOrderReceiptSource orders,
     IOptions<FiscalOptions> options,
-    IServiceProvider services,
+    FiscalGateway gateway,
+    IEnumerable<IFiscalProvider> providers,
     TimeProvider time,
     ILogger<IssueReceiptOnRequest> logger) : IOutboxHandler<FiscalReceiptRequested>
 {
     public async Task HandleAsync(FiscalReceiptRequested message, CancellationToken cancellationToken)
     {
-        if (services.GetService<IFiscalProvider>() is not { } provider)
+        if (await gateway.ProviderAsync(providers, cancellationToken) is not { } provider)
         {
             logger.LogInformation("Фіскалізацію вимкнено: чек для замовлення {OrderId} не видається", message.OrderId);
             return;
@@ -29,7 +30,7 @@ internal sealed class IssueReceiptOnRequest(
 
         var order = await orders.GetAsync(message.OrderId, cancellationToken);
         var settings = options.Value;
-        var moment = settings.IssueOn.GetValueOrDefault(order.PaymentMethod, ReceiptMoment.None);
+        var moment = (await gateway.LoadAsync(cancellationToken)).IssueOn.GetValueOrDefault(order.PaymentMethod, ReceiptMoment.None);
         var kind = message.Trigger == FiscalTrigger.Refund ? ReceiptKind.Return : ReceiptKind.Sell;
 
         var applies = message.Trigger switch

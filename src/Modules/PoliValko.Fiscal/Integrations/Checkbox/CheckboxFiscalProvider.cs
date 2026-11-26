@@ -4,11 +4,12 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using PoliValko.Fiscal.Configuration;
+using PoliValko.Fiscal.Features.Settings;
 using PoliValko.Fiscal.Integrations.Providers;
 
 namespace PoliValko.Fiscal.Integrations.Checkbox;
 
-internal sealed class CheckboxFiscalProvider(HttpClient http, IOptions<FiscalOptions> options) : IFiscalProvider
+internal sealed class CheckboxFiscalProvider(HttpClient http, IOptions<FiscalOptions> options, ICheckboxCredentials credentials) : IFiscalProvider
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
@@ -69,15 +70,25 @@ internal sealed class CheckboxFiscalProvider(HttpClient http, IOptions<FiscalOpt
         throw new TimeoutException("Checkbox ще не повернув фіскальний код; спробуємо пізніше.");
     }
 
+    internal sealed record CashRegister(string? FiscalNumber, string? Address);
+
+    /// <summary>Checks the keys: the cashier signs in and the license key opens its cash register. Returns its fiscal number.</summary>
+    public async Task<string> CheckAsync(CancellationToken ct)
+    {
+        var token = await SignInAsync(ct);
+        using var response = await SendAsync(HttpMethod.Get, "/api/v1/cash-registers/info", token, null, ct);
+        var register = await response.Content.ReadFromJsonAsync<CashRegister>(Json, ct);
+        return register?.FiscalNumber ?? "без номера";
+    }
+
+    private async Task<CheckboxKeys> KeysAsync(CancellationToken ct) =>
+        await credentials.CheckboxAsync(ct)
+        ?? throw new InvalidOperationException("Не задано ключі Checkbox: вставте їх у консолі, розділ «Оплата й чеки» → «Каса».");
+
     private async Task<string> SignInAsync(CancellationToken ct)
     {
-        var settings = options.Value.Checkbox;
-        if (string.IsNullOrWhiteSpace(settings.CashierLogin) || string.IsNullOrWhiteSpace(settings.CashierPassword))
-        {
-            throw new InvalidOperationException("Не задано Fiscal:Checkbox:CashierLogin або CashierPassword.");
-        }
-
-        using var response = await SendAsync(HttpMethod.Post, "/api/v1/cashier/signin", null, new SignIn(settings.CashierLogin, settings.CashierPassword), ct);
+        var keys = await KeysAsync(ct);
+        using var response = await SendAsync(HttpMethod.Post, "/api/v1/cashier/signin", null, new SignIn(keys.CashierLogin, keys.CashierPassword), ct);
         var token = await response.Content.ReadFromJsonAsync<Token>(Json, ct);
         return token?.AccessToken ?? throw new InvalidOperationException("Checkbox не повернув токен касира.");
     }
@@ -105,14 +116,11 @@ internal sealed class CheckboxFiscalProvider(HttpClient http, IOptions<FiscalOpt
 
     private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, string? token, object? body, CancellationToken ct, bool allowConflict = false)
     {
-        var settings = options.Value.Checkbox;
-        using var request = new HttpRequestMessage(method, $"{settings.BaseUrl.TrimEnd('/')}{path}");
+        var keys = await KeysAsync(ct);
+        using var request = new HttpRequestMessage(method, $"{options.Value.Checkbox.BaseUrl.TrimEnd('/')}{path}");
         request.Headers.Add("X-Client-Name", "PoliValko");
         request.Headers.Add("X-Client-Version", "1.0");
-        if (!string.IsNullOrWhiteSpace(settings.LicenseKey))
-        {
-            request.Headers.Add("X-License-Key", settings.LicenseKey);
-        }
+        request.Headers.Add("X-License-Key", keys.LicenseKey);
 
         if (token is not null)
         {

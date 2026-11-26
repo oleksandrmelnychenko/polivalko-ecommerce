@@ -104,7 +104,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'settings.shop.manage': 'Магазин: контакти, графік, реквізити',
   'settings.navkolo.manage': 'Навколо: підключення',
   'settings.notifications.manage': 'Сповіщення',
-  'settings.payments.manage': 'Оплата: банки й ключі',
+  'settings.payments.manage': 'Оплата й каса: банки, Checkbox, ключі',
   'delivery.pickup.manage': 'Доставка й самовивіз',
   'integration.status.view': 'Стан синхронізацій',
   'integration.jobs.run': 'Запуск синхронізацій вручну',

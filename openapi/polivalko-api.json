@@ -7404,6 +7404,177 @@
         }
       }
     },
+    "/api/v1/console/settings/fiscal": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Каса Checkbox (ПРРО) і коли сайт видає чек. Ключ ліцензії й пароль касира не повертаються.",
+        "operationId": "ConsoleGetFiscalSettings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalGatewayDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Зберегти касу й моменти видачі чека. Ключі ввімкненої каси спершу перевіряються в Checkbox; секрети шифруються.",
+        "operationId": "ConsoleSaveFiscalSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveFiscalSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiscalGatewayDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/settings/fiscal/check": {
+      "post": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Перевірити ключі Checkbox: вхід касира й каса за ключем ліцензії, нічого не зберігаючи",
+        "operationId": "ConsoleCheckFiscal",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckFiscalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckFiscalDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/console/orders/{number}/receipts": {
       "get": {
         "tags": [
@@ -15910,6 +16081,49 @@
           }
         }
       },
+      "CheckFiscalDto": {
+        "required": [
+          "fiscalNumber",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "fiscalNumber": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "CheckFiscalRequest": {
+        "required": [
+          "licenseKey",
+          "cashierLogin",
+          "cashierPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "licenseKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cashierLogin": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cashierPassword": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "CheckNavkoloDto": {
         "required": [
           "stores",
@@ -19158,6 +19372,71 @@
           },
           "draft": {
             "$ref": "#/components/schemas/NewDraft"
+          }
+        }
+      },
+      "FiscalGatewayDto": {
+        "required": [
+          "revision",
+          "source",
+          "provider",
+          "stubAvailable",
+          "enabled",
+          "hasLicenseKey",
+          "cashierLogin",
+          "hasPassword",
+          "verifiedAt",
+          "fiscalNumber",
+          "issueOn"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "source": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "stubAvailable": {
+            "type": "boolean"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "hasLicenseKey": {
+            "type": "boolean"
+          },
+          "cashierLogin": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "hasPassword": {
+            "type": "boolean"
+          },
+          "verifiedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "fiscalNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "issueOn": {
+            "$ref": "#/components/schemas/ReceiptMomentsDto"
           }
         }
       },
@@ -23255,6 +23534,25 @@
           "return"
         ]
       },
+      "ReceiptMomentsDto": {
+        "required": [
+          "card",
+          "cashOnDelivery",
+          "pickup"
+        ],
+        "type": "object",
+        "properties": {
+          "card": {
+            "type": "string"
+          },
+          "cashOnDelivery": {
+            "type": "string"
+          },
+          "pickup": {
+            "type": "string"
+          }
+        }
+      },
       "ReceiptStatus": {
         "enum": [
           "pending",
@@ -24160,6 +24458,54 @@
           },
           "data": {
             "$ref": "#/components/schemas/DnTradeWorkFormData"
+          }
+        }
+      },
+      "SaveFiscalSettingsRequest": {
+        "required": [
+          "revision",
+          "enabled",
+          "licenseKey",
+          "cashierLogin",
+          "cashierPassword",
+          "clearKeys",
+          "issueOn"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "licenseKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cashierLogin": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "cashierPassword": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "clearKeys": {
+            "type": "boolean"
+          },
+          "issueOn": {
+            "$ref": "#/components/schemas/ReceiptMomentsDto"
           }
         }
       },

@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using PoliValko.Fiscal.Contracts;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Sync;
-using PoliValko.Ordering.Contracts;
 using PoliValko.Payments.Contracts;
 
 namespace PoliValko.Console.Features.Settings;
@@ -25,15 +24,13 @@ internal static class GetPaymentSettings
             .FirstOrDefaultAsync(ct);
 
         var summary = await payments.GetAsync(ct);
+        var receipts = await fiscal.GetAsync(ct);
         return TypedResults.Ok(new PaymentSettingsDto(
             summary.Provider,
             summary.Mode,
             lastReconcileAt,
-            fiscal.Provider,
-            fiscal.Mode,
-            new ReceiptIssueDto(
-                fiscal.IssueOn(PaymentMethod.Card),
-                fiscal.IssueOn(PaymentMethod.CashOnDelivery),
-                fiscal.IssueOn(PaymentMethod.PayOnPickup))));
+            receipts.Provider,
+            receipts.Mode,
+            new ReceiptIssueDto(receipts.Card, receipts.CashOnDelivery, receipts.Pickup)));
     }
 }

@@ -21,14 +21,11 @@ public static class FiscalModule
     {
         var section = configuration.GetSection("Fiscal");
         services.Configure<FiscalOptions>(section);
-        var provider = section.GetValue<string>("Provider");
-
-        if (string.Equals(provider, "Checkbox", StringComparison.OrdinalIgnoreCase))
-        {
-            services.AddHttpClient<CheckboxFiscalProvider>(client => client.Timeout = TimeSpan.FromSeconds(30));
-            services.AddScoped<IFiscalProvider>(sp => sp.GetRequiredService<CheckboxFiscalProvider>());
-        }
-        else if (string.Equals(provider, "Stub", StringComparison.OrdinalIgnoreCase))
+        // Checkbox is always registered: the console turns it on and off. The stub only where the server asks for it.
+        services.AddHttpClient<CheckboxFiscalProvider>(client => client.Timeout = TimeSpan.FromSeconds(30));
+        services.AddScoped<IFiscalProvider>(sp => sp.GetRequiredService<CheckboxFiscalProvider>());
+        services.AddHttpClient(FiscalSettingsEndpoints.CheckClient, client => client.Timeout = TimeSpan.FromSeconds(20));
+        if (string.Equals(section.GetValue<string>("Provider"), "Stub", StringComparison.OrdinalIgnoreCase))
         {
             services.AddSingleton<IFiscalProvider, StubFiscalProvider>();
         }
@@ -36,7 +33,9 @@ public static class FiscalModule
         return services
             .AddModelConfigurator<FiscalModelConfigurator>()
             .AddScoped<IRefundReceiptStatuses, RefundReceiptStatuses>()
-            .AddSingleton<IFiscalSettings, FiscalSettings>()
+            .AddScoped<FiscalGateway>()
+            .AddScoped<ICheckboxCredentials>(sp => sp.GetRequiredService<FiscalGateway>())
+            .AddScoped<IFiscalSettings, FiscalSettings>()
             .AddOutboxHandler<FiscalReceiptRequested, IssueReceiptOnRequest>();
     }
 
@@ -45,6 +44,9 @@ public static class FiscalModule
 
     public static RouteGroupBuilder MapConsoleReceiptEndpoints(this RouteGroupBuilder console) =>
         ReceiptEndpoints.MapConsole(console);
+
+    public static RouteGroupBuilder MapConsoleFiscalSettingsEndpoints(this RouteGroupBuilder console) =>
+        FiscalSettingsEndpoints.Map(console);
 
     public static IEndpointRouteBuilder MapAccountReceiptEndpoints(this IEndpointRouteBuilder api) =>
         ReceiptEndpoints.MapAccount(api);

@@ -47,6 +47,7 @@ public static class ApiEndpoints
         console.MapConsoleCustomerEndpoints();
         console.MapConsolePaymentEndpoints();
         console.MapConsolePaymentGatewayEndpoints();
+        console.MapConsoleFiscalSettingsEndpoints();
         console.MapConsoleReceiptEndpoints();
         console.MapConsoleCatalogEndpoints();
         console.MapConsoleSiteContentEndpoints();

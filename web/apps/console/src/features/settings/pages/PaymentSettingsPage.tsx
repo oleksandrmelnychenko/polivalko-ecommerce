@@ -1,4 +1,4 @@
-import { Alert, Button, Checkbox, SegmentedControl, Stack, Switch, TextInput } from '@mantine/core'
+import { Alert, Button, Checkbox, SegmentedControl, Select, Stack, Switch, TextInput } from '@mantine/core'
 import { IconBrandApple, IconBuildingBank, IconClockHour4, IconCreditCard, IconDeviceFloppy, IconReceipt, IconRefresh } from '@tabler/icons-react'
 import { useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
@@ -10,7 +10,19 @@ import { ListPage, ListPageBody } from '@/shared/ui/ListPage'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { PageState } from '@/shared/ui/PageState'
 import { TableChip } from '@/shared/ui/TableChip'
-import { checkPaymentGateway, getPaymentGateways, getPaymentSettings, savePaymentGateways, type PaymentGateways, type PaymentSettings } from '../api/settingsApi'
+import {
+  checkFiscal,
+  checkPaymentGateway,
+  getFiscalSettings,
+  getPaymentGateways,
+  getPaymentSettings,
+  saveFiscalSettings,
+  savePaymentGateways,
+  type FiscalGateway,
+  type PaymentGateways,
+  type PaymentSettings,
+  type ReceiptMoments,
+} from '../api/settingsApi'
 import { SettingsCard, SettingsHero, SettingsSectionList, useSettingsSection, type SettingsSection } from '../components/SettingsSplit'
 import { modeChip, PAYMENT_METHODS, providerLabel, receiptMomentLabel, receiptMomentTone } from '../lib/paymentLabels'
 import './settings.css'
@@ -22,15 +34,32 @@ const VIEW_KEYS: readonly PaymentSectionKey[] = ['card', 'fiscal', 'moments']
 
 const FORM_ID = 'settings-payments-form'
 
+const MOMENT_OPTIONS = [
+  { value: 'payment', label: 'Одразу після оплати' },
+  { value: 'completion', label: 'Коли замовлення виконане' },
+  { value: 'none', label: 'Не видавати (чек дає каса магазину)' },
+]
+
+function momentsChanged(a: ReceiptMoments, b: ReceiptMoments): boolean {
+  return a.card !== b.card || a.cashOnDelivery !== b.cashOnDelivery || a.pickup !== b.pickup
+}
+
+function momentsSummary(value: ReceiptMoments): string {
+  const automatic = [value.card, value.cashOnDelivery, value.pickup].filter((moment) => moment !== 'none').length
+  return automatic ? `Автоматично: ${automatic} з 3` : 'Не видається'
+}
+
 export function PaymentSettingsPage() {
   const payments = useApiQuery('settings-payments', () => getPaymentSettings())
   const gateways = useApiQuery('settings-payment-gateways', () => getPaymentGateways())
-  const editable = gateways.status === 'ready' && gateways.data
+  const fiscal = useApiQuery('settings-fiscal', () => getFiscalSettings())
+  const editable = gateways.status === 'ready' && gateways.data && fiscal.status === 'ready' && fiscal.data
   const settled = payments.data && (gateways.status === 'ready' || gateways.status === 'forbidden' || gateways.status === 'error')
 
   function reload() {
     payments.reload()
     gateways.reload()
+    fiscal.reload()
   }
 
   if (settled && editable) {
@@ -38,12 +67,17 @@ export function PaymentSettingsPage() {
       <GatewaysForm
         value={payments.data!}
         initial={gateways.data!}
+        fiscal={fiscal.data!}
+        onFiscalSaved={(saved) => {
+          fiscal.setData(saved)
+          payments.reload()
+        }}
         onSaved={(saved) => {
           gateways.setData(saved)
           payments.reload()
         }}
         onReload={reload}
-        busyReload={payments.isFetching || gateways.isFetching}
+        busyReload={payments.isFetching || gateways.isFetching || fiscal.isFetching}
       />
     )
   }
@@ -91,7 +125,7 @@ function PaymentView({ value }: { value: PaymentSettings }) {
           sections={sections}
           active={active}
           onSelect={select}
-          top={<p className="settings-list-note">Банки й ключі змінює працівник із правом «Оплата: банки й ключі».</p>}
+          top={<p className="settings-list-note">Банки й ключі змінює працівник із правом «Оплата й каса: банки, Checkbox, ключі».</p>}
         />
         <section key={active} className="app-split-detail" aria-label={section.name}>
           {active === 'card' ? (
@@ -125,13 +159,17 @@ function PaymentView({ value }: { value: PaymentSettings }) {
 function GatewaysForm({
   value,
   initial,
+  fiscal,
   onSaved,
+  onFiscalSaved,
   onReload,
   busyReload,
 }: {
   value: PaymentSettings
   initial: PaymentGateways
+  fiscal: FiscalGateway
   onSaved: (value: PaymentGateways) => void
+  onFiscalSaved: (value: FiscalGateway) => void
   onReload: () => void
   busyReload: boolean
 }) {
@@ -145,20 +183,73 @@ function GatewaysForm({
   const [clearLiqPay, setClearLiqPay] = useState(false)
   const [walletsEnabled, setWalletsEnabled] = useState(initial.wallets.enabled)
   const [walletsProvider, setWalletsProvider] = useState(initial.wallets.provider || 'mono')
-  const [busy, setBusy] = useState<'check-mono' | 'check-liqpay' | 'save' | null>(null)
+  const [cashEnabled, setCashEnabled] = useState(fiscal.enabled)
+  const [license, setLicense] = useState('')
+  const [cashierLogin, setCashierLogin] = useState('')
+  const [cashierPassword, setCashierPassword] = useState('')
+  const [clearCash, setClearCash] = useState(false)
+  const [moments, setMoments] = useState<ReceiptMoments>(fiscal.issueOn)
+  const [busy, setBusy] = useState<'check-mono' | 'check-liqpay' | 'check-cash' | 'save' | null>(null)
   const [message, setMessage] = useState<{ error: boolean; text: string } | null>(null)
   const guard = useRef(false)
 
   const monoHasKey = initial.mono.hasToken && !clearMono
   const liqPayHasKeys = !!initial.liqPay.publicKey && initial.liqPay.hasPrivateKey && !clearLiqPay
   const walletBankOn = walletsProvider === 'liqpay' ? liqPayEnabled : monoEnabled
+  const cashHasKeys = fiscal.hasLicenseKey && fiscal.hasPassword && !!fiscal.cashierLogin && !clearCash
+  const banksDirty =
+    monoEnabled !== initial.mono.enabled || !!monoToken || clearMono || liqPayEnabled !== initial.liqPay.enabled || !!publicKey || !!privateKey || clearLiqPay
+    || walletsEnabled !== initial.wallets.enabled || walletsProvider !== (initial.wallets.provider || 'mono')
+  const cashDirty =
+    cashEnabled !== fiscal.enabled || !!license || !!cashierLogin || !!cashierPassword || clearCash
+    || moments.card !== fiscal.issueOn.card || moments.cashOnDelivery !== fiscal.issueOn.cashOnDelivery || moments.pickup !== fiscal.issueOn.pickup
 
-  async function run(action: 'check-mono' | 'check-liqpay' | 'save') {
+  async function saveCash(): Promise<string | null> {
+    const result = await withCsrf((headers) =>
+      saveFiscalSettings(headers, {
+        revision: fiscal.revision ?? null,
+        enabled: cashEnabled,
+        licenseKey: license || null,
+        cashierLogin: cashierLogin || null,
+        cashierPassword: cashierPassword || null,
+        clearKeys: clearCash,
+        issueOn: moments,
+      }),
+    )
+    if (!result.data) return Object.values(fieldErrors(result.error)).join(' ') || problemMessage(result.error, 'Налаштування каси не збережено.')
+    onFiscalSaved(result.data)
+    setLicense('')
+    setCashierLogin('')
+    setCashierPassword('')
+    setClearCash(false)
+    setMoments(result.data.issueOn)
+    return null
+  }
+
+  async function run(action: 'check-mono' | 'check-liqpay' | 'check-cash' | 'save') {
     if (guard.current) return
     guard.current = true
     setBusy(action)
     setMessage(null)
     try {
+      if (action === 'check-cash') {
+        const result = await withCsrf((headers) =>
+          checkFiscal(headers, { licenseKey: license || null, cashierLogin: cashierLogin || null, cashierPassword: cashierPassword || null }),
+        )
+        setMessage(
+          result.data
+            ? { error: false, text: `${result.data.message} Щоб сайт видавав чеки, увімкніть касу й збережіть.` }
+            : { error: true, text: Object.values(fieldErrors(result.error)).join(' ') || problemMessage(result.error, 'Не вдалося перевірити ключі каси.') },
+        )
+        return
+      }
+
+      if (action === 'save' && !banksDirty) {
+        const error = cashDirty ? await saveCash() : null
+        setMessage(error ? { error: true, text: error } : { error: false, text: cashDirty ? 'Збережено налаштування каси й чеків.' : 'Змін немає.' })
+        return
+      }
+
       if (action !== 'save') {
         const provider = action === 'check-mono' ? 'mono' : 'liqpay'
         const result = await withCsrf((headers) =>
@@ -202,7 +293,9 @@ function GatewaysForm({
       setClearMono(false)
       setClearLiqPay(false)
       const names = result.data.options.map((option) => option.name).join(', ')
-      setMessage({ error: false, text: names ? `Збережено. Покупець бачить: ${names}.` : 'Збережено. Онлайн-оплату вимкнено.' })
+      const banks = names ? `Збережено. Покупець бачить: ${names}.` : 'Збережено. Онлайн-оплату вимкнено.'
+      const cashError = cashDirty ? await saveCash() : null
+      setMessage(cashError ? { error: true, text: `${banks} Але каса: ${cashError}` } : { error: false, text: banks })
     } catch {
       setMessage({ error: true, text: 'Сервер не відповідає. Перевірте з’єднання й повторіть спробу.' })
     } finally {
@@ -231,7 +324,28 @@ function GatewaysForm({
         <TableChip dot tone="neutral" value="Вимкнено" />
       ),
     },
-    ...commonSections(value),
+    {
+      key: 'fiscal',
+      name: 'Каса Checkbox',
+      hint: fiscal.fiscalNumber ? `ПРРО ${fiscal.fiscalNumber}` : 'Фіскальні чеки через програмну касу',
+      icon: IconReceipt,
+      state: license || cashierLogin || cashierPassword ? (
+        <TableChip dot tone="warning" value="Не збережено" />
+      ) : cashEnabled && cashHasKeys ? (
+        <TableChip dot tone="success" value="Увімкнено" />
+      ) : fiscal.provider === 'Stub' ? (
+        <TableChip dot tone="warning" value="Тестова заглушка" />
+      ) : (
+        <TableChip dot tone="neutral" value={cashHasKeys ? 'Вимкнено' : 'Не підключено'} />
+      ),
+    },
+    {
+      key: 'moments',
+      name: 'Коли видається чек',
+      hint: 'Для кожного способу оплати',
+      icon: IconClockHour4,
+      state: <TableChip dot tone={momentsChanged(moments, fiscal.issueOn) ? 'warning' : 'neutral'} value={momentsChanged(moments, fiscal.issueOn) ? 'Не збережено' : momentsSummary(moments)} />,
+    },
   ]
   const section = sections.find((item) => item.key === active) ?? sections[0]
 
@@ -424,7 +538,108 @@ function GatewaysForm({
               </>
             ) : null}
 
-            {active === 'fiscal' || active === 'moments' ? <CommonDetail active={active} section={section} value={value} /> : null}
+            {active === 'fiscal' ? (
+              <>
+                <SettingsHero
+                  section={section}
+                  kicker="Чеки"
+                  description="Checkbox — хмарна програмна каса (ПРРО). Сайт сам входить касиром, відкриває зміну й видає чеки продажу та повернення. Окрема програма не потрібна, якщо КЕП касира зберігається в хмарі Checkbox; закриття зміни (Z-звіт) налаштовується в кабінеті Checkbox."
+                />
+                <SettingsCard title="Підключення каси">
+                  <Stack gap="md">
+                    <Switch
+                      label="Видавати фіскальні чеки через Checkbox"
+                      checked={cashEnabled}
+                      disabled={!!busy || clearCash}
+                      onChange={(e) => setCashEnabled(e.currentTarget.checked)}
+                    />
+                    {fiscal.stubAvailable && !cashEnabled ? (
+                      <p className="settings-muted">На цьому сервері, доки касу вимкнено, працює тестова заглушка: чеки з номером TEST-…</p>
+                    ) : null}
+                    <TextInput
+                      label="Ключ ліцензії каси"
+                      type="password"
+                      autoComplete="new-password"
+                      value={license}
+                      disabled={!!busy || clearCash}
+                      placeholder={fiscal.hasLicenseKey && !clearCash ? 'Новий ключ для заміни збереженого' : 'Кабінет Checkbox → Каси → ключ ліцензії'}
+                      onChange={(e) => setLicense(e.currentTarget.value.trim())}
+                    />
+                    <TextInput
+                      label="Логін касира"
+                      autoComplete="off"
+                      value={cashierLogin}
+                      disabled={!!busy || clearCash}
+                      placeholder={fiscal.cashierLogin && !clearCash ? fiscal.cashierLogin : 'Логін касира в Checkbox'}
+                      description={fiscal.cashierLogin && !clearCash ? 'Залиште порожнім, щоб лишити збережений.' : undefined}
+                      onChange={(e) => setCashierLogin(e.currentTarget.value.trim())}
+                    />
+                    <TextInput
+                      label="Пароль касира"
+                      type="password"
+                      autoComplete="new-password"
+                      value={cashierPassword}
+                      disabled={!!busy || clearCash}
+                      placeholder={fiscal.hasPassword && !clearCash ? 'Новий пароль для заміни збереженого' : 'Пароль касира'}
+                      description="Ключ ліцензії й пароль зберігаються зашифрованими й не показуються після збереження."
+                      onChange={(e) => setCashierPassword(e.currentTarget.value)}
+                    />
+                    <div>
+                      <Button
+                        variant="default"
+                        loading={busy === 'check-cash'}
+                        disabled={!!busy || clearCash || !(license || fiscal.hasLicenseKey) || !(cashierLogin || fiscal.cashierLogin) || !(cashierPassword || fiscal.hasPassword)}
+                        onClick={() => void run('check-cash')}
+                      >
+                        Перевірити касу
+                      </Button>
+                    </div>
+                    <p className="settings-muted">
+                      {fiscal.verifiedAt ? `Checkbox прийняв ключі ${formatDateTime(fiscal.verifiedAt)}${fiscal.fiscalNumber ? `, каса ${fiscal.fiscalNumber}` : ''}.` : 'Ключі перевіряються в Checkbox під час збереження.'}
+                    </p>
+                    {fiscal.hasLicenseKey || fiscal.hasPassword ? (
+                      <Checkbox
+                        label="Видалити збережені ключі каси"
+                        checked={clearCash}
+                        disabled={!!busy}
+                        onChange={(e) => {
+                          const checked = e.currentTarget.checked
+                          setClearCash(checked)
+                          if (checked) {
+                            setCashEnabled(false)
+                            setLicense('')
+                            setCashierPassword('')
+                          }
+                        }}
+                      />
+                    ) : null}
+                  </Stack>
+                </SettingsCard>
+              </>
+            ) : null}
+
+            {active === 'moments' ? (
+              <>
+                <SettingsHero section={section} kicker="Чеки" description="Коли сайт видає чек продажу для кожного способу оплати. Момент погоджує бухгалтер магазину. Чек повернення видається на кожне повернення, якщо був чек продажу." />
+                <SettingsCard title="Способи оплати">
+                  <Stack gap="md">
+                    {PAYMENT_METHODS.map((method) => (
+                      <Select
+                        key={method.key}
+                        label={method.label}
+                        description={method.hint}
+                        allowDeselect={false}
+                        disabled={!!busy}
+                        value={moments[method.key]}
+                        data={method.key === 'card' ? MOMENT_OPTIONS : MOMENT_OPTIONS.filter((option) => option.value !== 'payment')}
+                        onChange={(next) => next && setMoments((current) => ({ ...current, [method.key]: next }))}
+                      />
+                    ))}
+                    {fiscal.provider === 'Disabled' && !cashEnabled ? <Alert color="yellow">Каса вимкнена, тож чеки зараз не видаються взагалі.</Alert> : null}
+                  </Stack>
+                </SettingsCard>
+              </>
+            ) : null}
           </section>
         </form>
       </ListPageBody>
