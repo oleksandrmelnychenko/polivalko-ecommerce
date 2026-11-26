@@ -2,6 +2,7 @@ import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
 import type { BrandPage, BrandSummary } from "@polivalko/shared/api/types";
 import { countProducts } from "@polivalko/shared/lib/format";
+import { ArrowRightIcon } from "@polivalko/shared/ui/icons";
 import { breadcrumbJsonLd, itemListJsonLd, JsonLd } from "@/features/seo";
 import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import { introParagraphs } from "../lib/category-intro";
@@ -10,6 +11,18 @@ import { CatalogListing } from "./catalog-listing";
 import { ListingSkeleton } from "./listing-skeleton";
 
 const BRANDS = { name: "Бренди", path: "/brands" };
+
+// Manufacturer marks used until a logo is supplied through the console.
+const manufacturerMarks = new Map([
+  ["irritec", "irritec"], ["fiskars", "fiskars"], ["cellfast", "cellfast"],
+  ["сімейний сад", "simeinyi-sad"],
+]);
+
+function directoryLogo(brand: BrandSummary) {
+  if (brand.logoUrl?.trim()) return brand.logoUrl.trim();
+  const mark = manufacturerMarks.get(brand.name.trim().toLowerCase());
+  return mark ? `/brand/manufacturers/${mark}.webp` : undefined;
+}
 
 export const brandPath = (slug: string) => `/brands/${slug}`;
 
@@ -87,14 +100,24 @@ export function BrandsScreen({ brands }: { brands: BrandSummary[] }) {
         <h1>Бренди</h1>
       </header>
       <ul className="brand-list">
-        {brands.map((b) => (
-          <li key={b.slug}>
-            <Link href={brandPath(b.slug)} prefetch={false}>
-              <span className="brand-list__name">{b.name}</span>
-              <span className="brand-list__count">{countProducts(b.productCount)}</span>
-            </Link>
-          </li>
-        ))}
+        {brands.map((brand) => {
+          const logo = directoryLogo(brand);
+          return (
+            <li key={brand.slug}>
+              <Link href={brandPath(brand.slug)} prefetch={false}>
+                <span className="brand-list__mark">
+                  {logo
+                    ? <img src={logo} alt={brand.name} width={144} height={44} loading="lazy" decoding="async" />
+                    : brand.name}
+                </span>
+                <span className="brand-list__meta">
+                  {countProducts(brand.productCount)}
+                  <ArrowRightIcon aria-hidden="true" />
+                </span>
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

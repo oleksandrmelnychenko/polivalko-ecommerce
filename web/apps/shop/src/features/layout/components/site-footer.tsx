@@ -48,7 +48,7 @@ export function SiteFooter() {
             <FooterLinks links={purchasePages} />
           </FooterColumn>
         </div>
-        <p className="footer__statement">Магазин для саду, городу й дому в Бучі.</p>
+        <p className="footer__statement">Магазин для саду, городу й дому.</p>
         <div className="footer__legal">
           <p>© <Suspense fallback={null}><FooterYear /></Suspense> Poli-Valko. Усі права захищені.</p>
           <a className="footer__credit" href="https://www.horizon-dynamics.tech/" lang="en">
