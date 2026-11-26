@@ -11,6 +11,7 @@ using PoliValko.Payments.Features.Checkout;
 using PoliValko.Payments.Features.Processing;
 using PoliValko.Payments.Features.Refunds;
 using PoliValko.Payments.Features.Settings;
+using PoliValko.Payments.Integrations.LiqPay;
 using PoliValko.Payments.Integrations.Mono;
 using PoliValko.Payments.Integrations.Providers;
 using PoliValko.Payments.Integrations.Sandbox;
@@ -35,22 +36,27 @@ public static class PaymentsModule
             .ValidateOnStart();
         var provider = section.GetValue<string>("Provider");
 
-        if (PaymentProviderNames.Is(provider, PaymentProviderNames.Sandbox))
+        if (PaymentProviderNames.Is(provider, PaymentProviderNames.Sandbox) && section.GetValue<bool>("AllowSandbox"))
         {
             services.AddScoped<IPaymentProvider, SandboxPaymentProvider>();
         }
-        else if (PaymentProviderNames.Is(provider, PaymentProviderNames.Mono))
-        {
-            services.AddSingleton<MonoWebhookKeys>();
-            services.AddHttpClient<MonoPaymentProvider>(client => client.Timeout = TimeSpan.FromSeconds(20));
-            services.AddScoped<IPaymentProvider>(sp => sp.GetRequiredService<MonoPaymentProvider>());
-        }
+
+        // The banks are always registered: the console turns them on and off, and payments already opened with a
+        // bank that was later switched off still need webhooks, reconciliation and refunds.
+        services.AddSingleton<MonoWebhookKeys>();
+        services.AddHttpClient<MonoPaymentProvider>(client => client.Timeout = TimeSpan.FromSeconds(20));
+        services.AddScoped<IPaymentProvider>(sp => sp.GetRequiredService<MonoPaymentProvider>());
+        services.AddHttpClient<LiqPayPaymentProvider>(client => client.Timeout = TimeSpan.FromSeconds(20));
+        services.AddScoped<IPaymentProvider>(sp => sp.GetRequiredService<LiqPayPaymentProvider>());
+        services.AddHttpClient(PaymentGatewayEndpoints.CheckClient, client => client.Timeout = TimeSpan.FromSeconds(15));
 
         return services
             .AddModelConfigurator<PaymentsModelConfigurator>()
+            .AddScoped<PaymentGateways>()
+            .AddScoped<IPaymentCredentials>(sp => sp.GetRequiredService<PaymentGateways>())
             .AddScoped<IPaymentProviders, PaymentProviders>()
-            .AddSingleton<IPaymentSettings, PaymentSettings>()
-            .AddSingleton<ICardPayments, CardPayments>()
+            .AddScoped<IPaymentSettings, PaymentSettings>()
+            .AddScoped<ICardPayments, CardPayments>()
             .AddScoped<IPaymentActivity, PaymentActivity>()
             .AddScoped<PaymentProcessor>()
             .AddScoped<RefundSettlement>()
@@ -66,6 +72,9 @@ public static class PaymentsModule
 
     public static RouteGroupBuilder MapConsolePaymentEndpoints(this RouteGroupBuilder console) =>
         ConsolePaymentEndpoints.Map(console);
+
+    public static RouteGroupBuilder MapConsolePaymentGatewayEndpoints(this RouteGroupBuilder console) =>
+        PaymentGatewayEndpoints.Map(console);
 
     public static IEndpointRouteBuilder MapAccountPaymentEndpoints(this IEndpointRouteBuilder api) =>
         PaymentEndpoints.MapAccount(api);

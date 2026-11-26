@@ -19,9 +19,12 @@ internal sealed class PaymentReconciliationJob(IServiceScopeFactory scopes, Time
 
     protected override string Job => JobName;
 
+    private static readonly TimeSpan ExpiryGrace = TimeSpan.FromMinutes(15);
+
     protected override TimeSpan Interval(IServiceProvider services) => TimeSpan.FromMinutes(2);
 
-    protected override bool IsEnabled(IServiceProvider services) => services.GetRequiredService<IPaymentProviders>().Active is not null;
+    // Always on: a bank switched off in the console still has payments and refunds to settle.
+    protected override bool IsEnabled(IServiceProvider services) => true;
 
     protected override async Task<SyncResult> RunOnceAsync(IServiceProvider services, CancellationToken ct)
     {
@@ -52,6 +55,12 @@ internal sealed class PaymentReconciliationJob(IServiceScopeFactory scopes, Time
             try
             {
                 var status = await provider.GetStatusAsync(payment.ProviderPaymentId!, ct);
+                if (status.State == ProviderPaymentState.Created && payment.ExpiresAt + ExpiryGrace < now)
+                {
+                    // LiqPay keeps no trace of a checkout page nobody paid on; past its deadline it can no longer take money.
+                    status = new ProviderPaymentStatus(status.ProviderPaymentId, ProviderPaymentState.Expired, null, payment.ExpiresAt, "Час на оплату минув");
+                }
+
                 if (status.State is not (ProviderPaymentState.Created or ProviderPaymentState.Processing)
                     && await processor.ApplyAsync(provider.Name, status, "reconcile", null, ct) == PaymentUpdateResult.Applied)
                 {

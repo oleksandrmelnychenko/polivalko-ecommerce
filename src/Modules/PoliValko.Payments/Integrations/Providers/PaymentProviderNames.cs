@@ -4,6 +4,7 @@ public static class PaymentProviderNames
 {
     public const string Sandbox = "sandbox";
     public const string Mono = "mono";
+    public const string LiqPay = "liqpay";
     public const string Disabled = "disabled";
 
     public static bool Is(string? configured, string name) =>
@@ -13,6 +14,7 @@ public static class PaymentProviderNames
     public static string Display(string name) => name switch
     {
         Mono => "Plata by mono",
+        LiqPay => "LiqPay (ПриватБанк)",
         Sandbox => "Sandbox",
         _ => name,
     };

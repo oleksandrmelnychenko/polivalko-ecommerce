@@ -1,4 +1,6 @@
 const MONO_CHECKOUT_ORIGIN = "https://pay.mbnk.biz";
+const LIQPAY_ORIGIN = "https://www.liqpay.ua";
+const LIQPAY_CHECKOUT_PATH = "/api/3/checkout";
 
 function parseDestination(value: string, shopOrigin: string): URL | null {
   try {
@@ -14,6 +16,7 @@ export function paymentPageUrl(value: string, shopOrigin: string): string | null
   const url = parseDestination(value, shopOrigin);
   if (!url) return null;
   if (url.origin === MONO_CHECKOUT_ORIGIN) return url.href;
+  if (url.origin === LIQPAY_ORIGIN && url.pathname === LIQPAY_CHECKOUT_PATH && url.searchParams.has("data") && url.searchParams.has("signature")) return url.href;
   if (url.origin === shopOrigin && /^\/pay\/sandbox\/sbx_[a-f0-9]{32}$/.test(url.pathname) && !url.search && !url.hash) return url.href;
   return null;
 }

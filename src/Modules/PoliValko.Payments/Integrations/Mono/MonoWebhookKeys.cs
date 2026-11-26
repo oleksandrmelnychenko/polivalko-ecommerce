@@ -11,7 +11,34 @@ internal sealed class MonoWebhookKeys(TimeProvider time, ILogger<MonoWebhookKeys
     private long? _lastRefresh;
     private TimeSpan _refreshInterval;
 
+    private string? _owner;
+
     public string? Current => Volatile.Read(ref _key);
+
+    /// <summary>Forgets the cached key when the merchant token is not the one it was fetched with.</summary>
+    public async Task UseTokenAsync(string? token, CancellationToken ct)
+    {
+        var owner = token is null ? null : Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(token)));
+        if (Volatile.Read(ref _owner) == owner)
+        {
+            return;
+        }
+
+        await _refresh.WaitAsync(ct);
+        try
+        {
+            if (_owner != owner)
+            {
+                _owner = owner;
+                Volatile.Write(ref _key, null);
+                _lastRefresh = null;
+            }
+        }
+        finally
+        {
+            _refresh.Release();
+        }
+    }
 
     public async Task<string?> RefreshAsync(Func<CancellationToken, Task<string>> fetch, CancellationToken ct)
     {

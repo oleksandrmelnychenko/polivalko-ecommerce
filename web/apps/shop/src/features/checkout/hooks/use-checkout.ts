@@ -12,6 +12,7 @@ import { validateOrder } from "../lib/validate-order";
 import type { CourierPrefill, Errors, Notice } from "../lib/types";
 import { useCheckoutAccount } from "./use-checkout-account";
 import { useDeliveryPoint } from "./use-delivery-point";
+import { cardProviderOf } from "../lib/card-provider";
 
 export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: string | null) {
   const router = useRouter();
@@ -20,6 +21,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
   const { items, quote, deliveryQuote, current: quoteCurrent, failed: quoteError, refresh: refreshQuote } = useCartQuote();
   const [chosenDelivery, setDelivery] = useState("nova_poshta");
   const [payment, setPayment] = useState("");
+  const [cardChoice, setCardProvider] = useState("");
   const point = useDeliveryPoint();
   const [courier, setCourier] = useState<CourierPrefill>({ key: 0, values: null });
   const [errors, setErrors] = useState<Errors>({});
@@ -62,6 +64,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
   const delivery = deliveryOption?.code ?? chosenDelivery;
   const paymentOptions = deliveryOption?.paymentMethods ?? [];
   const effectivePayment = paymentOptions.some((p) => p.code === payment) ? payment : (paymentOptions[0]?.code ?? "");
+  const cardProvider = effectivePayment === "card" ? cardProviderOf(paymentOptions, cardChoice) : null;
 
   const blocking = quote?.items.some((i) => i.issue) ?? false;
   const canConfirm = quoteCurrent && !!quote && !!deliveryOption && !!effectivePayment && !blocking && !cartState.error;
@@ -113,7 +116,8 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
       }, cartState.owner === "guest" ? null : cartState.owner);
 
       if (data) {
-        router.push(`/order/${data.number}?token=${encodeURIComponent(data.accessToken)}`);
+        const pay = cardProvider ? `&pay=${encodeURIComponent(cardProvider)}` : "";
+        router.push(`/order/${data.number}?token=${encodeURIComponent(data.accessToken)}${pay}`);
         return;
       }
 
@@ -173,6 +177,8 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
     paymentOptions,
     effectivePayment,
     setPayment,
+    cardProvider,
+    setCardProvider,
     settlement: point.settlement,
     chooseSettlement: (next: Parameters<typeof point.chooseSettlement>[0]) => {
       account.release();

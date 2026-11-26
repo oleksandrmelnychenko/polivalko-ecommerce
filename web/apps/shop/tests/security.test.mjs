@@ -43,6 +43,10 @@ test("payment navigation stays on the supported provider or the relevant shop ro
 
   assert.equal(paymentPageUrl(sandbox, origin), sandbox);
   assert.equal(paymentPageUrl(vendor, origin), vendor);
+  const liqpay = "https://www.liqpay.ua/api/3/checkout?data=eyJ2IjozfQ%3D%3D&signature=abc%3D";
+  assert.equal(paymentPageUrl(liqpay, origin), liqpay);
+  assert.equal(paymentPageUrl("https://www.liqpay.ua/api/request?data=x&signature=y", origin), null);
+  assert.equal(paymentPageUrl("https://liqpay.ua.example.test/api/3/checkout?data=x&signature=y", origin), null);
   assert.equal(paymentPageUrl("https://example.test/checkout", origin), null);
   assert.equal(paymentPageUrl(guest, origin), null);
   assert.equal(sandboxReturnUrl(guest, origin, "PV-42"), guest);

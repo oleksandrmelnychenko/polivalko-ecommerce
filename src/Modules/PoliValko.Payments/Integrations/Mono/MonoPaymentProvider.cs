@@ -11,7 +11,7 @@ using PoliValko.Payments.Integrations.Providers;
 
 namespace PoliValko.Payments.Integrations.Mono;
 
-internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOptions> options, MonoWebhookKeys webhookKeys) : IPaymentProvider
+internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOptions> options, MonoWebhookKeys webhookKeys, IPaymentCredentials? credentials = null) : IPaymentProvider
 {
     private const int Hryvnia = 980;
 
@@ -92,6 +92,8 @@ internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOpti
             throw new PaymentWebhookRejectedException("Підпис X-Sign не збігається.");
         }
 
+        // The signing key belongs to the merchant token: a token changed in the console drops the cached key.
+        await webhookKeys.UseTokenAsync(await TokenAsync(ct), ct);
         var cachedKey = webhookKeys.Current;
         if ((cachedKey is null || !Verify(body, signature, cachedKey)) &&
             (await webhookKeys.RefreshAsync(FetchKeyAsync, ct) is not { } refreshedKey || !Verify(body, signature, refreshedKey)))
@@ -216,14 +218,14 @@ internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOpti
 
     private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string path, object? body, CancellationToken ct, bool throwOnError = true)
     {
-        var settings = options.Value.Mono;
-        if (string.IsNullOrWhiteSpace(settings.Token))
+        var token = await TokenAsync(ct);
+        if (string.IsNullOrWhiteSpace(token))
         {
-            throw new InvalidOperationException("Не задано Payments:Mono:Token.");
+            throw new InvalidOperationException("Не задано токен monobank: вставте його в консолі, розділ «Оплата й чеки».");
         }
 
-        using var request = new HttpRequestMessage(method, $"{settings.BaseUrl.TrimEnd('/')}{path}");
-        request.Headers.Add("X-Token", settings.Token);
+        using var request = new HttpRequestMessage(method, $"{options.Value.Mono.BaseUrl.TrimEnd('/')}{path}");
+        request.Headers.Add("X-Token", token);
         if (body is not null)
         {
             request.Content = JsonContent.Create(body, body.GetType(), options: Json);
@@ -239,6 +241,19 @@ internal sealed class MonoPaymentProvider(HttpClient http, IOptions<PaymentsOpti
 
         return response;
     }
+
+    /// <summary>Checks a token: monobank answers with the merchant's name only for a valid one.</summary>
+    public async Task<string> CheckAsync(CancellationToken ct)
+    {
+        using var response = await SendAsync(HttpMethod.Get, "/api/merchant/details", null, ct);
+        var details = await response.Content.ReadFromJsonAsync<MerchantDetails>(Json, ct);
+        return details?.MerchantName ?? details?.MerchantId ?? "monobank";
+    }
+
+    internal sealed record MerchantDetails(string? MerchantId, string? MerchantName);
+
+    private async Task<string?> TokenAsync(CancellationToken ct) =>
+        credentials is null ? options.Value.Mono.Token : await credentials.MonoTokenAsync(ct);
 
     private static long Kopecks(decimal amount) => (long)decimal.Round(amount * 100, 0, MidpointRounding.AwayFromZero);
 

@@ -1,4 +1,4 @@
-export const PERMISSION_CATALOG_VERSION = '2026-11-20.4'
+export const PERMISSION_CATALOG_VERSION = '2026-11-26.1'
 
 export const PermissionKeys = {
   Accounting: { View: 'accounting.registers.view', Edit: 'accounting.registers.edit', Post: 'accounting.invoices.post', Pay: 'accounting.payments.record', Opening: 'accounting.stock.open', BalanceOpening: 'accounting.settlements.open' },
@@ -45,6 +45,7 @@ export const PermissionKeys = {
     ManageShop: 'settings.shop.manage',
     ManageNavkolo: 'settings.navkolo.manage',
     ManageNotifications: 'settings.notifications.manage',
+    ManagePayments: 'settings.payments.manage',
   },
   Integration: {
     ViewStatus: 'integration.status.view',
@@ -103,6 +104,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   'settings.shop.manage': 'Магазин: контакти, графік, реквізити',
   'settings.navkolo.manage': 'Навколо: підключення',
   'settings.notifications.manage': 'Сповіщення',
+  'settings.payments.manage': 'Оплата: банки й ключі',
   'delivery.pickup.manage': 'Доставка й самовивіз',
   'integration.status.view': 'Стан синхронізацій',
   'integration.jobs.run': 'Запуск синхронізацій вручну',

@@ -22,6 +22,11 @@ internal static class PaymentEndpoints
             .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
+        group.MapGet("/payments/options", async (PoliValko.Payments.Features.Settings.PaymentGateways gateways, CancellationToken ct) =>
+                TypedResults.Ok<IReadOnlyList<PaymentOptionDto>>((await gateways.OptionsAsync(ct)).Select(o => new PaymentOptionDto(o.Code, o.Name, o.Hint)).ToList()))
+            .WithName("PaymentOptions")
+            .WithSummary("Способи онлайн-оплати, з яких обирає покупець: monobank, ПриватБанк, Apple Pay / Google Pay. Порожньо — онлайн-оплата вимкнена.");
+
         group.MapPost("/payments/webhooks/{provider}", ReceiveWebhook.HandleAsync)
             .WithName("PaymentWebhook")
             .WithSummary("Повідомлення платіжного провайдера. Приймається лише з дійсним підписом; дублікати ігноруються.")

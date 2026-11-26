@@ -4,6 +4,7 @@ const PROVIDERS: Record<string, string> = {
   mono: 'Plata by mono',
   monobank: 'Plata by mono',
   plata: 'Plata by mono',
+  liqpay: 'LiqPay (ПриватБанк)',
   sandbox: 'Тестова оплата (Sandbox)',
   stub: 'Тестова заглушка',
   checkbox: 'Checkbox',
@@ -28,14 +29,17 @@ const RECEIPT_MOMENTS: Record<string, string> = {
 }
 
 export const PAYMENT_METHODS: { key: 'card' | 'cashOnDelivery' | 'pickup'; label: string; hint: string }[] = [
-  { key: 'card', label: 'Карткою онлайн', hint: 'Plata by mono на сайті' },
+  { key: 'card', label: 'Онлайн на сайті', hint: 'monobank, ПриватБанк, Apple Pay, Google Pay' },
   { key: 'cashOnDelivery', label: 'Післяплата', hint: 'Оплата на Новій пошті під час отримання' },
   { key: 'pickup', label: 'У магазині під час самовивозу', hint: 'Оплата на касі магазину' },
 ]
 
 export function providerLabel(value: string | null | undefined): string {
   if (!value) return 'Не налаштовано'
-  return PROVIDERS[value.toLowerCase()] ?? value
+  return value
+    .split(',')
+    .map((part) => PROVIDERS[part.trim().toLowerCase()] ?? part.trim())
+    .join(', ')
 }
 
 export function modeChip(value: string | null | undefined): { label: string; tone: TableChipTone } {

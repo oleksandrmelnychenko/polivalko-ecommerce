@@ -1,10 +1,15 @@
 import { browserApi } from "@polivalko/shared/api/browser";
 
-export function startPayment(number: string, token: string, idempotencyKey: string) {
+export function startPayment(number: string, token: string, idempotencyKey: string, method?: string | null) {
   return browserApi.POST("/api/v1/orders/{number}/payments", {
     params: { path: { number }, header: { "Idempotency-Key": idempotencyKey } },
-    body: { token },
+    body: { token, method: method ?? null },
   });
+}
+
+/** Banks and wallets the buyer can pay with: monobank, PrivatBank (LiqPay), Apple Pay / Google Pay. */
+export function getPaymentOptions(signal: AbortSignal) {
+  return browserApi.GET("/api/v1/payments/options", { cache: "no-store", signal });
 }
 
 export function getSandboxInvoice(id: string, signal: AbortSignal) {

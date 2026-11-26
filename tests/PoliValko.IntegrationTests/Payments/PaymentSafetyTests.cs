@@ -249,7 +249,7 @@ public sealed class PaymentSafetyTests(ApiFactory api)
     private Task DeliverAsync(StartPaymentDto payment) =>
         api.WithScopeAsync(async services =>
         {
-            var provider = services.GetRequiredService<IPaymentProviders>().Active!;
+            var provider = services.GetRequiredService<IPaymentProviders>().Find(PaymentProviderNames.Sandbox)!;
             var status = await provider.GetStatusAsync(InvoiceId(payment), Ct);
             await services.GetRequiredService<PaymentProcessor>().ApplyAsync(provider.Name, status, "test", null, Ct);
             return 0;

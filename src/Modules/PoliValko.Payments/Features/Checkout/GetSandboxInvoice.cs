@@ -18,12 +18,11 @@ internal static class GetSandboxInvoice
         PoliValkoDbContext db,
         CancellationToken ct)
     {
-        if (providers.Active?.Name != PaymentProviderNames.Sandbox)
+        if (providers.Find(PaymentProviderNames.Sandbox) is not SandboxPaymentProvider provider)
         {
             return Problems.NotFound("http.not_found", "Не знайдено");
         }
 
-        var provider = (SandboxPaymentProvider)providers.Active;
         var status = await db.Set<SandboxInvoice>().AnyAsync(i => i.Id == invoiceId, ct)
             ? await provider.GetStatusAsync(invoiceId, ct)
             : null;

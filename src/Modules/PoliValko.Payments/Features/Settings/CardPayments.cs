@@ -1,9 +1,9 @@
 using PoliValko.Ordering.Contracts;
-using PoliValko.Payments.Contracts;
 
 namespace PoliValko.Payments.Features.Settings;
 
-internal sealed class CardPayments(IPaymentSettings settings) : ICardPayments
+internal sealed class CardPayments(PaymentGateways gateways) : ICardPayments
 {
-    public bool Available => settings.Mode != "Disabled";
+    public async Task<IReadOnlyList<CardPaymentOption>> GetOptionsAsync(CancellationToken ct) =>
+        (await gateways.OptionsAsync(ct)).Select(o => new CardPaymentOption(o.Code, o.Name, o.Hint)).ToList();
 }

@@ -78,6 +78,8 @@ function CheckoutFields({ mailDelivers, phone, pickupPoint }: CheckoutFormProps)
           paymentOptions={checkout.paymentOptions}
           effectivePayment={checkout.effectivePayment}
           setPayment={checkout.setPayment}
+          cardProvider={checkout.cardProvider}
+          setCardProvider={checkout.setCardProvider}
           fieldError={fieldError}
         />
         <CheckoutComment field={field} fieldError={fieldError} />

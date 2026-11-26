@@ -49,7 +49,7 @@ internal sealed class OrderWriter(
         }
 
         var availability = await delivery.GetAsync(ct);
-        var (errors, valid) = await OrderValidator.ValidateAsync(request, directory, availability, cards.Available, ct);
+        var (errors, valid) = await OrderValidator.ValidateAsync(request, directory, availability, (await cards.GetOptionsAsync(ct)).Count > 0, ct);
         if (valid is null)
         {
             return TypedResults.ValidationProblem(errors);

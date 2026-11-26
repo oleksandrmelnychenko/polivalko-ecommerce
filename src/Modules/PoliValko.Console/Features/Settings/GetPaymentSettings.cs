@@ -24,9 +24,10 @@ internal static class GetPaymentSettings
             .Select(s => s.LastSuccessAt)
             .FirstOrDefaultAsync(ct);
 
+        var summary = await payments.GetAsync(ct);
         return TypedResults.Ok(new PaymentSettingsDto(
-            payments.Provider,
-            payments.Mode,
+            summary.Provider,
+            summary.Mode,
             lastReconcileAt,
             fiscal.Provider,
             fiscal.Mode,
