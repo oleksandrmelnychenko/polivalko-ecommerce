@@ -2,23 +2,27 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
-import { AlertIcon } from "@polivalko/shared/ui/icons";
+import { AlertIcon, PhoneIcon } from "@polivalko/shared/ui/icons";
 import { getContacts, getPage } from "../api/server";
 import { htmlSections } from "../lib/html-sections";
 import { PageHead } from "./page-head";
 
 const TOC_MIN_SECTIONS = 7;
 
-type InfoPageProps = { slug: string; title: string; lead?: string; children?: ReactNode; layout?: "document" | "compact" };
+type InfoPageProps = { slug: string; title: string; lead?: string; children?: ReactNode; layout?: "document" | "privacy" | "returns" | "offer" };
+
+function DocumentHeaderAction({ layout }: Pick<InfoPageProps, "layout">) {
+  if (layout === "returns") return <Link href="/contacts" className="btn btn--graphite"><PhoneIcon /> Зв’язатися з магазином</Link>;
+  return null;
+}
 
 export function InfoPage({ slug, title, lead, children, layout = "document" }: InfoPageProps) {
   return (
     <div className={`container doc-page doc-page--${layout}`}>
       <Suspense fallback={
-        <>
-          <PageHead path={`/${slug}`} title={title} lead={lead} />
+        <PageHead path={`/${slug}`} title={title} lead={lead} actions={<DocumentHeaderAction layout={layout} />}>
           <div className="doc__loading" role="status">Завантажуємо текст сторінки…</div>
-        </>
+        </PageHead>
       }>
         <InfoContent slug={slug} layout={layout}>{children}</InfoContent>
       </Suspense>
@@ -33,12 +37,11 @@ async function InfoContent({ slug, children, layout }: Omit<InfoPageProps, "titl
   const phone = page.bodyHtml ? null : (await getContacts().catch(() => null))?.storePhone?.trim() || null;
   const { intro, sections } = page.bodyHtml ? htmlSections(page.bodyHtml) : { intro: "", sections: [] };
   const anchor = (index: number) => `part-${index + 1}`;
-  const toc = sections.length >= TOC_MIN_SECTIONS;
+  const leafSeparated = layout === "offer" || layout === "privacy" || layout === "returns";
+  const toc = !leafSeparated && sections.length >= TOC_MIN_SECTIONS;
 
   return (
-    <>
-      <PageHead path={`/${slug}`} title={page.title} lead={page.lead} />
-
+    <PageHead path={`/${slug}`} title={page.title} lead={page.lead} actions={<DocumentHeaderAction layout={layout} />}>
       <div className={toc ? "doc" : "doc doc--single"}>
         {toc && (
           <nav className="doc__toc" aria-label="Зміст сторінки">
@@ -53,7 +56,7 @@ async function InfoContent({ slug, children, layout }: Omit<InfoPageProps, "titl
           </nav>
         )}
 
-        <div className="doc__body">
+        <div className={leafSeparated ? "doc__body leaf-separated" : "doc__body"}>
           {intro && (
             <div className="doc__note">
               {layout === "document" && <AlertIcon />}
@@ -61,8 +64,8 @@ async function InfoContent({ slug, children, layout }: Omit<InfoPageProps, "titl
             </div>
           )}
           {sections.map((section, index) => (
-            <section key={anchor(index)} id={anchor(index)} className="doc__section" aria-labelledby={`${anchor(index)}-title`}>
-              <h2 id={`${anchor(index)}-title`}>{section.title}</h2>
+            <section key={anchor(index)} id={anchor(index)} className={layout === "returns" && index === 0 ? "doc__section customer-return-window" : "doc__section"} aria-labelledby={`${anchor(index)}-title`}>
+              <h2 id={`${anchor(index)}-title`}>{layout === "offer" ? section.title.replace(/^\d+[.)]\s+/u, "") : section.title}</h2>
               <div className="prose" dangerouslySetInnerHTML={{ __html: section.html }} />
             </section>
           ))}
@@ -83,8 +86,11 @@ async function InfoContent({ slug, children, layout }: Omit<InfoPageProps, "titl
             </div>
           )}
           {children}
+          {layout === "privacy" && page.bodyHtml && (
+            <Link href="/contacts" className="privacy-contact">Звернутися щодо даних <span aria-hidden="true">→</span></Link>
+          )}
         </div>
       </div>
-    </>
+    </PageHead>
   );
 }

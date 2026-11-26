@@ -27,25 +27,3 @@
 .doc__facts div { display: grid; gap: 2px; min-width: 0; }
 .doc__facts dt { color: rgb(255 255 255 / 0.6); font-size: var(--text-xs); letter-spacing: 0.06em; text-transform: uppercase; }
 .doc__facts dd { margin: 0; color: #fff; font-weight: 500; overflow-wrap: anywhere; }
-
-.doc-page--compact { padding-bottom: 32px; }
-.doc-page--compact .lead { margin: 0; color: var(--color-ink-2); font: 400 16px/1.5 var(--font-body); }
-.doc-page--compact .doc { max-width: 64rem; margin-top: 0; gap: 16px; }
-.doc-page--compact .doc__body { border: 1px solid var(--color-rule); border-radius: 16px; }
-.doc-page--compact .doc__note { display: block; margin: 0; padding: 12px 16px; border-radius: 15px 15px 0 0; background: var(--color-paper-2); color: var(--color-ink-2); }
-.doc-page--compact .doc__note .prose { font-size: 14px; line-height: 1.5; }
-.doc-page--compact .doc__section { display: grid; grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr); gap: 16px; padding: 16px; }
-.doc-page--compact .doc__note + .doc__section { border-top: 1px solid var(--color-rule); }
-.doc-page--compact .doc__section h2 { margin: 0; font: 600 16px/1.5 var(--font-body); }
-.doc-page--compact .doc__section .prose { min-width: 0; font-size: 16px; line-height: 1.55; overflow-wrap: anywhere; }
-.doc-page--compact .doc__toc { padding: 12px 16px; }
-.doc-page--compact .doc__toc-title { margin-bottom: 4px; font: 600 16px/1.5 var(--font-body); letter-spacing: normal; text-transform: none; }
-.doc-page--compact .doc__toc a { padding: 6px 0; }
-.doc-page--compact .doc__seller { margin: 0; border-top: 1px solid var(--color-rule); border-radius: 0 0 15px 15px; background: var(--color-paper-2); color: var(--color-ink); }
-.doc-page--compact .doc__seller h2, .doc-page--compact .doc__facts dd { color: inherit; }
-.doc-page--compact .doc__facts { gap: 8px 16px; }
-.doc-page--compact .doc__facts dt { color: var(--color-ink-2); letter-spacing: normal; text-transform: none; }
-@media (max-width: 40rem) {
-  .doc-page--compact .doc__note { padding: 10px 12px; }
-  .doc-page--compact .doc__section { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 12px; }
-}

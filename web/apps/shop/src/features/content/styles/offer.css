@@ -1,0 +1,4 @@
+.customer-layout__info .doc__seller { padding: var(--space-lg); border-radius: 16px; background: var(--customer-panel); color: var(--color-ink); }
+.customer-layout__info .doc__seller :is(h2,dt,dd) { color: inherit; }
+.privacy-contact { justify-self: start; margin-top: var(--space-md); font-weight: 550; }
+@media print { .privacy-contact { display: none; } }

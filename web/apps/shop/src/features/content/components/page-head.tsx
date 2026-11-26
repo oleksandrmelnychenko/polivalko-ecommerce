@@ -1,15 +1,32 @@
 import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import { breadcrumbJsonLd, JsonLd } from "@/features/seo";
+import type { ReactNode } from "react";
+import { CustomerPageNav } from "./customer-page-nav";
+import { customerPages } from "@/shared/lib/customer-pages";
+import "../styles/customer-banner.css";
 
-export function PageHead({ title, lead, path }: { title: string; lead?: string | null; path?: string }) {
+export function PageHead({ title, lead, path, actions, children }: { title: string; lead?: string | null; path?: string; actions?: ReactNode; children?: ReactNode }) {
+  const cover = customerPages.find(page => page.href === path)?.cover;
+  const titleLines = cover && title.trim().match(/^(\S+)\s+((?:(?:і|й|та)\s+)?\S+)$/u);
+  const content = <>
+    <h1>{titleLines ? <>{titleLines[1]}{" "}<br />{titleLines[2]}</> : title}</h1>
+    {lead && <p className="lead">{lead}</p>}
+    {actions}
+  </>;
   return (
     <>
+      <JsonLd data={breadcrumbJsonLd([{ name: title, path }])} />
       <Breadcrumbs current={title} />
-      <header className="page-head">
-        <JsonLd data={breadcrumbJsonLd([{ name: title, path }])} />
-        <h1>{title}</h1>
-        {lead && <p className="lead">{lead}</p>}
-      </header>
+      <CustomerPageNav path={path} />
+      {cover ? (
+        <div className="customer-layout">
+          <header className="customer-banner">
+            <img src={cover} alt="" fetchPriority="high" />
+            <div className="customer-banner__copy">{content}</div>
+          </header>
+          <div className="customer-layout__info">{children}</div>
+        </div>
+      ) : <><header className="page-head">{content}</header>{children}</>}
     </>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "@/shared/ui/idle-link";
+import { purchasePages, privacyPage } from "@/shared/lib/customer-pages";
 import { JOURNAL_ENABLED } from "@/features/journal";
 import { Suspense } from "react";
 import { FooterColumn } from "./footer-column";
@@ -26,12 +27,6 @@ const categories = [
   { href: "/catalog", label: "Усі категорії" },
 ];
 
-const buyers = [
-  { href: "/payment-delivery", label: "Доставка й оплата" },
-  { href: "/returns", label: "Повернення й обмін" },
-  { href: "/offer", label: "Публічна оферта" },
-];
-
 export function SiteFooter() {
   return (
     <footer className="footer" id="footer">
@@ -50,7 +45,7 @@ export function SiteFooter() {
             <FooterLinks links={categories} />
           </FooterColumn>
           <FooterColumn id="footer-buyers" title="Клієнтам">
-            <FooterLinks links={buyers} />
+            <FooterLinks links={purchasePages} />
           </FooterColumn>
         </div>
         <p className="footer__statement">Магазин для саду, городу й дому в Бучі.</p>
@@ -60,7 +55,7 @@ export function SiteFooter() {
             <Suspense fallback={null}><FooterSeller /></Suspense>
           </div>
           <div className="footer__legal-links">
-            <Link href="/privacy">Політика приватності</Link>
+            <Link href={privacyPage.href}>{privacyPage.label}</Link>
             <Link href="/credits">Автори фото</Link>
           </div>
         </div>
