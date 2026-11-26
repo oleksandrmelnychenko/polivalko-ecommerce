@@ -30,11 +30,14 @@
 .delivery-facts > div { display: grid; grid-template-columns: 3.8rem minmax(0, 1fr); gap: 8px; }
 .delivery-facts :is(dt,dd) { margin: 0; font-size: .9rem; }
 .delivery-route { margin-top: 14px; color: #284a34; }
-.payment-list > li { display: grid; gap: 6px; padding: 15px 0; border-top: 1px solid var(--color-rule); }
+.payment-list, .delivery-terms__items { display: grid; gap: 20px; }
+.payment-list > li { display: grid; gap: 6px; }
 .payment-availability { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .payment-availability li { padding: 2px 8px; border-radius: 5px; background: var(--color-paper-2); color: var(--color-ink); font-size: .82rem; }
-.delivery-terms .prose { margin: 0; }
-.delivery-terms .ib-faq summary { min-height: 44px; padding-inline-end: var(--space-sm); }
+.delivery-terms__items h3 { margin: 0 0 6px; font-size: 1rem; }
+.delivery-terms__items .prose { margin: 0; padding: 0; }
+.delivery-terms__items .prose > :first-child { margin-top: 0; }
+.delivery-terms__items .prose > :last-child { margin-bottom: 0; }
 .delivery-help { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-top: 30px; padding: 20px 0; border-top: 1px solid var(--color-rule); border-radius: 0; }
 .delivery-help__links { display: flex; flex-wrap: wrap; gap: 0 18px; }
 .delivery-link { display: inline-flex; align-items: center; min-height: 40px; color: var(--color-ink); text-underline-offset: 4px; }

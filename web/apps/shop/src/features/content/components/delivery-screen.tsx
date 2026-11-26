@@ -99,18 +99,14 @@ async function DeliveryContent() {
         {terms && (
           <section className="delivery-section delivery-terms" aria-labelledby="terms-title">
             <h2 id="terms-title">Після оформлення</h2>
-            <div>
+            <div className="delivery-terms__items">
               {terms.intro && <div className="prose" dangerouslySetInnerHTML={{ __html: terms.intro }} />}
-              {terms.sections.length > 0 && (
-                <div className="ib-faq">
-                  {terms.sections.map((section, index) => (
-                    <details key={index} open>
-                      <summary>{section.title}</summary>
-                      <div className="ib-faq__answer prose" dangerouslySetInnerHTML={{ __html: section.html }} />
-                    </details>
-                  ))}
+              {terms.sections.map((section, index) => (
+                <div key={index}>
+                  <h3>{section.title}</h3>
+                  <div className="prose" dangerouslySetInnerHTML={{ __html: section.html }} />
                 </div>
-              )}
+              ))}
             </div>
           </section>
         )}
