@@ -130,7 +130,7 @@ function PaymentView({ value }: { value: PaymentSettings }) {
         <section key={active} className="app-split-detail" aria-label={section.name}>
           {active === 'card' ? (
             <>
-              <SettingsHero section={section} kicker="Оплата й чеки" description="Як магазин приймає оплату на сайті." />
+              <SettingsHero section={section} kicker="Оплата й чеки" />
               <SettingsCard title="Стан">
                 <dl className="app-split-fields">
                   <div>
@@ -392,7 +392,6 @@ function GatewaysForm({
                 <SettingsHero
                   section={section}
                   kicker="Оплата онлайн"
-                  description="Покупець платить на сторінці Plata by mono: картка будь-якого банку, Apple Pay і Google Pay. Токен беруть у кабінеті web.monobank.ua → Налаштування → Інтернет-еквайринг. На робочому сайті — лише робочий токен: з тестовим будь-хто оплатив би замовлення тестовою карткою."
                 />
                 <SettingsCard title="Підключення">
                   <Stack gap="md">
@@ -446,7 +445,6 @@ function GatewaysForm({
                 <SettingsHero
                   section={section}
                   kicker="Оплата онлайн"
-                  description="Покупець платить на сторінці LiqPay ПриватБанку: картка, Приват24, Apple Pay і Google Pay. Ключі — у кабінеті liqpay.ua → Налаштування → API. Тестові ключі з префіксом sandbox_ приймаються лише на тестовому сервері: на робочому з ними будь-хто оплатив би замовлення тестовою карткою."
                 />
                 <SettingsCard title="Підключення">
                   <Stack gap="md">
@@ -512,7 +510,6 @@ function GatewaysForm({
                 <SettingsHero
                   section={section}
                   kicker="Оплата онлайн"
-                  description="Окремий пункт «Apple Pay / Google Pay» у виборі оплати. Покупець потрапляє на сторінку обраного банку, де кнопки Apple Pay і Google Pay показуються на iPhone, Mac із Safari та Android."
                 />
                 <SettingsCard title="Швидка оплата з телефона">
                   <Stack gap="md">
@@ -543,7 +540,6 @@ function GatewaysForm({
                 <SettingsHero
                   section={section}
                   kicker="Чеки"
-                  description="Checkbox — хмарна програмна каса (ПРРО). Сайт сам входить касиром, відкриває зміну й видає чеки продажу та повернення. Окрема програма не потрібна, якщо КЕП касира зберігається в хмарі Checkbox; закриття зміни (Z-звіт) налаштовується в кабінеті Checkbox."
                 />
                 <SettingsCard title="Підключення каси">
                   <Stack gap="md">
@@ -620,7 +616,7 @@ function GatewaysForm({
 
             {active === 'moments' ? (
               <>
-                <SettingsHero section={section} kicker="Чеки" description="Коли сайт видає чек продажу для кожного способу оплати. Момент погоджує бухгалтер магазину. Чек повернення видається на кожне повернення, якщо був чек продажу." />
+                <SettingsHero section={section} kicker="Чеки" />
                 <SettingsCard title="Способи оплати">
                   <Stack gap="md">
                     {PAYMENT_METHODS.map((method) => (
@@ -687,7 +683,7 @@ function CommonDetail({ active, section, value }: { active: PaymentSectionKey; s
   if (active === 'fiscal') {
     return (
       <>
-        <SettingsHero section={section} kicker="Оплата й чеки" description="Як магазин видає фіскальні чеки через програмну касу. Касу налаштовує розробник у конфігурації сервера." />
+        <SettingsHero section={section} kicker="Оплата й чеки" />
         <SettingsCard title="Стан">
           <dl className="app-split-fields">
             <div>
@@ -711,7 +707,7 @@ function CommonDetail({ active, section, value }: { active: PaymentSectionKey; s
 
   return (
     <>
-      <SettingsHero section={section} kicker="Оплата й чеки" description="Момент видачі чека для кожного способу оплати визначає бухгалтер магазину." />
+      <SettingsHero section={section} kicker="Оплата й чеки" />
       <SettingsCard title="Способи оплати">
         <ul className="settings-moments">
           {PAYMENT_METHODS.map((method) => (
