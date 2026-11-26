@@ -29,7 +29,7 @@ async function ServicePageContent({ page }: { page: ServiceDirectionPage }) {
   const group = serviceGroupOf(page.code);
   const related = (await getServiceDirections().catch(() => []))
     .filter((service) => service.code !== page.code && group.codes.includes(service.code));
-  const photo = page.imageUrl ? sized(page.imageUrl, "(max-width: 42rem) 100vw, (max-width: 107rem) 44vw, 740px", 960) : { src: group.photo };
+  const photo = page.imageUrl ? sized(page.imageUrl, "(max-width: 48rem) 100vw, (max-width: 107rem) 53vw, 880px", 960) : { src: group.photo };
   const Icon = serviceIcon(page.code);
   const path = servicePath(page.slug);
 
@@ -39,12 +39,12 @@ async function ServicePageContent({ page }: { page: ServiceDirectionPage }) {
       <JsonLd data={serviceJsonLd({ name: page.name, description: page.seoDescription || page.description, path, image: page.imageUrl })} />
       <Breadcrumbs current={page.name} parents={PARENTS} />
 
-      <header className="service-page__head">
+      <header className="service-page__head" data-group={group.key}>
         <div className="service-page__intro">
           <p className="service-page__group"><Icon aria-hidden="true" size={18} stroke={1.7} />{group.title}</p>
           <h1>{page.name}</h1>
           {page.description && <p className="lead">{page.description}</p>}
-          <Link href={serviceRequestHref(page.code)} className="shop-action-link">Залишити заявку <ArrowRightIcon /></Link>
+          <Link href={serviceRequestHref(page.code)} className="btn btn--graphite">Залишити заявку <ArrowRightIcon /></Link>
         </div>
         <div className="service-page__photo">
           <img {...photo} alt="" width={960} height={640} fetchPriority="high" decoding="async" />
@@ -61,7 +61,7 @@ async function ServicePageContent({ page }: { page: ServiceDirectionPage }) {
         </div>
         <nav className="service-page__related" aria-labelledby="service-related-title">
           <h2 id="service-related-title">Інші послуги</h2>
-          <ul>
+          {related.length > 0 && <ul>
             {related.map((service) => {
               const RelatedIcon = serviceIcon(service.code);
               return (
@@ -74,19 +74,10 @@ async function ServicePageContent({ page }: { page: ServiceDirectionPage }) {
                 </li>
               );
             })}
-            <li><Link href="/services">Усі послуги <ArrowRightIcon /></Link></li>
-          </ul>
+          </ul>}
+          <Link href="/services" className="service-page__all">Усі послуги <ArrowRightIcon /></Link>
         </nav>
       </div>
-      {page.bodyHtml && (
-        <section className="service-page__contact" aria-labelledby="service-cta-title">
-          <div>
-            <h2 id="service-cta-title">Обговорімо вашу ділянку</h2>
-            <p>Ми зателефонуємо, щоб уточнити обсяг робіт, вартість і строки.</p>
-          </div>
-          <Link href={serviceRequestHref(page.code)} className="shop-action-link">Залишити заявку <ArrowRightIcon /></Link>
-        </section>
-      )}
     </>
   );
 }
