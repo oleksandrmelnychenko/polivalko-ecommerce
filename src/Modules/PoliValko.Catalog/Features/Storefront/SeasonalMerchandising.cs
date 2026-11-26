@@ -81,6 +81,9 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
         if (pinned is { Length: > 0 })
             ordered = ordered.ThenByDescending(s => pinned.Contains(s.p.Id)).ThenBy(s => Array.IndexOf(pinned, s.p.Id));
         ordered = ordered.ThenByDescending(s => s.available >= 1 && s.p.Price.Amount > 0);
+        // Among what can be bought, and then among the rest, a product the visitor can see before one without a photo:
+        // pages without a photo are also kept out of search (GetSitemap).
+        ordered = ordered.ThenByDescending(s => s.p.Images.Any());
         // Among what can be bought, the thing itself before what goes with it: «Шланг …» before «… для шланга».
         if (about is { Length: > 0 }) ordered = ordered.ThenByDescending(s => about.Contains(s.p.Id));
         if (monthlyLeader is { } leader) ordered = ordered.ThenByDescending(s => s.p.Id == leader);

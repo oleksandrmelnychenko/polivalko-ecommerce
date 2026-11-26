@@ -187,6 +187,38 @@ public sealed class StorefrontModeTests(ApiFactory api)
     }
 
     [Fact]
+    public async Task A_photo_ranks_a_product_above_stock_cover_among_what_can_be_bought()
+    {
+        // An old product with stock to spare and no sales covers the longest, so by cover alone it would lead.
+        var noPhoto = await api.AddProductAsync("vse-dlia-polyvu", "Шланг без фото", 50, stock: 20, createdAt: DateTimeOffset.UtcNow.AddDays(-90));
+        var withPhoto = await api.AddProductAsync("vse-dlia-polyvu", "Шланг із фото", 50, stock: 1);
+        var soldOutWithPhoto = await api.AddProductAsync("vse-dlia-polyvu", "Шланг розпроданий із фото", 50, stock: 0);
+        await api.WithDbAsync(async db =>
+        {
+            foreach (var product in new[] { withPhoto, soldOutWithPhoto })
+            {
+                db.Add(new ProductImage { Id = Guid.CreateVersion7(), ProductId = product.Id, Url = $"https://example.test/{product.Slug}.jpg", Alt = "Шланг" });
+            }
+
+            return await db.SaveChangesAsync(Ct);
+        });
+        // A day no other test uses: recent purchases are cached per day, and a shared day would hand one test's
+        // sales picture to another.
+        var day = new DateOnly(2087, 7, 12);
+        await api.WithScopeAsync(async services =>
+        {
+            var db = services.GetRequiredService<PoliValkoDbContext>();
+            var merchandising = services.GetRequiredService<SeasonalMerchandising>();
+            var products = db.Set<Product>().Where(p => p.Id == noPhoto.Id || p.Id == withPhoto.Id || p.Id == soldOutWithPhoto.Id);
+            var categories = await CategoryQueries.LoadVisibleCategoriesAsync(db, Ct);
+            var cover = await merchandising.SortAsync(products, categories, null, db, day, Ct, "stock_cover");
+            // What can be bought still comes first; among it, the product a visitor can see.
+            (await cover.Select(p => p.Id).ToArrayAsync(Ct)).ShouldBe([withPhoto.Id, noPhoto.Id, soldOutWithPhoto.Id]);
+            return true;
+        });
+    }
+
+    [Fact]
     public async Task There_are_two_modes_and_a_saved_trending_mode_reads_as_seasonal()
     {
         using var shop = api.CreateClient();
