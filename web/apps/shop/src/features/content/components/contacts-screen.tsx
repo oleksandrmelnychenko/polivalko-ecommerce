@@ -46,7 +46,7 @@ async function ContactsContent() {
           {contacts?.email && <div><dt>Електронна пошта</dt><dd><a href={"mailto:" + contacts.email}>{contacts.email}</a></dd></div>}
         </dl>
         <nav className="contact-jumps" aria-label="На цій сторінці">
-          <a href="#store"><PinIcon /> Як нас знайти</a>
+          <a className="btn btn--graphite" href="#store"><PinIcon /> Як нас знайти</a>
           {directions.length > 0 && <a href="#request">Заявка на послугу <ArrowRightIcon /></a>}
         </nav>
       </div>

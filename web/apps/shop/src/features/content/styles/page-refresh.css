@@ -70,12 +70,11 @@
 .contact-lines > div { padding: 8px 12px; border: 1px solid var(--color-rule); border-radius: 8px; background: var(--color-paper); }
 .contact-lines dt { font-size: .86rem; color: var(--color-ink-2); }
 .contact-lines dd { margin: 5px 0 0; font-size: clamp(1.12rem, 1.55vw, 1.65rem); line-height: 1.25; font-weight: 560; letter-spacing: -.035em; overflow-wrap: anywhere; }
-.contact-lines a, .contact-jumps a { color: inherit; text-decoration: none; }
+.contact-lines a, .contact-jumps a:not(.btn) { color: inherit; text-decoration: none; }
 .contact-lines a[href^="tel:"] { white-space: nowrap; }
-.contact-lines a:hover, .contact-jumps a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.contact-lines a:hover, .contact-jumps a:not(.btn):hover { text-decoration: underline; text-underline-offset: 4px; }
 .contact-jumps { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 22px; margin-top: 24px; }
-.contact-jumps a { display: inline-flex; align-items: center; gap: 8px; font-size: .9rem; font-weight: 550; }
-.contact-jumps a:first-child { padding: 12px 17px; background: var(--shop-graphite); color: #fff; border-radius: 24px; }
+.contact-jumps a:not(.btn) { display: inline-flex; align-items: center; gap: 8px; font-size: .9rem; font-weight: 550; }
 .contact-jumps svg, .contact-visit svg { width: 16px; height: 16px; flex: none; }
 .contact-jumps a:nth-child(2) svg { transform: rotate(90deg); }
 .contact-social { padding: 15px 0; border-bottom: 1px solid var(--color-rule); }
