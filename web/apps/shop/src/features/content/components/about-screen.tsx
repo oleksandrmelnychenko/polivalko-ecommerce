@@ -48,7 +48,7 @@ export default function AboutPage() {
           <p>Добираємо дерева й кущі з урахуванням ґрунту та освітлення на ділянці. Закладаємо газони, монтуємо системи поливу й готуємо їх до зими.</p>
         </div>
         <div className="story-garden__links">
-          <Link className="btn" href="/services">Усі послуги <ArrowRightIcon /></Link>
+          <Link className="btn btn--graphite" href="/services">Усі послуги <ArrowRightIcon /></Link>
           <Link className="story-link" href="/contacts#request">Залишити заявку</Link>
         </div>
       </section>

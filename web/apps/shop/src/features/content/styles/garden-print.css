@@ -37,7 +37,7 @@
   border: 1px solid var(--outline);
   transform: translate(-40%, 8%) rotate(-24deg);
 }
-.customer-banner .btn.btn--graphite, .story-garden .story-garden__links .btn {
+.customer-banner .btn.btn--graphite {
   border-radius: var(--radius-pill);
   box-shadow: none;
 }
