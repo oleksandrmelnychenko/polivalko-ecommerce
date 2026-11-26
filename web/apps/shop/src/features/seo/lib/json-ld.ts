@@ -3,7 +3,7 @@ import { directionsUrl } from "@/shared/lib/directions-url";
 import { openingHours, specialOpeningHours } from "./opening-hours";
 import { absoluteUrl, organizationId, SITE_LANGUAGE, SITE_NAME, siteUrl, websiteId } from "./site";
 
-const STORE_PHOTO = "/brand/polivalko-bucha.jpg";
+const STORE_PHOTO = "/brand/poli-valko-social.png";
 
 const CONTEXT = "https://schema.org";
 

@@ -15,7 +15,7 @@ export const defaultOpenGraph = {
   siteName: SITE_NAME,
   locale: SITE_LOCALE,
   type: "website" as const,
-  images: ["/brand/polivalko-bucha.jpg"],
+  images: [{ url: "/brand/poli-valko-social.png", width: 1200, height: 630, alt: "Poli-Valko: дім, сад, город" }],
 };
 
 export function seoMetadata({ title, description, path, images = [], noIndex = false, exactTitle = false }: SeoInput): Metadata {
@@ -29,7 +29,7 @@ export function seoMetadata({ title, description, path, images = [], noIndex = f
     description: summary,
     alternates: { canonical: path },
     openGraph: { ...defaultOpenGraph, title: social, description: summary, url: path, images: previewImages },
-    twitter: { card: pictures.length ? "summary_large_image" : "summary", title: social, description: summary, images: previewImages },
+    twitter: { card: "summary_large_image", title: social, description: summary, images: previewImages },
     // No `robots` key on an indexable page: even `undefined` replaces the root layout's value, and with it the
     // googlebot preview directives (max-image-preview and the rest).
     ...(noIndex ? { robots: { index: false, follow: true } } : {}),
