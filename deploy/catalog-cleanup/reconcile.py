@@ -5,6 +5,7 @@
     python reconcile.py apply  --base https://console.example.ua --target target.json
     python reconcile.py audit  --base https://console.example.ua --target target.json --report audit.tsv
     python reconcile.py adopt-plan --base https://console.example.ua --keep dntrade-0d3dac570ca1a1 --replace hazova-produktsiia
+    python reconcile.py variants-plan --base https://console.example.ua --variants pack-groups-draft.csv --report variants.tsv
 
 Credentials come from CONSOLE_EMAIL and CONSOLE_PASSWORD. Everything goes through the console API,
 so the change log, storefront cache invalidation and slug redirects work as for manual edits.
@@ -549,9 +550,104 @@ def normalize_attributes(console, apply, report_path):
     print(f"details in {report_path or 'attributes.tsv'}")
 
 
+def read_variants(path, extra_groups):
+    """Rows of a reviewed pack-groups CSV (`;`-separated, see output/catalog-content/pack-groups-draft).
+
+    Only `high` groups are taken, plus the doubtful ones named in extra_groups (their group_key)."""
+    with open(path, encoding="utf-8-sig", newline="") as file:
+        rows = list(csv.DictReader(file, delimiter=";"))
+    groups = defaultdict(list)
+    for row in rows:
+        if row["confidence"] == "high" or row["group_key"] in extra_groups:
+            groups[row["group_key"]].append(row)
+    unknown = extra_groups - {row["group_key"] for row in rows}
+    if unknown:
+        sys.exit(f"no such groups in {path}: {', '.join(sorted(unknown))}")
+    return groups
+
+
+def variants(console, path, mode, report_path=None, extra_groups=frozenset()):
+    """Link products into pack-size groups (VariantGroup / VariantLabel) through the console's accounting edit.
+
+    A group is written only when every product in it is found as reviewed: visible, not archived, the same name
+    the review saw, and no other group already set. Otherwise the whole group is skipped and listed."""
+    apply = mode == "variants-apply"
+    say = lambda line: print({"variants-apply": "APPLY ", "variants-plan": "PLAN  "}.get(mode, "AUDIT ") + line)
+    groups = read_variants(path, extra_groups)
+    report, counts = [], defaultdict(int)
+    for key, rows in sorted(groups.items()):
+        if len(rows) < 2:
+            report.append((key, rows[0]["sku"], rows[0]["current_name"], rows[0]["proposed_label"], "skipped", "only one product approved"))
+            counts["groups skipped"] += 1
+            continue
+        if len({r["proposed_label"] for r in rows}) != len(rows) or any(len(r["group_key"]) > 100 or not r["proposed_label"] for r in rows):
+            sys.exit(f"{key}: labels must be filled and different, the key at most 100 characters")
+        checked, problems = [], []
+        for row in rows:
+            p = console.call("GET", f"/catalog/products/{row['product_id']}")
+            nav = p["navkolo"]
+            shown = p.get("displayName") or nav["name"]
+            current = (nav.get("variantGroup"), nav.get("variantLabel"))
+            if mode == "variants-audit":
+                ok = current == (key, row["proposed_label"])
+                report.append((key, row["sku"], shown, row["proposed_label"], "ok" if ok else "missing", f"now {current[0] or '-'} / {current[1] or '-'}"))
+                counts["products ok" if ok else "products missing"] += 1
+                continue
+            if p.get("isArchived"):
+                problems.append(f"{row['sku']} is archived")
+            elif not p["isVisible"]:
+                problems.append(f"{row['sku']} is hidden")
+            elif nav["sku"] != row["sku"]:
+                problems.append(f"{row['product_id']} has sku {nav['sku']}, the review saw {row['sku']}")
+            elif shown != row["current_name"]:
+                problems.append(f"{row['sku']} is now named {shown!r}")
+            elif current[0] not in (None, key):
+                problems.append(f"{row['sku']} is already in group {current[0]}")
+            checked.append((row, p, current))
+        if mode == "variants-audit":
+            continue
+        if problems:
+            for row, _, _ in checked:
+                report.append((key, row["sku"], row["current_name"], row["proposed_label"], "skipped", "; ".join(problems)))
+            counts["groups skipped"] += 1
+            say(f"skip {key}: {'; '.join(problems)}")
+            continue
+        todo = [(row, p) for row, p, current in checked if current != (key, row["proposed_label"])]
+        for row, p, current in checked:
+            report.append((key, row["sku"], row["current_name"], row["proposed_label"], "set" if (row, p) in todo else "unchanged", ""))
+        if not todo:
+            counts["groups unchanged"] += 1
+            continue
+        counts["groups set"] += 1
+        counts["products set"] += len(todo)
+        say(f"group {key}: {' / '.join(r['proposed_label'] for r in rows)} ({rows[0]['group_name']})")
+        if apply:
+            for row, p in todo:
+                nav = p["navkolo"]
+                expected = {"sku": nav["sku"], "name": nav["name"], "groupRef": nav.get("groupRef"),
+                            "variantGroup": nav.get("variantGroup"), "variantLabel": nav.get("variantLabel")}
+                console.call("PUT", f"/catalog/products/{row['product_id']}", {
+                    "displayName": p.get("displayName"), "slug": p["slug"], "categoryId": p["categoryId"], "brand": p.get("brand"),
+                    "descriptionHtml": p.get("descriptionHtml"), "isVisible": p["isVisible"], "seoTitle": p.get("seoTitle"),
+                    "seoDescription": p.get("seoDescription"),
+                    "attributes": [{"name": a["name"], "value": a["value"]} for a in p["attributes"]],
+                    "labelIds": None,  # labels stay as they are
+                    "accounting": {"expected": expected,
+                                   "value": {**expected, "variantGroup": key, "variantLabel": row["proposed_label"]}}})
+    for name, count in sorted(counts.items()):
+        say(f"{name}: {count}")
+    out = report_path or "variants.tsv"
+    with open(out, "w", encoding="utf-8", newline="") as file:
+        writer = csv.writer(file, delimiter="\t")
+        writer.writerow(["group_key", "sku", "name", "label", "result", "note"])
+        writer.writerows(report)
+    print(f"details in {out}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("mode", choices=["export", "plan", "apply", "audit", "adopt-plan", "adopt-apply", "merge-plan", "merge-apply", "attributes-plan", "attributes-apply"])
+    parser.add_argument("mode", choices=["export", "plan", "apply", "audit", "adopt-plan", "adopt-apply", "merge-plan", "merge-apply", "attributes-plan", "attributes-apply",
+                                         "variants-plan", "variants-apply", "variants-audit"])
     parser.add_argument("--base", required=True, help="console origin, e.g. https://console.example.ua")
     parser.add_argument("--host", help="Host header when it differs from --base, e.g. console.localhost:8081")
     parser.add_argument("--target", default="target.json")
@@ -563,10 +659,16 @@ def main():
     parser.add_argument("--previous-target", help="plan/apply: target file of an earlier run; values it wrote may be updated")
     parser.add_argument("--fix-names", help='plan/apply: JSON {"sku": {"from": name now, "to": new name}}; replaces a site name only if it is exactly "from"')
     parser.add_argument("--keep-visible", default="", help="plan/apply: comma-separated DNTrade codes the target hides but this run leaves visible")
+    parser.add_argument("--variants", help="variants: reviewed pack-groups CSV (output/catalog-content/pack-groups-draft)")
+    parser.add_argument("--with-groups", default="", help="variants: comma-separated group_key of doubtful groups the owner approved too")
     args = parser.parse_args()
     console = Console(args.base, args.host)
     console.login()
-    if args.mode == "export":
+    if args.mode.startswith("variants"):
+        if not args.variants:
+            sys.exit("--variants CSV is required")
+        variants(console, args.variants, args.mode, args.report, {g.strip() for g in args.with_groups.split(",") if g.strip()})
+    elif args.mode == "export":
         export(console, args.out)
     elif args.mode.startswith("attributes"):
         normalize_attributes(console, args.mode == "attributes-apply", args.report)

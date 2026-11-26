@@ -93,9 +93,19 @@ for (const rows of byKey.values()) {
     }
     return x.length - y.length;
   };
-  const labels = single.length === rows.length ? rows.map(r => r.label) : [];
-  const shown = [...labels].sort(natural);
-  const orderNote = shown.some((l, i) => l !== labels[i]) ? `; увага: перемикач покаже кнопки в порядку ${shown.join(" / ")}` : "";
+  const misordered = labels => [...labels].sort(natural).some((l, i) => l !== labels[i]);
+  let orderNote = "";
+  if (single.length === rows.length && misordered(rows.map(r => r.label))) {
+    // Mixed units ("200 г" / "1 кг"): write every label in the smaller unit so the buttons go from small to large.
+    const small = { mass: "г", volume: "мл", count: "шт" }[rows[0].family];
+    const relabeled = rows.map(r => `${String(Number(r.amount.toFixed(3))).replace(".", ",")} ${small}`);
+    if (new Set(rows.map(r => r.family)).size === 1 && !misordered(relabeled)) {
+      rows.forEach((r, i) => { r.label = relabeled[i]; });
+      orderNote = `; підписи в одній одиниці (${small}), щоб кнопки стали від меншого до більшого`;
+    } else {
+      reasons.push(`перемикач покаже кнопки не по порядку: ${[...rows.map(r => r.label)].sort(natural).join(" / ")}`);
+    }
+  }
   const shortest = rows.map(r => tidy(r.base)).sort((a, b) => a.length - b.length)[0];
   groups.push({
     name: shortest,
