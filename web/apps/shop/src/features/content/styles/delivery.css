@@ -5,9 +5,8 @@
 .delivery-options { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .delivery-option {
   display: grid; align-content: start; grid-template-columns: minmax(0, 1fr) fit-content(42%); align-items: start; gap: 12px;
-  padding: clamp(18px, 2.1vw, 32px); border: 1px solid #d9dfd5; border-radius: 16px;
+  padding: clamp(18px, 2.1vw, 32px); background: var(--color-paper-2); border: 1px solid var(--color-rule); border-radius: 16px;
 }
-.delivery-option--pickup { background: var(--customer-panel); border-color: var(--customer-panel); }
 .delivery-option__head { display: flex; gap: 12px; align-items: center; }
 .delivery-option__head :is(svg,img) { flex: none; width: 19px; height: 19px; }
 .delivery-option h3, .payment-list h3 { margin: 0; font-size: clamp(1.05rem, 1.3vw, 1.35rem); line-height: 1.25; }
@@ -15,10 +14,10 @@
   justify-self: end;
   min-width: 0;
   padding: 3px 10px;
-  border: 1px solid #c9d6c6;
+  border: 1px solid var(--color-rule);
   border-radius: 12px;
-  background: #f4f7f0;
-  color: #34503b;
+  background: var(--color-paper);
+  color: var(--color-ink);
   font-size: .8rem;
   font-weight: 550;
   line-height: 1.35;
@@ -33,7 +32,7 @@
 .delivery-route { margin-top: 14px; color: #284a34; }
 .payment-list > li { display: grid; gap: 6px; padding: 15px 0; border-top: 1px solid var(--color-rule); }
 .payment-availability { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.payment-availability li { padding: 2px 8px; border-radius: 5px; background: #edf1e8; color: #34503b; font-size: .82rem; }
+.payment-availability li { padding: 2px 8px; border-radius: 5px; background: var(--color-paper-2); color: var(--color-ink); font-size: .82rem; }
 .delivery-terms .prose { margin: 0; }
 .delivery-terms .ib-faq summary { min-height: 44px; padding-inline-end: var(--space-sm); }
 .delivery-help { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-top: 30px; padding: 20px 0; border-top: 1px solid var(--color-rule); border-radius: 0; }

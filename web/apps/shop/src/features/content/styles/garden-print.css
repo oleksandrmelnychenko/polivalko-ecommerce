@@ -1,25 +1,26 @@
 /* Two cropped leaf forms share the same baseline across the shop's information pages. */
 .garden-print {
-  --paper: #e7eee2;
-  --leaf: #b4cbb5;
-  --fold: #c6d8c4;
-  --outline: #9fbba7;
+  --paper: #f4f5f3;
+  --leaf: #dce5da;
+  --fold: #e5ebe2;
+  --outline: #c9d6c8;
   position: relative;
   isolation: isolate;
   overflow: hidden;
   background-color: var(--paper);
+  border: 1px solid var(--color-rule);
 }
 .garden-print[data-tone="sand"], .contact-poster.garden-print {
-  --paper: #f1ecdd;
-  --leaf: #c6c8a2;
-  --fold: #d5d6b7;
-  --outline: #b2b797;
+  --paper: #f5f4f1;
+  --leaf: #e0dfd4;
+  --fold: #e9e8df;
+  --outline: #d0d0c2;
 }
 .garden-print[data-tone="mist"] {
-  --paper: #e5edec;
-  --leaf: #afc8c3;
-  --fold: #c1d5cf;
-  --outline: #9eb8b2;
+  --paper: #f2f5f4;
+  --leaf: #d9e4e1;
+  --fold: #e4ebe9;
+  --outline: #c8d7d2;
 }
 .garden-print::before, .garden-print::after {
   content: "";
@@ -35,6 +36,10 @@
 .garden-print::before {
   border: 1px solid var(--outline);
   transform: translate(-40%, 8%) rotate(-24deg);
+}
+.garden-print .btn.btn--graphite, .story-garden .story-garden__links .btn {
+  border-radius: var(--radius-pill);
+  box-shadow: none;
 }
 .garden-print::after {
   background: linear-gradient(135deg, var(--leaf) 50%, var(--fold) 50%);

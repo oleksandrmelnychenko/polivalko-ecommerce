@@ -18,7 +18,7 @@
 .doc__section { padding-block: var(--space-xl); border-top: var(--rule-hair) solid var(--color-rule); scroll-margin-top: calc(var(--bar-height) + var(--space-md)); }
 .doc__section:first-of-type { border-top: 0; padding-top: var(--space-sm); }
 .doc__note + .doc__section { padding-top: var(--space-sm); }
-.doc__section h2 { margin: 0 0 var(--space-sm); font-size: var(--text-xl); }
+:where(.doc__section) h2 { margin: 0 0 var(--space-sm); font-size: var(--text-xl); }
 .doc__section .prose { max-width: 72ch; padding: 0; }
 
 .doc__seller { margin-top: var(--space-md); padding: var(--space-xl); border-top: 0; background: var(--color-ink); color: rgb(255 255 255 / 0.8); }

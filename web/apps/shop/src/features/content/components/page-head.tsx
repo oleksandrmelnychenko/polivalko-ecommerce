@@ -23,7 +23,7 @@ export function PageHead({ title, lead, path, actions, children }: { title: stri
           <header className="customer-banner garden-print" data-tone={customerPage.tone}>
             <div className="customer-banner__copy">{content}</div>
           </header>
-          <div className="customer-layout__info">{children}</div>
+          <div className="customer-layout__info info-sheet">{children}</div>
         </div>
       ) : <><header className="page-head">{content}</header>{children}</>}
     </>

@@ -16,14 +16,7 @@
 .customer-layout__info {
   container-type: inline-size;
   min-width: 0;
-  --section-space: var(--space-md);
-  --customer-panel: #edf1e8;
-}
-.customer-layout__info section h2 {
-  margin: 0 0 var(--space-sm);
-  color: var(--color-ink);
-  font: var(--display-weight) clamp(var(--text-xl), 3.6cqi, var(--text-2xl))/1.15 var(--font-display);
-  letter-spacing: var(--tracking-display);
+  --customer-panel: var(--color-paper-2);
 }
 .customer-layout__info :is(.prose, .delivery-option__body) {
   max-width: 68ch;
@@ -51,14 +44,8 @@
   border-radius: 16px;
 }
 .customer-layout .customer-layout__info > :first-child { margin-top: 0; }
-.customer-banner__copy { padding: clamp(14px, 5cqi, 40px); color: #203d37; overflow-wrap: anywhere; }
-.customer-banner__copy h1 {
-  margin: 0;
-  color: inherit;
-  font: 600 clamp(1.45rem, 9cqi, 4.6rem)/1.08 var(--font-body);
-  letter-spacing: -.05em;
-}
-.customer-banner__copy .lead { max-width: 36ch; margin: 0.6em 0 0; color: #30453d; font: 400 clamp(.875rem, 3cqi, 1.05rem)/1.45 var(--font-body); }
+.customer-banner__copy { padding: clamp(14px, 5cqi, 40px); color: var(--color-ink); overflow-wrap: anywhere; }
+.customer-banner__copy .lead { max-width: 36ch; margin: 0.6em 0 0; color: var(--color-ink-2); font: 400 clamp(.875rem, 3cqi, 1.05rem)/1.45 var(--font-body); }
 .customer-banner__copy .btn { max-width: 100%; margin-top: clamp(8px, 2.5cqi, 18px); }
 @media (max-width: 52rem) {
   .customer-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }

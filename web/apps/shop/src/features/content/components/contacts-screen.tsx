@@ -52,7 +52,7 @@ async function ContactsContent() {
       </div>
     </header>
     {socials.length > 0 && <nav className="contact-social" aria-label="Месенджери та соцмережі"><SocialLinksList links={socials} /></nav>}
-    <section id="store" className="contact-visit" aria-labelledby="contact-store-title">
+    <section id="store" className="contact-visit info-sheet" aria-labelledby="contact-store-title">
         <div className="contact-location">
           <h2 id="contact-store-title">Адреса магазину</h2>
           <address>{address}</address>
@@ -69,7 +69,7 @@ async function ContactsContent() {
         {(contacts?.address || point?.address) && <iframe className="contact-map" src={mapEmbed} title="Магазин на карті" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />}
     </section>
     {directions.length > 0 && (
-      <section id="request" className="contact-request-sheet" aria-labelledby="contact-services-title">
+      <section id="request" className="contact-request-sheet info-sheet" aria-labelledby="contact-services-title">
         <ServiceRequestForm directions={directions} />
       </section>
     )}

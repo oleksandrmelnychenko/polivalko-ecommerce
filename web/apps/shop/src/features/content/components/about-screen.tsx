@@ -25,7 +25,7 @@ export default function AboutPage() {
             <Link href="/contacts#store"><PinIcon /> Де нас знайти</Link>
           </div>
         </header>
-        <section className="story-shop" aria-labelledby="story-shop-title">
+        <section className="story-shop info-sheet" aria-labelledby="story-shop-title">
           <div className="story-copy">
             <h2 id="story-shop-title">У нашому магазині</h2>
             <p>Завітайте, щоб оглянути товар і порадитися з продавцем. Онлайн-замовлення надсилаємо Новою поштою по Україні.</p>
@@ -42,7 +42,7 @@ export default function AboutPage() {
           </ul>
         </section>
       </div>
-      <section className="story-garden" aria-labelledby="story-garden-title">
+      <section className="story-garden info-sheet" aria-labelledby="story-garden-title">
         <div className="story-copy">
           <h2 id="story-garden-title">Садові роботи</h2>
           <p>Добираємо дерева й кущі з урахуванням ґрунту та освітлення на ділянці. Закладаємо газони, монтуємо системи поливу й готуємо їх до зими.</p>
