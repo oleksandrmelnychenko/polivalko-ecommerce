@@ -168,6 +168,9 @@ internal static class PaymentGatewayEndpoints
         var current = await gateways.ReadAsync(ct);
         if (current?.Revision != request.Revision) return Conflict();
         var loaded = await gateways.LoadAsync(ct);
+        if (request.LiqPayEnabled && !options.Value.AllowSandbox
+            && PaymentGateways.Effective.IsTestKey(Blank(request.LiqPayPublicKey) ? loaded.LiqPayPublicKey : request.LiqPayPublicKey!.Trim()))
+            return Invalid("liqPayPublicKey", "Тестові ключі LiqPay (sandbox_) на цьому сервері заборонені: з ними будь-хто оплатить замовлення тестовою карткою.");
 
         var monoToken = request.ClearMonoToken ? null : Blank(request.MonoToken) ? loaded.MonoToken : request.MonoToken!.Trim();
         var publicKey = request.ClearLiqPayKeys ? null : Blank(request.LiqPayPublicKey) ? loaded.LiqPayPublicKey : request.LiqPayPublicKey!.Trim();

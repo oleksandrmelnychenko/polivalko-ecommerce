@@ -4,6 +4,7 @@ using PoliValko.Infrastructure.Security.Permissions;
 
 namespace PoliValko.IntegrationTests;
 
+[Collection("Payment settings")]
 public sealed class PaymentSettingsApiTests(ApiFactory api)
 {
     private const string Payments = "/api/v1/console/settings/payments";

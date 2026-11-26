@@ -148,14 +148,18 @@ internal static class StartPayment
             .Where(p => p.OrderId == orderId && p.Provider != provider
                         && (p.Status == PaymentAttemptStatus.Created || p.Status == PaymentAttemptStatus.Processing))
             .ToListAsync(ct);
+        var now = time.GetUtcNow();
         foreach (var other in others)
         {
-            if (other.Status == PaymentAttemptStatus.Processing)
+            // Long past its deadline the other page can no longer take money (an abandoned 3-D Secure, say): do not
+            // let it lock the order. A payment that still arrives goes through the extra-payment alert.
+            var stale = other.ExpiresAt + StaleAfter < now;
+            if (other.Status == PaymentAttemptStatus.Processing && !stale)
             {
                 return InProgress();
             }
 
-            if (other.ProviderPaymentId is { } invoiceId)
+            if (!stale && other.ProviderPaymentId is { } invoiceId)
             {
                 if (providers.Find(other.Provider) is not { } otherProvider)
                 {
@@ -182,6 +186,8 @@ internal static class StartPayment
 
         return null;
     }
+
+    private static readonly TimeSpan StaleAfter = TimeSpan.FromMinutes(15);
 
     public const string SwitchedReason = "Рахунок анульовано: покупець обрав інший спосіб оплати";
 

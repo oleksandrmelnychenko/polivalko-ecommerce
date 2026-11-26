@@ -41,11 +41,16 @@ internal sealed class PaymentGateways(PoliValkoDbContext db, IDataProtectionProv
         string LiqPaySignature,
         bool WalletsEnabled,
         string WalletsProvider,
-        string Source)
+        string Source,
+        bool AllowTestKeys)
     {
         public bool MonoReady => MonoEnabled && !string.IsNullOrWhiteSpace(MonoToken);
 
-        public bool LiqPayReady => LiqPayEnabled && !string.IsNullOrWhiteSpace(LiqPayPublicKey) && !string.IsNullOrWhiteSpace(LiqPayPrivateKey);
+        // LiqPay sandbox_ keys let anyone pay with a published test card: like the sandbox, only where it is allowed.
+        public bool LiqPayReady => LiqPayEnabled && !string.IsNullOrWhiteSpace(LiqPayPublicKey) && !string.IsNullOrWhiteSpace(LiqPayPrivateKey)
+                                   && (AllowTestKeys || !IsTestKey(LiqPayPublicKey));
+
+        public static bool IsTestKey(string? publicKey) => publicKey?.StartsWith("sandbox_", StringComparison.Ordinal) == true;
     }
 
     private Effective? _loaded;
@@ -72,7 +77,7 @@ internal sealed class PaymentGateways(PoliValkoDbContext db, IDataProtectionProv
         var server = options.Value;
         var envMono = PaymentProviderNames.Is(server.Provider, PaymentProviderNames.Mono);
         _loaded = stored is null
-            ? new Effective(SandboxEnabled, envMono, server.Mono.Token, false, null, null, LiqPaySignatures.Sha1, false, PaymentProviderNames.Mono, "environment")
+            ? new Effective(SandboxEnabled, envMono, server.Mono.Token, false, null, null, LiqPaySignatures.Sha1, false, PaymentProviderNames.Mono, "environment", server.AllowSandbox)
             : new Effective(
                 SandboxEnabled,
                 stored.Mono.Enabled,
@@ -83,7 +88,8 @@ internal sealed class PaymentGateways(PoliValkoDbContext db, IDataProtectionProv
                 stored.LiqPay.Signature ?? LiqPaySignatures.Sha1,
                 stored.Wallets.Enabled,
                 stored.Wallets.Provider ?? PaymentProviderNames.Mono,
-                "console");
+                "console",
+                server.AllowSandbox);
         return _loaded;
     }
 

@@ -17,6 +17,8 @@ using PoliValko.Payments.Integrations.LiqPay;
 namespace PoliValko.IntegrationTests;
 
 /// <summary>Banks for online payment are set in the console: keys stay encrypted, the buyer picks a bank.</summary>
+// Shares the stored payment settings with PaymentSettingsApiTests, so the two never run at the same time.
+[Collection("Payment settings")]
 public sealed class PaymentGatewaysApiTests(ApiFactory api)
 {
     private const string Path = "/api/v1/console/settings/payments/gateways";
@@ -105,6 +107,92 @@ public sealed class PaymentGatewaysApiTests(ApiFactory api)
         finally
         {
             await api.WithDbAsync(db => db.Set<PlatformSetting>().Where(s => s.Key == "payments.gateways.v1").ExecuteDeleteAsync(Ct));
+        }
+    }
+
+    [Fact]
+    public async Task Mono_uses_the_server_token_until_the_console_saves_one_and_test_keys_stay_off_a_live_server()
+    {
+        var mono = new FakeMono();
+        await using var host = api.WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("Payments:Provider", "Mono");
+            builder.UseSetting("Payments:AllowSandbox", "false");
+            builder.UseSetting("Payments:Mono:Token", "server-token");
+            builder.UseSetting("Payments:Mono:BaseUrl", "https://mono.test");
+            builder.ConfigureServices(services =>
+            {
+                services.AddHttpClient(PaymentGatewayEndpoints.CheckClient).ConfigurePrimaryHttpMessageHandler(() => mono);
+                services.AddHttpClient<PoliValko.Payments.Integrations.Mono.MonoPaymentProvider>().ConfigurePrimaryHttpMessageHandler(() => mono);
+            });
+        });
+        using var admin = host.CreateClient();
+        (await admin.PostAsJsonAsync("/api/v1/console/auth/login", new { email = ApiFactory.AdminEmail, password = ApiFactory.TestPassword }, Ct)).EnsureSuccessStatusCode();
+        var csrf = await admin.GetFromJsonAsync<PoliValko.Infrastructure.Security.CsrfTokenDto>("/api/v1/console/auth/csrf", Ct);
+        admin.DefaultRequestHeaders.Add(PoliValko.Infrastructure.Security.CsrfHeaders.Token, csrf!.Token);
+        try
+        {
+            using var buyer = host.CreateClient();
+            (await buyer.ReadAsync<List<PaymentOptionDto>>("/api/v1/payments/options")).Select(o => o.Code).ShouldBe(["mono"]);
+            var first = await StartAsync(buyer, await CardOrderAsync(buyer, 650m), null);
+            first.PageUrl.ShouldStartWith("https://pay.mbnk.biz/");
+            mono.Tokens.ShouldBe(["server-token"]);
+
+            var original = await admin.ReadAsync<PaymentGatewaysDto>(Path);
+            original.Source.ShouldBe("environment");
+            original.Mono.HasToken.ShouldBeTrue();
+            var testKeys = await admin.PutAsJsonAsync(Path, new SavePaymentGatewaysRequest(
+                original.Revision, true, null, false, true, PublicKey, PrivateKey, false, false, "mono"), Ct);
+            testKeys.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+            (await testKeys.Content.ReadAsStringAsync(Ct)).ShouldContain("sandbox_");
+
+            var saved = await (await admin.PutAsJsonAsync(Path, new SavePaymentGatewaysRequest(
+                original.Revision, true, "console-token", false, false, null, null, false, false, "mono"), Ct)).ReadAsync<PaymentGatewaysDto>();
+            saved.Options.Select(o => o.Code).ShouldBe(["mono"]);
+            mono.Tokens.Last().ShouldBe("console-token");
+
+            await StartAsync(buyer, await CardOrderAsync(buyer, 660m), "mono");
+            mono.Tokens.Last().ShouldBe("console-token");
+            mono.Paths.ShouldContain("POST /api/merchant/invoice/create");
+            (await api.WithDbAsync(db => db.Set<PlatformSetting>().SingleAsync(s => s.Key == "payments.gateways.v1", Ct))).Value.ShouldNotContain("console-token");
+        }
+        finally
+        {
+            await api.WithDbAsync(db => db.Set<PlatformSetting>().Where(s => s.Key == "payments.gateways.v1").ExecuteDeleteAsync(Ct));
+        }
+    }
+
+    [Fact]
+    public async Task LiqPay_webhook_without_saved_keys_is_rejected_not_a_server_error()
+    {
+        using var client = api.CreateClient();
+        var data = LiqPayPaymentProvider.Encode(new JsonObject { ["order_id"] = "x", ["status"] = "success" });
+        var response = await client.PostAsync("/api/v1/payments/webhooks/liqpay", Form(data, LiqPayPaymentProvider.Sign("any", data, LiqPaySignatures.Sha1)), Ct);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    /// <summary>monobank acquiring: records which token each call carried.</summary>
+    private sealed class FakeMono : HttpMessageHandler
+    {
+        public List<string> Tokens { get; } = [];
+
+        public List<string> Paths { get; } = [];
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            lock (Tokens)
+            {
+                Tokens.Add(request.Headers.GetValues("X-Token").Single());
+                Paths.Add($"{request.Method} {request.RequestUri!.AbsolutePath}");
+            }
+
+            var body = request.RequestUri!.AbsolutePath switch
+            {
+                "/api/merchant/details" => """{"merchantId":"m1","merchantName":"Тестовий магазин"}""",
+                "/api/merchant/invoice/create" => $$"""{"invoiceId":"inv-{{Guid.NewGuid():N}}","pageUrl":"https://pay.mbnk.biz/p2_test"}""",
+                _ => """{"invoiceId":"inv","status":"created"}""",
+            };
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body, Encoding.UTF8, "application/json") });
         }
     }
 

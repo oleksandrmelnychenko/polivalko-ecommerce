@@ -36,7 +36,6 @@ export function PaymentSettingsPage() {
   if (settled && editable) {
     return (
       <GatewaysForm
-        key={gateways.data!.revision ?? 'environment'}
         value={payments.data!}
         initial={gateways.data!}
         onSaved={(saved) => {
@@ -197,6 +196,13 @@ function GatewaysForm({
         return
       }
       onSaved(result.data)
+      setMonoToken('')
+      setPublicKey('')
+      setPrivateKey('')
+      setClearMono(false)
+      setClearLiqPay(false)
+      const names = result.data.options.map((option) => option.name).join(', ')
+      setMessage({ error: false, text: names ? `Збережено. Покупець бачить: ${names}.` : 'Збережено. Онлайн-оплату вимкнено.' })
     } catch {
       setMessage({ error: true, text: 'Сервер не відповідає. Перевірте з’єднання й повторіть спробу.' })
     } finally {
@@ -272,7 +278,7 @@ function GatewaysForm({
                 <SettingsHero
                   section={section}
                   kicker="Оплата онлайн"
-                  description="Покупець платить на сторінці Plata by mono: картка будь-якого банку, Apple Pay і Google Pay. Токен беруть у кабінеті web.monobank.ua → Налаштування → Інтернет-еквайринг (або на api.monobank.ua для тестового)."
+                  description="Покупець платить на сторінці Plata by mono: картка будь-якого банку, Apple Pay і Google Pay. Токен беруть у кабінеті web.monobank.ua → Налаштування → Інтернет-еквайринг. На робочому сайті — лише робочий токен: з тестовим будь-хто оплатив би замовлення тестовою карткою."
                 />
                 <SettingsCard title="Підключення">
                   <Stack gap="md">
@@ -326,7 +332,7 @@ function GatewaysForm({
                 <SettingsHero
                   section={section}
                   kicker="Оплата онлайн"
-                  description="Покупець платить на сторінці LiqPay ПриватБанку: картка, Приват24, Apple Pay і Google Pay. Ключі — у кабінеті liqpay.ua → Налаштування → API. Ключі з префіксом sandbox_ дають тестові оплати без списання грошей."
+                  description="Покупець платить на сторінці LiqPay ПриватБанку: картка, Приват24, Apple Pay і Google Pay. Ключі — у кабінеті liqpay.ua → Налаштування → API. Тестові ключі з префіксом sandbox_ приймаються лише на тестовому сервері: на робочому з ними будь-хто оплатив би замовлення тестовою карткою."
                 />
                 <SettingsCard title="Підключення">
                   <Stack gap="md">

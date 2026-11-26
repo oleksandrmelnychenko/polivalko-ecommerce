@@ -31,9 +31,9 @@ export function CheckoutPayment({
   cardProvider: string | null;
   setCardProvider: (code: string) => void;
 }) {
-  // Online payment opens as one row per bank, so the buyer picks monobank, PrivatBank or Apple Pay / Google Pay here.
+  // With more than one bank, online payment opens as one row per bank: monobank, PrivatBank, Apple Pay / Google Pay.
   const options: CheckoutOption[] = paymentOptions.flatMap((p): CheckoutOption[] =>
-    p.code === "card" && p.providers?.length
+    p.code === "card" && (p.providers?.length ?? 0) > 1
       ? p.providers.map((provider) => ({
           code: `${CARD_PREFIX}${provider.code}`,
           title: provider.code === "wallet" ? provider.name : `Онлайн: ${provider.name}`,

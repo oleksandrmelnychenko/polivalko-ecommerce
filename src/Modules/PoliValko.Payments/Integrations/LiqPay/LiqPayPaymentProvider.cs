@@ -59,7 +59,7 @@ internal sealed class LiqPayPaymentProvider(HttpClient http, IOptions<PaymentsOp
             return new ProviderPaymentStatus(providerPaymentId, ProviderPaymentState.Created, null, null, null);
         }
 
-        if (Text(response, "result") == "error" && response["payment_id"] is null)
+        if (response["payment_id"] is null && (Text(response, "result") == "error" || Text(response, "err_code") is not null || Text(response, "status") == "error"))
         {
             throw new InvalidOperationException($"LiqPay status: {Text(response, "err_code")} {Text(response, "err_description")}".Trim());
         }
@@ -77,7 +77,7 @@ internal sealed class LiqPayPaymentProvider(HttpClient http, IOptions<PaymentsOp
             throw new PaymentWebhookRejectedException("Немає data або signature.");
         }
 
-        var keys = await KeysAsync(ct);
+        var keys = await credentials.LiqPayAsync(ct) ?? throw new PaymentWebhookRejectedException("Ключі LiqPay не задано.");
         if (!Verify(keys.PrivateKey, data, signature))
         {
             throw new PaymentWebhookRejectedException("Підпис LiqPay не збігається.");
