@@ -32,7 +32,7 @@ export function SiteFooter() {
     <footer className="footer" id="footer">
       <div className="container footer__inner">
         <div className="footer__grid">
-          <div className="footer__about">
+          <div className="footer__about" data-nosnippet="">
             <Link href="/" prefetch={false} className="brand-logo footer__brand" aria-label="Poli Valko — на головну"><HeaderMascot /><span className="brand-logo__name">Poli-Valko</span></Link>
             <Suspense fallback={null}>
               <FooterContacts />
@@ -49,7 +49,7 @@ export function SiteFooter() {
           </FooterColumn>
         </div>
         <p className="footer__statement">Магазин для саду, городу й дому.</p>
-        <div className="footer__legal">
+        <div className="footer__legal" data-nosnippet="">
           <p>© <Suspense fallback={null}><FooterYear /></Suspense> Poli-Valko. Усі права захищені.</p>
           <a className="footer__credit" href="https://www.horizon-dynamics.tech/" target="_blank" rel="noopener noreferrer" lang="en">
             <span>Powered by</span>

@@ -19,7 +19,7 @@ export async function HeaderTopbar() {
   const phones = contactPhones({ storePhone: contacts?.storePhone, schedule: contacts?.schedule });
   if (!city && phones.length === 0 && socials.length === 0) return null;
   return (
-    <div className="site-header__top">
+    <div className="site-header__top" data-nosnippet="">
       <div className="container site-header__top-inner">
         {city ? (
           <Link href="/contacts" prefetch={false} className="site-header__city">

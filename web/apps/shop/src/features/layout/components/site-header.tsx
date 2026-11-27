@@ -34,7 +34,7 @@ export function SiteHeader() {
           <Suspense fallback={<NavFallback />}>
             <HeaderNav />
           </Suspense>
-          <div className="site-header__actions">
+          <div className="site-header__actions" data-nosnippet="">
             <SearchButton />
             <FavoritesLink />
             <CompareLink />

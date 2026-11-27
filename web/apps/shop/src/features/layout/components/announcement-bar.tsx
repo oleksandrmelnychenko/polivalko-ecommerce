@@ -8,7 +8,7 @@ export async function AnnouncementBar() {
   if (!announcement) return null;
   const link = announcement.link?.trim();
   return (
-    <aside className="announce" aria-label="Оголошення">
+    <aside className="announce" aria-label="Оголошення" data-nosnippet="">
       <div className="container announce__inner">
         {link ? (
           <Link href={link} className="announce__text">

@@ -381,3 +381,15 @@ test("secondary navigation dropdown panels carry data-nosnippet while top-level 
   assert.match(mainNav, /<div id="service-panel"[^>]*data-nosnippet/);
   assert.match(mobileMenu, /<div id="mobile-menu"[^>]*data-nosnippet/);
 });
+
+test("header utility bars, announcement bar, mobile dock, and footer legal/contacts carry data-nosnippet to keep Google snippets clean", () => {
+  const layout = (file) => readFileSync(resolve(here, "../src/features/layout/components", file), "utf8");
+
+  assert.match(layout("header-topbar.tsx"), /<div className="site-header__top"[^>]*data-nosnippet/);
+  assert.match(layout("site-header.tsx"), /<div className="site-header__actions"[^>]*data-nosnippet/);
+  assert.match(layout("announcement-bar.tsx"), /<aside className="announce"[^>]*data-nosnippet/);
+  assert.match(layout("mobile-dock.tsx"), /<nav className="mobile-dock"[^>]*data-nosnippet/);
+  const footer = layout("site-footer.tsx");
+  assert.match(footer, /<div className="footer__about"[^>]*data-nosnippet/);
+  assert.match(footer, /<div className="footer__legal"[^>]*data-nosnippet/);
+});

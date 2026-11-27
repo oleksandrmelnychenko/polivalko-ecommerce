@@ -21,7 +21,7 @@ export function MobileDock() {
   const pathname = usePathname();
   const { status } = useCustomer();
   return (
-    <nav className="mobile-dock" aria-label="Мобільна навігація">
+    <nav className="mobile-dock" aria-label="Мобільна навігація" data-nosnippet="">
       {links.map(({ href, label, Icon }) => (
         <Link key={href} href={href === "/account" && status === "guest" ? loginHref(href) : href} prefetch={ON_DEMAND.has(href) ? false : undefined}
           aria-current={(href === "/" ? pathname === "/" : pathname.startsWith(href)) ? "page" : undefined}>
