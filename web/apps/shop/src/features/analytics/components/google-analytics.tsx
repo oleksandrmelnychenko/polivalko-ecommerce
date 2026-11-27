@@ -7,20 +7,30 @@ import { cleanPageLocation, isAnalyticsAllowedLocation, isPrivateAnalyticsPath }
 const SCRIPT_ID = "pv-ga4-script";
 // Production GA4 property for poli-valko.com; local/preview hosts are blocked by isAnalyticsAllowedLocation().
 const DEFAULT_MEASUREMENT_ID = "G-0XD2ETJM9X";
-const CONFIGURED_ID = (process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? DEFAULT_MEASUREMENT_ID).trim();
+const CONFIGURED_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || DEFAULT_MEASUREMENT_ID;
+
+export function installGtagStub() {
+  if (typeof window === "undefined") return;
+  if (!window.dataLayer) window.dataLayer = [];
+  if (typeof window.gtag !== "function") {
+    // Google's gtag.js requires real Arguments objects in dataLayer and silently ignores plain arrays (...args).
+    window.gtag = function gtag() {
+      // eslint-disable-next-line prefer-rest-params
+      window.dataLayer?.push(arguments);
+    };
+  }
+}
 
 function ensureGtag(measurementId: string) {
   if (typeof window === "undefined" || typeof document === "undefined") return false;
   if (!isAnalyticsAllowedLocation(window.location)) return false;
 
-  if (!window.dataLayer) window.dataLayer = [];
-  if (typeof window.gtag !== "function") {
-    window.gtag = function gtag(...args: unknown[]) {
-      window.dataLayer?.push(args);
-    };
-    window.gtag("js", new Date());
+  const isFresh = typeof window.gtag !== "function";
+  installGtagStub();
+  if (isFresh) {
+    window.gtag?.("js", new Date());
     // Disable automatic page_view so every URL sent to GA4 passes through cleanPageLocation().
-    window.gtag("config", measurementId, {
+    window.gtag?.("config", measurementId, {
       send_page_view: false,
       anonymize_ip: true,
     });
@@ -38,7 +48,7 @@ function ensureGtag(measurementId: string) {
 
 export function GoogleAnalytics({ measurementId = CONFIGURED_ID }: { measurementId?: string } = {}) {
   const pathname = usePathname();
-  const id = measurementId.trim();
+  const id = measurementId.trim() || DEFAULT_MEASUREMENT_ID;
   const allowed = Boolean(id) && !isPrivateAnalyticsPath(pathname);
 
   useEffect(() => {

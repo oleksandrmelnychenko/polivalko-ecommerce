@@ -84,6 +84,10 @@ test("analytics blocks private, token-bearing, and local URLs while forwarding c
     "add_to_cart",
     { currency: "UAH", value: 120, page_location: "https://www.poli-valko.com/product/hose-1" },
   ]);
+
+  // Verify GoogleAnalytics pushes real Arguments objects (not plain Arrays) into window.dataLayer.
+  const gaSource = readFileSync(resolve(here, "../src/features/analytics/components/google-analytics.tsx"), "utf8");
+  assert.match(gaSource, /window\.dataLayer\?\.push\(arguments\)/, "gtag must push real Arguments objects so gtag.js processes queued events");
   delete globalThis.window;
 });
 
