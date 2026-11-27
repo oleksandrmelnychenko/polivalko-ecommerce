@@ -271,7 +271,6 @@
   .mobile-dock a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #767676; text-decoration: none; font-size: 10px; }
   .mobile-dock a[aria-current="page"] { color: #111; }
   .mobile-dock svg { width: 22px; height: 22px; }
-  .assistant-launcher { bottom: calc(84px + env(safe-area-inset-bottom)); }
   .home-faq { padding-block: 20px; }
 }
 /* Search stays in the header; results are a dropdown on both screen sizes. */
@@ -291,9 +290,6 @@
 .compare-page > .empty h2 { font-size: 18px; }
 .compare-page > .empty .btn { border-radius: 12px; }
 .hero-mobile, .mobile-categories, .mobile-bestsellers { display: none; }
-.assistant-launcher { width: 72px; height: 72px; padding: 10px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 8px 24px #0002; }
-.assistant-launcher span { display: none; }
-.assistant-launcher img { width: 44px; height: 52px; object-fit: contain; }
 
 @media (max-width: 63.999rem) {
   :root { --bar-height: 59px; }
@@ -348,8 +344,6 @@
   .hero-mobile__content p { font-size: 13px; }
   .auth-card h1 { font-size: 30px; }
   .compare-page > .page-head h1 { font-size: 36px; }
-  .assistant-launcher { width: 56px; height: 56px; padding: 8px; }
-  .assistant-launcher img { width: 32px; height: 40px; }
 }
 .gallery__arrow { position: absolute; z-index: 2; top: 50%; translate: 0 -50%; display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid #e5e5e5; border-radius: 50%; background: #fffffff2; color: #767676; box-shadow: 0 1px 3px #0001; cursor: pointer; }
 .gallery__arrow--prev { left: 16px; }
