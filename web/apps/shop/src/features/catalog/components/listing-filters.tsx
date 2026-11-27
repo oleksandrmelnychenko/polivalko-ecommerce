@@ -4,7 +4,8 @@ import { useId, useState, type FormEvent, type KeyboardEvent, type ReactNode } f
 import { CircleCheckIcon, GridIcon, TagIcon, WalletIcon } from "@polivalko/shared/ui/icons";
 import type { ProductSearch } from "@polivalko/shared/api/types";
 import { formatMoney } from "@polivalko/shared/lib/format";
-import { priceOrder, priceRanges } from "../lib/listing-params";
+import * as Slider from "@radix-ui/react-slider";
+import { priceOrder } from "../lib/listing-params";
 import { useListingNavigation } from "./listing-navigation";
 
 const LIST_LIMIT = 6;
@@ -113,7 +114,12 @@ export function ListingFilters({
 
   const low = facets.priceMin ? Math.floor(Number(facets.priceMin.value)) : undefined;
   const high = facets.priceMax ? Math.ceil(Number(facets.priceMax.value)) : undefined;
-  const ranges = low !== undefined && high !== undefined ? priceRanges(low, high) : [];
+  const priceId = useId();
+  const hasRange = low !== undefined && high !== undefined && low < high;
+
+  function sliderPrices([from, to]: number[]) {
+    return { priceMin: from === low ? undefined : from, priceMax: to === high ? undefined : to };
+  }
 
   const availability: Option[] = [
     { key: "inStock", label: "Лише в наявності", count: facets.inStockCount, checked: selection.inStock, name: "inStock", value: "true", onToggle: () => apply({ inStock: !selection.inStock }) },
@@ -131,38 +137,12 @@ export function ListingFilters({
 
       <fieldset className="fw">
         <legend className="fw__title">{compact && <WalletIcon />}Ціна, ₴</legend>
-        {ranges.length > 0 && (
-          <ul className="fw__list">
-            {ranges.map((r) => {
-              const active = selection.priceMin === r.min && selection.priceMax === r.max;
-              return (
-                <li key={r.label}>
-                  <button
-                    type="button"
-                    className="fprice"
-                    aria-pressed={active}
-                    onClick={() => {
-                      const min = active ? undefined : r.min;
-                      const max = active ? undefined : r.max;
-                      setPriceMin(min === undefined ? "" : String(min));
-                      setPriceMax(max === undefined ? "" : String(max));
-                      apply({ priceMin: min, priceMax: max });
-                    }}
-                  >
-                    <span className="fprice__dot" aria-hidden="true" />
-                    <span className={compact ? undefined : "money"}>{r.label}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
         <div className="range">
-          <label className="visually-hidden" htmlFor="price-min">
+          <label className="visually-hidden" htmlFor={`${priceId}-min`}>
             Ціна від
           </label>
           <input
-            id="price-min"
+            id={`${priceId}-min`}
             name="priceMin"
             className="money"
             autoComplete="off"
@@ -175,11 +155,11 @@ export function ListingFilters({
             onBlur={applyPrice}
             onKeyDown={applyOnEnter}
           />
-          <label className="visually-hidden" htmlFor="price-max">
+          <label className="visually-hidden" htmlFor={`${priceId}-max`}>
             Ціна до
           </label>
           <input
-            id="price-max"
+            id={`${priceId}-max`}
             name="priceMax"
             className="money"
             autoComplete="off"
@@ -193,6 +173,27 @@ export function ListingFilters({
             onKeyDown={applyOnEnter}
           />
         </div>
+        {hasRange && (
+          <Slider.Root
+            className="price-slider"
+            min={low}
+            max={high}
+            value={[
+              Math.min(high, Math.max(low, priceOf(priceMin) ?? low)),
+              Math.min(high, Math.max(low, priceOf(priceMax) ?? high)),
+            ]}
+            onValueChange={(values) => {
+              const bounds = sliderPrices(values);
+              setPriceMin(bounds.priceMin?.toString() ?? "");
+              setPriceMax(bounds.priceMax?.toString() ?? "");
+            }}
+            onValueCommit={(values) => apply(sliderPrices(values))}
+          >
+            <Slider.Track className="price-slider__track"><Slider.Range className="price-slider__fill" /></Slider.Track>
+            <Slider.Thumb className="price-slider__thumb" aria-label="Мінімальна ціна, грн" />
+            <Slider.Thumb className="price-slider__thumb" aria-label="Максимальна ціна, грн" />
+          </Slider.Root>
+        )}
         {!compact && facets.priceMin && facets.priceMax && (
           <p className="fw__hint">
             У розділі від <span className="money">{formatMoney(facets.priceMin)}</span> до <span className="money">{formatMoney(facets.priceMax)}</span>

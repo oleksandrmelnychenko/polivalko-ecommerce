@@ -31,12 +31,13 @@
 .fw__more { margin-top: var(--space-2xs); padding: var(--space-2xs) 0; border: 0; background: none; color: var(--color-ink); font: inherit; font-size: var(--text-sm); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .fw__more:hover { color: var(--color-brand-strong); }
 .fw__empty, .fw__hint { margin: var(--space-xs) 0 0; color: var(--color-muted); font-size: var(--text-xs); }
-.fw:has(.fprice) .fw__list { display: flex; flex-wrap: wrap; gap: 8px; }
-.fprice { display: inline-flex; align-items: center; gap: 6px; width: auto; min-height: 40px; padding: 6px 12px; border: 1px solid var(--color-control); border-radius: var(--radius-pill); background: #fff; color: #2b2b2b; font: 500 0.9375rem/1.4 var(--font-body); text-align: left; cursor: pointer; font-variant-numeric: tabular-nums; transition: border-color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
-.fprice:hover { border-color: var(--color-ink); color: var(--color-ink); }
-.fprice__dot { display: none; }
-.fprice[aria-pressed="true"] { border-color: var(--color-brand); background: var(--color-brand); color: #fff; }
-.fprice:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.price-slider { position: relative; display: flex; align-items: center; height: 44px; margin-inline: 10px; touch-action: none; user-select: none; cursor: pointer; }
+.price-slider__track { position: relative; flex: 1; height: 3px; border-radius: 3px; background: var(--color-control); }
+.price-slider__fill { position: absolute; height: 100%; background: var(--color-brand); }
+.price-slider__thumb { display: block; position: relative; width: 20px; height: 20px; border-radius: 50%; background: var(--color-brand); cursor: grab; }
+.price-slider__thumb::before { content: ""; position: absolute; inset: -10px; border-radius: inherit; }
+.price-slider__thumb:active { cursor: grabbing; }
+.price-slider__thumb:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
 .fw .range { margin-top: var(--space-xs); }
 .fw .range input { min-height: 44px; font-size: 0.9375rem; }
 .filters__submit { border-radius: var(--radius); position: sticky; bottom: 0; z-index: var(--z-base); box-shadow: 0 0 0 var(--space-sm) var(--color-paper), 0 var(--space-sm) 0 var(--space-sm) var(--color-paper); }

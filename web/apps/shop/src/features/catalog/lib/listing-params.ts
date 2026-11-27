@@ -19,23 +19,6 @@ export function listingPageSizes(path: string) {
 
 const MAX_PAGE = 100_000;
 
-const PRICE_STEPS = [100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000];
-
-export type PriceRange = { min?: number; max?: number; label: string };
-
-export function priceRanges(low: number, high: number): PriceRange[] {
-  const inside = PRICE_STEPS.filter((step) => step > low && step < high);
-  if (inside.length === 0) return [];
-  const picks = inside.length <= 3 ? inside : [1, 2, 3].map((k) => inside[Math.round((k * (inside.length + 1)) / 4) - 1]);
-  const bounds = Array.from(new Set(picks)).sort((a, b) => a - b);
-  const money = (n: number) => n.toLocaleString("uk-UA");
-  return [
-    { max: bounds[0], label: `до ${money(bounds[0])} ₴` },
-    ...bounds.slice(1).map((b, i) => ({ min: bounds[i], max: b, label: `від ${money(bounds[i])} до ${money(b)} ₴` })),
-    { min: bounds[bounds.length - 1], label: `від ${money(bounds[bounds.length - 1])} ₴` },
-  ];
-}
-
 export function parsePage(value: string | string[] | undefined): number {
   const page = Number(first(value));
   return Number.isInteger(page) && page >= 1 && page <= MAX_PAGE ? page : 1;

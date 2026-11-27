@@ -14,19 +14,20 @@
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@fontsource/oswald": "5.3.0",
     "@polivalko/shared": "*",
+    "@radix-ui/react-slider": "^1.6.1",
     "next": "16.4.6",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "three": "0.187.0"
   },
   "devDependencies": {
+    "@polivalko/typescript-compiler": "npm:typescript@^7.0.2",
     "@types/node": "^24.19.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "0.187.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
-    "@polivalko/typescript-compiler": "npm:typescript@^7.0.2",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   }
 }
