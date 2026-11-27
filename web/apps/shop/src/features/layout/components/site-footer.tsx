@@ -51,7 +51,7 @@ export function SiteFooter() {
         <p className="footer__statement">Магазин для саду, городу й дому.</p>
         <div className="footer__legal">
           <p>© <Suspense fallback={null}><FooterYear /></Suspense> Poli-Valko. Усі права захищені.</p>
-          <a className="footer__credit" href="https://www.horizon-dynamics.tech/" lang="en">
+          <a className="footer__credit" href="https://www.horizon-dynamics.tech/" target="_blank" rel="noopener noreferrer" lang="en">
             <span>Powered by</span>
             <img src="/brand/horizon-emblem.svg" width={16} height={19} alt="" aria-hidden="true" />
             <img src="/brand/horizon-wordmark.svg" width={150} height={11} alt="Horizon Dynamics" />

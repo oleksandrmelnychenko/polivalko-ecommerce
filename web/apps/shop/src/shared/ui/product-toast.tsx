@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AlertIcon, ArrowRightIcon, CloseIcon } from "@polivalko/shared/ui/icons";
-import { COMPARISON_NOTICE, type ComparisonNotice } from "./notice";
+import { PRODUCT_NOTICE, type ProductNotice } from "./product-notice";
 
-export function CompareToast() {
-  const [notice, setNotice] = useState<ComparisonNotice | null>(null);
+export function ProductToast() {
+  const [notice, setNotice] = useState<ProductNotice | null>(null);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -14,14 +14,14 @@ export function CompareToast() {
   function dismiss() { setClosing(true); setHovered(false); setFocused(false); }
   useEffect(() => {
     const show = (event: Event) => {
-      setNotice((event as CustomEvent<ComparisonNotice>).detail);
+      setNotice((event as CustomEvent<ProductNotice>).detail);
       setSequence(value => value + 1);
       setClosing(false);
       setHovered(false);
       setFocused(false);
     };
-    window.addEventListener(COMPARISON_NOTICE, show);
-    return () => window.removeEventListener(COMPARISON_NOTICE, show);
+    window.addEventListener(PRODUCT_NOTICE, show);
+    return () => window.removeEventListener(PRODUCT_NOTICE, show);
   }, []);
   useEffect(() => {
     if (!notice || hovered || focused || closing) return;
@@ -40,11 +40,11 @@ export function CompareToast() {
         {notice.kind === "error" ? <AlertIcon /> : notice.kind === "added" ? "+" : "−"}
       </span>
       <div className="compare-toast__body">
-        <strong>{notice.kind === "added" ? "Додано до порівняння" : notice.kind === "removed" ? "Прибрано з порівняння" : "Не вдалося додати товар"}</strong>
-        <p>{notice.message ?? notice.name}</p>
-        <Link href={notice.groupKey ? `/compare?group=${encodeURIComponent(notice.groupKey)}` : "/compare"} onClick={dismiss}>
-          Переглянути порівняння <ArrowRightIcon />
-        </Link>
+        <strong>{notice.title}</strong>
+        <p>{notice.message}</p>
+        {notice.action && <Link href={notice.action.href} onClick={dismiss}>
+          {notice.action.label} <ArrowRightIcon />
+        </Link>}
       </div>
       <button type="button" className="compare-toast__close" aria-label="Закрити повідомлення" onClick={dismiss}><CloseIcon /></button>
     </div>}

@@ -4,7 +4,7 @@ import type { Quote } from "@polivalko/shared/api/types";
 import { countProducts, formatMoney } from "@polivalko/shared/lib/format";
 import { thumb } from "@/shared/lib/images";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper";
-import type { CartRow } from "@/features/cart";
+import { RemoveCartItem, type CartRow } from "@/features/cart";
 
 export function CheckoutSummary({
   quote,
@@ -66,10 +66,8 @@ export function CheckoutSummary({
                 <span className="money">{item.unit}</span> за шт.
               </p>
               <div className="line__controls">
-                <QuantityStepper small value={item.quantity} onChange={(q) => setQuantity(item.productId, q)} label={`Кількість: ${item.name}`} />
-                <button type="button" className="remove" onClick={() => remove(item.productId)}>
-                  Прибрати
-                </button>
+                <QuantityStepper small max={item.availableQuantity ?? undefined} value={item.quantity} onChange={(q) => setQuantity(item.productId, q)} label={`Кількість: ${item.name}`} />
+                <RemoveCartItem name={item.name} onRemove={() => remove(item.productId)} />
               </div>
               {item.issue === "insufficient_stock" && <p className="line__issue">Доступно лише {item.availableQuantity} шт.</p>}
               {item.issue === "unavailable" && <p className="line__issue">Товар зараз недоступний, приберіть його.</p>}

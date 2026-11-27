@@ -66,7 +66,7 @@ internal sealed class ServerCartStore(PoliValkoDbContext db, CheckoutCalculator 
             // The customer's own lines come first; guest lines join until the cart is full, and the guest cart is emptied
             // either way, so that lines that did not fit never appear later on their own.
             var merged = Items(cart).Concat(Items(guestCart)).GroupBy(i => i.ProductId)
-                .Select(g => new CartLineRequest(g.Key, Math.Min(g.Sum(i => i.Quantity), CheckoutCalculator.MaxQuantity)))
+                .Select(g => new CartLineRequest(g.Key, (int)Math.Min(g.Sum(i => (long)i.Quantity), CheckoutCalculator.MaxQuantity)))
                 .Take(CheckoutCalculator.MaxLines).ToArray();
             if (Items(guestCart).Count > 0)
             {

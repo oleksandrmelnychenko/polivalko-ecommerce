@@ -1,6 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 import { CartDrawer, CartProvider } from "@/features/cart";
-import { CompareToast } from "@/features/compare";
+import { ProductToast } from "@/shared/ui/product-toast";
 import { ShopTools } from "./shop-tools";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
@@ -14,7 +14,7 @@ export function ShopShell({ children }: { children: ReactNode }) {
       <Suspense fallback={null}><ShopTools /></Suspense>
       <SiteFooter />
       <CartDrawer />
-      <CompareToast />
+      <ProductToast />
       <Suspense fallback={null}><MobileDock /></Suspense>
     </CartProvider>
   );

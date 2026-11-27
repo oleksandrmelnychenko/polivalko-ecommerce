@@ -1,87 +1,102 @@
 "use client";
 
 import Form from "next/form";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState, useTransition } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { CloseIcon, SearchIcon } from "@polivalko/shared/ui/icons";
+import { SearchSuggestions } from "./search-suggestions";
 
 const SEARCH_PATH = "/search";
-const MIN_LENGTH = 2;
-const DEBOUNCE_MS = 300;
-const RECENT = 5;
-const remember = (value: string) => (list: string[]) => [...list.slice(-(RECENT - 1)), value];
 
-export function SearchButton() {
-  return <Suspense fallback={<SearchField urlQuery="" onSearchPage={false} />}><SearchWithLocation /></Suspense>;
-}
-
-function SearchWithLocation() {
+function SearchLocation({ onChange }: { onChange: (pathname: string, term: string) => void }) {
   const pathname = usePathname();
   const params = useSearchParams();
-  const onSearchPage = pathname === SEARCH_PATH;
-  const urlQuery = onSearchPage ? params.get("q")?.trim() ?? "" : "";
-  return <SearchField urlQuery={urlQuery} onSearchPage={onSearchPage} />;
+  const term = pathname === SEARCH_PATH ? params.get("q")?.trim() ?? "" : "";
+  useEffect(() => onChange(pathname, term), [pathname, term, onChange]);
+  return null;
 }
 
-/**
- * Typing shows the results on the search page itself, not in a dropdown: after a short pause the field opens
- * /search?q=… (a new history entry from another page, a replaced one while typing on the search page).
- */
-function SearchField({ urlQuery, onSearchPage }: { urlQuery: string; onSearchPage: boolean }) {
-  const router = useRouter();
+export function SearchButton() {
+  const root = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
-  const [query, setQuery] = useState(urlQuery);
-  const [mobileOpen, setMobileOpen] = useState(onSearchPage);
-  const [pending, startTransition] = useTransition();
-  // The query this field last put into the address bar: a different one there came from Back, Forward or a link,
-  // and only then does the address overwrite what is typed (never while typing, which would eat letters).
-  // The last few count: on a slow connection an older address can arrive after a newer one was sent.
-  const [recent, setRecent] = useState([urlQuery]);
-  const [seenUrl, setSeenUrl] = useState(urlQuery);
-  if (urlQuery !== seenUrl) {
-    setSeenUrl(urlQuery);
-    if (!onSearchPage || !recent.includes(urlQuery)) {
-      setRecent([urlQuery]);
-      setQuery(urlQuery);
-      if (!onSearchPage) setMobileOpen(false);
-    }
-  }
-  const sent = recent[recent.length - 1];
+  const toggle = useRef<HTMLButtonElement>(null);
+  const [query, setQuery] = useState("");
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const location = useRef<string | null>(null);
+  const syncLocation = useCallback((pathname: string, urlQuery: string) => {
+    const key = JSON.stringify([pathname, urlQuery]);
+    if (location.current === key) return;
+    const initial = location.current === null;
+    location.current = key;
+    if (initial && pathname !== SEARCH_PATH) return;
+    setQuery(current => initial && current ? current : urlQuery);
+    setMobileOpen(pathname === SEARCH_PATH);
+    if (!initial) setExpanded(false);
+  }, []);
   const term = query.trim();
+  const showResults = expanded && term.length >= 2;
 
   useEffect(() => {
-    if (term === sent) return;
-    if (term.length < MIN_LENGTH && !(onSearchPage && term.length === 0)) return;
-    const timer = setTimeout(() => {
-      setRecent(remember(term));
-      const href = term ? `${SEARCH_PATH}?q=${encodeURIComponent(term)}` : SEARCH_PATH;
-      startTransition(() => {
-        if (onSearchPage) router.replace(href, { scroll: false });
-        else router.push(href);
-      });
-    }, DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [term, sent, onSearchPage, router]);
+    function shortcut(event: globalThis.KeyboardEvent) {
+      if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey ||
+          (event.target as HTMLElement).closest("input,textarea,select,[contenteditable]")) return;
+      event.preventDefault();
+      setMobileOpen(true);
+      requestAnimationFrame(() => input.current?.focus());
+    }
+    document.addEventListener("keydown", shortcut);
+    return () => document.removeEventListener("keydown", shortcut);
+  }, []);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !onSearchPage) setMobileOpen(false);
-      if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey && !(e.target as HTMLElement).closest("input,textarea,select,[contenteditable]")) {
-        e.preventDefault(); setMobileOpen(true); requestAnimationFrame(() => input.current?.focus());
-      }
+    if (!expanded) return;
+    const outside = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) setExpanded(false);
     };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onSearchPage]);
+    document.addEventListener("pointerdown", outside);
+    return () => document.removeEventListener("pointerdown", outside);
+  }, [expanded]);
 
-  return <div className="header-search" data-open={mobileOpen} data-pending={pending || undefined}>
-    <button type="button" className="icon-btn header-search__toggle" aria-label={mobileOpen ? "Закрити пошук" : "Пошук"} aria-expanded={mobileOpen} aria-controls="header-search-form"
-      onClick={() => { setMobileOpen(!mobileOpen); if (!mobileOpen) requestAnimationFrame(() => input.current?.focus()); }}>{mobileOpen ? <CloseIcon /> : <SearchIcon />}</button>
-    <Form id="header-search-form" action={SEARCH_PATH} role="search" className="header-search__form" onSubmit={() => { setRecent(remember(term)); input.current?.blur(); }}>
+  function handleKey(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.nativeEvent.isComposing) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      if (showResults) {
+        input.current?.focus();
+        setExpanded(false);
+      } else if (toggle.current?.offsetWidth) {
+        setMobileOpen(false);
+        toggle.current.focus();
+      }
+      return;
+    }
+    if (!showResults || (event.key !== "ArrowDown" && event.key !== "ArrowUp")) return;
+    const controls = Array.from(root.current!.querySelectorAll<HTMLElement>(".header-search__results a, .header-search__results button"));
+    const index = controls.indexOf(event.target as HTMLElement);
+    if (event.target !== input.current && index === -1) return;
+    event.preventDefault();
+    const next = event.key === "ArrowDown" ? index + 1 : index - 1;
+    (controls[next] ?? input.current)?.focus();
+  }
+
+  return <div ref={root} className="header-search" data-open={mobileOpen} onKeyDown={handleKey}
+    onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setExpanded(false); }}>
+    <Suspense fallback={null}><SearchLocation onChange={syncLocation} /></Suspense>
+    <button ref={toggle} type="button" className="icon-btn header-search__toggle" aria-label={mobileOpen ? "Закрити пошук" : "Пошук"}
+      aria-expanded={mobileOpen} aria-controls="header-search-form" onClick={() => {
+        setMobileOpen(!mobileOpen);
+        setExpanded(false);
+        if (!mobileOpen) requestAnimationFrame(() => input.current?.focus());
+      }}>{mobileOpen ? <CloseIcon /> : <SearchIcon />}</button>
+    <Form id="header-search-form" action={SEARCH_PATH} role="search" className="header-search__form"
+      onSubmit={event => { if (!term) event.preventDefault(); setExpanded(false); }}>
       <SearchIcon />
-      <input ref={input} name="q" type="search" value={query} onChange={(e) => setQuery(e.target.value)}
+      <input ref={input} name="q" type="search" value={query} aria-controls={showResults ? "header-search-results" : undefined}
+        onChange={e => { setQuery(e.target.value); setExpanded(true); }} onFocus={() => setExpanded(true)} onClick={() => setExpanded(true)}
         placeholder="Пошук товарів…" aria-label="Пошук у каталозі" autoComplete="off" spellCheck={false} enterKeyHint="search" />
       {query && <button type="button" className="header-search__clear" aria-label="Очистити пошук" onClick={() => { setQuery(""); input.current?.focus(); }}><CloseIcon /></button>}
+      {showResults && <SearchSuggestions term={term} onSelect={() => setExpanded(false)} />}
     </Form>
   </div>;
 }

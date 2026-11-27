@@ -7,7 +7,7 @@ function load(api) {
   const source = readFileSync(new URL("../src/features/cart/lib/cart-store.ts", import.meta.url), "utf8");
   const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const loaded = { exports: {} };
-  const require = (name) => name.includes("quantity") ? { MAX_QUANTITY: 999 } : name.includes("customer") ? {} : api;
+  const require = (name) => name.includes("quantity") ? { MAX_QUANTITY: 999_999_999 } : name.includes("customer") ? {} : api;
   new Function("exports", "module", "require", js)(loaded.exports, loaded, require);
   return loaded.exports;
 }

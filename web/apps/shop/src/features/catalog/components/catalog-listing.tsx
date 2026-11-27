@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { countProducts } from "@polivalko/shared/lib/format";
 import { CloseIcon } from "@polivalko/shared/ui/icons";
 import { itemListJsonLd, JsonLd } from "@/features/seo";
 import { searchProducts, type ProductQuery } from "../api/server";
@@ -8,9 +7,8 @@ import { hrefFor, parseListingParams, toQuery, type Parsed, type SearchParams } 
 import { FiltersPanel } from "./filters-panel";
 import { ListingFilters } from "./listing-filters";
 import { ListingPager } from "./listing-pager";
-import { ListingToolbar } from "./listing-toolbar";
+import { ListingResults } from "./listing-results";
 import { ListingNavigation } from "./listing-navigation";
-import { ProductTiles } from "./product-tiles";
 
 const CLEARED: Partial<Parsed> = { brands: [], attrs: [], inStock: false, onSale: false, priceMin: undefined, priceMax: undefined, page: 1 };
 
@@ -54,7 +52,8 @@ export async function CatalogListing({
   saleOnly?: boolean;
 }) {
   const p = parseListingParams(await searchParams, basePath);
-  const result = await searchProducts(toQuery(base, p));
+  const query = toQuery(base, p);
+  const result = await searchProducts(query);
   if (!result) return null;
 
   const href = (patch: Partial<Parsed>) => hrefFor(basePath, fixed, p, patch);
@@ -63,14 +62,6 @@ export async function CatalogListing({
   // this covers client navigations, where inside Suspense the redirect happens in the browser.
   if (result.page > Math.max(result.totalPages, 1)) redirect(href({ page: Math.max(result.totalPages, 1) }));
   const chips = activeChips(p, href);
-  const from = result.totalItems === 0 ? 0 : (result.page - 1) * result.pageSize + 1;
-  const to = Math.min(result.page * result.pageSize, result.totalItems);
-  const summary = result.approximate
-    ? `Точних збігів немає, ось схожі: ${countProducts(result.totalItems)}`
-    : result.totalItems === 0
-      ? "Товарів не знайдено"
-      : `Показано ${from}-${to} з ${result.totalItems.toLocaleString("uk-UA")}`;
-
   const itemList =
     listName && result.items.length > 0
       ? itemListJsonLd(
@@ -87,41 +78,47 @@ export async function CatalogListing({
         <ListingFilters facets={result.facets} basePath={basePath} fixed={fixed} saleOnly={saleOnly} compact={compact} />
       </FiltersPanel>
       <div className="catalog__main">
-        <ListingToolbar summary={compact && result.items.length === 0 ? "" : summary} path={basePath} />
+        <ListingResults
+          key={href({})}
+          initial={result}
+          base={base}
+          query={query}
+          path={basePath}
+          compact={compact}
+        >
 
-        {chips.length > 0 && (
-          <div className="active-filters">
-            <ul aria-label="Вибрані фільтри">
-              {chips.map((c) => (
-                <li key={c.key}>
-                  <Link href={c.href} scroll={false} aria-label={`Прибрати фільтр «${c.label}»`}>
-                    <span>{c.label}</span>
-                    <CloseIcon />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            {chips.length > 1 && (
-              <Link className="active-filters__reset" href={href(CLEARED)} scroll={false}>
-                Скинути все
-              </Link>
-            )}
-          </div>
-        )}
+          {chips.length > 0 && (
+            <div className="active-filters">
+              <ul aria-label="Вибрані фільтри">
+                {chips.map((c) => (
+                  <li key={c.key}>
+                    <Link href={c.href} scroll={false} aria-label={`Прибрати фільтр «${c.label}»`}>
+                      <span>{c.label}</span>
+                      <CloseIcon />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {chips.length > 1 && (
+                <Link className="active-filters__reset" href={href(CLEARED)} scroll={false}>
+                  Скинути все
+                </Link>
+              )}
+            </div>
+          )}
 
-        {result.items.length === 0 ? (
-          <div className="empty">
-            <h2>Товарів не знайдено</h2>
-            <p>{chips.length > 0 ? "Спробуйте прибрати частину фільтрів." : emptyHint}</p>
-            {chips.length > 0 && (
-              <Link className="btn btn--quiet" href={href(CLEARED)}>
-                Скинути фільтри
-              </Link>
-            )}
-          </div>
-        ) : (
-          <ProductTiles products={result.items} priority />
-        )}
+          {result.items.length === 0 && (
+            <div className="empty">
+              <h2>Товарів не знайдено</h2>
+              <p>{chips.length > 0 ? "Спробуйте прибрати частину фільтрів." : emptyHint}</p>
+              {chips.length > 0 && (
+                <Link className="btn btn--quiet" href={href(CLEARED)}>
+                  Скинути фільтри
+                </Link>
+              )}
+            </div>
+          )}
+        </ListingResults>
 
         <ListingPager result={result} href={(page) => href({ page })} />
       </div>

@@ -7,5 +7,11 @@
 .fav-toggle--box svg { width: 22px; height: 22px; }
 @media (max-width: 40rem) {
   .buybox__actions:has(.fav-toggle--box) { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
-  .buybox__actions:has(.fav-toggle--box) .stepper { grid-column: 1 / -1; justify-self: start; }
+  .buybox__actions:has(.fav-toggle--box) .quantity-feedback { grid-column: 1 / -1; justify-self: start; }
 }
+
+.guest-favorites { list-style: none; margin: 0 0 32px; padding: 0; display: grid; gap: 8px; max-width: 54rem; }
+.guest-favorites li { display: flex; align-items: center; gap: 14px; padding: 12px; border: 1px solid var(--color-rule); border-radius: var(--radius); }
+.guest-favorites img { object-fit: contain; }
+.guest-favorites li > div { flex: 1; min-width: 0; }
+.guest-favorites .money { margin: 4px 0 0; }

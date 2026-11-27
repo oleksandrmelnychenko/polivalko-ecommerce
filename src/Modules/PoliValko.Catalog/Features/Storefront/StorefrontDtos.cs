@@ -125,7 +125,8 @@ public sealed record ProductSearchQuery(
     [property: Description("Характеристики у форматі Назва:Значення; кілька значень однієї назви — АБО, різні назви — І")] [FromQuery(Name = "f")] string[]? F,
     [property: Description("Типово — активний режим вітрини. seasonal | stock_cover | name_asc | name_desc | price_asc | price_desc")] [FromQuery(Name = "sort")] string? Sort,
     [FromQuery(Name = "page")] int? Page,
-    [FromQuery(Name = "pageSize")] int? PageSize);
+    [FromQuery(Name = "pageSize")] int? PageSize,
+    [FromQuery(Name = "includeFacets")] bool? IncludeFacets = null);
 
 public static class ProductSort
 {

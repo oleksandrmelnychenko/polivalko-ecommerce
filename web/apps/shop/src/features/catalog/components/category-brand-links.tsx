@@ -10,6 +10,7 @@ import {
 } from "../lib/category-brand-seo";
 import type { SearchParams } from "../lib/listing-params";
 import { CatalogListing } from "./catalog-listing";
+import { CategoryNavigation } from "./category-head";
 import { ListingSkeleton } from "./listing-skeleton";
 
 export interface CategoryBrandLinkItem {
@@ -32,15 +33,16 @@ type BrandLinksProps = {
   maxItems?: number;
 };
 
-export function CategoryBrandItems({
+export function CategoryBrandLinks({
+  categoryName,
   categorySlug,
   brands,
   currentBrandSlug,
   minProducts = MIN_PRODUCTS_FOR_CATEGORY_BRAND,
   maxItems = 10,
-}: Omit<BrandLinksProps, "categoryName">) {
+}: BrandLinksProps) {
   const current = currentBrandSlug ? normalizeBrandSlug(currentBrandSlug) : undefined;
-  return brands
+  const links = brands
     .filter((brand) => brand.productCount >= minProducts && normalizeBrandSlug(brand.slug).length > 0)
     .slice(0, maxItems)
     .map((brand) => {
@@ -53,12 +55,11 @@ export function CategoryBrandItems({
         </li>
       );
     });
-}
-
-export function CategoryBrandLinks({ categoryName, ...props }: BrandLinksProps) {
+  if (!links.length) return null;
   return (
-    <nav aria-label={`Популярні бренди в категорії «${categoryName}»`} className="page-head__subs">
-      <ul className="chips chips--grey"><CategoryBrandItems {...props} /></ul>
+    <nav aria-label={`Популярні бренди в категорії «${categoryName}»`} className="page-head__subs category-nav--brands">
+      <span className="category-nav__label">Бренди</span>
+      <ul className="chips chips--grey">{links}</ul>
     </nav>
   );
 }
@@ -96,6 +97,7 @@ export function CategoryBrandScreen({
 
       <header className="page-head">
         <h1>{h1}</h1>
+        <CategoryNavigation category={category} withinCategory />
         <CategoryBrandLinks
           categorySlug={category.slug}
           categoryName={category.name}

@@ -5,6 +5,14 @@ namespace PoliValko.UnitTests.Ordering;
 public sealed class CartLineValidationTests
 {
     [Fact]
+    public void Quantities_over_999_can_proceed_to_the_stock_check()
+    {
+        var errors = new Dictionary<string, string[]>();
+        CheckoutCalculator.ValidateItems([new CartLineRequest(Guid.NewGuid(), 1500)], errors);
+        errors.ShouldBeEmpty();
+    }
+
+    [Fact]
     public void A_line_without_a_product_is_named_as_such_not_as_a_wrong_quantity()
     {
         var errors = new Dictionary<string, string[]>();

@@ -15,7 +15,7 @@ const edges = {
   catalog: ["cart", "favorites", "seo", "compare"],
   product: ["catalog", "cart", "analytics", "favorites", "seo", "compare"],
   home: ["catalog", "services", "content", "journal"],
-  layout: ["cart", "catalog", "services", "content", "search", "customer", "assistant", "compare", "journal"],
+  layout: ["cart", "catalog", "services", "content", "search", "customer", "assistant", "compare", "favorites", "journal"],
   search: ["catalog"],
   checkout: ["cart", "analytics", "customer"],
   order: ["payment", "analytics"],

@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { track } from "@/features/analytics";
-import { clamp, INITIAL, connect, watchCart, refreshCart, settledCart, getSnapshot, subscribe, update, setQuantity, type CartLine, type CartProduct } from "../lib/cart-store";
+import { clamp, INITIAL, connect, flushQuantities, watchCart, refreshCart, settledCart, getSnapshot, subscribe, update, setQuantity, type CartLine, type CartProduct } from "../lib/cart-store";
 
 import { refreshSession, useCustomer } from "@/features/customer";
 
@@ -70,7 +70,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       remove: (productId) => update((current) => current.filter((l) => l.productId !== productId)),
       clear: () => update(() => []),
       open: () => setOpen(true),
-      close: () => setOpen(false),
+      close: () => {
+        flushQuantities();
+        setOpen(false);
+      },
     }),
     [state, lines, isOpen, add, sessionFailed],
   );

@@ -17,7 +17,7 @@
 .cart-line__label { display: none; }
 .cart-line__qty { grid-area: qty; }
 .cart-line .line__total { grid-area: total; }
-.cart-line__remove { grid-area: remove; display: grid; place-items: center; width: 32px; height: 36px; padding: 0; border: 0; border-radius: 10px; background: none; color: var(--color-muted); cursor: pointer; transition: color var(--dur-micro) var(--ease-out); }
+.cart-line__remove { grid-area: remove; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 10px; background: none; color: var(--color-muted); cursor: pointer; transition: color var(--dur-micro) var(--ease-out); }
 .cart-line__remove:hover { color: var(--color-error); }
 .cart-line__remove svg { width: 18px; height: 18px; }
 .cart__after { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 14px; }

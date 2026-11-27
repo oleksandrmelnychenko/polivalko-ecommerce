@@ -7,3 +7,4 @@ export { BuyForm } from "./components/buy-form";
 export { AddToCart } from "./components/add-to-cart";
 export { checkoutCart } from "./api/server-cart";
 export { cartRows, type CartRow } from "./lib/cart-rows";
+export { RemoveCartItem } from "./components/remove-cart-item";

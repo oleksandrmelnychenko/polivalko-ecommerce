@@ -1,1 +1,1 @@
-export const MAX_QUANTITY = 999;
+export const MAX_QUANTITY = 999_999_999;

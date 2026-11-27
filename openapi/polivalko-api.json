@@ -196,6 +196,13 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "includeFacets",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {

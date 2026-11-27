@@ -115,7 +115,9 @@ internal static class SearchProducts
             scope = scope.Where(p => p.Price.OldAmount != null && p.Price.OldAmount > p.Price.Amount);
         }
 
-        var facets = await ProductFacetBuilder.BuildFacetsAsync(scope, filterNames, ct);
+        var facets = query.IncludeFacets is false
+            ? new ProductFacets([], null, null, 0, [])
+            : await ProductFacetBuilder.BuildFacetsAsync(scope, filterNames, ct);
 
         var products = scope;
         if (brands.Count > 0)

@@ -4,7 +4,10 @@
 .stepper button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
 .stepper button:disabled { color: var(--color-field); cursor: not-allowed; background: var(--color-paper); }
 .stepper input { width: 100%; min-height: 46px; border: 0; text-align: center; font-weight: 500; font-variant-numeric: tabular-nums; background: var(--color-paper); color: var(--color-ink); outline: 2px solid transparent; outline-offset: -2px; -moz-appearance: textfield; }
-.stepper input:focus-visible { outline-color: var(--color-focus); }
+.stepper:has(input:focus-visible) { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.stepper input:focus-visible { outline: none; }
+.quantity-feedback { display: grid; gap: 4px; justify-items: start; }
+.quantity-feedback small { color: var(--color-error); font-size: .8125rem; }
 .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; }
 .stepper--small { grid-template-columns: 34px 38px 34px; }
 .stepper--small button, .stepper--small input { min-height: 34px; font-size: var(--text-md); }

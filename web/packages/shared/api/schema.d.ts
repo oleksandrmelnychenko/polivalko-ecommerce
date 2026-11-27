@@ -6843,6 +6843,7 @@ export interface operations {
                 sort?: string;
                 page?: number;
                 pageSize?: number;
+                includeFacets?: boolean;
             };
             header?: never;
             path?: never;

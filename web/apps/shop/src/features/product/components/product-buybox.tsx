@@ -23,7 +23,7 @@ export function ProductBuybox({ product, discount }: { product: ProductDetails; 
   const buyable = canBuy(product);
   const tools = (
     <div className="buybox__tools">
-      <FavoriteButton productId={product.id} variant="box" />
+      <FavoriteButton productId={product.id} name={product.name} variant="box" />
       <CompareButton product={{ id: product.id, name: product.name, slug: product.slug, sku: product.sku, price: product.price, inStock: product.inStock, brand: product.brand, imageUrl: product.images[0]?.url }} />
     </div>
   );

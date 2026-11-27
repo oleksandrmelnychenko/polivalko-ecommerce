@@ -17,24 +17,31 @@ export function categoryHeading(category: Pick<Category, "slug" | "name">): stri
   return CATEGORY_H1_OVERRIDES[category.slug] ?? category.name;
 }
 
-export async function CategoryHead({ category, children }: { category: Category; children: ReactNode }) {
+export function CategoryHead({ category, children }: { category: Category; children: ReactNode }) {
   const parents = [
     { name: "Каталог", path: "/catalog" },
     ...category.breadcrumbs.map((c) => ({ name: c.name, path: `/catalog/${c.slug}` })),
   ];
-  const parent = category.breadcrumbs.at(-1);
-  // The header has already asked for the tree: the parent's subsections cost no request of their own.
-  const siblings = parent ? categoryChildren(await getCategoryTree().catch(() => []), parent.slug) : undefined;
   return (
     <>
       <JsonLd data={breadcrumbJsonLd([...parents, { name: category.name, path: `/catalog/${category.slug}` }])} />
       <Breadcrumbs current={category.name} parents={parents} />
       <header className="page-head">
         <h1>{categoryHeading(category)}</h1>
-        <CategoryChips label={`Розділи та бренди «${category.name}»`} items={[...(siblings ?? []), ...category.children]} current={category.slug}>
-          {children}
-        </CategoryChips>
+        <CategoryNavigation category={category} />
+        {children}
       </header>
+    </>
+  );
+}
+
+export async function CategoryNavigation({ category, withinCategory = false }: { category: Category; withinCategory?: boolean }) {
+  const parent = category.breadcrumbs.at(-1);
+  const siblings = parent ? categoryChildren(await getCategoryTree().catch(() => []), parent.slug) : undefined;
+  return (
+    <>
+      {!!siblings?.length && <CategoryChips label="Категорії" items={siblings} current={category.slug} withinCategory={withinCategory} />}
+      {category.children.length > 0 && <CategoryChips label={parent ? "Підкатегорії" : "Категорії"} items={category.children} />}
     </>
   );
 }

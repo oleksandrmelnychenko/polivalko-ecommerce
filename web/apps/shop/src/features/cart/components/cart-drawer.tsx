@@ -6,6 +6,7 @@ import { formatPrice } from "@polivalko/shared/lib/format";
 import { thumb } from "@/shared/lib/images";
 import { CloseIcon } from "@polivalko/shared/ui/icons";
 import { CartEmpty } from "./cart-empty";
+import { RemoveCartItem } from "./remove-cart-item";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper";
 import { useCart } from "./cart-provider";
 
@@ -92,10 +93,8 @@ export function CartDrawer() {
                       `Доступно лише ${quoted.get(line.productId)?.availableQuantity} шт.`}</p>
                   )}
                   <div className="line__controls">
-                    <QuantityStepper small value={line.quantity} onChange={(q) => setQuantity(line.productId, q)} label={`Кількість: ${line.name}`} />
-                    <button type="button" className="remove" onClick={() => remove(line.productId)}>
-                      Прибрати
-                    </button>
+                    <QuantityStepper small max={quoted.get(line.productId)?.availableQuantity} value={line.quantity} onChange={(q) => setQuantity(line.productId, q)} label={`Кількість: ${line.name}`} />
+                    <RemoveCartItem name={line.name} onRemove={() => remove(line.productId)} />
                   </div>
                 </div>
                 <p className="line__total"><span className="money">{formatPrice(amount(line))}</span></p>

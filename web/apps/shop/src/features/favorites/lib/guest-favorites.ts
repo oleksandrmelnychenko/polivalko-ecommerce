@@ -31,3 +31,14 @@ export function subscribeGuestFavorites(notify: () => void) {
     window.removeEventListener(changeEvent, notify);
   };
 }
+
+export function guestFavoriteKeys(): string {
+  try {
+    return Object.keys(localStorage)
+      .filter(key => key.startsWith(prefix) && localStorage.getItem(key) === "1")
+      .map(key => key.slice(prefix.length))
+      .sort().join(",");
+  } catch {
+    return "";
+  }
+}

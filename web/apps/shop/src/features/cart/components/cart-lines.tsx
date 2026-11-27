@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Quote } from "@polivalko/shared/api/types";
 import { thumb } from "@/shared/lib/images";
-import { CloseIcon } from "@polivalko/shared/ui/icons";
+import { RemoveCartItem } from "./remove-cart-item";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper";
 import type { CartRow } from "../lib/cart-rows";
 
@@ -69,12 +69,10 @@ export function CartLines({
               <span className="money">{row.unit}</span>
             </p>
             <div className="cart-line__qty">
-              <QuantityStepper small value={row.quantity} onChange={(q) => setQuantity(row.productId, q)} label={`Кількість: ${row.name}`} />
+              <QuantityStepper small max={row.availableQuantity ?? undefined} value={row.quantity} onChange={(q) => setQuantity(row.productId, q)} label={`Кількість: ${row.name}`} />
             </div>
             <p className="line__total"><span className="money">{row.total}</span></p>
-            <button type="button" className="cart-line__remove" onClick={() => remove(row.productId)} aria-label={`Прибрати: ${row.name}`} title="Прибрати">
-              <CloseIcon />
-            </button>
+            <RemoveCartItem name={row.name} onRemove={() => remove(row.productId)} />
           </li>
         ))}
       </ul>

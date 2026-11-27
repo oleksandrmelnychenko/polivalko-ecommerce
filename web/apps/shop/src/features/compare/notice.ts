@@ -1,6 +1,12 @@
-export const COMPARISON_NOTICE = "polivalko:comparison-notice";
-export type ComparisonNotice = { kind: "added" | "removed" | "error"; name: string; message?: string; groupKey?: string };
+import { showProductNotice, type ProductNotice } from "@/shared/ui/product-notice";
 
-export function notifyComparison(notice: ComparisonNotice) {
-  window.dispatchEvent(new CustomEvent<ComparisonNotice>(COMPARISON_NOTICE, { detail: notice }));
+type ComparisonNotice = { kind: ProductNotice["kind"]; name: string; message?: string; groupKey?: string };
+
+export function notifyComparison({ kind, name, message, groupKey }: ComparisonNotice) {
+  showProductNotice({
+    kind,
+    title: kind === "added" ? "Додано до порівняння" : kind === "removed" ? "Прибрано з порівняння" : "Не вдалося додати товар",
+    message: message ?? name,
+    action: { href: groupKey ? `/compare?group=${encodeURIComponent(groupKey)}` : "/compare", label: "Переглянути порівняння" },
+  });
 }

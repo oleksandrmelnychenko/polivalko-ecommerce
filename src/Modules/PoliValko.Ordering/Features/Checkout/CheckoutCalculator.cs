@@ -8,7 +8,7 @@ namespace PoliValko.Ordering.Features.Checkout;
 internal sealed class CheckoutCalculator(ICatalogPricing pricing)
 {
     public const int MaxLines = 50;
-    public const int MaxQuantity = 999;
+    public const int MaxQuantity = 999_999_999;
 
     public static IReadOnlyList<DeliveryMethodOptionDto> DeliveryOptions(IReadOnlyList<CardPaymentOption> cards, DeliveryAvailability availability) =>
         DeliveryOptions(availability, cards.Count > 0, cards);

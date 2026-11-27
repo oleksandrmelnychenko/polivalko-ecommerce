@@ -4,7 +4,7 @@ import { getBrandPages, summarizeProducts } from "../api/server";
 import { categoryBrandHref } from "../lib/category-brand-seo";
 import { listingIndexState, type SearchParams } from "../lib/listing-params";
 import { CatalogListing } from "./catalog-listing";
-import { CategoryBrandItems } from "./category-brand-links";
+import { CategoryBrandLinks } from "./category-brand-links";
 import { CategoryHead } from "./category-head";
 import { FirstPageIntro } from "./category-intro";
 import { ListingSkeleton } from "./listing-skeleton";
@@ -68,7 +68,8 @@ async function CategoryPopularBrands({ category, searchParams }: CategoryScreenP
     .sort((a, b) => b.productCount - a.productCount);
 
   return (
-    <CategoryBrandItems
+    <CategoryBrandLinks
+      categoryName={category.name}
       categorySlug={category.slug}
       brands={brands}
     />

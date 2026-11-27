@@ -42,5 +42,6 @@
 .fw .range input { min-height: 44px; font-size: 0.9375rem; }
 .filters__submit { border-radius: var(--radius); position: sticky; bottom: 0; z-index: var(--z-base); box-shadow: 0 0 0 var(--space-sm) var(--color-paper), 0 var(--space-sm) 0 var(--space-sm) var(--color-paper); }
 .page-head__subs { display: none; }
-.catalog .tiles { transition: opacity 0.15s ease; }
-.catalog:has(.filters[aria-busy="true"], .toolbar[aria-busy="true"]) .tiles { opacity: 0.55; }
+
+.listing-more { display: grid; justify-items: center; gap: var(--space-xs); margin-block: var(--space-md); }
+.listing-more p { margin: 0; color: var(--color-muted); }

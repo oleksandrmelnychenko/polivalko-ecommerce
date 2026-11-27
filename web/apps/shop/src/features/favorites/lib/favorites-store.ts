@@ -56,9 +56,9 @@ function withId(ids: ReadonlySet<string>, id: string, on: boolean) {
   return next;
 }
 
-export async function toggleFavorite(id: string, owner: string): Promise<boolean> {
+export async function toggleFavorite(id: string, owner: string): Promise<"added" | "removed" | "error" | "busy"> {
   const key = `${owner}:${id}`;
-  if (busy.has(key)) return true;
+  if (busy.has(key)) return "busy";
   busy.add(key);
   try {
     const result = await withActiveSession(async (assertActive) => {
@@ -78,9 +78,10 @@ export async function toggleFavorite(id: string, owner: string): Promise<boolean
         }
       }
     }, owner);
-    return result.response.ok;
+    if (!result.response.ok || state.owner !== owner) return "error";
+    return state.ids.has(id) ? "added" : "removed";
   } catch {
-    return false;
+    return "error";
   } finally {
     busy.delete(key);
   }

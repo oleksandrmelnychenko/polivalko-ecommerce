@@ -27,6 +27,12 @@ public sealed class CatalogFacetsTests(ApiFactory api)
         filtered.Facets.PriceMax.ShouldBe(new MoneyDto("300.00", "UAH"));
         filtered.Facets.InStockCount.ShouldBe(2);
 
+        var first = await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={token}&brand=Florovit&pageSize=1&includeFacets=false", TestJson.Options, Ct);
+        first!.Items.ShouldHaveSingleItem().Id.ShouldBe(filtered.Items[0].Id);
+        first.TotalItems.ShouldBe(filtered.TotalItems);
+        first.Facets.Brands.ShouldBeEmpty();
+        first.Facets.PriceMax.ShouldBeNull();
+
         var onSale = await _client.GetFromJsonAsync<ProductSearchResponse>($"/api/v1/products?q={token}&onSale=true", TestJson.Options, Ct);
         onSale!.Items.ShouldHaveSingleItem().OldPrice.ShouldBe(new MoneyDto("150.00", "UAH"));
         onSale.Facets.Brands.ShouldBe([new BrandFacet("Florovit", 1)]);

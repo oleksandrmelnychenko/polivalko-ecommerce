@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Quote } from "@polivalko/shared/api/types";
-import { quoteCart } from "../api/client";
+import { quoteCart } from "@/shared/api/quote-cart";
 import { useCart } from "../components/cart-provider";
 
 export function useCartQuote() {

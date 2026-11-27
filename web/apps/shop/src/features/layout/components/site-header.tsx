@@ -10,6 +10,7 @@ import { HeaderNav } from "./header-nav";
 import { NavFallback } from "./nav-fallback";
 import { HeaderMascot } from "./header-mascot";
 import { HeaderTopbar } from "./header-topbar";
+import { FavoritesLink } from "@/features/favorites";
 import { CompareLink } from "@/features/compare";
 
 export function SiteHeader() {
@@ -35,6 +36,7 @@ export function SiteHeader() {
           </Suspense>
           <div className="site-header__actions">
             <SearchButton />
+            <FavoritesLink />
             <CompareLink />
             <AccountButton />
             <CartButton />
