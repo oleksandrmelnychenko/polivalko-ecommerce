@@ -99,7 +99,7 @@ internal sealed class OrderWriter(
         var order = new Order
         {
             Id = orderId,
-            Number = $"PV-{number}",
+            Number = OrderNumbers.From(number),
             AccessTokenHash = tokenHash,
             IdempotencyKey = idempotencyKey,
             Status = status,

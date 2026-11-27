@@ -91,7 +91,7 @@ public sealed class CheckoutApiTests(ApiFactory api)
 
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
         var created = (await response.Content.ReadFromJsonAsync<OrderCreatedDto>(TestJson.Options, Ct))!;
-        created.Number.ShouldStartWith("PV-");
+        created.Number.ShouldMatch("^PV-[1-9][0-9]{7}$");
         created.Status.ShouldBe(OrderStatus.New);
         created.PaymentStatus.ShouldBe(PaymentStatus.NotRequired);
         created.PaymentRequired.ShouldBeFalse();

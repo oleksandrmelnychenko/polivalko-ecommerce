@@ -22,8 +22,9 @@ internal static class OrderSearch
         var digits = SqlLike.Digits(term);
         var byName = trimmed.Length >= 2;
         var pattern = SqlLike.Contains(trimmed);
+        // Digits alone also find a number typed with spaces, as read out on the phone («4827 1593»).
         return orders.Where(o => o.Number.Contains(term)
-            || (digits.Length >= 3 && o.CustomerPhone.Contains(digits))
+            || (digits.Length >= 3 && (o.CustomerPhone.Contains(digits) || o.Number.Contains(digits)))
             || (byName && EF.Functions.ILike(o.CustomerName, pattern, SqlLike.Escape)));
     }
 

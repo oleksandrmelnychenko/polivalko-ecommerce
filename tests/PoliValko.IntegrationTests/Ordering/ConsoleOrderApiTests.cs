@@ -214,6 +214,10 @@ public sealed class ConsoleOrderApiTests(ApiFactory api)
         // One letter is too little to search names by.
         (await ListOrdersAsync(manager, $"q={Uri.EscapeDataString(surname[..1])}&pageSize=100")).Items
             .ShouldNotContain(item => item.Number == order.Number);
+        // A number read out on the phone comes in two groups of four digits.
+        var digits = order.Number[3..];
+        (await ListOrdersAsync(manager, $"q={Uri.EscapeDataString($"{digits[..4]} {digits[4..]}")}")).Items
+            .ShouldHaveSingleItem().Number.ShouldBe(order.Number);
     }
 
     private static Task<PagedResponse<ConsoleOrderListItemDto>> ListOrdersAsync(HttpClient client, string query) =>
