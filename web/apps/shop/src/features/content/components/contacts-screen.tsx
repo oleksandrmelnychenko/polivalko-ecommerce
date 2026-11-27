@@ -42,7 +42,7 @@ async function ContactsContent() {
   const mapQuery = (mapUrl && URL.canParse(mapUrl) && new URL(mapUrl).searchParams.get("query")) || address;
   const mapEmbed = "https://maps.google.com/maps?" + new URLSearchParams({ q: mapQuery, z: "16", hl: "uk", output: "embed" });
   return <>
-    <JsonLd data={contactPageJsonLd({ name: "Контакти", description: "Адреса й графік магазину, телефони для замовлень і послуг.", path: "/contacts", organization: organizationSource(contacts, seller) })} />
+    <JsonLd data={contactPageJsonLd({ name: "Контакти", description: "Контакти Poli Valko в Бучі: вул. Депутатська, 1-В, ТК «Варшавський». Телефон +38 (073) 818-52-22, графік роботи, маршрут і заявка на послуги.", path: "/contacts", organization: organizationSource(contacts, seller) })} />
     <header className="contact-poster garden-print">
       <div className="contact-directory">
         <h1>Контакти</h1>

@@ -21,7 +21,18 @@ public sealed class ConsoleMediaAndPermissionApiTests(ApiFactory api)
             .ReadAsync<UploadedImageDto>();
         uploaded.Url.ShouldStartWith("/api/media/content/");
         uploaded.Url.ShouldEndWith(".png");
-        (await api.CreateClient().GetAsync(uploaded.Url, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var anon = api.CreateClient();
+        (await anon.GetAsync(uploaded.Url, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        using var headRequest = new HttpRequestMessage(HttpMethod.Head, uploaded.Url);
+        using var headResponse = await anon.SendAsync(headRequest, Ct);
+        headResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        headResponse.Content.Headers.ContentType?.MediaType.ShouldBe("image/png");
+        headResponse.Headers.CacheControl?.Public.ShouldBeTrue();
+        (await headResponse.Content.ReadAsByteArrayAsync(Ct)).ShouldBeEmpty();
+
+        using var missingHead = new HttpRequestMessage(HttpMethod.Head, "/api/media/content/does-not-exist.png");
+        (await anon.SendAsync(missingHead, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
         var text = await admin.PostAsync(Upload, Image("not an image"u8.ToArray(), "notes.txt"), Ct);
         text.StatusCode.ShouldBe(HttpStatusCode.BadRequest);

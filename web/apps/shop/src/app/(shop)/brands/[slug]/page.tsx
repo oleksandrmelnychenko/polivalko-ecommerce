@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { listingIndexState } from "@/features/catalog";
-import { BrandScreen, brandSeoDescription, getBrandPage, requireBrand } from "@/features/catalog/server";
+import { BrandScreen, brandSeoMetaDescription, brandSeoTitle, getBrandPage, requireBrand } from "@/features/catalog/server";
 import { seoMetadata } from "@/features/seo";
 
 export async function generateMetadata({ params, searchParams }: PageProps<"/brands/[slug]">): Promise<Metadata> {
@@ -10,8 +10,8 @@ export async function generateMetadata({ params, searchParams }: PageProps<"/bra
   const { page, filtered } = listingIndexState(sp);
   const paged = page > 1 && !filtered;
   return seoMetadata({
-    title: paged ? `${brand.name}, сторінка ${page}` : `${brand.name}: товари бренду`,
-    description: brandSeoDescription(brand),
+    title: brandSeoTitle(brand.name, paged ? page : 1),
+    description: brandSeoMetaDescription(brand),
     path: paged ? `/brands/${slug}?page=${page}` : `/brands/${slug}`,
     ...(brand.logoUrl ? { images: [brand.logoUrl] } : {}),
     noIndex: filtered,

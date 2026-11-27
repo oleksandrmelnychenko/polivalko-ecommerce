@@ -26,7 +26,7 @@ internal static partial class SeoTemplates
     public const int TitleMaxLengthWithoutShop = 52;
     public const int TitleMaxLengthWithShop = 65;
     public const int SnippetMinLength = 120;
-    public const int SnippetMaxLength = 160;
+    public const int SnippetMaxLength = 158;
 
     /// <summary>
     /// The start of the product description as a search snippet: plain text, cut at the last full sentence (or word)
@@ -88,7 +88,29 @@ internal static partial class SeoTemplates
             return own;
         }
 
-        return isTitle ? GuardTitleLength(text, values.Name) : text;
+        return isTitle ? GuardTitleLength(text, values.Name) : GuardDescriptionLength(text);
+    }
+
+    /// <summary>
+    /// Keeps templated meta descriptions within the 158-char Google SERP bound without modifying shorter descriptions,
+    /// preferring a sentence end at or after 120 chars and falling back to a clean word cut with an ellipsis.
+    /// </summary>
+    internal static string GuardDescriptionLength(string text)
+    {
+        var clean = Spaces().Replace(text, " ").Trim();
+        if (clean.Length <= SnippetMaxLength)
+        {
+            return clean;
+        }
+
+        var head = clean[..SnippetMaxLength];
+        var sentence = head.LastIndexOfAny(['.', '!', '?']);
+        if (sentence >= SnippetMinLength - 1)
+        {
+            return head[..(sentence + 1)];
+        }
+
+        return ClipTitleCleanly(clean, SnippetMaxLength - 1) + "…";
     }
 
     /// <summary>

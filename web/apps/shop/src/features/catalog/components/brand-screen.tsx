@@ -35,7 +35,7 @@ export function BrandScreen({ brand, searchParams }: { brand: BrandPage; searchP
       <Breadcrumbs current={brand.name} parents={[BRANDS]} />
       <header className="page-head brand-page__head">
         {brand.logoUrl && <img className="brand-page__logo" src={brand.logoUrl} alt={brand.name} width={96} height={48} decoding="async" />}
-        <h1>{brand.name}</h1>
+        <h1>Товари бренду {brand.name}</h1>
       </header>
       <Suspense fallback={<ListingSkeleton head={false} />}>
         <BrandListing brand={brand} searchParams={searchParams} />

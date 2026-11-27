@@ -378,6 +378,21 @@ export function articleJsonLd({
   };
 }
 
+export function aboutPageJsonLd({ name, description, path = "/about" }: { name: string; description?: string; path?: string }) {
+  const url = absoluteUrl(path);
+  return {
+    "@context": CONTEXT,
+    "@type": "AboutPage",
+    "@id": `${url}#webpage`,
+    url,
+    name,
+    description: description?.trim() || undefined,
+    inLanguage: SITE_LANGUAGE,
+    isPartOf: { "@id": websiteId() },
+    mainEntity: { "@id": organizationId() },
+  };
+}
+
 export function contactPageJsonLd({ name, description, path, organization }: { name: string; description?: string; path: string; organization: OrganizationSource }) {
   const url = absoluteUrl(path);
   return {

@@ -40,19 +40,29 @@ const renderTitle = (rawTitle, exactTitle = false) =>
     ? rawTitle.trim()
     : `${rawTitle.trim()}${BRAND_SUFFIX}`;
 
-/** Extracts static string literals from seoMetadata({ title: "...", description: "...", exactTitle?: true }). */
+/** Extracts static string literals (or top-level string consts) from seoMetadata({ title, description, exactTitle? }). */
 function extractStaticSeoMeta(relPath) {
   const code = readFileSync(resolve(shopSrc, relPath), "utf8");
-  const titleMatch = code.match(/title:\s*(?:paged\s*\?[^:]+:\s*)?"([^"]+)"/);
-  const descMatch = code.match(/description:\s*(?:paged\s*\?[\s\S]*?:\s*)?"([^"]+)"/);
+  const resolveConst = (field) => {
+    const inline = code.match(new RegExp(`${field}:\\s*(?:paged\\s*\\?[\\s\\S]*?:\\s*)?"([^"]+)"`));
+    if (inline) return inline[1];
+    const ref = code.match(new RegExp(`${field}:\\s*([A-Z0-9_]+)\\b`));
+    if (ref) {
+      const def = code.match(new RegExp(`const\\s+${ref[1]}\\s*=\\s*"([^"]+)"`));
+      if (def) return def[1];
+    }
+    return null;
+  };
+  const rawTitle = resolveConst("title");
+  const description = resolveConst("description");
   const exactTitle = /exactTitle:\s*true/.test(code);
-  assert.ok(titleMatch, `Could not find static title in ${relPath}`);
-  assert.ok(descMatch, `Could not find static description in ${relPath}`);
+  assert.ok(rawTitle, `Could not find static title in ${relPath}`);
+  assert.ok(description, `Could not find static description in ${relPath}`);
   return {
     relPath,
-    rawTitle: titleMatch[1],
-    renderedTitle: renderTitle(titleMatch[1], exactTitle),
-    description: descMatch[1],
+    rawTitle,
+    renderedTitle: renderTitle(rawTitle, exactTitle),
+    description,
     exactTitle,
   };
 }
@@ -162,15 +172,67 @@ test("formatProductTitle guards long product titles within 65 rendered chars and
   );
 });
 
-test("brandSeoTitle and brandSeoDescription stay within strict SERP character bounds", () => {
-  const { brandSeoTitle, brandSeoDescription } = src("features/catalog/lib/brand-seo.ts");
+test("brandSeoTitle and brandSeoMetaDescription stay within strict SERP character bounds for all brand lengths", () => {
+  const { brandSeoTitle, brandSeoDescription, brandSeoMetaDescription } = src("features/catalog/lib/brand-seo.ts");
 
-  for (const name of ["Hunter", "Irritec", "Cellfast", "Fiskars", "Spear & Jackson"]) {
+  for (const name of ["ICL", "BROS", "Hunter", "Irritec", "Cellfast", "Fiskars", "Spear & Jackson"]) {
     const rendered = renderTitle(brandSeoTitle(name));
     assert.ok(rendered.length >= 45 && rendered.length <= 60, `Brand ${name} title len ${rendered.length}: "${rendered}"`);
     const paged = renderTitle(brandSeoTitle(name, 2));
-    assert.ok(paged.length <= 65, `Brand ${name} paged title len ${paged.length}: "${paged}"`);
-    const desc = brandSeoDescription({ name, description: null, productCount: 68 });
-    assert.ok(desc.length >= 130 && desc.length <= 155, `Brand ${name} desc len ${desc.length}: "${desc}"`);
+    assert.ok(paged.length >= 45 && paged.length <= 65, `Brand ${name} paged title len ${paged.length}: "${paged}"`);
+    const fallbackDesc = brandSeoDescription({ name, description: null, productCount: 68 });
+    assert.ok(fallbackDesc.length >= 130 && fallbackDesc.length <= 155, `Brand ${name} desc len ${fallbackDesc.length}: "${fallbackDesc}"`);
   }
+
+  // Short DB brand descriptions (< 120 chars, e.g. forster at 69 chars or nerest at 104 chars) expand cleanly to 130–155 chars.
+  const shortSamples = [
+    { name: "FÖRSTER", description: "FÖRSTER — надійні садові інструменти та аксесуари для щоденної роботи.", productCount: 5 },
+    { name: "NeRest", description: "NeRest — товари для комфортного відпочинку на природі, кемпінгу та пікніка з міцних матеріалів.", productCount: 5 },
+    { name: "Vodaland", description: "Vodaland — системи поверхневого водовідведення та облаштування ділянок для приватних будинків і садів.", productCount: 6 },
+  ];
+  for (const sample of shortSamples) {
+    const meta = brandSeoMetaDescription(sample);
+    assert.ok(meta.length >= 130 && meta.length <= 155, `Short brand ${sample.name} meta len ${meta.length}: "${meta}"`);
+  }
+});
+
+test("brands/[slug]/page.tsx wires brandSeoTitle and brandSeoMetaDescription", () => {
+  const code = readFileSync(resolve(shopSrc, "app/(shop)/brands/[slug]/page.tsx"), "utf8");
+  assert.ok(code.includes("brandSeoTitle("), "brands/[slug]/page.tsx must use brandSeoTitle");
+  assert.ok(code.includes("brandSeoMetaDescription("), "brands/[slug]/page.tsx must use brandSeoMetaDescription");
+});
+
+test("formatProductDescription clamps >158-char overflow and enriches short templated descriptions to 120–158 chars", () => {
+  const { formatProductDescription } = src("features/product/lib/product-seo.ts");
+
+  // 162-char overflow is clamped strictly <= 158 chars.
+  const overflow =
+    "Квіти петунія великоквіткова низькоросла Пікоті Бургунд F1 SeedEra, 10 шт у магазині Poli Valko: доставка Новою поштою по Україні або самовивіз з магазину Буча.";
+  const clamped = formatProductDescription({ seoDescription: overflow, descriptionHtml: null });
+  assert.ok(clamped.length <= 158, `Overflow desc length ${clamped.length} > 158: "${clamped}"`);
+
+  // Short 108-char templated product description expands cleanly into 120–158 chars without duplicating delivery text.
+  const shortTemplated =
+    "Триходермін 1 кг у магазині Poli Valko: доставка Новою поштою по Україні або самовивіз з магазину.";
+  const expanded = formatProductDescription({ seoDescription: shortTemplated, descriptionHtml: null });
+  assert.ok(expanded.length >= 120 && expanded.length <= 158, `Expanded desc length ${expanded.length}: "${expanded}"`);
+  assert.match(expanded, /ТК «Варшавський»/);
+
+  // Short HTML fallback expands with full store USP cleanly into 120–158 chars.
+  const fromHtml = formatProductDescription({
+    seoDescription: null,
+    descriptionHtml: "<p>Агроперліт 1 л — легка мінеральна добавка для розсади та кімнатних рослин.</p>",
+  });
+  assert.ok(fromHtml.length >= 120 && fromHtml.length <= 158, `HTML desc length ${fromHtml.length}: "${fromHtml}"`);
+  assert.match(fromHtml, /ТК «Варшавський»/);
+});
+
+test("duplicate H1 pairs across /brands/*, /catalog/*, and /services/* are differentiated", () => {
+  const brandScreenCode = readFileSync(resolve(shopSrc, "features/catalog/components/brand-screen.tsx"), "utf8");
+  const categoryHeadCode = readFileSync(resolve(shopSrc, "features/catalog/components/category-head.tsx"), "utf8");
+
+  assert.match(brandScreenCode, /<h1>Товари бренду \{brand\.name\}<\/h1>/);
+  assert.ok(categoryHeadCode.includes('"landshaftnyi-dyzain": "Товари для ландшафтного дизайну"'));
+  assert.ok(categoryHeadCode.includes('hunter: "Автополив Hunter"'));
+  assert.ok(categoryHeadCode.includes('irritec: "Комплектуючі для поливу Irritec"'));
 });

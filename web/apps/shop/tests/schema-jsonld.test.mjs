@@ -324,3 +324,45 @@ test("articleJsonLd builds Google-compliant BlogPosting with publisher @id and w
     assert.deepEqual(article.isPartOf, { "@id": websiteId() });
   });
 });
+
+test("aboutPageJsonLd builds valid AboutPage linked to website and organization @id", () => {
+  const { aboutPageJsonLd } = src("features/seo/lib/json-ld.ts");
+  const { organizationId, websiteId } = src("features/seo/lib/site.ts");
+
+  withSiteUrl(SITE, () => {
+    const about = aboutPageJsonLd({
+      name: "Про магазин Poli Valko",
+      description: "Садовий центр Poli Valko у Бучі (ТК «Варшавський»).",
+      path: "/about",
+    });
+
+    assert.equal(about["@context"], "https://schema.org");
+    assert.equal(about["@type"], "AboutPage");
+    assert.equal(about["@id"], `${SITE}/about#webpage`);
+    assert.equal(about.url, `${SITE}/about`);
+    assert.equal(about.name, "Про магазин Poli Valko");
+    assert.equal(about.inLanguage, "uk-UA");
+    assert.deepEqual(about.isPartOf, { "@id": websiteId() });
+    assert.deepEqual(about.mainEntity, { "@id": organizationId() });
+  });
+});
+
+test("ServicePageScreen, ServicesScreen, CatalogScreen, AboutScreen, and ContactsScreen wire complete JSON-LD without duplicate ItemList", () => {
+  const servicePageSrc = readFileSync(resolve(here, "../src/features/services/components/service-page-screen.tsx"), "utf8");
+  assert.ok(servicePageSrc.includes("image: page.imageUrl || group.photo"), "Service JSON-LD must fall back to group.photo when page.imageUrl is null");
+
+  const servicesScreenSrc = readFileSync(resolve(here, "../src/features/services/components/services-screen.tsx"), "utf8");
+  assert.ok(servicesScreenSrc.includes("itemListJsonLd("), "/services must emit ItemList JSON-LD for all service directions");
+
+  const catalogScreenSrc = readFileSync(resolve(here, "../src/features/catalog/components/catalog-screen.tsx"), "utf8");
+  assert.ok(!catalogScreenSrc.includes("itemListJsonLd"), "/catalog must not emit a duplicate ItemList alongside CatalogListing");
+
+  const aboutScreenSrc = readFileSync(resolve(here, "../src/features/content/components/about-screen.tsx"), "utf8");
+  assert.ok(aboutScreenSrc.includes("aboutPageJsonLd("), "/about must emit AboutPage JSON-LD");
+
+  const contactsScreenSrc = readFileSync(resolve(here, "../src/features/content/components/contacts-screen.tsx"), "utf8");
+  assert.ok(
+    contactsScreenSrc.includes("ТК «Варшавський». Телефон +38 (073) 818-52-22"),
+    "/contacts ContactPage.description must match the upgraded meta description",
+  );
+});

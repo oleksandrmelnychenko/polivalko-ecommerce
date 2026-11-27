@@ -2,7 +2,7 @@ export { countSaleProducts, getBestsellers, getBrandPage, getBrandPages, getCate
 export { requireCategory } from "./api/require-category";
 export { requireBrand } from "./api/require-brand";
 export { BrandScreen, BrandsScreen } from "./components/brand-screen";
-export { brandSeoDescription } from "./lib/brand-seo";
+export { brandSeoDescription, brandSeoMetaDescription, brandSeoTitle } from "./lib/brand-seo";
 export { CatalogListing } from "./components/catalog-listing";
 export { CatalogScreen } from "./components/catalog-screen";
 export { CategoryScreen } from "./components/category-screen";

@@ -14,9 +14,9 @@ export function ListingSkeleton({ crumbs = false, head = true }: { crumbs?: bool
               </ol>
             </div>
           )}
-          <h1 className="skeleton" style={{ width: "min(24rem, 70%)" }}>
+          <div className="skeleton" style={{ width: "min(24rem, 70%)", height: "2.5rem" }}>
             &nbsp;
-          </h1>
+          </div>
         </header>
       )}
       <div className="catalog" aria-busy="true">

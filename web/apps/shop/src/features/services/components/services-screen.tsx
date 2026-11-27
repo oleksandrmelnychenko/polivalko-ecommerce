@@ -1,10 +1,10 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { breadcrumbJsonLd, JsonLd } from "@/features/seo";
+import { breadcrumbJsonLd, itemListJsonLd, JsonLd } from "@/features/seo";
 import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import { getServiceDirections } from "../api/server";
 import { ServiceGallery } from "./service-gallery";
-import { otherServicesGroup, serviceGroups as groups } from "../lib/service-groups";
+import { otherServicesGroup, serviceGroupOf, serviceGroups as groups, servicePath } from "../lib/service-groups";
 
 
 export function ServicesScreen() {
@@ -29,6 +29,16 @@ async function ServicesContent() {
   const other = directions.filter(direction => !groups.some(group => group.codes.includes(direction.code)));
   const catalogue = [...sections, { ...otherServicesGroup, services: other }]
     .filter(group => group.services.length);
+  const serviceEntries = directions.map((direction) => ({
+    name: direction.name,
+    path: servicePath(direction.slug),
+    image: direction.imageUrl || serviceGroupOf(direction.code).photo,
+  }));
 
-  return <ServiceGallery groups={catalogue} />;
+  return (
+    <>
+      {serviceEntries.length > 0 && <JsonLd data={itemListJsonLd("Послуги для саду Poli Valko", serviceEntries)} />}
+      <ServiceGallery groups={catalogue} />
+    </>
+  );
 }

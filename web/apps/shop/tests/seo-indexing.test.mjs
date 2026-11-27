@@ -64,6 +64,27 @@ test("a noindex page still lets robots follow its links", () => {
   assert.deepEqual(page.robots, { index: false, follow: true });
 });
 
+test("homepage metadata preserves trailing slash on canonical and og:url by bypassing metadataBase origin stripping", () => {
+  const prev = process.env.SITE_URL;
+  process.env.SITE_URL = "https://www.poli-valko.com";
+  try {
+    const { seoMetadata } = src("features/seo/lib/metadata.ts");
+    const home = seoMetadata({
+      title: "Poli Valko — все для поливу, саду й городу в Україні",
+      description: "Опис головної сторінки",
+      path: "/",
+      exactTitle: true,
+    });
+    assert.equal(home.metadataBase, null);
+    assert.equal(home.alternates.canonical, "https://www.poli-valko.com/");
+    assert.equal(home.openGraph.url, "https://www.poli-valko.com/");
+    assert.equal(home.openGraph.images[0].url, "https://www.poli-valko.com/brand/poli-valko-social.png");
+  } finally {
+    if (prev === undefined) delete process.env.SITE_URL;
+    else process.env.SITE_URL = prev;
+  }
+});
+
 test("a priced product page with a photo is indexable, in stock or sold out", () => {
   const { isIndexableProduct } = src("features/product/lib/indexable.ts");
 

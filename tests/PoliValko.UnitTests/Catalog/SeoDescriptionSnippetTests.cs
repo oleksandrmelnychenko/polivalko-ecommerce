@@ -46,4 +46,19 @@ public sealed class SeoDescriptionSnippetTests
         snippet.ShouldEndWith("слово…");
         snippet.Length.ShouldBeLessThanOrEqualTo(SeoTemplates.SnippetMaxLength);
     }
+
+    [Fact]
+    public void Templated_descriptions_over_158_chars_are_clipped_cleanly_while_shorter_ones_stay_verbatim()
+    {
+        const string shortDesc = "Дощувач у магазині Poli Valko: доставка Новою поштою по Україні або самовивіз з магазину.";
+        SeoTemplates.GuardDescriptionLength(shortDesc).ShouldBe(shortDesc);
+
+        const string longDesc =
+            "Квіти Петунія великоквіткова низькоросла Пікоті Бургунд F1 SeedEra 10 шт у магазині Poli Valko: ціна 39 грн, доставка Новою поштою по Україні або самовивіз з магазину.";
+        var clipped = SeoTemplates.GuardDescriptionLength(longDesc);
+
+        clipped.Length.ShouldBeLessThanOrEqualTo(SeoTemplates.SnippetMaxLength);
+        clipped.Length.ShouldBeGreaterThanOrEqualTo(SeoTemplates.SnippetMinLength);
+        clipped.ShouldEndWith("…");
+    }
 }

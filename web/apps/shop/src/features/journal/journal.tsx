@@ -57,7 +57,7 @@ export function StoryList({ items }: { items: Article[] }) {
         <li key={article.slug}>
           <Link href={`/blog/${article.slug}`}>
             <img {...sized(article.image.url, "(max-width: 44rem) 88px, 144px", 330)}
-              alt="" width={144} height={112} loading="lazy" />
+              alt={article.image.alt || article.title} width={144} height={112} loading="lazy" />
             <div>
               <span className="journal-meta">{article.category} · {article.readingMinutes} хв</span>
               <h2>{article.title}</h2>
@@ -75,7 +75,7 @@ export function JournalPreview() {
     <section className="container home-section journal-preview" aria-labelledby="journal-title">
       <div className="home-section__head">
         <div className="home-section__titles">
-          <h2 id="journal-title">Блог Poli-Valko</h2>
+          <h2 id="journal-title">Блог Poli Valko</h2>
         </div>
         <Link href="/blog" className="home-section__more">
           Усі статті <ArrowRightIcon />

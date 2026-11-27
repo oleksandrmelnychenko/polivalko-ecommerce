@@ -34,9 +34,16 @@ const PAYMENTS: Record<string, { title: string; text: string }> = {
 export function DeliveryScreen() {
   return (
     <div className="container delivery-page">
-      <Suspense fallback={<PageHead path="/payment-delivery" title={FALLBACK_TITLE} lead={FALLBACK_LEAD} />}>
-        <DeliveryContent />
-      </Suspense>
+      <PageHead
+        path="/payment-delivery"
+        title={FALLBACK_TITLE}
+        lead={FALLBACK_LEAD}
+        actions={<a href="#delivery-title" className="btn btn--graphite">Способи отримання</a>}
+      >
+        <Suspense fallback={<div className="doc__loading" role="status">Завантажуємо умови доставки й оплати…</div>}>
+          <DeliveryContent />
+        </Suspense>
+      </PageHead>
     </div>
   );
 }
@@ -50,7 +57,6 @@ async function DeliveryContent() {
     getContacts().catch(() => null),
   ]);
   if (!page) notFound();
-  const title = page.title?.trim() || FALLBACK_TITLE;
   const terms = page.bodyHtml ? htmlSections(page.bodyHtml) : null;
   const store = pickupPoints.find((point) => point.code === "bucha-store") ?? pickupPoints[0];
   const location: PickupLocation = store ?? contacts ?? {};
@@ -58,12 +64,7 @@ async function DeliveryContent() {
   const payments = [...new Set(methods.flatMap((m) => m.paymentMethods.map((p) => p.code)))].filter((code) => PAYMENTS[code]);
 
   return (
-    <PageHead
-      path="/payment-delivery"
-      title={title}
-      lead={page.lead || FALLBACK_LEAD}
-      actions={methods.length > 0 && <a href="#delivery-title" className="btn btn--graphite">Способи отримання</a>}
-    >
+    <>
       <div className="leaf-separated">
         {methods.length > 0 && (
           <section className="delivery-section" aria-labelledby="delivery-title">
@@ -125,7 +126,7 @@ async function DeliveryContent() {
           <Link className="delivery-link" href="/catalog">Каталог</Link>
         </div>
       </section>
-    </PageHead>
+    </>
   );
 }
 
@@ -155,7 +156,7 @@ function DeliveryOption({ method, location }: { method: Method; location: Pickup
   return (
     <li className={pickup ? "delivery-option delivery-option--pickup" : "delivery-option"}>
       <div className="delivery-option__head">
-        {pickup ? <StoreIcon /> : (courier || method.code === "nova_poshta") && <img src="/brand/nova-poshta.svg" width={20} height={20} alt="" />}
+        {pickup ? <StoreIcon /> : (courier || method.code === "nova_poshta") && <img src="/brand/nova-poshta.svg" width={20} height={20} alt="" aria-hidden="true" />}
         <h3>{method.name}</h3>
       </div>
       <span className="delivery-option__rate">{method.priceNote || (pickup ? "Безкоштовно" : CARRIER_RATE)}</span>

@@ -38,7 +38,7 @@ async function ServicePageContent({ page }: { page: ServiceDirectionPage }) {
   return (
     <>
       <JsonLd data={breadcrumbJsonLd([...PARENTS, { name: page.name, path }])} />
-      <JsonLd data={serviceJsonLd({ name: page.name, description: page.seoDescription || page.description, path, image: page.imageUrl })} />
+      <JsonLd data={serviceJsonLd({ name: page.name, description: page.seoDescription || page.description, path, image: page.imageUrl || group.photo })} />
       <Breadcrumbs current={page.name} parents={PARENTS} />
 
       <header className="service-page__head" data-group={group.key}>

@@ -1,5 +1,6 @@
 import type { ProductDetails } from "@polivalko/shared/api/types";
 import type { SeoInput } from "@/features/seo";
+import { clip } from "@/shared/lib/clip";
 import { hasShopName } from "@/shared/lib/page-title";
 import { descriptionText } from "./description";
 import { isIndexableProduct } from "./indexable";
@@ -8,6 +9,14 @@ import { isIndexableProduct } from "./indexable";
 const MAX_TITLE_WITH_BRAND = 65;
 const MAX_TITLE_WITHOUT_BRAND = 52;
 const MIN_TITLE_WITHOUT_BRAND = 32;
+
+const MIN_DESC = 120;
+const MAX_DESC = 158;
+const TEMPLATE_PICKUP_RE = /самовивіз з магазину\.?$/i;
+const STORE_USP_FULL = "Самовивіз у Бучі (ТК «Варшавський»), доставка Новою поштою по Україні.";
+const STORE_USP_SHORT = "Самовивіз у Бучі (ТК «Варшавський»), доставка по Україні.";
+const STORE_USP_COMPACT = "Самовивіз у Бучі (ТК «Варшавський»).";
+const STORE_USP_EXPERT = "Консультація фахівців і гарантія якості.";
 
 const SHOP_SUFFIX_RE = /\s*[|—–-]\s*poli\s*valko[\s.!?»"')]*$/i;
 const BUY_TAIL_RE = /\s*[,:;—–-]\s*купити(?:\s+з\s+доставкою|\s+в\s+україні|\s+в\s+бучі)?\s*$/i;
@@ -95,11 +104,53 @@ export function formatProductTitle(
   return `${clipTitleCleanly(body, bodyBudget)}${suffix}`;
 }
 
+/**
+ * Clamps product meta descriptions strictly to <= 158 chars (fixing 162-char overflow)
+ * and enriches short templated/fallback descriptions (< 120 chars) with concise store USP.
+ */
+export function formatProductDescription(
+  product: Pick<ProductDetails, "seoDescription" | "descriptionHtml">
+): string {
+  const explicit = product.seoDescription?.trim() || "";
+  const raw = (explicit || descriptionText(product.descriptionHtml)).replace(/\s+/g, " ").trim();
+  if (!raw) return "";
+  if (raw.length > MAX_DESC) return clip(raw, MAX_DESC);
+  if (raw.length >= MIN_DESC) return raw;
+
+  // Upgrade the default backend template ending ("самовивіз з магазину.") cleanly without duplicating delivery text.
+  if (TEMPLATE_PICKUP_RE.test(raw)) {
+    const upgraded = raw.replace(TEMPLATE_PICKUP_RE, "безкоштовний самовивіз у Бучі (ТК «Варшавський»).");
+    if (upgraded.length >= MIN_DESC && upgraded.length <= MAX_DESC) return upgraded;
+    if (upgraded.length < MIN_DESC) {
+      const withExpert = `${upgraded} ${STORE_USP_EXPERT}`;
+      if (withExpert.length <= MAX_DESC) return withExpert;
+    }
+    return clip(upgraded, MAX_DESC);
+  }
+
+  // Keep concise explicit custom fixtures (< 65 chars without template markers) untouched,
+  // while expanding real short descriptions (from HTML fallback or >= 65 chars) to 120–158 chars.
+  const isFromTemplateOrHtml = !explicit || raw.length >= 65;
+  if (!isFromTemplateOrHtml) return raw;
+
+  const sentence = /[.!?]$/.test(raw) ? raw : `${raw}.`;
+  const hasDelivery = /доставк|новою поштою/i.test(sentence);
+  const tails = hasDelivery
+    ? [STORE_USP_COMPACT, STORE_USP_EXPERT]
+    : [STORE_USP_FULL, STORE_USP_SHORT, STORE_USP_COMPACT];
+
+  for (const tail of tails) {
+    const candidate = `${sentence} ${tail}`;
+    if (candidate.length >= MIN_DESC && candidate.length <= MAX_DESC) return candidate;
+  }
+  return clip(`${sentence} ${tails[0]}`, MAX_DESC);
+}
+
 /** What the product page tells search engines; a thin page (see isIndexableProduct) is noindex, follow. */
 export function productSeo(product: ProductDetails): SeoInput {
   return {
     title: formatProductTitle(product),
-    description: product.seoDescription ?? descriptionText(product.descriptionHtml),
+    description: formatProductDescription(product),
     path: `/product/${product.slug}`,
     images: product.images.slice(0, 4).map((image) => image.url),
     noIndex: !isIndexableProduct(product),

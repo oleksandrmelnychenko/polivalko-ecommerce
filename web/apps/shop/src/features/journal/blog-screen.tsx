@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { PageHead } from "@/features/content/server";
-import { itemListJsonLd, JsonLd, seoMetadata } from "@/features/seo";
+import { breadcrumbJsonLd, itemListJsonLd, JsonLd, seoMetadata } from "@/features/seo";
+import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import { articles } from "./articles";
 import { JOURNAL_ENABLED } from "./config";
 import { BlogIndex } from "./journal";
@@ -16,6 +16,7 @@ export default function BlogPage() {
   if (!JOURNAL_ENABLED) notFound();
   return (
     <div className="container journal-page">
+      <JsonLd data={breadcrumbJsonLd([{ name: "Блог", path: "/blog" }])} />
       <JsonLd
         data={itemListJsonLd(
           "Статті блогу Poli Valko",
@@ -26,10 +27,10 @@ export default function BlogPage() {
           })),
         )}
       />
-      <PageHead
-        path="/blog"
-        title="Блог Poli-Valko"
-      />
+      <Breadcrumbs current="Блог" />
+      <header className="page-head">
+        <h1>Блог Poli Valko</h1>
+      </header>
       <BlogIndex items={articles} />
     </div>
   );

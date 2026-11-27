@@ -49,11 +49,17 @@ function HomeSkeleton() {
 
 async function HomeContent() {
   await connection();
-  const home = await getSiteHome().catch(() => null);
+  const [home, deals, featured, storeFeatured] = await Promise.all([
+    getSiteHome().catch(() => null),
+    heroDeals(),
+    heroFeatured(),
+    heroStoreFeatured(),
+  ]);
   const blocks = homeBlocks(home?.blocks);
   const banners = home?.banners ?? [];
   if (blocks.includes("hero")) preloadHeroPhoto(banners);
-  const data = blocks.includes("hero") ? await heroData(banners) : {};
+  const categoryData = blocks.includes("hero") ? await heroCategories(banners) : {};
+  const data: HeroData = blocks.includes("hero") ? { deals, featured, storeFeatured, ...categoryData } : {};
   const fromBanners = bannerSlides(banners, data);
   const slides = fromBanners.length ? fromBanners : heroSlides(data);
   return (
@@ -80,11 +86,6 @@ function preloadHeroPhoto(banners: Banner[]) {
   } else {
     hint(image);
   }
-}
-
-async function heroData(banners: Banner[]): Promise<HeroData> {
-  const [deals, featured, storeFeatured, categoryData] = await Promise.all([heroDeals(), heroFeatured(), heroStoreFeatured(), heroCategories(banners)]);
-  return { deals, featured, storeFeatured, ...categoryData };
 }
 
 async function heroCategories(banners: Banner[]): Promise<Pick<HeroData, "categories" | "categoryFeatured">> {

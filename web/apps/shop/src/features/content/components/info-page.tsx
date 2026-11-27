@@ -20,13 +20,11 @@ function DocumentHeaderAction({ layout }: Pick<InfoPageProps, "layout">) {
 export function InfoPage({ slug, title, lead, children, layout = "document" }: InfoPageProps) {
   return (
     <div className={`container doc-page doc-page--${layout}`}>
-      <Suspense fallback={
-        <PageHead path={`/${slug}`} title={title} lead={lead} actions={<DocumentHeaderAction layout={layout} />}>
-          <div className="doc__loading" role="status">Завантажуємо текст сторінки…</div>
-        </PageHead>
-      }>
-        <InfoContent slug={slug} layout={layout}>{children}</InfoContent>
-      </Suspense>
+      <PageHead path={`/${slug}`} title={title} lead={lead} actions={<DocumentHeaderAction layout={layout} />}>
+        <Suspense fallback={<div className="doc__loading" role="status">Завантажуємо текст сторінки…</div>}>
+          <InfoContent slug={slug} layout={layout}>{children}</InfoContent>
+        </Suspense>
+      </PageHead>
     </div>
   );
 }
@@ -42,8 +40,7 @@ async function InfoContent({ slug, children, layout }: Omit<InfoPageProps, "titl
   const toc = !leafSeparated && sections.length >= TOC_MIN_SECTIONS;
 
   return (
-    <PageHead path={`/${slug}`} title={page.title} lead={page.lead} actions={<DocumentHeaderAction layout={layout} />}>
-      <div className={toc ? "doc" : "doc doc--single"}>
+    <div className={toc ? "doc" : "doc doc--single"}>
         {toc && (
           <nav className="doc__toc" aria-label="Зміст сторінки">
             <p className="doc__toc-title">Зміст</p>
@@ -92,6 +89,5 @@ async function InfoContent({ slug, children, layout }: Omit<InfoPageProps, "titl
           )}
         </div>
       </div>
-    </PageHead>
   );
 }

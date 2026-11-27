@@ -1,8 +1,7 @@
 import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import { Suspense } from "react";
-import { breadcrumbJsonLd, itemListJsonLd, JsonLd } from "@/features/seo";
+import { breadcrumbJsonLd, JsonLd } from "@/features/seo";
 import { getCategoryTree } from "../api/server";
-import { categoryPhotoUrl } from "../lib/category-photo";
 import { listingIndexState, type SearchParams } from "../lib/listing-params";
 import { CatalogListing } from "./catalog-listing";
 import { CategoryCards } from "./category-cards";
@@ -32,19 +31,7 @@ async function CatalogCategories({ searchParams }: { searchParams: Promise<Searc
   const { page, filtered } = listingIndexState(await searchParams);
   if (page > 1 || filtered) return null;
   const categories = await getCategoryTree();
-  return (
-    <>
-      {categories.length > 0 && (
-        <JsonLd
-          data={itemListJsonLd(
-            "Каталог",
-            categories.map((c) => ({ name: c.name, path: `/catalog/${c.slug}`, image: categoryPhotoUrl(c) })),
-          )}
-        />
-      )}
-      <CategoryCards categories={categories} />
-    </>
-  );
+  return <CategoryCards categories={categories} />;
 }
 
 async function CatalogProducts({ searchParams }: { searchParams: Promise<SearchParams> }) {

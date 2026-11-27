@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { ArrowRightIcon, PinIcon } from "@polivalko/shared/ui/icons";
-import { breadcrumbJsonLd, JsonLd, seoMetadata } from "@/features/seo";
+import { aboutPageJsonLd, breadcrumbJsonLd, JsonLd, seoMetadata } from "@/features/seo";
 import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
+
+const ABOUT_DESCRIPTION =
+  "Садовий центр Poli Valko у Бучі (ТК «Варшавський»): 4 900+ товарів для поливу, саду й городу, монтаж автополиву та озеленення по Київщині.";
 
 export const metadata = seoMetadata({
   title: "Про інтернет-магазин і садовий центр у Бучі",
-  description: "Садовий центр Poli Valko у Бучі (ТК «Варшавський»): 4 900+ товарів для поливу, саду й городу, монтаж автополиву та озеленення по Київщині.",
+  description: ABOUT_DESCRIPTION,
   path: "/about",
 });
 
@@ -23,6 +26,7 @@ export default function AboutPage() {
     <div className="container story-page">
       <Breadcrumbs current="Про нас" />
       <JsonLd data={breadcrumbJsonLd([{ name: "Про нас", path: "/about" }])} />
+      <JsonLd data={aboutPageJsonLd({ name: "Про магазин Poli Valko", description: ABOUT_DESCRIPTION, path: "/about" })} />
       <div className="story-intro">
         <header className="story-cover garden-print">
           <div className="story-cover__text">

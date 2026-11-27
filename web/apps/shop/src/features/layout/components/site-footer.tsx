@@ -33,7 +33,7 @@ export function SiteFooter() {
       <div className="container footer__inner">
         <div className="footer__grid">
           <div className="footer__about">
-            <Link href="/" className="brand-logo footer__brand" aria-label="Poli-Valko — на головну"><HeaderMascot /><span className="brand-logo__name">Poli-Valko</span></Link>
+            <Link href="/" prefetch={false} className="brand-logo footer__brand" aria-label="Poli Valko — на головну"><HeaderMascot /><span className="brand-logo__name">Poli-Valko</span></Link>
             <Suspense fallback={null}>
               <FooterContacts />
             </Suspense>
@@ -53,7 +53,7 @@ export function SiteFooter() {
           <p>© <Suspense fallback={null}><FooterYear /></Suspense> Poli-Valko. Усі права захищені.</p>
           <a className="footer__credit" href="https://www.horizon-dynamics.tech/" lang="en">
             <span>Powered by</span>
-            <img src="/brand/horizon-emblem.svg" width={16} height={19} alt="" />
+            <img src="/brand/horizon-emblem.svg" width={16} height={19} alt="" aria-hidden="true" />
             <img src="/brand/horizon-wordmark.svg" width={150} height={11} alt="Horizon Dynamics" />
           </a>
           <div className="footer__legal-links">

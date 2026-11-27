@@ -1,5 +1,6 @@
 export { JsonLd } from "./components/json-ld";
 export {
+  aboutPageJsonLd,
   articleJsonLd,
   breadcrumbJsonLd,
   computePriceValidUntil,
