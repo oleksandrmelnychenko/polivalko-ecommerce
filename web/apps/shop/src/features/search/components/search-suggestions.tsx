@@ -39,7 +39,8 @@ export function SearchSuggestions({ term, onSelect }: { term: string; onSelect: 
       {result.items.map(product => <li key={product.id}>
         <Link href={`/product/${product.slug}`} prefetch={false} onClick={onSelect}>
           <span className="header-search__photo">{product.imageUrl && <img src={thumb(product.imageUrl)} alt="" width={40} height={40} />}</span>
-          <span>{product.name}<small>{hasPrice(product.price) ? formatMoney(product.price) : PRICE_ON_REQUEST}</small></span>
+          <span className="header-search__name">{product.name}</span>
+          <span className="header-search__price">{hasPrice(product.price) ? formatMoney(product.price) : PRICE_ON_REQUEST}</span>
         </Link>
       </li>)}
     </ul>}
