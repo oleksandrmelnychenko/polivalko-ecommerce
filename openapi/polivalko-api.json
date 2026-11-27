@@ -989,6 +989,101 @@
         }
       }
     },
+    "/api/v1/cart/activity": {
+      "post": {
+        "tags": [
+          "Cart"
+        ],
+        "operationId": "RecordShopActivity",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordShopActivityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/orders/{number}/receipts": {
+      "get": {
+        "tags": [
+          "Checkout"
+        ],
+        "summary": "Фіскальні чеки замовлення для покупця (за токеном)",
+        "operationId": "GetOrderReceipts",
+        "parameters": [
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReceiptDto"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customer-mail": {
+      "get": {
+        "tags": [
+          "Site"
+        ],
+        "summary": "Чи доставляються листи покупцям: від цього залежать тексти про лист із посиланням, підтвердження email і відновлення пароля",
+        "operationId": "GetCustomerMailStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerMailStatusDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/checkout/quote": {
       "post": {
         "tags": [
@@ -1460,78 +1555,6 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/orders/{number}/receipts": {
-      "get": {
-        "tags": [
-          "Checkout"
-        ],
-        "summary": "Фіскальні чеки замовлення для покупця (за токеном)",
-        "operationId": "GetOrderReceipts",
-        "parameters": [
-          {
-            "name": "number",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "token",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReceiptDto"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/customer-mail": {
-      "get": {
-        "tags": [
-          "Site"
-        ],
-        "summary": "Чи доставляються листи покупцям: від цього залежать тексти про лист із посиланням, підтвердження email і відновлення пароля",
-        "operationId": "GetCustomerMailStatus",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CustomerMailStatusDto"
                 }
               }
             }
@@ -6558,6 +6581,79 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PagedResponseOfConsoleOpenCart"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/orders/activity": {
+      "get": {
+        "tags": [
+          "Console"
+        ],
+        "summary": "Жива стрічка дій покупців на вітрині: додавання в кошик, порівняння, обране (лайки) і топ інтересу",
+        "operationId": "ConsoleListShopActivity",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsoleShopActivityResponse"
                 }
               }
             }
@@ -16970,6 +17066,35 @@
           },
           "subtotal": {
             "$ref": "#/components/schemas/MoneyDto"
+          },
+          "visitorTag": {
+            "type": "string",
+            "default": ""
+          },
+          "customerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "customerName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customerPhone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customerEmail": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -18015,6 +18140,214 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "ConsoleShopActivityItem": {
+        "required": [
+          "id",
+          "kind",
+          "quantity",
+          "occurredAt",
+          "device",
+          "isGuest",
+          "visitorTag",
+          "customerId",
+          "customerName",
+          "customerPhone",
+          "customerEmail",
+          "productId",
+          "productSku",
+          "productName",
+          "productSlug",
+          "productImageUrl",
+          "productPrice"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "device": {
+            "type": "string"
+          },
+          "isGuest": {
+            "type": "boolean"
+          },
+          "visitorTag": {
+            "type": "string"
+          },
+          "customerId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "customerName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customerPhone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "customerEmail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "productSku": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "productSlug": {
+            "type": "string"
+          },
+          "productImageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "productPrice": {
+            "$ref": "#/components/schemas/MoneyDto"
+          }
+        }
+      },
+      "ConsoleShopActivityResponse": {
+        "required": [
+          "summary",
+          "topProducts",
+          "events"
+        ],
+        "type": "object",
+        "properties": {
+          "summary": {
+            "$ref": "#/components/schemas/ConsoleShopActivitySummary"
+          },
+          "topProducts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleShopActivityTopProduct"
+            }
+          },
+          "events": {
+            "$ref": "#/components/schemas/PagedResponseOfConsoleShopActivityItem"
+          }
+        }
+      },
+      "ConsoleShopActivitySummary": {
+        "required": [
+          "cartAdds24h",
+          "compareAdds24h",
+          "favoriteAdds24h",
+          "activeVisitors15m",
+          "openCartsCount",
+          "openCartsSubtotal"
+        ],
+        "type": "object",
+        "properties": {
+          "cartAdds24h": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "compareAdds24h": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "favoriteAdds24h": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activeVisitors15m": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "openCartsCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "openCartsSubtotal": {
+            "$ref": "#/components/schemas/MoneyDto"
+          }
+        }
+      },
+      "ConsoleShopActivityTopProduct": {
+        "required": [
+          "productId",
+          "sku",
+          "name",
+          "slug",
+          "imageUrl",
+          "price",
+          "cartAdds",
+          "compareAdds",
+          "favoriteAdds",
+          "totalScore"
+        ],
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "price": {
+            "$ref": "#/components/schemas/MoneyDto"
+          },
+          "cartAdds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "compareAdds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "favoriteAdds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalScore": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -22054,6 +22387,40 @@
           }
         }
       },
+      "PagedResponseOfConsoleShopActivityItem": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalItems",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsoleShopActivityItem"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "PageDto": {
         "required": [
           "slug",
@@ -23988,6 +24355,22 @@
           },
           "reference": {
             "type": "string"
+          }
+        }
+      },
+      "RecordShopActivityRequest": {
+        "required": [
+          "kind",
+          "productId"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },

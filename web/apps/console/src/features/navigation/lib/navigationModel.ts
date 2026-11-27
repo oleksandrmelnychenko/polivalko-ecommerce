@@ -1,4 +1,5 @@
 import {
+  IconActivity,
   IconAdjustmentsHorizontal,
   IconArchive,
   IconBell,
@@ -81,6 +82,13 @@ export const NAV_SECTIONS: readonly NavSection[] = [
         icon: IconShoppingBag,
         badge: (summary) => summary.newOrders + summary.awaitingConfirmation,
         badgeTone: 'hot',
+      },
+      {
+        id: 'activity',
+        label: 'На сайті',
+        path: '/sales/activity',
+        permissionKey: PermissionKeys.Orders.View,
+        icon: IconActivity,
       },
       {
         id: 'requests',

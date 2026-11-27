@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { reportShopActivity } from "@/shared/api/shop-activity";
 import { showProductNotice } from "@/shared/ui/product-notice";
 import { loadSession } from "@/features/customer";
 import { useFavorites } from "../hooks/use-favorites";
@@ -27,6 +28,8 @@ export function FavoriteButton({ productId, name, variant = "round" }: { product
       result = await toggleFavorite(productId, id);
     }
     if (result === "busy") return;
+    if (result === "added") reportShopActivity("favorite_add", productId);
+    else if (result === "removed") reportShopActivity("favorite_remove", productId);
     showProductNotice({
       kind: result,
       title: result === "added" ? "Додано до обраного" : result === "removed" ? "Прибрано з обраного" : FAILED,

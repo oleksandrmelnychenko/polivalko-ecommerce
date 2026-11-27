@@ -19,6 +19,19 @@ internal sealed class OrderingModelConfigurator : IModelConfigurator
             b.HasIndex(c => c.Owner).IsUnique();
             b.Property(c => c.ItemsJson).HasColumnType("jsonb");
         });
+        modelBuilder.Entity<ShopActivityEvent>(b =>
+        {
+            b.ToTable("shop_activity_events", Schemas.Ordering);
+            b.HasKey(e => e.Id);
+            b.Property(e => e.Id).ValueGeneratedNever();
+            b.Property(e => e.Kind).HasMaxLength(24);
+            b.Property(e => e.VisitorKey).HasMaxLength(100);
+            b.Property(e => e.VisitorTag).HasMaxLength(16);
+            b.Property(e => e.Device).HasMaxLength(16);
+            b.HasIndex(e => new { e.OccurredAt, e.Id });
+            b.HasIndex(e => new { e.Kind, e.OccurredAt });
+            b.HasIndex(e => new { e.VisitorKey, e.OccurredAt });
+        });
         modelBuilder.HasSequence<long>(NumberSequence, Schemas.Ordering).StartsAt(100001);
 
         modelBuilder.Entity<Order>(builder =>

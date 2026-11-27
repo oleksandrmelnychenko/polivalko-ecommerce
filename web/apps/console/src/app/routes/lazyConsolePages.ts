@@ -6,6 +6,7 @@ export const ProductAnalyticsPage = lazy(() => import('@/features/product-analyt
 export const BusinessAnalyticsPage = lazy(() => import('@/features/product-analytics/pages/BusinessAnalyticsPage').then((m) => ({ default: m.BusinessAnalyticsPage })))
 export const OrdersPage = lazy(() => import('@/features/orders/pages/OrdersPage').then((m) => ({ default: m.OrdersPage })))
 export const OrderPage = lazy(() => import('@/features/orders/pages/OrderPage').then((m) => ({ default: m.OrderPage })))
+export const SalesActivityPage = lazy(() => import('@/features/orders/pages/SalesActivityPage').then((m) => ({ default: m.SalesActivityPage })))
 export const RequestsPage = lazy(() => import('@/features/requests/pages/RequestsPage').then((m) => ({ default: m.RequestsPage })))
 export const ReturnsPage = lazy(() => import('./SalesReturnsPage'))
 export const CustomersPage = lazy(() => import('@/features/customers/pages/CustomersPage').then((m) => ({ default: m.CustomersPage })))

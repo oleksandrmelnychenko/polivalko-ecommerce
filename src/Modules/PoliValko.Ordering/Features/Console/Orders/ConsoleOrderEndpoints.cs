@@ -18,6 +18,13 @@ internal static class ConsoleOrderEndpoints
         group.MapGet("/open-carts", ListOpenCarts.HandleAsync).WithName("ConsoleListOpenCarts")
             .WithSummary("Відкриті кошики покупців із поточними цінами й доступними залишками");
 
+        group.MapGet("/activity", ListShopActivity.HandleAsync).WithName("ConsoleListShopActivity")
+            .WithSummary("Жива стрічка дій покупців на вітрині: додавання в кошик, порівняння, обране (лайки) і топ інтересу");
+
+        group.MapGet("/activity/stream", StreamShopActivity.HandleAsync)
+            .WithName("ConsoleStreamShopActivity")
+            .ExcludeFromDescription();
+
         group.MapGet(string.Empty, ListOrders.HandleAsync)
             .WithName("ConsoleListOrders")
             .WithEnumQuery<OrderStatus>("status")

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Routing;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Security;
 using PoliValko.Infrastructure.Web;
+using PoliValko.Ordering.Features.Activity;
 using PoliValko.Ordering.Features.Checkout;
 using PoliValko.Ordering.Features.Notifications;
 
@@ -18,6 +19,12 @@ internal static class CartEndpoints
         group.MapPost("/open", OpenAsync).WithName("OpenCart");
         group.MapPut("/", SaveAsync).WithName("SaveCart");
         group.MapPost("/checkout", CheckoutAsync).RequireRateLimiting(RateLimitPolicies.Orders).WithName("CheckoutCart");
+
+        // Lightweight storefront activity beacon for guest/signed-in likes and comparisons (same-origin checked, rate-limited).
+        api.MapPost("/cart/activity", RecordShopActivity.HandleAsync)
+            .WithTags("Cart")
+            .RequireRateLimiting(RateLimitPolicies.Cart)
+            .WithName("RecordShopActivity");
     }
 
     private static async Task<Ok<ServerCartDto>> OpenAsync(HttpContext http, PoliValkoDbContext db, ServerCartStore store, CancellationToken ct)
@@ -32,7 +39,13 @@ internal static class CartEndpoints
     }
 
     private static async Task<Results<Ok<ServerCartDto>, ValidationProblem, ProblemHttpResult>> SaveAsync(
-        SaveCartRequest request, HttpContext http, PoliValkoDbContext db, ServerCartStore store, CancellationToken ct)
+        SaveCartRequest request,
+        HttpContext http,
+        PoliValkoDbContext db,
+        ServerCartStore store,
+        ShopActivityHub hub,
+        TimeProvider time,
+        CancellationToken ct)
     {
         http.Response.Headers.CacheControl = "no-store";
         var errors = new Dictionary<string, string[]>();
@@ -43,10 +56,19 @@ internal static class CartEndpoints
         await store.LockAsync(owner, ct);
         var cart = await store.LoadAsync(owner, ct);
         if (cart.Id != request.CartId || cart.Revision != request.Revision) return Changed();
+        var before = ServerCartStore.Items(cart);
+        var now = time.GetUtcNow();
+        var activity = ShopActivityRecorder.DiffCartEvents(owner, before, request.Items!, http.Request, now);
         store.Replace(cart, request.Items!);
+        if (activity.Count > 0) db.AddRange(activity);
         await db.SaveChangesAsync(ct);
         var dto = await store.DtoAsync(cart, ct);
         await tx.CommitAsync(ct);
+        if (activity.Count > 0)
+        {
+            await ShopActivityRecorder.TrimExpiredOccasionallyAsync(db, now, ct);
+            hub.Publish();
+        }
         return TypedResults.Ok(dto);
     }
 

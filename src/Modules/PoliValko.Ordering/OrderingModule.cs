@@ -28,6 +28,7 @@ public static class OrderingModule
         services.Configure<SellerOptions>(configuration.GetSection("Seller"));
         services.Configure<OrderingOptions>(configuration.GetSection("Ordering"));
         return services
+            .AddSingleton<Features.Activity.ShopActivityHub>()
             .AddModelConfigurator<OrderingModelConfigurator>()
             .AddScoped<CheckoutCalculator>()
             .AddScoped<IOrderPayments, OrderPayments>()

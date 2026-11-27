@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { browserApi } from "@polivalko/shared/api/browser";
+import { reportShopActivity } from "@/shared/api/shop-activity";
 import { comparisonGroup, fromDetails, type CompareProduct } from "./model";
 import { notifyComparison } from "./notice";
 
@@ -51,6 +52,7 @@ export function removeComparison(id: string) {
   const product = current.find(p => p.id === id);
   if (!product) return;
   save(current.filter(p => p.id !== id));
+  reportShopActivity("compare_remove", product.id);
   notifyComparison({ kind: "removed", name: product.name });
 }
 export function clearComparisonGroup(key: string) { save(read().filter(p => comparisonGroup(p).key !== key)); }
@@ -71,6 +73,7 @@ export async function addComparison(product: CompareProduct) {
     throw new Error("У цій групі вже 4 товари. Приберіть один зі списку порівняння.");
   if (current.length >= 20) throw new Error("Список заповнений. Приберіть зайві товари з порівняння.");
   save([...current, detail]);
+  reportShopActivity("compare_add", detail.id);
   notifyComparison({ kind: "added", name: detail.name, groupKey: key });
 }
 

@@ -16,4 +16,15 @@ internal sealed class CustomerDirectory(PoliValkoDbContext db) : ICustomerDirect
             .Select(c => (Guid?)c.Id)
             .FirstOrDefaultAsync(ct);
     }
+
+    public async Task<IReadOnlyDictionary<Guid, CustomerBrief>> GetBriefsAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct)
+    {
+        if (ids.Count == 0) return new Dictionary<Guid, CustomerBrief>();
+        var unique = ids.Distinct().ToArray();
+        return await db.Set<Customer>()
+            .AsNoTracking()
+            .Where(c => unique.Contains(c.Id))
+            .Select(c => new CustomerBrief(c.Id, c.Name, c.Phone, c.Email))
+            .ToDictionaryAsync(c => c.Id, ct);
+    }
 }

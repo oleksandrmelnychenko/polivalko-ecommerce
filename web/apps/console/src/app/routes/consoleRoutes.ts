@@ -31,6 +31,7 @@ export const consoleRoutes: readonly ConsoleRoute[] = [
   { path: '/', title: 'Дашборд', permissionKey: PermissionKeys.Dashboard.View, page: Pages.DashboardPage, redirectWhenDenied: true },
   { path: '/sales/orders', title: 'Замовлення', permissionKey: PermissionKeys.Orders.View, page: Pages.OrdersPage },
   { path: '/sales/orders/:number', title: 'Замовлення', permissionKey: PermissionKeys.Orders.View, page: Pages.OrderPage },
+  { path: '/sales/activity', title: 'На сайті', permissionKey: PermissionKeys.Orders.View, page: Pages.SalesActivityPage },
   { path: '/analytics/products', title: 'Аналітика товарів', permissionKey: PermissionKeys.Analytics.ViewProducts, page: Pages.ProductAnalyticsPage },
   { path: '/analytics/business', title: 'Бізнес-аналітика', permissionKey: PermissionKeys.Analytics.ViewProducts, page: Pages.BusinessAnalyticsPage },
   { path: '/sales/requests', title: 'Заявки', permissionKey: PermissionKeys.Requests.View, page: Pages.RequestsPage },

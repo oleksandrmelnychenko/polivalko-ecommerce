@@ -2848,6 +2848,67 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                     b.ToTable("carts", "ordering");
                 });
 
+            modelBuilder.Entity("PoliValko.Ordering.Domain.ShopActivityEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<string>("Device")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("device");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)")
+                        .HasColumnName("kind");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer")
+                        .HasColumnName("quantity");
+
+                    b.Property<string>("VisitorKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("visitor_key");
+
+                    b.Property<string>("VisitorTag")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("visitor_tag");
+
+                    b.HasKey("Id")
+                        .HasName("pk_shop_activity_events");
+
+                    b.HasIndex("Kind", "OccurredAt")
+                        .HasDatabaseName("ix_shop_activity_events_kind_occurred_at");
+
+                    b.HasIndex("OccurredAt", "Id")
+                        .HasDatabaseName("ix_shop_activity_events_occurred_at_id");
+
+                    b.HasIndex("VisitorKey", "OccurredAt")
+                        .HasDatabaseName("ix_shop_activity_events_visitor_key_occurred_at");
+
+                    b.ToTable("shop_activity_events", "ordering");
+                });
+
             modelBuilder.Entity("PoliValko.Payments.Domain.Payment", b =>
                 {
                     b.Property<Guid>("Id")

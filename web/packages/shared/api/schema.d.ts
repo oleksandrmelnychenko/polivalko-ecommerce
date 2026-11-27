@@ -425,6 +425,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cart/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["RecordShopActivity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/orders/{number}/receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Фіскальні чеки замовлення для покупця (за токеном) */
+        get: operations["GetOrderReceipts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customer-mail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Чи доставляються листи покупцям: від цього залежать тексти про лист із посиланням, підтвердження email і відновлення пароля */
+        get: operations["GetCustomerMailStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/checkout/quote": {
         parameters: {
             query?: never;
@@ -589,40 +639,6 @@ export interface paths {
         put?: never;
         /** Тестова оплата: успіх, відмова або прострочення. notify=false імітує втрачений вебхук. */
         post: operations["CompleteSandboxPayment"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/orders/{number}/receipts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Фіскальні чеки замовлення для покупця (за токеном) */
-        get: operations["GetOrderReceipts"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/customer-mail": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Чи доставляються листи покупцям: від цього залежать тексти про лист із посиланням, підтвердження email і відновлення пароля */
-        get: operations["GetCustomerMailStatus"];
-        put?: never;
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2012,6 +2028,23 @@ export interface paths {
         };
         /** Відкриті кошики покупців із поточними цінами й доступними залишками */
         get: operations["ConsoleListOpenCarts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/orders/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Жива стрічка дій покупців на вітрині: додавання в кошик, порівняння, обране (лайки) і топ інтересу */
+        get: operations["ConsoleListShopActivity"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4320,6 +4353,13 @@ export interface components {
             updatedAt: string;
             items: components["schemas"]["QuoteLineDto"][];
             subtotal: components["schemas"]["MoneyDto"];
+            /** @default  */
+            visitorTag: string;
+            /** Format: uuid */
+            customerId?: null | string;
+            customerName?: null | string;
+            customerPhone?: null | string;
+            customerEmail?: null | string;
         };
         ConsoleOrderCountsDto: {
             /** Format: int32 */
@@ -4576,6 +4616,65 @@ export interface components {
             comment: null | string;
             status: components["schemas"]["ServiceRequestStatus"];
             directionNames: string[];
+        };
+        ConsoleShopActivityItem: {
+            /** Format: uuid */
+            id: string;
+            kind: string;
+            /** Format: int32 */
+            quantity: number;
+            /** Format: date-time */
+            occurredAt: string;
+            device: string;
+            isGuest: boolean;
+            visitorTag: string;
+            /** Format: uuid */
+            customerId: null | string;
+            customerName: null | string;
+            customerPhone: null | string;
+            customerEmail: null | string;
+            /** Format: uuid */
+            productId: string;
+            productSku: string;
+            productName: string;
+            productSlug: string;
+            productImageUrl: null | string;
+            productPrice: components["schemas"]["MoneyDto"];
+        };
+        ConsoleShopActivityResponse: {
+            summary: components["schemas"]["ConsoleShopActivitySummary"];
+            topProducts: components["schemas"]["ConsoleShopActivityTopProduct"][];
+            events: components["schemas"]["PagedResponseOfConsoleShopActivityItem"];
+        };
+        ConsoleShopActivitySummary: {
+            /** Format: int32 */
+            cartAdds24h: number;
+            /** Format: int32 */
+            compareAdds24h: number;
+            /** Format: int32 */
+            favoriteAdds24h: number;
+            /** Format: int32 */
+            activeVisitors15m: number;
+            /** Format: int32 */
+            openCartsCount: number;
+            openCartsSubtotal: components["schemas"]["MoneyDto"];
+        };
+        ConsoleShopActivityTopProduct: {
+            /** Format: uuid */
+            productId: string;
+            sku: string;
+            name: string;
+            slug: string;
+            imageUrl: null | string;
+            price: components["schemas"]["MoneyDto"];
+            /** Format: int32 */
+            cartAdds: number;
+            /** Format: int32 */
+            compareAdds: number;
+            /** Format: int32 */
+            favoriteAdds: number;
+            /** Format: int32 */
+            totalScore: number;
         };
         ConsoleSummaryDto: {
             /** Format: int32 */
@@ -5577,6 +5676,17 @@ export interface components {
             /** Format: int32 */
             totalPages: number;
         };
+        PagedResponseOfConsoleShopActivityItem: {
+            items: components["schemas"]["ConsoleShopActivityItem"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            /** Format: int32 */
+            totalItems: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
         PageDto: {
             slug: string;
             title: string;
@@ -6063,6 +6173,11 @@ export interface components {
             method: string;
             accountTitle: string;
             reference: string;
+        };
+        RecordShopActivityRequest: {
+            kind: string;
+            /** Format: uuid */
+            productId: string;
         };
         RedirectDto: {
             from: string;
@@ -7493,6 +7608,81 @@ export interface operations {
             };
         };
     };
+    RecordShopActivity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordShopActivityRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetOrderReceipts: {
+        parameters: {
+            query?: {
+                token?: string;
+            };
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptDto"][];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetCustomerMailStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerMailStatusDto"];
+                };
+            };
+        };
+    };
     QuoteCheckout: {
         parameters: {
             query?: never;
@@ -7856,59 +8046,6 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    GetOrderReceipts: {
-        parameters: {
-            query?: {
-                token?: string;
-            };
-            header?: never;
-            path: {
-                number: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ReceiptDto"][];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    GetCustomerMailStatus: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CustomerMailStatusDto"];
                 };
             };
         };
@@ -11774,6 +11911,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PagedResponseOfConsoleOpenCart"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleListShopActivity: {
+        parameters: {
+            query?: {
+                kind?: string;
+                search?: string;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsoleShopActivityResponse"];
                 };
             };
             /** @description Unauthorized */
