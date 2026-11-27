@@ -1,0 +1,4 @@
+.copy-text { font: inherit; color: inherit; cursor: copy; border-radius: 6px; padding: 0 2px; margin: 0 -2px; transition: background-color 120ms ease; }
+.copy-text:hover { background: var(--app-ground); }
+.copy-text:focus-visible { outline: 2px solid var(--mantine-primary-color-filled); outline-offset: 1px; }
+.copy-text.is-copied { background: var(--mantine-color-teal-light); }

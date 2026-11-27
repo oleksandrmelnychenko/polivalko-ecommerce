@@ -5,6 +5,7 @@ import { formatDateTime } from '@polivalko/shared/lib/format'
 import { deliveryMethodLabel } from '@polivalko/shared/lib/labels'
 import { problemMessage } from '@/shared/api/problem'
 import type { ApiQueryStatus } from '@/shared/api/useApiQuery'
+import { CopyText } from '@/shared/ui/CopyText'
 import { DataTable } from '@/shared/ui/data-table/DataTable'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
 import { CellStack, Money } from '@/shared/ui/Money'
@@ -20,7 +21,7 @@ const columns: DataTableColumn<LatestOrder>[] = [
     id: 'number',
     header: 'Замовлення',
     width: 180,
-    cell: (row) => <CellStack code title={<Link to={orderHref(row.number)}>{row.number}</Link>} sub={formatDateTime(row.createdAt)} />,
+    cell: (row) => <CellStack code title={<CopyText value={row.number} />} sub={formatDateTime(row.createdAt)} />,
   },
   { id: 'customer', header: 'Покупець', width: 220, fill: true, cell: (row) => <CellStack title={row.customerName} sub={row.phone} /> },
   { id: 'total', header: 'Сума', width: 130, align: 'right', numeric: true, cell: (row) => <Money value={row.total} sub={`${row.itemsCount} поз.`} /> },

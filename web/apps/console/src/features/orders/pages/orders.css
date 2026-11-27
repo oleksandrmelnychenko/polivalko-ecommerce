@@ -1,5 +1,7 @@
 .orders-number { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
 .orders-number svg { box-sizing: content-box; flex: none; padding: 7px; background: var(--app-ground); border-radius: 50%; }
+.orders-number a { display: inline-flex; color: inherit; border-radius: 50%; }
+.orders-number a:hover svg { background: var(--app-line); }
 .orders-carts.app-editor-modal .mantine-Modal-body { padding: 0; }
 .orders-carts .app-sheet-scroll { background: var(--app-ground); padding: 12px; }
 .orders-carts-toolbar, .orders-carts-empty, .orders-carts .mantine-Accordion-item { background: white; border: 1px solid var(--app-line); border-radius: 16px; }

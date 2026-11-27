@@ -1,4 +1,5 @@
 import { formatDateTime, formatMoney } from '@polivalko/shared/lib/format'
+import { CopyText } from '@/shared/ui/CopyText'
 import { OrderStatusChip, PaymentStatusChip } from '@/shared/ui/StatusChip'
 import type { ConsoleOrder } from '../api/orderDetailApi'
 
@@ -14,7 +15,9 @@ export function OrderHero({ order, printedAt }: { order: ConsoleOrder; printedAt
       <section className="order-hero" aria-label={`Замовлення ${order.number}`}>
         <div className="order-hero-main">
           <span className="order-eyebrow">Замовлення</span>
-          <h1 className="order-number">{order.number}</h1>
+          <h1 className="order-number">
+            <CopyText value={order.number} />
+          </h1>
           <div className="order-hero-chips">
             <OrderStatusChip size="lg" status={order.status} />
             <PaymentStatusChip size="lg" status={order.paymentStatus} />

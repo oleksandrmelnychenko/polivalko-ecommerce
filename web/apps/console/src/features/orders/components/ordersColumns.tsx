@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { IconShoppingBag } from '@tabler/icons-react'
 import { formatDateTime } from '@polivalko/shared/lib/format'
 import { deliveryMethodLabel } from '@polivalko/shared/lib/labels'
+import { CopyText } from '@/shared/ui/CopyText'
 import type { DataTableColumn } from '@/shared/ui/data-table/types'
 import { Money, NumberValue } from '@/shared/ui/Money'
 import { OrderStatusChip, PaymentStatusChip } from '@/shared/ui/StatusChip'
@@ -13,11 +14,14 @@ export const ordersColumns: DataTableColumn<OrderRow>[] = [
     id: 'number',
     header: 'Номер',
     width: 160,
+    // A click on the number copies it; the bag icon and the rest of the row open the order.
     cell: (row) => (
-      <Link className="orders-number app-cell-code" to={orderHref(row.number)}>
-        <IconShoppingBag size={16} stroke={1.7} aria-hidden="true" />
-        {row.number}
-      </Link>
+      <span className="orders-number app-cell-code">
+        <Link to={orderHref(row.number)} aria-label={`Відкрити замовлення ${row.number}`}>
+          <IconShoppingBag size={16} stroke={1.7} aria-hidden="true" />
+        </Link>
+        <CopyText value={row.number} />
+      </span>
     ),
   },
   {
