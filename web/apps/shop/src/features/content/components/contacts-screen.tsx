@@ -2,6 +2,7 @@ import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { IconMail, IconPhone } from "@tabler/icons-react";
 import { breadcrumbJsonLd, contactPageJsonLd, JsonLd } from "@/features/seo";
 import { getServiceDirections, ServiceRequestForm } from "@/features/services/server";
 import { ArrowRightIcon, ClockIcon, PinIcon } from "@polivalko/shared/ui/icons";
@@ -46,11 +47,29 @@ async function ContactsContent() {
     <header className="contact-poster garden-print">
       <div className="contact-directory">
         <h1>Контакти</h1>
-        <dl className="contact-lines">
-          {contacts?.storePhone && <div><dt>Магазин і замовлення</dt><dd><a href={tel(contacts.storePhone)}>{contacts.storePhone}</a></dd></div>}
-          {contacts?.servicesPhone && <div><dt>Послуги для саду</dt><dd><a href={tel(contacts.servicesPhone)}>{contacts.servicesPhone}</a></dd></div>}
-          {contacts?.email && <div><dt>Електронна пошта</dt><dd><a href={"mailto:" + contacts.email}>{contacts.email}</a></dd></div>}
-        </dl>
+        <div className="contact-lines">
+          {contacts?.storePhone && (
+            <a href={tel(contacts.storePhone)}>
+              <span>Магазин і замовлення</span>
+              <strong>{contacts.storePhone}</strong>
+              <IconPhone aria-hidden="true" />
+            </a>
+          )}
+          {contacts?.servicesPhone && (
+            <a href={tel(contacts.servicesPhone)}>
+              <span>Послуги для саду</span>
+              <strong>{contacts.servicesPhone}</strong>
+              <IconPhone aria-hidden="true" />
+            </a>
+          )}
+          {contacts?.email && (
+            <a href={"mailto:" + contacts.email}>
+              <span>Електронна пошта</span>
+              <strong>{contacts.email}</strong>
+              <IconMail aria-hidden="true" />
+            </a>
+          )}
+        </div>
         <nav className="contact-jumps" aria-label="На цій сторінці">
           <a className="btn btn--graphite" href="#store"><PinIcon /> Як нас знайти</a>
           {directions.length > 0 && <a href="#request">Заявка на послугу <ArrowRightIcon /></a>}
