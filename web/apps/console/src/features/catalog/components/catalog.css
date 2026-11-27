@@ -1380,7 +1380,8 @@ details.catalog-run[open] > .catalog-run-summary .catalog-run-chevron {
   margin-bottom: 6px;
 }
 .product-metric-value s { font-size: .52em; color: var(--mantine-color-gray-6); white-space: nowrap; letter-spacing: normal; }
-.product-metric small { color: var(--mantine-color-gray-7); font-size: 12px; }
+.product-metric small { display: block; color: var(--mantine-color-gray-7); font-size: 12px; }
+.product-metric small + small { margin-top: 2px; }
 .product-sku input { font-family: var(--font-mono); }
 @media (max-width: 50em) {
   .product-editor-columns { grid-template-columns: minmax(0, 1fr); }

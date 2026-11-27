@@ -111,8 +111,9 @@
   width: max-content;
 }
 .ba-page .ba-report-tabs .mantine-SegmentedControl-label {
-  padding: 0 11px;
-  font-size: 13px;
+  padding: 5px 8px;
+  font-size: 12.5px;
+  letter-spacing: -0.01em;
   white-space: nowrap;
 }
 .ba-report-tabs .mantine-SegmentedControl-root,
