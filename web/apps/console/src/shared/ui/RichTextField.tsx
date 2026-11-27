@@ -1,9 +1,33 @@
 import { SegmentedControl, Text, Textarea } from '@mantine/core'
 import { Link, RichTextEditor } from '@mantine/tiptap'
+import type { DOMOutputSpec } from '@tiptap/pm/model'
 import { useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import { linkRelAttributes } from '@polivalko/shared/lib/link-rel'
 import { useEffect, useState } from 'react'
 import './rich-text-field.css'
+
+const SITE_HOST = (() => {
+  try {
+    return process.env.SITE_URL ? new URL(process.env.SITE_URL).host : null
+  } catch {
+    return null
+  }
+})()
+
+/**
+ * TipTap's Link writes `rel="noopener noreferrer nofollow"` and `target="_blank"` on every link, so links between
+ * shop pages (`/catalog/...`, `/services/...`) were saved as nofollow. The rel and target are derived from the href
+ * on every render instead: none for internal links, `noopener noreferrer` + a new tab for external ones. Text saved
+ * earlier with nofollow is cleaned the next time it is saved from the editor.
+ */
+const ShopLink = Link.extend({
+  renderHTML(props) {
+    const [tag, attrs, ...rest] = this.parent!(props) as [string, Record<string, unknown>, ...unknown[]]
+    const href = typeof attrs.href === 'string' ? attrs.href : ''
+    return [tag, { ...attrs, ...linkRelAttributes(href, SITE_HOST ? [SITE_HOST] : []) }, ...rest] as DOMOutputSpec
+  },
+}).configure({ openOnClick: false, HTMLAttributes: { rel: null, target: null } })
 
 type Mode = 'visual' | 'html'
 
@@ -39,7 +63,7 @@ export function RichTextField({ label, value, onChange, error, hint, minRows = 8
     immediatelyRender: false,
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3, 4] }, code: false, codeBlock: false, link: false }),
-      Link.configure({ openOnClick: false }),
+      ShopLink,
     ],
     content: visualOk ? value : '',
     onUpdate: ({ editor: current }) => onChange(current.isEmpty ? '' : current.getHTML()),

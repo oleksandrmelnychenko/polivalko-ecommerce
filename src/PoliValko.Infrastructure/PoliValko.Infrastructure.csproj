@@ -22,4 +22,8 @@
     <ProjectReference Include="..\PoliValko.SharedKernel\PoliValko.SharedKernel.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="PoliValko.UnitTests" />
+  </ItemGroup>
+
 </Project>
