@@ -2,6 +2,7 @@ import path from "node:path";
 import { apiInternalUrl } from "@polivalko/shared/api/origin";
 import type { NextConfig } from "next";
 import { CATALOG_PHOTO_HOST } from "./src/shared/lib/catalog-photo-host";
+import { BLOCKING_METADATA_AGENTS } from "./src/shared/lib/streaming-metadata";
 import { duplicateHostRedirects } from "./src/shared/lib/duplicate-hosts";
 
 const workspaceRoot = path.join(__dirname, "../..");
@@ -17,8 +18,9 @@ const nextConfig: NextConfig = {
   turbopack: { root: workspaceRoot },
   transpilePackages: ["@polivalko/shared"],
   poweredByHeader: false,
-  // Keep canonical URLs and robots directives in the initial head for every HTML reader.
-  htmlLimitedBots: /.*/,
+  // Metadata goes into <head> before the page starts for every reader, except people on pages whose metadata
+  // is in the prerendered shell anyway: they get the shell at once (src/shared/lib/streaming-metadata.ts).
+  htmlLimitedBots: BLOCKING_METADATA_AGENTS,
   cacheComponents: true,
   partialPrefetching: true,
   // Catalog photos from Vercel Blob are resized here (src/shared/lib/images.ts). Few widths and one format keep
