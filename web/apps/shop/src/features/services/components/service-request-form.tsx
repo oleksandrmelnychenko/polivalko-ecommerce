@@ -85,7 +85,7 @@ export function ServiceRequestForm({ directions }: { directions: ServiceDirectio
       if (problem.code === "idempotency.key_mismatch") attempt.current = null;
       setState({ status: "error", message: problem.title ?? "Не вдалося надіслати заявку. Спробуйте ще раз.", errors: problem.errors });
     } catch {
-      setState({ status: "error", message: "Немає зв'язку з сервером. Перевірте інтернет і спробуйте ще раз." });
+      setState({ status: "error", message: "Немає зв’язку із сервером. Перевірте інтернет і спробуйте ще раз." });
     } finally {
       sending.current = false;
     }

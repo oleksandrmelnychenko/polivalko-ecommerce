@@ -72,7 +72,7 @@ export const CATEGORY_BRAND_PRIORITY_MATRIX: readonly CategoryBrandSeedEntry[] =
   { categorySlug: "shlanhy", categoryName: "Шланги", brandSlug: "cellfast", brandName: "Cellfast", priority: "P1", intentNote: "Армовані поливальні шланги Cellfast" },
   { categorySlug: "shlanhy", categoryName: "Шланги", brandSlug: "gardena", brandName: "Gardena", priority: "P1", intentNote: "Садові шланги Gardena" },
   { categorySlug: "doshchuvachi", categoryName: "Дощувачі", brandSlug: "cellfast", brandName: "Cellfast", priority: "P1", intentNote: "Дощувачі для газону Cellfast" },
-  { categorySlug: "doshchuvachi", categoryName: "Дощувачі", brandSlug: "gardena", brandName: "Gardena", priority: "P1", intentNote: "Осцилюючі та кругові дощувачі Gardena" },
+  { categorySlug: "doshchuvachi", categoryName: "Дощувачі", brandSlug: "gardena", brandName: "Gardena", priority: "P1", intentNote: "Маятникові та кругові дощувачі Gardena" },
   { categorySlug: "ruchnyi-instrument", categoryName: "Ручний інструмент", brandSlug: "fiskars", brandName: "Fiskars", priority: "P1", intentNote: "Садовий інструмент Fiskars (90 SKU)" },
   { categorySlug: "ruchnyi-instrument", categoryName: "Ручний інструмент", brandSlug: "truper", brandName: "Truper", priority: "P1", intentNote: "Садовий інструмент Truper (50 SKU)" },
   { categorySlug: "ruchnyi-instrument", categoryName: "Ручний інструмент", brandSlug: "gruntek", brandName: "GRÜNTEK", priority: "P1", intentNote: "Секатори та інструмент GRÜNTEK (37 SKU)" },

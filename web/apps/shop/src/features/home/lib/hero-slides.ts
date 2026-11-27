@@ -163,7 +163,7 @@ export function heroSlides({ deals, sections, featured, storeFeatured }: HeroDat
       image: { ...sized(pagePhotos.hero.url, HERO_SIZES, 960), alt: pagePhotos.hero.alt },
       side: "left",
       title: "Товари для саду, городу й дому",
-      sub: "Відправляємо Новою поштою по всій Україні. Самовивіз з магазину безкоштовний.",
+      sub: "Відправляємо Новою поштою по всій Україні. Самовивіз із магазину в Бучі безкоштовний.",
       sections,
       featured: storeFeatured,
       cta: { href: "/catalog", label: "Перейти до каталогу" },

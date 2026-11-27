@@ -199,13 +199,14 @@ test("priority Category × Brand matrix has zero duplicate subcategory conflicts
   }
 });
 
-test("blog/journal articles are enabled, use zero Unsplash URLs, have valid SEO lengths, and link to real routes", () => {
+test("blog/journal articles are enabled, use zero Unsplash URLs, have valid SEO lengths, clean Ukrainian copy, and link to real routes", () => {
   assert.equal(JOURNAL_ENABLED, true);
-  assert.ok(articles.length >= 7);
+  assert.ok(articles.length >= 11, `Expected at least 11 blog articles, got ${articles.length}`);
 
   const slugs = new Set();
   const titles = new Set();
   const descs = new Set();
+  const forbiddenStyleRe = /(?:експертн\p{L}*\s+гід|повний\s+гід|практичний\s+гід|ріжуч\p{L}*|осцилююч\p{L}*|продувк\p{L}*|скріншот|шильдик|при\s+отриманні|під\s+сценарій)/iu;
 
   for (const article of articles) {
     assert.equal(slugs.has(article.slug), false, `Duplicate blog slug: ${article.slug}`);
@@ -223,6 +224,15 @@ test("blog/journal articles are enabled, use zero Unsplash URLs, have valid SEO 
       article.seoDescription.length >= 130 && article.seoDescription.length <= 155,
       `Blog description out of 130-155 range (${article.seoDescription.length}): ${article.seoDescription}`,
     );
+
+    const fullCopy = [
+      article.title,
+      article.seoTitle,
+      article.seoDescription,
+      article.intro,
+      ...article.sections.flatMap((s) => [s.title, ...s.text]),
+    ].join(" ");
+    assert.doesNotMatch(fullCopy, forbiddenStyleRe, `AI-ism or grammar calque found in blog article ${article.slug}`);
 
     assert.ok(article.image.url.startsWith("/brand/"), `Article image must be local /brand/* asset: ${article.image.url}`);
     assert.equal(article.image.url.includes("unsplash"), false);
