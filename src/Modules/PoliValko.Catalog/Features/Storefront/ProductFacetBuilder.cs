@@ -26,31 +26,36 @@ internal static class ProductFacetBuilder
             .Where(f => f.Values.Count > 0)
             .ToList();
 
-        var brands = await scope
-            .Where(p => p.Brand != null)
-            .GroupBy(p => p.Brand!)
-            .Select(g => new { Name = g.Key, Count = g.Count() })
-            .OrderByDescending(b => b.Count)
-            .ThenBy(b => b.Name)
-            .ToListAsync(ct);
-
-        var prices = await scope
-            .Select(p => new { p.Price.Amount, InStock = (p.Stock.Quantity - p.Stock.ReservedQuantity) >= 1 && p.Price.Amount > 0 })
-            .GroupBy(_ => 1)
+        // One pass over the scope, grouped by brand (products without one form a group of their own), gives both the
+        // brand counts and the price range: one round trip instead of two.
+        var groups = await scope
+            .Select(p => new { p.Brand, p.Price.Amount, InStock = (p.Stock.Quantity - p.Stock.ReservedQuantity) >= 1 && p.Price.Amount > 0 })
+            .GroupBy(p => p.Brand)
             .Select(g => new
             {
+                Name = g.Key,
+                Count = g.Count(),
                 // The range covers real prices: "price on request" (0) would pull its lower end down to nothing.
-                Min = g.Where(x => x.Amount > 0).Min(x => (decimal?)x.Amount) ?? 0m,
+                Min = g.Where(x => x.Amount > 0).Min(x => (decimal?)x.Amount),
                 Max = g.Max(x => x.Amount),
                 InStock = g.Count(x => x.InStock),
             })
-            .FirstOrDefaultAsync(ct);
+            // Sorted by the database, so brand names keep its collation.
+            .OrderByDescending(g => g.Count)
+            .ThenBy(g => g.Name)
+            .ToListAsync(ct);
+
+        var brands = groups
+            .Where(g => g.Name != null)
+            .Select(g => new BrandFacet(g.Name!, g.Count))
+            .ToList();
+        var any = groups.Count > 0;
 
         return new ProductFacets(
-            brands.Select(b => new BrandFacet(b.Name, b.Count)).ToList(),
-            prices is null ? null : MoneyDto.Hryvnia(prices.Min),
-            prices is null ? null : MoneyDto.Hryvnia(prices.Max),
-            prices?.InStock ?? 0,
+            brands,
+            any ? MoneyDto.Hryvnia(groups.Min(g => g.Min) ?? 0m) : null,
+            any ? MoneyDto.Hryvnia(groups.Max(g => g.Max)) : null,
+            groups.Sum(g => g.InStock),
             attributes);
     }
 

@@ -96,6 +96,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             services.RemoveAll<ICustomerMailer>();
             services.AddSingleton<ICustomerMailer>(Mailer);
             services.AddOutboxHandler<AlwaysFailingMessage, AlwaysFailingHandler>();
+            services.AddSingleton<SqlCommandCounter>();
+            services.ConfigureDbContext<PoliValkoDbContext>((provider, options) =>
+                options.AddInterceptors(provider.GetRequiredService<SqlCommandCounter>()));
         });
     }
 

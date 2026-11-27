@@ -22,7 +22,7 @@ internal static class ListFavorites
             .Select(f => f.ProductId)
             .ToListAsync(ct);
         var rows = await ProductListing.ListItems(visibleProducts.AsNoTracking().Where(p => p.IsVisible && ids.Contains(p.Id))).ToListAsync(ct);
-        var items = (await ProductListing.ToListItemsAsync(db, rows, time, ct)).ToDictionary(r => r.Id);
+        var items = (await ProductListing.ToListItemsAsync(db, visibleProducts, rows, time, ct)).ToDictionary(r => r.Id);
 
         return TypedResults.Ok(ids.Where(items.ContainsKey).Select(id => items[id]).ToList());
     }

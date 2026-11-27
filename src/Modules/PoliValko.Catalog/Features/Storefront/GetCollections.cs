@@ -20,7 +20,7 @@ internal static class GetCollections
             .ToListAsync(ct);
         var ids = collections.SelectMany(c => c.ProductIds).Distinct().ToList();
         var rows = await ProductListing.ListItems(visibleProducts.AsNoTracking().Where(p => p.IsVisible && ids.Contains(p.Id))).ToListAsync(ct);
-        var items = (await ProductListing.ToListItemsAsync(db, rows, time, ct)).ToDictionary(r => r.Id);
+        var items = (await ProductListing.ToListItemsAsync(db, visibleProducts, rows, time, ct)).ToDictionary(r => r.Id);
 
         return TypedResults.Ok(collections
             .Select(c => new CollectionDto(c.Code, c.Title, c.ProductIds.Where(items.ContainsKey).Select(id => items[id]).ToList()))

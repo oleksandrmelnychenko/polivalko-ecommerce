@@ -50,17 +50,16 @@ internal static class PackGroups
         CancellationToken ct)
     {
         if (ids.Count == 0) return [];
-        var groupOf = await visibleProducts
-            .Where(p => ids.Contains(p.Id) && p.VariantGroup != null && p.VariantLabel != null)
-            .Select(p => new { p.Id, Group = p.VariantGroup! })
+        // Every pack size of the groups the listed products belong to, in one round trip.
+        var members = await visibleProducts
+            .Where(p => p.VariantGroup != null && p.VariantLabel != null && visibleProducts.Any(listed =>
+                ids.Contains(listed.Id) && listed.VariantLabel != null && listed.VariantGroup == p.VariantGroup))
+            .Select(p => new { p.Id, Group = p.VariantGroup!, p.Price.Amount })
             .ToListAsync(ct);
+        var groupOf = members.Where(m => ids.Contains(m.Id)).ToList();
         if (groupOf.Count == 0) return [];
 
-        var groups = groupOf.Select(g => g.Group).Distinct().ToArray();
-        var sizes = (await visibleProducts
-                .Where(p => p.VariantGroup != null && p.VariantLabel != null && groups.Contains(p.VariantGroup))
-                .Select(p => new { Group = p.VariantGroup!, p.Price.Amount })
-                .ToListAsync(ct))
+        var sizes = members
             .GroupBy(p => p.Group)
             .ToDictionary(g => g.Key, g =>
             {

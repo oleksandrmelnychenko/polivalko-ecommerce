@@ -44,15 +44,20 @@ internal static class ProductListing
             p.Images.OrderBy(i => i.SortOrder).Select(i => i.Url).FirstOrDefault(),
             p.CreatedAt));
 
+    /// <param name="visibleProducts">
+    /// The visible catalog the caller already has (<see cref="CatalogVisibility.Products"/>): the pack sizes of a card
+    /// count only visible products, and loading the tree again here would cost another round trip.
+    /// </param>
     public static async Task<List<ProductListItemDto>> ToListItemsAsync(
         PoliValkoDbContext db,
+        IQueryable<Product> visibleProducts,
         IReadOnlyList<ListItemRow> rows,
         TimeProvider time,
         CancellationToken ct)
     {
         var ids = rows.Select(r => r.Id).ToList();
         var labels = await ProductLabelSet.LoadAsync(db, ids, time.GetUtcNow(), ct);
-        var sizes = await PackGroups.SizesAsync(await CatalogVisibility.ProductsAsync(db, ct), ids, ct);
+        var sizes = await PackGroups.SizesAsync(visibleProducts, ids, ct);
         return rows.Select(r => ToListItem(r, labels, sizes.GetValueOrDefault(r.Id))).ToList();
     }
 

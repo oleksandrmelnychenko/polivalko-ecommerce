@@ -37,11 +37,19 @@ internal static class StorefrontMode
     public static async Task<StorefrontModeDto> CurrentAsync(PoliValkoDbContext db, DateOnly today, CancellationToken ct)
     {
         var value = await db.Set<PlatformSetting>().Where(s => s.Key == Key).Select(s => s.Value).SingleOrDefaultAsync(ct);
-        if (value is null) return Default;
-        var saved = JsonSerializer.Deserialize<StorefrontModeDto>(value, JsonSerializerOptions.Web)!;
-        // A third mode, by the purchases of the last week, was retired: a setting saved with it reads as the default.
-        return saved.Through < today || !ProductSort.IsMode(saved.Mode) ? saved with { Mode = ProductSort.Seasonal, Through = null } : saved;
+        return value is null ? Default : InForce(JsonSerializer.Deserialize<StorefrontModeDto>(value, JsonSerializerOptions.Web)!, today);
     }
+
+    /// <summary>
+    /// The mode for a storefront listing, through the settings cache: every default-sorted listing asks for it, and
+    /// saving the mode clears the cache entry. The console and the save itself read the table directly.
+    /// </summary>
+    public static async Task<StorefrontModeDto> ForListingAsync(ISettingsStore settings, DateOnly today, CancellationToken ct) =>
+        await settings.GetAsync<StorefrontModeDto>(Key, ct) is { } saved ? InForce(saved, today) : Default;
+
+    // A third mode, by the purchases of the last week, was retired: a setting saved with it reads as the default.
+    private static StorefrontModeDto InForce(StorefrontModeDto saved, DateOnly today) =>
+        saved.Through < today || !ProductSort.IsMode(saved.Mode) ? saved with { Mode = ProductSort.Seasonal, Through = null } : saved;
 
     public static void MapConsole(RouteGroupBuilder catalog)
     {
@@ -79,7 +87,7 @@ internal static class StorefrontMode
         var ranked = await merchandising.SortAsync(listed, categories, term, db, today, ct, mode,
             pinned: term is null ? pinned : null, seasonDate: seasonDate);
         var rows = await ProductListing.ListItems(ranked.Take(PreviewSize)).ToListAsync(ct);
-        var items = await ProductListing.ToListItemsAsync(db, rows, time, ct);
+        var items = await ProductListing.ToListItemsAsync(db, products, rows, time, ct);
         // Matching every rule against every product is the costly part (0.6 s on 4 900 products). The catalog is
         // read once, for the counts and the products shown alike; a lookup asks about the products it found only.
         var seasons = await (await SeasonClassifier.QueryAsync(products, categories, db, cache, today, seasonDate, ct,

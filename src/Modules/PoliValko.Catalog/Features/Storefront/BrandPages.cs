@@ -79,10 +79,16 @@ internal static class BrandPages
         if (string.IsNullOrWhiteSpace(brand)) return null;
         // A product page asks for one brand: count only its products instead of loading every brand.
         var normalized = Brand.Normalize(brand);
-        var slug = await db.Set<Brand>().AsNoTracking().Where(b => b.NormalizedName == normalized).Select(b => b.Slug).FirstOrDefaultAsync(ct);
-        if (slug is null) return null;
-        var withPhoto = await visibleProducts.CountAsync(p => p.Brand != null && p.Brand.Trim().ToUpper() == normalized && p.Images.Any(), ct);
-        return withPhoto >= MinProductsWithPhoto ? slug : null;
+        // The brand and its products with a photo, in one round trip.
+        var page = await db.Set<Brand>().AsNoTracking()
+            .Where(b => b.NormalizedName == normalized)
+            .Select(b => new
+            {
+                b.Slug,
+                WithPhoto = visibleProducts.Count(p => p.Brand != null && p.Brand.Trim().ToUpper() == normalized && p.Images.Any()),
+            })
+            .FirstOrDefaultAsync(ct);
+        return page is { WithPhoto: >= MinProductsWithPhoto } ? page.Slug : null;
     }
 
     public static ProblemHttpResult NotFound(string slug) =>

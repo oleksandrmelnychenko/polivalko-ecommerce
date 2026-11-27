@@ -13,8 +13,8 @@ internal static class GetMerchantFeed
 {
     public static async Task<Ok<List<MerchantFeedItemDto>>> HandleAsync(PoliValkoDbContext db, CancellationToken ct)
     {
-        var visibleProducts = await CatalogVisibility.ProductsAsync(db, ct);
         var categories = (await CategoryQueries.LoadVisibleCategoriesAsync(db, ct)).ToDictionary(c => c.Id);
+        var visibleProducts = CatalogVisibility.Products(db, categories.Keys.ToArray());
         var rows = await visibleProducts
             .AsNoTracking()
             .AsSplitQuery()

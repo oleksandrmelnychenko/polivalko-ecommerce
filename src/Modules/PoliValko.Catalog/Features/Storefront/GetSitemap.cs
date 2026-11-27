@@ -11,8 +11,8 @@ internal static class GetSitemap
 {
     public static async Task<Ok<SitemapDto>> HandleAsync(PoliValkoDbContext db, CancellationToken ct)
     {
-        var visibleProducts = await CatalogVisibility.ProductsAsync(db, ct);
         var categories = await CategoryQueries.LoadVisibleCategoriesAsync(db, ct);
+        var visibleProducts = CatalogVisibility.Products(db, categories.Select(c => c.Id).ToArray());
         var products = await visibleProducts
             .AsNoTracking()
             .Where(p => p.IsVisible)

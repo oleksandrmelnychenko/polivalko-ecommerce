@@ -65,7 +65,8 @@ internal static class GetBestsellers
             .Where(s => !(s.Season.RuleOff && s.Season.State != (int)Season.In))
             .Select(s => s.Product);
         var rows = await ProductListing.ListItems(current).ToListAsync(ct);
-        var products = (await ProductListing.ToListItemsAsync(db, rows, time, ct)).ToDictionary(p => p.Id);
+        var visibleProducts = CatalogVisibility.Products(db, categories.Select(c => c.Id).ToArray());
+        var products = (await ProductListing.ToListItemsAsync(db, visibleProducts, rows, time, ct)).ToDictionary(p => p.Id);
         return top
             .Where(t => products.ContainsKey(t.ProductId))
             .Take(count)

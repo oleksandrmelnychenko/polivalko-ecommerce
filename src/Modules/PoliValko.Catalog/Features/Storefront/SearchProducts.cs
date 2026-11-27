@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using PoliValko.Catalog.Domain;
 using PoliValko.Catalog.Persistence;
 using PoliValko.Infrastructure.Persistence;
+using PoliValko.Infrastructure.Settings;
 using PoliValko.SharedKernel;
 
 namespace PoliValko.Catalog.Features.Storefront;
@@ -18,11 +19,12 @@ internal static class SearchProducts
         [AsParameters] ProductSearchQuery query,
         PoliValkoDbContext db,
         SeasonalMerchandising merchandising,
+        ISettingsStore settings,
         TimeProvider time,
         CancellationToken ct)
     {
         var today = KyivTime.Today(time);
-        var setting = query.Sort is null ? await StorefrontMode.CurrentAsync(db, today, ct) : null;
+        var setting = query.Sort is null ? await StorefrontMode.ForListingAsync(settings, today, ct) : null;
         var sort = query.Sort ?? setting!.Mode;
         if (!ProductSort.All.Contains(sort))
         {
@@ -162,7 +164,7 @@ internal static class SearchProducts
         };
 
         var rows = await ProductListing.ListItems(products.Skip(page.Skip).Take(page.PageSize)).ToListAsync(ct);
-        var items = await ProductListing.ToListItemsAsync(db, rows, time, ct);
+        var items = await ProductListing.ToListItemsAsync(db, visibleProducts, rows, time, ct);
 
         var totalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)page.PageSize);
         return TypedResults.Ok(new ProductSearchResponse(items, page.Page, page.PageSize, total, totalPages, facets, approximate && total > 0));
