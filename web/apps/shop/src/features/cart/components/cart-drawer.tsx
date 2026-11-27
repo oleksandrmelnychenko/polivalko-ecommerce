@@ -12,7 +12,7 @@ import { useCart } from "./cart-provider";
 
 export function CartDrawer() {
   const { ready, saving, error, cart, lines, isOpen, close, setQuantity, remove, count, refresh } = useCart();
-  const dialog = useRef<HTMLDialogElement>(null);
+  const panel = useRef<HTMLElement>(null);
   const quoted = new Map(cart?.items.map(item => [item.productId, item]));
   const amount = (line: typeof lines[number]) =>
     quoted.get(line.productId)?.issue === "unavailable" ? 0 : Number(line.price) * line.quantity;
@@ -28,35 +28,50 @@ export function CartDrawer() {
     return () => window.clearInterval(timer);
   }, [isOpen]);
 
+  const dismiss = useEffectEvent(() => close());
+
   useEffect(() => {
-    const el = dialog.current;
-    if (!el) return;
-    if (!isOpen) {
-      if (el.open) el.close();
-      return;
-    }
-    if (!el.open) el.showModal();
+    const el = panel.current;
+    if (!el || !isOpen) return;
     const anchor = document.getElementById("header-cart-button");
-    if (!anchor) return;
     const position = () => {
+      if (!anchor) return;
       const rect = anchor.getBoundingClientRect();
-      const top = rect.bottom > 0 && rect.bottom < window.innerHeight / 2 ? rect.bottom + 8 : 8;
+      const top = rect.bottom > 0 && rect.bottom < window.innerHeight / 2 ? Math.round(rect.bottom + 8) : 8;
       el.style.setProperty("--cart-top", `${top}px`);
-      el.style.setProperty("--cart-right", `${Math.max(8, document.documentElement.clientWidth - rect.right)}px`);
+      el.style.setProperty("--cart-right", `${Math.max(8, Math.round(document.documentElement.clientWidth - rect.right))}px`);
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (el.contains(target)) return;
+      if (target instanceof Element && target.closest("#header-cart-button, .cart-purchase")) return;
+      dismiss();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") dismiss();
     };
     position();
     window.addEventListener("resize", position);
-    return () => window.removeEventListener("resize", position);
+    window.addEventListener("scroll", position, { passive: true });
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("resize", position);
+      window.removeEventListener("scroll", position);
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, [isOpen]);
 
   return (
-    <dialog
-      ref={dialog}
+    <aside
+      ref={panel}
       id="mini-cart"
       className="drawer"
+      role="region"
       aria-labelledby="cart-title"
-      onClose={close}
-      onClick={(e) => e.target === e.currentTarget && close()}
+      hidden={!isOpen}
     >
       <div className="drawer__inner">
         <div className="drawer__head">
@@ -118,6 +133,6 @@ export function CartDrawer() {
           </div>
         )}
       </div>
-    </dialog>
+    </aside>
   );
 }

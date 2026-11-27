@@ -8,14 +8,14 @@
 
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    :is(.section__head, .heading:not(.heading--side), .strip__inner > .heading--side, .tiles:not(.tiles--rail) > li, .tiles--rail, .ctiles > li, .directions > li, .look__content, .visit__inner > *, .ib-section__head, .ib-cards > li, .ib-steps > li, .svc-grid > li) {
+    :is(.section__head, .heading:not(.heading--side), .strip__inner > .heading--side, .tiles:not(.tiles--rail):not(.tiles--listing) > li, .tiles--rail, .ctiles > li, .directions > li, .look__content, .visit__inner > *, .ib-section__head, .ib-cards > li, .ib-steps > li, .svc-grid > li) {
       animation: rise-in linear both;
       animation-timeline: view();
       animation-range: entry 0% entry 60%;
     }
-    :is(.tiles:not(.tiles--rail), .ctiles, .ib-cards, .svc-grid) > li:nth-child(4n + 2) { animation-range: entry 8% entry 68%; }
-    :is(.tiles:not(.tiles--rail), .ctiles, .ib-cards, .svc-grid) > li:nth-child(4n + 3) { animation-range: entry 16% entry 76%; }
-    :is(.tiles:not(.tiles--rail), .ctiles, .ib-cards, .svc-grid) > li:nth-child(4n + 4) { animation-range: entry 24% entry 84%; }
+    :is(.tiles:not(.tiles--rail):not(.tiles--listing), .ctiles, .ib-cards, .svc-grid) > li:nth-child(4n + 2) { animation-range: entry 8% entry 68%; }
+    :is(.tiles:not(.tiles--rail):not(.tiles--listing), .ctiles, .ib-cards, .svc-grid) > li:nth-child(4n + 3) { animation-range: entry 16% entry 76%; }
+    :is(.tiles:not(.tiles--rail):not(.tiles--listing), .ctiles, .ib-cards, .svc-grid) > li:nth-child(4n + 4) { animation-range: entry 24% entry 84%; }
     :is(.look__photo, .visit__photo) img {
       scale: 1.12;
       animation: photo-drift linear both;

@@ -79,9 +79,8 @@ export async function CatalogListing({
       </FiltersPanel>
       <div className="catalog__main">
         <ListingResults
-          key={href({})}
+          queryKey={href({})}
           initial={result}
-          base={base}
           query={query}
           path={basePath}
           compact={compact}

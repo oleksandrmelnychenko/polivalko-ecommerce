@@ -1,8 +1,9 @@
 .drawer {
   --cart-top: 8px;
   position: fixed;
+  z-index: var(--z-modal);
   inset: var(--cart-top) var(--cart-right, 8px) auto auto;
-  width: min(460px, calc(100% - 16px));
+  width: min(440px, calc(100% - 16px));
   max-width: none;
   max-height: calc(100dvh - var(--cart-top) - 8px);
   margin: 0;
@@ -12,10 +13,19 @@
   border-radius: 20px;
   background: var(--color-paper);
   color: var(--color-ink);
-  box-shadow: 0 16px 48px rgb(0 0 0 / 14%);
+  box-shadow: 0 14px 40px rgb(15 23 20 / 0.14), 0 2px 10px rgb(15 23 20 / 0.06);
 }
-.drawer::backdrop { background: rgb(20 24 28 / 10%); }
-html:has(.drawer[open]) { overflow: hidden; }
+.drawer[hidden] { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .drawer:not([hidden]) {
+    animation: drawer-pop-in 180ms var(--ease-out);
+    transform-origin: top right;
+  }
+}
+@keyframes drawer-pop-in {
+  from { opacity: 0; translate: 0 -6px; scale: 0.985; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
 .drawer__inner { display: flex; flex-direction: column; max-height: inherit; }
 .drawer__head, .drawer__foot { flex: none; padding: 14px 18px; }
 .drawer__head { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--color-rule); }

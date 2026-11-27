@@ -8,21 +8,26 @@ import type { ProductQuery } from "../api/server";
 import { useListingNavigation } from "./listing-navigation";
 import { ListingToolbar } from "./listing-toolbar";
 import { ProductTiles } from "./product-tiles";
-import { FilterPreview } from "./filter-preview";
 
 type Batch = Pick<ProductSearch, "items" | "page" | "pageSize" | "totalItems" | "totalPages" | "approximate">;
 
-export function ListingResults({ initial, base, query, path, compact, children }: {
+export function ListingResults({ queryKey, initial, query, path, compact, children }: {
+  queryKey: string;
   initial: Batch;
-  base: ProductQuery;
   query: ProductQuery;
   path: string;
   compact: boolean;
   children: ReactNode;
 }) {
-  const { pending, selection } = useListingNavigation();
+  const { pending } = useListingNavigation();
+  const [trackedKey, setTrackedKey] = useState(queryKey);
   const [result, setResult] = useState(initial);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
+  if (queryKey !== trackedKey) {
+    setTrackedKey(queryKey);
+    setResult(initial);
+    setStatus("idle");
+  }
   const request = useRef<AbortController | null>(null);
   const more = useRef<HTMLDivElement>(null);
   const hasMore = result.page < result.totalPages;
@@ -55,7 +60,7 @@ export function ListingResults({ initial, base, query, path, compact, children }
     }
   }
 
-  useEffect(() => () => request.current?.abort(), []);
+  useEffect(() => () => request.current?.abort(), [queryKey]);
   const loadOnScroll = useEffectEvent(loadMore);
   useEffect(() => {
     if (!more.current || pending || !hasMore || status !== "idle" || !("IntersectionObserver" in window)) return;
@@ -72,19 +77,24 @@ export function ListingResults({ initial, base, query, path, compact, children }
       ? `Показано ${first}-${first + result.items.length - 1} з ${result.totalItems.toLocaleString("uk-UA")}`
       : compact ? "" : "Товарів не знайдено";
 
-  return <>
-    <ListingToolbar summary={pending ? "Оновлюємо товари…" : summary} path={path} />
-    {pending ? <FilterPreview key={JSON.stringify(selection)} base={base} selection={selection} /> : <>
-      {children}
-      {result.items.length > 0 && <ProductTiles products={result.items} priority />}
-      {hasMore && (
-        <div ref={more} className="listing-more">
-          {status === "error" && <p role="status">Не вдалося завантажити наступні товари.</p>}
-          <button type="button" className="btn btn--quiet" disabled={status === "loading"} onClick={loadMore}>
-            {status === "loading" ? "Завантажуємо товари…" : status === "error" ? "Спробувати ще раз" : "Показати ще"}
-          </button>
-        </div>
-      )}
-    </>}
-  </>;
+  return (
+    <div className="listing-stage" data-pending={pending ? "true" : undefined} aria-busy={pending}>
+      <div className="listing-stage__progress" aria-hidden="true">
+        <span className="listing-stage__progress-bar" />
+      </div>
+      <ListingToolbar summary={pending ? "Оновлюємо товари…" : summary} path={path} />
+      <div className="listing-stage__body">
+        {children}
+        {result.items.length > 0 && <ProductTiles products={result.items} priority listing />}
+        {hasMore && (
+          <div ref={more} className="listing-more">
+            {status === "error" && <p role="status">Не вдалося завантажити наступні товари.</p>}
+            <button type="button" className="btn btn--quiet" disabled={status === "loading"} onClick={loadMore}>
+              {status === "loading" ? "Завантажуємо товари…" : status === "error" ? "Спробувати ще раз" : "Показати ще"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
