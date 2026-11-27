@@ -17,7 +17,7 @@ export const SEO_LIMITS = { title: 60, description: 160, maxLength: 300 } as con
 
 export const PRODUCT_SAMPLE: Record<TemplateToken, string> = {
   name: 'Шланг поливальний Gardena 1/2", 20 м',
-  price: '1 249',
+  price: '1 249 грн',
   category: 'Шланги й котушки',
   brand: 'Gardena',
   shop: 'Poli Valko',

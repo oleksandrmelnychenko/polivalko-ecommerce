@@ -6,6 +6,12 @@ import './seo-snippet.css'
 const TITLE_LIMIT = 60
 const DESCRIPTION_LIMIT = 160
 const SHOP_SUFFIX = ' | Poli Valko'
+const HAS_SHOP_NAME = /poli\s*valko[\s.!?»"')]*$/i
+
+function withShopSuffix(title: string): string {
+  const clean = title.trim() || 'Без заголовка'
+  return HAS_SHOP_NAME.test(clean) ? clean : `${clean}${SHOP_SUFFIX}`
+}
 
 type SeoSnippetFieldsProps = {
   /** Address on the shop, e.g. `/product/<slug>`. */
@@ -37,7 +43,7 @@ const TEMPLATE_HINTS: EmptyHints = {
 export function SeoSnippetFields({ path, seoTitle, seoDescription, fallbackTitle, fallbackDescription, emptyHints = TEMPLATE_HINTS, errors, disabled, onChange }: SeoSnippetFieldsProps) {
   const ownTitle = seoTitle.trim()
   const ownDescription = seoDescription.trim()
-  const shownTitle = `${ownTitle || fallbackTitle.trim() || 'Без заголовка'}${SHOP_SUFFIX}`
+  const shownTitle = withShopSuffix(ownTitle || fallbackTitle)
   const shownDescription = ownDescription || fallbackDescription.trim()
 
   return (

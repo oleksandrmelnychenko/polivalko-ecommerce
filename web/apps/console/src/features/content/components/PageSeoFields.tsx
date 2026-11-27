@@ -7,6 +7,12 @@ import { siteUrl } from '@/shared/lib/siteUrl'
 const SEO_TITLE_LIMIT = 60
 const SEO_DESCRIPTION_LIMIT = 160
 const SHOP_SUFFIX = ' | Poli Valko'
+const HAS_SHOP_NAME = /poli\s*valko[\s.!?»"')]*$/i
+
+function withShopSuffix(title: string): string {
+  const clean = title.trim() || 'Без заголовка'
+  return HAS_SHOP_NAME.test(clean) ? clean : `${clean}${SHOP_SUFFIX}`
+}
 
 type PageSeoFieldsProps = {
   slug: string
@@ -19,7 +25,7 @@ type PageSeoFieldsProps = {
 }
 
 export function PageSeoFields({ slug, title, lead, seoTitle, seoDescription, errors, onChange }: PageSeoFieldsProps) {
-  const shownTitle = `${seoTitle.trim() || title.trim() || 'Без заголовка'}${SHOP_SUFFIX}`
+  const shownTitle = withShopSuffix(seoTitle.trim() || title)
   const description = seoDescription.trim()
   const shownDescription = description || lead.trim()
 
