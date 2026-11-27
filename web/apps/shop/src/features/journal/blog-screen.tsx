@@ -3,7 +3,7 @@ import { breadcrumbJsonLd, itemListJsonLd, JsonLd, seoMetadata } from "@/feature
 import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import { articles } from "./articles";
 import { JOURNAL_ENABLED } from "./config";
-import { BlogIndex } from "./journal";
+import { BlogIndex } from "./blog-index";
 
 export const metadata = seoMetadata({
   title: "Блог про полив, догляд за садом і городом",
@@ -28,10 +28,7 @@ export default function BlogPage() {
         )}
       />
       <Breadcrumbs current="Блог" />
-      <header className="page-head">
-        <h1>Блог Poli Valko</h1>
-      </header>
-      <BlogIndex items={articles} />
+      <BlogIndex items={articles.map(({ slug, title, category, intro, readingMinutes, image }) => ({ slug, title, category, intro, readingMinutes, image }))} />
     </div>
   );
 }

@@ -30,26 +30,6 @@ export function ArticleCards({ items = articles }: { items?: Article[] }) {
   );
 }
 
-export function BlogIndex({ items }: { items: Article[] }) {
-  const [first, ...rest] = items;
-  if (!first) return null;
-  return (
-    <>
-      <Link className="journal-feature" href={`/blog/${first.slug}`}>
-        <img {...sized(first.image.url, "(max-width: 44rem) 100vw, 50vw", 960)}
-          alt={first.image.alt} width={960} height={640} fetchPriority="high" />
-        <div className="journal-feature__copy">
-          <span className="journal-meta">{first.category} · {first.readingMinutes} хв читання</span>
-          <h2>{first.title}</h2>
-          <p>{first.intro}</p>
-          <span className="btn">Читати статтю <ArrowRightIcon /></span>
-        </div>
-      </Link>
-      <StoryList items={rest} />
-    </>
-  );
-}
-
 export function StoryList({ items }: { items: Article[] }) {
   return (
     <ul className="journal-stories">
