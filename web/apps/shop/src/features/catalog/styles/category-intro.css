@@ -6,6 +6,8 @@
   margin-inline: auto;
 }
 .category-notes:has(> section, > aside) { margin-block: 16px 24px; }
+.listing-page > .category-notes:last-child:has(> section, > aside) { margin-block: clamp(40px, 5vw, 72px); }
+main:has(> .listing-page > .category-notes:last-child > :is(section, aside)) ~ .footer { margin-top: 0; }
 .category-notes:not(:has(> section ~ aside)) { max-width: 80ch; }
 .category-intro {
   display: grid;
