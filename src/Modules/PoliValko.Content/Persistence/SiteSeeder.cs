@@ -41,10 +41,10 @@ internal static class SiteSeeder
             dirty = true;
         }
 
-        var legacyBanners = await db.Set<Banner>()
-            .Where(b => b.ImageUrl.Contains(LegacyUnsplashBannerPhoto))
+        var bannerCandidates = await db.Set<Banner>()
+            .Where(b => b.ImageUrl.Contains(LegacyUnsplashPhotoPath))
             .ToListAsync(ct);
-        foreach (var banner in legacyBanners)
+        foreach (var banner in bannerCandidates.Where(b => IsLegacyUnsplashBanner(b.ImageUrl)))
         {
             banner.ImageUrl = FallbackBannerImageUrl;
             banner.UpdatedAt = now;
@@ -57,12 +57,14 @@ internal static class SiteSeeder
         }
     }
 
-    internal const string LegacyUnsplashBannerPhoto = "images.unsplash.com/photo-1764046860592-9931f0869fc6";
+    private const string LegacyUnsplashPhotoPath = "/photo-1764046860592-9931f0869fc6";
     internal const string FallbackBannerImageUrl = "/brand/service-irrigation.webp";
 
     internal static bool IsLegacyUnsplashBanner(string? url) =>
-        !string.IsNullOrWhiteSpace(url)
-        && url.Contains(LegacyUnsplashBannerPhoto, StringComparison.OrdinalIgnoreCase);
+        Uri.TryCreate(url, UriKind.Absolute, out var uri)
+        && uri.Scheme is "https" or "http"
+        && uri.Host.Equals("images.unsplash.com", StringComparison.OrdinalIgnoreCase)
+        && uri.AbsolutePath == LegacyUnsplashPhotoPath;
 
     internal sealed record DefaultServiceSeo(string Description, string SeoTitle, string SeoDescription);
 
