@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
-import { GoogleAnalytics } from "@/features/analytics";
+import { GoogleAnalytics, MicrosoftClarity } from "@/features/analytics";
 import { defaultOpenGraph, SITE_NAME, siteUrl } from "@/features/seo";
 import "./globals.css";
 
@@ -35,6 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <Suspense fallback={null}>
           <GoogleAnalytics />
+          <MicrosoftClarity />
         </Suspense>
       </body>
     </html>

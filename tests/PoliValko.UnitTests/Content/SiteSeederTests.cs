@@ -49,6 +49,17 @@ public sealed class SiteSeederTests
         SiteSeeder.IsRootSocialPlaceholder(url).ShouldBe(expected);
     }
 
+    [Theory]
+    [InlineData("https://images.unsplash.com/photo-1764046860592-9931f0869fc6?auto=format&fit=crop&q=80&w=1200", true)]
+    [InlineData("https://images.unsplash.com/photo-1764046860592-9931f0869fc6", true)]
+    [InlineData("/brand/service-irrigation.webp", false)]
+    [InlineData("https://blob.vercel-storage.com/banners/promo.webp", false)]
+    [InlineData(null, false)]
+    public void Legacy_unsplash_banner_detection_targets_only_old_seed_photo(string? url, bool expected)
+    {
+        SiteSeeder.IsLegacyUnsplashBanner(url).ShouldBe(expected);
+    }
+
     [Fact]
     public void Default_services_cover_every_direction_with_kyiv_oblast_seo_bounds()
     {

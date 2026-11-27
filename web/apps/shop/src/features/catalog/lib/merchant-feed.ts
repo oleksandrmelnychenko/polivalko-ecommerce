@@ -8,6 +8,40 @@ const TITLE_MAX = 150;
 const DESCRIPTION_MAX = 5000;
 const EXTRA_IMAGES = 10;
 const MODEL_ATTRIBUTE = "модель виробника";
+const BRAND_ATTRIBUTES = new Set(["бренд", "виробник", "торгова марка"]);
+const MIN_INFERRED_BRAND_LENGTH = 4;
+
+type BrandMatcher = { name: string; pattern: RegExp };
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildBrandMatchers(items: readonly MerchantFeedItem[]): BrandMatcher[] {
+  const unique = new Set<string>();
+  for (const item of items) {
+    const b = item.brand?.trim();
+    if (b && b.length >= MIN_INFERRED_BRAND_LENGTH) unique.add(b);
+  }
+  return Array.from(unique)
+    .sort((a, b) => b.length - a.length)
+    .map((name) => ({
+      name,
+      pattern: new RegExp(`(?:^|[^\\p{L}\\d])${escapeRegExp(name)}(?=$|[^\\p{L}\\d])`, "iu"),
+    }));
+}
+
+function resolveBrand(item: MerchantFeedItem, matchers: readonly BrandMatcher[]): string | undefined {
+  const explicit = item.brand?.trim();
+  if (explicit) return explicit;
+  const fromAttribute = item.attributes
+    .find((attribute) => BRAND_ATTRIBUTES.has(attribute.name.trim().toLowerCase()))
+    ?.value.trim();
+  if (fromAttribute) return fromAttribute;
+  const title = item.name.trim();
+  if (!title) return undefined;
+  return matchers.find((matcher) => matcher.pattern.test(title))?.name;
+}
 
 // Google Merchant Center prohibits tobacco and smoking items (e.g. smoking tobacco seeds),
 // while garden pest-control "тютюновий пил" remains allowed.
@@ -50,11 +84,11 @@ function feedIds(items: readonly MerchantFeedItem[]): Map<string, string> {
   return new Map(items.map((item) => [item.id, item.sku && keeper.get(item.sku) === item.id ? item.sku : item.id]));
 }
 
-function itemXml(item: MerchantFeedItem, id: string, shop: FeedShop): string {
+function itemXml(item: MerchantFeedItem, id: string, shop: FeedShop, brandMatchers: readonly BrandMatcher[]): string {
   const title = clip(item.name.trim(), TITLE_MAX);
   // A description is required; a product without its own text is described by its name.
   const description = clip(plainText(item.descriptionHtml).join(" "), DESCRIPTION_MAX) || title;
-  const brand = item.brand?.trim();
+  const brand = resolveBrand(item, brandMatchers);
   const gtin = gtinFromAttributes(item.attributes)?.value;
   const model = item.attributes.find((attribute) => attribute.name.trim().toLowerCase() === MODEL_ATTRIBUTE)?.value.trim();
   const [image, ...more] = item.images;
@@ -90,6 +124,7 @@ export function merchantFeedXml(items: readonly MerchantFeedItem[], shop: FeedSh
   const eligible = items.filter(isMerchantFeedEligible);
   if (eligible.length === 0) throw new Error("Товарний фід порожній: порожній файл прибрав би всі товари з сервісу покупок");
   const ids = feedIds(eligible);
+  const brandMatchers = buildBrandMatchers(eligible);
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">',
@@ -97,7 +132,7 @@ export function merchantFeedXml(items: readonly MerchantFeedItem[], shop: FeedSh
     tag("title", shop.name),
     tag("link", shop.url),
     tag("description", shop.description),
-    ...eligible.map((item) => itemXml(item, ids.get(item.id) ?? item.id, shop)),
+    ...eligible.map((item) => itemXml(item, ids.get(item.id) ?? item.id, shop, brandMatchers)),
     "</channel>",
     "</rss>",
     "",

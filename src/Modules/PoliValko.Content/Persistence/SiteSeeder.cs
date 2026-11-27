@@ -41,11 +41,28 @@ internal static class SiteSeeder
             dirty = true;
         }
 
+        var legacyBanners = await db.Set<Banner>()
+            .Where(b => b.ImageUrl.Contains(LegacyUnsplashBannerPhoto))
+            .ToListAsync(ct);
+        foreach (var banner in legacyBanners)
+        {
+            banner.ImageUrl = FallbackBannerImageUrl;
+            banner.UpdatedAt = now;
+            dirty = true;
+        }
+
         if (dirty)
         {
             await db.SaveChangesAsync(ct);
         }
     }
+
+    internal const string LegacyUnsplashBannerPhoto = "images.unsplash.com/photo-1764046860592-9931f0869fc6";
+    internal const string FallbackBannerImageUrl = "/brand/service-irrigation.webp";
+
+    internal static bool IsLegacyUnsplashBanner(string? url) =>
+        !string.IsNullOrWhiteSpace(url)
+        && url.Contains(LegacyUnsplashBannerPhoto, StringComparison.OrdinalIgnoreCase);
 
     internal sealed record DefaultServiceSeo(string Description, string SeoTitle, string SeoDescription);
 

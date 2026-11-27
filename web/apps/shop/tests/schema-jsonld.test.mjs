@@ -89,7 +89,7 @@ test("organizationJsonLd unifies brand identity, Bucha geo, areaServed, priceRan
     assert.equal(org.email, "shop.polivalko@gmail.com");
     assert.equal(org.priceRange, "₴₴");
     assert.equal(org.image, `${SITE}/brand/poli-valko-social.png`);
-    assert.deepEqual(org.logo, { "@type": "ImageObject", url: `${SITE}/brand/poli-valko-social.png` });
+    assert.deepEqual(org.logo, { "@type": "ImageObject", url: `${SITE}/icon.png`, width: 192, height: 192 });
 
     assert.deepEqual(org.geo, {
       "@type": "GeoCoordinates",
@@ -281,7 +281,7 @@ test("articleJsonLd builds Google-compliant BlogPosting with publisher @id and w
     assert.equal(article.dateModified, "2026-05-01");
     assert.equal(article.author["@id"], organizationId());
     assert.equal(article.publisher["@id"], organizationId());
-    assert.equal(article.publisher.logo.url, `${SITE}/brand/poli-valko-social.png`);
+    assert.deepEqual(article.publisher.logo, { "@type": "ImageObject", url: `${SITE}/icon.png`, width: 192, height: 192 });
     assert.deepEqual(article.isPartOf, { "@id": websiteId() });
   });
 });

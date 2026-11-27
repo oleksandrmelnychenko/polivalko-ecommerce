@@ -37,6 +37,12 @@
 		reverse_proxy api:8080
 	}
 
+	@health_external {
+		path /health/*
+		not remote_ip private_ranges
+	}
+	respond @health_external 404
+
 	handle /health/* {
 		header Cache-Control "no-store"
 		reverse_proxy api:8080

@@ -13,6 +13,7 @@ import {
 } from "./site";
 
 const STORE_PHOTO = "/brand/poli-valko-social.png";
+const BRAND_LOGO = { path: "/icon.png", width: 192, height: 192 } as const;
 
 const CONTEXT = "https://schema.org";
 
@@ -271,6 +272,12 @@ function organizationEntity({ contacts, seller, sameAs }: OrganizationSource) {
       availableLanguage: ["uk"],
     }));
   const storePhotoUrl = absoluteUrl(STORE_PHOTO);
+  const logoObject = {
+    "@type": "ImageObject",
+    url: absoluteUrl(BRAND_LOGO.path),
+    width: BRAND_LOGO.width,
+    height: BRAND_LOGO.height,
+  };
   return {
     "@type": ["Organization", "Store"],
     "@id": organizationId(),
@@ -280,7 +287,7 @@ function organizationEntity({ contacts, seller, sameAs }: OrganizationSource) {
     url: absoluteUrl("/"),
     // Photo of the shop front in Bucha; the same picture is the site-wide social preview (see metadata.ts).
     image: storePhotoUrl,
-    logo: { "@type": "ImageObject", url: storePhotoUrl },
+    logo: logoObject,
     telephone: telephone ? phone(telephone) : undefined,
     email,
     priceRange: STORE_PRICE_RANGE,
@@ -373,7 +380,9 @@ export function articleJsonLd({
       url: absoluteUrl("/"),
       logo: {
         "@type": "ImageObject",
-        url: storePhotoUrl,
+        url: absoluteUrl(BRAND_LOGO.path),
+        width: BRAND_LOGO.width,
+        height: BRAND_LOGO.height,
       },
     },
     isPartOf: { "@id": websiteId() },

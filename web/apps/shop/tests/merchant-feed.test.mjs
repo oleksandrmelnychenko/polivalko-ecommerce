@@ -147,3 +147,21 @@ test("smoking tobacco items are excluded from the Merchant Center feed while gar
   assert.ok(xml.includes("<g:id>11944</g:id>"));
   assert.ok(xml.includes("<g:google_product_category>Home &amp; Garden &gt; Lawn &amp; Garden &gt; Gardening &gt; Disease Control</g:google_product_category>"));
 });
+
+test("missing brand is recovered from manufacturer attributes or known catalog brands in the product title", () => {
+  const known = { ...hose, id: "01a1fea5-0000-7000-8000-000000000010", sku: "10", slug: "valagro-ref", brand: "Valagro", name: "Добриво Valagro Master" };
+  const fromTitle = { ...hose, id: "01a1fea5-0000-7000-8000-000000000011", sku: "11", slug: "valagro-kendal", brand: null, name: "Біостимулятор Valagro Kendal, 25 мл", attributes: [] };
+  const fromAttr = { ...hose, id: "01a1fea5-0000-7000-8000-000000000012", sku: "12", slug: "attr-brand", brand: null, name: "Фільтр дисковий 1\"", attributes: [{ name: "Виробник", value: "Irritec" }] };
+  const trulyGeneric = { ...hose, id: "01a1fea5-0000-7000-8000-000000000013", sku: "13", slug: "generic-item", brand: null, name: "Агроперліт 1 л", attributes: [] };
+
+  const xml = merchantFeedXml([known, fromTitle, fromAttr, trulyGeneric], shop);
+  const items = Object.fromEntries(
+    [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((m) => [m[1].match(/<g:id>([^<]+)<\/g:id>/)[1], m[1]])
+  );
+
+  assert.ok(items["11"].includes("<g:brand>Valagro</g:brand>"));
+  assert.ok(!items["11"].includes("<g:identifier_exists>no</g:identifier_exists>"));
+  assert.ok(items["12"].includes("<g:brand>Irritec</g:brand>"));
+  assert.ok(!items["13"].includes("<g:brand>"));
+  assert.ok(items["13"].includes("<g:identifier_exists>no</g:identifier_exists>"));
+});
