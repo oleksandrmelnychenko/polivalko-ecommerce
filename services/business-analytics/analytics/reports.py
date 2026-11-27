@@ -6,6 +6,7 @@ from itertools import chain
 from operator import itemgetter
 
 from .forecast import replenishment
+from .register import unit_label
 
 
 def window(snapshot, query):
@@ -108,7 +109,7 @@ def report(snapshot, q):
         )
         day = (day.replace(day=28) + timedelta(days=4)).replace(day=1)
     products = []
-    for (product, unit), items in group(rows, lambda r: (r["product"], r["unit"])).items():
+    for (product, unit), items in group(rows, lambda r: (r["product"], unit_label(r["unit"]))).items():
         sold = sum(r["qty"] for r in items if not r["refund"])
         stats = aggregate(items)
         products.append(
@@ -224,7 +225,7 @@ def documents(snapshot, q):
 
 
 def policy_key(row):
-    return json.dumps([row[k] for k in ("org", "store", "product", "unit")], ensure_ascii=False)
+    return json.dumps([row["org"], row["store"], row["product"], unit_label(row["unit"])], ensure_ascii=False)
 
 
 def forecasts(snapshot, q, policies, today):
@@ -233,7 +234,7 @@ def forecasts(snapshot, q, policies, today):
     units = defaultdict(set)
     for model in snapshot["models"]:
         if model["kind"] == "sku":
-            units[model["org"], model["store"], model["product"]].add(model["unit"])
+            units[model["org"], model["store"], model["product"]].add(unit_label(model["unit"]))
     rows = []
     for m in snapshot["models"]:
         if (
@@ -243,6 +244,7 @@ def forecasts(snapshot, q, policies, today):
         ):
             continue
         row = {k: v for k, v in m.items() if k != "signature"}
+        row["unit"] = unit_label(row["unit"])
         if row["kind"] == "sku":
             key = (row["org"], row["store"], row["product"])
             policy = policies.get(policy_key(row))

@@ -40,11 +40,46 @@ class StockTurnoverTests(TestCase):
                              [item("first","dntrade-code:one"),item("second","up-id")])
         self.assertEqual(ambiguous["unknownCount"],2)
         self.assertIsNone(ambiguous["net"])
-        incomplete = exposure(report(missing=1),[item("a","dntrade-code:a")])
-        self.assertIsNone(incomplete["rows"][0]["net"])
+        unrelated = exposure(report(missing=1),[item("a","dntrade-code:a")])
+        self.assertEqual(unrelated["rows"][0]["net"],0)
+        affected = exposure(
+            dict(report(missing=1), incompleteProductRefs=[dict(account="valko-dntrade", code="a", productRef=None, catalogId=None)]),
+            [item("a","dntrade-code:a"), item("b","dntrade-code:b")],
+        )
+        by_key = {r["id"]: r for r in affected["rows"]}
+        self.assertIsNone(by_key["a"]["net"])
+        self.assertEqual(by_key["a"]["purchaseStatus"], "sales")
+        self.assertEqual(by_key["b"]["net"], 0)
         zero = exposure(report(net=0),[item("a","dntrade-code:a")])
         self.assertEqual(zero["rows"][0]["net"],0)
         self.assertIsNone(zero["share"])
+
+    def test_fast_movers_above_three_units_are_included_when_stock_days_below_cover_days(self):
+        sales = report(
+            sale("valko-dntrade", "fast", "ext-fast", 3000, 60, 900),
+            sale("valko-dntrade", "slow", "ext-slow", 500, 15, 150),
+            net=3500,
+        )
+        catalog = [
+            item("fast", "dntrade-code:fast", on_hand=10, reserved=0),
+            item("slow", "dntrade-code:slow", on_hand=10, reserved=0),
+        ]
+        result = exposure(sales, catalog, cover_days=14)
+        self.assertEqual([r["id"] for r in result["rows"]], ["fast"])
+        fast = result["rows"][0]
+        self.assertEqual((fast["stockDays"], fast["purchaseStatus"], fast["buyQuantity"]), (Decimal(5), "buy", 18))
+
+    def test_inferred_sales_unit_is_used_before_seasonal_profile_lookup(self):
+        sales = report(sale("valko-dntrade", "a", "ext-a", 700, 7, 210, unit="2009"), net=700)
+        sales["days"] = 7
+        catalog = [dict(item("a", "dntrade-code:a", on_hand=0), unit=None, category="garden")]
+        result = exposure(
+            sales, catalog, cover_days=7,
+            season_profiles=lambda by_id, by_ext: {("category", "garden", "шт"): {"source": "category", "years": 2, "factor": Decimal("1.5")}},
+        )
+        row = result["rows"][0]
+        self.assertEqual((row["unit"], row["unitSource"], row["season"]["factor"], row["buyQuantity"]),
+                         ("шт", "sales", Decimal("1.5"), 11))
 
     def test_search_and_paging_preserve_whole_group_totals(self):
         sales = report()

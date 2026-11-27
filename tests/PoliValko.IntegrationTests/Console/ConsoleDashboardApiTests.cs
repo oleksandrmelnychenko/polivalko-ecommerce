@@ -1,11 +1,14 @@
 using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Catalog.Contracts;
 using PoliValko.Catalog.Features.Console.Products;
 using PoliValko.Console.Features.Dashboard;
 using PoliValko.Ordering.Contracts;
+using PoliValko.Ordering.Domain;
+using PoliValko.Ordering.Features.Checkout;
 using PoliValko.Ordering.Features.Console.Orders;
 using PoliValko.SharedKernel;
 
@@ -18,13 +21,22 @@ public sealed class ConsoleDashboardApiTests(ApiFactory api)
     private static DateOnly KyivToday => KyivTime.Today(TimeProvider.System);
 
     [Fact]
-    public async Task Dashboard_shows_every_kyiv_day_and_counts_a_new_order()
+    public async Task Dashboard_shows_every_kyiv_day_and_counts_a_confirmed_order_while_excluding_unconfirmed()
     {
         var manager = await Staff.ManagerAsync(api);
+        var admin = await Staff.AdminAsync(api);
         var before = await manager.ReadAsync<ConsoleDashboardDto>("/api/v1/console/dashboard");
         var product = await api.AddProductAsync("ruchnyi-instrument", "Мотика для зведення", 731m, stock: 5);
 
-        await TestOrders.PlaceAsync(api, product.Id, 2, 731m, CheckoutApiTests.UniquePhone());
+        var placed = await TestOrders.PlaceAsync(api, product.Id, 2, 731m, CheckoutApiTests.UniquePhone());
+
+        // New (unconfirmed) order is shown in ByStatus but excluded from recognized Orders and Revenue.
+        var whileNew = await manager.ReadAsync<ConsoleDashboardDto>("/api/v1/console/dashboard");
+        whileNew.Current.Orders.ShouldBe(before.Current.Orders);
+        Amount(whileNew.Current.Revenue).ShouldBe(Amount(before.Current.Revenue));
+        whileNew.ByStatus.ShouldContain(s => s.Status == OrderStatus.New);
+
+        (await admin.PostAsJsonAsync($"/api/v1/console/orders/{placed.Number}/status", new { status = "confirmed" }, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var after = await manager.ReadAsync<ConsoleDashboardDto>("/api/v1/console/dashboard");
         after.Days.ShouldBe(30);
@@ -34,8 +46,7 @@ public sealed class ConsoleDashboardApiTests(ApiFactory api)
         after.Current.Orders.ShouldBe(before.Current.Orders + 1);
         Amount(after.Current.Revenue).ShouldBe(Amount(before.Current.Revenue) + 1462m);
         after.ByDay.Sum(d => d.Orders).ShouldBe(after.Current.Orders);
-        after.ByStatus.Sum(s => s.Count).ShouldBe(after.Current.Orders + after.Current.Cancelled);
-        after.ByStatus.ShouldContain(s => s.Status == OrderStatus.New);
+        after.ByStatus.Sum(s => s.Count).ShouldBeGreaterThanOrEqualTo(after.Current.Orders + after.Current.Cancelled);
         after.ByStatus.Select(s => s.Status).ShouldBeInOrder();
         after.ByDelivery.ShouldContain(d => d.Method == DeliveryCodes.NovaPoshta);
         after.TopProducts.Count.ShouldBeLessThanOrEqualTo(5);
@@ -58,7 +69,8 @@ public sealed class ConsoleDashboardApiTests(ApiFactory api)
         var admin = await Staff.AdminAsync(api);
         var before = await manager.ReadAsync<ConsoleDashboardDto>("/api/v1/console/dashboard");
         var product = await api.AddProductAsync("ruchnyi-instrument", "Сапа для скасування", 500m, stock: 9);
-        await TestOrders.PlaceAsync(api, product.Id, 2, 500m, CheckoutApiTests.UniquePhone());
+        var kept = await TestOrders.PlaceAsync(api, product.Id, 2, 500m, CheckoutApiTests.UniquePhone());
+        (await admin.PostAsJsonAsync($"/api/v1/console/orders/{kept.Number}/status", new { status = "confirmed" }, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
         var dropped = await TestOrders.PlaceAsync(api, product.Id, 1, 500m, CheckoutApiTests.UniquePhone());
         (await admin.PostAsJsonAsync($"/api/v1/console/orders/{dropped.Number}/status", new { status = "cancelled" }, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
 
@@ -69,8 +81,54 @@ public sealed class ConsoleDashboardApiTests(ApiFactory api)
         Amount(after.Current.Revenue).ShouldBe(Amount(before.Current.Revenue) + 1000m);
         after.ByDay.Sum(d => d.Orders).ShouldBe(after.Current.Orders);
         after.ByDelivery.Sum(d => d.Count).ShouldBe(after.Current.Orders);
-        after.ByStatus.Sum(s => s.Count).ShouldBe(after.Current.Orders + after.Current.Cancelled);
+        after.ByStatus.Sum(s => s.Count).ShouldBeGreaterThanOrEqualTo(after.Current.Orders + after.Current.Cancelled);
         Amount(after.Current.AverageOrder).ShouldBe(Math.Round(Amount(after.Current.Revenue) / after.Current.Orders, 2, MidpointRounding.AwayFromZero));
+    }
+
+    [Fact]
+    public async Task Unpaid_orders_are_excluded_from_top_products_and_refunds_are_attributed_by_completed_date()
+    {
+        var manager = await Staff.ManagerAsync(api);
+        var product = await api.AddProductAsync("ruchnyi-instrument", "Неоплачений товар дашборду", 1200m, stock: 9);
+        var unpaidBody = CheckoutApiTests.Order(product.Id, 2, "2400.00", CheckoutApiTests.UniquePhone()) with
+        {
+            Payment = new PaymentRequest(PaymentCodes.Card),
+        };
+        await (await new CheckoutApiTests(api).PostOrderAsync(unpaidBody, Guid.NewGuid().ToString())).ReadAsync<OrderCreatedDto>(HttpStatusCode.Created);
+
+        var top = await api.WithScopeAsync(services => services.GetRequiredService<IOrderReporting>().TopProductsAsync(
+            KyivTime.StartOfDay(KyivToday.AddDays(-1)), KyivTime.StartOfDay(KyivToday.AddDays(1)), int.MaxValue, Ct));
+        top.ShouldNotContain(p => p.ProductId == product.Id);
+
+        var before = await manager.ReadAsync<ConsoleDashboardDto>("/api/v1/console/dashboard?days=30");
+        var olderProduct = await api.AddProductAsync("ruchnyi-instrument", "Товар старого замовлення", 400m, stock: 5);
+        var olderOrder = await TestOrders.PlaceAsync(api, olderProduct.Id, 1, 400m, CheckoutApiTests.UniquePhone());
+        await api.WithDbAsync(async db =>
+        {
+            var oldDate = KyivTime.StartOfDay(KyivToday.AddDays(-40));
+            await db.Set<Order>().Where(o => o.Number == olderOrder.Number)
+                .ExecuteUpdateAsync(u => u.SetProperty(o => o.Status, OrderStatus.Completed).SetProperty(o => o.CreatedAt, oldDate), Ct);
+            var item = await db.Set<OrderItem>().SingleAsync(i => i.ProductId == olderProduct.Id, Ct);
+            var refundId = Guid.NewGuid();
+            db.Add(new OrderRefund
+            {
+                Id = refundId,
+                OrderId = item.OrderId,
+                Method = RefundMethod.Manual,
+                Status = RefundStatus.Succeeded,
+                Amount = 400m,
+                Reason = "Повернення в поточному періоді",
+                RequestedBy = "Тест",
+                CreatedAt = KyivTime.StartOfDay(KyivToday),
+                CompletedAt = KyivTime.StartOfDay(KyivToday),
+                Lines = [new OrderRefundLine { Id = Guid.NewGuid(), RefundId = refundId, OrderItemId = item.Id, Quantity = 1, Amount = 400m }],
+            });
+            return await db.SaveChangesAsync(Ct);
+        });
+
+        var after = await manager.ReadAsync<ConsoleDashboardDto>("/api/v1/console/dashboard?days=30");
+        Amount(after.Current.Revenue).ShouldBe(Amount(before.Current.Revenue) - 400m);
+        Amount(after.ByDay[^1].Revenue).ShouldBe(Amount(before.ByDay[^1].Revenue) - 400m);
     }
 
     [Fact]

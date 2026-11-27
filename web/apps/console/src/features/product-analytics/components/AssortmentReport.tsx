@@ -2,6 +2,7 @@ import { SegmentedControl } from '@mantine/core'
 import { IconBox, IconCalendarStats, IconCoins, IconFileInvoice, IconReceiptRefund } from '@tabler/icons-react'
 import { useState, type ReactNode } from 'react'
 import { cleanProductName } from '@/shared/lib/cleanProductName'
+import { formatUnitLabel } from '@/shared/lib/salesFormat'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import type { BusinessReport } from '../api/businessAnalytics'
 import { formatValue as fmt } from './BusinessForecast'
@@ -83,7 +84,7 @@ export function AssortmentReport({ report, loading, selectedProduct, selectProdu
         <table><thead><tr>{columns.map(column => <th key={column} scope="col">{column}</th>)}</tr></thead>
           <tbody>{report.products.rows.map(p => <tr key={JSON.stringify([p.id, p.unit])} data-selected={p.id === selectedProduct || undefined}>
             <th scope="row"><button type="button" onClick={() => selectProduct(p.id)}>{cleanProductName(p.name)}</button></th>
-            <td>{p.sku || '—'}</td><td>{p.unit || '—'}</td><td>{fmt(p.sold)}</td><td>{fmt(p.returned)}</td>
+            <td>{p.sku || '—'}</td><td>{formatUnitLabel(p.unit)}</td><td>{fmt(p.sold)}</td><td>{fmt(p.returned)}</td>
             <td>{fmt(p.price)}</td><td className="assortment-net">{fmt(p.net)}</td><td>{fmt(p.profit)}</td>
             <td>{fmt(p.coverage == null ? null : p.coverage * 100)}</td>
           </tr>)}</tbody>

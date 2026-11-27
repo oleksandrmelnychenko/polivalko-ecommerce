@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { getProducts } from '@/features/catalog/api/catalogApi'
 import { problemMessage } from '@/shared/api/problem'
 import { useApiQuery } from '@/shared/api/useApiQuery'
-import { IconFileInvoice, IconPackage, IconPackageExport, IconSearch, IconTrash, IconUser } from '@tabler/icons-react'
+import { IconArrowBackUp, IconFileInvoice, IconPackage, IconPackageExport, IconSearch, IconTrash, IconUser } from '@tabler/icons-react'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import { money, save, useRegister, type Page, type Partner, type Ref } from './api'
@@ -46,6 +46,7 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
   const location = useLocation()
   const person = kind === 'partner'
   const outgoing = kind === 'out'
+  const customerReturn = kind === 'customerReturn'
   const [id] = useState(() => initial?.id ?? crypto.randomUUID())
   const [title, setTitle] = useState(initial?.number ?? '')
   const [category, setCategory] = useState('juridical')
@@ -128,11 +129,23 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
       size={person ? 'compact' : 'standard'}
       className={person ? 'ledger-editor' : 'ledger-editor invoice-editor'}
       data-outgoing={outgoing || undefined}
-      title={<MetricLabel icon={person ? IconUser : outgoing ? IconPackageExport : IconFileInvoice}>
-        {initial && outgoing ? 'Редагування видаткової накладної № ' + initial.number : initial ? 'Редагування чернетки' : person ? 'Новий контрагент' : kind === 'in' ? 'Нова прибуткова накладна' : 'Нова видаткова накладна'}
+      title={<MetricLabel icon={person ? IconUser : customerReturn ? IconArrowBackUp : outgoing ? IconPackageExport : IconFileInvoice}>
+        {initial && outgoing
+          ? 'Редагування видаткової накладної № ' + initial.number
+          : initial && customerReturn
+            ? 'Редагування повернення № ' + initial.number
+            : initial
+              ? 'Редагування чернетки'
+              : person
+                ? 'Новий контрагент'
+                : customerReturn
+                  ? 'Нове повернення від покупця'
+                  : kind === 'in'
+                    ? 'Нова прибуткова накладна'
+                    : 'Нова видаткова накладна'}
       </MetricLabel>}
       footer={<>
-        {!person && <div className="draft-total"><span>{outgoing ? 'Сума відвантаження' : 'Сума накладної'}</span><strong>{draftAmount(total)}</strong></div>}
+        {!person && <div className="draft-total"><span>{customerReturn ? 'Сума повернення' : outgoing ? 'Сума відвантаження' : 'Сума накладної'}</span><strong>{draftAmount(total)}</strong></div>}
         <Group gap="xs">
         <Button variant="default" onClick={() => setOpened(false)} disabled={busy}>Скасувати</Button>
         <Button type="submit" form={'register-' + id} loading={busy}>{person ? 'Зберегти' : 'Зберегти чернетку'}</Button>
@@ -141,10 +154,10 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
       <form id={'register-' + id} onSubmit={submit}>
         <Stack gap="sm">
           <section className={person ? 'ledger-form-block' : 'ledger-form-block draft-details'}>
-            {!person && <h3><MetricLabel icon={IconFileInvoice}>Реквізити накладної</MetricLabel></h3>}
+            {!person && <h3><MetricLabel icon={customerReturn ? IconArrowBackUp : IconFileInvoice}>{customerReturn ? 'Реквізити повернення' : 'Реквізити накладної'}</MetricLabel></h3>}
             <TextInput
               required
-              label={person ? 'Назва контрагента' : 'Номер накладної'}
+              label={person ? 'Назва контрагента' : customerReturn ? 'Номер документа повернення' : 'Номер накладної'}
               value={title}
               maxLength={person ? 300 : 80}
               onChange={(e) => setTitle(e.currentTarget.value)}
@@ -172,7 +185,7 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
                   <Select
                     searchable
                     required
-                    label={outgoing ? 'Покупець' : 'Постачальник'}
+                    label={outgoing || customerReturn ? 'Покупець' : 'Постачальник'}
                     className="draft-partner"
                     disabled={initial?.agreed}
                     placeholder={kind === 'in' ? 'Оберіть постачальника' : 'Оберіть покупця'}
@@ -193,7 +206,7 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
                   />
                   <Select
                     required
-                    label={outgoing ? "Склад відвантаження" : "Склад"}
+                    label={outgoing ? 'Склад відвантаження' : customerReturn ? 'Склад приймання' : 'Склад'}
                     placeholder="Оберіть склад"
                     data={refs.data?.stores.map(option) ?? []}
                     value={store}
@@ -203,7 +216,7 @@ export function EditRegister({ kind, initial, onClose, onSaved }: Props) {
             )}
           </section>
           {!person && <section className="ledger-form-block draft-products">
-              <header><h3><MetricLabel icon={IconPackage}>{outgoing ? 'Товари до відвантаження' : 'Товари'}</MetricLabel></h3><span>{lines.length}</span></header>
+              <header><h3><MetricLabel icon={IconPackage}>{customerReturn ? 'Повернені товари' : outgoing ? 'Товари до відвантаження' : 'Товари'}</MetricLabel></h3><span>{lines.length}</span></header>
               <Select
                 label="Додати товар"
                 placeholder="Назва або артикул від двох символів"

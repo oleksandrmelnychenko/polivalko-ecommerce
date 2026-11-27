@@ -24,6 +24,7 @@ internal static class ChangeOrderStatus
         PoliValkoDbContext db,
         IOutbox outbox,
         ICatalogReservations reservations,
+        IExternalOrderSyncStatus orderSync,
         IAuditLog audit,
         TimeProvider time,
         CancellationToken ct)
@@ -65,9 +66,24 @@ internal static class ChangeOrderStatus
 
         if (target == OrderStatus.Cancelled)
         {
-            await OrderCancellationEffects.ApplyAsync(order, outbox, reservations, ct);
+            await OrderCancellationEffects.ApplyAsync(order, outbox, reservations, orderSync.IsEnabled, ct);
+            if (from == OrderStatus.Shipped)
+            {
+                await reservations.RestockAsync(order.Id, ct);
+            }
         }
-        if (target is OrderStatus.Shipped or OrderStatus.Completed) await reservations.ConsumeAsync(order.Id, ct);
+
+        if (target is OrderStatus.Shipped or OrderStatus.Completed)
+        {
+            try
+            {
+                await reservations.ConsumeAsync(order.Id, ct);
+            }
+            catch (StockShortageException ex)
+            {
+                return Problems.Create(StatusCodes.Status409Conflict, "ordering.stock_shortage", "Недостатньо залишку на складі", ex.Message);
+            }
+        }
 
         audit.Record("order.status_changed", "Order", order.Number, new { from, to = target, reason });
         try

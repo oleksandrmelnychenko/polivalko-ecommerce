@@ -1,5 +1,6 @@
-import { Alert, Button, NumberInput } from '@mantine/core'
+import { Alert, Button, NumberInput, Text } from '@mantine/core'
 import { useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { withCsrf } from '@/shared/api/csrf'
 import { NETWORK_ERROR, problemMessage } from '@/shared/api/problem'
 import { AppModal, AppModalFooter } from '@/shared/ui/AppModal'
@@ -12,9 +13,11 @@ export function ProductStockDialog({ product, onClose, onReload }: { product: Pr
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [conflict, setConflict] = useState(false)
+  const linkedWarehouse = product.warehouseStoreId != null
+  const reserved = product.reservedQuantity ?? 0
   async function submit(event: FormEvent) {
     event.preventDefault()
-    if (busy || conflict || typeof value !== 'number' || value < 0 || value === before.stock) return
+    if (linkedWarehouse || busy || conflict || typeof value !== 'number' || value < reserved || value === before.stock) return
     setBusy(true)
     try {
       const result = await withCsrf(headers => adjustProductStock(headers, {
@@ -39,11 +42,37 @@ export function ProductStockDialog({ product, onClose, onReload }: { product: Pr
   return (
     <AppModal opened title="Змінити залишок" onClose={() => { if (!busy) onClose() }}>
       <form onSubmit={submit}>
-        <NumberInput label="Кількість на складі" min={0} max={999999999.999} decimalScale={3} value={value} onChange={setValue} data-autofocus />
+        {linkedWarehouse ? (
+          <Alert color="blue" mb="sm">
+            Товар прив’язаний до складу{product.warehouseStoreTitle ? ` «${product.warehouseStoreTitle}»` : ''}. Змінюйте залишок складськими документами у розділі{' '}
+            <Link to={`/warehouse/stock?q=${encodeURIComponent(before.sku)}`}>Склад → Залишки</Link>.
+          </Alert>
+        ) : (
+          <>
+            <NumberInput
+              label="Кількість на складі"
+              min={reserved}
+              max={999999999.999}
+              decimalScale={3}
+              value={value}
+              onChange={setValue}
+              data-autofocus
+            />
+            {reserved > 0 && (
+              <Text size="xs" c="dimmed" mt={6}>
+                У резерві замовлень: {new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 3 }).format(reserved)}. Залишок не може бути меншим за резерв.
+              </Text>
+            )}
+          </>
+        )}
         {error && <Alert color="red" role="alert" mt="sm">{error}</Alert>}
         <AppModalFooter>
           <Button variant="default" disabled={busy} onClick={onClose}>Скасувати</Button>
-          <Button type="submit" loading={busy} disabled={conflict || typeof value !== 'number' || value === before.stock}>Зберегти залишок</Button>
+          {!linkedWarehouse && (
+            <Button type="submit" loading={busy} disabled={conflict || typeof value !== 'number' || value < reserved || value === before.stock}>
+              Зберегти залишок
+            </Button>
+          )}
         </AppModalFooter>
       </form>
     </AppModal>

@@ -26,12 +26,16 @@ export function useRegister<T>(path: string, enabled = true) {
   }, [enabled, path, reload])
   return query
 }
-export function save(path: string, body: unknown, method: 'POST' | 'PUT' = 'POST') {
+export function save<T = string>(path: string, body?: unknown, method: 'POST' | 'PUT' | 'DELETE' = 'POST') {
   return withCsrf((headers) =>
-    read<string>(path, {
+    read<T>(path, {
       method,
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      headers: body !== undefined ? { ...headers, 'Content-Type': 'application/json' } : headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     }),
   )
+}
+
+export function remove<T = string>(path: string) {
+  return save<T>(path, undefined, 'DELETE')
 }

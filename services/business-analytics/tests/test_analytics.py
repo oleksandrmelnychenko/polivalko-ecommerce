@@ -10,10 +10,10 @@ from unittest.mock import MagicMock, patch
 from analytics.forecast import build_models, fit, replenishment
 from analytics.invoices import add_cash, compare
 from analytics.neon import FrameStream
-from analytics.register import apply_inventory_cost, reconcile
-from analytics.reports import documents, forecasts, report
+from analytics.register import apply_inventory_cost, reconcile, unit_label
+from analytics.reports import documents, forecasts, policy_key, report
 from analytics.server import PolicyConflict, Service, app, load, now, save, service
-from analytics.source import ARCHIVE, archived_rows, production, target
+from analytics.source import ARCHIVE, COST_EVENTS, archived_rows, production, target
 
 DAY = date(2026, 11, 19)
 PRODUCT = {
@@ -425,3 +425,74 @@ class ConnectionTests(unittest.TestCase):
             self.assertTrue(call("/health/live").startswith("200"))
             self.assertTrue(call("/report").startswith("503"))
             self.assertTrue(call("/sql").startswith("404"))
+
+    def test_cost_events_include_console_stock_income_and_unit_codes_map_cleanly(self):
+        self.assertIn("d.kind IN ('in','income')", COST_EVENTS)
+        for code, expected in (("2009", "шт"), ("301", "кг"), ("0166", "л"), ("0006", "м"),
+                               ("0055", "м²"), ("0113", "м³"), ("2006", "уп"), ("2007", "компл"), ("0304", "г")):
+            self.assertEqual(unit_label(code), expected)
+        row_coded = doc("u1", products=[{"product": {"code": "9", "unit": "2009"}, "quantity": "2", "total": "100"}])
+        row_text = doc("u2", amount="50", products=[{"product": {"code": "9", "unit": "шт"}, "quantity": "1", "total": "50"}])
+        s = snapshot([row_coded, row_text])
+        self.assertEqual({f["unit"] for f in s["facts"]}, {"шт"})
+        r = report(s, {})
+        self.assertEqual(len(r["products"]["rows"]), 1)
+        self.assertEqual(r["products"]["rows"][0]["unit"], "шт")
+        legacy = dict(s, models=[dict(m, unit="2009") if m["kind"] == "sku" else m for m in s["models"]])
+        fc = forecasts(legacy, {}, {}, DAY + timedelta(days=1))
+        self.assertEqual(fc["rows"][0]["unit"], "шт")
+        sku_legacy = next(m for m in legacy["models"] if m["kind"] == "sku")
+        self.assertEqual(policy_key(sku_legacy), policy_key(fc["rows"][0]))
+
+    def test_refresh_clears_module_caches_and_documents_supports_refresh_param(self):
+        from analytics import (
+            customer_recommendations as cr,
+            dashboard as dash,
+            invoices as inv,
+            markets as mk,
+            product_contribution as pc,
+            stock_turnover as st,
+            turnover as tv,
+        )
+        dash._cache[(7, DAY)] = (float("inf"), {"cached": True})
+        st._cache[(30, 14)] = (None, float("inf"), {"cached": True})
+        st._profiles[(30, 14)] = (DAY, float("inf"), {})
+        pc._cached = (DAY, float("inf"), {})
+        cr._history_cache = (DAY, float("inf"), [], ([], []))
+        tv._cached = (DAY, float("inf"), ({}, DAY))
+        mk._cache[2026] = (float("inf"), DAY, {})
+        mk._carrier_cache[2026] = (float("inf"), DAY, {})
+        inv._years = (DAY, float("inf"), {})
+
+        def call(method, path, qs=""):
+            status = []
+            body = app(
+                {"REQUEST_METHOD": method, "PATH_INFO": path, "QUERY_STRING": qs, "wsgi.input": BytesIO()},
+                lambda s, h: status.append(s),
+            )
+            return status[0], body
+
+        with patch("analytics.server.hosted", return_value=False), patch.object(service, "refresh", return_value={"state": "queued"}):
+            code, _ = call("POST", "/refresh")
+        self.assertTrue(code.startswith("202"))
+        self.assertEqual(dash._cache, {})
+        self.assertEqual(st._cache, {})
+        self.assertEqual(st._profiles, {})
+        self.assertIsNone(pc._cached)
+        self.assertIsNone(cr._history_cache)
+        self.assertIsNone(tv._cached)
+        self.assertEqual(mk._cache, {})
+        self.assertEqual(mk._carrier_cache, {})
+        self.assertIsNone(inv._years)
+
+        with patch("analytics.server.dashboard", return_value={"ok": True}) as mock_dash:
+            code, _ = call("GET", "/documents", "analysis=dashboard&days=7&refresh=1")
+            self.assertTrue(code.startswith("200"))
+            self.assertEqual(mock_dash.call_args.kwargs, {"refresh": True})
+            bad, _ = call("GET", "/documents", "analysis=dashboard&days=7&refresh=abc")
+            self.assertTrue(bad.startswith("400"))
+
+        with patch("analytics.server.stock_page", return_value={"ok": True}) as mock_stock:
+            code, _ = call("GET", "/documents", "analysis=stock-turnover&days=30&refresh=1")
+            self.assertTrue(code.startswith("200"))
+            self.assertEqual(mock_stock.call_args.kwargs, {"refresh": True})

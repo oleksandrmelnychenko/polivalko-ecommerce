@@ -25,9 +25,20 @@ def order(code, ref, qty, **changes):
 
 
 class StockReasonTests(TestCase):
-    def test_unreconciled_sales_documents_are_reported_as_the_reason_for_an_empty_queue(self):
-        blocked = exposure(dict(REPORT, incompleteProducts=2), [SKU], 14)
-        self.assertEqual((blocked["buyCount"], blocked["unknownCount"], blocked["incompleteSales"]), (0, 1, 2))
+    def test_unreconciled_sales_documents_isolate_affected_products_without_blanking_others(self):
+        discrepant = dict(
+            REPORT,
+            products=[sale("42"), sale("2")],
+            current={"net": Decimal(600)},
+            incompleteProducts=2,
+            incompleteProductRefs=[dict(account="valko-dntrade", code="42", productRef="p-ext", catalogId=None)],
+        )
+        blocked_only = exposure(discrepant, [SKU], 14)
+        self.assertEqual((blocked_only["buyCount"], blocked_only["unknownCount"], blocked_only["incompleteSales"]), (0, 1, 2))
+        mixed = exposure(discrepant, [SKU, product("2")], 14)
+        self.assertEqual((mixed["buyCount"], mixed["unknownCount"], mixed["incompleteSales"]), (1, 1, 2))
+        by_id = {r["id"]: r for r in mixed["rows"]}
+        self.assertEqual((by_id["p"]["purchaseStatus"], by_id["2"]["purchaseStatus"]), ("sales", "buy"))
         self.assertEqual(exposure(REPORT, [SKU], 14)["incompleteSales"], 0)
 
     def test_products_waiting_for_a_delivery_to_be_confirmed_are_counted_and_can_be_listed(self):

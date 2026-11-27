@@ -1,5 +1,5 @@
 import { ActionIcon, Alert, Button, Group, Modal, Select, Stack, Table, Text, TextInput, Textarea, Title } from '@mantine/core'
-import { IconFilePencil, IconPackage, IconPlus, IconSearch, IconTrash } from '@tabler/icons-react'
+import { IconFilePencil, IconPackage, IconPlus, IconRotateClockwise, IconSearch, IconTrash } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import type { components } from '@polivalko/shared/api/schema'
@@ -12,16 +12,22 @@ import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { DOCUMENTS_PATH, DocumentLink } from '@/shared/ui/DocumentLink'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { MetricLabel } from '@/shared/ui/MetricCard'
+import { notifySuccess } from '@/shared/ui/notify'
 import { PageHeader } from '@/shared/ui/PageHeader'
 import { PageState } from '@/shared/ui/PageState'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { DocumentStatus, documentIcon } from './DocumentTable'
 import { Grid } from './RegisterTable'
-import { money, save, stockOperationNames, useRegister, writeOffReasons, type Doc, type Page, type Ref } from './api'
+import { money, remove, save, stockOperationNames, useRegister, writeOffReasons, type Doc, type Page, type Ref } from './api'
 
 type S = components['schemas']
-type State = S['StockOperationState']
-export type StockKind = 'income' | 'writeOff' | 'recount'
+type StockLineState = S['StockOperationState']['lines'][number] & { reservedQuantity?: number | null }
+type State = Omit<S['StockOperationState'], 'lines'> & {
+  targetStoreId?: string | null
+  targetStore?: string | null
+  lines: StockLineState[]
+}
+export type StockKind = 'income' | 'writeOff' | 'recount' | 'transfer'
 type LineInput = { productId: string; title: string; quantity: string; price: string }
 type Initial = { state: State; lines: LineInput[] }
 
@@ -54,6 +60,14 @@ const copy: Record<StockKind, { title: string; heading: string; create: string; 
     empty: 'Перерахунків ще немає',
     editor: 'Новий перерахунок',
     amount: 'Факт',
+  },
+  transfer: {
+    title: 'Переміщення',
+    heading: 'Переміщення товару між складами',
+    create: 'Перемістити товар',
+    empty: 'Переміщень ще немає',
+    editor: 'Нове переміщення',
+    amount: 'Кількість',
   },
 }
 
@@ -132,6 +146,7 @@ function StockOperationForm({ kind, initial, onClose, onSaved }: { kind: StockKi
   const [day, setDay] = useState(initial?.state.day ?? today())
   const [org, setOrg] = useState<string | null>(initial?.state.orgId ?? null)
   const [store, setStore] = useState<string | null>(initial?.state.storeId ?? null)
+  const [targetStore, setTargetStore] = useState<string | null>(initial?.state.targetStoreId ?? null)
   const [reason, setReason] = useState<string | null>(initial?.state.reason ?? null)
   const [comment, setComment] = useState(initial?.state.comment ?? '')
   const [lines, setLines] = useState<LineInput[]>(initial?.lines ?? [])
@@ -142,17 +157,29 @@ function StockOperationForm({ kind, initial, onClose, onSaved }: { kind: StockKi
   const refs = useRegister<{ organizations: Ref[]; stores: Ref[] }>('references')
   const products = useApiQuery('stock-operation-products:' + productTerm,
     () => getProducts({ q: productTerm, page: 1, pageSize: 25 }), { enabled: productTerm.trim().length >= 2 })
+  const sameTransferStores = kind === 'transfer' && Boolean(store) && store === targetStore
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (busy) return
-    if (!org || !store || !lines.length || (kind === 'writeOff' && !reason)) {
-      setError(kind === 'writeOff' ? 'Виберіть організацію, склад, причину й товари.' : 'Виберіть організацію, склад і товари.')
+    if (!org || !store || !lines.length || (kind === 'writeOff' && !reason) || (kind === 'transfer' && !targetStore)) {
+      setError(
+        kind === 'writeOff'
+          ? 'Виберіть організацію, склад, причину й товари.'
+          : kind === 'transfer'
+            ? 'Виберіть організацію, склад-відправник, склад-отримувач і товари.'
+            : 'Виберіть організацію, склад і товари.',
+      )
+      return
+    }
+    if (kind === 'transfer' && targetStore === store) {
+      setError('Склад-відправник і склад-отримувач мають відрізнятися.')
       return
     }
     setBusy(true)
     setError('')
     const draft = {
       id, kind, day, orgId: org, storeId: store,
+      targetStoreId: kind === 'transfer' ? targetStore : null,
       reason: kind === 'writeOff' ? reason : null,
       comment: comment.trim() || null,
       lines: lines.map((l) => ({ productId: l.productId, quantity: Number(l.quantity), price: kind === 'income' ? Number(l.price) : null })),
@@ -192,8 +219,19 @@ function StockOperationForm({ kind, initial, onClose, onSaved }: { kind: StockKi
             <TextInput required type="date" label="Дата" value={day} onChange={(e) => setDay(e.currentTarget.value)} />
             <Select required searchable label="Організація" placeholder="Оберіть організацію"
               data={refs.data?.organizations.map(option) ?? []} value={org} onChange={setOrg} />
-            <Select required label="Склад" placeholder="Оберіть склад"
+            <Select required label={kind === 'transfer' ? 'Склад-відправник' : 'Склад'} placeholder="Оберіть склад"
               data={refs.data?.stores.map(option) ?? []} value={store} onChange={setStore} />
+            {kind === 'transfer' && (
+              <Select
+                required
+                label="Склад-отримувач"
+                placeholder="Оберіть склад-отримувач"
+                data={refs.data?.stores.map(option) ?? []}
+                value={targetStore}
+                onChange={setTargetStore}
+                error={sameTransferStores ? 'Оберіть інший склад' : undefined}
+              />
+            )}
             {kind === 'writeOff' && <Select required label="Причина" placeholder="Оберіть причину"
               data={Object.entries(writeOffReasons).map(([value, label]) => ({ value, label }))} value={reason} onChange={setReason} />}
             <Textarea label={reason === 'other' ? 'Коментар (обов’язковий)' : 'Коментар'} required={reason === 'other'} maxLength={500}
@@ -238,11 +276,21 @@ function StockOperationForm({ kind, initial, onClose, onSaved }: { kind: StockKi
   )
 }
 
-// Card block of a stock operation: expected or recorded movement, editing and posting.
-export function StockOperationActions({ doc, refresh, onDialogChange }: { doc: Doc; refresh: () => void; onDialogChange: (opened: boolean) => void }) {
+// Card block of a stock operation: expected or recorded movement, editing, deleting, posting, and storno.
+export function StockOperationActions({
+  doc,
+  refresh,
+  onDeleted,
+  onDialogChange,
+}: {
+  doc: Doc
+  refresh: () => void
+  onDeleted?: () => void
+  onDialogChange: (opened: boolean) => void
+}) {
   const url = 'stock-operations/' + doc.id
   const query = useRegister<State>(url)
-  const [action, updateAction] = useState<'post' | 'edit' | null>(null)
+  const [action, updateAction] = useState<'post' | 'edit' | 'delete' | 'unpost' | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const { can } = usePermissions()
@@ -255,8 +303,12 @@ export function StockOperationActions({ doc, refresh, onDialogChange }: { doc: D
   const state = query.data
   const kind = state.kind as StockKind
   const draft = state.status === 'draft'
+  const posted = state.status === 'posted'
+  const storeHeading = kind === 'transfer' && state.targetStore ? `${state.store} → ${state.targetStore}` : state.store
   const negative = state.lines.some((l) => l.after < 0)
-  // Only receipts and write-offs need the opening first; a recount itself states the quantity on the shelf.
+  const reservedConflicts = state.lines.filter((l) => l.reservedQuantity != null && l.after < l.reservedQuantity)
+  const reservedConflict = reservedConflicts.length > 0
+  // Only receipts, write-offs, and transfers need the opening first; a recount itself states the quantity on the shelf.
   const unopened = kind === 'recount' ? [] : state.lines.filter((l) => l.firstMovement)
   const openingWarning = unopened.length > 0 && (
     <Alert color="orange" title="Спершу введіть початковий залишок">
@@ -266,6 +318,12 @@ export function StockOperationActions({ doc, refresh, onDialogChange }: { doc: D
       проведення ввести для {unopened.length === 1 ? 'нього' : 'них'} початковий залишок
       уже не вийде, і склад покаже лише кількість із цієї операції. Якщо товар уже лежав на полиці, спершу введіть
       початковий залишок у «Склад → Залишки» або проведіть перерахунок.
+    </Alert>
+  )
+  const reservedWarning = reservedConflict && (
+    <Alert color="orange" title="Конфлікт із резервом інтернет-магазину">
+      Після проведення залишок стане меншим за зарезервовану кількість для{' '}
+      {reservedConflicts.map((l) => `«${l.title}» (залишиться ${quantity(l.after)}, у резерві ${quantity(l.reservedQuantity ?? 0)})`).join(', ')}.
     </Alert>
   )
   async function post() {
@@ -288,16 +346,77 @@ export function StockOperationActions({ doc, refresh, onDialogChange }: { doc: D
       setBusy(false)
     }
   }
+  async function deleteDraft() {
+    if (busy) return
+    setBusy(true)
+    setError('')
+    try {
+      const result = await remove(url)
+      if (!result.response.ok) {
+        setError(problemMessage(result.error, 'Не вдалося видалити чернетку.'))
+        query.reload()
+        return
+      }
+      notifySuccess('Чернетку видалено.')
+      setAction(null)
+      onDeleted?.()
+    } catch {
+      setError('Немає зв’язку. Повторіть дію, коли з’єднання відновиться.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  async function unpostOperation() {
+    if (busy) return
+    setBusy(true)
+    setError('')
+    try {
+      const result = await save(url + '/unpost')
+      if (!result.response.ok) {
+        setError(problemMessage(result.error, 'Не вдалося сторнувати проведення.'))
+        query.reload()
+        return
+      }
+      notifySuccess('Проведення сторновано.')
+      setAction(null)
+      query.reload()
+      refresh()
+    } catch {
+      setError('Немає зв’язку. Повторіть дію, коли з’єднання відновиться.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  if (state.status === 'cancelled') {
+    return (
+      <Stack className="invoice-operation" gap="sm">
+        <Text size="sm" c="dimmed">{storeHeading}</Text>
+        <Text c="dimmed">Складську операцію сторновано (скасовано).</Text>
+      </Stack>
+    )
+  }
   return (
     <Stack className="invoice-operation" gap="md">
-      <Group justify="space-between">
+      <Group justify="space-between" wrap="wrap">
         <div>
-          <Text size="sm" c="dimmed">{state.store}</Text>
+          <Text size="sm" c="dimmed">{storeHeading}</Text>
           <Title order={3}>{draft ? 'Підготовка до проведення' : 'Рух складу проведено'}</Title>
         </div>
-        <Group>
-          {draft && can(PermissionKeys.Accounting.Edit) && <Button variant="default" onClick={() => setAction('edit')}>Редагувати</Button>}
+        <Group gap="xs" wrap="wrap">
+          {draft && can(PermissionKeys.Accounting.Edit) && (
+            <>
+              <Button variant="default" onClick={() => setAction('edit')}>Редагувати</Button>
+              <Button variant="light" color="red" leftSection={<IconTrash size={15} />} onClick={() => setAction('delete')}>
+                Видалити чернетку
+              </Button>
+            </>
+          )}
           {draft && can(PermissionKeys.Accounting.Post) && <Button onClick={() => setAction('post')}>Перевірити й провести</Button>}
+          {posted && can(PermissionKeys.Accounting.Post) && (
+            <Button variant="light" color="orange" leftSection={<IconRotateClockwise size={15} />} onClick={() => setAction('unpost')}>
+              Сторнувати проведення
+            </Button>
+          )}
         </Group>
       </Group>
       {(state.reason || state.comment) && <Text size="sm">
@@ -305,18 +424,42 @@ export function StockOperationActions({ doc, refresh, onDialogChange }: { doc: D
         {state.comment}
       </Text>}
       {draft && openingWarning}
+      {draft && reservedWarning}
       <Movement state={state} />
       <Modal opened={action === 'post'} onClose={() => { if (!busy) setAction(null) }} title={stockOperationNames[kind]} size="lg">
         <Stack>
-          <Text fw={600}>{state.store} · № {state.number}</Text>
+          <Text fw={600}>{storeHeading} · № {state.number}</Text>
           <Movement state={state} />
           {kind === 'recount' && <Text size="sm">Рух — різниця між фактом і обліком на момент збереження чернетки.</Text>}
           {openingWarning}
+          {reservedWarning}
           {negative && <Alert color="orange">На цьому складі бракує товару для цієї операції.</Alert>}
           {error && <Alert color="red">{error}</Alert>}
           <Group justify="end">
             <Button variant="default" onClick={() => setAction(null)} disabled={busy}>Закрити</Button>
-            <Button disabled={negative || !draft} loading={busy} onClick={post}>Провести</Button>
+            <Button disabled={negative || reservedConflict || !draft} loading={busy} onClick={post}>Провести</Button>
+          </Group>
+        </Stack>
+      </Modal>
+      <Modal opened={action === 'delete'} onClose={() => { if (!busy) setAction(null) }} title="Видалити чернетку?" size="sm">
+        <Stack>
+          <Text size="sm">Чернетку № {state.number} буде видалено без можливості відновлення.</Text>
+          {error && <Alert color="red">{error}</Alert>}
+          <Group justify="end">
+            <Button variant="default" onClick={() => setAction(null)} disabled={busy}>Скасувати</Button>
+            <Button color="red" loading={busy} onClick={deleteDraft}>Видалити чернетку</Button>
+          </Group>
+        </Stack>
+      </Modal>
+      <Modal opened={action === 'unpost'} onClose={() => { if (!busy) setAction(null) }} title="Сторнувати проведення?" size="md">
+        <Stack>
+          <Text size="sm">
+            Проведення операції № {state.number} ({storeHeading}) буде скасовано, а залишки на складі — відкочені на протилежну кількість.
+          </Text>
+          {error && <Alert color="red">{error}</Alert>}
+          <Group justify="end">
+            <Button variant="default" onClick={() => setAction(null)} disabled={busy}>Скасувати</Button>
+            <Button color="orange" loading={busy} onClick={unpostOperation}>Сторнувати проведення</Button>
           </Group>
         </Stack>
       </Modal>
@@ -334,19 +477,28 @@ export function StockOperationActions({ doc, refresh, onDialogChange }: { doc: D
 function Movement({ state }: { state: State }) {
   const recount = state.kind === 'recount'
   const income = state.kind === 'income'
+  const showReserved = state.lines.some((l) => l.reservedQuantity != null && l.reservedQuantity > 0)
   return (
-    <Grid columns={['Товар', ...(recount ? ['Облік', 'Факт'] : ['Кількість']), ...(income ? ['Ціна'] : []), 'Було', 'Рух', state.status === 'draft' ? 'Стане' : 'Стало']}>
-      {state.lines.map((l) => (
-        <Table.Tr key={l.productId}>
-          <Table.Td>{l.title}<Text size="xs" c="dimmed">{l.sku}</Text></Table.Td>
-          {recount && <Table.Td className="ledger-number">{l.book == null ? '—' : quantity(l.book)}</Table.Td>}
-          <Table.Td className="ledger-number">{quantity(l.quantity)}</Table.Td>
-          {income && <Table.Td className="register-money">{money(l.price == null ? null : l.price.toFixed(2), 'UAH')}</Table.Td>}
-          <Table.Td className="ledger-number">{quantity(l.before)}</Table.Td>
-          <Table.Td className="ledger-number">{signed(l.change)}</Table.Td>
-          <Table.Td className="ledger-number" c={l.after < 0 ? 'red' : undefined}>{quantity(l.after)}</Table.Td>
-        </Table.Tr>
-      ))}
+    <Grid columns={['Товар', ...(recount ? ['Облік', 'Факт'] : ['Кількість']), ...(income ? ['Ціна'] : []), 'Було', 'Рух', state.status === 'draft' ? 'Стане' : 'Стало', ...(showReserved ? ['У резерві'] : [])]}>
+      {state.lines.map((l) => {
+        const belowReserve = l.reservedQuantity != null && l.after < l.reservedQuantity
+        return (
+          <Table.Tr key={l.productId}>
+            <Table.Td>{l.title}<Text size="xs" c="dimmed">{l.sku}</Text></Table.Td>
+            {recount && <Table.Td className="ledger-number">{l.book == null ? '—' : quantity(l.book)}</Table.Td>}
+            <Table.Td className="ledger-number">{quantity(l.quantity)}</Table.Td>
+            {income && <Table.Td className="register-money">{money(l.price == null ? null : l.price.toFixed(2), 'UAH')}</Table.Td>}
+            <Table.Td className="ledger-number">{quantity(l.before)}</Table.Td>
+            <Table.Td className="ledger-number">{signed(l.change)}</Table.Td>
+            <Table.Td className="ledger-number" c={l.after < 0 || belowReserve ? 'red' : undefined}>{quantity(l.after)}</Table.Td>
+            {showReserved && (
+              <Table.Td className="ledger-number" c={belowReserve ? 'orange' : undefined}>
+                {l.reservedQuantity != null ? quantity(l.reservedQuantity) : '—'}
+              </Table.Td>
+            )}
+          </Table.Tr>
+        )
+      })}
     </Grid>
   )
 }

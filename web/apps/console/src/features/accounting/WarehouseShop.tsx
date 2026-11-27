@@ -1,16 +1,19 @@
 import { DocumentLink, DocumentOverlayContext } from '@/shared/ui/DocumentLink'
-import { Alert, Button, Group, Stack, Table, Text } from '@mantine/core'
+import { Alert, Button, Checkbox, Group, Select, Stack, Table, Text } from '@mantine/core'
 import { useContext, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { components } from '@polivalko/shared/api/schema'
-import { IconBuildingStore, IconHistory, IconPackage } from '@tabler/icons-react'
+import { IconBuildingStore, IconHistory, IconLink, IconLinkOff, IconPackage } from '@tabler/icons-react'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { MetricLabel } from '@/shared/ui/MetricCard'
+import { notifySuccess } from '@/shared/ui/notify'
 import { PageState } from '@/shared/ui/PageState'
 import { problemMessage } from '@/shared/api/problem'
 import { Grid } from './RegisterTable'
-import { save, stockOperationNames, useRegister, type Page } from './api'
+import { remove, save, stockOperationNames, useRegister, type Page, type Ref } from './api'
+
+type BulkWarehouseConnection = { connected: number; skipped: number; conflicts: string[] }
 
 export type WarehouseRow = components['schemas']['WarehouseBalance']
 type Movement = components['schemas']['WarehouseMovement']
@@ -109,7 +112,9 @@ export function MovementHistory({ row, close, onRefresh }: { row: WarehouseRow; 
     opening: 'Початковий залишок',
     in: 'Надходження',
     out: 'Видаткова накладна',
+    customerReturn: 'Повернення від покупця',
     order: 'Відвантаження замовлення',
+    storno: 'Сторно',
     ...stockOperationNames,
   }
   return (
@@ -145,7 +150,7 @@ export function MovementHistory({ row, close, onRefresh }: { row: WarehouseRow; 
                     <Table.Tr key={m.kind + m.id}>
                       <Table.Td data-label="Дата">{m.day}</Table.Td>
                       <Table.Td data-label="Операція">{kinds[m.kind] ?? m.kind}</Table.Td>
-                      <Table.Td data-label="Документ">{m.kind === 'in' || m.kind === 'out' || m.kind in stockOperationNames ? <DocumentLink id={m.id}>{m.reference || m.id}</DocumentLink> : url ? <Link to={url}>{m.reference || m.id}</Link> : m.reference || '—'}</Table.Td>
+                      <Table.Td data-label="Документ">{m.kind === 'in' || m.kind === 'out' || m.kind === 'customerReturn' || m.kind in stockOperationNames ? <DocumentLink id={m.id}>{m.reference || m.id}</DocumentLink> : url ? <Link to={url}>{m.reference || m.id}</Link> : m.reference || '—'}</Table.Td>
                       <Table.Td data-label="Зміна"><span className="wh-change" data-direction={Math.sign(m.change)}>
                         {m.change > 0 ? '+' : ''}
                         {count(m.change)}</span>
@@ -162,6 +167,183 @@ export function MovementHistory({ row, close, onRefresh }: { row: WarehouseRow; 
             <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
           )}
         </section>
+      </Stack>
+    </AppEditorModal>
+  )
+}
+
+export function BulkShopSourceModal({
+  defaultStoreId,
+  close,
+  onConnected,
+}: {
+  defaultStoreId?: string | null
+  close: () => void
+  onConnected: () => void
+}) {
+  const [opened, setOpened] = useState(true)
+  const [orgId, setOrgId] = useState<string | null>(null)
+  const [storeId, setStoreId] = useState<string | null>(defaultStoreId ?? null)
+  const [overwriteExisting, setOverwriteExisting] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [summary, setSummary] = useState<BulkWarehouseConnection | null>(null)
+  const refs = useRegister<{ organizations: Ref[]; stores: Ref[] }>('references')
+
+  const organizations = refs.data?.organizations ?? []
+  const stores = refs.data?.stores ?? []
+  const effectiveOrgId = orgId ?? (organizations.length === 1 ? organizations[0].id : null)
+
+  async function submit() {
+    if (busy || !effectiveOrgId || !storeId) return
+    setBusy(true)
+    setError('')
+    try {
+      const result = await save<BulkWarehouseConnection>('warehouse/shop-source/bulk', {
+        orgId: effectiveOrgId,
+        storeId,
+        overwriteExisting,
+      })
+      if (!result.response.ok || !result.data) {
+        setError(problemMessage(result.error, 'Не вдалося прив’язати товари складу до вітрини.'))
+        return
+      }
+      setSummary(result.data)
+      notifySuccess(`Прив’язано товарів: ${result.data.connected}.`)
+      onConnected()
+    } catch {
+      setError('Немає зв’язку із сервером. Повторіть дію.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <AppEditorModal
+      opened={opened}
+      className="ledger-editor warehouse-modal"
+      onExitTransitionEnd={close}
+      onClose={() => { if (!busy) setOpened(false) }}
+      title={<MetricLabel icon={IconLink}>Прив’язати всі товари складу до вітрини</MetricLabel>}
+      footer={
+        <Group gap="xs">
+          <Button variant="default" onClick={() => setOpened(false)} disabled={busy}>Закрити</Button>
+          {!summary && (
+            <Button onClick={submit} loading={busy} disabled={!effectiveOrgId || !storeId}>
+              Прив’язати товари
+            </Button>
+          )}
+        </Group>
+      }
+    >
+      <Stack gap="sm">
+        <section className="ledger-form-block">
+          <Select
+            required
+            searchable
+            label="Організація"
+            placeholder="Оберіть організацію"
+            data={organizations.map((r) => ({ value: r.id, label: r.title }))}
+            value={effectiveOrgId}
+            disabled={busy || Boolean(summary)}
+            onChange={setOrgId}
+          />
+          <Select
+            required
+            searchable
+            label="Склад"
+            placeholder="Оберіть склад"
+            data={stores.map((r) => ({ value: r.id, label: r.title }))}
+            value={storeId}
+            disabled={busy || Boolean(summary)}
+            onChange={setStoreId}
+          />
+          <Checkbox
+            label="Перезаписати товари, вже прив’язані до іншого складу"
+            description="Без цієї позначки прив’язуються лише товари, які ще не мають прив’язки до складу."
+            checked={overwriteExisting}
+            disabled={busy || Boolean(summary)}
+            onChange={(e) => setOverwriteExisting(e.currentTarget.checked)}
+          />
+        </section>
+        {summary && (
+          <Alert color={summary.conflicts.length > 0 ? 'orange' : 'green'} title="Масову прив’язку завершено">
+            <Text size="sm">
+              Прив’язано: <b>{summary.connected}</b> · Пропущено: <b>{summary.skipped}</b>
+            </Text>
+            {summary.conflicts.length > 0 && (
+              <Text size="xs" mt={6}>
+                Конфлікти ({summary.conflicts.length}): {summary.conflicts.slice(0, 10).join(', ')}
+                {summary.conflicts.length > 10 ? '…' : ''}
+              </Text>
+            )}
+          </Alert>
+        )}
+        {error && <Alert color="red" role="alert">{error}</Alert>}
+      </Stack>
+    </AppEditorModal>
+  )
+}
+
+export function DisconnectShopSourceModal({
+  row,
+  close,
+  onDisconnected,
+}: {
+  row: WarehouseRow
+  close: () => void
+  onDisconnected: () => void
+}) {
+  const [opened, setOpened] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  async function submit() {
+    if (busy) return
+    setBusy(true)
+    setError('')
+    try {
+      const result = await remove('warehouse/shop-source/' + row.productId)
+      if (!result.response.ok) {
+        setError(problemMessage(result.error, 'Не вдалося відв’язати товар від складу.'))
+        return
+      }
+      notifySuccess('Товар відв’язано від складу.')
+      onDisconnected()
+      setOpened(false)
+    } catch {
+      setError('Немає зв’язку із сервером. Повторіть дію.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <AppEditorModal
+      opened={opened}
+      className="ledger-editor warehouse-modal"
+      onExitTransitionEnd={close}
+      onClose={() => { if (!busy) setOpened(false) }}
+      title={<MetricLabel icon={IconLinkOff}>Відв’язати товар від складу</MetricLabel>}
+      footer={
+        <Group gap="xs">
+          <Button variant="default" onClick={() => setOpened(false)} disabled={busy}>Скасувати</Button>
+          <Button color="red" onClick={submit} loading={busy} disabled={Boolean(row.reserved)}>
+            Відв’язати
+          </Button>
+        </Group>
+      }
+    >
+      <Stack gap="sm">
+        <Text size="sm">
+          Відв’язати <b>{row.product}</b> від складу «{row.store}»? Залишок на вітрині перестане автоматично оновлюватися від складських документів.
+        </Text>
+        {Boolean(row.reserved) && (
+          <Alert color="orange">
+            У товару є активний резерв інтернет-замовлень ({count(row.reserved)}). Спочатку завершіть або скасуйте відповідні замовлення.
+          </Alert>
+        )}
+        {error && <Alert color="red" role="alert">{error}</Alert>}
       </Stack>
     </AppEditorModal>
   )

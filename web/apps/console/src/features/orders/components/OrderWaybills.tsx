@@ -5,7 +5,11 @@ import { getOrderWaybills } from '../api/orderDetailApi'
 
 export function OrderWaybills({ number }: { number: string }) {
   const refresh = useRef(false)
-  const query = useApiQuery(`order-waybills:${number}`, () => getOrderWaybills(number, refresh.current))
+  const query = useApiQuery(`order-waybills:${number}`, () => {
+    const force = refresh.current
+    refresh.current = false
+    return getOrderWaybills(number, force)
+  })
   const result = query.data
   if (result?.status === 'not_applicable') return null
   const bills = result?.status === 'complete' ? result.waybills : undefined

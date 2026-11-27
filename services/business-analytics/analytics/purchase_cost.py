@@ -5,7 +5,7 @@ from datetime import datetime
 import json
 
 from .invoices import currency_valid
-from .register import ACTIVE, INACTIVE, KINDS, identifier, kind_of, number, sale_line
+from .register import ACTIVE, INACTIVE, KINDS, identifier, kind_of, number, sale_line, unit_label
 
 
 ORG = "lower(coalesce(d.native_org_id::text, nullif(d.organization_id,''), d.details#>>'{organization,external_id}'))"
@@ -32,7 +32,7 @@ def checked_purchases(document_filter=""):
   SELECT d.id,d.number,d.day,d.source_account AS a,{ORG} AS o,{STORE} AS s,
     CASE WHEN nullif(l#>>'{{product,id}}','') IS NOT NULL THEN 'id:'||lower(l#>>'{{product,id}}')
          ELSE 'code:'||lower(l#>>'{{product,code}}') END AS p,{UNIT} AS u,d.details->>'date' AS stamp,
-    lower(l#>>'{{product,code}}') AS external_code,d.total,
+    lower(l#>>'{{product,code}}') AS external_code,coalesce(d.details->>'load','1') AS loaded,d.total,
     accounting.stock_number(l->>'quantity') AS qty,accounting.stock_number(l->>'total') AS amount,
     d.details->>'extra_costs' AS extras
   FROM accounting.documents d CROSS JOIN LATERAL jsonb_array_elements(
@@ -46,7 +46,7 @@ def checked_purchases(document_filter=""):
     {document_filter}
 ), checked AS (
   SELECT positions.*, round(sum(amount) OVER doc,2)=round(total,2)
-    AND bool_and(qty IS NOT NULL AND qty>0 AND amount IS NOT NULL AND amount>=0) OVER doc
+    AND bool_and(qty IS NOT NULL AND qty>0 AND amount IS NOT NULL AND amount>0) OVER doc
     AND (extras IS NULL OR extras IN ('[]','{{}}') OR accounting.stock_number(extras)=0) AS ok
   FROM positions WINDOW doc AS (PARTITION BY id)
 )"""
@@ -55,15 +55,66 @@ def checked_purchases(document_filter=""):
 PURCHASES = """
 WITH needed AS (
   SELECT * FROM jsonb_to_recordset(%s::jsonb) AS n(a text,o text,s text,p text,u text,first_day date,last_day date)
+), resolved AS (
+  SELECT n.*,
+         lower(prod.navkolo_id) AS ext_product,
+         lower(org_ref.source_id) AS ext_org,
+         lower(store_ref.source_id) AS ext_store,
+         iu.unit AS catalog_unit
+  FROM needed n
+  LEFT JOIN catalog.products prod
+    ON n.a='polivalko-native' AND n.p='id:'||lower(prod.id::text)
+  LEFT JOIN accounting.references org_ref
+    ON n.a='polivalko-native' AND lower(org_ref.id::text)=n.o
+   AND org_ref.source_account='valko-dntrade' AND org_ref.kind='organization'
+  LEFT JOIN accounting.references store_ref
+    ON n.a='polivalko-native' AND lower(store_ref.id::text)=n.s
+   AND store_ref.source_account='valko-dntrade' AND store_ref.kind='store'
+  LEFT JOIN (
+    SELECT 'dntrade-code:' || lower(l.code) AS navkolo_id, min(lower(trim(l.unit))) AS unit
+    FROM accounting.inventory_lines l JOIN accounting.inventory_reports r ON r.id=l.report_id
+    WHERE r.source_account='valko-dntrade' AND nullif(trim(l.unit),'') IS NOT NULL
+    GROUP BY lower(l.code) HAVING count(DISTINCT lower(trim(l.unit)))=1
+  ) iu ON iu.navkolo_id=lower(prod.navkolo_id)
 ), """ + checked_purchases() + """, matched AS (
-  SELECT c.*,n.first_day,max(day) FILTER (WHERE day<n.first_day) OVER (PARTITION BY a,o,s,p,u) AS prior_day
-  FROM checked c JOIN needed n USING(a,o,s,p,u) WHERE c.day<=n.last_day
+  SELECT n.a,n.o,n.s,n.p,n.u,c.a AS src_a,c.u AS src_u,n.catalog_unit,
+         c.day,c.stamp,c.id,c.number,c.qty,c.amount,n.first_day,
+         c.ok AND (c.a=n.a OR NOT EXISTS (
+           SELECT 1 FROM catalog.products other
+           WHERE 'id:'||lower(other.id::text)<>n.p
+             AND (c.p='id:'||lower(other.navkolo_id)
+                  OR (nullif(c.external_code,'') IS NOT NULL AND lower(other.navkolo_id)='dntrade-code:'||c.external_code))
+         )) AS valid,
+         max(c.day) FILTER (WHERE c.day<n.first_day) OVER (PARTITION BY n.a,n.o,n.s,n.p,n.u,c.a,c.u) AS prior_day
+  FROM checked c JOIN resolved n ON c.day<=n.last_day AND (
+    (c.a=n.a AND c.o=n.o AND c.s=n.s AND c.p=n.p)
+    OR (n.a='polivalko-native' AND c.a='valko-dntrade' AND c.loaded='1'
+        AND c.o=n.ext_org AND c.s=n.ext_store
+        AND (c.p='id:'||n.ext_product
+             OR (nullif(c.external_code,'') IS NOT NULL AND 'dntrade-code:'||c.external_code=n.ext_product)))
+  )
 )
-SELECT a,o,s,p,u,day,stamp,id::text AS id,number,sum(qty) AS qty,
-       CASE WHEN bool_and(coalesce(ok,false)) THEN sum(amount) END AS amount
-FROM matched WHERE day>=first_day OR day=prior_day GROUP BY a,o,s,p,u,day,stamp,id,number
+SELECT a,o,s,p,u,src_a,src_u,catalog_unit,day,stamp,id::text AS id,number,sum(qty) AS qty,
+       CASE WHEN bool_and(coalesce(valid,false)) THEN sum(amount) END AS amount
+FROM matched WHERE day>=first_day OR day=prior_day
+GROUP BY a,o,s,p,u,src_a,src_u,catalog_unit,day,stamp,id,number
 ORDER BY a,o,s,p,u,day,id
 """
+
+
+def direct_cost(line):
+    cost = number(line.get("cogs_total"))
+    return cost if cost is not None and cost != 0 else None
+
+
+def canonical_kind(value):
+    clean = "".join(ch for ch in identifier(value) if ch.isalnum())
+    if not clean:
+        return ""
+    for kind, aliases in KINDS.items():
+        if clean in aliases:
+            return kind
+    return clean
 
 
 def product_key(line):
@@ -77,7 +128,8 @@ def product_key(line):
 
 
 def stock_key(doc, line):
-    return doc["account"], identifier(doc.get("org")), identifier(line.get("store")), product_key(line), identifier(line.get("unit"))
+    return (doc["account"], identifier(doc.get("org")), identifier(line.get("store")),
+            product_key(line), unit_label(identifier(line.get("unit"))))
 
 
 def timestamp(raw, day):
@@ -95,9 +147,35 @@ def timestamp(raw, day):
 
 class PurchaseBook:
     def __init__(self, purchases):
+        rows = list(purchases)
+        bridged_units = defaultdict(set)
+        for row in rows:
+            src_a = row.get("src_a")
+            if src_a and src_a != row["a"]:
+                key = row["a"], row["o"], row["s"], row["p"], unit_label(identifier(row["u"]))
+                receipt_unit = unit_label(identifier(row.get("src_u")))
+                if receipt_unit:
+                    bridged_units[key].add(receipt_unit)
         self.groups = defaultdict(lambda: defaultdict(list))
-        for row in purchases:
-            key = tuple(row[k] for k in ("a", "o", "s", "p", "u"))
+        for row in rows:
+            u = unit_label(identifier(row["u"]))
+            key = row["a"], row["o"], row["s"], row["p"], u
+            src_a = row.get("src_a")
+            src_u = row.get("src_u")
+            if src_a is not None and src_a != row["a"]:
+                receipt_unit = unit_label(identifier(src_u))
+                cat_unit = unit_label(identifier(row.get("catalog_unit")))
+                if cat_unit:
+                    if receipt_unit != cat_unit:
+                        continue
+                else:
+                    units = bridged_units[key]
+                    if not units or not receipt_unit:
+                        continue
+                    if len(units) > 1:
+                        row = dict(row, amount=None)
+            elif src_u is not None and unit_label(identifier(src_u)) != u:
+                continue
             self.groups[key][row["day"]].append(row)
         self.days = {key: sorted(groups) for key, groups in self.groups.items()}
 
@@ -120,7 +198,7 @@ class PurchaseBook:
             if index < 0:
                 return None, ()
             receipts = groups[days[index]]
-        if any(p["amount"] is None or not p["qty"] or p["qty"] <= 0 for p in receipts):
+        if any(p["amount"] is None or p["amount"] <= 0 or not p["qty"] or p["qty"] <= 0 for p in receipts):
             return None, ()
         unit_cost = sum(p["amount"] for p in receipts) / sum(p["qty"] for p in receipts)
         return qty * unit_cost, tuple((p["id"], p["number"], str(p["day"])) for p in receipts)
@@ -150,20 +228,20 @@ def before_return(parent, refund):
 
 
 def return_cost(parent, line, qty, book):
-    key = product_key(line), identifier(line.get("unit"))
+    key = product_key(line), unit_label(identifier(line.get("unit")))
     if not all(key):
         return None, ()
     portions = []
     sources = set()
     for original in parent["lines"]:
-        if (product_key(original), identifier(original.get("unit"))) != key:
+        if (product_key(original), unit_label(identifier(original.get("unit")))) != key:
             continue
         sold = number(original["quantity"])
-        cost = number(original.get("cogs_total"))
+        cost = direct_cost(original)
         if cost is None:
             cost, refs = book.cost(parent, original, sold)
             sources.update(refs)
-        if cost is None or cost < 0:
+        if cost is None or cost <= 0:
             return None, ()
         portions.append((sold, cost))
     sold = sum(q for q, _ in portions)
@@ -194,7 +272,7 @@ def enrich_costs(conn, rows, start):
     ranges = {}
     for doc in valuation_docs:
         for line in doc["lines"]:
-            if not isinstance(line, dict) or line.get("cogs_total") is not None:
+            if not isinstance(line, dict) or direct_cost(line) is not None:
                 continue
             key = stock_key(doc,line)
             if all(key):
@@ -207,14 +285,14 @@ def enrich_costs(conn, rows, start):
         refund = doc["entity_type"] == "customerReturn" or kind_of(doc) == "return"
         parent = None
         if refund:
-            parent_kind = identifier(doc.get("parent_kind"))
+            parent_kind = canonical_kind(doc.get("parent_kind"))
             candidates = [p for p in parents[doc["account"], identifier(doc.get("parent"))]
                           if before_return(p,doc) and doc.get("org") and p.get("org") == doc["org"]
-                          and (not parent_kind or parent_kind == identifier(p["kind"]))]
+                          and (not parent_kind or parent_kind == canonical_kind(p["kind"]))]
             if len(candidates) == 1:
                 parent = candidates[0]
         for line in doc["lines"]:
-            if not isinstance(line,dict) or line.get("cogs_total") is not None:
+            if not isinstance(line,dict) or direct_cost(line) is not None:
                 continue
             qty = number(line.get("quantity"))
             if not qty or (not refund and qty < 0):

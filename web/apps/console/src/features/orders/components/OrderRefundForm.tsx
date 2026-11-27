@@ -1,4 +1,4 @@
-import { Alert, Button, Textarea } from '@mantine/core'
+import { Alert, Button, Checkbox, Textarea } from '@mantine/core'
 import { IconAlertTriangle, IconInfoCircle, IconMinus, IconPlus, IconReceiptRefund } from '@tabler/icons-react'
 import { formatMoney } from '@polivalko/shared/lib/format'
 import type { ConsoleOrder } from '../api/orderDetailApi'
@@ -7,7 +7,7 @@ import type { OrderRefundState } from '../lib/useRefund'
 const uah = (value: number) => formatMoney({ value: value.toFixed(2), currency: 'UAH' })
 
 export function OrderRefundForm({ order, refund, onCancel }: { order: ConsoleOrder; refund: OrderRefundState; onCancel: () => void }) {
-  const { quantities, setQuantity, reason, setReason, busy, error, refundable, amount, canSubmit, submit } = refund
+  const { quantities, setQuantity, reason, setReason, returnToStock, setReturnToStock, busy, error, refundable, amount, canSubmit, submit } = refund
   const lines = order.items.filter((item) => refundable.has(item.productId))
   const allPicked = lines.every((item) => (quantities[item.productId] ?? 0) === refundable.get(item.productId))
 
@@ -78,6 +78,14 @@ export function OrderRefundForm({ order, refund, onCancel }: { order: ConsoleOrd
         maxRows={5}
         disabled={busy}
         onChange={(event) => setReason(event.currentTarget.value)}
+      />
+
+      <Checkbox
+        label="Повернути товар на склад"
+        description="Відновить залишок повернених позицій на складі та вітрині."
+        checked={returnToStock}
+        disabled={busy}
+        onChange={(event) => setReturnToStock(event.currentTarget.checked)}
       />
 
       {error ? (

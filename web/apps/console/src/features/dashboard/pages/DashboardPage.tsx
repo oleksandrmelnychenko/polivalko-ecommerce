@@ -1,6 +1,6 @@
 import { ActionIcon, Button, Menu, SegmentedControl, Tooltip } from '@mantine/core'
 import { IconCheck, IconDatabase, IconRefresh, IconShoppingCart, IconUsers } from '@tabler/icons-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { usePermissions } from '@/features/auth'
 import { problemMessage } from '@/shared/api/problem'
@@ -40,10 +40,19 @@ export function DashboardPage() {
   const canCatalog = can(PermissionKeys.Catalog.ViewProducts)
   const canDocuments = can(PermissionKeys.Analytics.ViewProducts) && can(PermissionKeys.Accounting.View)
   const documents = canDocuments && params.get('source') !== 'web'
-  const sales = useApiQuery('document-sales-' + days, () => getDocumentSales(days), { enabled: documents })
+  const forceSalesRefresh = useRef(false)
+  const sales = useApiQuery(
+    'document-sales-' + days,
+    () => {
+      const force = forceSalesRefresh.current
+      forceSalesRefresh.current = false
+      return getDocumentSales(days, force)
+    },
+    { enabled: documents },
+  )
   const report = documents && sales.status === 'ready' ? sales.data : undefined
 
-  const dashboard = useApiQuery(`dashboard:${days}`, () => getDashboard(days), { keepPrevious: true })
+  const dashboard = useApiQuery(`dashboard:${days}`, () => getDashboard(days), { keepPrevious: true, enabled: !documents })
   const loadingPeriod = documents ? sales.isLoading : dashboard.isLoading
   const summary = useApiQuery('dashboard-summary', () => getDashboardSummary())
   const latest = useApiQuery('dashboard-latest', () => getLatestOrders(), { enabled: canOrders })
@@ -73,8 +82,12 @@ export function DashboardPage() {
   }
 
   function refresh() {
-    dashboard.reload()
-    if (documents) sales.reload()
+    if (documents) {
+      forceSalesRefresh.current = true
+      sales.reload()
+    } else {
+      dashboard.reload()
+    }
     if (canOrders) latest.reload()
     if (canCatalog) productCounts.reload()
     if (canCustomers) customers.reload()

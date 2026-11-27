@@ -287,4 +287,95 @@ public sealed class RecommendationOfferTests(ApiFactory api)
             PermissionKeys.ProductsView, PermissionKeys.ProductAnalyticsView, PermissionKeys.AccountingEdit);
         (await reader.PutAsJsonAsync(Route+b+"/accept",new {},ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
+
+    [Fact]
+    public async Task Unlinked_recommendation_offer_posts_and_unposts_via_catalog_fallback_when_warehouse_stock_is_zero()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var staff = await Staff.AdminAsync(api);
+        var product = await api.AddProductAsync("ruchnyi-instrument", "Неприв'язаний товар пропозиції", 80m, 5m);
+        var partner = Guid.NewGuid();
+        var org = Guid.NewGuid();
+        var store = Guid.NewGuid();
+        var offerId = Guid.NewGuid();
+        var last = new DateOnly(2026, 1, 15);
+        await api.WithDbAsync(db => db.Database.ExecuteSqlAsync($"""
+            INSERT INTO accounting.references(id,source_account,kind,source_id,title) VALUES
+              ({org},'test','organization',{org.ToString()},'ФОП Каталог'),({store},'test','store',{store.ToString()},'Склад Каталог');
+            INSERT INTO accounting.partners(id,source_account,source_id,title,details) VALUES
+              ({partner},'test',{partner.ToString()},'Клієнт Каталогу',jsonb_build_object());
+            INSERT INTO accounting.recommendation_offers(id,partner_id,product_id,last_purchase,quantity,unit,price,status)
+            VALUES ({offerId},{partner},{product.Id},{last},2,'шт',80,'offered')
+            """, ct));
+
+        (await staff.PutAsJsonAsync(Route + offerId + "/accept", new { }, ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var invoiceId = await (await staff.PutAsJsonAsync(Route + offerId + "/invoice",
+            new { organizationId = org, storeId = store }, ct)).ReadAsync<Guid>();
+        var url = Accounting + "documents/" + invoiceId;
+
+        // Warehouse has 0 stock, catalog has 5 -> preview shows catalog fallback (5 -> 3) instead of -2.
+        var state = await staff.ReadAsync<InvoiceState>(url + "/operations");
+        state.Stock.Single().ShouldSatisfyAllConditions(
+            s => s.Before.ShouldBe(5m),
+            s => s.Change.ShouldBe(-2m),
+            s => s.After.ShouldBe(3m),
+            s => s.FirstMovement.ShouldBeFalse());
+
+        // Posting succeeds via catalog fallback without 409!
+        (await staff.PostAsJsonAsync(url + "/post", new PostInvoice(state.Revision), ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var stockAfterPost = await api.WithDbAsync(db => db.Set<ProductStock>().Where(s => s.ProductId == product.Id).SingleAsync(ct));
+        stockAfterPost.Quantity.ShouldBe(3m);
+        stockAfterPost.ReservedQuantity.ShouldBe(0m);
+        (await staff.ReadAsync<InvoiceState>(url + "/operations")).Stock.Single().After.ShouldBe(3m);
+
+        // Unposting restores catalog stock back to 5 and releases offer.
+        (await staff.PostAsync(url + "/unpost", null, ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var stockAfterUnpost = await api.WithDbAsync(db => db.Set<ProductStock>().Where(s => s.ProductId == product.Id).SingleAsync(ct));
+        stockAfterUnpost.Quantity.ShouldBe(5m);
+        (await api.WithDbAsync(db => db.Database.SqlQuery<string>(
+            $"SELECT status AS \"Value\" FROM accounting.recommendation_offers WHERE id={offerId}").SingleAsync(ct))).ShouldBe("released");
+    }
+
+    private sealed class CapturingHandler : HttpMessageHandler
+    {
+        public string? LastPathAndQuery { get; private set; }
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        {
+            LastPathAndQuery = request.RequestUri?.PathAndQuery;
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(new { ok = true }) });
+        }
+    }
+
+    [Fact]
+    public async Task Business_analytics_refresh_requires_accounting_edit_and_documents_forwards_refresh_query()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var handler = new CapturingHandler();
+        await using var host = api.WithWebHostBuilder(b => b.ConfigureServices(s =>
+            s.AddHttpClient<BusinessAnalyticsClient>(h => h.BaseAddress = new Uri("http://analytics.test/"))
+                .ConfigurePrimaryHttpMessageHandler(() => handler)));
+        using var admin = host.CreateClient();
+        (await admin.PostAsJsonAsync("/api/v1/console/auth/login", new LoginRequest(ApiFactory.AdminEmail, ApiFactory.TestPassword), ct))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        var csrf = await admin.ReadAsync<CsrfTokenDto>("/api/v1/console/auth/csrf");
+        admin.DefaultRequestHeaders.Add("X-CSRF-TOKEN", csrf.Token);
+
+        // Viewer with only ProductAnalyticsView + AccountingView cannot POST /business-analytics/refresh (403).
+        using var apiAdmin = await Staff.AdminAsync(api);
+        using var viewer = await TestRoles.LoginWithPermissionsAsync(api, apiAdmin,
+            PermissionKeys.ProductAnalyticsView, PermissionKeys.AccountingView);
+        (await viewer.PostAsync("/api/v1/console/business-analytics/refresh", null, ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        // Admin (has AccountingEdit) succeeds on POST /refresh and ?refresh=1 / ?refresh=true are forwarded cleanly.
+        (await admin.PostAsync("/api/v1/console/business-analytics/refresh", null, ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        handler.LastPathAndQuery.ShouldBe("/refresh");
+
+        (await admin.GetAsync("/api/v1/console/business-analytics/documents?analysis=dashboard&days=30&refresh=1", ct))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        handler.LastPathAndQuery.ShouldBe("/documents?analysis=dashboard&days=30&refresh=1");
+
+        (await admin.GetAsync("/api/v1/console/business-analytics/documents?analysis=dashboard&days=30&refresh=true", ct))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        handler.LastPathAndQuery.ShouldBe("/documents?analysis=dashboard&days=30&refresh=1");
+    }
 }

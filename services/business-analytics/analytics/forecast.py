@@ -4,6 +4,7 @@ from hashlib import sha256
 from math import ceil
 from statistics import mean, median
 from .learning import lag_regression
+from .register import unit_label
 
 VERSION = "weekly-5"
 WEEKS = 156
@@ -209,7 +210,8 @@ def weekly_series(snapshot):
         age = (end - date.fromisoformat(row["day"])).days // 7
         if not 0 <= age < WEEKS:
             continue
-        org, store, cat, prod, unit = (row[k] for k in ("org", "store", "category", "product", "unit"))
+        org, store, cat, prod = (row[k] for k in ("org", "store", "category", "product"))
+        unit = unit_label(row["unit"])
         seen[org, store].add(age)
         series = [("sku", prod, unit, "qty"), ("category", cat, "грн", "amount")]
         if unit:
@@ -250,7 +252,7 @@ def build_models(snapshot, previous=None):
         org, store, prod = (stock[k] for k in ("org", "store", "product"))
         if (org, store, prod) not in existing:
             p = snapshot.get("stockMeta", {}).get(prod, {})
-            unit = (p.get("unit") or "").rstrip(".")
+            unit = unit_label(p.get("unit") or "")
             models.append(
                 dict(
                     kind="sku",

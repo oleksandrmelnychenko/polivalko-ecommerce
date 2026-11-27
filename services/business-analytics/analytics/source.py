@@ -174,7 +174,7 @@ ARCHIVE = ARCHIVE_SQL.replace("DAY_FILTER", "r.source_day <= %s")
 NATIVE = """
 SELECT id::text, source_account AS account,source_id AS ref,entity_type AS entity,day,kind,status,currency,total,
        native_org_id::text AS org, ARRAY[native_store_id::text] AS store_ids, number, details->'products' AS products
-FROM accounting.documents WHERE native_partner_id IS NOT NULL AND kind='out' AND day <= %s
+FROM accounting.documents WHERE native_partner_id IS NOT NULL AND kind IN ('out','customerReturn') AND day <= %s
 """
 WEB = """
 SELECT o.id::text AS order_id, o.number AS number, o.navkolo_order_ref AS upstream,
@@ -199,8 +199,9 @@ WHERE r.status='Succeeded' AND r.completed_at < ((%s::date + 1)::timestamp AT TI
 COST_EVENTS = """
 SELECT d.native_org_id::text AS org,d.native_store_id::text AS store,m.product_id::text AS product,
        d.day,d.id::text AS doc,m.delta,m.resulting_quantity AS balance,
-       CASE WHEN d.kind='in' AND d.currency='UAH' THEN
-        (SELECT sum((x->>'total')::numeric) FROM jsonb_array_elements(d.details->'products') x
+       CASE WHEN d.kind IN ('in','income') AND lower(d.currency) IN ('uah','980') THEN
+        (SELECT sum((x->>'total')::numeric) FROM jsonb_array_elements(
+          CASE WHEN jsonb_typeof(d.details->'products')='array' THEN d.details->'products' ELSE '[]'::jsonb END) x
          WHERE x#>>'{product,id}'=m.product_id::text) END AS purchase
 FROM accounting.stock_movements m JOIN accounting.documents d ON d.id=m.document_id
 WHERE d.status='posted' AND d.day<=%s

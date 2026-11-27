@@ -3,6 +3,14 @@ import { Link, matchPath, useLocation, type LinkProps, type Location } from 'rea
 
 export const DocumentOverlayContext = createContext(false)
 
+export type OverlayRouteState = {
+  section: 'documents' | 'partners'
+  id: string
+  state: unknown
+}
+
+export const OverlayRouteContext = createContext<OverlayRouteState | null>(null)
+
 // Document and partner cards open as overlays above the register they were opened from.
 export const DOCUMENTS_PATH = '/finance/documents'
 export const PARTNERS_PATH = '/finance/partners'

@@ -110,4 +110,100 @@ public sealed class StockOperationTests(ApiFactory api)
         (await Post(restock)).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root+"/warehouse?store="+store)).Items.Single().ShopQuantity.ShouldBe(5m);
     }
+
+    [Fact]
+    public async Task Transfers_move_stock_between_warehouses_and_draft_delete_and_unpost_work_atomically()
+    {
+        using var admin = await Staff.AdminAsync(api);
+        var org = await (await admin.PostAsJsonAsync(Root + "/references/organizations",
+            new ReferenceRequest("Transfer Org " + Guid.NewGuid().ToString("N")[..8]), Ct)).ReadAsync<RegisterReference>();
+        var storeA = await (await admin.PostAsJsonAsync(Root + "/references/stores",
+            new ReferenceRequest("Transfer Store A " + Guid.NewGuid().ToString("N")[..8]), Ct)).ReadAsync<RegisterReference>();
+        var storeB = await (await admin.PostAsJsonAsync(Root + "/references/stores",
+            new ReferenceRequest("Transfer Store B " + Guid.NewGuid().ToString("N")[..8]), Ct)).ReadAsync<RegisterReference>();
+        var orgId = Guid.Parse(org.Id);
+        var storeAId = Guid.Parse(storeA.Id);
+        var storeBId = Guid.Parse(storeB.Id);
+        var product = await api.AddProductAsync("ruchnyi-instrument", "Товар переміщення", 120m, stock: 10);
+        var day = new DateOnly(2026, 11, 22);
+
+        (await admin.PostAsJsonAsync(Root + "/warehouse/openings",
+            new StockOpening(Guid.NewGuid(), orgId, storeAId, product.Id, 10m, day, "Звірка А"), Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // Link store A to shop and verify draft preview surfaces reservedQuantity.
+        (await admin.PutAsJsonAsync(Root + "/warehouse/shop-source/" + product.Id,
+            new ConnectWarehouse(orgId, storeAId, null, null, 10m, 10m, 0m), Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // Invalid transfer drafts: missing target, same store, or price supplied.
+        var noTarget = new StockOperationDraft(Guid.NewGuid(), "transfer", day, orgId, storeAId, null, null, [new(product.Id, 3m, null)]);
+        (await admin.PostAsJsonAsync(Root + "/stock-operations", noTarget, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var sameStore = noTarget with { Id = Guid.NewGuid(), TargetStoreId = storeAId };
+        (await admin.PostAsJsonAsync(Root + "/stock-operations", sameStore, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        var withPrice = noTarget with { Id = Guid.NewGuid(), TargetStoreId = storeBId, Lines = [new(product.Id, 3m, 10m)] };
+        (await admin.PostAsJsonAsync(Root + "/stock-operations", withPrice, Ct)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        // Draft delete works on draft and returns 404 after deletion.
+        var disposable = new StockOperationDraft(Guid.NewGuid(), "transfer", day, orgId, storeAId, null, "Тимчасова", [new(product.Id, 2m, null)], storeBId);
+        (await admin.PostAsJsonAsync(Root + "/stock-operations", disposable, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.DeleteAsync(Root + "/stock-operations/" + disposable.Id, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.GetAsync(Root + "/stock-operations/" + disposable.Id, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        // Create and post transfer from Store A -> Store B.
+        var transferDraft = new StockOperationDraft(Guid.NewGuid(), "transfer", day, orgId, storeAId, null, "На філію", [new(product.Id, 4m, null)], storeBId);
+        (await admin.PostAsJsonAsync(Root + "/stock-operations", transferDraft, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var state = await admin.ReadAsync<StockOperationState>(Root + "/stock-operations/" + transferDraft.Id);
+        state.Number.ShouldStartWith("ПМ-");
+        state.TargetStoreId.ShouldBe(storeBId);
+        state.TargetStore.ShouldBe(storeB.Title);
+        state.Lines.Single().ShouldSatisfyAllConditions(
+            l => l.Before.ShouldBe(10m),
+            l => l.Change.ShouldBe(-4m),
+            l => l.After.ShouldBe(6m),
+            l => l.FirstMovement.ShouldBeTrue(),
+            l => l.ReservedQuantity.ShouldBe(0m));
+
+        (await admin.PostAsJsonAsync(Root + "/stock-operations/" + transferDraft.Id + "/post",
+            new PostStockOperation(state.Revision), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        // Deleting a posted operation is rejected with 409.
+        (await admin.DeleteAsync(Root + "/stock-operations/" + transferDraft.Id, Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // Verify both warehouses and synced catalog stock.
+        var balanceA = (await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root + "/warehouse?store=" + storeAId)).Items.Single();
+        var balanceB = (await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root + "/warehouse?store=" + storeBId)).Items.Single();
+        balanceA.Quantity.ShouldBe(6m);
+        balanceA.ShopQuantity.ShouldBe(6m);
+        balanceB.Quantity.ShouldBe(4m);
+
+        // Transfer appears in register=transfer and in BOTH stores' movement histories.
+        (await admin.ReadAsync<RegisterPage<DocumentRow>>(Root + "/documents?register=transfer")).Items.ShouldContain(d => d.Id == transferDraft.Id);
+        var movesA = await admin.ReadAsync<RegisterPage<WarehouseMovement>>(Root + "/warehouse/" + product.Id + "/movements?org=" + orgId + "&store=" + storeAId);
+        var movesB = await admin.ReadAsync<RegisterPage<WarehouseMovement>>(Root + "/warehouse/" + product.Id + "/movements?org=" + orgId + "&store=" + storeBId);
+        movesA.Items.ShouldContain(m => m.Kind == "transfer" && m.Change == -4m && m.Balance == 6m);
+        movesB.Items.ShouldContain(m => m.Kind == "transfer" && m.Change == 4m && m.Balance == 4m);
+
+        // If Store B writes off 2 units (leaving 2 < 4), unposting the transfer must fail with 409.
+        var writeOffB = new StockOperationDraft(Guid.NewGuid(), "writeOff", day, orgId, storeBId, "loss", null, [new(product.Id, 2m, null)]);
+        (await admin.PostAsJsonAsync(Root + "/stock-operations", writeOffB, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var writeOffState = await admin.ReadAsync<StockOperationState>(Root + "/stock-operations/" + writeOffB.Id);
+        (await admin.PostAsJsonAsync(Root + "/stock-operations/" + writeOffB.Id + "/post",
+            new PostStockOperation(writeOffState.Revision), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.PostAsync(Root + "/stock-operations/" + transferDraft.Id + "/unpost", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // Unpost the write-off on Store B first, then unpost the transfer cleanly.
+        (await admin.PostAsync(Root + "/stock-operations/" + writeOffB.Id + "/unpost", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.PostAsync(Root + "/stock-operations/" + transferDraft.Id + "/unpost", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        // Unpost is idempotent on retry.
+        (await admin.PostAsync(Root + "/stock-operations/" + transferDraft.Id + "/unpost", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        (await admin.ReadAsync<StockOperationState>(Root + "/stock-operations/" + transferDraft.Id)).Status.ShouldBe("cancelled");
+        var restoredA = (await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root + "/warehouse?store=" + storeAId)).Items.Single();
+        var restoredB = (await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root + "/warehouse?store=" + storeBId)).Items.Single();
+        restoredA.Quantity.ShouldBe(10m);
+        restoredA.ShopQuantity.ShouldBe(10m);
+        restoredB.Quantity.ShouldBe(0m);
+        var movesAfterA = await admin.ReadAsync<RegisterPage<WarehouseMovement>>(Root + "/warehouse/" + product.Id + "/movements?org=" + orgId + "&store=" + storeAId);
+        movesAfterA.Items.ShouldContain(m => m.Kind == "storno" && m.Change == 4m && m.Balance == 10m);
+    }
 }

@@ -61,6 +61,12 @@ _history_lock = Lock()
 _cached = None
 
 
+def clear_cache():
+    global _cached
+    with _history_lock:
+        _cached = None
+
+
 def history_for(today):
     global _cached
     with _history_lock:

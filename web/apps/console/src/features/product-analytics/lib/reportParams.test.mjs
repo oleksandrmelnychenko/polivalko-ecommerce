@@ -28,8 +28,9 @@ test('choosing a year inside a yearly report keeps it', () => {
 })
 
 test('a section left behind takes its own filters with it', () => {
-  assert.equal(next('tab=markets&region=UA32&source=online&metric=count&carrier=np', 'markets', { tab: 'overview' }), 'tab=overview')
+  assert.equal(next('tab=markets&region=UA32&source=online&metric=count&carrier=np&partnerSearch=abc&partnerPage=2', 'markets', { tab: 'overview' }), 'tab=overview')
   assert.equal(next('tab=winter&season=2025&week=3&partner=p1', 'winter', { tab: 'offers' }), 'tab=offers')
+  assert.equal(next('tab=demand&kind=category', 'demand', { tab: 'forecast' }), 'tab=forecast')
 })
 
 test('a filter change stays in the section and returns to the first page', () => {

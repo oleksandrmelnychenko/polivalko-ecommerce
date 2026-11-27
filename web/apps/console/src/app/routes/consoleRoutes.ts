@@ -22,6 +22,7 @@ export const consoleRoutes: readonly ConsoleRoute[] = [
     ['/sales/outgoing', 'Видаткові накладні'],
     ['/warehouse/stock', 'Залишки'], ['/warehouse/incoming', 'Прибуткові накладні'],
     ['/warehouse/income', 'Оприбуткування'], ['/warehouse/write-offs', 'Списання'],
+    ['/warehouse/transfers', 'Переміщення'],
     ['/warehouse/inventory', 'Інвентаризація'], ['/warehouse/product-history', 'Історія товару'],
     ['/finance/payments', 'Оплати й борги'],
     ['/finance/partners', 'Контрагенти'], ['/finance/partners/:id', 'Документи контрагента'],

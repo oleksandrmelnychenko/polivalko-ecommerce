@@ -66,7 +66,7 @@ internal sealed class BusinessAnalyticsClient(HttpClient http)
             client.Send("offer-draft", context, ct)).RequirePermission(PermissionKeys.AccountingEdit)
             .RequirePermission(PermissionKeys.AccountingView).WithName("BusinessOfferDraft");
         group.MapPost("/refresh", (BusinessAnalyticsClient client, HttpContext context, CancellationToken ct) =>
-            client.Send("refresh", context, ct)).WithName("BusinessAnalyticsRefresh");
+            client.Send("refresh", context, ct)).RequirePermission(PermissionKeys.AccountingEdit).WithName("BusinessAnalyticsRefresh");
         group.MapPut("/policy", (BusinessAnalyticsClient client, HttpContext context, CancellationToken ct) =>
             client.Send("policy", context, ct)).RequirePermission(PermissionKeys.AccountingEdit).WithName("BusinessAnalyticsPolicy");
     }
@@ -75,7 +75,8 @@ internal sealed class BusinessAnalyticsClient(HttpClient http)
     {
         context.Response.Headers.CacheControl = "private, no-store";
         if (http.BaseAddress is null) return Unavailable();
-        using var request = new HttpRequestMessage(new HttpMethod(context.Request.Method), path + (query ?? context.Request.QueryString.Value));
+        var effectiveQuery = query ?? NormalizeQuery(context.Request.Query);
+        using var request = new HttpRequestMessage(new HttpMethod(context.Request.Method), path + effectiveQuery);
         try
         {
             if (path == "policy")
@@ -93,6 +94,25 @@ internal sealed class BusinessAnalyticsClient(HttpClient http)
         }
         catch (HttpRequestException) { return Unavailable(); }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested) { return Unavailable(); }
+    }
+
+    private static string NormalizeQuery(IQueryCollection query)
+    {
+        if (query.Count == 0) return "";
+        var parts = new List<string>(query.Count);
+        foreach (var (key, values) in query)
+        {
+            foreach (var raw in values)
+            {
+                if (string.Equals(key, "refresh", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (raw is "1" or "true" or "True" or "TRUE") parts.Add("refresh=1");
+                    continue;
+                }
+                parts.Add($"{Uri.EscapeDataString(key)}={Uri.EscapeDataString(raw ?? "")}");
+            }
+        }
+        return parts.Count == 0 ? "" : "?" + string.Join('&', parts);
     }
 
     private static IResult Unavailable() => Results.Problem(statusCode: 503,

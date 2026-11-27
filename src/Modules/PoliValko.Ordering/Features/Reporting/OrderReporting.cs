@@ -12,24 +12,48 @@ internal sealed class OrderReporting(PoliValkoDbContext db) : IOrderReporting
     public async Task<IReadOnlyList<OrderPeriodRow>> ListForPeriodAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct) =>
         await db.Set<Order>().AsNoTracking()
             .Where(o => o.CreatedAt >= from && o.CreatedAt < to)
-            .Select(o => new OrderPeriodRow(o.CreatedAt, o.Status, o.DeliveryMethod, o.CustomerPhone, o.Total, o.RefundedAmount))
+            .Select(o => new OrderPeriodRow(
+                o.CreatedAt,
+                o.Status,
+                o.DeliveryMethod,
+                o.CustomerPhone,
+                o.Total,
+                o.RefundedAmount,
+                o.Status == OrderStatus.Cancelled
+                    && o.History.Any(h => h.To == OrderStatus.Paid)
+                    && o.Refunds.Any(r => r.Status == RefundStatus.Succeeded)))
             .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<RefundPeriodRow>> ListRefundsForPeriodAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct)
+    {
+        var rows = await db.Set<Order>().AsNoTracking()
+            .Where(o => ProductSalesSource.SoldStatuses.Contains(o.Status)
+                || (o.Status == OrderStatus.Cancelled && o.History.Any(h => h.To == OrderStatus.Paid)))
+            .SelectMany(o => o.Refunds)
+            .Where(r => r.Status == RefundStatus.Succeeded && r.CompletedAt >= from && r.CompletedAt < to)
+            .Select(r => new { r.CompletedAt, r.Amount })
+            .ToListAsync(ct);
+        return rows.Select(r => new RefundPeriodRow(r.CompletedAt!.Value, r.Amount)).ToList();
+    }
 
     public async Task<IReadOnlyList<ProductSalesRow>> TopProductsAsync(DateTimeOffset from, DateTimeOffset to, int take, CancellationToken ct)
     {
-        var orders = db.Set<Order>().AsNoTracking()
-            .Where(o => o.CreatedAt >= from && o.CreatedAt < to && o.Status != OrderStatus.Cancelled);
-        var sold = await orders
+        var eligibleOrders = db.Set<Order>().AsNoTracking()
+            .Where(o => ProductSalesSource.SoldStatuses.Contains(o.Status)
+                || (o.Status == OrderStatus.Cancelled && o.History.Any(h => h.To == OrderStatus.Paid)
+                    && o.Refunds.Any(r => r.Status == RefundStatus.Succeeded && r.Lines.Any())));
+        var sold = await eligibleOrders
+            .Where(o => o.CreatedAt >= from && o.CreatedAt < to)
             .SelectMany(o => o.Items)
             .GroupBy(i => i.ProductId)
             .Select(g => new { ProductId = g.Key, Quantity = g.Sum(i => i.Quantity), Revenue = g.Sum(i => i.LineTotal) })
             .ToListAsync(ct);
 
-        // The revenue of the period is net of refunds, so the ranking is too. A refund recorded without
-        // product lines cannot be assigned to a product and stays out of the ranking.
-        var refunded = await orders
+        // The revenue of the period is net of refunds completed in the same window, consistent with WebsiteProductSales.
+        // A refund recorded without product lines cannot be assigned to a product and stays out of the ranking.
+        var refunded = await eligibleOrders
             .SelectMany(o => o.Refunds)
-            .Where(r => r.Status == RefundStatus.Succeeded)
+            .Where(r => r.Status == RefundStatus.Succeeded && r.CompletedAt >= from && r.CompletedAt < to)
             .SelectMany(r => r.Lines)
             .Join(db.Set<OrderItem>().AsNoTracking(), l => l.OrderItemId, i => i.Id, (l, i) => new { i.ProductId, l.Quantity, l.Amount })
             .GroupBy(l => l.ProductId)

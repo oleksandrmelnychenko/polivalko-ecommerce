@@ -80,8 +80,8 @@ function PartnerMark({ kind }: { kind: Partner['kind'] }) {
   )
 }
 
-export function PartnersDirectory({ id }: { id?: string }) {
-  return id ? <PartnerProfile key={id} id={id} /> : <DirectoryList />
+export function PartnersDirectory({ id, overlayState }: { id?: string; overlayState?: unknown }) {
+  return id ? <PartnerProfile key={id} id={id} overlayState={overlayState} /> : <DirectoryList />
 }
 
 function DirectoryList() {
@@ -338,9 +338,10 @@ function DirectoryList() {
   )
 }
 
-function PartnerProfile({ id }: { id: string }) {
+function PartnerProfile({ id, overlayState }: { id: string; overlayState?: unknown }) {
   const { can } = usePermissions()
   const location = useLocation()
+  const navState = (overlayState ?? location.state) as { documentBackground?: unknown; marketSearch?: unknown; balanceSearch?: unknown } | null
   const navigate = useNavigate()
   const [opened, setOpened] = useState(true)
   const [operationOpen, setOperationOpen] = useState(false)
@@ -391,7 +392,7 @@ function PartnerProfile({ id }: { id: string }) {
       closeOnEscape={!dialog} closeOnClickOutside={!dialog} trapFocus={!dialog}
       title={<MetricLabel icon={IconUsers}>{partner?.title || 'Картка контрагента'}</MetricLabel>}
       onExitTransitionEnd={() => {
-        if (location.state?.documentBackground || location.state?.marketSearch != null || location.state?.balanceSearch != null) navigate(-1)
+        if (navState?.documentBackground || navState?.marketSearch != null || navState?.balanceSearch != null) navigate(-1)
         else navigate(directory, { replace: true })
       }}>
     <div className="partners-page ledger-workspace">
@@ -479,7 +480,7 @@ function PartnerProfile({ id }: { id: string }) {
               const next = new URLSearchParams(params)
               if (key === 'documents') next.delete('section')
               else next.set('section', key)
-              return <Link key={key} replace to={{ search: next.toString() }} state={location.state}
+              return <Link key={key} replace to={{ pathname: '/finance/partners/' + id, search: next.toString() }} state={navState}
                 aria-current={active === key ? 'page' : undefined}>{label}</Link>
             })}
           </nav>

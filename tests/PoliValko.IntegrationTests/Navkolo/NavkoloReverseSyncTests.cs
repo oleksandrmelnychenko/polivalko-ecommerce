@@ -8,6 +8,7 @@ using PoliValko.Catalog.Contracts;
 using PoliValko.Catalog.Domain;
 using PoliValko.Infrastructure.Outbox;
 using PoliValko.Infrastructure.Persistence;
+using PoliValko.Infrastructure.Sync;
 using PoliValko.Navkolo.Configuration;
 using PoliValko.Navkolo.Contracts;
 using PoliValko.Navkolo.Features.OrderSync;
@@ -56,10 +57,10 @@ public sealed class NavkoloReverseSyncTests(ApiFactory api)
             services.RemoveAll<INavkoloSettings>();
             services.AddSingleton<INavkoloSettings>(new TestSettings(mode, orderSyncEnabled));
         }));
-    private static async Task Sync(WebApplicationFactory<Program> host)
+    private static async Task<SyncResult> Sync(WebApplicationFactory<Program> host)
     {
         await using var scope = host.Services.CreateAsyncScope();
-        await scope.ServiceProvider.GetRequiredService<NavkoloInventorySync>().RunAsync(Ct);
+        return await scope.ServiceProvider.GetRequiredService<NavkoloInventorySync>().RunAsync(Ct);
     }
     private Task<Order> Saved(TestOrder order) => api.WithDbAsync(db => db.Set<Order>().AsNoTracking().Include(o => o.History).SingleAsync(o => o.Id == order.Id, Ct));
     private async Task Stock(TestOrder order, decimal raw, decimal reserved)
@@ -244,6 +245,51 @@ public sealed class NavkoloReverseSyncTests(ApiFactory api)
             await Stock(order, 5, 2);
         }
         finally { provider.ContinueUpload.TrySetResult(); }
+    }
+
+    [Fact]
+    public async Task Warehouse_shortage_on_one_order_is_isolated_from_catalog_sync_and_other_orders()
+    {
+        var failing = await CreateAsync();
+        var healthy = await CreateAsync();
+        var orgId = Guid.NewGuid();
+        var storeId = Guid.NewGuid();
+        var account = $"sync-isolate-{Guid.NewGuid():N}";
+        await api.WithDbAsync(async db =>
+        {
+            await db.Database.ExecuteSqlAsync($"""
+                INSERT INTO accounting.references(id, source_account, kind, source_id, title)
+                VALUES ({orgId}, {account}, 'organization', 'org-iso', 'Ізоляція ФОП'),
+                       ({storeId}, {account}, 'store', 'store-iso', 'Ізоляція Склад');
+                INSERT INTO accounting.warehouse_stock(org_id, store_id, product_id, quantity)
+                VALUES ({orgId}, {storeId}, {failing.ProductId}, 5);
+                """, Ct);
+            return 0;
+        });
+        await api.WithScopeAsync(async sp =>
+        {
+            await sp.GetRequiredService<ICatalogWarehouseSource>().ConnectBulkAsync(orgId, storeId, false, Ct);
+            return 0;
+        });
+        await api.WithDbAsync(db => db.Database.ExecuteSqlAsync($"""
+            UPDATE accounting.warehouse_stock SET quantity = 1
+            WHERE org_id = {orgId} AND store_id = {storeId} AND product_id = {failing.ProductId}
+            """, Ct));
+
+        var provider = new Provider
+        {
+            States = [new(failing.Id, Shipped: true, Cancelled: false), new(healthy.Id, Shipped: true, Cancelled: false)],
+            Stock = [new(failing.ProductRef, 100, null, 5), new(healthy.ProductRef, 115, null, 3)],
+        };
+        await using var host = Host(provider);
+        var syncResult = await Sync(host);
+
+        syncResult.Errors.ShouldContain(e => e.Item == failing.Number);
+        (await Saved(failing)).Status.ShouldBe(OrderStatus.New);
+        (await Saved(healthy)).Status.ShouldBe(OrderStatus.Shipped);
+        await Stock(healthy, 3, 0);
+        var updatedPrice = await api.WithDbAsync(db => db.Set<ProductPrice>().Where(p => p.ProductId == healthy.ProductId).Select(p => p.Amount).SingleAsync(Ct));
+        updatedPrice.ShouldBe(115m);
     }
 
     private sealed record TestSettings(string Mode, bool OrderSyncEnabled) : INavkoloSettings

@@ -6,8 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using PoliValko.Catalog.Contracts;
 using PoliValko.Catalog.Domain;
+using PoliValko.Identity.Features.Auth;
 using PoliValko.Infrastructure.Outbox;
 using PoliValko.Infrastructure.Persistence;
+using PoliValko.Infrastructure.Security;
 using PoliValko.Navkolo.Contracts;
 using PoliValko.Navkolo.Integrations.NavkoloApi;
 using PoliValko.Ordering.Contracts;
@@ -175,6 +177,27 @@ public sealed class NavkoloCancellationTests(ApiFactory api)
         (await Reserved(order)).ShouldBe(0);
         var row = await api.WithDbAsync(db => db.Set<StockReservation>().AsNoTracking().SingleAsync(r => r.OrderId == order.Id, Ct));
         row.Consumed.ShouldBeTrue(); row.Released.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Disabling_order_sync_releases_exported_order_reservation_locally_on_cancellation()
+    {
+        var order = await CreateAsync();
+        var provider = new Provider();
+        await using var enabledHost = Host(provider, orderSyncEnabled: true);
+        await using var disabledHost = Host(provider, orderSyncEnabled: false);
+        await Export(enabledHost, order);
+        (await Reserved(order)).ShouldBe(2);
+
+        using var admin = disabledHost.CreateClient();
+        (await admin.PostAsJsonAsync("/api/v1/console/auth/login", new LoginRequest(ApiFactory.AdminEmail, ApiFactory.TestPassword), Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        var csrf = await admin.GetFromJsonAsync<CsrfTokenDto>("/api/v1/console/auth/csrf", Ct);
+        admin.DefaultRequestHeaders.Add("X-CSRF-TOKEN", csrf!.Token);
+
+        (await admin.PostJsonAsync($"/api/v1/console/orders/{order.Number}/status", new ChangeOrderStatusRequest(OrderStatus.Cancelled, "Обмін вимкнено")))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Reserved(order)).ShouldBe(0);
     }
 
     private sealed class TestSettings(bool orderSyncEnabled) : INavkoloSettings

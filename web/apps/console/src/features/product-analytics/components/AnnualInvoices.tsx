@@ -85,7 +85,7 @@ function InvoiceReport({ year, years }: { year: number; years: number[] }) {
           <h2 id="annual-title"><MetricLabel icon={IconFileInvoice}>Оборот за документами продажу</MetricLabel></h2>
           <div className="annual-links">
             {assortmentEnd >= `${year}-01-01` && <Button component={Link} to={`?tab=assortment&from=${year}-01-01&to=${assortmentEnd}`} variant="default" size="xs" rightSection={<IconArrowUpRight size={14} />}>Аналіз товарів</Button>}
-            <Button component={Link} to="?tab=turnover-forecast" variant="default" size="xs" rightSection={<IconArrowUpRight size={14} />}>Прогноз обороту</Button>
+            <Button component={Link} to="?tab=forecast" variant="default" size="xs" rightSection={<IconArrowUpRight size={14} />}>Прогноз обороту</Button>
           </div>
         </header>
         <div className="annual-controls">

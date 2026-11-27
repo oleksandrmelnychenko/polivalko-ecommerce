@@ -18,4 +18,36 @@ export const axisDate = (value: string) => shortDate.format(new Date(value))
 export const monthLabel = (month: number) => monthName.format(new Date(Date.UTC(2024, month - 1, 1)))
 export const axisMonth = (month: number) => monthShort.format(new Date(Date.UTC(2024, month - 1, 1)))
 export const dateRange = (from: string, to: string) => from === to ? dateLabel(from) : `${dateLabel(from)} — ${dateLabel(to)}`
+const UNIT_LABELS: Record<string, string> = {
+  '2009': 'шт',
+  '796': 'шт',
+  '301': 'кг',
+  '166': 'кг',
+  '0166': 'л',
+  '112': 'л',
+  '0006': 'м',
+  '6': 'м',
+  '0055': 'м²',
+  '55': 'м²',
+  '0113': 'м³',
+  '113': 'м³',
+  '2006': 'уп',
+  '2007': 'компл',
+  '0304': 'г',
+  '304': 'г',
+  '0163': 'г',
+  '163': 'г',
+  '0168': 'т',
+  '168': 'т',
+  '0009': 'км',
+  '778': 'уп',
+  '839': 'компл',
+}
+
+export function formatUnitLabel(unit: string | null | undefined, fallback = '—'): string {
+  const trimmed = unit?.trim()
+  if (!trimmed) return fallback
+  return UNIT_LABELS[trimmed] ?? UNIT_LABELS[trimmed.replace(/^0+(?=\d)/, '')] ?? trimmed
+}
+
 export { formatPrice }

@@ -3,7 +3,7 @@ from decimal import Decimal
 from unittest import TestCase
 
 from analytics.dashboard import summarize
-from analytics.purchase_cost import PARENTS, PURCHASES, PurchaseBook, enrich_costs, return_cost
+from analytics.purchase_cost import PARENTS, PURCHASES, PurchaseBook, checked_purchases, enrich_costs, return_cost
 
 
 DAY = date(2026, 11, 10)
@@ -85,3 +85,61 @@ class PurchaseCostTests(TestCase):
                 return [document(ref="sale",stamp=f"{DAY}T18:00:00Z")] if sql == PARENTS else [purchase(DAY,1,60)]
         enrich_costs(Source(),[refund],DAY)
         self.assertIsNone(summarize([refund],DAY,7)["products"][0]["profit"])
+
+    def test_cross_source_bridging_matches_native_sales_to_dntrade_purchases_and_normalizes_units(self):
+        self.assertIn("accounting.references", PURCHASES)
+        self.assertIn("catalog.products", PURCHASES)
+        self.assertIn("amount>0", checked_purchases())
+        self.assertNotIn("amount>=0", checked_purchases())
+        sale = document(account="polivalko-native", entity_type="invoice", kind="out", status="posted",
+                        org="native-org", lines=[dict(product={"id": "prod-1"}, store="native-store",
+                                                      unit="catalog-base", quantity=2, total=200)])
+        prior = DAY - timedelta(days=5)
+        bridged = dict(a="polivalko-native", o="native-org", s="native-store", p="id:prod-1", u="catalog-base",
+                       src_a="valko-dntrade", src_u="2009", catalog_unit="шт", day=prior,
+                       qty=Decimal(4), amount=Decimal(100), id="dn-1", number="P-1", stamp=None)
+        wrong_unit = dict(bridged, src_u="301", day=DAY - timedelta(days=2), amount=Decimal(999), id="dn-wrong")
+        book = PurchaseBook([bridged, wrong_unit])
+        cost, refs = book.cost(sale, sale["lines"][0], Decimal(2))
+        self.assertEqual((cost, refs), (Decimal(50), (("dn-1", "P-1", str(prior)),)))
+        native_newer = dict(a="polivalko-native", o="native-org", s="native-store", p="id:prod-1", u="catalog-base",
+                            src_a="polivalko-native", src_u="catalog-base", catalog_unit="шт", day=DAY - timedelta(days=1),
+                            qty=Decimal(2), amount=Decimal(70), id="nat-1", number="ПН-1", stamp=None)
+        newer_book = PurchaseBook([bridged, native_newer])
+        self.assertEqual(newer_book.cost(sale, sale["lines"][0], Decimal(2))[0], Decimal(70))
+        ambiguous = PurchaseBook([dict(bridged, catalog_unit=None), dict(wrong_unit, catalog_unit=None)])
+        self.assertEqual(ambiguous.cost(sale, sale["lines"][0], Decimal(2)), (None, ()))
+
+    def test_numeric_parent_kind_matches_original_sale_and_rejects_wrong_kind(self):
+        previous = DAY - timedelta(days=10)
+        parent_out = document(previous, entity_type="invoice", kind="out", ref="inv-1")
+        parent_cash = document(previous, entity_type="receipt", kind="cash", ref="rcpt-1")
+        refund_out = document(entity_type="customerReturn", kind="back", parent_kind="3", parent="inv-1")
+        refund_cash = document(entity_type="customerReturn", kind="back", parent_kind="6", parent="rcpt-1")
+        refund_mismatch = document(entity_type="customerReturn", kind="back", parent_kind="3", parent="rcpt-1")
+        class Source:
+            def execute(self, sql, params):
+                if sql == PARENTS:
+                    return [parent_out, parent_cash]
+                if sql == PURCHASES:
+                    return [purchase(previous, 1, 40)]
+                raise AssertionError(sql)
+        enrich_costs(Source(), [refund_out, refund_cash, refund_mismatch], DAY)
+        self.assertEqual(refund_out["lines"][0].get("derived_cost"), Decimal(40))
+        self.assertEqual(refund_cash["lines"][0].get("derived_cost"), Decimal(40))
+        self.assertIsNone(refund_mismatch["lines"][0].get("derived_cost"))
+
+    def test_zero_cogs_total_is_treated_as_uncosted_and_zero_amount_purchase_is_rejected(self):
+        zero_book = PurchaseBook([purchase(DAY - timedelta(days=1), 1, 0)])
+        self.assertEqual(zero_book.cost(document(), position(), Decimal(1)), (None, ()))
+        sale_with_zero_cogs = document(lines=[position(cogs_total=0)])
+        class Source:
+            def execute(self, sql, params):
+                if sql == PURCHASES:
+                    return [purchase(DAY - timedelta(days=1), 1, 65)]
+                raise AssertionError(sql)
+        enrich_costs(Source(), [sale_with_zero_cogs], DAY)
+        self.assertEqual(sale_with_zero_cogs["lines"][0].get("derived_cost"), Decimal(65))
+        self.assertEqual(summarize([sale_with_zero_cogs], DAY, 7)["products"][0]["profit"], Decimal(35))
+        uncosted = document(lines=[position(cogs_total=0)])
+        self.assertIsNone(summarize([uncosted], DAY, 7)["products"][0]["profit"])

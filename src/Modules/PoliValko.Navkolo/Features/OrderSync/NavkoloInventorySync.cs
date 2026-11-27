@@ -46,14 +46,17 @@ internal sealed class NavkoloInventorySync(PoliValkoDbContext db, INavkoloSettin
         if (catalog is not null) await importer.DisableMissingAsync(catalog.Select(p => p.NavkoloId!).ToArray(), ct);
 
         var changed = 0;
+        var syncErrors = new List<SyncError>();
         if (orderSyncEnabled)
         {
             var stockIds = catalog is not null ? catalog.Select(p => p.NavkoloId!).ToHashSet(StringComparer.OrdinalIgnoreCase)
                 : records.Select(p => p.NavkoloId).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            changed = await orders.ApplyAsync(states, stockIds, ct);
+            var applied = await orders.ApplyAsync(states, stockIds, ct);
+            changed = applied.Changed;
+            syncErrors.AddRange(applied.Errors);
         }
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
-        return new SyncResult($"Отримано {catalog?.Count ?? records.Count} записів. Змінено: {result.Updated}, без змін: {result.Unchanged}. Замовлень оновлено: {changed}.", []);
+        return new SyncResult($"Отримано {catalog?.Count ?? records.Count} записів. Змінено: {result.Updated}, без змін: {result.Unchanged}. Замовлень оновлено: {changed}.", syncErrors);
     }
 }

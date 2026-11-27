@@ -1088,6 +1088,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/accounting/references/organizations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleCreateAccountingOrganization"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/references/organizations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["ConsoleUpdateAccountingOrganization"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/references/stores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleCreateAccountingStore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/references/stores/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["ConsoleUpdateAccountingStore"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/accounting/documents": {
         parameters: {
             query?: never;
@@ -1258,7 +1322,7 @@ export interface paths {
         get?: never;
         put: operations["ConsoleUpdateInvoiceDraft"];
         post?: never;
-        delete?: never;
+        delete: operations["ConsoleDeleteInvoiceDraft"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1322,6 +1386,22 @@ export interface paths {
         get?: never;
         put: operations["ConsoleConnectShopStock"];
         post?: never;
+        delete: operations["ConsoleDisconnectShopStock"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/warehouse/shop-source/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleConnectShopStockBulk"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1392,6 +1472,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/accounting/documents/{id}/unpost": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleUnpostInvoice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/accounting/documents/{id}/payments": {
         parameters: {
             query?: never;
@@ -1403,6 +1499,22 @@ export interface paths {
         put?: never;
         post: operations["ConsoleRecordInvoicePayment"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/payments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["ConsoleDeleteInvoicePayment"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1546,7 +1658,7 @@ export interface paths {
         get: operations["ConsoleStockOperation"];
         put: operations["ConsoleUpdateStockOperation"];
         post?: never;
-        delete?: never;
+        delete: operations["ConsoleDeleteStockOperation"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1562,6 +1674,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["ConsolePostStockOperation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/stock-operations/{id}/unpost": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleUnpostStockOperation"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4115,6 +4243,13 @@ export interface components {
             /** Format: int32 */
             updated: number;
         };
+        BulkWarehouseConnection: {
+            /** Format: int32 */
+            connected: number;
+            /** Format: int32 */
+            skipped: number;
+            conflicts: string[];
+        };
         CardPaymentOptionDto: {
             code: string;
             name: string;
@@ -4253,6 +4388,14 @@ export interface components {
             shopQuantity: number;
             /** Format: double */
             reserved: number;
+        };
+        ConnectWarehouseBulk: {
+            /** Format: uuid */
+            orgId: string;
+            /** Format: uuid */
+            storeId: string;
+            /** @default false */
+            overwriteExisting: boolean;
         };
         ConsoleAccountDetailsDto: {
             /** Format: uuid */
@@ -4501,6 +4644,21 @@ export interface components {
             createdAt: string;
             /** @default false */
             isArchived: boolean;
+            /**
+             * Format: double
+             * @default 0
+             */
+            reservedQuantity: number;
+            /**
+             * Format: double
+             * @default 0
+             */
+            availableQuantity: number;
+            /** Format: uuid */
+            warehouseOrgId?: null | string;
+            /** Format: uuid */
+            warehouseStoreId?: null | string;
+            warehouseStoreTitle?: null | string;
         };
         ConsoleProductImageDto: {
             /** Format: uuid */
@@ -4535,6 +4693,21 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             labels: components["schemas"]["ConsoleProductLabelDto"][];
+            /**
+             * Format: double
+             * @default 0
+             */
+            reservedQuantity: number;
+            /**
+             * Format: double
+             * @default 0
+             */
+            availableQuantity: number;
+            /** Format: uuid */
+            warehouseOrgId?: null | string;
+            /** Format: uuid */
+            warehouseStoreId?: null | string;
+            warehouseStoreTitle?: null | string;
         };
         ConsoleRedirectDto: {
             /** Format: uuid */
@@ -4737,6 +4910,8 @@ export interface components {
         CreateRefundRequest: {
             lines: null | components["schemas"]["RefundLineRequest"][];
             reason: null | string;
+            /** @default true */
+            returnToStock: boolean;
         };
         CreateServiceRequest: {
             name: null | string;
@@ -6183,6 +6358,11 @@ export interface components {
             from: string;
             to: string;
         };
+        ReferenceRequest: {
+            title: string;
+            /** Format: uuid */
+            id?: null | string;
+        };
         RefundableItemDto: {
             /** Format: uuid */
             productId: string;
@@ -6239,6 +6419,9 @@ export interface components {
         };
         RegisterReference: {
             id: string;
+            title: string;
+        };
+        RenameReferenceRequest: {
             title: string;
         };
         ReorderBannersRequest: {
@@ -6620,6 +6803,10 @@ export interface components {
             change: number;
             /** Format: double */
             after: number;
+            /** Format: double */
+            reservedQuantity?: null | number;
+            /** @default false */
+            firstMovement: boolean;
         };
         StockOpening: {
             /** Format: uuid */
@@ -6653,6 +6840,8 @@ export interface components {
             reason: null | string;
             comment: null | string;
             lines: null | components["schemas"]["StockOperationLine"][];
+            /** Format: uuid */
+            targetStoreId?: null | string;
         };
         StockOperationLine: {
             /** Format: uuid */
@@ -6680,6 +6869,8 @@ export interface components {
             /** Format: double */
             after: number;
             firstMovement: boolean;
+            /** Format: double */
+            reservedQuantity?: null | number;
         };
         StockOperationState: {
             /** Format: uuid */
@@ -6699,6 +6890,9 @@ export interface components {
             revision: string;
             total: null | string;
             lines: components["schemas"]["StockOperationLineState"][];
+            /** Format: uuid */
+            targetStoreId?: null | string;
+            targetStore?: null | string;
         };
         StorefrontModeDto: {
             mode: string;
@@ -9495,6 +9689,178 @@ export interface operations {
             };
         };
     };
+    ConsoleCreateAccountingOrganization: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReferenceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterReference"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleUpdateAccountingOrganization: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenameReferenceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterReference"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleCreateAccountingStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReferenceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterReference"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleUpdateAccountingStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenameReferenceRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterReference"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     ConsoleAccountingDocuments: {
         parameters: {
             query?: {
@@ -9932,6 +10298,46 @@ export interface operations {
             };
         };
     };
+    ConsoleDeleteInvoiceDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     ConsoleAccountingWork: {
         parameters: {
             query?: never;
@@ -10076,6 +10482,88 @@ export interface operations {
                 };
                 content: {
                     "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleDisconnectShopStock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleConnectShopStockBulk: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectWarehouseBulk"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkWarehouseConnection"];
                 };
             };
             /** @description Unauthorized */
@@ -10266,6 +10754,46 @@ export interface operations {
             };
         };
     };
+    ConsoleUnpostInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     ConsoleRecordInvoicePayment: {
         parameters: {
             query?: never;
@@ -10280,6 +10808,46 @@ export interface operations {
                 "application/json": components["schemas"]["InvoicePayment"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleDeleteInvoicePayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -10775,6 +11343,46 @@ export interface operations {
             };
         };
     };
+    ConsoleDeleteStockOperation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     ConsolePostStockOperation: {
         parameters: {
             query?: never;
@@ -10789,6 +11397,46 @@ export interface operations {
                 "application/json": components["schemas"]["PostStockOperation"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleUnpostStockOperation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {

@@ -91,4 +91,32 @@ public sealed class ProductAnalyticsApiTests(ApiFactory api)
         selected.CatalogProductId.ShouldBe(product.Id);
         selected.StockDays.ShouldBeNull();
     }
+
+    [Fact]
+    public async Task Thirty_day_analytics_loads_catalog_stock_for_older_products_so_slow_stock_insight_fires()
+    {
+        using var admin = await Staff.AdminAsync(api);
+        using var analyst = await TestRoles.LoginWithPermissionsAsync(api, admin, PermissionKeys.ProductAnalyticsView);
+        var yesterday = KyivTime.Today(TimeProvider.System).AddDays(-1);
+        var oldSaleDay = yesterday.AddDays(-90);
+
+        var slowProduct = await api.AddProductAsync("ruchnyi-instrument", "Залежалий товар для 30 днів", 150m, stock: 500);
+        var recentProduct = await api.AddProductAsync("ruchnyi-instrument", "Свіжий товар для покриття", 100m, stock: 10);
+        var oldOrder = await TestOrders.PlaceAsync(api, slowProduct.Id, 1, 150m, CheckoutApiTests.UniquePhone());
+        var recentOrder = await TestOrders.PlaceAsync(api, recentProduct.Id, 1, 100m, CheckoutApiTests.UniquePhone());
+
+        await api.WithDbAsync(async db =>
+        {
+            await db.Set<Order>().Where(o => o.Number == oldOrder.Number)
+                .ExecuteUpdateAsync(u => u.SetProperty(o => o.Status, OrderStatus.Completed)
+                    .SetProperty(o => o.CreatedAt, KyivTime.StartOfDay(oldSaleDay)), Ct);
+            await db.Set<Order>().Where(o => o.Number == recentOrder.Number)
+                .ExecuteUpdateAsync(u => u.SetProperty(o => o.Status, OrderStatus.Completed)
+                    .SetProperty(o => o.CreatedAt, KyivTime.StartOfDay(yesterday)), Ct);
+            return 0;
+        });
+
+        var report = await analyst.ReadAsync<ProductAnalyticsDto>($"{Url}?days=30&source=web");
+        report.Insights.ShouldContain(i => i.Kind == "slow-stock");
+    }
 }

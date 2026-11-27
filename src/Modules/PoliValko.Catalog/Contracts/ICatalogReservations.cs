@@ -8,4 +8,6 @@ public interface ICatalogReservations
     Task ReleaseAsync(Guid orderId, CancellationToken ct);
     Task ConsumeAsync(Guid orderId, CancellationToken ct);
     Task ReconcileFulfilledAsync(IReadOnlyCollection<Guid> orderIds, CancellationToken ct);
+    Task ApplyRefundAsync(Guid orderId, IReadOnlyDictionary<Guid, int> quantities, bool returnToStock, CancellationToken ct);
+    Task RestockAsync(Guid orderId, CancellationToken ct);
 }

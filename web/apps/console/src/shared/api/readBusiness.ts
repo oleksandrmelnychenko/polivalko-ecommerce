@@ -4,6 +4,6 @@ export async function readBusiness<T>(op: string, params = '') {
   const response = await apiFetch('/api/v1/console/business-analytics/' + op + (params ? '?' + params : ''), {
     cache: 'no-store',
   })
-  const body = await response.json()
+  const body = await response.json().catch(() => undefined)
   return { response, data: response.ok ? (body as T) : undefined, error: response.ok ? undefined : body }
 }

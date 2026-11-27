@@ -329,4 +329,90 @@ public sealed class AccountingRegisterTests(ApiFactory api)
         (await admin.ReadAsync<RegisterPage<CurrentPartnerBalance>>(filtered+"receivable")).Total.ShouldBe(0);
         (await admin.ReadAsync<List<PartnerPosition>>(partnerUrl+"/positions")).Single().Payable.ShouldBe("110.00");
     }
+
+    [Fact]
+    public async Task Native_references_customer_returns_draft_deletion_payment_reversal_and_unpost_work_end_to_end()
+    {
+        using var admin = await Staff.AdminAsync(api);
+        using var viewer = await TestRoles.LoginWithPermissionsAsync(api, admin, PoliValko.Infrastructure.Security.Permissions.PermissionKeys.AccountingView);
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+
+        // Organizations & Stores CRUD
+        (await viewer.PostAsJsonAsync(Root + "/references/organizations", new ReferenceRequest("NoPerm " + suffix), Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        var org = await (await admin.PostAsJsonAsync(Root + "/references/organizations",
+            new ReferenceRequest("ФОП Новий " + suffix), Ct)).ReadAsync<RegisterReference>();
+        var store = await (await admin.PostAsJsonAsync(Root + "/references/stores",
+            new ReferenceRequest("Склад Новий " + suffix), Ct)).ReadAsync<RegisterReference>();
+        (await admin.PostAsJsonAsync(Root + "/references/organizations",
+            new ReferenceRequest("ФОП Новий " + suffix), Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        var renamedOrg = await (await admin.PutAsJsonAsync(Root + "/references/organizations/" + org.Id,
+            new RenameReferenceRequest("ФОП Оновлений " + suffix), Ct)).ReadAsync<RegisterReference>();
+        renamedOrg.Title.ShouldBe("ФОП Оновлений " + suffix);
+        var renamedStore = await (await admin.PutAsJsonAsync(Root + "/references/stores/" + store.Id,
+            new RenameReferenceRequest("Склад Оновлений " + suffix), Ct)).ReadAsync<RegisterReference>();
+        renamedStore.Title.ShouldBe("Склад Оновлений " + suffix);
+        var refs = await admin.ReadAsync<References>(Root + "/references");
+        refs.Organizations.ShouldContain(o => o.Id == org.Id && o.Title == renamedOrg.Title);
+        refs.Stores.ShouldContain(s => s.Id == store.Id && s.Title == renamedStore.Title);
+
+        var partner = new NewPartner(Guid.NewGuid(), "Покупець повернення " + suffix, "individual");
+        (await admin.PostAsJsonAsync(Root + "/partners", partner, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var product = await api.AddProductAsync("ruchnyi-instrument", "Товар повернення " + suffix, 200m, stock: 0);
+        var day = new DateOnly(2026, 11, 23);
+
+        // Draft deletion on draft vs posted
+        var disposable = new NewDraft(Guid.NewGuid(), partner.Id, "customerReturn", "RET-DEL-" + suffix, day,
+            org.Id, store.Id, [new(product.Id, 1m, 200m)]);
+        (await admin.PostAsJsonAsync(Root + "/drafts", disposable, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await viewer.DeleteAsync(Root + "/drafts/" + disposable.Id, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await admin.DeleteAsync(Root + "/drafts/" + disposable.Id, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.GetAsync(Root + "/documents/" + disposable.Id, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        // Native customerReturn draft -> preview shows firstMovement -> post adds +qty & tracks payable credit
+        var ret = new NewDraft(Guid.NewGuid(), partner.Id, "customerReturn", "RET-" + suffix, day,
+            org.Id, store.Id, [new(product.Id, 2m, 200m)]);
+        (await admin.PostAsJsonAsync(Root + "/drafts", ret, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var retUrl = Root + "/documents/" + ret.Id;
+        var preview = await admin.ReadAsync<InvoiceState>(retUrl + "/operations");
+        preview.Stock.Single().ShouldSatisfyAllConditions(
+            s => s.Before.ShouldBe(0m),
+            s => s.Change.ShouldBe(2m),
+            s => s.After.ShouldBe(2m),
+            s => s.FirstMovement.ShouldBeTrue());
+
+        (await admin.PostAsJsonAsync(retUrl + "/post", new PostInvoice(preview.Revision), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.DeleteAsync(Root + "/drafts/" + ret.Id, Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await admin.ReadAsync<RegisterPage<DocumentRow>>(Root + "/documents?register=customerReturn&q=" + ret.Number))
+            .Items.ShouldContain(d => d.Id == ret.Id);
+        (await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root + "/warehouse?store=" + store.Id))
+            .Items.Single(w => w.ProductId == product.Id).Quantity.ShouldBe(2m);
+
+        // Record payout to customer, verify due drops, verify unpost is blocked while payment exists
+        var payment = new InvoicePayment(Guid.NewGuid(), day, 150m, "cash", "Каса", "PAY-" + suffix);
+        (await admin.PostAsJsonAsync(retUrl + "/payments", payment, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.ReadAsync<InvoiceState>(retUrl + "/operations")).ShouldSatisfyAllConditions(
+            s => s.Paid.ShouldBe("150.00"),
+            s => s.Due.ShouldBe("250.00"));
+        (await admin.PostAsync(retUrl + "/unpost", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+
+        // Delete payment (requires AccountingPost), verify due restores to 400.00
+        (await viewer.DeleteAsync(Root + "/payments/" + payment.Id, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await admin.DeleteAsync(Root + "/payments/" + payment.Id, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.DeleteAsync(Root + "/payments/" + payment.Id, Ct)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await admin.ReadAsync<InvoiceState>(retUrl + "/operations")).ShouldSatisfyAllConditions(
+            s => s.Paid.ShouldBe("0.00"),
+            s => s.Due.ShouldBe("400.00"),
+            s => s.Payments.ShouldBeEmpty());
+
+        // Now unpost succeeds, reverses +2 back to 0, sets status to cancelled, removes from balances
+        (await viewer.PostAsync(retUrl + "/unpost", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await admin.PostAsync(retUrl + "/unpost", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.PostAsync(retUrl + "/unpost", null, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.ReadAsync<InvoiceState>(retUrl + "/operations")).ShouldSatisfyAllConditions(
+            s => s.Status.ShouldBe("cancelled"),
+            s => s.Due.ShouldBeNull());
+        (await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root + "/warehouse?store=" + store.Id))
+            .Items.Single(w => w.ProductId == product.Id).Quantity.ShouldBe(0m);
+    }
 }

@@ -44,6 +44,14 @@ public static class AccountingRegisters
             Organizations = await AccountingEntry.Organizations(db).OrderBy(x => x.Title).ToListAsync(ct),
             Stores = await AccountingEntry.Stores(db).OrderBy(x => x.Title).ToListAsync(ct)
         }).WithName("ConsoleAccountingReferences");
+        group.MapPost("/references/organizations", AccountingEntry.CreateOrganization)
+            .WithName("ConsoleCreateAccountingOrganization").RequirePermission(PermissionKeys.AccountingEdit).Produces<RegisterReference>();
+        group.MapPut("/references/organizations/{id:guid}", AccountingEntry.UpdateOrganization)
+            .WithName("ConsoleUpdateAccountingOrganization").RequirePermission(PermissionKeys.AccountingEdit).Produces<RegisterReference>();
+        group.MapPost("/references/stores", AccountingEntry.CreateStore)
+            .WithName("ConsoleCreateAccountingStore").RequirePermission(PermissionKeys.AccountingEdit).Produces<RegisterReference>();
+        group.MapPut("/references/stores/{id:guid}", AccountingEntry.UpdateStore)
+            .WithName("ConsoleUpdateAccountingStore").RequirePermission(PermissionKeys.AccountingEdit).Produces<RegisterReference>();
         group.MapGet("/documents", Documents).WithName("ConsoleAccountingDocuments").Produces<RegisterPage<DocumentRow>>();
         group.MapGet("/documents/{id:guid}", Card).WithName("ConsoleAccountingDocument").Produces<DocumentCard>();
         group.MapGet("/product-history", ProductHistory).WithName("ConsoleAccountingProductHistory").Produces<RegisterPage<ProductMovement>>();
@@ -60,6 +68,8 @@ public static class AccountingRegisters
             .RequirePermission(PermissionKeys.AccountingEdit).Produces<int>();
         group.MapPost("/drafts", AccountingEntry.CreateDraft).WithName("ConsoleCreateInvoiceDraft").RequirePermission(PermissionKeys.AccountingEdit);
         group.MapPut("/drafts/{id:guid}", AccountingEntry.UpdateDraft).WithName("ConsoleUpdateInvoiceDraft").RequirePermission(PermissionKeys.AccountingEdit);
+        group.MapDelete("/drafts/{id:guid}", AccountingEntry.DeleteDraft).WithName("ConsoleDeleteInvoiceDraft")
+            .RequirePermission(PermissionKeys.AccountingEdit).Produces<Guid>();
         InvoiceWorkflow.Map(group);
         SalesOffers.Map(group);
         RecommendationOfferWorkflow.Map(group);
@@ -142,16 +152,16 @@ public static class AccountingRegisters
     private static async Task<IResult> Documents(PoliValkoDbContext db, string? register, Guid? partnerId,
         string? q, string? status, DateOnly? from, DateOnly? to, string? queue, int page = 1, CancellationToken ct = default)
     {
-        if (InvalidPage(page, q) || from > to || register is not (null or "in" or "out" or "customerReturn" or "income" or "writeOff" or "recount")) return Invalid();
+        if (InvalidPage(page, q) || from > to || register is not (null or "in" or "out" or "customerReturn" or "income" or "writeOff" or "recount" or "transfer")) return Invalid();
         var rows = AllDocuments(db);
         if (queue != null)
         {
-            rows = rows.Where(d => d.SourceAccount=="polivalko-native" && d.EntityType=="invoice");
+            rows = rows.Where(d => d.SourceAccount=="polivalko-native" && (d.EntityType=="invoice" || d.EntityType=="customerReturn"));
             rows = queue switch
             {
                 "drafts" => rows.Where(d => d.Status=="draft"),
                 "receivable" => rows.Where(d => d.Kind=="out" && (d.PaymentStatus=="partial" || d.PaymentStatus=="unpaid")),
-                "payable" => rows.Where(d => d.Kind=="in" && (d.PaymentStatus=="partial" || d.PaymentStatus=="unpaid")),
+                "payable" => rows.Where(d => (d.Kind=="in" || d.Kind=="customerReturn") && (d.PaymentStatus=="partial" || d.PaymentStatus=="unpaid")),
                 "settled" => rows.Where(d => d.PaymentStatus=="settled"),
                 _ => null
             };

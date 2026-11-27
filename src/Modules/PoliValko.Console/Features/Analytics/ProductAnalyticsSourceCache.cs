@@ -12,18 +12,18 @@ internal sealed class ProductAnalyticsSourceCache(IMemoryCache cache) : IDisposa
     public async Task<ProductSalesData> ReadAsync(string source, DateOnly from, DateOnly to,
         Func<DateOnly, DateOnly, CancellationToken, Task<ProductSalesData>> read, CancellationToken ct)
     {
-        var key = (typeof(ProductAnalyticsSourceCache), source);
+        var key = (typeof(ProductAnalyticsSourceCache), source, from, to);
         var gate = source == "web" ? _website : _archive;
         await gate.WaitAsync(ct);
         try
         {
-            if (cache.TryGetValue<Snapshot>(key, out var snapshot) && snapshot?.From == from && snapshot.To == to)
+            if (cache.TryGetValue<ProductSalesData>(key, out var cached) && cached is not null)
             {
-                return snapshot.Data;
+                return cached;
             }
 
             var sales = await read(from, to, ct);
-            cache.Set(key, new Snapshot(from, to, sales), Expiration);
+            cache.Set(key, sales, Expiration);
             return sales;
         }
         finally
@@ -37,6 +37,4 @@ internal sealed class ProductAnalyticsSourceCache(IMemoryCache cache) : IDisposa
         _website.Dispose();
         _archive.Dispose();
     }
-
-    private sealed record Snapshot(DateOnly From, DateOnly To, ProductSalesData Data);
 }

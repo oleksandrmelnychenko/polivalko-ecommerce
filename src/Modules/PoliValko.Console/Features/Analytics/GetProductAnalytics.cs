@@ -56,7 +56,7 @@ internal static class GetProductAnalytics
             product = productId.ToString("D");
         }
 
-        var catalogIds = sales.Rows.Where(row => row.Day >= previousFrom || row.ProductKey == product)
+        var catalogIds = sales.Rows
             .Select(row => row.CatalogProductId).OfType<Guid>().ToHashSet();
         if (productId != Guid.Empty) catalogIds.Add(productId);
         var catalogProducts = await catalog.GetAnalyticsProductsAsync(catalogIds, ct);

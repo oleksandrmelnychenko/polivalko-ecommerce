@@ -36,6 +36,9 @@ internal static class ConsoleProductQueries
                 p.Price.Amount,
                 p.Price.OldAmount,
                 p.Stock.Quantity,
+                p.Stock.ReservedQuantity,
+                p.Stock.WarehouseOrgId,
+                p.Stock.WarehouseStoreId,
                 p.IsVisible,
                 p.Images.OrderBy(i => i.SortOrder).Select(i => i.Url).FirstOrDefault(),
                 p.DescriptionHtml != null && !ProductFillFilters.EmptyDescriptions.Contains(p.DescriptionHtml.Trim()),
@@ -43,7 +46,10 @@ internal static class ConsoleProductQueries
                 p.CreatedAt))
             .ToListAsync(ct);
         var labels = await ProductLabelSet.LoadAsync(db, rows.Select(r => r.Id).ToList(), now, ct);
-        return rows.Select(r => r.ToDto(Labels(labels.For(r.Id, r.Price, r.OldPrice, r.CreatedAt)))).ToList();
+        var storeTitles = await LoadStoreTitlesAsync(db, rows.Select(r => r.WarehouseStoreId), ct);
+        return rows.Select(r => r.ToDto(
+            Labels(labels.For(r.Id, r.Price, r.OldPrice, r.CreatedAt)),
+            r.WarehouseStoreId is { } storeId ? storeTitles.GetValueOrDefault(storeId) : null)).ToList();
     }
 
     public static async Task<Dictionary<Guid, ConsoleProductListItemDto>> LoadListItemsAsync(PoliValkoDbContext db, IEnumerable<Guid> ids, DateTimeOffset now, CancellationToken ct)
@@ -68,7 +74,9 @@ internal static class ConsoleProductQueries
             .Select(l => l.Id)
             .ToListAsync(ct);
         var labels = await ProductLabelSet.LoadAsync(db, [p.Id], now, ct);
-        return ToDto(p, linked, Labels(labels.For(p.Id, p.Price.Amount, p.Price.OldAmount, p.CreatedAt)));
+        var storeTitles = await LoadStoreTitlesAsync(db, [p.Stock.WarehouseStoreId], ct);
+        var storeTitle = p.Stock.WarehouseStoreId is { } storeId ? storeTitles.GetValueOrDefault(storeId) : null;
+        return ToDto(p, linked, Labels(labels.For(p.Id, p.Price.Amount, p.Price.OldAmount, p.CreatedAt)), storeTitle);
     }
 
     public static IReadOnlyList<ConsoleProductLabelDto> Labels(IReadOnlyList<ProductLabel> labels) =>
@@ -78,7 +86,23 @@ internal static class ConsoleProductQueries
 
     public static ProblemHttpResult ProductNotFound() => Problems.NotFound("catalog.product_not_found", "Товар не знайдено");
 
-    private static ConsoleProductDto ToDto(Product p, IReadOnlyList<Guid> labelIds, IReadOnlyList<ConsoleProductLabelDto> labels) => new(
+    private static async Task<Dictionary<Guid, string>> LoadStoreTitlesAsync(PoliValkoDbContext db, IEnumerable<Guid?> storeIds, CancellationToken ct)
+    {
+        var ids = storeIds.Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToArray();
+        if (ids.Length == 0)
+        {
+            return [];
+        }
+
+        var rows = await db.Database.SqlQuery<StoreTitleRow>($"""
+            SELECT id, title
+            FROM accounting.references
+            WHERE kind = 'store' AND id = ANY({ids})
+            """).ToListAsync(ct);
+        return rows.ToDictionary(r => r.Id, r => r.Title);
+    }
+
+    private static ConsoleProductDto ToDto(Product p, IReadOnlyList<Guid> labelIds, IReadOnlyList<ConsoleProductLabelDto> labels, string? warehouseStoreTitle) => new(
         p.Id,
         new NavkoloProductFieldsDto(
             p.NavkoloId,
@@ -106,7 +130,14 @@ internal static class ConsoleProductQueries
         labelIds,
         labels,
         p.CreatedAt,
-        p.IsArchived);
+        p.IsArchived,
+        p.Stock.ReservedQuantity,
+        Math.Max(0m, p.Stock.Quantity - p.Stock.ReservedQuantity),
+        p.Stock.WarehouseOrgId,
+        p.Stock.WarehouseStoreId,
+        warehouseStoreTitle);
+
+    private sealed record StoreTitleRow(Guid Id, string Title);
 
     private sealed record ListRow(
         Guid Id,
@@ -118,13 +149,17 @@ internal static class ConsoleProductQueries
         decimal Price,
         decimal? OldPrice,
         decimal Stock,
+        decimal ReservedQuantity,
+        Guid? WarehouseOrgId,
+        Guid? WarehouseStoreId,
         bool IsVisible,
         string? ImageUrl,
         bool HasDescription,
         DateTimeOffset UpdatedAt,
         DateTimeOffset CreatedAt)
     {
-        public ConsoleProductListItemDto ToDto(IReadOnlyList<ConsoleProductLabelDto> labels) =>
-            new(Id, Sku, Name, DisplayName, Slug, CategoryName, MoneyDto.Hryvnia(Price), Stock, IsVisible, ImageUrl, HasDescription, UpdatedAt, labels);
+        public ConsoleProductListItemDto ToDto(IReadOnlyList<ConsoleProductLabelDto> labels, string? warehouseStoreTitle) =>
+            new(Id, Sku, Name, DisplayName, Slug, CategoryName, MoneyDto.Hryvnia(Price), Stock, IsVisible, ImageUrl, HasDescription, UpdatedAt, labels,
+                ReservedQuantity, Math.Max(0m, Stock - ReservedQuantity), WarehouseOrgId, WarehouseStoreId, warehouseStoreTitle);
     }
 }

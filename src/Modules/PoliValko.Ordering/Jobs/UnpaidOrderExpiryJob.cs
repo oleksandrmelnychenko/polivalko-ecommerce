@@ -36,6 +36,7 @@ internal sealed class UnpaidOrderExpiryJob(IServiceScopeFactory scopes, TimeProv
         var db = services.GetRequiredService<PoliValkoDbContext>();
         var outbox = services.GetRequiredService<IOutbox>();
         var reservations = services.GetRequiredService<ICatalogReservations>();
+        var orderSync = services.GetRequiredService<IExternalOrderSyncStatus>();
         var payments = services.GetRequiredService<IPaymentActivity>();
         var options = services.GetRequiredService<IOptions<OrderingOptions>>().Value;
         var now = services.GetRequiredService<TimeProvider>().GetUtcNow();
@@ -94,7 +95,7 @@ internal sealed class UnpaidOrderExpiryJob(IServiceScopeFactory scopes, TimeProv
                 if (reason is not null)
                 {
                     order.ChangeStatus(OrderStatus.Cancelled, now, OrderActors.Schedule, reason);
-                    await OrderCancellationEffects.ApplyAsync(order, outbox, reservations, ct);
+                    await OrderCancellationEffects.ApplyAsync(order, outbox, reservations, orderSync.IsEnabled, ct);
                     await db.SaveChangesAsync(ct);
                     await transaction.CommitAsync(ct);
                     cancelled++;

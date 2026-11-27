@@ -13,6 +13,8 @@ public sealed record NewDraft(Guid Id, Guid PartnerId, string Kind, string Numbe
 public sealed record DraftChange(string Revision, NewDraft Draft);
 internal sealed record ProductReference(Guid Id, string Name, string Sku);
 public sealed record RegisterReference(string Id, string Title);
+public sealed record ReferenceRequest(string Title, Guid? Id = null);
+public sealed record RenameReferenceRequest(string Title);
 public sealed record BalancePartnerLink(long HeadingPosition, Guid PartnerId, Guid? Previous);
 public sealed record BalanceRowLink(Guid PartnerId, Guid? Previous);
 public sealed record PartnerNameChange(Guid Id, string Title, string? Note, string PreviousTitle, string? PreviousNote);
@@ -38,7 +40,7 @@ internal static class AccountingEntry
             var confirmed = await db.Database.SqlQuery<int>($"""
                 SELECT 1 AS "Value" FROM accounting.partner_openings WHERE report_id={id} AND heading_position={input.HeadingPosition}
                 """).AnyAsync(ct);
-            if (confirmed) return Results.Problem(detail:"За цією прив’язкою вже підтверджено початковий борг.",statusCode:409);
+            if (confirmed) return Results.Problem(detail: "За цією прив’язкою вже підтверджено початковий борг.", statusCode: 409);
         }
         int changed;
         if (input.Previous is Guid previous)
@@ -64,6 +66,7 @@ internal static class AccountingEntry
         await tx.CommitAsync(ct);
         return Results.Ok(input.PartnerId);
     }
+
     // Links one report row to a partner, overriding its heading's link: DNTrade puts same-named partners under one heading.
     internal static async Task<IResult> LinkRow(Guid id, long position, BalanceRowLink input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
     {
@@ -199,15 +202,110 @@ internal static class AccountingEntry
             SELECT id::text,title FROM accounting.references WHERE kind='store'
             """);
 
+    internal static Task<IResult> CreateOrganization(ReferenceRequest input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct) =>
+        CreateReference("organization", input, db, audit, ct);
+
+    internal static Task<IResult> UpdateOrganization(Guid id, RenameReferenceRequest input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct) =>
+        RenameReference("organization", id, input, db, audit, ct);
+
+    internal static Task<IResult> CreateStore(ReferenceRequest input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct) =>
+        CreateReference("store", input, db, audit, ct);
+
+    internal static Task<IResult> UpdateStore(Guid id, RenameReferenceRequest input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct) =>
+        RenameReference("store", id, input, db, audit, ct);
+
+    private static async Task<IResult> CreateReference(string kind, ReferenceRequest input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
+    {
+        var title = (input.Title ?? "").Trim();
+        if (title.Length is 0 or > 200) return Invalid("Назва має бути від 1 до 200 символів.");
+        var id = input.Id is { } provided && provided != Guid.Empty ? provided : Guid.NewGuid();
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var existing = await db.Database.SqlQuery<RegisterReference>($"""
+            SELECT id::text,title FROM accounting.references WHERE id={id} AND kind={kind} AND source_account='polivalko-native'
+            """).SingleOrDefaultAsync(ct);
+        if (existing != null)
+            return string.Equals(existing.Title, title, StringComparison.Ordinal) ? Results.Ok(existing) : Results.Conflict();
+        var duplicate = await db.Database.SqlQuery<int>($"""
+            SELECT 1 AS "Value" FROM accounting.references WHERE kind={kind} AND lower(trim(title))=lower({title}) AND id<>{id}
+            """).AnyAsync(ct);
+        if (duplicate)
+            return Results.Problem(
+                detail: kind == "organization" ? "Організація з такою назвою вже існує." : "Склад з такою назвою вже існує.",
+                statusCode: StatusCodes.Status409Conflict);
+        var inserted = await db.Database.ExecuteSqlAsync($"""
+            INSERT INTO accounting.references(id,source_account,kind,source_id,title)
+            VALUES ({id},'polivalko-native',{kind},{id.ToString()},{title})
+            ON CONFLICT (id) DO NOTHING
+            """, ct);
+        if (inserted == 0) return Results.Conflict();
+        audit.Record(kind == "organization" ? "accounting.organization_created" : "accounting.store_created",
+            "AccountingReference", id.ToString(), new { kind, title });
+        await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+        return Results.Ok(new RegisterReference(id.ToString(), title));
+    }
+
+    private static async Task<IResult> RenameReference(string kind, Guid id, RenameReferenceRequest input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
+    {
+        var title = (input.Title ?? "").Trim();
+        if (title.Length is 0 or > 200) return Invalid("Назва має бути від 1 до 200 символів.");
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var duplicate = await db.Database.SqlQuery<int>($"""
+            SELECT 1 AS "Value" FROM accounting.references WHERE kind={kind} AND lower(trim(title))=lower({title}) AND id<>{id}
+            """).AnyAsync(ct);
+        if (duplicate)
+            return Results.Problem(
+                detail: kind == "organization" ? "Організація з такою назвою вже існує." : "Склад з такою назвою вже існує.",
+                statusCode: StatusCodes.Status409Conflict);
+        var updated = await db.Database.ExecuteSqlAsync($"""
+            UPDATE accounting.references SET title={title} WHERE id={id} AND kind={kind}
+            """, ct);
+        if (updated == 0) return Results.NotFound();
+        if (kind == "organization")
+            await db.Database.ExecuteSqlAsync($"UPDATE accounting.documents SET organization={title} WHERE native_org_id={id}", ct);
+        audit.Record(kind == "organization" ? "accounting.organization_renamed" : "accounting.store_renamed",
+            "AccountingReference", id.ToString(), new { kind, title });
+        await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+        return Results.Ok(new RegisterReference(id.ToString(), title));
+    }
+
     internal static Task<IResult> CreateDraft(NewDraft input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct) =>
-        SaveDraft(input,null,db,audit,ct);
+        SaveDraft(input, null, db, audit, ct);
 
     internal static Task<IResult> UpdateDraft(Guid id, DraftChange change, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct) =>
-        change.Draft==null || id!=change.Draft.Id || string.IsNullOrWhiteSpace(change.Revision)
+        change.Draft == null || id != change.Draft.Id || string.IsNullOrWhiteSpace(change.Revision)
             ? Task.FromResult(Invalid("Невідома версія чернетки."))
-            : SaveDraft(change.Draft,change.Revision,db,audit,ct);
+            : SaveDraft(change.Draft, change.Revision, db, audit, ct);
 
-    private static async Task<IResult> SaveDraft(NewDraft input,string? revision,PoliValkoDbContext db,IAuditLog audit,CancellationToken ct)
+    internal static async Task<IResult> DeleteDraft(Guid id, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
+    {
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var invoice = (await db.Database.SqlQuery<NativeInvoice>($"""
+            SELECT id,status,kind,day,total,native_org_id AS org_id,native_store_id AS store_id
+            FROM accounting.documents
+            WHERE id={id} AND source_account='polivalko-native' AND native_partner_id IS NOT NULL
+              AND ((entity_type='invoice' AND kind IN ('in','out')) OR (entity_type='customerReturn' AND kind='customerReturn'))
+            FOR UPDATE
+            """).ToListAsync(ct)).SingleOrDefault();
+        if (invoice is null) return Results.NotFound();
+        if (invoice.Status != "draft")
+            return Results.Problem(detail: "Видалити можна лише чернетку.", statusCode: StatusCodes.Status409Conflict);
+        var hasOffer = await db.Database.SqlQuery<int>($"""
+            SELECT 1 AS "Value" FROM accounting.recommendation_offers WHERE invoice_id={id}
+            """).AnyAsync(ct);
+        if (hasOffer)
+            return Results.Problem(detail: "Чернетку прив’язано до резерву пропозиції. Спочатку зніміть резерв.", statusCode: StatusCodes.Status409Conflict);
+        await db.Database.ExecuteSqlAsync($"DELETE FROM accounting.sales_offer_shipments WHERE document_id={id}", ct);
+        await db.Database.ExecuteSqlAsync($"DELETE FROM accounting.product_document_lines WHERE document_id={id}", ct);
+        await db.Database.ExecuteSqlAsync($"DELETE FROM accounting.documents WHERE id={id}", ct);
+        audit.Record("accounting.draft_deleted", "AccountingDocument", id.ToString(), new { invoice.Kind, invoice.Total });
+        await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+        return Results.Ok(id);
+    }
+
+    private static async Task<IResult> SaveDraft(NewDraft input, string? revision, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
     {
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         var result = await SaveDraftInTransaction(input, revision, db, audit, ct);
@@ -215,22 +313,22 @@ internal static class AccountingEntry
         return result;
     }
 
-    internal static async Task<IResult> SaveDraftInTransaction(NewDraft input,string? revision,PoliValkoDbContext db,IAuditLog audit,CancellationToken ct)
+    internal static async Task<IResult> SaveDraftInTransaction(NewDraft input, string? revision, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
     {
-        if (input.Id == Guid.Empty || input.Kind is not ("in" or "out") || string.IsNullOrWhiteSpace(input.Number) ||
+        if (input.Id == Guid.Empty || input.Kind is not ("in" or "out" or "customerReturn") || string.IsNullOrWhiteSpace(input.Number) ||
             input.Number.Length > 80 || input.Day == default || input.Lines is not { Count: > 0 and <= 250 } lines ||
-            lines.Any(l => l == null || l.Quantity is <= 0 or > 1000000 || decimal.Round(l.Quantity,3) != l.Quantity ||
-                l.Price is < 0 or > 100000000 || decimal.Round(l.Price,2) != l.Price))
+            lines.Any(l => l == null || l.Quantity is <= 0 or > 1000000 || decimal.Round(l.Quantity, 3) != l.Quantity ||
+                l.Price is < 0 or > 100000000 || decimal.Round(l.Price, 2) != l.Price))
             return Invalid("Вкажіть номер, дату та від 1 до 250 позицій. Кількість — до тисячних, ціна — до копійки.");
         if (revision != null)
         {
             var offer = await RecommendationOfferWorkflow.ForInvoice(input.Id, db, ct);
             if (offer != null && (offer.Status != "reserved" || input.Kind != "out" || input.PartnerId != offer.PartnerId ||
                 lines.Count != 1 || lines[0] != new NewLine(offer.ProductId, offer.Quantity, offer.Price)))
-                return Results.Problem(detail:"Клієнт, товар, кількість і ціна мають відповідати погодженій пропозиції.",statusCode:409);
-            if (offer != null && await RecommendationOfferWorkflow.StockSource(offer.ProductId,db,ct) is { StoreId: not null } source &&
+                return Results.Problem(detail: "Клієнт, товар, кількість і ціна мають відповідати погодженій пропозиції.", statusCode: 409);
+            if (offer != null && await RecommendationOfferWorkflow.StockSource(offer.ProductId, db, ct) is { StoreId: not null } source &&
                 (source.OrganizationId.ToString() != input.OrganizationId || source.StoreId.ToString() != input.StoreId))
-                return Results.Problem(detail:"Виберіть організацію та склад, до яких прив’язано залишок товару.",statusCode:409);
+                return Results.Problem(detail: "Виберіть організацію та склад, до яких прив’язано залишок товару.", statusCode: 409);
         }
         var partner = await db.Database.SqlQuery<PartnerRow>($"""
             SELECT id,title,kind,source_account,source_id,NULL::text AS category,source_title,note,merged_into
@@ -248,39 +346,42 @@ internal static class AccountingEntry
         {
             product = new { id = l.ProductId, title = products[l.ProductId].Name, sku = products[l.ProductId].Sku },
             store = new { external_id = store.Id, title = store.Title },
-            quantity = l.Quantity, price = l.Price, total = decimal.Round(l.Quantity*l.Price, 2, MidpointRounding.AwayFromZero)
+            quantity = l.Quantity,
+            price = l.Price,
+            total = decimal.Round(l.Quantity * l.Price, 2, MidpointRounding.AwayFromZero)
         }).ToList();
         var total = positions.Sum(p => p.total);
+        var entityType = input.Kind == "customerReturn" ? "customerReturn" : "invoice";
         var request = JsonSerializer.Serialize(input);
         var details = JsonSerializer.Serialize(new { origin = "console", request = input, products = positions });
-        if (revision!=null)
+        if (revision != null)
         {
-            var updated=await db.Database.ExecuteSqlAsync($"""
+            var updated = await db.Database.ExecuteSqlAsync($"""
                 UPDATE accounting.documents SET number={input.Number.Trim()},day={input.Day},organization_id={org.Id},
                     organization={org.Title},store_ids=ARRAY[{store.Id}],partner_ref={partner.SourceId},partner_title={partner.Title},
                     total={total},details={details}::jsonb,native_partner_id={partner.Id},native_org_id={Guid.Parse(org.Id)},native_store_id={Guid.Parse(store.Id)}
                 WHERE id={input.Id} AND native_partner_id IS NOT NULL AND status='draft' AND kind={input.Kind}
                     AND md5((details->'request')::text)={revision}
-                """,ct);
-            if (updated==0) return Results.Problem(detail:"Чернетку вже змінили або провели. Оновіть картку.",statusCode:409);
-            await db.Database.ExecuteSqlAsync($"DELETE FROM accounting.product_document_lines WHERE document_id={input.Id}",ct);
+                """, ct);
+            if (updated == 0) return Results.Problem(detail: "Чернетку вже змінили або провели. Оновіть картку.", statusCode: 409);
+            await db.Database.ExecuteSqlAsync($"DELETE FROM accounting.product_document_lines WHERE document_id={input.Id}", ct);
             await db.Database.ExecuteSqlAsync($"""
                 INSERT INTO accounting.product_document_lines(document_id,position,source_account,product_ref)
                 SELECT {input.Id},n::int,'polivalko-native',p->'product'->>'id'
                 FROM jsonb_array_elements({details}::jsonb->'products') WITH ORDINALITY AS t(p,n)
-                """,ct);
-            audit.Record("accounting.draft_updated","AccountingDocument",input.Id.ToString(),new { input.Kind,input.PartnerId,total });
+                """, ct);
+            audit.Record("accounting.draft_updated", "AccountingDocument", input.Id.ToString(), new { input.Kind, input.PartnerId, total });
             await db.SaveChangesAsync(ct);
             return Results.Ok(input.Id);
         }
         var inserted = await db.Database.ExecuteSqlAsync($"""
             INSERT INTO accounting.documents(id,source_account,source_id,entity_type,kind,number,day,status,organization_id,
                 organization,store_ids,partner_ref,partner_title,currency,total,details,native_partner_id,native_org_id,native_store_id)
-            VALUES({input.Id},'polivalko-native',{input.Id.ToString()},'invoice',{input.Kind},{input.Number.Trim()},{input.Day},
+            VALUES({input.Id},'polivalko-native',{input.Id.ToString()},{entityType},{input.Kind},{input.Number.Trim()},{input.Day},
                 'draft',{org.Id},{org.Title},ARRAY[{store.Id}],{partner.SourceId},{partner.Title},'UAH',{total},{details}::jsonb,
                 {partner.Id},{Guid.Parse(org.Id)},{Guid.Parse(store.Id)})
             ON CONFLICT (id) DO NOTHING
-            """,ct);
+            """, ct);
         if (inserted == 0)
         {
             var matches = await db.Database.SqlQuery<int>($"""
@@ -288,10 +389,10 @@ internal static class AccountingEntry
                 """).AnyAsync(ct);
             return matches ? Results.Ok(input.Id) : Results.Conflict();
         }
-        audit.Record("accounting.draft_created","AccountingDocument",input.Id.ToString(),new { input.Kind, input.PartnerId, total });
+        audit.Record("accounting.draft_created", "AccountingDocument", input.Id.ToString(), new { input.Kind, input.PartnerId, total });
         await db.SaveChangesAsync(ct);
         return Results.Ok(input.Id);
     }
 
-    private static IResult Invalid(string message) => Results.ValidationProblem(new Dictionary<string,string[]> { ["register"] = [message] });
+    private static IResult Invalid(string message) => Results.ValidationProblem(new Dictionary<string, string[]> { ["register"] = [message] });
 }

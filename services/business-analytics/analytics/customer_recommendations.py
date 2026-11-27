@@ -237,6 +237,12 @@ _history_cache = None
 _lock = Lock()
 
 
+def clear_cache():
+    global _history_cache
+    with _lock:
+        _history_cache = None
+
+
 def customer_recommendations(today, days):
     global _history_cache
     with production() as conn:

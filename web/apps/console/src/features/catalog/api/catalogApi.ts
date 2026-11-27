@@ -11,9 +11,17 @@ export type ProductLabelRef = S['ConsoleProductLabelDto']
 
 export type ProductFill = 'missing-photo' | 'missing-description' | 'short-description' | 'missing-attributes' | 'missing-brand' | 'any-missing'
 
+type CatalogWarehouseStockMeta = {
+  reservedQuantity?: number
+  availableQuantity?: number
+  warehouseOrgId?: string | null
+  warehouseStoreId?: string | null
+  warehouseStoreTitle?: string | null
+}
+
 export type ProductsQuery = NonNullable<paths['/api/v1/console/catalog/products']['get']['parameters']['query']>
-export type ProductRow = S['ConsoleProductListItemDto']
-export type Product = S['ConsoleProductDto']
+export type ProductRow = S['ConsoleProductListItemDto'] & CatalogWarehouseStockMeta
+export type Product = S['ConsoleProductDto'] & CatalogWarehouseStockMeta
 export type ProductImage = S['ConsoleProductImageDto']
 export type ProductAttribute = S['ProductAttributeDto']
 export type UpdateProductRequest = S['UpdateProductRequest']

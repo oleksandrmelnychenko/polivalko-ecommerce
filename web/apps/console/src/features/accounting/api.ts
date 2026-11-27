@@ -1,5 +1,5 @@
 import type { components } from '@polivalko/shared/api/schema'
-export { read, save, useRegister, ACCOUNTING_DOCUMENT_CHANGED, type Page, type Partner } from '@/shared/api/accounting'
+export { read, remove, save, useRegister, ACCOUNTING_DOCUMENT_CHANGED, type Page, type Partner } from '@/shared/api/accounting'
 type S = components['schemas']
 export type Doc = S['DocumentRow']
 export type Card = S['DocumentCard']
@@ -13,16 +13,34 @@ export function currencyLabel(currency: string | null | undefined) {
 
 export function money(value: string | null, currency?: string | null) {
   if (value === null) return '—'
-  const [whole, fraction = ''] = value.split('.')
-  const formatted = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ',' + fraction.padEnd(2, '0')
-  return (
-    formatted + (currency ? ' ' + currencyLabel(currency) : '')
-  )
+  const trimmed = value.trim()
+  if (!trimmed) return '—'
+  const sign = trimmed.startsWith('-') ? '−' : ''
+  const unsigned = trimmed.replace(/^[+-]/, '')
+  const [wholeRaw, fractionRaw = ''] = unsigned.split('.')
+  const whole = (wholeRaw || '0').replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  const significant = fractionRaw.replace(/0+$/, '')
+  const fraction = significant.length <= 2 ? significant.padEnd(2, '0') : significant
+  return sign + whole + ',' + fraction + (currency ? ' ' + currencyLabel(currency) : '')
 }
+
+export function quantityText(value: string | null) {
+  if (value === null) return '—'
+  const trimmed = value.trim()
+  if (!trimmed) return '—'
+  const sign = trimmed.startsWith('-') ? '−' : ''
+  const unsigned = trimmed.replace(/^[+-]/, '')
+  const [wholeRaw, fractionRaw = ''] = unsigned.split('.')
+  const whole = (wholeRaw || '0').replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  const significant = fractionRaw.replace(/0+$/, '')
+  return sign + whole + (significant ? ',' + significant : '')
+}
+
 export const stockOperationNames: Record<string, string> = {
   income: 'Оприбуткування',
   writeOff: 'Списання',
   recount: 'Перерахунок',
+  transfer: 'Переміщення',
 }
 
 export const writeOffReasons: Record<string, string> = {

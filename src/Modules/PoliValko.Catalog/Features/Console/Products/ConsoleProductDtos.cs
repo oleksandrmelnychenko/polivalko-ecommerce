@@ -19,7 +19,12 @@ public sealed record ConsoleProductListItemDto(
     string? ImageUrl,
     bool HasDescription,
     DateTimeOffset UpdatedAt,
-    IReadOnlyList<ConsoleProductLabelDto> Labels);
+    IReadOnlyList<ConsoleProductLabelDto> Labels,
+    decimal ReservedQuantity = 0m,
+    decimal AvailableQuantity = 0m,
+    Guid? WarehouseOrgId = null,
+    Guid? WarehouseStoreId = null,
+    string? WarehouseStoreTitle = null);
 
 public sealed record ConsoleProductLabelDto(Guid Id, string Name, LabelTone Tone, LabelKind Kind);
 
@@ -85,7 +90,12 @@ public sealed record ConsoleProductDto(
     IReadOnlyList<Guid> LabelIds,
     IReadOnlyList<ConsoleProductLabelDto> Labels,
     DateTimeOffset CreatedAt,
-    bool IsArchived = false);
+    bool IsArchived = false,
+    decimal ReservedQuantity = 0m,
+    decimal AvailableQuantity = 0m,
+    Guid? WarehouseOrgId = null,
+    Guid? WarehouseStoreId = null,
+    string? WarehouseStoreTitle = null);
 
 public sealed record UpdateProductRequest(
     string? DisplayName,

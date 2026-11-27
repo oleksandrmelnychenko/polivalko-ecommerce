@@ -60,9 +60,17 @@ class ProductAnalyticsReportTests(unittest.TestCase):
         self.assertEqual(report["metrics"]["previousSoldUnits"], 2)
         self.assertEqual(report["trend"][-1]["to"], end.isoformat())
         product = report["selectedProduct"]
-        self.assertEqual(product["stockDays"], Decimal("4.7"))
+        self.assertEqual(product["stockDays"], Decimal("5.6"))
         self.assertEqual(product["abcClass"], "A")
         self.assertIn(("replenish", PRODUCT_ID), [(item["kind"], item["productKey"]) for item in report["insights"]])
+
+    def test_stock_days_is_none_when_returns_offset_all_recent_sales(self):
+        end = date(2026, 10, 31)
+        start = end - timedelta(days=29)
+        rows = [*(sale(end - timedelta(days=day), units=2, value=20) for day in (9, 8, 7)),
+                sale(end - timedelta(days=5), units=0, value=0, returned=6, refunds=60)]
+        report = build_report(payload("web", start, end, rows, start, end))
+        self.assertIsNone(report["selectedProduct"]["stockDays"])
 
     def test_archive_preserves_fractional_values_and_withholds_models_if_documents_are_unreadable(self):
         end = date(2026, 10, 31)

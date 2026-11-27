@@ -144,12 +144,18 @@ function ProductTile({ row, selected, onToggle }: ProductTileProps) {
         </span>
         <div className="catalog-tile-price">
           <Money value={row.price} />
-          {row.stock > LOW_STOCK ? (
+          {(row.availableQuantity ?? row.stock) > LOW_STOCK && !(row.reservedQuantity && row.reservedQuantity > 0) && row.warehouseStoreId == null ? (
             <span className="catalog-tile-stock">
-              Залишок <NumberValue value={row.stock} />
+              Залишок <NumberValue value={row.availableQuantity ?? row.stock} />
             </span>
           ) : (
-            <StockText stock={row.stock} />
+            <StockText
+              stock={row.stock}
+              reserved={row.reservedQuantity}
+              available={row.availableQuantity}
+              warehouseStoreTitle={row.warehouseStoreTitle}
+              warehouseLinked={row.warehouseStoreId != null}
+            />
           )}
         </div>
         <div className="catalog-tile-foot">

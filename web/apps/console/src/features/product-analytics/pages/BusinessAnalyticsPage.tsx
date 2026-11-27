@@ -106,7 +106,8 @@ export function BusinessAnalyticsPage() {
   const [docPage, setDocPage] = useState(1)
   const reportTabs = useRef<HTMLDivElement>(null)
   const { can } = usePermissions()
-  const tab = params.get('tab') ?? 'overview'
+  const rawTab = params.get('tab') ?? 'overview'
+  const tab = rawTab === 'turnover-forecast' ? 'forecast' : rawTab
   useEffect(() => {
     const nav = reportTabs.current
     if (!nav) return
@@ -123,7 +124,7 @@ export function BusinessAnalyticsPage() {
     observer.observe(nav)
     return () => observer.disconnect()
   }, [tab])
-  const usesReport = !['invoices', 'turnover-forecast', 'markets', 'winter', 'offers'].includes(tab)
+  const usesReport = !['invoices', 'forecast', 'markets', 'winter', 'offers'].includes(tab)
   const period = new URLSearchParams(params)
   for (const name of ['tab', 'kind', 'page', 'year', 'horizon']) period.delete(name)
   const reportParams = new URLSearchParams(period)
@@ -138,16 +139,16 @@ export function BusinessAnalyticsPage() {
   const reportKey = reportParams.toString()
   const report = useApiQuery(reportKey + updated, () => readBusiness<BusinessReport>('report', reportKey), {
     keepPrevious: true,
-    enabled: usesReport && tab !== 'forecast',
+    enabled: usesReport && tab !== 'demand',
   })
   const forecastKey = forecastParams.toString()
   const forecast = useApiQuery(forecastKey + updated, () => readBusiness<Projection>('forecast', forecastKey), {
-    enabled: tab === 'forecast',
+    enabled: tab === 'demand',
     keepPrevious: true,
   })
   const docKey = docParams.toString()
   const docs = useApiQuery(docKey + updated, () => readBusiness<Paged<DocumentRow>>('documents', docKey), {
-    enabled: showDocs && can(PermissionKeys.Accounting.View) && tab !== 'forecast' && usesReport,
+    enabled: showDocs && can(PermissionKeys.Accounting.View) && tab !== 'demand' && usesReport,
   })
   const reloadStatus = status.reload
   useEffect(() => {
@@ -166,8 +167,8 @@ export function BusinessAnalyticsPage() {
   const reportFailed = report.status === 'error' || report.status === 'forbidden'
   const r = reportFailed ? undefined : report.data
   const f = forecast.data
-  const view = tab === 'forecast' ? f : r
-  const query = tab === 'forecast' ? forecast : report
+  const view = tab === 'demand' ? f : r
+  const query = tab === 'demand' ? forecast : report
   const label = (key: 'store' | 'org' | 'category', id: string) =>
     view?.options?.[key].find((x) => x.value === id)?.label ?? id
   const changePage = (n: number) => update({ page: String(n) })
@@ -177,7 +178,7 @@ export function BusinessAnalyticsPage() {
       await writeBusiness('refresh')
       setMessage('Запит на звірку прийнято')
       reloadStatus()
-      if (tab === 'forecast') forecast.reload()
+      if (tab === 'demand') forecast.reload()
       else report.reload()
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Помилка оновлення')
@@ -202,7 +203,7 @@ export function BusinessAnalyticsPage() {
   )
   return (
     <>
-      <PageHeader title={title} actions={usesReport && (
+      <PageHeader title={title} actions={usesReport && can(PermissionKeys.Accounting.Edit) && (
         <Button radius="xl" variant="default" leftSection={<IconRefresh size={16} stroke={1.7} />}
           disabled={status.data?.state === 'running' || status.data?.state === 'queued'} onClick={refresh}>
           Звірити з виробничою БД
@@ -223,8 +224,8 @@ export function BusinessAnalyticsPage() {
                 ...(can(PermissionKeys.Accounting.View) ? [{ value: 'winter', label: 'Зимові продажі' },
                   { value: 'offers', label: 'Пропозиції' }] : []),
                 { value: 'assortment', label: 'Товари й сезонність' },
-                { value: 'turnover-forecast', label: 'Прогноз обороту' },
-                { value: 'forecast', label: 'Попит і закупівлі' },
+                { value: 'forecast', label: 'Прогноз обороту' },
+                { value: 'demand', label: 'Попит і закупівлі' },
               ]}
             />
           </div>
@@ -232,14 +233,14 @@ export function BusinessAnalyticsPage() {
             ? <AnnualInvoices /> : <p>Для звірки потрібен доступ до реєстру накладних.</p>)}
           {tab === 'winter' && (can(PermissionKeys.Accounting.View) ? <WinterSales /> : <p>Потрібен доступ до обліку.</p>)}
           {tab === 'offers' && (can(PermissionKeys.Accounting.View) ? <SalesOffers /> : <p>Потрібен доступ до обліку.</p>)}
-          {tab === 'turnover-forecast' && <TurnoverForecast />}
+          {tab === 'forecast' && <TurnoverForecast />}
           {tab === 'markets' && (can(PermissionKeys.Accounting.View)
             ? <BuyerMarkets /> : <p>Для перегляду географії та продажів контрагентів потрібен доступ до обліку.</p>)}
           {usesReport && !assortment && runStatus}
           {!view && usesReport && (
             <section className="pa-card ba-report-feedback">
               <div role={query.isFetching ? 'status' : 'alert'}>
-                {query.isFetching ? <><Loader size={16} />{tab === 'forecast' ? 'Навчаємо моделі за виробничими документами…' : 'Завантаження аналітики…'}</>
+                {query.isFetching ? <><Loader size={16} />{tab === 'demand' ? 'Навчаємо моделі за виробничими документами…' : 'Завантаження аналітики…'}</>
                   : <MetricLabel icon={IconFileInvoice}>{query.problem?.title ?? 'Не вдалося завантажити виробничий звіт'}</MetricLabel>}
               </div>
               {!query.isFetching && <Button variant="default" size="xs" leftSection={<IconRefresh size={15} />}
@@ -255,7 +256,7 @@ export function BusinessAnalyticsPage() {
                   {['from', 'to', 'org', 'store', 'category', 'product', 'search'].some(key => params.has(key)) &&
                     <Button size="xs" variant="default" onClick={() => update({ from: '', to: '', org: '', store: '', category: '', product: '', search: '' })}>Скинути фільтри</Button>}
                 </div>}
-                {tab !== 'forecast' && r && (
+                {tab !== 'demand' && r && (
                   <>
                     <label>
                       Рік
@@ -419,7 +420,7 @@ export function BusinessAnalyticsPage() {
                   selectProduct={product => update({ product })} pager={<Pager {...r.products} change={changePage} />}
                   search={<ProductSearch value={params.get('search') ?? ''} onSearch={search => update({ search })} placeholder="Назва або артикул…" />} />
               )}
-              {tab === 'forecast' && f && (
+              {tab === 'demand' && f && (
                 <DemandForecastReport
                   forecast={f}
                   kind={params.get('kind') ?? 'sku'}
@@ -430,7 +431,7 @@ export function BusinessAnalyticsPage() {
                   update={update}
                 />
               )}
-              {tab !== 'forecast' && can(PermissionKeys.Accounting.View) && (
+              {tab !== 'demand' && can(PermissionKeys.Accounting.View) && (
                 <AnalyticsCard title={<MetricLabel icon={IconFileInvoice}>Звірка з документами</MetricLabel>} actions={
                   <Button variant="default" aria-expanded={showDocs} onClick={() => setShowDocs(!showDocs)}>
                     {showDocs ? 'Згорнути документи' : 'Показати документи'}

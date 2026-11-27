@@ -3,7 +3,8 @@ import unittest
 from datetime import date
 from unittest.mock import patch
 
-from analytics.offer_statistics import rank, season_window
+from analytics.invoices import BODY_ACTIVE, BODY_IN_HRYVNIA
+from analytics.offer_statistics import HISTORY, SALES, rank, season_window
 from analytics.offers import generate
 
 
@@ -63,3 +64,25 @@ class OfferStatisticsTests(unittest.TestCase):
             status, draft = generate(PARTNER, "general", "openai", DAY)
         self.assertEqual((status, draft["mode"], draft["basis"], draft["items"]),
                          (200, "provider-unavailable", "statistics", items))
+
+    def test_sql_checks_body_subtracts_returns_and_rank_matches_case_insensitively(self):
+        self.assertIn(BODY_ACTIVE, SALES)
+        self.assertIn(BODY_IN_HRYVNIA, SALES)
+        self.assertIn("customerReturn", SALES)
+        self.assertIn("THEN -1 ELSE 1 END AS sign", HISTORY)
+        self.assertIn("lower(item#>>'{product,id}')", HISTORY)
+        prod_upper = dict(id="P-1", navkolo_id="DNTrade-Code:XYZ", name="Товар 1", category="Полив")
+        prod_fallback = dict(id="P-2", navkolo_id="EXT-UUID-2", name="Товар 2", category="Полив")
+        prod_returned = dict(id="P-3", navkolo_id="dntrade-code:ret", name="Товар 3", category="Полив")
+        basis, items = rank(
+            [prod_upper, prod_fallback, prod_returned],
+            {
+                "dntrade-code:xyz": history(purchases=2, weight=1.0),
+                "ext-uuid-2": history(purchases=1, weight=0.4),
+                "dntrade-code:ret": history(purchases=0, weight=0.9),
+            },
+            DAY,
+        )
+        self.assertEqual(basis, "statistics")
+        self.assertEqual([i["id"] for i in items], ["P-1", "P-2"])
+        self.assertEqual(items[0]["purchases"], 2)

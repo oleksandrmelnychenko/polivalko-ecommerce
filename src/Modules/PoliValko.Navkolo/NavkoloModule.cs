@@ -50,6 +50,7 @@ public static class NavkoloModule
         services.AddOutboxHandler<OrderCancellationRequested, CancelOrderInNavkolo>();
 
         services.Replace(ServiceDescriptor.Scoped<ICatalogFreshness, NavkoloFreshness>());
+        services.Replace(ServiceDescriptor.Scoped<IExternalOrderSyncStatus, NavkoloOrderSyncStatus>());
 
         return services;
     }

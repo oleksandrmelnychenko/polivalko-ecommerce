@@ -5,8 +5,8 @@ export function nextReportParams(current: URLSearchParams, tab: string, changes:
   const p = new URLSearchParams(current)
   if (!('page' in changes)) p.delete('page')
   if (changes.tab && changes.tab !== tab) {
-    for (const key of ['season', 'week', 'partner']) p.delete(key)
-    if (tab === 'markets') for (const name of ['region', 'source', 'metric', 'carrier']) p.delete(name)
+    for (const key of ['season', 'week', 'partner', 'kind']) p.delete(key)
+    if (tab === 'markets') for (const name of ['region', 'source', 'metric', 'carrier', 'partnerSearch', 'partnerPage']) p.delete(name)
     // The year passes only between the two yearly reports. Kept through another section, it would
     // come back later and open a report on an old year instead of the newest one.
     if (!YEARLY.includes(tab) || !YEARLY.includes(changes.tab)) p.delete('year')

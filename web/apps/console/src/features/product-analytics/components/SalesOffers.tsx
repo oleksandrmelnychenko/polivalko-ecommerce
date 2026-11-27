@@ -60,7 +60,7 @@ function Compose({ initialPartner, opened, onClose, onIssued }: { initialPartner
       const result = await withCsrf(async headers => {
         const response = await apiFetch('/api/v1/console/business-analytics/offer-draft?' +
           new URLSearchParams({ partner, focus, method }), { method: 'POST', headers })
-        const payload = await response.json()
+        const payload = await response.json().catch(() => undefined)
         return response.ok ? { data: payload as Draft } : { error: payload }
       })
       if (!result.data) throw new Error(result.error?.title ?? 'Помилка генерації')

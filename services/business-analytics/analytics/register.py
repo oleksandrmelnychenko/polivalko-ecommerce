@@ -24,6 +24,76 @@ KINDS = {
     "receipt": {"6", "cash", "receipt", "salereceipt", "salebyreceipt", "продажпочеку", "продажапочеку"},
     "return": {"7", "back", "return", "customerreturn", "поверненнятовару"},
 }
+UNIT_LABELS = {
+    "2009": "шт",
+    "796": "шт",
+    "2454": "шт",
+    "0301": "кг",
+    "301": "кг",
+    "0304": "г",
+    "304": "г",
+    "0305": "мг",
+    "305": "мг",
+    "0306": "т",
+    "306": "т",
+    "0138": "л",
+    "138": "л",
+    "0166": "л",
+    "166": "л",
+    "112": "л",
+    "0168": "мл",
+    "168": "мл",
+    "0003": "мм",
+    "003": "мм",
+    "0004": "см",
+    "004": "см",
+    "0006": "м",
+    "006": "м",
+    "0008": "км",
+    "008": "км",
+    "0055": "м²",
+    "055": "м²",
+    "55": "м²",
+    "0113": "м³",
+    "113": "м³",
+    "2006": "уп",
+    "2007": "компл",
+    "2008": "пара",
+    "2010": "рул",
+    "2011": "набір",
+    "2012": "пачка",
+    "2013": "міш",
+    "2014": "короб",
+    "2015": "бухт",
+    "2016": "лист",
+    "2017": "банка",
+    "2018": "флак",
+    "2019": "каністр",
+    "2020": "відро",
+    "метр": "м",
+    "м. п": "м пог",
+    "м.п": "м пог",
+    "мп": "м пог",
+    "кв.м": "м²",
+    "кв м": "м²",
+    "куб.м": "м³",
+    "куб м": "м³",
+    "тони": "т",
+    "тонна": "т",
+    "штук": "шт",
+    "штука": "шт",
+    "упак": "уп",
+    "упаковка": "уп",
+    "комплект": "компл",
+    "літр": "л",
+    "кілограм": "кг",
+    "грам": "г",
+}
+
+
+def unit_label(value):
+    value = str(value or "").strip().lower().rstrip(".")
+    return UNIT_LABELS.get(value, value)
 
 
 def identifier(value):
@@ -91,7 +161,15 @@ def apply_inventory_cost(facts, events):
 
 def kind_of(doc):
     if doc["account"] == "polivalko-native":
-        return "sale" if doc["kind"] == "out" and doc["status"] == "posted" else None
+        if doc["status"] != "posted":
+            return None
+        if doc["kind"] == "out":
+            return "sale"
+        if (doc["kind"] in ("back", "return", "customerReturn")
+                or doc.get("entity_type") == "customerReturn"
+                or doc.get("entity") == "customerReturn"):
+            return "return"
+        return None
     values = [
         "".join(ch for ch in identifier(doc.get(k)) if ch.isalnum()) for k in ("code", "kind", "raw_kind")
     ]
@@ -179,8 +257,8 @@ def reconcile(documents, website, catalog, refs, as_of):
                 titles.setdefault(store, line["store"]["title"])
             unit = p.get("unit") or line.get("unit")
             if isinstance(unit, dict):
-                unit = unit.get("title") or unit.get("name")
-            unit = str(unit or meta.get("unit") or "").strip().lower().rstrip(".")
+                unit = unit.get("title") or unit.get("name") or unit.get("external_id") or unit.get("id")
+            unit = unit_label(unit or meta.get("unit") or "")
             cost = number(line.get("cogs_total"))
             rows.append(
                 {
@@ -311,7 +389,7 @@ def reconcile(documents, website, catalog, refs, as_of):
                 "category": meta.get("category") or UNKNOWN,
                 "org": w["org"] or UNKNOWN,
                 "store": w["store"] or UNKNOWN,
-                "unit": (meta.get("unit") or "").rstrip("."),
+                "unit": unit_label(meta.get("unit") or ""),
                 "qty": qty - overlap,
                 "original": w["order_id"] if w["refund"] else None,
                 "amount": w["total"] * (qty - overlap) / qty,

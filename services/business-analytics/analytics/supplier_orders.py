@@ -3,7 +3,7 @@ from collections import Counter, defaultdict
 from datetime import datetime
 from decimal import Decimal
 
-from .register import KYIV, identifier, number
+from .register import KYIV, identifier, number, unit_label
 
 
 # 17 is a supplier order; 18 is a customer order. Use the live archive body because
@@ -49,12 +49,6 @@ WHERE source_account='valko-dntrade' AND entity_type='sourceReport' AND source_d
   AND payload::jsonb#>>'{raw,sourceView}'='/invoices/order'
 ORDER BY source_day DESC, imported_at DESC, id DESC LIMIT 1
 """
-
-def unit_label(value):
-    value = str(value or "").strip().lower().rstrip(".")
-    return {"2009": "шт", "301": "кг", "0301": "кг", "138": "л", "0138": "л",
-            "метр": "м", "м. п": "м пог", "кв.м": "м²", "тони": "т"}.get(value, value)
-
 
 def delivery_day(value):
     if not value:

@@ -61,7 +61,23 @@ export const productsColumns: DataTableColumn<ProductRow>[] = [
   { id: 'name', header: 'Товар', width: 285, fill: true, cell: (row) => <ProductIdentity row={row} /> },
   skuColumn,
   { id: 'price', header: 'Ціна', width: 120, align: 'right', numeric: true, className: 'catalog-cell-strong', cell: (row) => <Money value={row.price} /> },
-  { id: 'stock', header: 'Залишок', width: 108, align: 'right', numeric: true, className: 'catalog-cell-strong', cell: (row) => <StockText stock={row.stock} /> },
+  {
+    id: 'stock',
+    header: 'Залишок',
+    width: 152,
+    align: 'right',
+    numeric: true,
+    className: 'catalog-cell-strong',
+    cell: (row) => (
+      <StockText
+        stock={row.stock}
+        reserved={row.reservedQuantity}
+        available={row.availableQuantity}
+        warehouseStoreTitle={row.warehouseStoreTitle}
+        warehouseLinked={row.warehouseStoreId != null}
+      />
+    ),
+  },
   { id: 'category', header: 'Категорія та мітки', width: 174, cell: (row) => <CategoryAndLabels row={row} /> },
   { id: 'visible', header: 'На сайті', width: 140, cell: (row) => <SiteLink row={row} /> },
   { id: 'updated', header: 'Змінено', width: 142, cell: (row) => <UpdatedAt row={row} /> },
@@ -76,7 +92,7 @@ export const mobileProductsColumns: DataTableColumn<ProductRow>[] = [
         <CategoryAndLabels row={row} />
         <dl className="catalog-row-figures">
           <div><dt>Ціна</dt><dd><Money value={row.price} /></dd></div>
-          <div><dt>Залишок</dt><dd><StockText stock={row.stock} /></dd></div>
+          <div><dt>Залишок</dt><dd><StockText stock={row.stock} reserved={row.reservedQuantity} available={row.availableQuantity} warehouseStoreTitle={row.warehouseStoreTitle} warehouseLinked={row.warehouseStoreId != null} /></dd></div>
         </dl>
         <div className="catalog-row-foot"><SiteLink row={row} /><UpdatedAt row={row} /></div>
       </div>

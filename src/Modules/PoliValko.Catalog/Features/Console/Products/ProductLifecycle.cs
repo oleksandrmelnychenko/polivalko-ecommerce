@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using PoliValko.Catalog.Contracts;
 using PoliValko.Catalog.Domain;
 using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Storefront;
+using PoliValko.Infrastructure.Web;
 using PoliValko.SharedKernel;
 
 namespace PoliValko.Catalog.Features.Console.Products;
@@ -52,14 +54,49 @@ internal static class ProductLifecycle
     }
 
     public static async Task<Results<NoContent, ProblemHttpResult>> SetArchiveAsync(Guid id, SetProductArchiveRequest input,
-        PoliValkoDbContext db, IAuditLog audit, IStorefrontCache storefront, TimeProvider time, CancellationToken ct)
+        PoliValkoDbContext db, ICatalogReservations reservations, IAuditLog audit, IStorefrontCache storefront, TimeProvider time, CancellationToken ct)
     {
         var now = time.GetUtcNow();
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        if (input.Archived)
+        {
+            await reservations.LockAsync([id], ct);
+        }
+
         var product = await db.Set<Product>().FromSql($"SELECT * FROM catalog.products WHERE id = {id} FOR UPDATE").SingleOrDefaultAsync(ct);
         if (product is null) return ConsoleProductQueries.ProductNotFound();
         if (product.IsArchived != input.Archived)
         {
+            if (input.Archived)
+            {
+                var reserved = await db.Set<ProductStock>().AsNoTracking()
+                    .Where(s => s.ProductId == id)
+                    .Select(s => s.ReservedQuantity)
+                    .SingleOrDefaultAsync(ct);
+                if (reserved > 0m)
+                {
+                    return Problems.Create(
+                        StatusCodes.Status409Conflict,
+                        "catalog.product_archive_blocked",
+                        "Не можна архівувати товар",
+                        "Товар має активні резерви в замовленнях. Завершіть або скасуйте їх перед архівацією.");
+                }
+
+                var warehouseQuantity = await db.Database.SqlQuery<decimal>($"""
+                    SELECT COALESCE(SUM(quantity), 0) AS "Value"
+                    FROM accounting.warehouse_stock
+                    WHERE product_id = {id}
+                    """).SingleAsync(ct);
+                if (warehouseQuantity > 0m)
+                {
+                    return Problems.Create(
+                        StatusCodes.Status409Conflict,
+                        "catalog.product_archive_blocked",
+                        "Не можна архівувати товар",
+                        "На складах обліковується додатний залишок цього товару. Спишіть залишки перед архівацією.");
+                }
+            }
+
             product.IsArchived = input.Archived;
             product.IsVisible = false;
             product.UpdatedAt = now;

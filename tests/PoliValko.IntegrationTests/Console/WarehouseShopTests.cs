@@ -88,4 +88,52 @@ public sealed class WarehouseShopTests(ApiFactory api)
         (await Stock()).ShopQuantity.ShouldBe(2.5m);
         (await shop.ReadAsync<ProductDetailsDto>(itemUrl)).InStock.ShouldBeTrue();
     }
+
+    [Fact]
+    public async Task Bulk_connect_and_disconnect_manage_shop_warehouse_sources_cleanly()
+    {
+        using var admin = await Staff.AdminAsync(api);
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var org = await (await admin.PostAsJsonAsync(Root + "/references/organizations",
+            new ReferenceRequest("Bulk Org " + suffix), Ct)).ReadAsync<RegisterReference>();
+        var store = await (await admin.PostAsJsonAsync(Root + "/references/stores",
+            new ReferenceRequest("Bulk Store " + suffix), Ct)).ReadAsync<RegisterReference>();
+        var orgId = Guid.Parse(org.Id);
+        var storeId = Guid.Parse(store.Id);
+        var day = new DateOnly(2026, 11, 23);
+
+        var p1 = await api.AddProductAsync("ruchnyi-instrument", "Товар Bulk 1 " + suffix, 100m, stock: 1);
+        var p2 = await api.AddProductAsync("ruchnyi-instrument", "Товар Bulk 2 " + suffix, 100m, stock: 1);
+        (await admin.PostAsJsonAsync(Root + "/warehouse/openings",
+            new StockOpening(Guid.NewGuid(), orgId, storeId, p1.Id, 7m, day, "Оп 1"), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await admin.PostAsJsonAsync(Root + "/warehouse/openings",
+            new StockOpening(Guid.NewGuid(), orgId, storeId, p2.Id, 4m, day, "Оп 2"), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var bulk = await (await admin.PostAsJsonAsync(Root + "/warehouse/shop-source/bulk",
+            new ConnectWarehouseBulk(orgId, storeId), Ct)).ReadAsync<BulkWarehouseConnection>();
+        bulk.Connected.ShouldBe(2);
+        bulk.Skipped.ShouldBe(0);
+        bulk.Conflicts.ShouldBeEmpty();
+
+        // Second call skips already connected items.
+        var again = await (await admin.PostAsJsonAsync(Root + "/warehouse/shop-source/bulk",
+            new ConnectWarehouseBulk(orgId, storeId), Ct)).ReadAsync<BulkWarehouseConnection>();
+        again.Connected.ShouldBe(0);
+        again.Skipped.ShouldBe(2);
+
+        var balances = (await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root + "/warehouse?store=" + storeId)).Items;
+        balances.Single(b => b.ProductId == p1.Id).ShouldSatisfyAllConditions(
+            b => b.SourceStoreId.ShouldBe(storeId),
+            b => b.ShopQuantity.ShouldBe(7m));
+
+        // Disconnect p1 succeeds and clears sourceStoreId.
+        (await admin.DeleteAsync(Root + "/warehouse/shop-source/" + p1.Id, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var afterDisconnect = (await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root + "/warehouse?store=" + storeId)).Items;
+        afterDisconnect.Single(b => b.ProductId == p1.Id).SourceStoreId.ShouldBeNull();
+
+        // Reserve p2 via storefront checkout -> disconnect must return 409 Conflict.
+        var body = CheckoutApiTests.Order(p2.Id, 1, "100.00", CheckoutApiTests.UniquePhone());
+        (await new CheckoutApiTests(api).PostOrderAsync(body, Guid.NewGuid().ToString())).StatusCode.ShouldBe(HttpStatusCode.Created);
+        (await admin.DeleteAsync(Root + "/warehouse/shop-source/" + p2.Id, Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
 }

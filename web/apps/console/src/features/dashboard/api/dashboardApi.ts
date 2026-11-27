@@ -30,8 +30,8 @@ type ProfitReport = { available: false } | { available: true; start: string; thr
 export const getProductProfit = (params: URLSearchParams) =>
   readBusiness<ProfitReport>('documents', 'analysis=product-profit&' + params)
 
-export const getDocumentSales = (days: number) =>
-  readBusiness<DocumentSales>('documents', 'analysis=dashboard&days=' + days)
+export const getDocumentSales = (days: number, refresh = false) =>
+  readBusiness<DocumentSales>('documents', 'analysis=dashboard&days=' + days + (refresh ? '&refresh=1' : ''))
 
 export type SupplierDelivery = {
   id: string; number: string | null; day: string; eta: string | null; unit: string

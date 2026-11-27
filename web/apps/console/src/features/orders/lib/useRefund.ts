@@ -14,6 +14,7 @@ type Attempt = { key: string; payload: string }
 export function useRefund(order: ConsoleOrder, onChange: (order: ConsoleOrder) => void, onSynced: (order: ConsoleOrder) => void) {
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [reason, setReason] = useState('')
+  const [returnToStock, setReturnToStock] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const attempt = useRef<Attempt | null>(null)
@@ -31,6 +32,7 @@ export function useRefund(order: ConsoleOrder, onChange: (order: ConsoleOrder) =
   function reset() {
     setQuantities({})
     setReason('')
+    setReturnToStock(true)
     setError(null)
   }
 
@@ -55,7 +57,7 @@ export function useRefund(order: ConsoleOrder, onChange: (order: ConsoleOrder) =
       .filter(([, quantity]) => quantity > 0)
       .map(([productId, quantity]) => ({ productId, quantity }))
       .sort((a, b) => a.productId.localeCompare(b.productId))
-    const body = { lines, reason: reason.trim() }
+    const body = { lines, reason: reason.trim(), returnToStock }
     const payload = JSON.stringify(body)
     try {
       if (unconfirmed.current && attempt.current?.payload !== payload) {
@@ -75,6 +77,7 @@ export function useRefund(order: ConsoleOrder, onChange: (order: ConsoleOrder) =
         attempt.current = null
         setQuantities({})
         setReason('')
+        setReturnToStock(true)
         onChange(result.data)
         notifySummaryStale()
       } else {
@@ -95,7 +98,7 @@ export function useRefund(order: ConsoleOrder, onChange: (order: ConsoleOrder) =
     }
   }
 
-  return { quantities, setQuantity, reason, setReason, busy, error, refundable, amount, canSubmit, submit, reset }
+  return { quantities, setQuantity, reason, setReason, returnToStock, setReturnToStock, busy, error, refundable, amount, canSubmit, submit, reset }
 }
 
 export type OrderRefundState = ReturnType<typeof useRefund>

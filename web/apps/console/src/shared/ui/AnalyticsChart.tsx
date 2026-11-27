@@ -27,9 +27,7 @@ export function AnalyticsChart({ label, points, format, variant, baseline }: Pro
   const [element, setElement] = useState<HTMLDivElement | null>(null)
   const [active, setActive] = useState<number | null>(null)
   const width = useElementClientWidth(element)
-  const plotWidth = Math.max(0, width - PAD.left - PAD.right)
   const bottom = HEIGHT - PAD.bottom
-  const band = plotWidth / Math.max(1, points.length)
   const paired = variant === 'bars' && points.some(point => point.previous !== undefined)
   const values = points.flatMap((point) => [point.low, point.value, point.high, point.previous].filter((value): value is number => value != null))
   const dataMin = Math.min(0, ...values)
@@ -38,10 +36,14 @@ export function AnalyticsChart({ label, points, format, variant, baseline }: Pro
   const min = Math.floor(dataMin / tickSize) * tickSize
   const max = Math.ceil(dataMax / tickSize) * tickSize || tickSize
   const span = max - min
-  const x = (i: number) => PAD.left + (i + 0.5) * band
+  const ticks = Array.from({ length: Math.round(span / tickSize) + 1 }, (_, i) => min + i * tickSize)
+  const tickLabels = ticks.map((tick) => compact.format(tick))
+  const padLeft = Math.max(66, Math.ceil(Math.max(3, ...tickLabels.map((text) => text.length)) * 7.2) + 14)
+  const plotWidth = Math.max(0, width - padLeft - PAD.right)
+  const band = plotWidth / Math.max(1, points.length)
+  const x = (i: number) => padLeft + (i + 0.5) * band
   const y = (value: number) => bottom - (value - min) * (bottom - PAD.top) / span
   const zero = y(0)
-  const ticks = Array.from({ length: Math.round(span / tickSize) + 1 }, (_, i) => min + i * tickSize)
   const labelEvery = Math.max(1, Math.ceil(points.length / Math.max(1, Math.floor(plotWidth / 54))))
   const point = active === null ? undefined : points[active]
 
@@ -92,14 +94,14 @@ export function AnalyticsChart({ label, points, format, variant, baseline }: Pro
           onPointerLeave={() => setActive(null)}
         >
           <g aria-hidden="true">
-            {ticks.map((tick) => (
+            {ticks.map((tick, tickIndex) => (
               <g key={tick}>
-                <line className="pa-chart-grid" x1={PAD.left} x2={width - PAD.right} y1={y(tick)} y2={y(tick)} />
-                <text className="pa-chart-axis" x={PAD.left - 7} y={y(tick)} dy="0.32em" textAnchor="end">{compact.format(tick)}</text>
+                <line className="pa-chart-grid" x1={padLeft} x2={width - PAD.right} y1={y(tick)} y2={y(tick)} />
+                <text className="pa-chart-axis" x={padLeft - 8} y={y(tick)} dy="0.32em" textAnchor="end">{tickLabels[tickIndex]}</text>
               </g>
             ))}
             {baseline !== undefined ? (
-              <line className="pa-chart-reference" x1={PAD.left} x2={width - PAD.right} y1={y(baseline)} y2={y(baseline)} />
+              <line className="pa-chart-reference" x1={padLeft} x2={width - PAD.right} y1={y(baseline)} y2={y(baseline)} />
             ) : null}
             {variant === 'forecast' && upper.length > 1 && upper.length === lower.length ? (
               <polygon className="pa-chart-band" points={[...upper, ...lower.reverse()].join(' ')} />

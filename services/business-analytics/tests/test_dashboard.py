@@ -68,3 +68,30 @@ class SalesPeriodTests(TestCase):
         future = dict(doc, id="future", ref="future", day=end+timedelta(days=1))
         result = compare(2026, [doc, future], [doc, future], end)["total"]
         self.assertEqual((result["documents"], result["lineDocuments"], result["net"], result["lineNet"]), (1, 1, 12, 12))
+
+    def test_dashboard_merges_dntrade_and_native_rows_for_same_canonical_catalog_product(self):
+        end = date(2026, 1, 10)
+        catalog = [dict(id="cat-1", external="dntrade-code:42", sku="SKU-42", name="Шланг")]
+        dntrade_sale = dict(entity_type="invoice", account="valko-dntrade", kind="out", status="active",
+                            currency="UAH", day=end, total=Decimal(200),
+                            lines=[dict(product=dict(code="42", id="ext-42", title="Шланг DN"),
+                                        quantity=2, total=200, cogs_total=120, unit="2009")])
+        native_sale = dict(entity_type="invoice", account="polivalko-native", kind="out", status="posted",
+                           currency="UAH", day=end, total=Decimal(300),
+                           lines=[dict(product=dict(id="cat-1", title="Шланг"),
+                                       quantity=3, total=300, cogs_total=180, unit="catalog-base")])
+        native_return = dict(entity_type="customerReturn", account="polivalko-native", kind="customerReturn",
+                             status="posted", currency="UAH", day=end, total=Decimal(100),
+                             lines=[dict(product=dict(id="cat-1", title="Шланг"),
+                                         quantity=1, total=100, cogs_total=60, unit="catalog-base")])
+        for order in ([dntrade_sale, native_sale, native_return], [native_sale, dntrade_sale, native_return]):
+            result = summarize(order, end, 7, catalog)
+            self.assertEqual(len(result["products"]), 1)
+            row = result["products"][0]
+            self.assertEqual((row["catalogId"], row["code"], row["salesUnit"], row["netQuantity"], row["net"], row["profit"]),
+                             ("cat-1", "42", "шт", Decimal(4), Decimal(400), Decimal(160)))
+        bad_doc = dict(dntrade_sale, total=Decimal("200.01"))
+        with_bad = summarize([bad_doc, native_sale], end, 7, catalog)
+        self.assertEqual(with_bad["incompleteProducts"], 1)
+        self.assertEqual(with_bad["incompleteProductRefs"],
+                         [dict(account="valko-dntrade", catalogId="cat-1", productRef="ext-42", code="42")])

@@ -11,11 +11,21 @@ internal static class GetConsoleDashboard
 {
     private static readonly int[] AllowedDays = [7, 30, 90];
 
-    private sealed record OrderRow(DateTimeOffset CreatedAt, OrderStatus Status, DeliveryMethod DeliveryMethod, string Phone, decimal Total, decimal RefundedAmount)
+    private sealed record OrderRow(
+        DateTimeOffset CreatedAt,
+        OrderStatus Status,
+        DeliveryMethod DeliveryMethod,
+        string Phone,
+        decimal Total,
+        bool CountRevenueWhenCancelled)
     {
-        public bool Counts => Status != OrderStatus.Cancelled;
+        public bool Counts => Status is OrderStatus.Confirmed
+            or OrderStatus.Paid
+            or OrderStatus.Shipped
+            or OrderStatus.ReadyForPickup
+            or OrderStatus.Completed;
 
-        public decimal Revenue => Counts ? Total - RefundedAmount : 0m;
+        public bool CountsForGrossRevenue => Counts || CountRevenueWhenCancelled;
     }
 
     public static async Task<Results<Ok<ConsoleDashboardDto>, ValidationProblem>> HandleAsync(
@@ -41,18 +51,27 @@ internal static class GetConsoleDashboard
         var previousFrom = KyivTime.StartOfDay(firstDay.AddDays(-n));
 
         var rows = (await orders.ListForPeriodAsync(previousFrom, currentTo, ct))
-            .Select(r => new OrderRow(r.CreatedAt, r.Status, r.DeliveryMethod, r.Phone, r.Total, r.RefundedAmount))
+            .Select(r => new OrderRow(r.CreatedAt, r.Status, r.DeliveryMethod, r.Phone, r.Total, r.CountRevenueWhenCancelled))
             .ToList();
+        var refunds = await orders.ListRefundsForPeriodAsync(previousFrom, currentTo, ct);
+
         var current = rows.Where(r => r.CreatedAt >= currentFrom).ToList();
         var previous = rows.Where(r => r.CreatedAt < currentFrom).ToList();
+        var currentRefunds = refunds.Where(r => r.CompletedAt >= currentFrom).ToList();
+        var previousRefunds = refunds.Where(r => r.CompletedAt < currentFrom).ToList();
 
-        // A cancelled order brings no revenue, so it is not an order, a buyer or a delivery of the period
-        // either. It is reported on its own: in the totals and in the breakdown by status.
+        // Only confirmed/paid/fulfilled orders count as recognized orders and sales; unpaid/unconfirmed and cancelled
+        // orders remain visible in the breakdown by status. Refunds are attributed by CompletedAt window.
         var counted = current.Where(r => r.Counts).ToList();
-        var perDay = counted.ToLookup(r => KyivTime.DateOf(r.CreatedAt));
+        var perDayOrders = counted.ToLookup(r => KyivTime.DateOf(r.CreatedAt));
+        var perDayGross = current.Where(r => r.CountsForGrossRevenue).ToLookup(r => KyivTime.DateOf(r.CreatedAt));
+        var perDayRefunds = currentRefunds.ToLookup(r => KyivTime.DateOf(r.CompletedAt));
         var byDay = Enumerable.Range(0, n)
             .Select(i => firstDay.AddDays(i))
-            .Select(day => new DashboardDayDto(day, perDay[day].Count(), MoneyDto.Hryvnia(perDay[day].Sum(r => r.Revenue))))
+            .Select(day => new DashboardDayDto(
+                day,
+                perDayOrders[day].Count(),
+                MoneyDto.Hryvnia(perDayGross[day].Sum(r => r.Total) - perDayRefunds[day].Sum(r => r.Amount))))
             .ToList();
 
         var byStatus = OrderStatusCounts.From(current.GroupBy(r => r.Status).Select(g => (g.Key, g.Count())));
@@ -66,8 +85,8 @@ internal static class GetConsoleDashboard
 
         return TypedResults.Ok(new ConsoleDashboardDto(
             n,
-            Totals(current),
-            Totals(previous),
+            Totals(current, currentRefunds),
+            Totals(previous, previousRefunds),
             byDay,
             byStatus,
             await TopProductsAsync(orders, catalog, currentFrom, currentTo, ct),
@@ -75,16 +94,17 @@ internal static class GetConsoleDashboard
             byDelivery));
     }
 
-    private static DashboardTotalsDto Totals(IReadOnlyCollection<OrderRow> rows)
+    private static DashboardTotalsDto Totals(IReadOnlyCollection<OrderRow> rows, IReadOnlyCollection<RefundPeriodRow> refunds)
     {
         var counted = rows.Where(r => r.Counts).ToList();
-        var revenue = counted.Sum(r => r.Revenue);
+        var revenue = rows.Where(r => r.CountsForGrossRevenue).Sum(r => r.Total) - refunds.Sum(r => r.Amount);
+        var cancelled = rows.Count(r => r.Status == OrderStatus.Cancelled);
         return new DashboardTotalsDto(
             MoneyDto.Hryvnia(revenue),
             counted.Count,
             MoneyDto.Hryvnia(counted.Count == 0 ? 0m : revenue / counted.Count),
             counted.Select(r => r.Phone).Distinct(StringComparer.Ordinal).Count(),
-            rows.Count - counted.Count);
+            cancelled);
     }
 
     private static async Task<List<DashboardTopProductDto>> TopProductsAsync(

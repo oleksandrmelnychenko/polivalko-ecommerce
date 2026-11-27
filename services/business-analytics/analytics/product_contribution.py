@@ -84,6 +84,12 @@ _lock = Lock()
 _cached = None
 
 
+def clear_cache():
+    global _cached
+    with _lock:
+        _cached = None
+
+
 def profit_page(today, page, sort, search, account="", code=""):
     global _cached
     with _lock:

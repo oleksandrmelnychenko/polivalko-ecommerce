@@ -4,6 +4,8 @@ public interface IOrderReporting
 {
     Task<IReadOnlyList<OrderPeriodRow>> ListForPeriodAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct);
 
+    Task<IReadOnlyList<RefundPeriodRow>> ListRefundsForPeriodAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken ct);
+
     Task<IReadOnlyList<ProductSalesRow>> TopProductsAsync(DateTimeOffset from, DateTimeOffset to, int take, CancellationToken ct);
 
     Task<IReadOnlyList<OrderedProductSnapshot>> OrderedProductSnapshotsAsync(IReadOnlyCollection<Guid> productIds, CancellationToken ct);

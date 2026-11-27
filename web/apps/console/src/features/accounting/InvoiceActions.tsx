@@ -1,39 +1,87 @@
 import { Alert, Button, Group, Modal, Select, Stack, Table, Text, TextInput, Title } from '@mantine/core'
+import { IconRotateClockwise, IconTrash } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import type { components } from '@polivalko/shared/api/schema'
 import { usePermissions } from '@/features/auth'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { problemMessage } from '@/shared/api/problem'
+import { notifySuccess } from '@/shared/ui/notify'
 import { PageState } from '@/shared/ui/PageState'
 import { Grid } from './RegisterTable'
-import { money, save, useRegister, type Doc, type Card } from './api'
+import { money, remove, save, useRegister, type Doc, type Card } from './api'
 import { EditRegister } from './EditRegister'
 
 const amount = (value: string) => money(value, 'UAH')
-type State = components['schemas']['InvoiceState']
+const qtyFmt = new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 3 })
+type ImpactLine = components['schemas']['InvoiceState']['stock'][number] & {
+  reservedQuantity?: number | null
+  firstMovement?: boolean
+}
+type State = Omit<components['schemas']['InvoiceState'], 'stock'> & { stock: ImpactLine[] }
+type PaymentItem = State['payments'][number]
 
-export function InvoiceActions({ doc, lines, refresh, onDialogChange }: { doc: Doc; lines: Card['lines']; refresh: () => void; onDialogChange: (opened: boolean) => void }) {
+export function InvoiceActions({
+  doc,
+  lines,
+  refresh,
+  onDeleted,
+  onDialogChange,
+}: {
+  doc: Doc
+  lines: Card['lines']
+  refresh: () => void
+  onDeleted?: () => void
+  onDialogChange: (opened: boolean) => void
+}) {
   const url = 'documents/' + doc.id
   const query = useRegister<State>(url + '/operations')
-  const [action, updateAction] = useState<'post' | 'pay' | 'edit' | null>(null)
+  const [action, updateAction] = useState<'post' | 'pay' | 'edit' | 'delete' | 'unpost' | null>(null)
+  const [reversingPayment, setReversingPayment] = useState<PaymentItem | null>(null)
   function setAction(next: typeof action) {
     updateAction(next)
-    onDialogChange(next !== null)
+    onDialogChange(next !== null || reversingPayment !== null)
+    if (!next) setError('')
+  }
+  function openReversePayment(payment: PaymentItem | null) {
+    setReversingPayment(payment)
+    onDialogChange(action !== null || payment !== null)
+    if (!payment) setError('')
   }
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const { can } = usePermissions()
   if (!query.data) return <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
   const state = query.data
+  const isReturn = doc.entityType === 'customerReturn' || doc.kind === 'customerReturn'
   const purchase = doc.kind === 'in'
   const negative = state.stock.some((item) => item.after < 0)
+  const reservedConflicts = state.stock.filter((item) => item.reservedQuantity != null && item.after < item.reservedQuantity)
+  const reservedConflict = reservedConflicts.length > 0
+  const unopened = state.stock.filter((item) => item.firstMovement)
+  const openingWarning = unopened.length > 0 && (
+    <Alert color="orange" title="Спершу введіть початковий залишок">
+      {unopened.length === 1
+        ? <>Товар «{unopened[0].title}» ще не має руху</>
+        : <>Товари {unopened.map((l) => '«' + l.title + '»').join(', ')} ще не мають руху</>} на складі {state.store}. Після
+      проведення ввести для {unopened.length === 1 ? 'нього' : 'них'} початковий залишок уже не вийде, і склад покаже лише кількість із цієї операції.
+      Якщо товар уже лежав на полиці, спершу введіть початковий залишок у «Склад → Залишки».
+    </Alert>
+  )
+  const reservedWarning = reservedConflict && (
+    <Alert color="orange" title="Конфлікт із резервом інтернет-магазину">
+      Після проведення залишок стане меншим за зарезервовану кількість для{' '}
+      {reservedConflicts.map((l) => `«${l.title}» (залишиться ${qtyFmt.format(l.after)}, у резерві ${qtyFmt.format(l.reservedQuantity ?? 0)})`).join(', ')}.
+    </Alert>
+  )
   const close = () => {
     if (!busy) {
       setAction(null)
+      setReversingPayment(null)
+      onDialogChange(false)
       setError('')
     }
   }
-  async function submit(path: string, body: unknown) {
+  async function submit(path: string, body?: unknown) {
     if (busy) return
     setBusy(true)
     setError('')
@@ -45,6 +93,71 @@ export function InvoiceActions({ doc, lines, refresh, onDialogChange }: { doc: D
         return
       }
       setAction(null)
+      onDialogChange(false)
+      query.reload()
+      refresh()
+    } catch {
+      setError('Немає зв’язку. Повторіть дію, коли з’єднання відновиться.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  async function deleteDraft() {
+    if (busy) return
+    setBusy(true)
+    setError('')
+    try {
+      const result = await remove('drafts/' + doc.id)
+      if (!result.response.ok) {
+        setError(problemMessage(result.error, 'Не вдалося видалити чернетку.'))
+        query.reload()
+        return
+      }
+      notifySuccess('Чернетку видалено.')
+      setAction(null)
+      onDialogChange(false)
+      onDeleted?.()
+    } catch {
+      setError('Немає зв’язку. Повторіть дію, коли з’єднання відновиться.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  async function unpostDocument() {
+    if (busy) return
+    setBusy(true)
+    setError('')
+    try {
+      const result = await save(url + '/unpost')
+      if (!result.response.ok) {
+        setError(problemMessage(result.error, 'Не вдалося сторнувати проведення.'))
+        query.reload()
+        return
+      }
+      notifySuccess('Проведення сторновано.')
+      setAction(null)
+      onDialogChange(false)
+      query.reload()
+      refresh()
+    } catch {
+      setError('Немає зв’язку. Повторіть дію, коли з’єднання відновиться.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  async function reversePayment() {
+    if (busy || !reversingPayment) return
+    setBusy(true)
+    setError('')
+    try {
+      const result = await remove('payments/' + reversingPayment.id)
+      if (!result.response.ok) {
+        setError(problemMessage(result.error, 'Не вдалося сторнувати оплату.'))
+        query.reload()
+        return
+      }
+      notifySuccess('Оплату сторновано.')
+      openReversePayment(null)
       query.reload()
       refresh()
     } catch {
@@ -54,28 +167,48 @@ export function InvoiceActions({ doc, lines, refresh, onDialogChange }: { doc: D
     }
   }
   const draft = state.status === 'draft'
-  if (state.status === 'cancelled') return <Text>Чернетку скасовано після зняття резерву клієнта.</Text>
+  const posted = state.status === 'posted'
+  const canReversePayment = posted && can(PermissionKeys.Accounting.Post)
+  if (state.status === 'cancelled') {
+    return (
+      <Text c="dimmed">
+        {state.offerReservation ? 'Чернетку скасовано після зняття резерву клієнта.' : 'Документ сторновано (скасовано).'}
+      </Text>
+    )
+  }
   return (
     <Stack className="invoice-operation" gap="md">
-      <Group justify="space-between">
+      <Group justify="space-between" wrap="wrap">
         <div>
           <Text size="sm" c="dimmed">
             {state.store}
           </Text>
-          <Title order={3}>{draft ? 'Підготовка до проведення' : 'Оплата накладної'}</Title>
+          <Title order={3}>
+            {draft ? 'Підготовка до проведення' : isReturn ? 'Повернення коштів' : 'Оплата накладної'}
+          </Title>
         </div>
-        <Group>
+        <Group gap="xs" wrap="wrap">
           {draft && can(PermissionKeys.Accounting.Edit) && (
-            <Button variant="default" onClick={() => setAction('edit')}>
-              Редагувати
-            </Button>
+            <>
+              <Button variant="default" onClick={() => setAction('edit')}>
+                Редагувати
+              </Button>
+              <Button variant="light" color="red" leftSection={<IconTrash size={15} />} onClick={() => setAction('delete')}>
+                Видалити чернетку
+              </Button>
+            </>
           )}
           {draft && can(PermissionKeys.Accounting.Post) && (
             <Button onClick={() => setAction('post')}>Перевірити й провести</Button>
           )}
-          {!draft && Number(state.due) > 0 && can(PermissionKeys.Accounting.Pay) && (
+          {posted && can(PermissionKeys.Accounting.Post) && (
+            <Button variant="light" color="orange" leftSection={<IconRotateClockwise size={15} />} onClick={() => setAction('unpost')}>
+              Сторнувати проведення
+            </Button>
+          )}
+          {posted && Number(state.due) > 0 && can(PermissionKeys.Accounting.Pay) && (
             <Button onClick={() => setAction('pay')}>
-              {purchase ? 'Зареєструвати виплату' : 'Зареєструвати оплату'}
+              {isReturn ? 'Зареєструвати повернення коштів' : purchase ? 'Зареєструвати виплату' : 'Зареєструвати оплату'}
             </Button>
           )}
         </Group>
@@ -83,22 +216,24 @@ export function InvoiceActions({ doc, lines, refresh, onDialogChange }: { doc: D
       {state.offerReservation && <Text size="sm">
         {draft ? 'Під час проведення буде списано резерв' : 'Списано резерв'} клієнта {doc.partnerTitle} · {state.offerReservation.quantity.toLocaleString('uk-UA')} {state.offerReservation.unit}
       </Text>}
+      {draft && openingWarning}
+      {draft && reservedWarning}
       <div className="invoice-totals">
         <div>
-          <span>Сума накладної</span>
+          <span>{isReturn ? 'Сума повернення' : 'Сума накладної'}</span>
           <strong>{amount(state.total)}</strong>
         </div>
         <div>
-          <span>{purchase ? 'Сплачено постачальнику' : 'Отримано від клієнта'}</span>
+          <span>{isReturn ? 'Повернуто клієнту' : purchase ? 'Сплачено постачальнику' : 'Отримано від клієнта'}</span>
           <strong>{draft ? '—' : amount(state.paid)}</strong>
         </div>
         <div>
-          <span>{purchase ? 'До сплати' : 'До отримання'}</span>
+          <span>{isReturn ? 'До повернення клієнту' : purchase ? 'До сплати' : 'До отримання'}</span>
           <strong>{state.due == null ? 'Після проведення' : amount(state.due)}</strong>
         </div>
       </div>
       {state.payments.length > 0 && (
-        <Grid columns={['Дата', 'Спосіб', 'Каса або рахунок', 'Номер платіжного документа', 'Сума']}>
+        <Grid columns={['Дата', 'Спосіб', 'Каса або рахунок', 'Номер платіжного документа', 'Сума', ...(canReversePayment ? ['Дії'] : [])]}>
           {state.payments.map((p) => (
             <Table.Tr key={p.id}>
               <Table.Td>{p.day}</Table.Td>
@@ -106,6 +241,19 @@ export function InvoiceActions({ doc, lines, refresh, onDialogChange }: { doc: D
               <Table.Td>{p.accountTitle}</Table.Td>
               <Table.Td>{p.reference}</Table.Td>
               <Table.Td>{amount(p.amount)}</Table.Td>
+              {canReversePayment && (
+                <Table.Td>
+                  <Button
+                    size="compact-xs"
+                    variant="subtle"
+                    color="red"
+                    leftSection={<IconRotateClockwise size={13} />}
+                    onClick={() => openReversePayment(p)}
+                  >
+                    Сторнувати
+                  </Button>
+                </Table.Td>
+              )}
             </Table.Tr>
           ))}
         </Grid>
@@ -117,7 +265,7 @@ export function InvoiceActions({ doc, lines, refresh, onDialogChange }: { doc: D
       <Modal
         opened={action === 'post'}
         onClose={close}
-        title={purchase ? 'Приймання на склад' : 'Відвантаження зі складу'}
+        title={isReturn ? 'Повернення від покупця на склад' : purchase ? 'Приймання на склад' : 'Відвантаження зі складу'}
         size="lg"
       >
         <Stack>
@@ -126,8 +274,10 @@ export function InvoiceActions({ doc, lines, refresh, onDialogChange }: { doc: D
           </Text>
           <Impact state={state} />
           <Text>
-            {purchase ? 'До сплати постачальнику' : 'До отримання від клієнта'} після проведення · {amount(state.total)}
+            {isReturn ? 'До повернення клієнту' : purchase ? 'До сплати постачальнику' : 'До отримання від клієнта'} після проведення · {amount(state.total)}
           </Text>
+          {openingWarning}
+          {reservedWarning}
           {negative && <Alert color="orange">На цьому складі бракує товару. Перевірте склад і надходження.</Alert>}
           {error && <Alert color="red">{error}</Alert>}
           <Group justify="end">
@@ -135,11 +285,66 @@ export function InvoiceActions({ doc, lines, refresh, onDialogChange }: { doc: D
               Закрити
             </Button>
             <Button
-              disabled={negative || !draft}
+              disabled={negative || reservedConflict || !draft}
               loading={busy}
               onClick={() => submit('post', { revision: state.revision })}
             >
-              Провести накладну
+              {isReturn ? 'Провести повернення' : 'Провести накладну'}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+      <Modal opened={action === 'delete'} onClose={close} title="Видалити чернетку?" size="sm">
+        <Stack>
+          <Text size="sm">
+            Чернетку № {doc.number || doc.sourceId} буде видалено без можливості відновлення.
+          </Text>
+          {error && <Alert color="red">{error}</Alert>}
+          <Group justify="end">
+            <Button variant="default" onClick={close} disabled={busy}>
+              Скасувати
+            </Button>
+            <Button color="red" loading={busy} onClick={deleteDraft}>
+              Видалити чернетку
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+      <Modal opened={action === 'unpost'} onClose={close} title="Сторнувати проведення?" size="md">
+        <Stack>
+          <Text size="sm">
+            Проведення документа № {doc.number || doc.sourceId} буде скасовано, а складські залишки — відкочені на протилежну кількість.
+          </Text>
+          {state.payments.length > 0 && (
+            <Alert color="orange">
+              У документа є зареєстровані оплати ({state.payments.length}). Спочатку сторнуйте їх, інакше документ не можна буде розпровести.
+            </Alert>
+          )}
+          {error && <Alert color="red">{error}</Alert>}
+          <Group justify="end">
+            <Button variant="default" onClick={close} disabled={busy}>
+              Скасувати
+            </Button>
+            <Button color="orange" loading={busy} onClick={unpostDocument}>
+              Сторнувати проведення
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+      <Modal opened={reversingPayment !== null} onClose={close} title="Сторнувати оплату?" size="sm">
+        <Stack>
+          {reversingPayment && (
+            <Text size="sm">
+              Сторнувати платіж на суму <b>{amount(reversingPayment.amount)}</b> від {reversingPayment.day} ({reversingPayment.reference})? Залишок боргу за документом перерахується автоматично.
+            </Text>
+          )}
+          {error && <Alert color="red">{error}</Alert>}
+          <Group justify="end">
+            <Button variant="default" onClick={close} disabled={busy}>
+              Скасувати
+            </Button>
+            <Button color="red" loading={busy} onClick={reversePayment}>
+              Сторнувати оплату
             </Button>
           </Group>
         </Stack>
@@ -148,7 +353,9 @@ export function InvoiceActions({ doc, lines, refresh, onDialogChange }: { doc: D
         <PaymentForm
           due={state.due ?? '0.00'}
           minDay={doc.day ?? ''}
-          purchase={purchase}
+          purchase={purchase || isReturn}
+          titleOverride={isReturn ? 'Повернення коштів клієнту' : undefined}
+          submitLabel={isReturn ? 'Зареєструвати повернення коштів' : undefined}
           error={error}
           busy={busy}
           close={close}
@@ -157,7 +364,7 @@ export function InvoiceActions({ doc, lines, refresh, onDialogChange }: { doc: D
       )}
       {action === 'edit' && doc.partnerId && (
         <EditRegister
-          kind={doc.kind!}
+          kind={isReturn ? 'customerReturn' : doc.kind!}
           initial={{
             id: doc.id,
             agreed: Boolean(state.offerReservation),
@@ -187,19 +394,28 @@ export function InvoiceActions({ doc, lines, refresh, onDialogChange }: { doc: D
 }
 
 function Impact({ state }: { state: State }) {
+  const showReserved = state.stock.some((l) => l.reservedQuantity != null && l.reservedQuantity > 0)
   return (
-    <Grid columns={['Товар', 'Було', 'Рух', 'Стане / стало']}>
-      {state.stock.map((l) => (
-        <Table.Tr key={l.productId}>
-          <Table.Td>{l.title}</Table.Td>
-          <Table.Td>{l.before}</Table.Td>
-          <Table.Td>
-            {l.change > 0 ? '+' : ''}
-            {l.change}
-          </Table.Td>
-          <Table.Td c={l.after < 0 ? 'red' : undefined}>{l.after}</Table.Td>
-        </Table.Tr>
-      ))}
+    <Grid columns={['Товар', 'Було', 'Рух', 'Стане / стало', ...(showReserved ? ['У резерві'] : [])]}>
+      {state.stock.map((l) => {
+        const belowReserve = l.reservedQuantity != null && l.after < l.reservedQuantity
+        return (
+          <Table.Tr key={l.productId}>
+            <Table.Td>{l.title}</Table.Td>
+            <Table.Td>{qtyFmt.format(l.before)}</Table.Td>
+            <Table.Td>
+              {l.change > 0 ? '+' : ''}
+              {qtyFmt.format(l.change)}
+            </Table.Td>
+            <Table.Td c={l.after < 0 || belowReserve ? 'red' : undefined}>{qtyFmt.format(l.after)}</Table.Td>
+            {showReserved && (
+              <Table.Td c={belowReserve ? 'orange' : undefined}>
+                {l.reservedQuantity != null ? qtyFmt.format(l.reservedQuantity) : '—'}
+              </Table.Td>
+            )}
+          </Table.Tr>
+        )
+      })}
     </Grid>
   )
 }
@@ -208,6 +424,8 @@ export function PaymentForm({
   due,
   minDay,
   purchase,
+  titleOverride,
+  submitLabel,
   error,
   busy,
   close,
@@ -217,6 +435,8 @@ export function PaymentForm({
   due: string
   minDay: string
   purchase: boolean
+  titleOverride?: string
+  submitLabel?: string
   error: string
   busy: boolean
   close: () => void
@@ -236,7 +456,7 @@ export function PaymentForm({
     void submit({ id, day, amount: value, method, accountTitle, reference })
   }
   return (
-    <Modal opened onClose={close} title={purchase ? 'Виплата постачальнику' : 'Оплата від клієнта'}>
+    <Modal opened onClose={close} title={titleOverride ?? (purchase ? 'Виплата постачальнику' : 'Оплата від клієнта')}>
       <form onSubmit={onSubmit}>
         <Stack>
           <Text>
@@ -287,7 +507,7 @@ export function PaymentForm({
           />
           {error && <Alert color="red">{error}</Alert>}
           <Button type="submit" loading={busy}>
-            Зареєструвати {purchase ? 'виплату' : 'оплату'}
+            {submitLabel ?? `Зареєструвати ${purchase ? 'виплату' : 'оплату'}`}
           </Button>
         </Stack>
       </form>

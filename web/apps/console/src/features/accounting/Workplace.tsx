@@ -3,7 +3,7 @@ import { FilterBar } from '@/shared/ui/FilterBar'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { Button, Group, Select, Stack, Table, TextInput } from '@mantine/core'
 import { StockOperationRegister } from './StockOperations'
-import { IconArrowDownLeft, IconBuildingWarehouse, IconChecklist, IconFiles, IconWallet, IconHistory, IconPackage, IconPlus, IconSearch, IconListCheck } from '@tabler/icons-react'
+import { IconArrowDownLeft, IconBuilding, IconBuildingWarehouse, IconChecklist, IconFiles, IconWallet, IconHistory, IconLink, IconLinkOff, IconPackage, IconPlus, IconSearch, IconListCheck } from '@tabler/icons-react'
 import type { components } from '@polivalko/shared/api/schema'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -16,7 +16,8 @@ import { Grid } from './RegisterTable'
 import { StockOpeningForm } from './StockOpeningForm'
 import './warehouse.css'
 import { InventoryReview } from './InventoryReview'
-import { activeSource, count, ShopSourceForm, MovementHistory, type WarehouseRow } from './WarehouseShop'
+import { ReferencesModal } from './ReferencesModal'
+import { activeSource, BulkShopSourceModal, count, DisconnectShopSourceModal, ShopSourceForm, MovementHistory, type WarehouseRow } from './WarehouseShop'
 import { useRegister, type Doc, type Page, type Ref } from './api'
 
 type S = components['schemas']
@@ -109,7 +110,10 @@ export function InventoryPage() {
 export function WarehouseBalances() {
   const [params, setParams] = useSearchParams()
   const [opening, setOpening] = useState(false)
+  const [referencesOpen, setReferencesOpen] = useState(false)
+  const [bulkConnectOpen, setBulkConnectOpen] = useState(false)
   const [source, setSource] = useState<WarehouseRow | null>(null)
+  const [disconnectRow, setDisconnectRow] = useState<WarehouseRow | null>(null)
   const [history, setHistory] = useState<WarehouseRow | null>(null)
   const { can } = usePermissions()
   const refs = useRegister<{ stores: Ref[] }>('references')
@@ -125,7 +129,17 @@ export function WarehouseBalances() {
   return (
     <Stack gap="sm" className="ledger-workspace warehouse-page wh-current doc-register">
       <PageHeader title="Залишки" actions={
-        <Group gap="xs">
+        <Group gap="xs" wrap="wrap">
+          {can(PermissionKeys.Accounting.Edit) && (
+            <Button radius="xl" variant="default" leftSection={<IconBuilding size={16} />} onClick={() => setReferencesOpen(true)}>
+              Організації та склади
+            </Button>
+          )}
+          {can(PermissionKeys.Catalog.RunImport) && (
+            <Button radius="xl" variant="default" leftSection={<IconLink size={16} />} onClick={() => setBulkConnectOpen(true)}>
+              Прив’язати всі товари складу до вітрини
+            </Button>
+          )}
           <Button component={Link} to="/warehouse/inventory?view=inventory" radius="xl" variant="default"
             leftSection={<IconListCheck size={16} />}>Звірити залишки</Button>
           {can(PermissionKeys.Accounting.Opening) && <Button radius="xl" leftSection={<IconPlus size={16} />}
@@ -168,6 +182,8 @@ export function WarehouseBalances() {
                   <Button size="compact-xs" variant="default" leftSection={<IconHistory size={14} />} onClick={() => setHistory(r)}>Рух товару</Button>
                   {!activeSource(r) && r.shopQuantity != null && can(PermissionKeys.Catalog.RunImport) &&
                     <Button size="compact-xs" variant="default" onClick={() => setSource(r)}>Підключити склад</Button>}
+                  {activeSource(r) && can(PermissionKeys.Catalog.RunImport) &&
+                    <Button size="compact-xs" variant="subtle" color="red" leftSection={<IconLinkOff size={13} />} onClick={() => setDisconnectRow(r)}>Відв’язати</Button>}
                 </Group></Table.Td>
               </Table.Tr>
             ))}
@@ -180,6 +196,29 @@ export function WarehouseBalances() {
           row={source}
           close={() => {
             setSource(null)
+            result.reload()
+          }}
+        />
+      )}
+      {disconnectRow && (
+        <DisconnectShopSourceModal
+          row={disconnectRow}
+          close={() => setDisconnectRow(null)}
+          onDisconnected={result.reload}
+        />
+      )}
+      {bulkConnectOpen && (
+        <BulkShopSourceModal
+          defaultStoreId={params.get('store')}
+          close={() => setBulkConnectOpen(false)}
+          onConnected={result.reload}
+        />
+      )}
+      {referencesOpen && (
+        <ReferencesModal
+          close={() => setReferencesOpen(false)}
+          onChanged={() => {
+            refs.reload()
             result.reload()
           }}
         />

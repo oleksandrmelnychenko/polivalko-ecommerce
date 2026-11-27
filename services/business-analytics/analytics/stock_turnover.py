@@ -41,6 +41,20 @@ def uncovered_gap(demand, available, days, cover_days, arrivals):
     return max(gap, demand * cover_days - balance * days)
 
 
+def resolve_unit(stock_unit, sales):
+    unit = unit_label(stock_unit)
+    if unit:
+        return unit, None
+    if sales:
+        units = {unit_label(p["salesUnit"]) for p in sales}
+        named = units - {"catalog-base", ""}
+        if len(named) == 1:
+            # The stock report carries no unit for this product, and every sale names the same one.
+            # The demand forecast already treats a product with one sales unit as stocked in it.
+            return next(iter(named)), "sales"
+    return "", None
+
+
 def purchase_plan(sales, known, stock_unit, available, days, cover_days, arrivals=(), possible=(), factor=1):
     net = sum((p["net"] for p in sales), Decimal(0))
     priced = known and net > 0 and all(p["profit"] is not None for p in sales)
@@ -52,12 +66,10 @@ def purchase_plan(sales, known, stock_unit, available, days, cover_days, arrival
         return plan
     if sales:
         units = {unit_label(p["salesUnit"]) for p in sales}
-        named = units - {"catalog-base", ""}
-        if not unit and len(named) == 1:
-            # The stock report carries no unit for this product, and every sale names the same one.
-            # The demand forecast already treats a product with one sales unit as stocked in it.
-            unit = next(iter(named))
-            plan["unitSource"] = "sales"
+        inferred, source = resolve_unit(stock_unit, sales)
+        if not unit and inferred:
+            unit = inferred
+            plan["unitSource"] = source
         if "catalog-base" in units:
             units.remove("catalog-base")
             units.add(unit or "од")
@@ -120,6 +132,10 @@ def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), r
     matched = defaultdict(list)
     ambiguous = set()
     for product in report["products"]:
+        cid = identifier(product.get("catalogId"))
+        if cid and cid in by_id:
+            matched[cid].append(product)
+            continue
         ref, code = identifier(product.get("productRef")), identifier(product.get("code"))
         if product["account"] == "polivalko-native":
             if ref in by_id:
@@ -132,27 +148,41 @@ def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), r
             elif candidates:
                 ambiguous.update(candidates)
 
+    incomplete_ids = set()
+    for item_ref in report.get("incompleteProductRefs") or ():
+        cid = identifier(item_ref.get("catalogId"))
+        if cid and cid in by_id:
+            incomplete_ids.add(cid)
+            continue
+        ref, code = identifier(item_ref.get("productRef")), identifier(item_ref.get("code"))
+        if item_ref.get("account") == "polivalko-native":
+            if ref in by_id:
+                incomplete_ids.add(ref)
+        elif item_ref.get("account") == "valko-dntrade":
+            code_ids = by_external.get("dntrade-code:" + code, set()) if code else set()
+            incomplete_ids.update(code_ids | by_external.get(ref, set()))
+
     period_net = report["current"]["net"]
-    complete = report["incompleteProducts"] == 0
     rows = []
     for p in catalog:
         if not p["visible"] or p["on_hand"] is None or p["reserved"] is None:
             continue
         available = p["on_hand"] - p["reserved"]
-        if available > THRESHOLD:
-            continue
         external = identifier(p["external"])
         imported = external.startswith("dntrade-code:") and len(external) > len("dntrade-code:")
         identified = p["id"] in matched or (imported and len(by_external[external]) == 1)
-        known = complete and identified and p["id"] not in ambiguous
+        known = identified and p["id"] not in ambiguous and p["id"] not in incomplete_ids
         sales = matched.get(p["id"], [])
         net = sum((item["net"] for item in sales), Decimal(0)) if known else None
         supply, arrivals, possible = schedule(incoming.get(p["id"], ()), p, today, cover_days)
-        unit = unit_label(p["unit"])
-        season = seasons.get(("product", p["id"], unit)) or seasons.get(("category", p.get("category"), unit))
+        unit, _ = resolve_unit(p["unit"], sales if known else ())
+        season = (seasons.get(("product", p["id"], unit)) or seasons.get(("category", p.get("category"), unit))) if unit else None
         plan = purchase_plan(sales, known, p["unit"], available, report["days"], cover_days, arrivals.items(), possible.items(),
                              season["factor"] if season else 1)
-        upcoming = seasons.get(("upcoming", p["id"], unit))
+        stock_days = plan["stockDays"]
+        if available > THRESHOLD and (stock_days is None or stock_days >= cover_days):
+            continue
+        upcoming = seasons.get(("upcoming", p["id"], unit)) if unit else None
         if upcoming and plan["purchaseStatus"] == "no-demand":
             gap = uncovered_gap(upcoming["rate"], available, 1, cover_days, arrivals)
             if gap > 0:
@@ -168,8 +198,6 @@ def exposure(report, catalog, cover_days=DEFAULT_COVER_DAYS, supplier_docs=(), r
     out = sum(r["available"] <= 0 for r in rows)
     return dict(start=report["start"], through=report["through"], asOf=str(today), periodNet=period_net, threshold=THRESHOLD,
                 coverDays=cover_days, buyCount=sum(r["purchaseStatus"] == "buy" for r in rows),
-                # Sales documents whose lines do not add up. One of them leaves the sales of every product
-                # unconfirmed, so the queue is empty and has to say why.
                 incompleteSales=report["incompleteProducts"],
                 supplyReview=sum(r["purchaseStatus"] == "supply-review" for r in rows),
                 seasonal=season_profiles is not None, seasonalReview=sum(r["purchaseStatus"] == "season-review" for r in rows),
@@ -185,18 +213,24 @@ _cache = {}
 _profiles = {}
 
 
-def stock_page(through, days, page, stock, search, cover_days=DEFAULT_COVER_DAYS, sort="turnover", seasonal=False):
+def clear_cache():
+    with _lock:
+        _cache.clear()
+        _profiles.clear()
+
+
+def stock_page(through, days, page, stock, search, cover_days=DEFAULT_COVER_DAYS, sort="turnover", seasonal=False, refresh=False):
     # Today's sales are not finished. Counted as a whole day they would lower a 7-day rate, and the
     # purchase need with it, by up to a seventh until closing time.
     sold_through = through - timedelta(days=1)
-    report = dashboard(sold_through, days)
+    report = dashboard(sold_through, days, refresh=True) if refresh else dashboard(sold_through, days)
     cache_key = (days, cover_days, "seasonal") if seasonal else (days, cover_days)
     with _lock:
-        cached = _cache.get(cache_key)
+        cached = None if refresh else _cache.get(cache_key)
         if cached is None or cached[0] is not report or cached[1] <= monotonic():
             with production() as conn:
                 def load_seasons(by_id, by_external):
-                    saved = _profiles.get((days, cover_days))
+                    saved = None if refresh else _profiles.get((days, cover_days))
                     if saved and saved[0] == sold_through and saved[1] > monotonic():
                         return saved[2]
                     result = profiles(history(conn, sold_through, days, cover_days), by_id, by_external, days, cover_days)

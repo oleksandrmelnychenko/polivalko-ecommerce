@@ -7,7 +7,7 @@ import { FilterBar } from '@/shared/ui/FilterBar'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { usePermissions } from '@/features/auth'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { PageHeader } from '@/shared/ui/PageHeader'
@@ -17,7 +17,7 @@ import { Balances } from './Balances'
 import { ProductHistory } from './ProductHistory'
 import { Grid } from './RegisterTable'
 import { InventoryPage, Workplace, WarehouseBalances } from './Workplace'
-import { DOCUMENTS_PATH } from '@/shared/ui/DocumentLink'
+import { DOCUMENTS_PATH, OverlayRouteContext } from '@/shared/ui/DocumentLink'
 import { InvoiceActions } from './InvoiceActions'
 import { StockOperationActions, StockOperationRegister } from './StockOperations'
 import { PartnersDirectory } from './Partners'
@@ -26,6 +26,7 @@ import {
   kindName,
   money,
   paymentNames,
+  quantityText,
   statusNames,
   useRegister,
   type Card,
@@ -34,8 +35,9 @@ import {
 } from './api'
 import './registers.css'
 
-function Document({ id }: { id: string }) {
-  const { state } = useLocation()
+function Document({ id, overlayState }: { id: string; overlayState?: unknown }) {
+  const location = useLocation()
+  const navState = (overlayState ?? location.state) as { documentBackground?: unknown } | null
   const navigate = useNavigate()
   const [opened, setOpened] = useState(true)
   const [operationOpen, setOperationOpen] = useState(false)
@@ -46,11 +48,14 @@ function Document({ id }: { id: string }) {
     <AppEditorModal opened={opened} onClose={() => setOpened(false)} size="wide" className="ledger-editor document-modal"
       closeOnEscape={!operationOpen} closeOnClickOutside={!operationOpen} trapFocus={!operationOpen}
       onExitTransitionEnd={() => {
-        if (state?.documentBackground) navigate(-1)
+        if (navState?.documentBackground) navigate(-1)
         else navigate(DOCUMENTS_PATH, { replace: true })
       }}
       title={<MetricLabel icon={card ? documentIcon(card.document) : IconFileInvoice}>{title}</MetricLabel>}>
-      {card ? <DocumentDetails card={card} onDialogChange={setOperationOpen} reload={() => {
+      {card ? <DocumentDetails card={card} onDialogChange={setOperationOpen} onDeleted={() => {
+        window.dispatchEvent(new Event(ACCOUNTING_DOCUMENT_CHANGED))
+        setOpened(false)
+      }} reload={() => {
         result.reload()
         window.dispatchEvent(new Event(ACCOUNTING_DOCUMENT_CHANGED))
       }} /> :
@@ -59,10 +64,11 @@ function Document({ id }: { id: string }) {
   )
 }
 
-function DocumentDetails({ card, reload, onDialogChange }: { card: Card; reload: () => void; onDialogChange: (opened: boolean) => void }) {
+function DocumentDetails({ card, reload, onDeleted, onDialogChange }: { card: Card; reload: () => void; onDeleted: () => void; onDialogChange: (opened: boolean) => void }) {
   const { document: d, lines, parents, related } = card
   const partnerLabel = d.entityType === 'invoice' && d.kind === 'in' ? 'Постачальник'
-    : d.entityType === 'invoice' && d.kind === 'out' ? 'Покупець' : 'Контрагент'
+    : (d.entityType === 'invoice' && d.kind === 'out') || d.entityType === 'customerReturn' ? 'Покупець' : 'Контрагент'
+  const isNativeInvoice = d.sourceAccount === 'polivalko-native' && (d.entityType === 'invoice' || d.entityType === 'customerReturn')
   return (
     <Stack gap="sm" className="ledger-workspace ledger-document">
       <section className="ledger-card doc-summary">
@@ -80,11 +86,11 @@ function DocumentDetails({ card, reload, onDialogChange }: { card: Card; reload:
           <div><dt>Код документа</dt><dd className="doc-code">{d.sourceId}</dd></div>
         </dl>
       </section>
-      {d.sourceAccount === 'polivalko-native' && d.entityType === 'invoice' && (
-        <InvoiceActions key={d.id} doc={d} lines={lines} refresh={reload} onDialogChange={onDialogChange} />
+      {isNativeInvoice && (
+        <InvoiceActions key={d.id} doc={d} lines={lines} refresh={reload} onDeleted={onDeleted} onDialogChange={onDialogChange} />
       )}
       {d.sourceAccount === 'polivalko-native' && d.entityType === 'stockOperation' && (
-        <StockOperationActions key={d.id} doc={d} refresh={reload} onDialogChange={onDialogChange} />
+        <StockOperationActions key={d.id} doc={d} refresh={reload} onDeleted={onDeleted} onDialogChange={onDialogChange} />
       )}
       {d.partnerRef && !d.partnerId && (
         <Text c="orange">Контрагента з кодом {d.partnerRef} потрібно звірити з довідником.</Text>
@@ -119,7 +125,7 @@ function DocumentDetails({ card, reload, onDialogChange }: { card: Card; reload:
                 </Table.Td>
                 <Table.Td data-label="Артикул" className="ledger-number">{l.sku || '—'}</Table.Td>
                 <Table.Td data-label="Склад">{l.store || '—'}</Table.Td>
-                <Table.Td data-label="Кількість" className="ledger-number">{l.quantity ?? '—'}</Table.Td>
+                <Table.Td data-label="Кількість" className="ledger-number">{quantityText(l.quantity)}</Table.Td>
                 <Table.Td data-label="Ціна" className="ledger-number">{money(l.price)}</Table.Td>
                 <Table.Td data-label="Сума" className="ledger-number">{money(l.total, d.currency)}</Table.Td>
               </Table.Tr>
@@ -152,6 +158,7 @@ function Register({ section, sourceSwitch }: { section: string; sourceSwitch?: R
   const { can } = usePermissions()
   const direction = section === 'incoming' ? 'in' : section === 'outgoing' ? 'out' : null
   const returns = section === 'returns'
+  const editableKind = returns ? 'customerReturn' : direction
   const title = returns ? 'Повернення' : direction === 'in' ? 'Прибуткові накладні' : direction === 'out' ? 'Видаткові накладні' : 'Документи'
   const filter = new URLSearchParams(params)
   filter.delete('source')
@@ -160,7 +167,7 @@ function Register({ section, sourceSwitch }: { section: string; sourceSwitch?: R
   else filter.delete('register')
   const query = useRegister<Page<Doc>>('documents?' + filter)
   // Drafts waiting to be posted are part of the invoice journal, not a separate workplace queue.
-  const drafts = useRegister<Page<Doc>>('documents?' + new URLSearchParams({ register: direction ?? 'in', status: 'draft' }), !!direction)
+  const drafts = useRegister<Page<Doc>>('documents?' + new URLSearchParams({ register: editableKind ?? 'in', status: 'draft' }), !!editableKind)
   const draftsOnly = params.get('status') === 'draft'
   const page = Math.max(1, Number(params.get('page')) || 1)
   function change(key: string, value: string) {
@@ -171,23 +178,25 @@ function Register({ section, sourceSwitch }: { section: string; sourceSwitch?: R
     else next.delete(key)
     setParams(next, { replace: true })
   }
+  const createLabel = returns ? 'Оформити повернення' : direction === 'in' ? 'Прийняти товар' : 'Оформити продаж'
   return (
     <Stack gap="sm" className="ledger-workspace doc-register" data-invoice={direction ?? undefined}>
-      <PageHeader title={title} actions={sourceSwitch ?? (direction && (
-        <Group gap="xs">
-          {(draftsOnly || !!drafts.data?.total) && (
+      <PageHeader title={title} actions={(sourceSwitch || editableKind) ? (
+        <Group gap="xs" wrap="wrap">
+          {sourceSwitch}
+          {editableKind && (draftsOnly || !!drafts.data?.total) && (
             <Button radius="xl" variant={draftsOnly ? 'filled' : 'default'} leftSection={<IconFilePencil size={16} />}
               aria-pressed={draftsOnly} onClick={() => change('status', draftsOnly ? '' : 'draft')}>
               Чернетки · {drafts.data?.total.toLocaleString('uk-UA') ?? '—'}
             </Button>
           )}
-          {can(PermissionKeys.Accounting.Edit) && (
+          {editableKind && can(PermissionKeys.Accounting.Edit) && (
             <Button radius="xl" leftSection={<IconPlus size={16} />} onClick={() => setEdit(true)}>
-              {direction === 'in' ? 'Прийняти товар' : 'Оформити продаж'}
+              {createLabel}
             </Button>
           )}
         </Group>
-      ))} />
+      ) : undefined} />
       <section className={section === 'documents' ? 'ledger-card document-register-list' : 'ledger-card'}>
         <header className="ledger-card-head"><h2><MetricLabel icon={returns ? IconArrowBackUp : direction === 'out' ? IconPackageExport : direction === 'in' ? IconPackageImport : IconFiles}>{returns ? 'Повернення від покупців' : direction === 'in' ? 'Надходження від постачальників' : direction ? 'Відвантаження покупцям' : 'Реєстр документів'}</MetricLabel></h2>
           {query.data && <span className="ledger-count">Записів · {query.data.total.toLocaleString('uk-UA')}</span>}
@@ -238,9 +247,9 @@ function Register({ section, sourceSwitch }: { section: string; sourceSwitch?: R
           <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
         )}
       </section>
-      {edit && direction && (
+      {edit && editableKind && (
         <EditRegister
-          kind={direction}
+          kind={editableKind}
           onClose={() => setEdit(false)}
           onSaved={() => {
             setEdit(false)
@@ -258,14 +267,20 @@ export function AccountingReturnsPage({ sourceSwitch }: { sourceSwitch?: React.R
 }
 
 export default function AccountingPage() {
-  const section = useLocation().pathname.split('/')[2]
-  const { id } = useParams()
-  if (section === 'documents' && id) return <Document key={id} id={id} />
-  if (section === 'partners') return <PartnersDirectory id={id} />
+  const overlay = useContext(OverlayRouteContext)
+  const pathname = useLocation().pathname
+  const { id: paramId } = useParams()
+  if (overlay?.section === 'documents') return <Document key={overlay.id} id={overlay.id} overlayState={overlay.state} />
+  if (overlay?.section === 'partners') return <PartnersDirectory id={overlay.id} overlayState={overlay.state} />
+  const section = pathname.split('/')[2]
+  if (section === 'documents' && paramId) return <Document key={paramId} id={paramId} />
+  if (section === 'partners') return <PartnersDirectory id={paramId} />
   if (section === 'payments' || section === 'stock' || section === 'inventory')
     return <div className="accounting-register">{section === 'payments' ? <Workplace /> : section === 'stock' ? <WarehouseBalances /> : <InventoryPage />}</div>
-  if (section === 'income' || section === 'write-offs')
-    return <div className="accounting-register"><StockOperationRegister key={section} kind={section === 'income' ? 'income' : 'writeOff'} /></div>
+  if (section === 'income' || section === 'write-offs' || section === 'transfers') {
+    const kind = section === 'income' ? 'income' : section === 'write-offs' ? 'writeOff' : 'transfer'
+    return <div className="accounting-register"><StockOperationRegister key={section} kind={kind} /></div>
+  }
   if (section === 'product-history')
     return (
       <div className="accounting-register">

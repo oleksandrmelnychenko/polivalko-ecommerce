@@ -9,25 +9,44 @@ from time import monotonic
 from urllib.parse import parse_qs
 
 import simplejson as json
-from .customer_recommendations import customer_recommendations
+from .customer_recommendations import clear_cache as clear_recommendations_cache, customer_recommendations
 from .recommendation_results import recommendation_results
 
 from .forecast import VERSION, build_models
 from .register import KYIV
 from .reports import documents, forecasts, policy_key, report
 from .source import hosted, read_register
-from .invoices import read_year, report_years
-from .dashboard import dashboard
-from .stock_turnover import COVER_OPTIONS, DEFAULT_COVER_DAYS, stock_page
-from .product_contribution import profit_page
-from .turnover import forecast_months, history_for
-from .markets import markets
+from .invoices import clear_cache as clear_years_cache, read_year, report_years
+from .dashboard import clear_cache as clear_dashboard_cache, dashboard
+from .stock_turnover import COVER_OPTIONS, DEFAULT_COVER_DAYS, clear_cache as clear_stock_cache, stock_page
+from .product_contribution import clear_cache as clear_profit_cache, profit_page
+from .turnover import clear_cache as clear_turnover_cache, forecast_months, history_for
+from .markets import clear_cache as clear_markets_cache, markets
 from .order_waybills import order_waybills
 from .winter import winter
 from .offers import generate
 from .shipments import check_shipment_sources
 
 logger = logging.getLogger(__name__)
+
+
+def clear_caches():
+    clear_dashboard_cache()
+    clear_stock_cache()
+    clear_profit_cache()
+    clear_recommendations_cache()
+    clear_turnover_cache()
+    clear_markets_cache()
+    clear_years_cache()
+
+
+def _parse_refresh(q):
+    raw = q.get("refresh")
+    if raw is None or raw in ("0", "false"):
+        return False
+    if raw in ("1", "true"):
+        return True
+    raise ValueError("Некоректний параметр оновлення")
 
 
 def now():
@@ -264,6 +283,7 @@ def dispatch(env):
     if route == ("GET", "/status"):
         return 200, dict(service.status, policiesWritable=not hosted())
     if route == ("POST", "/refresh"):
+        clear_caches()
         if hosted():
             service.current(force=True)
             return (503 if service.status["state"] == "error" else 200), service.status
@@ -324,22 +344,26 @@ def dispatch(env):
         days, page = int(q.get("days",30)), int(q.get("page",1))
         stock, search = q.get("stock","all"), q.get("search","")
         cover_days, sort = int(q.get("coverDays", DEFAULT_COVER_DAYS)), q.get("sort", "turnover")
-        if (set(q) - {"analysis","days","page","stock","search","sort","coverDays","seasonal"} or days not in (7,30,90)
+        refresh = _parse_refresh(q)
+        if (set(q) - {"analysis","days","page","stock","search","sort","coverDays","seasonal","refresh"} or days not in (7,30,90)
                 or q.get("seasonal", "0") not in ("0", "1")
                 or cover_days not in COVER_OPTIONS or sort not in ("purchase","turnover") or not 1 <= page <= 1000000
                 or stock not in ("all","out","low","buy","ordered","season-review","supply-review") or len(search) > 160):
             raise ValueError("Перевірте період, стан залишку та параметри списку")
         try:
+            if refresh:
+                return 200, stock_page(now().date(), days, page, stock, search, cover_days, sort, q.get("seasonal") == "1", refresh=True)
             return 200, stock_page(now().date(), days, page, stock, search, cover_days, sort, q.get("seasonal") == "1")
         except Exception as exc:
             logger.error("Stock turnover unavailable (%s)", type(exc).__name__)
             return 503, {"title": "Не вдалося звірити наявність товарів із продажами"}
     if route[1] == "/documents" and q.get("analysis") == "dashboard":
         days = int(q.get("days", 30))
-        if set(q) - {"analysis", "days"} or days not in (7, 30, 90):
+        refresh = _parse_refresh(q)
+        if set(q) - {"analysis", "days", "refresh"} or days not in (7, 30, 90):
             raise ValueError("Виберіть 7, 30 або 90 днів")
         try:
-            return 200, dashboard(now().date(), days)
+            return 200, (dashboard(now().date(), days, refresh=True) if refresh else dashboard(now().date(), days))
         except Exception as exc:
             logger.error("Sales dashboard unavailable (%s)", type(exc).__name__)
             return 503, {"title": "Не вдалося прочитати показники за документами продажу"}

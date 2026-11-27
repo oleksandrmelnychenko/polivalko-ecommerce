@@ -2,6 +2,7 @@ import { Button, SegmentedControl } from '@mantine/core'
 import { IconCalendarStats, IconChartDots, IconChartLine, IconChevronRight, IconPackages, IconWaveSine } from '@tabler/icons-react'
 import { useState } from 'react'
 import { cleanProductName } from '@/shared/lib/cleanProductName'
+import { formatUnitLabel } from '@/shared/lib/salesFormat'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import type { Projection, Series } from '../api/businessAnalytics'
@@ -64,7 +65,7 @@ export function DemandForecastReport({ forecast, kind, loading, error, edit, rel
                   <tr key={keyOf(row)}>
                     <th scope="row"><button type="button" aria-haspopup="dialog" onClick={() => show(row)}>{cleanProductName(row.name)}<IconChevronRight size={14} aria-hidden="true" /></button></th>
                     <td>{orgs.get(row.org) ?? row.org}<small>{stores.get(row.store) ?? row.store}</small></td>
-                    <td>{row.unit || 'од. товару'}</td>
+                    <td>{formatUnitLabel(row.unit, 'од. товару')}</td>
                     <td>{formatValue(row.weeks.length ? row.weeks.reduce((sum, week) => sum + week.value, 0) : null)}</td>
                     <td>{formatValue(row.purchase?.order)}</td>
                     <td>{row.reason ?? row.purchase?.reason ?? 'Розраховано'}</td>
@@ -87,7 +88,7 @@ export function DemandForecastReport({ forecast, kind, loading, error, edit, rel
         title={<MetricLabel icon={IconPackages}>{selected ? cleanProductName(selected.name) : 'Прогноз попиту'}</MetricLabel>}
       >
         {selected && <div className="ba-demand-detail">
-          <p className="ba-demand-context">{[orgs.get(selected.org) ?? selected.org, stores.get(selected.store) ?? selected.store, selected.unit || 'од. товару'].join(' · ')}</p>
+          <p className="ba-demand-context">{[orgs.get(selected.org) ?? selected.org, stores.get(selected.store) ?? selected.store, formatUnitLabel(selected.unit, 'од. товару')].join(' · ')}</p>
           {moved && <p role="status">Список оновлено, і цей рядок перейшов на іншу сторінку. Розрахунок у вікні застарів: закрийте його й відкрийте товар зі списку.</p>}
           <ForecastDetail key={keyOf(selected)} row={selected} start={forecast.start} edit={edit && !moved} saved={reload} onDirty={setDirty} onBusy={setBusy} />
           {selected.kind === 'sku' && selected.reason && <Button variant="default" disabled={busy || dirty} onClick={() => {

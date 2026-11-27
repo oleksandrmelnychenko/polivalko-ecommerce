@@ -7,7 +7,7 @@ export type OrderItem = components['schemas']['OrderItemDto']
 export type OrderRefund = components['schemas']['ConsoleRefundDto']
 export type OrderPayment = components['schemas']['ConsolePaymentDto']
 export type OrderReceipt = components['schemas']['ReceiptDto']
-export type CreateRefundRequest = components['schemas']['CreateRefundRequest']
+export type CreateRefundRequest = components['schemas']['CreateRefundRequest'] & { returnToStock?: boolean }
 
 export function getOrder(number: string) {
   return api.GET('/api/v1/console/orders/{number}', { params: { path: { number } } })
@@ -23,7 +23,7 @@ export function createRefund(headers: CsrfHeaders, number: string, idempotencyKe
   return api.POST('/api/v1/console/orders/{number}/refunds', {
     params: { path: { number }, header: { 'Idempotency-Key': idempotencyKey } },
     headers,
-    body,
+    body: body as components['schemas']['CreateRefundRequest'],
   })
 }
 

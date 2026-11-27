@@ -78,7 +78,7 @@ public sealed record UpdateOrderNoteRequest(string? Note);
 
 public sealed record RefundLineRequest(Guid ProductId, int Quantity);
 
-public sealed record CreateRefundRequest(IReadOnlyList<RefundLineRequest>? Lines, string? Reason);
+public sealed record CreateRefundRequest(IReadOnlyList<RefundLineRequest>? Lines, string? Reason, bool ReturnToStock = true);
 
 public sealed record ConsoleOrderQuery(
     [FromQuery(Name = "q")] string? Q,

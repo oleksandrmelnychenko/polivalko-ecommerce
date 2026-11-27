@@ -20,7 +20,7 @@ ORDER BY day,id
 NATIVE_LINES = """
 SELECT id::text, source_account AS account, source_id AS ref, day, kind, status, currency, number,
        details->'products' AS products
-FROM accounting.documents WHERE native_partner_id IS NOT NULL AND kind='out' AND day >= %s AND day < %s
+FROM accounting.documents WHERE native_partner_id IS NOT NULL AND kind IN ('out','customerReturn') AND day >= %s AND day < %s
 """
 ARCHIVE_LINES = ARCHIVE_SQL.replace("DAY_FILTER", """r.source_day BETWEEN %s AND %s
   AND r.entity_type IN ('invoice','customerReturn')""")
@@ -98,6 +98,12 @@ def body_in_hryvnia(doc):
 
 _years_lock = Lock()
 _years = None
+
+
+def clear_cache():
+    global _years
+    with _years_lock:
+        _years = None
 
 
 def report_years(today):

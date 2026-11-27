@@ -35,6 +35,7 @@ public static class OrderingModule
             .AddScoped<IOrderReceiptSource, OrderReceiptSource>()
             .AddScoped<IOrderExportSource, OrderExportSource>()
             .AddScoped<IOrderStateSync, Features.Synchronization.OrderStateSync>()
+            .AddScoped<IExternalOrderSyncStatus, Features.Cancellation.ConfigurationOrderSyncStatus>()
             .AddScoped<IOrderReporting, OrderReporting>()
             .AddScoped<IProductSalesSource, ProductSalesSource>()
             .AddScoped<IWebsiteProductSales, WebsiteProductSales>()

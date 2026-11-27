@@ -4,7 +4,7 @@ from decimal import Decimal
 from unittest import TestCase
 from unittest.mock import patch
 
-from analytics import customer_recommendations, dashboard, invoices, markets, purchase_season, turnover, winter
+from analytics import customer_recommendations, dashboard, invoices, markets, offer_statistics, purchase_season, turnover, winter
 from analytics.dashboard import summarize
 from analytics.register import INACTIVE
 
@@ -23,7 +23,7 @@ class ReceiptCheckTests(TestCase):
     def test_every_receipt_query_drops_a_receipt_whose_body_is_deleted_or_a_draft(self):
         queries = dict(
             dashboard=dashboard.RECEIPTS, cash=invoices.CASH_MONTHS, turnover=turnover.RECEIPT_MONTHS,
-            markets=markets.DOCUMENTS, winter=winter.SALES,
+            markets=markets.DOCUMENTS, winter=winter.SALES, offers=offer_statistics.SALES,
             recommendations=customer_recommendations._SALES, season=purchase_season._DOCS)
         for name, sql in queries.items():
             with self.subTest(name):
@@ -33,7 +33,7 @@ class ReceiptCheckTests(TestCase):
     def test_summed_receipts_are_in_hryvnia_and_only_the_dashboard_reads_the_others_to_count_them(self):
         summed = dict(
             cash=invoices.CASH_MONTHS, turnover=turnover.RECEIPT_MONTHS, markets=markets.DOCUMENTS, winter=winter.SALES,
-            recommendations=customer_recommendations._SALES, season=purchase_season._DOCS)
+            offers=offer_statistics.SALES, recommendations=customer_recommendations._SALES, season=purchase_season._DOCS)
         for name, sql in summed.items():
             with self.subTest(name):
                 self.assertIn(CURRENCY, sql)

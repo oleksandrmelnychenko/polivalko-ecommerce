@@ -301,6 +301,13 @@ _carrier_lock = Lock()
 _carrier_cache = {}
 
 
+def clear_cache():
+    with _lock:
+        _cache.clear()
+    with _carrier_lock:
+        _carrier_cache.clear()
+
+
 def log_coverage(year, data):
     for source in ("documents", "registered", "online", "combined"):
         geography = data[source]

@@ -164,6 +164,11 @@ export function OrderStatusPanel({ order, status }: { order: ConsoleOrder; statu
         <Text size="sm" mb="sm">
           Покупець побачить статус «Скасоване». Змінити статус після цього вже не можна.
         </Text>
+        {order.status === 'shipped' ? (
+          <Alert mb="sm" color="blue" variant="light">
+            Відвантажений товар із цього замовлення буде автоматично повернуто на склад після скасування.
+          </Alert>
+        ) : null}
         <Textarea
           label="Причина скасування"
           placeholder="Наприклад: покупець відмовився, товару немає"

@@ -100,13 +100,20 @@
   justify-self: start;
   max-width: 100%;
   overflow-x: auto;
-  border-radius: 999px;
+  border-radius: 20px;
   background: white;
   scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-inline: 8px;
 }
 .ba-page .ba-report-tabs .mantine-SegmentedControl-root {
   max-width: none;
   width: max-content;
+}
+.ba-page .ba-report-tabs .mantine-SegmentedControl-label {
+  padding: 0 11px;
+  font-size: 13px;
+  white-space: nowrap;
 }
 .ba-report-tabs .mantine-SegmentedControl-root,
 .ba-page[data-report-content] .mantine-SegmentedControl-root,
@@ -142,7 +149,7 @@
 .ba-page .pa-filters.ba-controls :is(input,select) { width: 100%; min-width: 0; max-width: none; border-radius: 999px; padding-inline: 12px; min-height: 36px; font-weight: 400; }
 .ba-page .pa-filters.ba-controls input[type='date'] { font-family: var(--font-mono); }
 .ba-page[data-report-content] .mantine-Button-root { border-radius: 999px; }
-.ba-page .ba-overview-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(172px, 100%), 1fr)); gap: 10px; }
+.ba-page .ba-overview-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); gap: 10px; }
 .ba-overview-metrics > .pa-card {
   display: flex;
   flex-direction: column;
@@ -158,9 +165,9 @@
 .ba-overview-metrics .metric-label { align-items: center; }
 .ba-overview-metrics strong {
   margin-top: auto;
-  font: 500 clamp(20px, 2vw, 32px)/1.2 var(--font-mono);
-  overflow-wrap: anywhere;
-  letter-spacing: -.05em;
+  font: 500 clamp(17px, 1.55vw, 26px)/1.2 var(--font-mono);
+  white-space: nowrap;
+  letter-spacing: -.04em;
 }
 .ba-overview-metrics strong small { color: var(--pa-muted); font-size: .68em; margin-left: .2em; }
 .ba-page[data-report-content] .pa-card { overflow: hidden; }

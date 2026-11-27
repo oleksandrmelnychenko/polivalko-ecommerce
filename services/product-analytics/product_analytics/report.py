@@ -152,9 +152,11 @@ def rank_products(
         stock = Decimal(catalog_item["stock"]) if catalog_item is not None else None
         stock_days = None
         if stock_coverage and stock is not None:
-            recent = [row for row in positive if row.day >= recent_start]
-            if len({row.day for row in recent}) >= 3:
-                stock_days = round_one(stock * 28 / sum((row.sold for row in recent), ZERO))
+            recent = [row for row in group if row.day >= recent_start]
+            if len({row.day for row in recent if row.sold > 0}) >= 3:
+                net_sold = max(ZERO, sum((row.sold - row.returned for row in recent), ZERO))
+                if net_sold > 0:
+                    stock_days = round_one(stock * 28 / net_sold)
 
         products.append({
             "productKey": key,

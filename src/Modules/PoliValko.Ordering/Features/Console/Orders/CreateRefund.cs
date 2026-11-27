@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using PoliValko.Catalog.Contracts;
 using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Outbox;
 using PoliValko.Infrastructure.Persistence;
@@ -21,6 +22,7 @@ internal static class CreateRefund
         ClaimsPrincipal user,
         PoliValkoDbContext db,
         IOutbox outbox,
+        ICatalogReservations reservations,
         IAuditLog audit,
         TimeProvider time,
         CancellationToken ct)
@@ -101,7 +103,13 @@ internal static class CreateRefund
             outbox.Enqueue(new FiscalReceiptRequested(order.Id, FiscalTrigger.Refund, refund.Id));
         }
 
-        audit.Record("order.refund_created", "Order", order.Number, new { refund.Id, method, amount = refund.Amount, reason, lines = lines.Count });
+        await reservations.ApplyRefundAsync(
+            order.Id,
+            lines.ToDictionary(l => l.ProductId, l => l.Quantity),
+            request.ReturnToStock,
+            ct);
+
+        audit.Record("order.refund_created", "Order", order.Number, new { refund.Id, method, amount = refund.Amount, reason, lines = lines.Count, returnToStock = request.ReturnToStock });
         try
         {
             await db.SaveChangesAsync(ct);

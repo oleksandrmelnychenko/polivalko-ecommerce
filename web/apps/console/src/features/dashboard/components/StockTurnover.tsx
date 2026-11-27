@@ -1,13 +1,13 @@
 import { Button, Select, TextInput } from '@mantine/core'
 import { IconChevronDown, IconAdjustmentsHorizontal, IconSearch, IconShoppingCart } from '@tabler/icons-react'
 import { useDebouncedCallback } from '@mantine/hooks'
-import { useContext, useEffect, useId, useState } from 'react'
+import { useContext, useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/features/auth'
 import { useApiQuery } from '@/shared/api/useApiQuery'
 import { problemMessage } from '@/shared/api/problem'
 import { onConsoleEvent } from '@/shared/lib/events'
-import { dateRange, formatPrice } from '@/shared/lib/salesFormat'
+import { dateRange, formatPrice, formatUnitLabel } from '@/shared/lib/salesFormat'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { DocumentOverlayContext } from '@/shared/ui/DocumentLink'
 import { MetricLabel } from '@/shared/ui/MetricCard'
@@ -70,9 +70,20 @@ function StockReport({ days, account, purchasesOpen, openPurchases, closePurchas
     coverDays: filters.cover, sort: filters.sort,
   })
   if (filters.seasonal) params.set('seasonal', '1')
-  const query = useApiQuery('stock-turnover?' + params, () => getStockTurnover(params))
+  const forceRefresh = useRef(false)
+  const query = useApiQuery('stock-turnover?' + params, () => {
+    const requestParams = new URLSearchParams(params)
+    if (forceRefresh.current) {
+      forceRefresh.current = false
+      requestParams.set('refresh', '1')
+    }
+    return getStockTurnover(requestParams)
+  })
   const { reload } = query
-  useEffect(() => onConsoleEvent('summary-stale', reload), [reload])
+  useEffect(() => onConsoleEvent('summary-stale', () => {
+    forceRefresh.current = true
+    reload()
+  }), [reload])
   const report = query.status === 'ready' ? query.data : undefined
   // Counters follow the search; an older service sends only the totals of all products.
   const counts = report && (report.counts ?? { all: report.total, buy: report.buyCount, supplyReview: report.supplyReview ?? 0,
@@ -157,11 +168,11 @@ function StockReport({ days, account, purchasesOpen, openPurchases, closePurchas
             <div className="report-tile-metric">
               <span className="report-metric-label">{item.purchaseStatus === 'buy' ? 'Докупити' : 'Доступно після резервів'}</span>
               <div className="report-metric-line">
-                <strong>{numberFormat.format(item.purchaseStatus === 'buy' ? item.buyQuantity : item.available)} {item.unit || 'од.'}</strong>
+                <strong>{numberFormat.format(item.purchaseStatus === 'buy' ? item.buyQuantity : item.available)} {formatUnitLabel(item.unit, 'од.')}</strong>
                 <TableChip tone="product" value={stockCoverageLabel(item.available, item.stockDays)} />
               </div>
               <div className="stock-metric-context">
-                {item.purchaseStatus === 'buy' && <span>Доступно після резервів · {numberFormat.format(item.available)} {item.unit || 'од.'}</span>}
+                {item.purchaseStatus === 'buy' && <span>Доступно після резервів · {numberFormat.format(item.available)} {formatUnitLabel(item.unit, 'од.')}</span>}
                 <span>Ціль · {daysWithUnit.format(report.coverDays)}</span>
                 {item.stockDays != null && item.season && item.season.factor !== 1 && <TableChip tone="success" value="З урахуванням сезону" />}
               </div>
