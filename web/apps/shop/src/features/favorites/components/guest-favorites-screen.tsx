@@ -8,6 +8,7 @@ import { formatMoney } from "@polivalko/shared/lib/format";
 import { quoteCart } from "@/shared/api/quote-cart";
 import { useCustomer } from "@/features/customer";
 import { thumb } from "@/shared/lib/images";
+import { hasPrice, PRICE_ON_REQUEST } from "@/shared/lib/price";
 import { guestFavoriteKeys, subscribeGuestFavorites } from "../lib/guest-favorites";
 import { FavoriteButton } from "./favorite-button";
 
@@ -37,11 +38,24 @@ export function GuestFavoritesScreen() {
   if (status === "guest" && !keys) return <div className="empty"><h2>В обраному поки порожньо</h2><p>Натисніть сердечко біля товару, щоб зберегти його тут.</p><Link href="/catalog" className="btn btn--graphite">До каталогу</Link></div>;
   if (status !== "guest" || result?.key !== keys) return <p role="status">Завантажуємо обране…</p>;
   if (!result.rows) return <p role="status">Не вдалося завантажити обране. <button type="button" className="link" onClick={() => setAttempt(n => n + 1)}>Спробувати ще раз</button></p>;
-  return <ul className="guest-favorites">{result.rows.map(row => <li key={row.productId}>
-    {row.imageUrl && <img src={thumb(row.imageUrl)} width="64" height="64" alt="" />}
-    <div>{row.slug ? <Link href={`/product/${row.slug}`}>{row.name}</Link> : row.name}
-      {row.slug && Number(row.unitPrice.value) > 0 && <p className="money">{formatMoney(row.unitPrice)}</p>}
-    </div>
-    <FavoriteButton productId={row.productId} name={row.name} variant="box" />
-  </li>)}</ul>;
+  return (
+    <ul className="guest-favorites">
+      {result.rows.map(row => (
+        <li key={row.productId}>
+          <span className="guest-favorites__photo">
+            {row.imageUrl
+              ? <img src={thumb(row.imageUrl)} width="72" height="72" alt="" loading="lazy" />
+              : <small>Фото відсутнє</small>}
+          </span>
+          <div className="guest-favorites__name">
+            {row.slug ? <Link href={`/product/${row.slug}`}>{row.name}</Link> : row.name}
+          </div>
+          {row.slug && <span className="guest-favorites__price money">
+            {hasPrice(row.unitPrice) ? formatMoney(row.unitPrice) : PRICE_ON_REQUEST}
+          </span>}
+          <FavoriteButton productId={row.productId} name={row.name} variant="box" />
+        </li>
+      ))}
+    </ul>
+  );
 }
