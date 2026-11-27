@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import ts from "typescript";
-import { canBuy, hasPrice, PRICE_ON_REQUEST } from "../src/shared/lib/price.ts";
-import { comparisonRows } from "../src/features/compare/model.ts";
+import { loadShop } from "./helpers/load-ts.mjs";
+
+const { canBuy, hasPrice, PRICE_ON_REQUEST } = loadShop("shared/lib/price.ts");
+const { comparisonRows } = loadShop("features/compare/model.ts");
 
 function load(path, require) {
   const source = readFileSync(new URL(path, import.meta.url), "utf8");

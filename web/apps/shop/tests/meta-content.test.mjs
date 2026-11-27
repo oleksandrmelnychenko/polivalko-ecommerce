@@ -1,39 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { resolve } from "node:path";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
-import ts from "typescript";
-
-const here = dirname(fileURLToPath(import.meta.url));
-const shopSrc = resolve(here, "../src");
-const aliases = {
-  "@/": `${shopSrc}/`,
-  "@polivalko/shared/": `${resolve(here, "../../../packages/shared")}/`,
-};
-
-function loadTs(file, seen = new Map()) {
-  if (seen.has(file)) return seen.get(file).exports;
-  const loaded = { exports: {} };
-  seen.set(file, loaded);
-  const js = ts.transpileModule(readFileSync(file, "utf8"), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-  }).outputText;
-  const require = (name) => {
-    const alias = Object.keys(aliases).find((prefix) => name.startsWith(prefix));
-    const base = alias
-      ? aliases[alias] + name.slice(alias.length)
-      : name.startsWith(".")
-        ? resolve(dirname(file), name)
-        : null;
-    if (!base) throw new Error(`Unexpected runtime import "${name}" in ${file}`);
-    return loadTs(`${base}.ts`, seen);
-  };
-  new Function("exports", "module", "require", js)(loaded.exports, loaded, require);
-  return loaded.exports;
-}
-
-const src = (path) => loadTs(resolve(shopSrc, path));
+import { loadShop as src, shopSrc } from "./helpers/load-ts.mjs";
 const BRAND_SUFFIX = " | Poli Valko";
 const renderTitle = (rawTitle, exactTitle = false) =>
   exactTitle || /poli\s*valko[\s.!?»"')]*$/i.test(rawTitle.trim())

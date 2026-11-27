@@ -41,9 +41,13 @@ const nextConfig: NextConfig = {
       { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(self)" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
     ];
-    const publicHtmlCache = [
-      { key: "CDN-Cache-Control", value: "public, s-maxage=300, stale-while-revalidate=3600" },
-      { key: "Vercel-CDN-Cache-Control", value: "public, s-maxage=300, stale-while-revalidate=3600" },
+    const catalogHtmlCache = [
+      { key: "CDN-Cache-Control", value: "public, s-maxage=300, stale-while-revalidate=14400" },
+      { key: "Vercel-CDN-Cache-Control", value: "public, s-maxage=300, stale-while-revalidate=14400" },
+    ];
+    const editorialHtmlCache = [
+      { key: "CDN-Cache-Control", value: "public, s-maxage=1800, stale-while-revalidate=86400" },
+      { key: "Vercel-CDN-Cache-Control", value: "public, s-maxage=1800, stale-while-revalidate=86400" },
     ];
     const immutableAssetCache = [
       { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
@@ -60,23 +64,25 @@ const nextConfig: NextConfig = {
       { source: "/mascot/:path*", headers: immutableAssetCache },
       ...[
         "/",
-        "/about",
-        "/blog",
-        "/blog/:slug",
         "/brands",
         "/brands/:slug",
         "/catalog",
         "/catalog/:path*",
+        "/product/:slug",
+        "/sale",
+      ].map((source) => ({ source, headers: catalogHtmlCache })),
+      ...[
+        "/about",
+        "/blog",
+        "/blog/:slug",
         "/contacts",
         "/offer",
         "/payment-delivery",
         "/privacy",
-        "/product/:slug",
         "/returns",
-        "/sale",
         "/services",
         "/services/:slug",
-      ].map((source) => ({ source, headers: publicHtmlCache })),
+      ].map((source) => ({ source, headers: editorialHtmlCache })),
       ...["/404", "/cart", "/checkout", "/compare", "/order/:number", "/account/:path*", "/pay/sandbox/:id", "/api/:path*", "/internal/:path*"].map((source) => ({
         source,
         headers: privateNoStore,

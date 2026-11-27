@@ -1,30 +1,8 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
-import ts from "typescript";
+import { loadShop } from "./helpers/load-ts.mjs";
 
-const here = dirname(fileURLToPath(import.meta.url));
-const aliases = { "@/": `${resolve(here, "../src")}/`, "@polivalko/shared/": `${resolve(here, "../../../packages/shared")}/` };
-
-// Loads a storefront module together with its real imports (path aliases included); type-only imports vanish on transpile.
-function loadTs(file, seen = new Map()) {
-  if (seen.has(file)) return seen.get(file).exports;
-  const loaded = { exports: {} };
-  seen.set(file, loaded);
-  const js = ts.transpileModule(readFileSync(file, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const require = (name) => {
-    const alias = Object.keys(aliases).find((prefix) => name.startsWith(prefix));
-    const base = alias ? aliases[alias] + name.slice(alias.length) : name.startsWith(".") ? resolve(dirname(file), name) : null;
-    if (!base) throw new Error(`Unexpected runtime import "${name}" in ${file}`);
-    return loadTs(`${base}.ts`, seen);
-  };
-  new Function("exports", "module", "require", js)(loaded.exports, loaded, require);
-  return loaded.exports;
-}
-
-const { isMerchantFeedEligible, merchantFeedXml } = loadTs(resolve(here, "../src/features/catalog/lib/merchant-feed.ts"));
+const { isMerchantFeedEligible, merchantFeedXml } = loadShop("features/catalog/lib/merchant-feed.ts");
 const shop = { url: "https://shop.test", name: "Shop", description: "Garden goods" };
 const money = (value) => ({ value, currency: "UAH" });
 

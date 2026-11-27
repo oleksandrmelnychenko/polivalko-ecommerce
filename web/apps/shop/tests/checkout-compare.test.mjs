@@ -1,8 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { comparisonGroup, comparisonRows } from "../src/features/compare/model.ts";
-import { orderRequest } from "../src/features/checkout/lib/order-request.ts";
-import { validateOrder } from "../src/features/checkout/lib/validate-order.ts";
+import { loadShop } from "./helpers/load-ts.mjs";
+
+const { comparisonGroup, comparisonRows } = loadShop("features/compare/model.ts");
+const { orderRequest } = loadShop("features/checkout/lib/order-request.ts");
+const { validateOrder } = loadShop("features/checkout/lib/validate-order.ts");
 
 const product = (category, attributes = []) => ({ id: category, slug: category, name: category, sku: category, price: { value: "100.00", currency: "UAH" }, inStock: true, category: { slug: category, name: category }, attributes });
 test("separate categories and explicit types never share a comparison group", () => {

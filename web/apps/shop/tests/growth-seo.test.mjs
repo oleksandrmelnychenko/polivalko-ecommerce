@@ -1,47 +1,16 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
-import ts from "typescript";
+import { loadShop } from "./helpers/load-ts.mjs";
 
-const here = dirname(fileURLToPath(import.meta.url));
-const aliases = {
-  "@/": `${resolve(here, "../src")}/`,
-  "@polivalko/shared/": `${resolve(here, "../../../packages/shared")}/`,
-};
-
-function loadTs(file, seen = new Map()) {
-  if (seen.has(file)) return seen.get(file).exports;
-  const loaded = { exports: {} };
-  seen.set(file, loaded);
-  const js = ts.transpileModule(readFileSync(file, "utf8"), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-  }).outputText;
-  const require = (name) => {
-    const alias = Object.keys(aliases).find((prefix) => name.startsWith(prefix));
-    const base = alias
-      ? aliases[alias] + name.slice(alias.length)
-      : name.startsWith(".")
-        ? resolve(dirname(file), name)
-        : null;
-    if (!base) throw new Error(`Unexpected runtime import "${name}" in ${file}`);
-    return loadTs(`${base}.ts`, seen);
-  };
-  new Function("exports", "module", "require", js)(loaded.exports, loaded, require);
-  return loaded.exports;
-}
-
-const src = resolve(here, "../src");
 const {
   CATEGORY_BRAND_PRIORITY_MATRIX,
   categoryBrandHref,
   categoryBrandSeoMeta,
   duplicateSubcategoryRedirect,
   resolveCatalogRobotsAndCanonical,
-} = loadTs(`${src}/features/catalog/lib/category-brand-seo.ts`);
-const { articles } = loadTs(`${src}/features/journal/articles.ts`);
-const { JOURNAL_ENABLED } = loadTs(`${src}/features/journal/config.ts`);
+} = loadShop("features/catalog/lib/category-brand-seo.ts");
+const { articles } = loadShop("features/journal/articles.ts");
+const { JOURNAL_ENABLED } = loadShop("features/journal/config.ts");
 
 test("clean Category × Brand route with sufficient products is indexable and sitemap-eligible", () => {
   const decision = resolveCatalogRobotsAndCanonical({

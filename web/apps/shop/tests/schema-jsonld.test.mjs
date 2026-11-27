@@ -1,51 +1,11 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import ts from "typescript";
+import { loadShop as src } from "./helpers/load-ts.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const aliases = {
-  "@/": `${resolve(here, "../src")}/`,
-  "@polivalko/shared/": `${resolve(here, "../../../packages/shared")}/`,
-};
-
-function resolveTsFile(base) {
-  if (existsSync(`${base}.ts`)) return `${base}.ts`;
-  if (existsSync(`${base}.tsx`)) return `${base}.tsx`;
-  if (existsSync(`${base}/index.ts`)) return `${base}/index.ts`;
-  throw new Error(`Cannot resolve TypeScript module at ${base}`);
-}
-
-function loadTs(file, seen = new Map()) {
-  if (seen.has(file)) return seen.get(file).exports;
-  const loaded = { exports: {} };
-  seen.set(file, loaded);
-  const js = ts.transpileModule(readFileSync(file, "utf8"), {
-    fileName: file,
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2022,
-      jsx: ts.JsxEmit.ReactJSX,
-    },
-  }).outputText;
-  const require = (name) => {
-    if (name === "react/jsx-runtime") return { jsx: () => null, jsxs: () => null, Fragment: Symbol("Fragment") };
-    const alias = Object.keys(aliases).find((prefix) => name.startsWith(prefix));
-    const base = alias
-      ? aliases[alias] + name.slice(alias.length)
-      : name.startsWith(".")
-        ? resolve(dirname(file), name)
-        : null;
-    if (!base) throw new Error(`Unexpected runtime import "${name}" in ${file}`);
-    return loadTs(resolveTsFile(base), seen);
-  };
-  new Function("exports", "module", "require", js)(loaded.exports, loaded, require);
-  return loaded.exports;
-}
-
-const src = (path) => loadTs(resolve(here, "../src", path));
 
 const SITE = "https://www.poli-valko.com";
 
