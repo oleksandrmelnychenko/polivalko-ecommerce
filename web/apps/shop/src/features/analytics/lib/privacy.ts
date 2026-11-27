@@ -23,6 +23,7 @@ const ALLOWED_ANALYTICS_QUERY_KEYS = new Set([
   "dclid",
   "fbclid",
   "msclkid",
+  "srsltid",
 ]);
 
 export type LocationLike = {

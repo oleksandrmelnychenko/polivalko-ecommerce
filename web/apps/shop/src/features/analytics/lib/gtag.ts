@@ -1,4 +1,4 @@
-import { isAnalyticsAllowedLocation } from "./privacy";
+import { cleanPageLocation, isAnalyticsAllowedLocation } from "./privacy";
 
 const SCRIPT_ID = "pv-ga4-script";
 // Production GA4 property for poli-valko.com; local/preview hosts are blocked by isAnalyticsAllowedLocation().
@@ -28,10 +28,11 @@ export function ensureGtag(measurementId = CONFIGURED_GA_MEASUREMENT_ID) {
   installGtagStub();
   if (isFresh) {
     window.gtag?.("js", new Date());
-    // Disable automatic page_view so every URL sent to GA4 passes through cleanPageLocation().
+    // Disable automatic page_view and sanitize default page_location so every URL sent to GA4 passes through cleanPageLocation().
     window.gtag?.("config", id, {
       send_page_view: false,
       anonymize_ip: true,
+      page_location: cleanPageLocation(window.location),
     });
   }
 
