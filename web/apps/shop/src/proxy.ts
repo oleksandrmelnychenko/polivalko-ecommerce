@@ -45,6 +45,5 @@ export const config = {
     "/blog",
     "/blog/:slug",
     "/services",
-    "/product/:slug",
   ],
 };

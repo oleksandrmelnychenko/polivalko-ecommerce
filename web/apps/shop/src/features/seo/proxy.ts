@@ -2,14 +2,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { STREAMING_METADATA_MARK } from "@/shared/lib/streaming-metadata";
 
 /**
- * Pages whose metadata is part of the shell: it lands in <head> whether Next.js streams the page or waits for the
- * metadata (checked for each, a product also on its first visit). Only these answer people with the shell at once.
+ * Pages whose shell the build prerenders and whose metadata is part of it: it lands in <head> whether Next.js streams
+ * the page or waits for the metadata (checked for each). Only these answer people with the shell at once.
  * A listing or an info page is not here: its metadata depends on the request and would stream into <body>.
- * The build prerenders the shells of the fixed pages and the articles; a product's shell is built on its first visit
- * and kept, so that visit waits a little longer and the following ones get the shell at once.
+ * Product and service pages keep their metadata in <head> too, but have no shell until their first visit, which then
+ * waits to build one. Tried for products on 2026-11-27: a repeat visit gained ~60 ms, a first visit lost ~140 ms, and
+ * shells go with every deploy, so most visits to a large, rarely visited catalog were first visits. They stay out.
  */
 const STREAMABLE = new Set(["/", "/about", "/contacts", "/blog", "/services"]);
-const SHELL_PER_SLUG = /^\/(blog|product)\/[^/]+$/;
+const ARTICLE = /^\/blog\/[^/]+$/;
 
 // Anything that may read the HTML without running it: search engines, SEO tools, link previews in messengers and
 // social networks, scripts. They keep the metadata in <head> before the page starts, as before.
@@ -20,7 +21,7 @@ export function markStreamingMetadata(request: NextRequest) {
   const agent = request.headers.get("user-agent") ?? "";
   if (!agent.startsWith("Mozilla/5.0") || READER.test(agent)) return undefined;
   const { pathname } = request.nextUrl;
-  if (!STREAMABLE.has(pathname) && !SHELL_PER_SLUG.test(pathname)) return undefined;
+  if (!STREAMABLE.has(pathname) && !ARTICLE.test(pathname)) return undefined;
   const headers = new Headers(request.headers);
   headers.set("user-agent", `${agent} ${STREAMING_METADATA_MARK}`);
   return NextResponse.next({ request: { headers } });
