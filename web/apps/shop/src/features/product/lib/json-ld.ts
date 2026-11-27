@@ -8,8 +8,11 @@ import {
   SITE_NAME,
 } from "@/features/seo";
 import { hasPrice } from "@/shared/lib/price";
+import { googleProductCategory } from "@/shared/lib/google-product-taxonomy";
 import { markupDescription } from "./description";
 import { gtinFromAttributes } from "@polivalko/shared/lib/gtin";
+
+export { googleProductCategory };
 
 export type ProductRatingInput = {
   ratingValue: number;
@@ -96,7 +99,7 @@ export function productJsonLd(product: ProductDetails, options?: ProductJsonLdOp
     ...(gtin ? { [gtin.property]: gtin.value } : {}),
     description,
     image: product.images.length > 0 ? product.images.map((image) => absoluteUrl(image.url)) : undefined,
-    category: product.category.name,
+    category: googleProductCategory(product.category),
     brand: product.brand ? { "@type": "Brand", name: product.brand } : undefined,
     additionalProperty:
       product.attributes.length > 0

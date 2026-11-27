@@ -2,11 +2,22 @@ import type { MerchantFeedItem } from "@polivalko/shared/api/types";
 import { plainText } from "@polivalko/shared/lib/format";
 import { gtinFromAttributes } from "@polivalko/shared/lib/gtin";
 import { clip } from "@/shared/lib/clip";
+import { googleProductCategoryFromPath } from "@/shared/lib/google-product-taxonomy";
 
 const TITLE_MAX = 150;
 const DESCRIPTION_MAX = 5000;
 const EXTRA_IMAGES = 10;
 const MODEL_ATTRIBUTE = "модель виробника";
+
+// Google Merchant Center prohibits tobacco and smoking items (e.g. smoking tobacco seeds),
+// while garden pest-control "тютюновий пил" remains allowed.
+const PROHIBITED_TOBACCO_PATTERN =
+  /(?:^|[^\p{L}])(?:тютюн\s+курильн\p{L}*|курильн\p{L}*\s+тютюн\p{L}*|табак\s+курительн\p{L}*|махорк\p{L}*|сигарет\p{L}*|сигар\p{L}*|кальян\p{L}*|вейп\p{L}*|smoking\s+tobacco)(?=$|[^\p{L}])/iu;
+
+export function isMerchantFeedEligible(item: Pick<MerchantFeedItem, "name" | "slug">): boolean {
+  const text = `${item.name} ${item.slug.replace(/-/g, " ")}`;
+  return !PROHIBITED_TOBACCO_PATTERN.test(text);
+}
 
 export type FeedShop = { url: string; name: string; description: string };
 
@@ -65,6 +76,7 @@ function itemXml(item: MerchantFeedItem, id: string, shop: FeedShop): string {
     // "No identifiers" is a claim that the maker never assigned any: made only for goods with no brand at all.
     !brand && !gtin && !model ? tag("g:identifier_exists", "no") : "",
     tag("g:product_type", item.categoryPath.join(" > ")),
+    tag("g:google_product_category", googleProductCategoryFromPath(item.categoryPath)),
     tag("g:condition", "new"),
     "</item>",
   ].filter(Boolean).join("\n");
@@ -75,8 +87,9 @@ function itemXml(item: MerchantFeedItem, id: string, shop: FeedShop): string {
  * An empty list is an error: served as a valid empty feed it would tell the service to drop every product.
  */
 export function merchantFeedXml(items: readonly MerchantFeedItem[], shop: FeedShop): string {
-  if (items.length === 0) throw new Error("Товарний фід порожній: порожній файл прибрав би всі товари з сервісу покупок");
-  const ids = feedIds(items);
+  const eligible = items.filter(isMerchantFeedEligible);
+  if (eligible.length === 0) throw new Error("Товарний фід порожній: порожній файл прибрав би всі товари з сервісу покупок");
+  const ids = feedIds(eligible);
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">',
@@ -84,7 +97,7 @@ export function merchantFeedXml(items: readonly MerchantFeedItem[], shop: FeedSh
     tag("title", shop.name),
     tag("link", shop.url),
     tag("description", shop.description),
-    ...items.map((item) => itemXml(item, ids.get(item.id) ?? item.id, shop)),
+    ...eligible.map((item) => itemXml(item, ids.get(item.id) ?? item.id, shop)),
     "</channel>",
     "</rss>",
     "",

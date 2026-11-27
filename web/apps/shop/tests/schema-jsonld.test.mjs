@@ -212,6 +212,7 @@ test("productJsonLd enriches Offer with shippingDetails, hasMerchantReturnPolicy
     const schema = productJsonLd(sampleProduct, { referenceDate: "2026-11-26T00:00:00Z" });
 
     assert.equal(schema["@type"], "Product");
+    assert.equal(schema.category, "Home & Garden > Lawn & Garden > Watering & Irrigation > Garden Hoses");
     assert.equal(schema.gtin13, "5901828852411");
     assert.equal(schema.aggregateRating, undefined, "must never emit fake aggregateRating");
     assert.equal(schema.review, undefined, "must never emit fake review");
@@ -365,4 +366,31 @@ test("ServicePageScreen, ServicesScreen, CatalogScreen, AboutScreen, and Contact
     contactsScreenSrc.includes("ТК «Варшавський». Телефон +38 (073) 818-52-22"),
     "/contacts ContactPage.description must match the upgraded meta description",
   );
+});
+
+test("googleProductCategory maps store categories to official Google Product Taxonomy strings", () => {
+  const { googleProductCategory } = src("features/product/lib/json-ld.ts");
+
+  assert.equal(googleProductCategory({ slug: "vse-dlia-polyvu", name: "Все для поливу" }), "Home & Garden > Lawn & Garden > Watering & Irrigation");
+  assert.equal(googleProductCategory({ slug: "shlanhy", name: "Шланги" }), "Home & Garden > Lawn & Garden > Watering & Irrigation > Garden Hoses");
+  assert.equal(googleProductCategory({ slug: "doshchuvachi", name: "Дощувачі" }), "Home & Garden > Lawn & Garden > Watering & Irrigation > Sprinklers & Sprinkler Heads");
+  assert.equal(googleProductCategory({ slug: "ruchnyi-instrument", name: "Ручний інструмент" }), "Home & Garden > Lawn & Garden > Gardening > Gardening Tools");
+  assert.equal(googleProductCategory({ slug: "nasinnia-tomativ", name: "Насіння томатів" }), "Home & Garden > Plants > Seeds");
+  assert.equal(googleProductCategory({ slug: "dobryva", name: "Добрива" }), "Home & Garden > Lawn & Garden > Gardening > Fertilizers");
+  assert.equal(googleProductCategory({ slug: "shkidnyky", name: "Шкідники" }), "Home & Garden > Household Supplies > Pest Control");
+  assert.equal(googleProductCategory({ slug: "vse-dlia-vidpochynku", name: "Все для відпочинку" }), "Home & Garden > Lawn & Garden > Outdoor Living");
+  assert.equal(googleProductCategory({ slug: "novyi-rik", name: "Новий рік" }), "Home & Garden > Decor > Seasonal & Holiday Decorations");
+  assert.equal(googleProductCategory({ slug: "unknown-slug", name: "Нова категорія" }), "Home & Garden > Lawn & Garden");
+});
+
+test("webSiteJsonLd emits Google Site Name fields including Poli Valko and alternate names", () => {
+  const { webSiteJsonLd } = src("features/seo/lib/json-ld.ts");
+
+  withSiteUrl(SITE, () => {
+    const site = webSiteJsonLd();
+    assert.equal(site["@type"], "WebSite");
+    assert.equal(site.name, "Poli Valko");
+    assert.deepEqual(site.alternateName, ["Полі-Валко", "Poli-Valko", "poli-valko.com"]);
+    assert.equal(site.url, `${SITE}/`);
+  });
 });

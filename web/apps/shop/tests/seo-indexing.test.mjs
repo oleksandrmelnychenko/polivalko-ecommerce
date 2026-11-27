@@ -345,3 +345,39 @@ test("the shop's markup states the 14-day return window for Ukraine", () => {
     merchantReturnLink: absoluteUrl("/returns"),
   });
 });
+
+test("brand icons meet Google favicon size rules (48px multiples) and Apple touch icon dimensions", () => {
+  const pngDims = (file) => {
+    const buf = readFileSync(resolve(here, "../src/app", file));
+    assert.equal(buf.subarray(0, 8).toString("hex"), "89504e470d0a1a0a", `${file} must be a PNG`);
+    return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+  };
+
+  const icon = pngDims("icon.png");
+  assert.equal(icon.width, icon.height);
+  assert.equal(icon.width % 48, 0, "icon.png must be a multiple of 48px for Google Search");
+  assert.ok(icon.width >= 96, `icon.png should be at least 96px, got ${icon.width}`);
+
+  assert.deepEqual(pngDims("apple-icon.png"), { width: 180, height: 180 });
+
+  const ico = readFileSync(resolve(here, "../src/app/favicon.ico"));
+  assert.equal(ico.readUInt16LE(0), 0);
+  assert.equal(ico.readUInt16LE(2), 1);
+  const count = ico.readUInt16LE(4);
+  assert.ok(count >= 1, "favicon.ico must contain at least one icon frame");
+  const sizes = Array.from({ length: count }, (_, i) => ico[6 + i * 16] || 256);
+  const maxSize = Math.max(...sizes);
+  assert.equal(maxSize % 48, 0, `favicon.ico largest frame (${maxSize}px) must be a multiple of 48px`);
+  assert.ok(sizes.includes(48), "favicon.ico must include a 48x48 frame");
+});
+
+test("secondary navigation dropdown panels carry data-nosnippet while top-level nav stays open to snippets and sitelinks", () => {
+  const mainNav = readFileSync(resolve(here, "../src/features/layout/components/main-nav.tsx"), "utf8");
+  const mobileMenu = readFileSync(resolve(here, "../src/features/layout/components/mobile-menu.tsx"), "utf8");
+
+  assert.match(mainNav, /<nav className="site-nav"[^>]*>/);
+  assert.doesNotMatch(mainNav, /<nav className="site-nav"[^>]*data-nosnippet/);
+  assert.match(mainNav, /<div id="catalog-panel"[^>]*data-nosnippet/);
+  assert.match(mainNav, /<div id="service-panel"[^>]*data-nosnippet/);
+  assert.match(mobileMenu, /<div id="mobile-menu"[^>]*data-nosnippet/);
+});

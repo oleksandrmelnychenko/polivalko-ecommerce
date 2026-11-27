@@ -20,7 +20,7 @@ export function MobileMenu({ categories, pages, services }: { categories: MenuCa
   }
 
   return (
-    <div id="mobile-menu" ref={menu} popover="auto" className="mega" onClick={closeOnNavigate}>
+    <div id="mobile-menu" ref={menu} popover="auto" className="mega" data-nosnippet="" onClick={closeOnNavigate}>
       <div className="mega__head">
         <p className="mega__title">Каталог</p>
         <Link href="/catalog" className="mega__all">Увесь каталог <ArrowRightIcon /></Link>

@@ -24,7 +24,7 @@ function loadTs(file, seen = new Map()) {
   return loaded.exports;
 }
 
-const { merchantFeedXml } = loadTs(resolve(here, "../src/features/catalog/lib/merchant-feed.ts"));
+const { isMerchantFeedEligible, merchantFeedXml } = loadTs(resolve(here, "../src/features/catalog/lib/merchant-feed.ts"));
 const shop = { url: "https://shop.test", name: "Shop", description: "Garden goods" };
 const money = (value) => ({ value, currency: "UAH" });
 
@@ -68,6 +68,7 @@ test("a product goes into the feed with everything a shopping service asks for",
   assert.ok(xml.includes("<g:gtin>5901828852411</g:gtin>"));
   assert.ok(xml.includes("<g:mpn>15-101</g:mpn>"));
   assert.ok(xml.includes("<g:product_type>Все для поливу &gt; Шланги</g:product_type>"));
+  assert.ok(xml.includes("<g:google_product_category>Home &amp; Garden &gt; Lawn &amp; Garden &gt; Watering &amp; Irrigation &gt; Garden Hoses</g:google_product_category>"));
   assert.ok(xml.includes("<g:condition>new</g:condition>"));
   assert.equal(count(xml, "g:sale_price"), 0);
   assert.equal(count(xml, "g:identifier_exists"), 0);
@@ -139,4 +140,32 @@ test("when an article number repeats, the older product keeps it whatever the or
 
 test("an empty list is an error, not an empty feed", () => {
   assert.throws(() => merchantFeedXml([], shop));
+});
+
+test("smoking tobacco items are excluded from the Merchant Center feed while garden tobacco dust stays eligible", () => {
+  const tobaccoSeeds = {
+    ...hose,
+    id: "01a1fea5-0000-7000-8000-000000010546",
+    sku: "10546",
+    slug: "tiutiun-kurylnyi-havana-seedera-0-05-h-10546",
+    name: "Тютюн Курильний Гавана SeedEra, 0,05 г",
+    categoryPath: ["Все для рослин", "Насіння"],
+  };
+  const tobaccoDust = {
+    ...hose,
+    id: "01a1fea5-0000-7000-8000-000000011944",
+    sku: "11944",
+    slug: "tiutiunovyi-pyl-11944",
+    name: "Тютюновий пил.",
+    categoryPath: ["Все для рослин", "Засоби захисту рослин"],
+  };
+
+  assert.equal(isMerchantFeedEligible(tobaccoSeeds), false);
+  assert.equal(isMerchantFeedEligible(tobaccoDust), true);
+
+  const xml = merchantFeedXml([hose, tobaccoSeeds, tobaccoDust], shop);
+  assert.ok(xml.includes("<g:id>8326</g:id>"));
+  assert.ok(!xml.includes("<g:id>10546</g:id>"));
+  assert.ok(xml.includes("<g:id>11944</g:id>"));
+  assert.ok(xml.includes("<g:google_product_category>Home &amp; Garden &gt; Lawn &amp; Garden &gt; Gardening &gt; Disease Control</g:google_product_category>"));
 });

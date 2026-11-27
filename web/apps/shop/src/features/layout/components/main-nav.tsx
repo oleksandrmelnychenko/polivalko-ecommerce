@@ -70,7 +70,7 @@ export function MainNav({ categories, links, services }: { categories: MenuCateg
               onClick={() => { if (!open) setSelected(""); toggle("catalog"); }}>
               <GridIcon />Каталог<ChevronDownIcon />
             </button>
-            <div id="catalog-panel" className="catalog-panel" hidden={!open}
+            <div id="catalog-panel" className="catalog-panel" data-nosnippet="" hidden={!open}
               onClick={event => { if ((event.target as Element).closest("a")) setMenu(null); }}>
               <div className="catalog-panel__rail">
                 <Link href="/catalog" className="shop-action-link">Увесь каталог <ArrowRightIcon /></Link>
@@ -106,7 +106,7 @@ export function MainNav({ categories, links, services }: { categories: MenuCateg
               onClick={() => toggle("services")}>
               <GardenServicesIcon aria-hidden="true" stroke={1.75} />{link.label}<ChevronDownIcon />
             </button>
-            <div id="service-panel" className="service-panel" hidden={!servicesOpen}
+            <div id="service-panel" className="service-panel" data-nosnippet="" hidden={!servicesOpen}
               onClick={event => { if ((event.target as Element).closest("a")) setMenu(null); }}>
               <Link href={link.href} className="shop-action-link" aria-current={pathname === link.href ? "page" : undefined}>
                 Усі послуги <ArrowRightIcon />

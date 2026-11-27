@@ -217,6 +217,8 @@ export function itemListJsonLd(name: string, entries: ListEntry[], offset = 0) {
   };
 }
 
+const WEBSITE_ALTERNATE_NAMES = ["Полі-Валко", "Poli-Valko", "poli-valko.com"] as const;
+
 export function webSiteJsonLd() {
   return {
     "@context": CONTEXT,
@@ -224,7 +226,7 @@ export function webSiteJsonLd() {
     "@id": websiteId(),
     url: absoluteUrl("/"),
     name: SITE_NAME,
-    alternateName: [...SITE_ALTERNATE_NAMES],
+    alternateName: [...WEBSITE_ALTERNATE_NAMES],
     inLanguage: SITE_LANGUAGE,
     publisher: { "@id": organizationId() },
     potentialAction: {
