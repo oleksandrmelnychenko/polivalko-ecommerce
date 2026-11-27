@@ -41,33 +41,23 @@ function api(answer) {
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 const page = (path, mode) => new NextRequest(`http://shop.test${path}`, { headers: mode ? { "sec-fetch-mode": mode } : {} });
 const passes = (response) => response.headers.get("x-middleware-next") === "1";
-const rewrittenTo = (response) => response.headers.get("x-middleware-rewrite") && new URL(response.headers.get("x-middleware-rewrite")).pathname;
 
 test("client navigations and prefetches skip the checks, opening a page or a crawler does not", async () => {
-  const calls = api(() => json({}, 404));
-  assert.ok(passes(await proxy(page("/order/PV-1?token=t", "cors"))));
+  const calls = api(() => json({ totalPages: 2 }));
+  assert.ok(passes(await proxy(page("/catalog/hoses?page=9", "cors"))));
   assert.ok(passes(await proxy(page("/catalog/hoses?page=9", "same-origin"))));
   assert.equal(calls.length, 0);
 
-  assert.equal(rewrittenTo(await proxy(page("/order/PV-1?token=t", "navigate"))), "/404");
-  assert.equal(rewrittenTo(await proxy(page("/order/PV-1?token=t"))), "/404");
+  assert.equal((await proxy(page("/catalog/hoses?page=9", "navigate"))).status, 307);
+  assert.equal((await proxy(page("/catalog/hoses?page=9"))).status, 307);
   assert.equal(calls.length, 2);
 });
 
-test("an order page answers 404 unless the API may have the order for this token", async () => {
-  let status = 404;
-  const calls = api(() => json({}, status));
-  assert.equal(rewrittenTo(await proxy(page("/order/PV-1"))), "/404", "no token");
-  assert.equal(rewrittenTo(await proxy(page("/order/..%2Fadmin?token=t"))), "/404", "not an order number");
+test("order pages pass through the proxy so the blocking page route returns 404 directly", async () => {
+  const calls = api(() => json({}, 404));
+  assert.ok(passes(await proxy(page("/order/PV-1"))));
+  assert.ok(passes(await proxy(page("/order/PV-1?token=wrong", "navigate"))));
   assert.equal(calls.length, 0);
-
-  for (status of [400, 401, 403, 404]) assert.equal(rewrittenTo(await proxy(page("/order/PV-1?token=wrong"))), "/404", String(status));
-  assert.equal(calls.at(-1).pathname, "/api/v1/orders/PV-1");
-  assert.equal(calls.at(-1).searchParams.get("token"), "wrong");
-
-  for (status of [200, 500]) assert.ok(passes(await proxy(page("/order/PV-1?token=right"))), String(status));
-  globalThis.fetch = async () => { throw new TypeError("fetch failed"); };
-  assert.ok(passes(await proxy(page("/order/PV-1?token=right"))), "the API is down: the page decides");
 });
 
 test("a listing page past the last one redirects to the last page and keeps the filters", async () => {

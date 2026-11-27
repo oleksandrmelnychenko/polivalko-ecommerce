@@ -1,23 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { redirectPastLastPage } from "@/features/catalog/proxy";
-import { orderNotFound } from "@/features/order/proxy";
 import { markStreamingMetadata } from "@/features/seo/proxy";
 
 /**
  * Marks people on pages whose metadata is part of the prebuilt shell, so Next.js answers them with the shell at once
  * (features/seo/proxy.ts).
  *
- * Some statuses depend on data from the request URL, and the prebuilt page shell would already answer 200.
- * For a document request the features decide them first:
- * - an order page without a matching order and token answers 404;
- * - a listing page past the last one answers a 307 to the last page.
- * Client navigations and prefetches skip the checks: they have no status to fix, and the pages handle
- * the same cases themselves.
+ * Listing pages past the last one answer a 307 to the last page before the prebuilt shell can answer 200.
+ * Order pages opt into blocking rendering (`unstable_paramMatching = { number: "blocking" }`, `instant = false`)
+ * so `OrderScreen` answers a real 404 directly without an internal rewrite.
+ * Client navigations and prefetches skip the listing check: they have no status to fix, and the pages handle
+ * the same case themselves.
  */
 export async function proxy(request: NextRequest) {
   if (isClientFetch(request)) return NextResponse.next();
   const { pathname } = request.nextUrl;
-  if (pathname.startsWith("/order/")) return (await orderNotFound(request)) ?? NextResponse.next();
   if (LISTINGS.some((path) => path.test(pathname))) return (await redirectPastLastPage(request)) ?? NextResponse.next();
   // A person on a page whose metadata is in its shell gets the shell at once (see shared/lib/streaming-metadata.ts).
   return markStreamingMetadata(request) ?? NextResponse.next();
@@ -37,7 +34,6 @@ function isClientFetch(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/order/:number",
     { source: "/catalog", has: [{ type: "query", key: "page" }] },
     { source: "/catalog/:slug", has: [{ type: "query", key: "page" }] },
     { source: "/brands/:slug", has: [{ type: "query", key: "page" }] },
