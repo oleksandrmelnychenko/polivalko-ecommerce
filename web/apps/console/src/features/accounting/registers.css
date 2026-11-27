@@ -168,7 +168,7 @@
 .draft-products header { display: flex; align-items: center; justify-content: space-between; }
 .draft-products header > span { border-radius: 99px; background: var(--app-ground); padding: 2px 9px; font: 500 12px/1.6 var(--font-mono); }
 .draft-line-list { padding: 0; margin: 0; list-style: none; }
-.draft-line-list li { display: grid; grid-template-columns: minmax(110px,2fr) minmax(70px,1fr) minmax(74px,1fr) minmax(80px,auto) 30px; gap: 10px; align-items: center; border-top: 1px dashed var(--app-line); padding-block: 10px; }
+.draft-line-list li { display: grid; gap: 6px 10px; align-items: center; border-top: 1px dashed var(--app-line); padding-block: 10px; }
 .draft-line-list li:last-child { padding-bottom: 0; }
 .draft-product-name { font-size: 14px; font-weight: 550; overflow-wrap: anywhere; }
 .draft-line-list .mantine-InputWrapper-label, .draft-line-sum span, .draft-total span { color: var(--mantine-color-gray-7); font: 500 12px/1.5 var(--font-sans); }
@@ -178,10 +178,30 @@
 .draft-total strong { font-size: clamp(18px,2vw,24px); }
 .invoice-editor .app-sheet-footer { flex-wrap: wrap; }
 .invoice-editor .app-sheet-footer .mantine-Button-root { border-radius: 999px; }
+@media (min-width: 641px) {
+  .draft-line-list li {
+    grid-auto-flow: column;
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-columns: max-content;
+    grid-template-rows: auto auto;
+  }
+  .draft-line-list li > .mantine-InputWrapper-root, .draft-line-list .draft-line-sum {
+    display: grid; grid-row: 1 / span 2; grid-template-rows: subgrid; row-gap: inherit;
+  }
+  .draft-line-list li > .mantine-InputWrapper-root { width: clamp(7rem, 12vw, 9rem); }
+  .draft-line-list .mantine-InputWrapper-label { align-self: end; }
+  .draft-line-sum { min-width: 5rem; max-width: 9rem; }
+  .draft-line-sum span { align-self: end; }
+  .draft-line-sum strong { align-self: center; }
+  .draft-product-name, .draft-remove { grid-row: 2; }
+  .draft-product-name { grid-column: 1; }
+}
 @media (max-width: 640px) {
-  .draft-line-list li { grid-template-columns: repeat(2,minmax(0,1fr)) 30px; }
-  .draft-product-name { grid-row: 1; grid-column: 1/3; }
-  .draft-remove { grid-row: 1; grid-column: 3; }
+  .draft-line-list li { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .draft-product-name { grid-row: 1; grid-column: 1 / -1; padding-inline-end: 40px; }
+  .draft-remove { grid-row: 1; grid-column: -2 / -1; justify-self: end; }
+  .draft-line-list li > .mantine-InputWrapper-root { grid-column: span 2; align-self: end; min-width: 0; }
+  .draft-line-list[data-quantity-only] li > .mantine-InputWrapper-root { grid-column: 1 / -1; }
   .draft-line-sum { grid-column: 1/-1; display: flex; justify-content: space-between; align-items: center; }
   .invoice-editor .app-sheet-footer { padding: 9px 12px; gap: 6px; }
   .invoice-editor .app-sheet-footer > .mantine-Group-root { margin-inline-start: auto; }

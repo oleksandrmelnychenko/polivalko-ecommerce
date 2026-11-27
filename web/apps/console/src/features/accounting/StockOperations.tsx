@@ -214,7 +214,7 @@ function StockOperationForm({ kind, initial, onClose, onSaved }: { kind: StockKi
             {products.status === 'forbidden' && <Text c="red">Для вибору товарів потрібне право перегляду каталогу.</Text>}
             {refs.status === 'error' && <Button variant="subtle" onClick={refs.reload}>Повторити завантаження складів і організацій</Button>}
             {kind === 'recount' && <Text size="sm" c="dimmed">Облікову кількість консоль запам’ятає під час збереження чернетки.</Text>}
-            {lines.length > 0 && <ol className="draft-line-list">
+            {lines.length > 0 && <ol className="draft-line-list" data-quantity-only={kind !== 'income' || undefined}>
               {lines.map((line, index) => (
                 <li key={line.productId}>
                   <strong className="draft-product-name">{line.title}</strong>
