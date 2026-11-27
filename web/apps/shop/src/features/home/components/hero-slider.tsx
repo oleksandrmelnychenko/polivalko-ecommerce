@@ -35,6 +35,14 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
 
   const go = (step: number) => setIndex((i) => (i + step + count) % count);
 
+  function updateMobileSlide(rail: HTMLUListElement) {
+    const [first, second] = rail.querySelectorAll("li");
+    if (!second) return;
+    setLoadRest(true);
+    const step = second.offsetLeft - first.offsetLeft;
+    if (step > 0) setMobileIndex(Math.max(0, Math.min(count - 1, Math.round(rail.scrollLeft / step))));
+  }
+
   return (
     <section
       className="hero"
@@ -46,7 +54,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
       onBlurCapture={() => setPaused(false)}
     >
       <div className="hero-mobile">
-        <ul ref={mobileRail} aria-label="Колекції" className="hero-mobile__slides" onScroll={(event) => { setLoadRest(true); setMobileIndex(Math.round(event.currentTarget.scrollLeft / (event.currentTarget.clientWidth + 12))); }}>
+        <ul ref={mobileRail} aria-label="Колекції" className="hero-mobile__slides" onScroll={(event) => updateMobileSlide(event.currentTarget)}>
           {slides.map((slide, i) => <li key={slide.key} className="hero-mobile__slide">
             <div className="hero-mobile__content">
               {i === 0 ? <h1>{slide.title}</h1> : <h2>{slide.title}</h2>}
@@ -58,6 +66,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
           </li>)}
         </ul>
         {count > 1 && <div className="hero-mobile__dots" aria-label="Слайди">{slides.map((slide, i) => <button key={slide.key} type="button" aria-label={`Слайд ${i + 1}`} aria-pressed={i === mobileIndex} onClick={() => mobileRail.current?.children[i]?.scrollIntoView({ block: "nearest", inline: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" })} />)}</div>}
+        {slides[mobileIndex] && <HeroShortcuts slide={slides[mobileIndex]} />}
       </div>
       {slides.map((slide, i) => {
         const active = i === index;
@@ -96,17 +105,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
                   <ExternalIcon />
                 </Link>
               </div>
-              {slide.subsections ? <nav className="hero-shortcuts" aria-label="Категорії колекції">
-                {slide.subsections.items.slice(0, 3).map(item => <Link key={item.id} href={item.href}>
-                  {item.image && <img src={item.image} alt={item.name} width={48} height={48} loading="lazy" decoding="async" />}
-                  <span>{item.name}</span><ArrowRightIcon />
-                </Link>)}
-              </nav> : (slide.cta?.href === "/catalog" || slide.featured) && <nav className="hero-shortcuts" aria-label="Популярні категорії">
-                {QUICK_CATEGORIES.map(({ slug, label }) => <Link key={slug} href={`/catalog/${slug}`}>
-                  <img src={categoryPhotos[slug].url} alt={categoryPhotos[slug].alt || label} width={48} height={48} loading="lazy" decoding="async" />
-                  <span>{label}</span><ArrowRightIcon />
-                </Link>)}
-              </nav>}
+              <HeroShortcuts slide={slide} />
             </div>
             <div className="hero-slide__media">
               {(i === 0 || loadRest || active) && <HeroPhoto slide={slide} first={i === 0} />}
@@ -132,6 +131,19 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
       )}
     </section>
   );
+}
+
+function HeroShortcuts({ slide }: { slide: HeroSlide }) {
+  if (!slide.subsections && slide.cta?.href !== "/catalog" && !slide.featured) return null;
+  const items = slide.subsections?.items.slice(0, 3) ?? QUICK_CATEGORIES.map(({ slug, label }) => ({
+    href: `/catalog/${slug}`, image: categoryPhotos[slug].url, name: label,
+  }));
+  return <nav className="hero-shortcuts" aria-label={slide.subsections ? "Категорії колекції" : "Популярні категорії"}>
+    {items.map(item => <Link key={item.href} href={item.href}>
+      {item.image && <img src={item.image} alt="" width={48} height={48} loading="lazy" decoding="async" />}
+      <span>{item.name}</span>
+    </Link>)}
+  </nav>;
 }
 
 function HeroChip({ product, label }: { product: HeroFeatured; label?: string }) {

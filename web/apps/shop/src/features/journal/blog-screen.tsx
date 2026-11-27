@@ -3,7 +3,7 @@ import { PageHead } from "@/features/content/server";
 import { itemListJsonLd, JsonLd, seoMetadata } from "@/features/seo";
 import { articles } from "./articles";
 import { JOURNAL_ENABLED } from "./config";
-import { ArticleCards } from "./journal";
+import { BlogIndex } from "./journal";
 
 export const metadata = seoMetadata({
   title: "Блог про полив, догляд за садом і городом",
@@ -28,10 +28,9 @@ export default function BlogPage() {
       />
       <PageHead
         path="/blog"
-        title="Блог Poli Valko"
-        lead="Практичні інструкції з поливу, вибору садового інструменту, догляду за газоном і підготовки ділянки до сезону."
+        title="Блог Poli-Valko"
       />
-      <ArticleCards />
+      <BlogIndex items={articles} />
     </div>
   );
 }

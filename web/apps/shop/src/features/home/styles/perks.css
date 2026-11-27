@@ -1,7 +1,0 @@
-.perks { margin-top: 0; border-bottom: 1px solid #e9e9e9; }
-.perks__list { display: grid; grid-template-columns: repeat(var(--perks, 4), minmax(0, 1fr)); margin: 0; padding: 28px 0; gap: 0; list-style: none; }
-.perks__list li { display: grid; grid-template-columns: 20px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 12px; row-gap: 2px; align-content: start; padding: 0 24px; border-left: 1px solid var(--color-rule); background: none; text-align: left; }
-.perks__list li:first-child { padding-left: 0; border-left: 0; }
-.perks__list svg { grid-row: 1 / span 2; width: 20px; height: 20px; margin: 2px 0 0; padding: 0; border: 0; border-radius: 0; background: none; color: var(--color-ink); stroke-width: 1.75; }
-.perks__list h3 { margin: 0; color: var(--color-ink); font: 600 0.9375rem/1.375 var(--font-body); letter-spacing: 0; text-transform: none; }
-.perks__list p { max-width: none; color: var(--color-ink-2); font-size: 0.875rem; line-height: 1.375; }

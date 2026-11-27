@@ -108,22 +108,6 @@ test("homepage route no longer renders redundant Breadcrumbs above hero", () => 
   assert.equal(homePageCode.includes("Breadcrumbs"), false);
 });
 
-test("HomeSeoBlock exports a Ukrainian storefront SEO section with internal links to core categories and services", () => {
-  const code = readFileSync(resolve(shopSrc, "features/home/components/home-seo-block.tsx"), "utf8");
-  assert.match(code, /export function HomeSeoBlock\(/);
-  for (const href of [
-    "/catalog/vse-dlia-polyvu",
-    "/catalog/vse-dlia-roslyn",
-    "/catalog/ruchnyi-instrument",
-    "/services/montazh-avtopolyvu",
-    "/services/hazony",
-    "/about",
-    "/contacts",
-  ]) {
-    assert.ok(code.includes(`href="${href}"`), `HomeSeoBlock missing internal link ${href}`);
-  }
-});
-
 test("about-screen.tsx includes expanded E-E-A-T copy for Bucha store and Kyiv Oblast services", () => {
   const code = readFileSync(resolve(shopSrc, "features/content/components/about-screen.tsx"), "utf8");
   for (const needle of ["Poli Valko", "Депутатська, 1-В", "Варшавський", "Ірпені", "Гостомелі", "Ворзелі"]) {

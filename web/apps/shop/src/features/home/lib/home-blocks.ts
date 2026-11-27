@@ -1,4 +1,4 @@
-export const HOME_BLOCKS = ["hero", "perks", "categories", "collections", "offers", "services", "steps", "visit"] as const;
+export const HOME_BLOCKS = ["hero", "categories", "collections", "offers", "services", "visit"] as const;
 
 export type HomeBlockKey = (typeof HOME_BLOCKS)[number];
 

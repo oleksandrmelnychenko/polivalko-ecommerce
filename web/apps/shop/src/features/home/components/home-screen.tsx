@@ -5,8 +5,7 @@ import { Suspense } from "react";
 import { preload } from "react-dom";
 import { getBestsellers, getCategoryTree, searchProducts } from "@/features/catalog/server";
 import type { ProductListItem } from "@polivalko/shared/api/types";
-import { enabledDeliveryFacts, getSiteHome, SiteJsonLd, type SiteHome, type Banner } from "@/features/content/server";
-import type { DeliveryFacts } from "@/shared/lib/delivery-facts";
+import { getSiteHome, SiteJsonLd, type SiteHome, type Banner } from "@/features/content/server";
 import { homeBlocks, type HomeBlockKey } from "../lib/home-blocks";
 import {
   bannerSlides,
@@ -25,13 +24,10 @@ import {
 import { CollectionPairs } from "./collection-pair";
 import { HeroSlider } from "./hero-slider";
 import { LookSkeleton } from "./look-skeleton";
-import { Perks } from "./perks";
 import { SectionsPair } from "./sections-pair";
 import { ServicesLook } from "./services-look";
-import { Steps } from "./steps";
 import { StoreVisit } from "./store-visit";
 import { HomeFaq } from "./home-faq";
-import { HomeSeoBlock } from "./home-seo-block";
 import { JournalPreview } from "@/features/journal/server";
 
 export function HomeScreen() {
@@ -57,11 +53,7 @@ async function HomeContent() {
   const blocks = homeBlocks(home?.blocks);
   const banners = home?.banners ?? [];
   if (blocks.includes("hero")) preloadHeroPhoto(banners);
-  const needsFacts = blocks.includes("perks") && !home?.perks?.some((p) => p.title?.trim());
-  const [data, facts] = await Promise.all([
-    blocks.includes("hero") ? heroData(banners) : Promise.resolve<HeroData>({}),
-    needsFacts ? enabledDeliveryFacts() : Promise.resolve(null),
-  ]);
+  const data = blocks.includes("hero") ? await heroData(banners) : {};
   const fromBanners = bannerSlides(banners, data);
   const slides = fromBanners.length ? fromBanners : heroSlides(data);
   return (
@@ -69,10 +61,9 @@ async function HomeContent() {
       <SiteJsonLd />
       {!blocks.includes("hero") && <h1 className="visually-hidden">Poli Valko: товари для саду, городу й дому</h1>}
       {blocks.map((block) => (
-        <HomeBlock key={block} block={block} home={home} slides={slides} facts={facts} />
+        <HomeBlock key={block} block={block} home={home} slides={slides} />
       ))}
       <JournalPreview />
-      <HomeSeoBlock />
       <HomeFaq />
     </>
   );
@@ -141,7 +132,7 @@ async function heroFeatured(): Promise<HeroFeatured | undefined> {
   }
 }
 
-function HomeBlock({ block, home, slides, facts }: { block: HomeBlockKey; home: SiteHome | null; slides: HeroSlide[]; facts: DeliveryFacts | null }) {
+function HomeBlock({ block, home, slides }: { block: HomeBlockKey; home: SiteHome | null; slides: HeroSlide[] }) {
   switch (block) {
     case "hero":
       return <HeroSlider slides={slides} />;
@@ -159,16 +150,12 @@ function HomeBlock({ block, home, slides, facts }: { block: HomeBlockKey; home: 
           <SectionsPair />
         </Suspense>
       );
-    case "perks":
-      return <Perks items={home?.perks} facts={facts} />;
     case "services":
       return (
         <Suspense fallback={<LookSkeleton />}>
           <ServicesLook />
         </Suspense>
       );
-    case "steps":
-      return <Steps items={home?.steps} />;
     case "visit":
       return (
         <Suspense fallback={null}>

@@ -30,19 +30,58 @@ export function ArticleCards({ items = articles }: { items?: Article[] }) {
   );
 }
 
+export function BlogIndex({ items }: { items: Article[] }) {
+  const [first, ...rest] = items;
+  if (!first) return null;
+  return (
+    <>
+      <Link className="journal-feature" href={`/blog/${first.slug}`}>
+        <img {...sized(first.image.url, "(max-width: 44rem) 100vw, 50vw", 960)}
+          alt={first.image.alt} width={960} height={640} fetchPriority="high" />
+        <div className="journal-feature__copy">
+          <span className="journal-meta">{first.category} · {first.readingMinutes} хв читання</span>
+          <h2>{first.title}</h2>
+          <p>{first.intro}</p>
+          <span className="btn">Читати статтю <ArrowRightIcon /></span>
+        </div>
+      </Link>
+      <StoryList items={rest} />
+    </>
+  );
+}
+
+export function StoryList({ items }: { items: Article[] }) {
+  return (
+    <ul className="journal-stories">
+      {items.map((article) => (
+        <li key={article.slug}>
+          <Link href={`/blog/${article.slug}`}>
+            <img {...sized(article.image.url, "(max-width: 44rem) 88px, 144px", 330)}
+              alt="" width={144} height={112} loading="lazy" />
+            <div>
+              <span className="journal-meta">{article.category} · {article.readingMinutes} хв</span>
+              <h2>{article.title}</h2>
+            </div>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function JournalPreview() {
   if (!JOURNAL_ENABLED) return null;
   return (
     <section className="container home-section journal-preview" aria-labelledby="journal-title">
       <div className="home-section__head">
         <div className="home-section__titles">
-          <h2 id="journal-title">Блог Poli Valko</h2>
+          <h2 id="journal-title">Блог Poli-Valko</h2>
         </div>
         <Link href="/blog" className="home-section__more">
           Усі статті <ArrowRightIcon />
         </Link>
       </div>
-      <ArticleCards items={articles.slice(0, 3)} />
+      <StoryList items={articles.slice(0, 3)} />
     </section>
   );
 }

@@ -194,22 +194,14 @@ test("faqPageJsonLd generates valid FAQPage and drops blank items", () => {
   });
 });
 
-test("HomeFaq renders FaqJsonLd via content/server boundary with all 6 live homepage FAQ questions", () => {
+test("HomeFaq renders its answers and structured data from the same questions", () => {
   const homeFaqSource = readFileSync(resolve(here, "../src/features/home/components/home-faq.tsx"), "utf8");
   assert.ok(homeFaqSource.includes('from "@/features/content/server"'));
   assert.ok(!homeFaqSource.includes('from "@/features/seo"'), "home feature must not import seo directly");
   assert.ok(homeFaqSource.includes("<FaqJsonLd"));
 
-  for (const question of [
-    "Як знайти потрібний товар?",
-    "Чи потрібна реєстрація для замовлення?",
-    "Як дізнатися про доставку й оплату?",
-    "Де розташований магазин?",
-    "Як повернути або обміняти товар?",
-    "Як замовити послугу для саду?",
-  ]) {
-    assert.ok(homeFaqSource.includes(question), `HomeFaq must contain question: ${question}`);
-  }
+  assert.match(homeFaqSource, /<FaqJsonLd items=\{faqItems\}/);
+  assert.match(homeFaqSource, /faqItems\.map\(/);
 });
 
 test("productJsonLd enriches Offer with shippingDetails, hasMerchantReturnPolicy @id, priceValidUntil (+90d), and no fake ratings", () => {

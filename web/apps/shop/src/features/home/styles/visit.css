@@ -1,7 +1,10 @@
+.store-visit__sheet { display: grid; grid-template-columns: minmax(13rem, .8fr) minmax(0, 2fr); gap: 20px clamp(24px, 5vw, 76px); padding: clamp(18px, 2.5vw, 36px); border: 1px solid var(--color-rule); border-radius: 16px; }
+.store-visit__intro h2 { margin: 0; }
+.store-visit__intro .link { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-size: var(--text-sm); }
 .store-visit__lead { margin: 4px 0 0; max-width: 70ch; color: var(--color-ink-2); line-height: 1.5; }
 .store-visit__pickup {
   display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: clamp(16px, 3vw, 48px);
-  margin-top: 14px; padding: clamp(16px, 2vw, 24px); border-radius: 16px; background: var(--color-paper-2);
+  align-items: start; min-width: 0;
 }
 .store-visit__pickup > div { display: grid; justify-items: start; align-content: start; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
 .store-visit__pickup h3 { margin: 0 0 4px; font: 500 var(--text-sm)/1.4 var(--font-body); color: var(--color-ink-2); }
@@ -10,7 +13,10 @@
 .store-visit__hours > p { color: var(--color-ink-2); font-size: var(--text-sm); }
 .store-visit .store-visit__pickup a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: var(--text-sm); }
 .store-visit svg { width: 16px; height: 16px; }
-@media (max-width: 48rem) {
+@media (max-width: 60rem) {
+  .store-visit__sheet { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 40rem) {
   .store-visit__pickup { grid-template-columns: minmax(0,1fr); gap: 12px; }
   .store-visit__hours { padding-top: 12px; border-top: 1px solid var(--color-rule); }
 }
