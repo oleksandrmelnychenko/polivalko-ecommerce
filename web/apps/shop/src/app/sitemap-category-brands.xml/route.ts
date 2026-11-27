@@ -7,11 +7,7 @@ import {
 import { getSitemap, summarizeProducts } from "@/features/catalog/server";
 import { latestChange, SITEMAP_XML_HEADERS, sitemapXml, siteUrl, type SitemapUrlEntry } from "@/features/seo";
 
-/**
- * Dedicated sitemap for curated, non-duplicate Category × Brand SEO landing pages (`/catalog/[slug]/[brand]`).
- * Every candidate is verified against live sitemap categories, live indexable brands, duplicate L3 subcategory guards,
- * and real product counts (>= MIN_PRODUCTS_FOR_CATEGORY_BRAND) via `resolveCatalogRobotsAndCanonical`.
- */
+/** Sitemap for indexable Category × Brand landing pages (`/catalog/[slug]/[brand]`). */
 export async function GET() {
   await connection();
   const site = siteUrl();

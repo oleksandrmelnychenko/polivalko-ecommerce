@@ -188,6 +188,7 @@ internal static class ProductSearch
         public required string Brand { get; init; }
         public required string Category { get; init; }
         public required string Slug { get; init; }
+        public required string[] SlugTokens { get; init; }
         public required string Sku { get; init; }
         public required string[] Tokens { get; init; }
 
@@ -198,6 +199,7 @@ internal static class ProductSearch
             var nameTokens = Split(name);
             var brand = Normalize(e.Brand ?? string.Empty);
             var slug = e.Slug.ToLowerInvariant();
+            var slugTokens = slug.Split('-', StringSplitOptions.RemoveEmptyEntries);
             return new Doc
             {
                 Id = e.Id,
@@ -207,8 +209,9 @@ internal static class ProductSearch
                 Brand = brand,
                 Category = category,
                 Slug = slug,
+                SlugTokens = slugTokens,
                 Sku = Normalize(e.Sku.Trim()),
-                Tokens = [.. nameTokens, .. Split(brand), .. Split(category), .. slug.Split('-', StringSplitOptions.RemoveEmptyEntries)],
+                Tokens = [.. nameTokens, .. Split(brand), .. Split(category), .. slugTokens],
             };
         }
 
@@ -284,7 +287,7 @@ internal static class ProductSearch
             var text = variant.Text;
             if (variant.WholeToken)
             {
-                if (doc.NameTokens.Contains(text) || doc.Slug.Split('-').Contains(text)) return WordForm;
+                if (doc.NameTokens.Contains(text) || doc.SlugTokens.Contains(text)) return WordForm;
                 return doc.Tokens.Contains(text) ? 0 : null;
             }
 

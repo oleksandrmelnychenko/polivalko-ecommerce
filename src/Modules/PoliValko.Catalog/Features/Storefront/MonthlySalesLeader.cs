@@ -7,6 +7,8 @@ namespace PoliValko.Catalog.Features.Storefront;
 
 internal static class MonthlySalesLeader
 {
+    private static readonly SemaphoreSlim Refresh = new(1, 1);
+
     private sealed record MonthlySales(Guid ProductId, int Month, long Score);
     private sealed record Plan(Guid? Last, int Repeats, long Score, Guid? Requested);
 
@@ -14,12 +16,14 @@ internal static class MonthlySalesLeader
         PoliValkoDbContext db, IMemoryCache cache, DateOnly today, int requestedMonth, CancellationToken ct)
     {
         var cutoff = new DateOnly(today.Year, today.Month, 1);
-        var sales = await cache.GetOrCreateAsync(("storefront-monthly-sales", cutoff), entry =>
-        {
-            // Receipts before the first of this month: only a late import changes them.
-            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(6);
-            return ReadSalesAsync(db, cutoff, ct);
-        }) ?? [];
+        // Receipts before the first of this month: only a late import changes them.
+        var sales = await CachedLoad.GetAsync(
+            cache,
+            ("storefront-monthly-sales", cutoff),
+            Refresh,
+            TimeSpan.FromHours(6),
+            async () => (await ReadSalesAsync(db, cutoff, ct), true),
+            ct);
         if (sales.Length == 0) return null;
         var eligible = from p in products
                        join m in SeasonalPurpose.Calendar(db, matches) on p.Id equals m.ProductId

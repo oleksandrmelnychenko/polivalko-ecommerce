@@ -11,4 +11,4 @@ openssl req -x509 -newkey rsa:3072 -sha256 -nodes -days 3650 \
   -subj '/CN=PoliValko Data Protection/' \
   -keyout "$key_dir/current.key" -out "$key_dir/current.crt"
 chmod 600 "$key_dir/current.key" "$key_dir/current.crt"
-printf 'Certificate created in %s. Back up this directory separately from the database.\n' "$key_dir"
+printf 'Certificate created in %s.\nEnsure container API user (UID 1654) can read this directory (e.g. chown -R 1654:1654 "%s"), and back it up separately from the database.\n' "$key_dir" "$key_dir"

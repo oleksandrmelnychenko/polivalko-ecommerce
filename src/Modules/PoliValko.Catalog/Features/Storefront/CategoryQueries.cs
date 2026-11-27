@@ -24,8 +24,5 @@ internal static class CategoryQueries
     public static ProblemHttpResult CategoryNotFound(string slug) =>
         Problems.NotFound("catalog.category_not_found", "Категорію не знайдено", $"Категорії '{slug}' немає або вона прихована.");
 
-    public static string EscapeLike(string value) =>
-        value.Replace("\\", "\\\\", StringComparison.Ordinal)
-            .Replace("%", "\\%", StringComparison.Ordinal)
-            .Replace("_", "\\_", StringComparison.Ordinal);
+    public static string EscapeLike(string value) => SqlLike.EscapePattern(value);
 }

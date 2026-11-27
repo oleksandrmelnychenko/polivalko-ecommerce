@@ -12,19 +12,26 @@ out/
 *.tsbuildinfo
 next-env.d.ts
 
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+
 # Environment
 .env
 .env.local
 *.local.json
 
-# OS / IDE
+# OS / IDE / Local tools
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/
-
-# Hallmark: скриншоти рендер-перевірки (журнал і preflight лишаються)
-.hallmark/shots/
+.claude/
+.hallmark/
 
 # Local wrapping keys must never enter source control or build contexts
 .local/
@@ -35,7 +42,8 @@ Thumbs.db
 .env.*
 !.env.example
 
-# Local QA data and generated artifacts (automated test source stays versioned)
+# Local QA data, exports, and generated artifacts
+/output/
 /docs/qa/
 /src/PoliValko.Api/media/
 playwright-report/

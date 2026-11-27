@@ -1,20 +1,13 @@
 import { connection } from "next/server";
 import Link from "@/shared/ui/idle-link";
-import { getContacts, socialLinks, SocialLinksList } from "@/features/content/server";
+import { activeSocialLinks, getContacts, SocialLinksList } from "@/features/content/server";
 import { PinIcon } from "@polivalko/shared/ui/icons";
 import { contactPhones } from "../lib/contact-phones";
-
-function isRealSocialProfile(url: string): boolean {
-  if (!/^https?:/i.test(url)) return true;
-  if (!URL.canParse(url)) return false;
-  const parsed = new URL(url);
-  return parsed.pathname.replace(/\/+$/, "").length > 0 || Boolean(parsed.search || parsed.hash);
-}
 
 export async function HeaderTopbar() {
   await connection();
   const contacts = await getContacts().catch(() => null);
-  const socials = socialLinks(contacts).filter((item) => !item.placeholder && isRealSocialProfile(item.url));
+  const socials = activeSocialLinks(contacts);
   const city = contacts?.address?.split(",")[0]?.trim();
   const phones = contactPhones({ storePhone: contacts?.storePhone, schedule: contacts?.schedule });
   if (!city && phones.length === 0 && socials.length === 0) return null;

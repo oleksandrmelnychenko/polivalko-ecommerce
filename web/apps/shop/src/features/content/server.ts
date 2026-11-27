@@ -1,7 +1,7 @@
 export { getAnnouncement, getContacts, getPage, getSeller, getSiteHome } from "./api/server";
 export { pageMetadata } from "./lib/page-metadata";
 export { customerMailDelivers, enabledDeliveryFacts, storePhone } from "./lib/shop-facts";
-export { socialLinks } from "./lib/social-links";
+export { activeSocialLinks, socialLinks } from "./lib/social-links";
 export type { Banner, SiteHome, TextItem } from "./lib/site-types";
 export { InfoPage } from "./components/info-page";
 export { ContactsScreen } from "./components/contacts-screen";

@@ -1,11 +1,9 @@
 # Poli Valko
 
-Інтернет-магазин товарів для дому, саду та городу: вітрина й консоль на Next.js і React, спільний ASP.NET Core API + PostgreSQL.
-Вітрина з особистим кабінетом покупця живе на основному домені, консоль для працівників — окремим застосунком на власному піддомені (`CONSOLE_ADDRESS`), про який вітрина нічого не знає.
-Архітектура й обґрунтування — у [docs/solution-proposal.md](docs/solution-proposal.md), стан і план до запуску — у [docs/prototype-plan.md](docs/prototype-plan.md),
-відповідність кожної вимоги ТЗ — у [docs/tz-status.md](docs/tz-status.md).
+Інтернет-магазин товарів для дому, саду та городу: вітрина й консоль на Next.js і React, спільний ASP.NET Core API + PostgreSQL та сервіси аналітики на Python.
+Вітрина з особистим кабінетом покупця працює на основному домені, консоль для працівників — окремим застосунком на власному піддомені (`CONSOLE_ADDRESS`), про який вітрина нічого не знає.
 Розгортання, бекапи й моніторинг — [docs/operations.md](docs/operations.md); інтеграції — [docs/integrations.md](docs/integrations.md);
-інструкція для працівників — [docs/console-guide.md](docs/console-guide.md).
+SEO та фід — [docs/SEO.md](docs/SEO.md); інструкція для працівників — [docs/console-guide.md](docs/console-guide.md).
 Будова коду й правила меж між модулями — [docs/architecture-backend.md](docs/architecture-backend.md) (сервер)
 і [docs/architecture-web.md](docs/architecture-web.md) (вітрина, кабінет і консоль).
 
@@ -34,18 +32,19 @@ src/
                              і його реквізити, особливі дні магазину, статуси, нотатка працівників, повернення, «Мої замовлення»
     PoliValko.Payments/      спроби оплати, вебхуки з підписом, звірка, повернення на картку (тестовий провайдер, Plata by mono)
     PoliValko.Fiscal/        чеки продажу й повернення за матрицею продавця (заглушка, Checkbox)
-    PoliValko.Navkolo/       заглушка клієнта Navkolo, синхронізація цін і залишків, передача замовлень, свіжість даних
+    PoliValko.Navkolo/       інтеграція з Navkolo / DNTrade (та локальна заглушка), синхронізація цін і залишків, передача замовлень
     PoliValko.Identity/      працівники (ASP.NET Core Identity): вхід, CSRF, ролі з правами за ключами (системні Адміністратор
                              і Менеджер плюс власні), керування працівниками й ролями
     PoliValko.Notifications/ повідомлення менеджеру й алерти збоїв (Telegram або лог; чати й події — з консолі), листи
                              покупцям (SMTP або лог)
 web/                        npm workspaces:
-  apps/shop/                Next.js 16: вітрина й особистий кабінет покупця (дизайн за скілом Hallmark), домен магазину
-  apps/console/             консоль для працівників: односторінковий застосунок на Next.js 16 (статичний експорт; React 19,
-                            React Router 7, Mantine 9, TanStack Table) на ядрі консолі GBA, власний піддомен; у Docker його
-                            статику віддає Caddy
+  apps/shop/                Next.js 16: вітрина й особистий кабінет покупця, основний домен магазину
+  apps/console/             консоль для працівників: SPA на Next.js 16 (статичний експорт; React 19, React Router 7,
+                            Mantine 9, TanStack Table 9), власний піддомен; у Docker статику віддає Caddy
   packages/shared/          @polivalko/shared: згенеровані типи й клієнт API, іконки, спільні стилі
-.claude/skills/hallmark/    скіл Hallmark для Claude Code, встановлений локально для проєкту
+services/                   Python 3.13 сервіси аналітики:
+  product-analytics/        розрахунок попиту, сезонності й товарних сигналів (внутрішній HTTP без прямого доступу до БД)
+  business-analytics/       багаторічна звірка обороту, прогноз закупівель і географія продажів (read-only PostgreSQL)
 tests/                      юніт- і інтеграційні тести (HTTP + PostgreSQL у Testcontainers)
 openapi/                    контракт API, генерується під час збірки й комітиться
 deploy/                     Dockerfile для .NET, Caddyfile, production-override, скрипти бекапу й відновлення
@@ -190,4 +189,4 @@ dotnet ef migrations add <Назва> --project src/PoliValko.Infrastructure --s
 Navkolo (`Navkolo:Mode=Stub`), оплата (`Payments:Provider=Sandbox`), ПРРО (`Fiscal:Provider=Stub`), Нова пошта (демо-довідник без ключа),
 листи покупцям (`Email:Mode=Log` для розробки або `Email:Mode=Smtp` для доставки). У режимі `Log` посилання для підтвердження
 пошти й скидання пароля пишуться в лог API лише в середовищі Development.
-Як увімкнути справжні — [docs/integrations.md](docs/integrations.md). Що лишилося до запуску — [docs/prototype-plan.md](docs/prototype-plan.md).
+Як увімкнути реальні інтеграції — у [docs/integrations.md](docs/integrations.md).

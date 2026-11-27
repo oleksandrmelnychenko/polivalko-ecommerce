@@ -147,6 +147,7 @@ internal static class StockOperations
                     {prefix} || nextval({sequence}::regclass),{input.Day},'draft',{org.Id},{org.Title},ARRAY[{store.Id}],
                     'UAH',{total}::numeric,{details}::jsonb,{input.OrgId},{input.StoreId}
                 WHERE NOT EXISTS (SELECT 1 FROM accounting.documents WHERE id={input.Id})
+                ON CONFLICT (id) DO NOTHING
                 """, ct);
             if (inserted==0)
             {

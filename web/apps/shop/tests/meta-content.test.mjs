@@ -129,7 +129,7 @@ test("formatProductTitle guards long product titles within 65 rendered chars and
   const { formatProductTitle } = src("features/product/lib/product-seo.ts");
   const money = (value) => ({ value, currency: "UAH" });
 
-  // Well-sized explicit CMS title stays untouched (keeps seo-indexing.test.mjs green).
+  // Preserve well-sized explicit CMS titles unchanged.
   assert.equal(
     formatProductTitle({
       name: "Зерно від мишей Bross 300 г",
@@ -184,7 +184,7 @@ test("brandSeoTitle and brandSeoMetaDescription stay within strict SERP characte
     assert.ok(fallbackDesc.length >= 130 && fallbackDesc.length <= 155, `Brand ${name} desc len ${fallbackDesc.length}: "${fallbackDesc}"`);
   }
 
-  // Short DB brand descriptions (< 120 chars, e.g. forster at 69 chars or nerest at 104 chars) expand cleanly to 130–155 chars.
+  // Short brand descriptions (< 120 chars) expand cleanly to 130–155 chars.
   const shortSamples = [
     { name: "FÖRSTER", description: "FÖRSTER — надійні садові інструменти та аксесуари для щоденної роботи.", productCount: 5 },
     { name: "NeRest", description: "NeRest — товари для комфортного відпочинку на природі, кемпінгу та пікніка з міцних матеріалів.", productCount: 5 },
@@ -205,13 +205,13 @@ test("brands/[slug]/page.tsx wires brandSeoTitle and brandSeoMetaDescription", (
 test("formatProductDescription clamps >158-char overflow and enriches short templated descriptions to 120–158 chars", () => {
   const { formatProductDescription } = src("features/product/lib/product-seo.ts");
 
-  // 162-char overflow is clamped strictly <= 158 chars.
+  // Descriptions longer than 158 chars are clipped cleanly.
   const overflow =
     "Квіти петунія великоквіткова низькоросла Пікоті Бургунд F1 SeedEra, 10 шт у магазині Poli Valko: доставка Новою поштою по Україні або самовивіз з магазину Буча.";
   const clamped = formatProductDescription({ seoDescription: overflow, descriptionHtml: null });
   assert.ok(clamped.length <= 158, `Overflow desc length ${clamped.length} > 158: "${clamped}"`);
 
-  // Short 108-char templated product description expands cleanly into 120–158 chars without duplicating delivery text.
+  // Short templated product descriptions expand into 120–158 chars without duplicating delivery text.
   const shortTemplated =
     "Триходермін 1 кг у магазині Poli Valko: доставка Новою поштою по Україні або самовивіз з магазину.";
   const expanded = formatProductDescription({ seoDescription: shortTemplated, descriptionHtml: null });

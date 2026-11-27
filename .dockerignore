@@ -2,18 +2,29 @@
 **/obj
 **/node_modules
 **/.next
+**/__pycache__
+**/*.py[cod]
 web/
 tests/
 docs/
 openapi/
+services/
+output/
+assets/
 .git
 .vs
 .vscode
 .idea
+.claude/
+.hallmark/
+.ruff_cache/
 **/*.user
+*.log
 .env*
 
 # Local wrapping keys must never enter source control or build contexts
 .local/
 **/*.key
 **/*.pfx
+**/*.pem
+**/*.p12

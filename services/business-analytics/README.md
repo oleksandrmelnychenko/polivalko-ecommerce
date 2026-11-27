@@ -13,8 +13,8 @@
 | Схема | Таблиці |
 |---|---|
 | integration | dntrade_archive_records |
-| accounting | references, documents, inventory_lines, inventory_reports, warehouse_stock, stock_movements, stock_openings, order_shipments |
-| catalog | products, categories, product_stock |
+| accounting | references, documents, document_register, partners, inventory_lines, inventory_reports, warehouse_stock, stock_movements, stock_openings, order_shipments, recommendation_offers, sales_offers, sales_offer_shipments, offer_invoices (а також право `EXECUTE` на `accounting.stock_number`) |
+| catalog | products, categories, product_stock, product_prices |
 | ordering | orders, order_items, order_refunds, order_refund_lines, order_status_changes |
 
 | Змінна production Compose | Значення |

@@ -92,7 +92,7 @@ internal sealed class SeasonalMerchandising(IMemoryCache cache) : IDisposable
         ordered = ordered.ThenBy(s => s.state);
         // Stock that would last eight weeks or longer comes first, the largest first.
         if (!seasonalMode) ordered = ordered.ThenByDescending(s => s.cover >= 56).ThenByDescending(s => s.cover);
-        return ordered.ThenByDescending(s => s.demand).ThenByDescending(s => s.p.Images.Any())
+        return ordered.ThenByDescending(s => s.demand)
             .ThenBy(s => s.p.DisplayName ?? s.p.Name).ThenBy(s => s.p.Id).Select(s => s.p);
     }
 

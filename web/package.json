@@ -9,7 +9,11 @@
   "scripts": {
     "lint": "npm run lint --workspaces",
     "typecheck": "npm run typecheck --workspaces",
+    "test": "npm test -w shop",
     "build": "npm run build --workspaces --if-present",
     "api:types": "npm run api:types -w @polivalko/shared"
+  },
+  "devDependencies": {
+    "@polivalko/typescript-compiler": "npm:typescript@^7.0.2"
   }
 }

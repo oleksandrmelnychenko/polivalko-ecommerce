@@ -1,4 +1,5 @@
 using System.Text;
+using PoliValko.Infrastructure.Persistence;
 
 namespace PoliValko.Delivery.Integrations.NovaPoshta;
 
@@ -37,10 +38,7 @@ internal static class NovaPoshtaText
         return result.ToString();
     }
 
-    public static string EscapeLike(string value) =>
-        value.Replace("\\", "\\\\", StringComparison.Ordinal)
-            .Replace("%", "\\%", StringComparison.Ordinal)
-            .Replace("_", "\\_", StringComparison.Ordinal);
+    public static string EscapeLike(string value) => SqlLike.EscapePattern(value);
 
     public static string Truncate(string value, int max) => value.Length > max ? value[..max].TrimEnd() : value;
 }

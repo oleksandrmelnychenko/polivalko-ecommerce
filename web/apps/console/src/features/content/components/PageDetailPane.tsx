@@ -12,7 +12,13 @@ import { previewDocument } from '../lib/previewDocument'
 import { ListError } from './ListError'
 
 const SHOP_SUFFIX = ' | Poli Valko'
+const HAS_SHOP_NAME = /poli\s*valko[\s.!?»"')]*$/i
 const countFormat = new Intl.NumberFormat('uk-UA')
+
+function withShopSuffix(title: string): string {
+  const clean = title.trim() || 'Без заголовка'
+  return HAS_SHOP_NAME.test(clean) ? clean : `${clean}${SHOP_SUFFIX}`
+}
 
 function wordCount(html: string | null | undefined): number {
   if (!html) return 0
@@ -30,7 +36,7 @@ function PageDetail({ item }: { item: PageListItem }) {
   const data = page.data
   const updated = moment(item.updatedAt)
   const words = wordCount(data?.bodyHtml)
-  const seoTitle = `${item.seoTitle?.trim() || item.title}${SHOP_SUFFIX}`
+  const seoTitle = withShopSuffix(item.seoTitle?.trim() || item.title)
   const seoDescription = item.seoDescription?.trim() || data?.lead?.trim()
 
   return (

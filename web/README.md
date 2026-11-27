@@ -5,9 +5,9 @@ npm workspace із двох застосунків і спільного пак�
 
 - `apps/shop` — вітрина й особистий кабінет покупця: Next.js 16 (App Router, Cache Components), серверний рендеринг.
 - `apps/console` — консоль для працівників на окремому піддомені (локально `console.localhost`): односторінковий
-  застосунок на Next.js 16 зі статичним експортом (React 19, React Router 7, Mantine 9, TanStack Table 8,
-  `@tabler/icons-react`, шрифт Onest з `@fontsource/onest`) на ядрі консолі GBA. Кожна сторінка вимагає право
-  працівника. У Docker зібрану статику (`apps/console/out`) віддає Caddy.
+  застосунок на Next.js 16 зі статичним експортом (React 19, React Router 7, Mantine 9, TanStack Table 9,
+  `@tabler/icons-react`, шрифт Onest з `@fontsource/onest`). Кожна сторінка вимагає право працівника. У Docker
+  зібрану статику (`apps/console/out`) віддає Caddy.
 - `packages/shared` (`@polivalko/shared`) — клієнт і типи API, хелпери форматування й підписів; іконки й базові стилі —
   для вітрини.
 
@@ -18,6 +18,7 @@ npm run dev -w console      # консоль: http://localhost:3001, /api — ч
 npm run api:types           # перегенерувати packages/shared/api/schema.d.ts з ../openapi/polivalko-api.json
 npm run lint                # ESLint у кожному workspace
 npm run typecheck           # вітрина й консоль: next typegen + tsc --noEmit; пакет: tsc --noEmit
+npm test                    # юніт-тести вітрини (node --test)
 npm run build               # вітрина: next build; консоль: next build (статичний експорт → apps/console/out)
 ```
 

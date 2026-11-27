@@ -1,7 +1,7 @@
 export const DEFAULT_GOOGLE_PRODUCT_CATEGORY = "Home & Garden > Lawn & Garden";
 
-// Official Google Product Taxonomy paths (verified against taxonomy-with-ids.en-US.txt)
-// used by both Schema.org Product.category and Google Merchant Center g:google_product_category.
+// Official Google Product Taxonomy paths used by Schema.org Product.category
+// and Google Merchant Center g:google_product_category.
 const GOOGLE_TAXONOMY_BY_SLUG: Readonly<Record<string, string>> = {
   "vse-dlia-polyvu": "Home & Garden > Lawn & Garden > Watering & Irrigation",
   "nazemnyi-polyv": "Home & Garden > Lawn & Garden > Watering & Irrigation",

@@ -60,8 +60,8 @@ internal static class ImportCategories
         }
 
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
-        // The catalog importer reads categories before deciding which rows to insert. Exclude stale reads through commit.
-        await db.Database.ExecuteSqlRawAsync("LOCK TABLE catalog.categories IN ACCESS EXCLUSIVE MODE", ct);
+        // Serialize concurrent category imports without blocking storefront category reads.
+        await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(hashtext('catalog.categories'))", ct);
         var existing = await db.Set<Category>().AsNoTracking().ToListAsync(ct);
         var bySlug = existing.ToDictionary(category => category.Slug, StringComparer.Ordinal);
         var parents = existing.ToDictionary(category => category.Id, category => category.ParentId);

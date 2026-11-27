@@ -22,8 +22,8 @@ services:
           create_host_path: false
     environment:
       <<: *required-env
-      Database__SeedDemoData: ${SEED_DEMO_DATA:-false}
-      Api__ExposeDocs: ${EXPOSE_API_DOCS:-false}
+      Database__SeedDemoData: "false"
+      Api__ExposeDocs: "false"
 
   worker:
     volumes:

@@ -49,10 +49,13 @@ internal sealed class OrderReporting(PoliValkoDbContext db) : IOrderReporting
     }
 
     public async Task<IReadOnlyList<OrderedProductSnapshot>> OrderedProductSnapshotsAsync(IReadOnlyCollection<Guid> productIds, CancellationToken ct) =>
-        await db.Set<OrderItem>().AsNoTracking()
-            .Where(i => productIds.Contains(i.ProductId))
-            .Select(i => new OrderedProductSnapshot(i.ProductId, i.Name, i.Sku, i.ImageUrl))
-            .ToListAsync(ct);
+        productIds.Count == 0
+            ? []
+            : await db.Set<OrderItem>().AsNoTracking()
+                .Where(i => productIds.Contains(i.ProductId))
+                .Select(i => new OrderedProductSnapshot(i.ProductId, i.Name, i.Sku, i.ImageUrl))
+                .Distinct()
+                .ToListAsync(ct);
 
     public async Task<IReadOnlyList<OrderSearchHit>> SearchOrdersAsync(string term, int limit, CancellationToken ct)
     {

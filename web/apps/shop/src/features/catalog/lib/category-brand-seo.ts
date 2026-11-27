@@ -37,10 +37,9 @@ const KNOWN_CATALOG_PARAMS = new Set([
 ]);
 
 /**
- * Brand slugs that ALREADY exist as dedicated L3 subcategories in the live catalog
- * (discovered via live crawl: `/catalog/hunter` and `/catalog/irritec` under `/catalog/pidzemnyi-polyv`).
- * Never create duplicate indexable `/catalog/<parent>/<brand>` pages for these pairs;
- * redirect and link directly to the canonical subcategory URL instead.
+ * Brand slugs that already exist as dedicated subcategories in the catalog
+ * (`/catalog/hunter` and `/catalog/irritec` under `/catalog/pidzemnyi-polyv`).
+ * Redirect to the canonical subcategory URL instead of serving duplicate `/catalog/<parent>/<brand>` pages.
  */
 export const DUPLICATE_SUBCATEGORY_BRANDS: Readonly<Record<string, string>> = {
   "pidzemnyi-polyv::hunter": "/catalog/hunter",
@@ -56,11 +55,7 @@ export interface CategoryBrandSeedEntry {
   intentNote: string;
 }
 
-/**
- * Curated priority Category × Brand seed matrix built strictly from verified live categories
- * and live brands (`seo-fixes/inventory/site-inventory.json`), excluding duplicates that already
- * have dedicated L3 subcategories (`/catalog/hunter`, `/catalog/irritec`).
- */
+/** Curated Category × Brand landing pairs, excluding brands that already have dedicated subcategories. */
 export const CATEGORY_BRAND_PRIORITY_MATRIX: readonly CategoryBrandSeedEntry[] = [
   { categorySlug: "vse-dlia-polyvu", categoryName: "Все для поливу", brandSlug: "irritec", brandName: "Irritec", priority: "P1", intentNote: "Італійські системи поливу Irritec (98 SKU)" },
   { categorySlug: "vse-dlia-polyvu", categoryName: "Все для поливу", brandSlug: "cellfast", brandName: "Cellfast", priority: "P1", intentNote: "Шланги, конектори, дощувачі Cellfast" },

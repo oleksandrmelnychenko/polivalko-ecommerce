@@ -80,34 +80,28 @@ export function formatProductTitle(
   const bodyBudget = maxLen - suffix.length;
   let body = suffix ? raw.slice(0, raw.length - suffix.length).trim() : raw;
 
-  // Step 1: Drop redundant "купити з доставкою" boilerplate first.
+  // Drop trailing boilerplate clauses before falling back to clipping the name.
   const withoutBuy = body.replace(BUY_TAIL_RE, "").trim();
   if (withoutBuy.length > 0 && withoutBuy.length <= bodyBudget) {
     return `${withoutBuy}${suffix}`;
   }
   body = withoutBuy || body;
 
-  // Step 2: Drop trailing price clause if still too long.
   const withoutPrice = body.replace(PRICE_TAIL_RE, "").trim();
   if (withoutPrice.length > 0 && withoutPrice.length <= bodyBudget) {
     return `${withoutPrice}${suffix}`;
   }
   body = withoutPrice || body;
 
-  // Step 3: Fall back to clean product name if it fits.
   const cleanName = product.name.replace(/\s+/g, " ").trim();
   if (cleanName.length > 0 && cleanName.length <= bodyBudget) {
     return `${cleanName}${suffix}`;
   }
 
-  // Step 4: Word-boundary clip with no dangling prepositions or punctuation.
   return `${clipTitleCleanly(body, bodyBudget)}${suffix}`;
 }
 
-/**
- * Clamps product meta descriptions strictly to <= 158 chars (fixing 162-char overflow)
- * and enriches short templated/fallback descriptions (< 120 chars) with concise store USP.
- */
+/** Keeps product meta descriptions within 120–158 chars, appending store delivery details when too short. */
 export function formatProductDescription(
   product: Pick<ProductDetails, "seoDescription" | "descriptionHtml">
 ): string {

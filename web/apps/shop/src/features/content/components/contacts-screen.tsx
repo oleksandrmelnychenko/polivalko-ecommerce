@@ -9,17 +9,11 @@ import { ArrowRightIcon, ClockIcon, PinIcon } from "@polivalko/shared/ui/icons";
 import { directionsUrl } from "@/shared/lib/directions-url";
 import { getContacts, getPickupPoints, getSeller } from "../api/server";
 import { organizationSource } from "../lib/organization";
-import { socialLinks } from "../lib/social-links";
+import { activeSocialLinks } from "../lib/social-links";
 import { SpecialDays } from "./special-days";
 import { SocialLinksList } from "./social-links";
 
 const tel = (value: string) => "tel:" + value.replace(/[^\d+]/g, "");
-function isRealSocialProfile(url: string): boolean {
-  if (!/^https?:/i.test(url)) return true;
-  if (!URL.canParse(url)) return false;
-  const parsed = new URL(url);
-  return parsed.pathname.replace(/\/+$/, "").length > 0 || Boolean(parsed.search || parsed.hash);
-}
 export function ContactsScreen() {
   return (
     <div className="container contact-page">
@@ -39,7 +33,7 @@ async function ContactsContent() {
   const schedule = contacts?.schedule || point?.schedule;
   const mapUrl = contacts?.mapUrl || point?.mapUrl;
   const route = directionsUrl(mapUrl, contacts?.address || point?.address);
-  const socials = socialLinks(contacts).filter((item) => !item.placeholder && isRealSocialProfile(item.url));
+  const socials = activeSocialLinks(contacts);
   const mapQuery = (mapUrl && URL.canParse(mapUrl) && new URL(mapUrl).searchParams.get("query")) || address;
   const mapEmbed = "https://maps.google.com/maps?" + new URLSearchParams({ q: mapQuery, z: "16", hl: "uk", output: "embed" });
   return <>

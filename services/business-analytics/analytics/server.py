@@ -399,6 +399,9 @@ def app(env, start_response):
         status, body = 409, {"title": "Умови закупівлі вже змінено. Оновіть сторінку перед збереженням."}
     except (ValueError, TypeError, OverflowError, UnicodeError):
         status, body = 400, {"title": "Перевірте параметри запиту, дати та кількість"}
+    except Exception as exc:
+        logger.error("Unhandled business analytics error (%s)", type(exc).__name__)
+        status, body = 500, {"title": "Внутрішня помилка сервісу бізнес-аналітики"}
     payload = json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode()
     start_response(
         f"{status} {HTTPStatus(status).phrase}",
