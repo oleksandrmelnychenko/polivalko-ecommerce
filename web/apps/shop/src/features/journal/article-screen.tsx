@@ -6,6 +6,7 @@ import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import { articles } from "./articles";
 import { JOURNAL_ENABLED } from "./config";
 import { GuideCover } from "./guide-cover";
+import { GuideContents } from "./guide-contents";
 
 export function generateStaticParams() {
   return articles.map(({ slug }) => ({ slug }));
@@ -84,12 +85,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         </header>
 
         <div className="field-guide__reading">
-          <nav className="field-guide__contents" aria-label="Зміст статті">
-            <h2>У цій статті</h2>
-            <ul>{article.sections.map((section, index) => (
-              <li key={section.title}><a href={`#section-${index + 1}`}>{section.title}</a></li>
-            ))}</ul>
-          </nav>
+          <GuideContents chapters={chapters} />
           <div className="field-guide__chapters">
             {article.sections.map((section, index) => (
               <section className="field-guide__chapter" key={section.title} id={chapters[index].id}>
