@@ -190,6 +190,7 @@
   }
   .draft-line-list li > .mantine-InputWrapper-root { width: clamp(7rem, 12vw, 9rem); }
   .draft-line-list .mantine-InputWrapper-label { align-self: end; }
+  .draft-line-list .mantine-Input-wrapper { align-self: center; }
   .draft-line-sum { min-width: 5rem; max-width: 9rem; }
   .draft-line-sum span { align-self: end; }
   .draft-line-sum strong { align-self: center; }
