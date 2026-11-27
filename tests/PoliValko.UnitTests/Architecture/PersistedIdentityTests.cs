@@ -36,7 +36,7 @@ public sealed class PersistedIdentityTests
         ["RefundRequested"] = ["OrderId", "RefundId"],
         ["ServiceRequestSubmitted"] = ["ServiceRequestId"],
         ["IntegrationAlert"] = ["Title", "Body"],
-        ["StockAvailabilityChanged"] = [],
+        ["StockAvailabilityChanged"] = ["OrdersOnly"],
     };
 
     [Fact]

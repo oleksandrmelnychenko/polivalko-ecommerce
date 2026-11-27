@@ -2,6 +2,8 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { revalidateTag } from "next/cache";
 
 const digest = (value: string) => createHash("sha256").update(value).digest();
+// Edits to the catalog expire at once. "stock" (orders reserving or shipping goods) is not here on purpose: orders
+// come all day, so stock data is served stale once and refreshed in the background; checkout checks the stock itself.
 const catalogTags = new Set(["catalog", "categories", "products", "collections", "redirects"]);
 
 export async function POST(request: Request) {

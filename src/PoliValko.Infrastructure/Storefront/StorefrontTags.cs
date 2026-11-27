@@ -12,6 +12,9 @@ public static class StorefrontTags
     public const string Site = "site";
     public const string Home = "home";
 
+    /// <summary>Storefront data that shows what can be bought; orders refresh it in the background.</summary>
+    public const string Stock = "stock";
+
     public static string Product(string slug) => $"product:{slug}";
 
     public static string Category(string slug) => $"category:{slug}";

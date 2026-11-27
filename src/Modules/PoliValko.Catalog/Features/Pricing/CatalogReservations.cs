@@ -30,7 +30,7 @@ internal sealed class CatalogReservations(PoliValkoDbContext db, TimeProvider ti
             db.Add(new StockReservation { OrderId = orderId, ProductId = id, Quantity = quantity, CreatedAt = time.GetUtcNow(),
                 WarehouseOrgId=source.WarehouseOrgId, WarehouseStoreId=source.WarehouseStoreId });
         }
-        outbox.Enqueue(new StockAvailabilityChanged());
+        outbox.Enqueue(new StockAvailabilityChanged { OrdersOnly = true });
     }
 
     public async Task ReleaseAsync(Guid orderId, CancellationToken ct)
@@ -45,7 +45,7 @@ internal sealed class CatalogReservations(PoliValkoDbContext db, TimeProvider ti
                 .ExecuteUpdateAsync(s => s.SetProperty(p => p.ReservedQuantity, p => p.ReservedQuantity - row.Quantity), ct);
             row.Released = true;
         }
-        if (rows.Count > 0) outbox.Enqueue(new StockAvailabilityChanged());
+        if (rows.Count > 0) outbox.Enqueue(new StockAvailabilityChanged { OrdersOnly = true });
     }
 
     public Task ReconcileFulfilledAsync(IReadOnlyCollection<Guid> orderIds, CancellationToken ct) =>
@@ -99,6 +99,6 @@ internal sealed class CatalogReservations(PoliValkoDbContext db, TimeProvider ti
                 .ExecuteUpdateAsync(s=>s.SetProperty(r=>r.Consumed,true).SetProperty(r=>r.Released,true),ct);
             availabilityChanged=true;
         }
-        if (availabilityChanged) outbox.Enqueue(new StockAvailabilityChanged());
+        if (availabilityChanged) outbox.Enqueue(new StockAvailabilityChanged { OrdersOnly = true });
     }
 }

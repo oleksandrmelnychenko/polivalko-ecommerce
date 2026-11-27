@@ -75,7 +75,7 @@ export async function countSaleProducts(): Promise<number | null> {
 async function searchSortedProducts({ query }: { query: ProductQuery; modeRevision?: string }) {
   "use cache";
   cacheLife("minutes");
-  cacheTag("catalog", "products");
+  cacheTag("catalog", "products", "stock");
   const { data, response } = await api.GET("/api/v1/products", {
     params: { query: { pageSize: PAGE_SIZE, ...query } },
   });
@@ -105,7 +105,7 @@ export async function getBrandPage(slug: string) {
 export async function getCollections() {
   "use cache";
   cacheLife("minutes");
-  cacheTag("catalog", "collections");
+  cacheTag("catalog", "collections", "stock");
   return loaded(await api.GET("/api/v1/collections"), "колекції") ?? [];
 }
 
@@ -122,7 +122,7 @@ export async function getSitemap() {
 export async function getMerchantFeed() {
   "use cache";
   cacheLife("hours");
-  cacheTag("catalog", "products", "categories");
+  cacheTag("catalog", "products", "categories", "stock");
   const data = loaded(await api.GET("/api/v1/catalog/merchant-feed"), "товарний фід");
   if (!data) throw new Error("API: не вдалося завантажити товарний фід");
   return data;
@@ -138,6 +138,6 @@ export async function resolveRedirect(path: string) {
 export async function getBestsellers(take: number) {
   "use cache";
   cacheLife("minutes");
-  cacheTag("catalog", "products", "bestsellers");
+  cacheTag("catalog", "products", "bestsellers", "stock");
   return loaded(await api.GET("/api/v1/bestsellers", { params: { query: { take } } }), "хіти продажів");
 }
