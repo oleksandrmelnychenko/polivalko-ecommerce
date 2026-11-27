@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { articleJsonLd, breadcrumbJsonLd, JsonLd, seoMetadata } from "@/features/seo";
-import { sized } from "@/shared/lib/images";
+import { ArrowRightIcon } from "@polivalko/shared/ui/icons";
 import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
 import { articles } from "./articles";
 import { JOURNAL_ENABLED } from "./config";
-import { StoryList } from "./journal";
+import { GuideCover } from "./guide-cover";
 
 export function generateStaticParams() {
   return articles.map(({ slug }) => ({ slug }));
@@ -44,6 +44,10 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
   const path = `/blog/${slug}`;
   const parents = [{ name: "Блог", path: "/blog" }];
+  const chapters = article.sections.map((section, index) => ({
+    id: `section-${index + 1}`,
+    title: section.title.replace(/^\d+\.\s*/, ""),
+  }));
 
   return (
     <div className="container journal-page">
@@ -62,79 +66,74 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
       <Breadcrumbs current={article.title} parents={parents} />
 
-      <article className="journal-article">
-        <header className="journal-article__head">
-          <div>
-            <p className="journal-meta">{article.category} · {article.readingMinutes} хв читання</p>
+      <article className="field-guide">
+        <header className="field-guide__head">
+          <div className="field-guide__title">
+            <div className="field-guide__meta">
+              <span className="guide-topic">{article.category}</span>
+              <span>{article.readingMinutes} хв читання</span>
+            </div>
             <h1>{article.title}</h1>
-            <p className="lead">{article.intro}</p>
-            <p className="journal-meta journal-byline">
-              {article.authorName} · <time dateTime={article.dateModified}>{formatDateUk(article.dateModified)}</time>
+            <p className="field-guide__intro">{article.intro}</p>
+            <p className="field-guide__credit">
+              <span>{article.authorName}</span>
+              <span>Оновлено <time dateTime={article.dateModified}>{formatDateUk(article.dateModified)}</time></span>
             </p>
           </div>
-          <img
-            className="journal-article__cover"
-            {...sized(article.image.url, "(max-width: 44rem) 100vw, 45vw", 960)}
-            alt={article.image.alt}
-            width={1200}
-            height={720}
-            fetchPriority="high"
-          />
+          <GuideCover story={article} priority />
         </header>
 
-        <div className="journal-reading">
-          <nav className="journal-contents" aria-label="Зміст статті">
+        <div className="field-guide__reading">
+          <nav className="field-guide__contents" aria-label="Зміст статті">
             <h2>У цій статті</h2>
             <ul>{article.sections.map((section, index) => (
               <li key={section.title}><a href={`#section-${index + 1}`}>{section.title}</a></li>
             ))}</ul>
           </nav>
-          <div className="journal-article__body">
+          <div className="field-guide__chapters">
             {article.sections.map((section, index) => (
-              <section key={section.title} id={`section-${index + 1}`}>
-                <h2>{section.title}</h2>
-                {section.text.map((text) => (
-                  <p key={text}>{text}</p>
-                ))}
+              <section className="field-guide__chapter" key={section.title} id={chapters[index].id}>
+                <h2>{chapters[index].title}</h2>
+                {section.text.map((text) => <p key={text}>{text}</p>)}
               </section>
             ))}
-
-            <Link className="btn" href={article.link.href}>
-              {article.link.label}
-            </Link>
-
-            {article.relatedCategories.length > 0 && (
-              <section aria-labelledby="article-related-categories">
-                <h2 id="article-related-categories">Рекомендовані категорії каталогу</h2>
-                <ul className="chips chips--grey">
-                  {article.relatedCategories.map((item) => (
-                    <li key={item.href}>
-                      <Link href={item.href}>{item.label}</Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {article.relatedServices && article.relatedServices.length > 0 && (
-              <section aria-labelledby="article-related-services">
-                <h2 id="article-related-services">Послуги Poli Valko у Бучі та Київській області</h2>
-                <ul className="chips chips--grey">
-                  {article.relatedServices.map((service) => (
-                    <li key={service.href}>
-                      <Link href={service.href}>{service.label}</Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
+            <footer className="field-guide__resources">
+              {article.relatedCategories.length > 0 && (
+                <section>
+                  <h2>Категорії каталогу</h2>
+                  <ul className="chips chips--grey">
+                    {article.relatedCategories.map((item) => (
+                      <li key={item.href}><Link href={item.href}>{item.label}</Link></li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+              {!!article.relatedServices?.length && (
+                <section>
+                  <h2>Послуги для саду</h2>
+                  <ul className="chips chips--grey">
+                    {article.relatedServices.map((item) => (
+                      <li key={item.href}><Link href={item.href}>{item.label}</Link></li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+              <Link className="btn" href={article.link.href}>{article.link.label} <ArrowRightIcon /></Link>
+            </footer>
           </div>
         </div>
       </article>
 
-      <section className="journal-related" aria-label="Інші статті">
-        <h2>Ще у блозі</h2>
-        <StoryList items={articles.filter((item) => item.slug !== slug).slice(0, 3)} />
+      <section className="field-guide__related" aria-label="Інші практикуми">
+        <header><h2>Ще почитати</h2><Link href="/blog">Усі статті <ArrowRightIcon /></Link></header>
+        <ul>
+          {articles.filter((item) => item.slug !== slug).slice(0, 3).map((item) => (
+            <li key={item.slug}><Link href={`/blog/${item.slug}`}>
+              <span className="field-guide__meta">{item.category} · {item.readingMinutes} хв читання</span>
+              <h3>{item.title}</h3>
+            </Link></li>
+          ))}
+        </ul>
       </section>
     </div>
   );
