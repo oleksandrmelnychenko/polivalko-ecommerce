@@ -84,7 +84,7 @@ export async function CatalogListing({
     <ListingNavigation basePath={basePath} fixed={fixed} parsed={p}><div className="catalog">
       {itemList && <JsonLd data={itemList} />}
       <FiltersPanel active={chips.length} compact={compact}>
-        <ListingFilters result={result} basePath={basePath} fixed={fixed} saleOnly={saleOnly} compact={compact} />
+        <ListingFilters facets={result.facets} basePath={basePath} fixed={fixed} saleOnly={saleOnly} compact={compact} />
       </FiltersPanel>
       <div className="catalog__main">
         <ListingToolbar summary={compact && result.items.length === 0 ? "" : summary} path={basePath} />

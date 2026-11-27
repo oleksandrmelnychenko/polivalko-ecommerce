@@ -9,6 +9,7 @@ export { ProductLabels } from "./components/product-labels";
 export { withoutSaleLabel } from "./lib/labels";
 export { discountPercent } from "./lib/discount";
 export { categoryPhotoUrl } from "./lib/category-photo";
+export { categoryAncestors, categoryChildren } from "./lib/category-path";
 export { listingIndexState } from "./lib/listing-params";
 export { saleIsEmpty } from "./lib/sale";
 export { merchantFeedXml } from "./lib/merchant-feed";

@@ -1,10 +1,10 @@
 import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
-import { getCategory } from "@/features/catalog/server";
+import { getCategoryTree } from "@/features/catalog/server";
 import { Suspense } from "react";
 import type { ProductDetails } from "@polivalko/shared/api/types";
 import type { DeliveryFacts } from "@/shared/lib/delivery-facts";
 import { TrackViewItem } from "@/features/analytics";
-import { discountPercent, ProductLabels, withoutSaleLabel } from "@/features/catalog";
+import { categoryAncestors, discountPercent, ProductLabels, withoutSaleLabel } from "@/features/catalog";
 import { Gallery } from "./gallery";
 import { ProductAsk, ProductAskPending } from "./product-ask";
 import { ProductBuybox } from "./product-buybox";
@@ -30,10 +30,11 @@ export async function ProductScreen({ product, deliveryFacts, askPhone }: {
   deliveryFacts: () => Promise<DeliveryFacts | null>;
   askPhone: () => Promise<string | null>;
 }) {
-  const category = await getCategory(product.category.slug).catch(() => null);
+  // The header has already asked for the tree, so the breadcrumbs cost no request of their own.
+  const tree = await getCategoryTree().catch(() => []);
   const parents = [
     { name: "Каталог", path: "/catalog" },
-    ...(category?.breadcrumbs ?? []).map(c => ({ name: c.name, path: `/catalog/${c.slug}` })),
+    ...(categoryAncestors(tree, product.category.slug) ?? []).map(c => ({ name: c.name, path: `/catalog/${c.slug}` })),
     { name: product.category.name, path: `/catalog/${product.category.slug}` },
   ];
   const discount = discountPercent(product.price, product.oldPrice);

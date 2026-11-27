@@ -58,9 +58,17 @@ export async function searchProducts(query: ProductQuery) {
   return searchSortedProducts({ query, modeRevision: query.sort ? undefined : await currentMode() });
 }
 
+/**
+ * The total and the facets of a query, without its products. The order does not change either, so an explicit cheap
+ * one spares the API the storefront mode and the seasonal ranking, the costliest part of a default listing.
+ */
+export async function summarizeProducts(query: Omit<ProductQuery, "sort" | "page" | "pageSize">) {
+  return searchProducts({ ...query, sort: "price_asc", pageSize: 1 });
+}
+
 /** How many products are on sale now, by the query the menu uses to show «Акції»; null when the catalog did not answer. */
 export async function countSaleProducts(): Promise<number | null> {
-  return searchProducts({ onSale: true, sort: "price_asc", pageSize: 1 }).then((result) => result?.totalItems ?? null, () => null);
+  return summarizeProducts({ onSale: true }).then((result) => result?.totalItems ?? null, () => null);
 }
 
 // Include the effective mode and revision in the cache key, including after a scheduled expiry.

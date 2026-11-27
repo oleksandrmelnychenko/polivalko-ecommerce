@@ -1,4 +1,4 @@
-export { countSaleProducts, getBestsellers, getBrandPage, getBrandPages, getCategory, getCategoryTree, getCollections, getMerchantFeed, getSitemap, resolveRedirect, searchProducts } from "./api/server";
+export { countSaleProducts, getBestsellers, getBrandPage, getBrandPages, getCategory, getCategoryTree, getCollections, getMerchantFeed, getSitemap, resolveRedirect, searchProducts, summarizeProducts } from "./api/server";
 export { requireCategory } from "./api/require-category";
 export { requireBrand } from "./api/require-brand";
 export { BrandScreen, BrandsScreen } from "./components/brand-screen";

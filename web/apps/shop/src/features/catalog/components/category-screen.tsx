@@ -1,6 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 import type { Category } from "@polivalko/shared/api/types";
-import { getBrandPages, searchProducts } from "../api/server";
+import { getBrandPages, summarizeProducts } from "../api/server";
 import { categoryBrandHref } from "../lib/category-brand-seo";
 import { listingIndexState, type SearchParams } from "../lib/listing-params";
 import { CatalogListing } from "./catalog-listing";
@@ -44,7 +44,7 @@ async function CategoryPopularBrands({ category, searchParams }: CategoryScreenP
 
   const [allBrands, preview] = await Promise.all([
     getBrandPages().catch(() => []),
-    searchProducts({ category: category.slug, pageSize: 1 }).catch(() => null),
+    summarizeProducts({ category: category.slug }).catch(() => null),
   ]);
   if (allBrands.length === 0 || !preview?.facets.brands.length) return null;
 

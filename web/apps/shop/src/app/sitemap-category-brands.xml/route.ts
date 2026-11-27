@@ -4,7 +4,7 @@ import {
   duplicateSubcategoryRedirect,
   resolveCatalogRobotsAndCanonical,
 } from "@/features/catalog";
-import { getSitemap, searchProducts } from "@/features/catalog/server";
+import { getSitemap, summarizeProducts } from "@/features/catalog/server";
 import { latestChange, SITEMAP_XML_HEADERS, sitemapXml, siteUrl, type SitemapUrlEntry } from "@/features/seo";
 
 /**
@@ -26,10 +26,9 @@ export async function GET() {
 
   const resolved = await Promise.all(
     candidates.map(async (entry): Promise<SitemapUrlEntry | null> => {
-      const preview = await searchProducts({
+      const preview = await summarizeProducts({
         category: entry.categorySlug,
         brandPage: entry.brandSlug,
-        pageSize: 1,
       }).catch(() => null);
       const totalProducts = preview?.totalItems ?? 0;
       const decision = resolveCatalogRobotsAndCanonical({

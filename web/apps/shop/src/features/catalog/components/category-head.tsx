@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import type { Category } from "@polivalko/shared/api/types";
 import { breadcrumbJsonLd, JsonLd } from "@/features/seo";
 import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
-import { getCategory } from "../api/server";
+import { getCategoryTree } from "../api/server";
+import { categoryChildren } from "../lib/category-path";
 import { CategoryChips } from "./category-chips";
 
 /** Differentiates catalog H1s that otherwise duplicate a service page or brand hub H1. */
@@ -22,7 +23,8 @@ export async function CategoryHead({ category, children }: { category: Category;
     ...category.breadcrumbs.map((c) => ({ name: c.name, path: `/catalog/${c.slug}` })),
   ];
   const parent = category.breadcrumbs.at(-1);
-  const siblings = parent ? (await getCategory(parent.slug).catch(() => null))?.children : undefined;
+  // The header has already asked for the tree: the parent's subsections cost no request of their own.
+  const siblings = parent ? categoryChildren(await getCategoryTree().catch(() => []), parent.slug) : undefined;
   return (
     <>
       <JsonLd data={breadcrumbJsonLd([...parents, { name: category.name, path: `/catalog/${category.slug}` }])} />

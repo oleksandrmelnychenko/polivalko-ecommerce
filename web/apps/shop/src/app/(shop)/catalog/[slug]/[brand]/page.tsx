@@ -12,7 +12,7 @@ import {
   getBrandPage,
   getBrandPages,
   getCategory,
-  searchProducts,
+  summarizeProducts,
 } from "@/features/catalog/server";
 import { seoMetadata } from "@/features/seo";
 import { CategoryServiceLink } from "@/features/services/server";
@@ -38,10 +38,9 @@ export async function generateMetadata({ params, searchParams }: CategoryBrandPa
     return { title: "Сторінку не знайдено", robots: null };
   }
 
-  const preview = await searchProducts({
+  const preview = await summarizeProducts({
     category: category.slug,
     brandPage: brandPage.slug,
-    pageSize: 1,
   }).catch(() => null);
   const totalProducts = preview?.totalItems ?? 0;
 
@@ -83,7 +82,7 @@ export default async function CategoryBrandPage({ params, searchParams }: Catego
     getCategory(slug),
     getBrandPage(brand),
     getBrandPages().catch(() => []),
-    searchProducts({ category: slug, pageSize: 1 }).catch(() => null),
+    summarizeProducts({ category: slug }).catch(() => null),
   ]);
 
   if (!category || !brandPage) notFound();

@@ -68,19 +68,19 @@ function FacetGroup({ title, options, icon }: { title: string; options: Option[]
 }
 
 export function ListingFilters({
-  result,
+  facets,
   basePath,
   fixed,
   saleOnly = false,
   compact,
 }: {
-  result: ProductSearch;
+  // Only the facets cross into the client: the listed products would be serialized into the payload a second time.
+  facets: ProductSearch["facets"];
   basePath: string;
   fixed: Record<string, string>;
   saleOnly?: boolean;
   compact: boolean;
 }) {
-  const { facets } = result;
   const { selection, pending, apply } = useListingNavigation();
   const minValue = selection.priceMin?.toString() ?? "";
   const maxValue = selection.priceMax?.toString() ?? "";
