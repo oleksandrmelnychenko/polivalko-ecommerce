@@ -137,7 +137,7 @@ export function WarehouseBalances() {
           )}
           {can(PermissionKeys.Catalog.RunImport) && (
             <Button radius="xl" variant="default" leftSection={<IconLink size={16} />} onClick={() => setBulkConnectOpen(true)}>
-              Прив’язати всі товари складу до вітрини
+              Прив’язати до вітрини
             </Button>
           )}
           <Button component={Link} to="/warehouse/inventory?view=inventory" radius="xl" variant="default"
