@@ -1,10 +1,10 @@
 import {
-  IconAssembly, IconAxe, IconBox, IconBucket, IconBug, IconCar, IconCategory, IconChristmasTree,
+  IconAssembly, IconAxe, IconBox, IconBucket, IconBug, IconBulb, IconCar, IconCategory, IconChristmasBall, IconChristmasTree,
   IconCut, IconDroplet, IconDroplets, IconEngine, IconFeather, IconFence, IconFlame,
-  IconGardenCart, IconGrain, IconGrill, IconHome, IconLayersIntersect, IconPipeline,
+  IconGardenCart, IconGift, IconGrain, IconGrill, IconHome, IconLaurelWreath, IconLayersIntersect, IconPipeline,
   IconPlant2, IconPool, IconRecycle, IconSeeding, IconShield, IconShovel,
   IconSnowflake, IconSpiral, IconSpray, IconStack2, IconSun, IconTent,
-  IconTool, IconToolsKitchen2, IconTrees, type Icon,
+  IconTool, IconToolsKitchen2, IconTrees, IconTrowel, type Icon,
 } from '@tabler/icons-react'
 
 const categorySymbols: [RegExp, Icon][] = [
@@ -33,7 +33,13 @@ const categorySymbols: [RegExp, Icon][] = [
   [/обігрів/iu, IconFlame],
   [/компост|септик/iu, IconRecycle],
   [/годівниц/iu, IconFeather],
-  [/новий рік/iu, IconChristmasTree],
+  [/новий рік|ялинки/iu, IconChristmasTree],
+  [/гірлянд/iu, IconBulb],
+  [/^прикраси$/iu, IconChristmasBall],
+  [/^вінки$/iu, IconLaurelWreath],
+  [/сувенір/iu, IconGift],
+  [/великий ручний інструмент/iu, IconShovel],
+  [/дрібний ручний інструмент/iu, IconTrowel],
   [/секатор|ножиці/iu, IconCut],
   [/сокири|пили/iu, IconAxe],
   [/техніка/iu, IconEngine],
