@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BuyForm } from "@/features/cart";
 import { canBuy, hasPrice, PRICE_ON_REQUEST } from "@/shared/lib/price";
+import { LiveAvailability } from "@/shared/ui/live-availability";
 import { FavoriteButton } from "@/features/favorites";
 import { CompareButton } from "@/features/compare";
 import type { ProductDetails } from "@polivalko/shared/api/types";
@@ -61,7 +62,7 @@ export function ProductBuybox({ product, discount }: { product: ProductDetails; 
             )}
           </p>
         </div>
-        <p className={product.inStock ? "stock stock--in" : "stock stock--out"}>{product.inStock ? "В наявності" : "Немає в наявності"}</p>
+        <LiveAvailability as="p" productId={product.id} inStock={product.inStock} className="stock" inClassName="stock--in" outClassName="stock--out" />
         {product.variants.length > 1 && <ProductVariants variants={product.variants} />}
         {priced ? <BuyForm product={cartProduct} inStock={buyable} actionsClassName="buybox__actions" aside={tools} /> : tools}
       </div>

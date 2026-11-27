@@ -280,6 +280,49 @@
         }
       }
     },
+    "/api/v1/catalog/availability": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Наявність товарів зараз, повз кеш сторінок: ids — до 100 ідентифікаторів через кому",
+        "operationId": "GetProductAvailability",
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductAvailabilityDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/bestsellers": {
       "get": {
         "tags": [
@@ -23138,6 +23181,27 @@
           },
           "value": {
             "type": "string"
+          }
+        }
+      },
+      "ProductAvailabilityDto": {
+        "required": [
+          "productId",
+          "inStock",
+          "available"
+        ],
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "inStock": {
+            "type": "boolean"
+          },
+          "available": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

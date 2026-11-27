@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { InCartButton } from "./in-cart-button";
-import { quoteCart } from "@/shared/api/quote-cart";
+import { recheckStock, useLiveStock } from "@/shared/lib/live-stock";
 import { PurchaseIcon } from "./purchase-icon";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper";
 import type { CartProduct } from "../lib/cart-store";
@@ -25,24 +25,15 @@ export function BuyForm({
 }) {
   const { add, lines } = useCart();
   const line = lines.find(item => item.productId === product.productId);
-  const [stock, setStock] = useState<{ id: string; available: number | null } | null>(null);
-  const [attempt, setAttempt] = useState(0);
-  const inCart = Boolean(line);
-  useEffect(() => {
-    if (!inStock || inCart) return;
-    const controller = new AbortController();
-    quoteCart([{ productId: product.productId, quantity: 1 }], controller.signal)
-      .then(({ data }) => data?.items.find(item => item.productId === product.productId)?.availableQuantity ?? null)
-      .catch(() => null)
-      .then(available => { if (!controller.signal.aborted) setStock({ id: product.productId, available }); });
-    return () => controller.abort();
-  }, [product.productId, inStock, inCart, attempt]);
-  const available = stock?.id === product.productId ? stock.available : undefined;
+  // The page may be minutes old: the live answer decides, the page's own value holds until it arrives.
+  const live = useLiveStock(product.productId);
+  const inStockNow = live ? live.inStock : inStock;
+  const available = live === undefined ? undefined : live === null ? null : live.available;
   const [quantity, setQuantity] = useState(1);
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!line && inStock && available !== 0) {
+    if (!line && inStockNow && available !== 0) {
       add(product, typeof available === "number" ? Math.min(quantity, available) : quantity);
     }
   }
@@ -54,8 +45,8 @@ export function BuyForm({
         {line ? (
           <InCartButton name={product.name} quantity={line.quantity} className="btn btn--graphite" />
         ) : available === null ? (
-          <button type="button" className="btn btn--quiet" onClick={() => setAttempt(n => n + 1)}>Повторити перевірку наявності</button>
-        ) : inStock && available !== 0 ? (
+          <button type="button" className="btn btn--quiet" onClick={() => recheckStock(product.productId)}>Повторити перевірку наявності</button>
+        ) : inStockNow && available !== 0 ? (
           <>
             <QuantityStepper max={available} value={Math.min(quantity, available ?? quantity)} onChange={setQuantity} label={`Кількість: ${product.name}`} />
             <button type="submit" className="btn btn--graphite cart-purchase">

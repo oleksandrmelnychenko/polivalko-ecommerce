@@ -8,6 +8,7 @@ import { sized } from "@/shared/lib/images";
 import { toCartProduct } from "../lib/cart-product";
 import { discountPercent } from "../lib/discount";
 import { canBuy, hasPrice, PRICE_ON_REQUEST } from "@/shared/lib/price";
+import { LiveAvailability } from "@/shared/ui/live-availability";
 import { withoutSaleLabel } from "../lib/labels";
 import { ProductLabels } from "./product-labels";
 
@@ -39,9 +40,7 @@ export function ProductTile({ product, priority }: { product: ProductListItem; p
       <div className="tile__body">
         <div className="tile__info-row">
           {product.sku && <span className="tile__sku" translate="no"><span className="visually-hidden">Артикул </span>{product.sku}</span>}
-          <span className="tile__availability" data-available={product.inStock}>
-            {product.inStock ? "В наявності" : "Немає в наявності"}
-          </span>
+          <LiveAvailability productId={product.id} inStock={product.inStock} className="tile__availability" />
         </div>
         <p className="tile__name">
           <Link href={href}>{product.name}</Link>
@@ -73,8 +72,13 @@ export function ProductTile({ product, priority }: { product: ProductListItem; p
           <Link href={href} className="tile__buy">
             Обрати фасування
           </Link>
-        ) : buyable ? (
-          <AddToCart product={toCartProduct(product)} inStock />
+        ) : hasPrice(product.price) ? (
+          // The live stock may differ from the page's: sold out since, the card offers the product page instead.
+          <AddToCart
+            product={toCartProduct(product)}
+            inStock={buyable}
+            fallback={<Link href={href} className="tile__buy tile__buy--off">Переглянути</Link>}
+          />
         ) : (
           <Link href={href} className="tile__buy tile__buy--off">
             Переглянути

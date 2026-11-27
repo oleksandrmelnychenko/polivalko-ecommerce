@@ -30,6 +30,10 @@ internal static class CatalogEndpoints
             .WithSummary("Картка товару")
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        group.MapGet("/catalog/availability", GetAvailability.HandleAsync)
+            .WithName("GetProductAvailability")
+            .WithSummary("Наявність товарів зараз, повз кеш сторінок: ids — до 100 ідентифікаторів через кому");
+
         group.MapGet("/bestsellers", GetBestsellers.HandleAsync)
             .WithName("GetBestsellers")
             .WithSummary("Товари, які найчастіше замовляли за останні 90 днів (без скасованих), лише видимі й у наявності, крім тих, що правило сезону лишає для інших місяців");
