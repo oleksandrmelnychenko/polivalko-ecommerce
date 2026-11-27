@@ -148,13 +148,37 @@ test("smoking tobacco items are excluded from the Merchant Center feed while gar
   assert.ok(xml.includes("<g:google_product_category>Home &amp; Garden &gt; Lawn &amp; Garden &gt; Gardening &gt; Disease Control</g:google_product_category>"));
 });
 
-test("missing brand is recovered from manufacturer attributes or known catalog brands in the product title", () => {
-  const known = { ...hose, id: "01a1fea5-0000-7000-8000-000000000010", sku: "10", slug: "valagro-ref", brand: "Valagro", name: "Добриво Valagro Master" };
-  const fromTitle = { ...hose, id: "01a1fea5-0000-7000-8000-000000000011", sku: "11", slug: "valagro-kendal", brand: null, name: "Біостимулятор Valagro Kendal, 25 мл", attributes: [] };
-  const fromAttr = { ...hose, id: "01a1fea5-0000-7000-8000-000000000012", sku: "12", slug: "attr-brand", brand: null, name: "Фільтр дисковий 1\"", attributes: [{ name: "Виробник", value: "Irritec" }] };
-  const trulyGeneric = { ...hose, id: "01a1fea5-0000-7000-8000-000000000013", sku: "13", slug: "generic-item", brand: null, name: "Агроперліт 1 л", attributes: [] };
+test("missing brand is recovered from attributes, descriptions, aliases, and unambiguous GS1 prefixes without collisions", () => {
+  const knownValagro = {
+    ...hose,
+    id: "01a1fea5-0000-7000-8000-000000000010",
+    sku: "10",
+    slug: "valagro-ref",
+    brand: "Valagro",
+    name: "Добриво Valagro Master",
+    attributes: [{ name: "Штрихкод", value: "4820146160064" }],
+  };
+  const fromTitle = { ...hose, id: "01a1fea5-0000-7000-8000-000000000011", sku: "11", slug: "valagro-kendal", brand: null, name: "Біостимулятор Valagro Kendal, 25 мл", descriptionHtml: null, attributes: [] };
+  const fromAttr = { ...hose, id: "01a1fea5-0000-7000-8000-000000000012", sku: "12", slug: "attr-brand", brand: null, name: "Фільтр дисковий 1\"", descriptionHtml: null, attributes: [{ name: "Виробник", value: "Irritec" }] };
+  const trulyGeneric = { ...hose, id: "01a1fea5-0000-7000-8000-000000000013", sku: "13", slug: "generic-item", brand: null, name: "Агроперліт 1 л", descriptionHtml: "<p>Купити в магазині Poli-Valko.</p>", attributes: [] };
+  const fromDescAlias = { ...hose, id: "01a1fea5-0000-7000-8000-000000000014", sku: "14", slug: "rehau-hose", brand: null, name: "Шланг Есо (1/2) 20 м", descriptionHtml: "<p>Садовий шланг REHAU ECO Line.</p>", attributes: [{ name: "Штрихкод", value: "4007360588878" }] };
+  const fromGtinIntl = { ...hose, id: "01a1fea5-0000-7000-8000-000000000015", sku: "15", slug: "rehau-part", brand: null, name: "Перехідник 3/4", descriptionHtml: "<p>Пластиковий перехідник.</p>", attributes: [{ name: "Штрихкод", value: "4007360191214" }] };
+  const fromGtinUa9 = { ...hose, id: "01a1fea5-0000-7000-8000-000000000016", sku: "16", slug: "valagro-viva", brand: null, name: "Віва 25 г", descriptionHtml: null, attributes: [{ name: "Штрихкод", value: "4820146160095" }] };
+  // Different 9-digit Ukrainian company prefix (482014668 vs 482014616) must NOT inherit Valagro.
+  const distinctUaCompany = { ...hose, id: "01a1fea5-0000-7000-8000-000000000017", sku: "17", slug: "coco-brick", brand: null, name: "Кокосовий брикет 0.5 кг", descriptionHtml: null, attributes: [{ name: "Штрихкод", value: "4820146680012" }] };
+  // Product-line alias (YaraMila -> Yara) must NOT propagate across Ukrainian repacker 482 barcodes.
+  const yaraLine = { ...hose, id: "01a1fea5-0000-7000-8000-000000000018", sku: "18", slug: "yaramila", brand: null, name: "Добриво ЯраМіла Кропкер 2,5 кг", descriptionHtml: null, attributes: [{ name: "Штрихкод", value: "4820269250055" }] };
+  const sameRepackerOther = { ...hose, id: "01a1fea5-0000-7000-8000-000000000019", sku: "19", slug: "special-fert", brand: null, name: "Особливе добриво 50 г", descriptionHtml: null, attributes: [{ name: "Штрихкод", value: "4820269250086" }] };
+  // Colliding GS1 prefix shared by two brands must never propagate.
+  const collideA = { ...hose, id: "01a1fea5-0000-7000-8000-000000000020", sku: "20", slug: "col-a", brand: "Kvitofor", name: "Добриво Kvitofor", attributes: [{ name: "Штрихкод", value: "4820179190011" }] };
+  const collideB = { ...hose, id: "01a1fea5-0000-7000-8000-000000000021", sku: "21", slug: "col-b", brand: "Чистий Лист", name: "Добриво Чистий Лист", attributes: [{ name: "Штрихкод", value: "4820179190028" }] };
+  const collideTarget = { ...hose, id: "01a1fea5-0000-7000-8000-000000000022", sku: "22", slug: "col-target", brand: null, name: "Палички для квітів", descriptionHtml: null, attributes: [{ name: "Штрихкод", value: "4820179190035" }] };
+  const housePacked = { ...hose, id: "01a1fea5-0000-7000-8000-000000000023", sku: "23", slug: "copper", brand: null, name: "Мідний купорос (Poli-Valko)", descriptionHtml: null, attributes: [] };
 
-  const xml = merchantFeedXml([known, fromTitle, fromAttr, trulyGeneric], shop);
+  const xml = merchantFeedXml(
+    [knownValagro, fromTitle, fromAttr, trulyGeneric, fromDescAlias, fromGtinIntl, fromGtinUa9, distinctUaCompany, yaraLine, sameRepackerOther, collideA, collideB, collideTarget, housePacked],
+    shop,
+  );
   const items = Object.fromEntries(
     [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((m) => [m[1].match(/<g:id>([^<]+)<\/g:id>/)[1], m[1]])
   );
@@ -164,4 +188,12 @@ test("missing brand is recovered from manufacturer attributes or known catalog b
   assert.ok(items["12"].includes("<g:brand>Irritec</g:brand>"));
   assert.ok(!items["13"].includes("<g:brand>"));
   assert.ok(items["13"].includes("<g:identifier_exists>no</g:identifier_exists>"));
+  assert.ok(items["14"].includes("<g:brand>REHAU</g:brand>"));
+  assert.ok(items["15"].includes("<g:brand>REHAU</g:brand>"));
+  assert.ok(items["16"].includes("<g:brand>Valagro</g:brand>"));
+  assert.ok(!items["17"].includes("<g:brand>"));
+  assert.ok(items["18"].includes("<g:brand>Yara</g:brand>"));
+  assert.ok(!items["19"].includes("<g:brand>"));
+  assert.ok(!items["22"].includes("<g:brand>"));
+  assert.ok(items["23"].includes("<g:brand>Poli Valko</g:brand>"));
 });
