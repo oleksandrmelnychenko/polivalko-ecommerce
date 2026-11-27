@@ -6,6 +6,8 @@ namespace PoliValko.Ordering.Features.Console.Orders;
 internal static class StreamShopActivity
 {
     private static readonly TimeSpan KeepAliveInterval = TimeSpan.FromSeconds(15);
+    // Close cleanly before Vercel's 300s runtime request timeout so EventSource reconnects silently with HTTP 200.
+    private static readonly TimeSpan MaxStreamDuration = TimeSpan.FromSeconds(240);
 
     public static async Task HandleAsync(HttpContext http, ShopActivityHub hub, CancellationToken ct)
     {
@@ -13,15 +15,19 @@ internal static class StreamShopActivity
         http.Response.Headers["X-Accel-Buffering"] = "no";
         http.Response.ContentType = "text/event-stream; charset=utf-8";
 
+        using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        lifetime.CancelAfter(MaxStreamDuration);
+        var token = lifetime.Token;
+
         var reader = hub.Subscribe(out var subscriberId);
         try
         {
-            await http.Response.WriteAsync(": connected\n\n", ct);
-            await http.Response.Body.FlushAsync(ct);
+            await http.Response.WriteAsync("retry: 1500\n: connected\n\n", token);
+            await http.Response.Body.FlushAsync(token);
 
-            while (!ct.IsCancellationRequested)
+            while (!token.IsCancellationRequested)
             {
-                using var keepAlive = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                using var keepAlive = CancellationTokenSource.CreateLinkedTokenSource(token);
                 keepAlive.CancelAfter(KeepAliveInterval);
                 try
                 {
@@ -30,20 +36,20 @@ internal static class StreamShopActivity
                     while (reader.TryRead(out var seq)) latest = seq;
                     if (latest > 0)
                     {
-                        await http.Response.WriteAsync($"event: activity\ndata: {latest}\n\n", ct);
-                        await http.Response.Body.FlushAsync(ct);
+                        await http.Response.WriteAsync($"event: activity\ndata: {latest}\n\n", token);
+                        await http.Response.Body.FlushAsync(token);
                     }
                 }
-                catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                catch (OperationCanceledException) when (!token.IsCancellationRequested)
                 {
-                    await http.Response.WriteAsync(": ping\n\n", ct);
-                    await http.Response.Body.FlushAsync(ct);
+                    await http.Response.WriteAsync(": ping\n\n", token);
+                    await http.Response.Body.FlushAsync(token);
                 }
             }
         }
         catch (OperationCanceledException)
         {
-            // Client disconnected.
+            // Client disconnected or max stream duration reached; EventSource reconnects automatically.
         }
         finally
         {

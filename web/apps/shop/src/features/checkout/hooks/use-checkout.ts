@@ -130,6 +130,7 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
             value: Number(quote.total.value),
             payment_type: effectivePayment,
             shipping_tier: delivery,
+            transport_type: "beacon",
             items: quote.items.map((i) => ({ item_id: i.sku, item_name: i.name, price: Number(i.unitPrice.value), quantity: i.quantity })),
           });
         }

@@ -9,6 +9,22 @@ const SECRET_QUERY_KEYS = new Set([
   "secret",
 ]);
 
+const ALLOWED_ANALYTICS_QUERY_KEYS = new Set([
+  "q",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_term",
+  "utm_content",
+  "utm_id",
+  "gclid",
+  "gbraid",
+  "wbraid",
+  "dclid",
+  "fbclid",
+  "msclkid",
+]);
+
 export type LocationLike = {
   origin?: string;
   hostname?: string;
@@ -91,8 +107,22 @@ export function isAnalyticsAllowedLocation(loc: LocationLike | undefined): boole
   return true;
 }
 
-/** Returns origin + pathname with all query parameters and hashes stripped. */
+/** Returns origin + pathname plus allowlisted marketing/site-search query params (all other params & hashes stripped). */
 export function cleanPageLocation(loc: LocationLike | undefined): string {
-  const { origin, pathname } = parsedLocation(loc);
-  return `${origin}${pathname}`;
+  const { origin, pathname, search } = parsedLocation(loc);
+  if (!search) return `${origin}${pathname}`;
+  try {
+    const raw = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+    const safe = new URLSearchParams();
+    for (const [key, value] of raw.entries()) {
+      const normalized = key.trim().toLowerCase();
+      if (ALLOWED_ANALYTICS_QUERY_KEYS.has(normalized) && value.length <= 200) {
+        safe.append(normalized, value);
+      }
+    }
+    const qs = safe.toString();
+    return qs ? `${origin}${pathname}?${qs}` : `${origin}${pathname}`;
+  } catch {
+    return `${origin}${pathname}`;
+  }
 }

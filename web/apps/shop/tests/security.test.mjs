@@ -61,33 +61,70 @@ test("analytics blocks private, token-bearing, and local URLs while forwarding c
     assert.equal(globalThis.window.dataLayer, undefined);
   }
 
-  // Public production URLs strip query strings and forward sanitized events to gtag.
+  // Public production URLs preserve allowlisted attribution/search params while stripping unknown/PII params.
   const sent = [];
   globalThis.window = {
     location: {
-      href: "https://www.poli-valko.com/product/hose-1?utm_source=google&fbclid=abc",
+      href: "https://www.poli-valko.com/catalog?q=%D1%88%D0%BB%D0%B0%D0%BD%D0%B3&utm_source=google&fbclid=abc&email=user@example.com&page=2",
       origin: "https://www.poli-valko.com",
       hostname: "www.poli-valko.com",
-      pathname: "/product/hose-1",
-      search: "?utm_source=google&fbclid=abc",
+      pathname: "/catalog",
+      search: "?q=%D1%88%D0%BB%D0%B0%D0%BD%D0%B3&utm_source=google&fbclid=abc&email=user@example.com&page=2",
     },
     gtag(...args) {
       sent.push(args);
     },
   };
   assert.equal(isAnalyticsAllowedLocation(globalThis.window.location), true);
-  assert.equal(cleanPageLocation(globalThis.window.location), "https://www.poli-valko.com/product/hose-1");
+  assert.equal(
+    cleanPageLocation(globalThis.window.location),
+    "https://www.poli-valko.com/catalog?q=%D1%88%D0%BB%D0%B0%D0%BD%D0%B3&utm_source=google&fbclid=abc",
+  );
   track("add_to_cart", { currency: "UAH", value: 120 });
   assert.equal(sent.length, 1);
   assert.deepEqual(sent[0], [
     "event",
     "add_to_cart",
-    { currency: "UAH", value: 120, page_location: "https://www.poli-valko.com/product/hose-1" },
+    {
+      currency: "UAH",
+      value: 120,
+      page_location: "https://www.poli-valko.com/catalog?q=%D1%88%D0%BB%D0%B0%D0%BD%D0%B3&utm_source=google&fbclid=abc",
+    },
   ]);
 
-  // Verify GoogleAnalytics pushes real Arguments objects (not plain Arrays) into window.dataLayer.
-  const gaSource = readFileSync(resolve(here, "../src/features/analytics/components/google-analytics.tsx"), "utf8");
-  assert.match(gaSource, /window\.dataLayer\?\.push\(arguments\)/, "gtag must push real Arguments objects so gtag.js processes queued events");
+  // Direct product page loads (TrackViewItem before GoogleAnalytics) must bootstrap gtag and queue real Arguments objects.
+  const appendedScripts = [];
+  globalThis.document = {
+    getElementById: () => null,
+    createElement: (tag) => ({ tag }),
+    head: { appendChild: (node) => appendedScripts.push(node) },
+  };
+  globalThis.window = {
+    location: {
+      href: "https://www.poli-valko.com/product/hose-1?foo=bar",
+      origin: "https://www.poli-valko.com",
+      hostname: "www.poli-valko.com",
+      pathname: "/product/hose-1",
+      search: "?foo=bar",
+    },
+  };
+  track("view_item", { currency: "UAH", value: 60 });
+  assert.equal(appendedScripts.length, 1);
+  assert.equal(appendedScripts[0].src, "https://www.googletagmanager.com/gtag/js?id=G-0XD2ETJM9X");
+  assert.equal(globalThis.window.dataLayer.length, 3);
+  for (const entry of globalThis.window.dataLayer) {
+    assert.equal(Object.prototype.toString.call(entry), "[object Arguments]");
+  }
+  assert.equal(globalThis.window.dataLayer[0][0], "js");
+  assert.equal(globalThis.window.dataLayer[1][0], "config");
+  assert.equal(globalThis.window.dataLayer[1][1], "G-0XD2ETJM9X");
+  assert.equal(globalThis.window.dataLayer[2][0], "event");
+  assert.equal(globalThis.window.dataLayer[2][1], "view_item");
+  assert.equal(globalThis.window.dataLayer[2][2].page_location, "https://www.poli-valko.com/product/hose-1");
+
+  const gtagSource = readFileSync(resolve(here, "../src/features/analytics/lib/gtag.ts"), "utf8");
+  assert.match(gtagSource, /window\.dataLayer\?\.push\(arguments\)/, "gtag must push real Arguments objects so gtag.js processes queued events");
+  delete globalThis.document;
   delete globalThis.window;
 });
 

@@ -1,3 +1,4 @@
+import { ensureGtag } from "./gtag";
 import { cleanPageLocation, isAnalyticsAllowedLocation } from "./privacy";
 
 export type AnalyticsItem = { item_id: string; item_name: string; price: number; quantity: number };
@@ -14,8 +15,9 @@ declare global {
 export function track(event: AnalyticsEvent, params: Record<string, unknown>) {
   if (typeof window === "undefined") return;
   if (!isAnalyticsAllowedLocation(window.location)) return;
-  if (typeof window.gtag !== "function") return;
-  window.gtag("event", event, {
+  // Child effects (e.g. TrackViewItem on direct product visits) run before RootLayout's GoogleAnalytics effect.
+  if (typeof window.gtag !== "function" && !ensureGtag()) return;
+  window.gtag?.("event", event, {
     ...params,
     page_location: cleanPageLocation(window.location),
   });
