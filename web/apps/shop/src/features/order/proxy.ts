@@ -13,8 +13,9 @@ export async function orderNotFound(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token");
   if (ORDER_NUMBER.test(number) && token && (await orderMayExist(number, token))) return undefined;
 
-  // An unmatched internal path renders app/not-found.tsx with status 404; the address bar keeps the order URL.
-  return NextResponse.rewrite(new URL("/_not-found", request.url));
+  // Rewrite to an unmatched public path so Next.js renders app/not-found.tsx with status 404
+  // while keeping the order URL in the address bar (rewriting directly to internal /_not-found returns 500).
+  return NextResponse.rewrite(new URL("/404", request.url));
 }
 
 /** Only a definite "no such order for this token" closes the page; an API failure leaves it to the page itself. */

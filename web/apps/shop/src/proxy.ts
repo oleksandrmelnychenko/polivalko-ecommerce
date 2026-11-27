@@ -37,7 +37,17 @@ function isClientFetch(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/order/:number", "/catalog", "/catalog/:slug", "/brands/:slug", "/sale", "/search",
-    "/", "/about", "/contacts", "/blog", "/blog/:slug", "/services",
+    "/order/:number",
+    { source: "/catalog", has: [{ type: "query", key: "page" }] },
+    { source: "/catalog/:slug", has: [{ type: "query", key: "page" }] },
+    { source: "/brands/:slug", has: [{ type: "query", key: "page" }] },
+    { source: "/sale", has: [{ type: "query", key: "page" }] },
+    { source: "/search", has: [{ type: "query", key: "page" }] },
+    "/",
+    "/about",
+    "/contacts",
+    "/blog",
+    "/blog/:slug",
+    "/services",
   ],
 };

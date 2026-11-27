@@ -70,6 +70,7 @@
 
     .tile__image { position: relative; align-self: stretch; }
     .tile__bar { position: relative; inset: auto; grid-column: 2; flex-direction: column; }
+    .tile__bar .round-btn { width: 38px; height: 38px; }
   }
 }
 .tile--shop .tile__body { display: flex; flex: 1; flex-direction: column; align-items: stretch; gap: 8px; padding: 12px 0 0; text-align: left; }

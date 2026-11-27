@@ -16,6 +16,7 @@ const QUICK_CATEGORIES = [
 
 export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
   const [index, setIndex] = useState(0);
+  const [moved, setMoved] = useState(false);
   const [paused, setPaused] = useState(false);
   const [loadRest, setLoadRest] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -28,11 +29,22 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
 
   useEffect(() => {
     if (paused || count < 2 || matchMedia("(prefers-reduced-motion: reduce)").matches || matchMedia("(max-width: 63.999rem)").matches) return;
-    const timer = setTimeout(() => setIndex((i) => (i + 1) % count), AUTOPLAY_MS);
+    const timer = setTimeout(() => {
+      setMoved(true);
+      setIndex((i) => (i + 1) % count);
+    }, AUTOPLAY_MS);
     return () => clearTimeout(timer);
   }, [index, paused, count]);
 
-  const go = (step: number) => setIndex((i) => (i + step + count) % count);
+  const selectSlide = (next: number) => {
+    setMoved(true);
+    setIndex(next);
+  };
+
+  const go = (step: number) => {
+    setMoved(true);
+    setIndex((i) => (i + step + count) % count);
+  };
 
   function updateMobileSlide(rail: HTMLDivElement) {
     const [first, second] = rail.querySelectorAll<HTMLElement>(".hero-slide");
@@ -45,6 +57,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
   return (
     <section
       className="hero"
+      data-animated={moved || undefined}
       aria-roledescription="карусель"
       aria-label="Головні пропозиції"
       onPointerEnter={() => setPaused(true)}
@@ -136,7 +149,7 @@ export function HeroSlider({ slides }: { slides: HeroSlide[] }) {
       </div>
       {count > 1 && (
         <div className="hero-pagination" aria-label="Обрати слайд">
-          {slides.map((slide, i) => <button key={slide.key} type="button" aria-label={`Показати слайд ${i + 1}`} aria-pressed={i === index} onClick={() => setIndex(i)} />)}
+          {slides.map((slide, i) => <button key={slide.key} type="button" aria-label={`Показати слайд ${i + 1}`} aria-pressed={i === index} onClick={() => selectSlide(i)} />)}
         </div>
       )}
     </section>

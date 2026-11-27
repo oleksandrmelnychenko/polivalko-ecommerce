@@ -20,7 +20,7 @@ const edges = {
   checkout: ["cart", "analytics", "customer"],
   order: ["payment", "analytics"],
   payment: [],
-  services: ["seo"],
+  services: ["seo", "analytics"],
   content: ["seo", "services"],
   account: ["customer", "favorites", "catalog", "cart", "checkout", "order", "payment"],
 };

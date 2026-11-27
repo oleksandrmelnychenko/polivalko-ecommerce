@@ -69,13 +69,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setQuantity,
       remove: (productId) => update((current) => current.filter((l) => l.productId !== productId)),
       clear: () => update(() => []),
-      open: () => setOpen(true),
+      open: () => {
+        if (!state.cart && owner) void refreshCart();
+        setOpen(true);
+      },
       close: () => {
         flushQuantities();
         setOpen(false);
       },
     }),
-    [state, lines, isOpen, add, sessionFailed],
+    [state, lines, isOpen, add, sessionFailed, owner],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

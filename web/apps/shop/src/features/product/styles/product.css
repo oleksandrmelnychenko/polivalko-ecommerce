@@ -1,6 +1,6 @@
 .product { display: grid; gap: clamp(24px, 3.4vw, 56px); align-items: start; }
 .gallery { display: grid; gap: 8px; min-width: 0; }
-.gallery-photo__previous { position: absolute; inset: 0; pointer-events: none; object-fit: cover; }
+.gallery-photo__previous { position: absolute; inset: 0; width: 100%; height: 100%; padding: 12px; pointer-events: none; object-fit: contain; }
 .gallery { --slide-from: 100%; --slide-to: -100%; --slide-timing: 440ms cubic-bezier(.4, 0, .2, 1) both; }
 .gallery[data-backward] { --slide-from: -100%; --slide-to: 100%; }
 .gallery img[data-slide-in] { animation: gallery-enter var(--slide-timing); }
@@ -8,11 +8,7 @@
 @keyframes gallery-enter { from { translate: var(--slide-from) 0; } to { translate: 0 0; } }
 @keyframes gallery-leave { from { translate: 0 0; } to { translate: var(--slide-to) 0; } }
 .gallery__main { border-radius: var(--radius-card); position: relative; width: 100%; aspect-ratio: 5 / 4; margin: 0; border: 1px solid var(--color-rule); background: #fff; overflow: hidden; isolation: isolate; }
-.gallery__main img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
-@media (max-width: 48rem) {
-  /* Keep the tall ProTurf and Sportsmaster bags fully visible in mobile previews. */
-  .product:is([data-sku="10754"], [data-sku="11417"]) .gallery__main img { object-fit: contain; scale: 1; }
-}
+.gallery__main img { position: absolute; inset: 0; width: 100%; height: 100%; padding: 12px; object-fit: contain; object-position: center; }
 .gallery__open { position: absolute; inset: 0; display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
 .gallery__open:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -4px; border-radius: inherit; }
 .gallery__hint { position: absolute; right: 16px; bottom: 16px; z-index: 1; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: #fff; color: var(--color-ink); box-shadow: 0 8px 24px -12px rgb(0 0 0 / 0.35); }
@@ -30,7 +26,7 @@
 .gallery__thumbs button { border-radius: var(--radius-thumb); position: relative; width: 64px; aspect-ratio: 1; padding: 0; border: 1px solid var(--color-rule); background: #fff; cursor: pointer; overflow: hidden; transition: border-color var(--dur-micro) var(--ease-out); }
 .gallery__thumbs button:hover { border-color: var(--color-control); }
 .gallery__thumbs button[aria-pressed="true"] { border-color: #292929; box-shadow: inset 0 0 0 1px #292929; }
-.gallery__thumbs img { position: absolute; inset: 2px; width: calc(100% - 4px); height: calc(100% - 4px); border-radius: calc(var(--radius-thumb) - 3px); object-fit: cover; }
+.gallery__thumbs img { position: absolute; inset: 2px; width: calc(100% - 4px); height: calc(100% - 4px); border-radius: calc(var(--radius-thumb) - 3px); object-fit: contain; }
 .buybox { min-width: 0; display: flex; flex-direction: column; gap: 20px; }
 .buybox h1, .garden-print h1 { color: #000; font-size: clamp(1.875rem, 1.6vw + 1.2rem, 2.8rem); font-weight: 600; line-height: 1.1; letter-spacing: -0.025em; text-transform: none; }
 .pinfo { container-type: inline-size; }

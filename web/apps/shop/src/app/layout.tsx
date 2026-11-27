@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { GoogleAnalytics } from "@/features/analytics";
 import { defaultOpenGraph, SITE_NAME, siteUrl } from "@/features/seo";
 import "./globals.css";
@@ -32,7 +33,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Перейти до вмісту
         </a>
         {children}
-        <GoogleAnalytics />
+        <Suspense fallback={null}>
+          <GoogleAnalytics />
+        </Suspense>
       </body>
     </html>
   );

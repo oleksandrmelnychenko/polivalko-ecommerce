@@ -14,7 +14,9 @@ export async function GET() {
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Cache-Control": "public, max-age=300, s-maxage=900, stale-while-revalidate=3600",
+      "CDN-Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600",
+      "Vercel-CDN-Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600",
       // The file is for the shopping service, not for search results.
       "X-Robots-Tag": "noindex",
     },

@@ -1,13 +1,26 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
 import ts from "typescript";
 
-function load(relative) {
-  const source = readFileSync(new URL(relative, import.meta.url), "utf8");
-  const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+const here = dirname(fileURLToPath(import.meta.url));
+
+function load(relative, seen = new Map()) {
+  const fullPath = resolve(here, relative);
+  if (seen.has(fullPath)) return seen.get(fullPath).exports;
+  const source = readFileSync(fullPath, "utf8");
+  const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   const loaded = { exports: {} };
-  new Function("exports", "module", js)(loaded.exports, loaded);
+  seen.set(fullPath, loaded);
+  const localRequire = (specifier) => {
+    if (specifier.startsWith(".")) {
+      return load(resolve(dirname(fullPath), `${specifier}.ts`), seen);
+    }
+    throw new Error(`Unexpected import ${specifier} in ${fullPath}`);
+  };
+  new Function("exports", "module", "require", js)(loaded.exports, loaded, localRequire);
   return loaded.exports;
 }
 
@@ -23,13 +36,54 @@ test("login return paths stay same-origin after URL normalization", () => {
   }
 });
 
-test("analytics does not load scripts or queue private order events", () => {
-  const { GoogleAnalytics } = load("../src/features/analytics/components/google-analytics.tsx");
+test("analytics blocks private, token-bearing, and local URLs while forwarding clean public events", () => {
+  const { cleanPageLocation, isAnalyticsAllowedLocation, isPrivateAnalyticsPath } = load("../src/features/analytics/lib/privacy.ts");
   const { track } = load("../src/features/analytics/lib/track.ts");
-  globalThis.window = { location: { href: "https://shop.example/order/1?token=secret" }, gtag() { throw new Error("Unexpected collection"); } };
-  assert.equal(GoogleAnalytics(), null);
-  track("purchase", { transaction_id: "1" });
-  assert.equal(globalThis.window.dataLayer, undefined);
+
+  for (const path of ["/order", "/order/PV-1", "/account", "/account/reset-password", "/account/confirm-email", "/pay/sandbox/123"]) {
+    assert.equal(isPrivateAnalyticsPath(path), true, path);
+  }
+  for (const path of ["/", "/catalog", "/catalog/shlanhy", "/product/hose-1", "/checkout", "/contacts"]) {
+    assert.equal(isPrivateAnalyticsPath(path), false, path);
+  }
+
+  // Private, token-bearing, local, or preview URLs must never invoke gtag or create dataLayer.
+  for (const href of [
+    "https://www.poli-valko.com/order/1?token=secret",
+    "https://www.poli-valko.com/account/reset-password?token=secret",
+    "https://www.poli-valko.com/catalog?token=leaked",
+    "http://localhost:3000/product/hose-1",
+    "https://polivalko-preview.vercel.app/product/hose-1",
+  ]) {
+    globalThis.window = { location: { href }, gtag() { throw new Error(`Unexpected collection for ${href}`); } };
+    assert.equal(isAnalyticsAllowedLocation(globalThis.window.location), false, href);
+    track("purchase", { transaction_id: "1" });
+    assert.equal(globalThis.window.dataLayer, undefined);
+  }
+
+  // Public production URLs strip query strings and forward sanitized events to gtag.
+  const sent = [];
+  globalThis.window = {
+    location: {
+      href: "https://www.poli-valko.com/product/hose-1?utm_source=google&fbclid=abc",
+      origin: "https://www.poli-valko.com",
+      hostname: "www.poli-valko.com",
+      pathname: "/product/hose-1",
+      search: "?utm_source=google&fbclid=abc",
+    },
+    gtag(...args) {
+      sent.push(args);
+    },
+  };
+  assert.equal(isAnalyticsAllowedLocation(globalThis.window.location), true);
+  assert.equal(cleanPageLocation(globalThis.window.location), "https://www.poli-valko.com/product/hose-1");
+  track("add_to_cart", { currency: "UAH", value: 120 });
+  assert.equal(sent.length, 1);
+  assert.deepEqual(sent[0], [
+    "event",
+    "add_to_cart",
+    { currency: "UAH", value: 120, page_location: "https://www.poli-valko.com/product/hose-1" },
+  ]);
   delete globalThis.window;
 });
 

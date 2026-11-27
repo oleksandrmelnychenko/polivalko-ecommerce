@@ -78,3 +78,66 @@ test("checkout waiting for the previous cart cannot settle with the next account
   resolveOld(empty("old-account"));
   await assert.rejects(checkout, /Сеанс змінився/);
 });
+
+function withBrowser(pathname, initialCookie, run) {
+  const prevDoc = globalThis.document;
+  const prevWin = globalThis.window;
+  let cookie = initialCookie;
+  globalThis.document = {
+    get cookie() { return cookie; },
+    set cookie(v) {
+      const pair = String(v).split(";")[0];
+      const [name, value] = pair.split("=");
+      const entries = cookie.split(";").map((s) => s.trim()).filter(Boolean).filter((s) => !s.startsWith(`${name}=`));
+      if (value) entries.push(`${name}=${value}`);
+      cookie = entries.join("; ");
+    },
+  };
+  globalThis.window = { location: { pathname, protocol: "https:" } };
+  return Promise.resolve().then(() => run(() => cookie)).finally(() => {
+    if (prevDoc === undefined) delete globalThis.document; else globalThis.document = prevDoc;
+    if (prevWin === undefined) delete globalThis.window; else globalThis.window = prevWin;
+  });
+}
+
+test("anonymous visitor on a public page skips /cart/open until adding an item, then writes pv_cart_hint", async () => {
+  await withBrowser("/", "", async (readCookie) => {
+    let opens = 0;
+    let saves = 0;
+    const store = load({
+      openCart: async () => { opens++; return empty("guest-1"); },
+      saveCart: async (cart, items) => {
+        saves++;
+        return { ...cart, revision: cart.revision + 1, items: items.map((i) => ({ ...line(i.quantity), productId: i.productId })) };
+      },
+    });
+    store.connect("guest");
+    assert.equal(opens, 0);
+    assert.equal(store.getSnapshot().ready, true);
+    assert.equal(readCookie(), "");
+
+    store.update(() => [{ productId: "p", quantity: 1, name: "Product", slug: "product", sku: "P", price: "100.00", imageUrl: null }]);
+    await store.settledCart();
+    assert.equal(opens, 1);
+    assert.equal(saves, 1);
+    assert.match(readCookie(), /pv_cart_hint=1/);
+  });
+});
+
+test("anonymous visitor with pv_cart_hint=1 or on /checkout opens the server cart immediately", async () => {
+  await withBrowser("/", "pv_cart_hint=1", async () => {
+    let opens = 0;
+    const store = load({ openCart: async () => { opens++; return { ...empty("guest-2"), items: [line(1)] }; } });
+    store.connect("guest");
+    await store.settledCart();
+    assert.equal(opens, 1);
+  });
+
+  await withBrowser("/checkout", "", async () => {
+    let opens = 0;
+    const store = load({ openCart: async () => { opens++; return empty("guest-3"); } });
+    store.connect("guest");
+    await store.settledCart();
+    assert.equal(opens, 1);
+  });
+});

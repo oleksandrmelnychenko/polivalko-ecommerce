@@ -20,6 +20,7 @@ type OrderScreenProps = {
 };
 
 const NOT_FOUND_STATUSES = [400, 401, 403, 404];
+const ORDER_NUMBER = /^[A-Za-z0-9-]{1,32}$/;
 
 /**
  * Loads the order before anything streams, so an unknown number or a wrong token answers a real 404
@@ -29,7 +30,7 @@ export async function OrderScreen({ params, searchParams, mailDelivers, getPicku
   await connection();
   const [{ number }, sp] = await Promise.all([params, searchParams]);
   const token = typeof sp.token === "string" ? sp.token : "";
-  if (!token) notFound();
+  if (!ORDER_NUMBER.test(number) || !token) notFound();
 
   const [[{ data: order, response }, receipts], mail] = await Promise.all([getOrderAndReceipts(number, token), mailDelivers()]);
   if (!order) {

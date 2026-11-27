@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { newIdempotencyKey } from "@polivalko/shared/api/browser";
 import type { Problem } from "@polivalko/shared/api/problem";
 import type { ServiceDirection } from "@polivalko/shared/api/types";
+import { track } from "@/features/analytics";
 import { createServiceRequest } from "../api/client";
 import { DIRECTION_EVENT } from "../lib/direction-event";
 
@@ -58,6 +60,14 @@ export function ServiceRequestForm({ directions }: { directions: ServiceDirectio
       setState({ status: "error", message: "Оберіть хоча б одну послугу.", errors: { direction: ["Оберіть хоча б одну послугу."] } });
       return;
     }
+    if (!data.get("acceptPrivacy")) {
+      setState({
+        status: "error",
+        message: "Потрібна згода на обробку персональних даних.",
+        errors: { acceptPrivacy: ["Підтвердьте згоду з політикою приватності."] },
+      });
+      return;
+    }
     const body = {
       name: String(data.get("name") ?? ""),
       phone: String(data.get("phone") ?? ""),
@@ -74,6 +84,10 @@ export function ServiceRequestForm({ directions }: { directions: ServiceDirectio
       const { response, error } = await createServiceRequest(attempt.current.key, body);
 
       if (response.ok) {
+        track("generate_lead", {
+          service_direction: direction,
+          directions_count: 1 + additionalDirections.length,
+        });
         attempt.current = null;
         form.reset();
         setSelected([]);
@@ -148,6 +162,26 @@ export function ServiceRequestForm({ directions }: { directions: ServiceDirectio
           <label htmlFor="comment">Коментар (необов’язково)</label>
           <textarea id="comment" name="comment" readOnly={pending} autoComplete="off" maxLength={1000} aria-invalid={Boolean(err("comment"))} aria-describedby={err("comment") ? "comment-error" : undefined} />
           {err("comment") && <p id="comment-error" className="field__error">{err("comment")}</p>}
+        </div>
+
+        <div className="field">
+          <label className="consent">
+            <input
+              type="checkbox"
+              name="acceptPrivacy"
+              required
+              disabled={pending}
+              aria-invalid={Boolean(err("acceptPrivacy"))}
+              aria-describedby={err("acceptPrivacy") ? "privacy-error" : undefined}
+            />
+            <span>
+              Погоджуюся з{" "}
+              <Link href="/privacy" className="link" target="_blank" rel="noopener noreferrer">
+                політикою приватності
+              </Link>
+            </span>
+          </label>
+          {err("acceptPrivacy") && <p id="privacy-error" className="field__error">{err("acceptPrivacy")}</p>}
         </div>
 
         <button type="submit" className="btn btn--wide btn--graphite" disabled={pending} aria-busy={pending}>

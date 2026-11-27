@@ -1,9 +1,24 @@
+import { cleanPageLocation, isAnalyticsAllowedLocation } from "./privacy";
+
 export type AnalyticsItem = { item_id: string; item_name: string; price: number; quantity: number };
 
-export function track(_event: "view_item" | "add_to_cart" | "begin_checkout" | "purchase", _params: Record<string, unknown>) {
-  // Intentionally no collection or queue while token-bearing URLs are in use.
-  void _event;
-  void _params;
+export type AnalyticsEvent = "view_item" | "add_to_cart" | "begin_checkout" | "purchase" | "generate_lead";
+
+declare global {
+  interface Window {
+    dataLayer?: unknown[];
+    gtag?: (...args: unknown[]) => void;
+  }
+}
+
+export function track(event: AnalyticsEvent, params: Record<string, unknown>) {
+  if (typeof window === "undefined") return;
+  if (!isAnalyticsAllowedLocation(window.location)) return;
+  if (typeof window.gtag !== "function") return;
+  window.gtag("event", event, {
+    ...params,
+    page_location: cleanPageLocation(window.location),
+  });
 }
 
 export function itemsValue(items: AnalyticsItem[]) {

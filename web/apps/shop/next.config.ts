@@ -34,6 +34,13 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 2678400,
   },
   async headers() {
+    const securityHeaders = [
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "X-Frame-Options", value: "SAMEORIGIN" },
+      { key: "Content-Security-Policy", value: "frame-ancestors 'self'; base-uri 'self'; object-src 'none'" },
+      { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(self)" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+    ];
     const publicHtmlCache = [
       { key: "CDN-Cache-Control", value: "public, s-maxage=300, stale-while-revalidate=3600" },
       { key: "Vercel-CDN-Cache-Control", value: "public, s-maxage=300, stale-while-revalidate=3600" },
@@ -48,6 +55,7 @@ const nextConfig: NextConfig = {
       { key: "Vercel-CDN-Cache-Control", value: "private, no-store" },
     ];
     return [
+      { source: "/:path*", headers: securityHeaders },
       { source: "/brand/:path*", headers: immutableAssetCache },
       { source: "/mascot/:path*", headers: immutableAssetCache },
       ...[
@@ -69,7 +77,7 @@ const nextConfig: NextConfig = {
         "/services",
         "/services/:slug",
       ].map((source) => ({ source, headers: publicHtmlCache })),
-      ...["/cart", "/checkout", "/compare", "/order/:number", "/account/:path*", "/pay/sandbox/:id", "/api/:path*", "/internal/:path*"].map((source) => ({
+      ...["/404", "/cart", "/checkout", "/compare", "/order/:number", "/account/:path*", "/pay/sandbox/:id", "/api/:path*", "/internal/:path*"].map((source) => ({
         source,
         headers: privateNoStore,
       })),

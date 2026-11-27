@@ -124,11 +124,12 @@
   .hero-mobile__content :is(h1,h2) { max-width: 17ch; font-size: clamp(1.35rem, 5.5vw, 2.4rem); line-height: 1.1; }
   .hero-mobile__content p { margin: 0; max-width: 34ch; color: var(--color-ink-2); }
   .hero-mobile__content .hero-panel__btn { min-height: 42px; margin: 2px 0 0; padding-inline: 12px; background: var(--shop-graphite); color: white; }
-  .hero-mobile .hero-shortcuts { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 10px; padding-block: 2px; }
-  .hero-mobile .hero-shortcuts a { display: inline-flex; align-items: center; flex: none; gap: 6px; min-height: 36px; padding: 4px 10px 4px 4px; border: 1px solid var(--color-rule); border-radius: 24px; font-size: .8125rem; text-decoration: none; }
+  .hero-mobile .hero-shortcuts { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 10px; padding-block: 2px; scrollbar-width: none; }
+  .hero-mobile .hero-shortcuts::-webkit-scrollbar { display: none; }
+  .hero-mobile .hero-shortcuts a { display: inline-flex; align-items: center; flex: none; gap: 6px; min-height: 40px; padding: 4px 12px 4px 4px; border: 1px solid var(--color-rule); border-radius: 24px; font-size: .8125rem; text-decoration: none; }
   .hero-mobile .hero-shortcuts img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
-  .hero-mobile__dots { gap: 2px; margin: 0; }
-  .hero-mobile__dots button, .hero-mobile__dots button[aria-pressed="true"] { display: grid; place-items: center; width: 26px; height: 24px; background: transparent; }
+  .hero-mobile__dots { gap: 0; margin: 0; }
+  .hero-mobile__dots button, .hero-mobile__dots button[aria-pressed="true"] { display: grid; place-items: center; width: 40px; height: 40px; background: transparent; }
   .hero-mobile__dots button::after { content: ""; width: 6px; height: 6px; border-radius: 99px; background: var(--color-control); }
   .hero-mobile__dots button[aria-pressed="true"]::after { width: 16px; background: var(--color-ink); }
   .mobile-bestsellers { padding-top: 6px; }

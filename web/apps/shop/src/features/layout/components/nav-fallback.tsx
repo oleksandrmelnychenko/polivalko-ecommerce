@@ -1,6 +1,6 @@
 import Link from "@/shared/ui/idle-link";
 import { ChevronDownIcon } from "@polivalko/shared/ui/icons";
-import { pageLinks, saleLink } from "../lib/nav-links";
+import { pageLinks } from "../lib/nav-links";
 
 export function NavFallback() {
   return (
@@ -12,7 +12,7 @@ export function NavFallback() {
             <ChevronDownIcon />
           </Link>
         </li>
-        {[saleLink, ...pageLinks].map((link) => (
+        {pageLinks.map((link) => (
           <li key={link.href} className="nav-item">
             <Link href={link.href} className="nav-link">
               {link.label}

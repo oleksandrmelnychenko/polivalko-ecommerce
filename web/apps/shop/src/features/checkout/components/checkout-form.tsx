@@ -102,11 +102,11 @@ function CheckoutFields({ mailDelivers, phone, pickupPoint }: CheckoutFormProps)
               <input type="checkbox" name="acceptOffer" required {...field("acceptOffer")} />
               <span>
                 Погоджуюся з{" "}
-                <Link href="/offer" className="link" target="_blank">
+                <Link href="/offer" className="link" target="_blank" rel="noopener noreferrer">
                   публічною офертою
                 </Link>{" "}
                 і{" "}
-                <Link href="/privacy" className="link" target="_blank">
+                <Link href="/privacy" className="link" target="_blank" rel="noopener noreferrer">
                   політикою приватності
                 </Link>
               </span>

@@ -9,13 +9,14 @@ import type { MenuCategory } from "../lib/menu-category";
 
 import { GardenServicesIcon } from "@polivalko/shared/ui/service-icon";
 import type { NavLink, ServiceNavLink } from "../lib/nav-links";
+import { MobileMenu } from "./mobile-menu";
 import { NavItemLink } from "./nav-item-link";
 import { ServiceMenuLinks } from "./service-menu-links";
 
 type Panel = "catalog" | "services";
 type MenuState = { panel: Panel; pinned: boolean } | null;
 
-export function MainNav({ categories, links, services }: { categories: MenuCategory[]; links: NavLink[]; services: ServiceNavLink[] }) {
+export function MainNav({ categories, links, mobilePages, services }: { categories: MenuCategory[]; links: NavLink[]; mobilePages: NavLink[]; services: ServiceNavLink[] }) {
   const pathname = usePathname();
   const current = categories.find(category => containsCategory(category, pathname));
   const [selected, setSelected] = useState("");
@@ -58,6 +59,7 @@ export function MainNav({ categories, links, services }: { categories: MenuCateg
   }, [panel]);
 
   return (
+    <>
     <nav className="site-nav" aria-label="Головне меню">
       <ul className="site-nav__list">
         <li ref={item} className="nav-item nav-item--mega"
@@ -72,26 +74,28 @@ export function MainNav({ categories, links, services }: { categories: MenuCateg
             </button>
             <div id="catalog-panel" className="catalog-panel" data-nosnippet="" hidden={!open}
               onClick={event => { if ((event.target as Element).closest("a")) setMenu(null); }}>
-              <div className="catalog-panel__rail">
-                <Link href="/catalog" className="shop-action-link">Увесь каталог <ArrowRightIcon /></Link>
-                {categories.map(category => (
-                  <Link key={category.id} href={`/catalog/${category.slug}`} className="catalog-panel__category"
-                    aria-current={pathname === `/catalog/${category.slug}` ? "page" : undefined}
-                    data-active={category.id === active.id || undefined}
-                    aria-controls="catalog-section"
-                    onPointerEnter={event => { if (event.pointerType === "mouse") setSelected(category.slug); }}
-                    onFocus={() => setSelected(category.slug)}>
-                    <CategoryPicture category={category} />{category.name}<ChevronRightIcon />
-                  </Link>
-                ))}
-              </div>
-              <section id="catalog-section" className="catalog-panel__section" aria-labelledby="catalog-section-name">
-                <div className="catalog-panel__head">
-                  <h2 id="catalog-section-name">{active.name}</h2>
-                  <Link href={`/catalog/${active.slug}`}>Усі товари розділу <ArrowRightIcon /></Link>
+              {open && <>
+                <div className="catalog-panel__rail">
+                  <Link href="/catalog" className="shop-action-link">Увесь каталог <ArrowRightIcon /></Link>
+                  {categories.map(category => (
+                    <Link key={category.id} href={`/catalog/${category.slug}`} className="catalog-panel__category"
+                      aria-current={pathname === `/catalog/${category.slug}` ? "page" : undefined}
+                      data-active={category.id === active.id || undefined}
+                      aria-controls="catalog-section"
+                      onPointerEnter={event => { if (event.pointerType === "mouse") setSelected(category.slug); }}
+                      onFocus={() => setSelected(category.slug)}>
+                      <CategoryPicture category={category} />{category.name}<ChevronRightIcon />
+                    </Link>
+                  ))}
                 </div>
-                <CategoryLinks categories={active.children} pathname={pathname} />
-              </section>
+                <section id="catalog-section" className="catalog-panel__section" aria-labelledby="catalog-section-name">
+                  <div className="catalog-panel__head">
+                    <h2 id="catalog-section-name">{active.name}</h2>
+                    <Link href={`/catalog/${active.slug}`}>Усі товари розділу <ArrowRightIcon /></Link>
+                  </div>
+                  <CategoryLinks categories={active.children} pathname={pathname} />
+                </section>
+              </>}
             </div>
           </> : <Link href="/catalog" className="nav-link">Каталог</Link>}
         </li>
@@ -108,14 +112,18 @@ export function MainNav({ categories, links, services }: { categories: MenuCateg
             </button>
             <div id="service-panel" className="service-panel" data-nosnippet="" hidden={!servicesOpen}
               onClick={event => { if ((event.target as Element).closest("a")) setMenu(null); }}>
-              <Link href={link.href} className="shop-action-link" aria-current={pathname === link.href ? "page" : undefined}>
-                Усі послуги <ArrowRightIcon />
-              </Link>
-              <ServiceMenuLinks services={services} pathname={pathname} />
+              {servicesOpen && <>
+                <Link href={link.href} className="shop-action-link" aria-current={pathname === link.href ? "page" : undefined}>
+                  Усі послуги <ArrowRightIcon />
+                </Link>
+                <ServiceMenuLinks services={services} pathname={pathname} />
+              </>}
             </div>
           </li>
         ) : <NavItemLink key={link.href} {...link} />)}
       </ul>
     </nav>
+    <MobileMenu categories={categories} pages={mobilePages} services={services} />
+    </>
   );
 }

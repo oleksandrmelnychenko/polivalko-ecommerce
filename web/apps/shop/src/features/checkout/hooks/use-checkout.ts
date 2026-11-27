@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
 import { track } from "@/features/analytics";
 import { cartRows, useCart, useCartQuote } from "@/features/cart";
@@ -15,7 +14,6 @@ import { useDeliveryPoint } from "./use-delivery-point";
 import { cardProviderOf } from "../lib/card-provider";
 
 export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: string | null) {
-  const router = useRouter();
   const cartState = useCart();
   const { lines, setQuantity, remove } = cartState;
   const { items, quote, deliveryQuote, current: quoteCurrent, failed: quoteError, refresh: refreshQuote } = useCartQuote();
@@ -31,8 +29,11 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
   const focusInvalid = useRef(false);
   const recoveredOrder = cartState.ready && lines.length === 0 ? cartState.cart?.lastOrder : null;
   useEffect(() => {
-    if (recoveredOrder) router.replace(`/order/${recoveredOrder.number}?token=${encodeURIComponent(recoveredOrder.accessToken)}`);
-  }, [recoveredOrder, router]);
+    if (recoveredOrder) {
+      // Full navigation clears any client-side scripts (e.g. GA4) before a token-bearing /order URL loads.
+      window.location.replace(`/order/${recoveredOrder.number}?token=${encodeURIComponent(recoveredOrder.accessToken)}`);
+    }
+  }, [recoveredOrder]);
 
   function applyAddress(address: CustomerAddress) {
     setDelivery(address.method);
@@ -116,8 +117,26 @@ export function useCheckout(formRef: RefObject<HTMLFormElement | null>, phone: s
       }, cartState.owner === "guest" ? null : cartState.owner);
 
       if (data) {
+        const key = `pv-purchase-${data.number}`;
+        let alreadyTracked = false;
+        try {
+          alreadyTracked = Boolean(window.localStorage.getItem(key));
+          if (!alreadyTracked) window.localStorage.setItem(key, "1");
+        } catch {}
+        if (!alreadyTracked) {
+          track("purchase", {
+            transaction_id: data.number,
+            currency: "UAH",
+            value: Number(quote.total.value),
+            payment_type: effectivePayment,
+            shipping_tier: delivery,
+            items: quote.items.map((i) => ({ item_id: i.sku, item_name: i.name, price: Number(i.unitPrice.value), quantity: i.quantity })),
+          });
+        }
         const pay = cardProvider ? `&pay=${encodeURIComponent(cardProvider)}` : "";
-        router.push(`/order/${data.number}?token=${encodeURIComponent(data.accessToken)}${pay}`);
+        // Hard navigation ensures GA4 scripts loaded on /checkout are completely unloaded before /order?token=... opens.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- Intentional full navigation to unload analytics before a token-bearing /order URL.
+        window.location.assign(`/order/${data.number}?token=${encodeURIComponent(data.accessToken)}${pay}`);
         return;
       }
 

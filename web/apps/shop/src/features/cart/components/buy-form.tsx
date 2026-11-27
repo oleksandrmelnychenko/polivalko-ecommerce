@@ -23,7 +23,7 @@ export function BuyForm({
   children?: ReactNode;
   aside?: ReactNode;
 }) {
-  const { add, lines, ready } = useCart();
+  const { add, lines } = useCart();
   const line = lines.find(item => item.productId === product.productId);
   const [stock, setStock] = useState<{ id: string; available: number | null } | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -42,7 +42,9 @@ export function BuyForm({
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!line && ready && inStock && available) add(product, Math.min(quantity, available));
+    if (!line && inStock && available !== 0) {
+      add(product, typeof available === "number" ? Math.min(quantity, available) : quantity);
+    }
   }
 
   return (
@@ -56,7 +58,7 @@ export function BuyForm({
         ) : inStock && available !== 0 ? (
           <>
             <QuantityStepper max={available} value={Math.min(quantity, available ?? quantity)} onChange={setQuantity} label={`Кількість: ${product.name}`} />
-            <button type="submit" disabled={!ready || available === undefined} className="btn btn--graphite cart-purchase">
+            <button type="submit" className="btn btn--graphite cart-purchase">
               <PurchaseIcon />
               До кошика
             </button>

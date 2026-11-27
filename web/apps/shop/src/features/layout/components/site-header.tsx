@@ -5,7 +5,6 @@ import { AccountButton } from "@/features/customer";
 import { SearchButton } from "@/features/search";
 import { MenuIcon } from "@polivalko/shared/ui/icons";
 import { AnnouncementBar } from "./announcement-bar";
-import { HeaderMobileMenu } from "./header-mobile-menu";
 import { HeaderNav } from "./header-nav";
 import { NavFallback } from "./nav-fallback";
 import { HeaderMascot } from "./header-mascot";
@@ -46,9 +45,6 @@ export function SiteHeader() {
           </div>
         </div>
       </header>
-      <Suspense fallback={null}>
-        <HeaderMobileMenu />
-      </Suspense>
     </>
   );
 }

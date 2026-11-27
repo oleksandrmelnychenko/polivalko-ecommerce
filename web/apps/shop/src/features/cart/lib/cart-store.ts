@@ -18,7 +18,41 @@ let timer: ReturnType<typeof setTimeout> | null = null;
 const desired = new Map<string, number>();
 const listeners = new Set<() => void>();
 const SIGNAL = "pv-cart-sync-v2";
+export const CART_HINT_COOKIE = "pv_cart_hint";
+const CART_HINT_RE = /(?:^|;\s*)pv_cart_hint=1(?:;|$)/;
 const QUANTITY_DELAY = 400;
+
+function hasCartHint(): boolean {
+  try {
+    return typeof document !== "undefined" && CART_HINT_RE.test(document.cookie ?? "");
+  } catch {
+    return false;
+  }
+}
+
+function writeCartHint(present: boolean) {
+  try {
+    if (typeof document === "undefined") return;
+    const secure = typeof window !== "undefined" && window.location?.protocol === "https:" ? "; Secure" : "";
+    document.cookie = present
+      ? `${CART_HINT_COOKIE}=1; Path=/; SameSite=Lax; Max-Age=2592000${secure}`
+      : `${CART_HINT_COOKIE}=; Path=/; SameSite=Lax; Max-Age=0${secure}`;
+  } catch {}
+}
+
+function isCartRoute(): boolean {
+  try {
+    const pathname = typeof window !== "undefined" ? window.location?.pathname : undefined;
+    return typeof pathname === "string" && (pathname === "/cart" || pathname.startsWith("/cart/") || pathname === "/checkout" || pathname.startsWith("/checkout/"));
+  } catch {
+    return false;
+  }
+}
+
+function canSkipGuestCartBootstrap(): boolean {
+  return typeof document !== "undefined" && !hasCartHint() && !isCartRoute();
+}
+
 function publish(next: typeof INITIAL) { snapshot = next; listeners.forEach((l) => l()); }
 function withDesired(lines: CartLine[]) {
   return desired.size === 0 ? lines : lines.map((l) => ({ ...l, quantity: desired.get(l.productId) ?? l.quantity }));
@@ -26,6 +60,7 @@ function withDesired(lines: CartLine[]) {
 function dropPending() { if (timer) clearTimeout(timer); timer = null; desired.clear(); }
 function accept(cart: ServerCart) {
   for (const id of [...desired.keys()]) if (!cart.items.some((i) => i.productId === id)) desired.delete(id);
+  writeCartHint(cart.items.length > 0);
   publish({ ...snapshot, ready: true, saving: desired.size > 0, error: null, cart, lines: withDesired(cart.items.map((i) => ({
     productId: i.productId, quantity: i.quantity, name: i.name, slug: i.slug, sku: i.sku,
     price: i.unitPrice.value, imageUrl: i.imageUrl ?? null,
@@ -38,14 +73,19 @@ export function connect(nextOwner: string) {
   if (snapshot.owner === nextOwner) return;
   const current = ++generation;
   dropPending();
+  const changes = early;
+  early = [];
+  if (nextOwner === "guest" && changes.length === 0 && canSkipGuestCartBootstrap()) {
+    publish({ ...INITIAL, ready: true, owner: nextOwner });
+    queue = Promise.resolve();
+    return;
+  }
   publish({ ...INITIAL, owner: nextOwner });
   queue = openCart(nextOwner === "guest" ? null : nextOwner).then((cart) => {
     if (current === generation) accept(cart);
   }).catch(() => {
     if (current === generation) publish({ ...snapshot, error: "Не вдалося завантажити кошик. Спробуйте ще раз." });
   });
-  const changes = early;
-  early = [];
   changes.forEach(update);
 }
 export function refreshCart() {

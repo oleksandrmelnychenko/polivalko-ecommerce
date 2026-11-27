@@ -5,8 +5,6 @@
 }
 
 @media (max-width: 60rem) {
-  .hero { height: 560px; }
-  .hero-slide { padding: var(--space-2xl) 70px; }
   .hero__arrow { width: 48px; height: 48px; }
   .hero__arrow--prev { left: 10px; }
   .hero__arrow--next { right: 10px; }
@@ -48,12 +46,9 @@
   .toolbar__sort { flex: 1; }
   .toolbar__sort .dsel__box, .toolbar__sort .dsel__trigger { width: 100%; min-width: 0; }
   .toolbar .dsel__popup { min-width: 100%; }
-  .hero { height: 500px; border-radius: var(--radius); }
-  .hero-slide { padding: var(--space-xl) 16px var(--space-3xl); }
   .hero__arrow { top: auto; bottom: 12px; translate: none; width: 40px; height: 40px; }
   .hero__arrow--prev { left: calc(50% - 48px); }
   .hero__arrow--next { right: calc(50% - 48px); }
-  .hero-panel__title { font-size: 1.75rem; }
   .directions { grid-template-columns: minmax(0, 1fr); }
   .tiles--rail { grid-auto-columns: 62%; }
   .flash { font-size: var(--text-xs); }

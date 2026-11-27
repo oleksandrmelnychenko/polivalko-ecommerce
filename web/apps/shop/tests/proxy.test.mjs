@@ -49,19 +49,19 @@ test("client navigations and prefetches skip the checks, opening a page or a cra
   assert.ok(passes(await proxy(page("/catalog/hoses?page=9", "same-origin"))));
   assert.equal(calls.length, 0);
 
-  assert.equal(rewrittenTo(await proxy(page("/order/PV-1?token=t", "navigate"))), "/_not-found");
-  assert.equal(rewrittenTo(await proxy(page("/order/PV-1?token=t"))), "/_not-found");
+  assert.equal(rewrittenTo(await proxy(page("/order/PV-1?token=t", "navigate"))), "/404");
+  assert.equal(rewrittenTo(await proxy(page("/order/PV-1?token=t"))), "/404");
   assert.equal(calls.length, 2);
 });
 
 test("an order page answers 404 unless the API may have the order for this token", async () => {
   let status = 404;
   const calls = api(() => json({}, status));
-  assert.equal(rewrittenTo(await proxy(page("/order/PV-1"))), "/_not-found", "no token");
-  assert.equal(rewrittenTo(await proxy(page("/order/..%2Fadmin?token=t"))), "/_not-found", "not an order number");
+  assert.equal(rewrittenTo(await proxy(page("/order/PV-1"))), "/404", "no token");
+  assert.equal(rewrittenTo(await proxy(page("/order/..%2Fadmin?token=t"))), "/404", "not an order number");
   assert.equal(calls.length, 0);
 
-  for (status of [400, 401, 403, 404]) assert.equal(rewrittenTo(await proxy(page("/order/PV-1?token=wrong"))), "/_not-found", String(status));
+  for (status of [400, 401, 403, 404]) assert.equal(rewrittenTo(await proxy(page("/order/PV-1?token=wrong"))), "/404", String(status));
   assert.equal(calls.at(-1).pathname, "/api/v1/orders/PV-1");
   assert.equal(calls.at(-1).searchParams.get("token"), "wrong");
 
