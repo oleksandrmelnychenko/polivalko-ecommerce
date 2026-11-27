@@ -82,7 +82,7 @@ public static class ConsoleModule
         console.MapGroup("/search").WithTags("Console").RequireStaff()
             .MapGet(string.Empty, SearchConsole.HandleAsync)
             .WithName("ConsoleSearch")
-            .WithSummary("Пошук по замовленнях (номер, телефон), товарах (назва, артикул) і покупцях (ім'я, телефон); від 2 символів");
+            .WithSummary("Пошук по замовленнях (номер, телефон, ім'я покупця), товарах (назва, артикул) і покупцях (ім'я, телефон); від 2 символів");
         return console;
     }
 

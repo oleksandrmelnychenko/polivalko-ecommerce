@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
+using PoliValko.Console.Features.Search;
 using PoliValko.Console.Features.Summary;
 using PoliValko.Identity.Features.Auth;
 using PoliValko.Identity.Features.Staff;
@@ -191,6 +192,28 @@ public sealed class ConsoleOrderApiTests(ApiFactory api)
 
         var invalid = await manager.GetAsync("/api/v1/console/orders/export?sort=random", Ct);
         invalid.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Orders_are_found_by_part_of_the_buyers_name_in_any_case()
+    {
+        // A surname no other test uses, so the search finds this order alone.
+        var surname = "Пошукова" + string.Concat(Guid.NewGuid().ToString("N")[..6].Select(c => (char)('а' + c % 26)));
+        var product = await api.AddProductAsync("ruchnyi-instrument", "Товар для пошуку за іменем", 100m);
+        var body = CheckoutApiTests.Order(product.Id, 1, "100.00", CheckoutApiTests.UniquePhone()) with
+        {
+            Customer = new CustomerRequest($"Олена {surname}", CheckoutApiTests.UniquePhone(), Accounts.UniqueEmail("guest")),
+        };
+        var order = await (await new CheckoutApiTests(api).PostOrderAsync(body, Guid.NewGuid().ToString())).ReadAsync<OrderCreatedDto>(HttpStatusCode.Created);
+        using var manager = await Staff.ManagerAsync(api);
+
+        var part = Uri.EscapeDataString(surname[2..].ToUpperInvariant());
+        (await ListOrdersAsync(manager, $"q={part}")).Items.ShouldHaveSingleItem().Number.ShouldBe(order.Number);
+        (await manager.ReadAsync<ConsoleSearchDto>($"/api/v1/console/search?q={part}")).Orders
+            .ShouldHaveSingleItem().Number.ShouldBe(order.Number);
+        // One letter is too little to search names by.
+        (await ListOrdersAsync(manager, $"q={Uri.EscapeDataString(surname[..1])}&pageSize=100")).Items
+            .ShouldNotContain(item => item.Number == order.Number);
     }
 
     private static Task<PagedResponse<ConsoleOrderListItemDto>> ListOrdersAsync(HttpClient client, string query) =>

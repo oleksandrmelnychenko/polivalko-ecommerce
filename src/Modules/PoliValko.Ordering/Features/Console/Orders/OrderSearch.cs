@@ -6,16 +6,25 @@ namespace PoliValko.Ordering.Features.Console.Orders;
 
 internal static class OrderSearch
 {
-    public static IQueryable<Order> MatchingNumberOrPhone(this IQueryable<Order> orders, string? q)
+    /// <summary>
+    /// Orders whose number, phone or buyer's name contains the term. The name ignores case («коваль» finds
+    /// «Олена Коваль») and needs two letters, so a single one does not list half the orders.
+    /// </summary>
+    public static IQueryable<Order> MatchingNumberPhoneOrName(this IQueryable<Order> orders, string? q)
     {
         if (string.IsNullOrWhiteSpace(q))
         {
             return orders;
         }
 
-        var term = q.Trim().ToUpperInvariant();
+        var trimmed = q.Trim();
+        var term = trimmed.ToUpperInvariant();
         var digits = SqlLike.Digits(term);
-        return orders.Where(o => o.Number.Contains(term) || (digits.Length >= 3 && o.CustomerPhone.Contains(digits)));
+        var byName = trimmed.Length >= 2;
+        var pattern = SqlLike.Contains(trimmed);
+        return orders.Where(o => o.Number.Contains(term)
+            || (digits.Length >= 3 && o.CustomerPhone.Contains(digits))
+            || (byName && EF.Functions.ILike(o.CustomerName, pattern, SqlLike.Escape)));
     }
 
     public static IQueryable<Order> OfCustomersMatching(this IQueryable<Order> orders, string? q)

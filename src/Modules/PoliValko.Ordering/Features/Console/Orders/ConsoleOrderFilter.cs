@@ -68,7 +68,7 @@ internal sealed record ConsoleOrderFilter(
 
     public IQueryable<Order> Apply(IQueryable<Order> orders, bool byStatus = true)
     {
-        orders = orders.MatchingNumberOrPhone(Q);
+        orders = orders.MatchingNumberPhoneOrName(Q);
 
         if (byStatus && Status is { } status)
         {

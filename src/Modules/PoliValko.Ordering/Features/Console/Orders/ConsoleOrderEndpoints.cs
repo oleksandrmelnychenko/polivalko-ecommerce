@@ -22,7 +22,7 @@ internal static class ConsoleOrderEndpoints
             .WithName("ConsoleListOrders")
             .WithEnumQuery<OrderStatus>("status")
             .WithEnumQuery<PaymentStatus>("paymentStatus")
-            .WithSummary("Замовлення: пошук за номером або телефоном, фільтри за статусом, оплатою, способом отримання й датами");
+            .WithSummary("Замовлення: пошук за номером, телефоном або іменем покупця, фільтри за статусом, оплатою, способом отримання й датами");
 
         group.MapGet("/counts", CountOrders.HandleAsync)
             .WithName("ConsoleOrderCounts")

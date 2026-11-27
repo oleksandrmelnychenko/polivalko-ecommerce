@@ -37,7 +37,7 @@ internal static class ListRefunds
         var refunds = db.Set<OrderRefund>().AsNoTracking();
         if (!string.IsNullOrWhiteSpace(query.Q))
         {
-            var orderIds = db.Set<Order>().MatchingNumberOrPhone(query.Q).Select(o => o.Id);
+            var orderIds = db.Set<Order>().MatchingNumberPhoneOrName(query.Q).Select(o => o.Id);
             refunds = refunds.Where(r => orderIds.Contains(r.OrderId));
         }
 

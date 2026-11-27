@@ -57,7 +57,7 @@ internal sealed class OrderReporting(PoliValkoDbContext db) : IOrderReporting
     public async Task<IReadOnlyList<OrderSearchHit>> SearchOrdersAsync(string term, int limit, CancellationToken ct)
     {
         var orders = await db.Set<Order>().AsNoTracking()
-            .MatchingNumberOrPhone(term)
+            .MatchingNumberPhoneOrName(term)
             .OrderByDescending(o => o.CreatedAt)
             .Take(limit)
             .Select(o => new { o.Number, o.CustomerName, o.CustomerPhone, o.Status, o.Total, o.CreatedAt })

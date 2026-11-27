@@ -16,7 +16,7 @@ internal static class ConsoleRefundEndpoints
             .MapGet(string.Empty, ListRefunds.HandleAsync)
             .WithName("ConsoleListRefunds")
             .WithEnumQuery<RefundStatus>("status")
-            .WithSummary("Повернення коштів з усіх замовлень: пошук за номером чи телефоном, фільтр за статусом і датами, стан чека");
+            .WithSummary("Повернення коштів з усіх замовлень: пошук за номером, телефоном чи іменем покупця, фільтр за статусом і датами, стан чека");
         return console;
     }
 }

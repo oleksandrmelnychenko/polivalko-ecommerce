@@ -49,7 +49,7 @@ export function OrdersFilters({ state, filtered, update, reset, actions }: Order
         <TextInput
           className="app-filter-wide"
           aria-label="Пошук замовлень"
-          placeholder="Номер замовлення або телефон…"
+          placeholder="Номер, телефон або ім’я покупця…"
           value={text}
           leftSection={<IconSearch size={16} stroke={1.7} />}
           rightSection={text ? <CloseButton size="sm" aria-label="Очистити пошук" onClick={() => changeText('')} /> : null}

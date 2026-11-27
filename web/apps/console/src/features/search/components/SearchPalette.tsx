@@ -105,7 +105,7 @@ export function SearchPalette() {
               go(items[active])
             }
           }}
-          placeholder="Номер замовлення, телефон, товар або артикул…"
+          placeholder="Номер замовлення, телефон, ім’я покупця, товар або артикул…"
           aria-label="Що шукаємо"
           role="combobox"
           aria-expanded={items.length > 0}
