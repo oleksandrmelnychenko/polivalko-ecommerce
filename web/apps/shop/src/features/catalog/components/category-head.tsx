@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { Category } from "@polivalko/shared/api/types";
 import { breadcrumbJsonLd, JsonLd } from "@/features/seo";
 import { Breadcrumbs } from "@/shared/ui/breadcrumbs";
@@ -15,7 +16,7 @@ export function categoryHeading(category: Pick<Category, "slug" | "name">): stri
   return CATEGORY_H1_OVERRIDES[category.slug] ?? category.name;
 }
 
-export async function CategoryHead({ category }: { category: Category }) {
+export async function CategoryHead({ category, children }: { category: Category; children: ReactNode }) {
   const parents = [
     { name: "Каталог", path: "/catalog" },
     ...category.breadcrumbs.map((c) => ({ name: c.name, path: `/catalog/${c.slug}` })),
@@ -28,12 +29,9 @@ export async function CategoryHead({ category }: { category: Category }) {
       <Breadcrumbs current={category.name} parents={parents} />
       <header className="page-head">
         <h1>{categoryHeading(category)}</h1>
-        {parent && siblings?.length ? (
-          <CategoryChips label={`Підрозділи «${parent.name}»`} items={siblings} current={category.slug} />
-        ) : null}
-        {category.children.length > 0 && (
-          <CategoryChips label={`Підрозділи «${category.name}»`} items={category.children} />
-        )}
+        <CategoryChips label={`Розділи та бренди «${category.name}»`} items={[...(siblings ?? []), ...category.children]} current={category.slug}>
+          {children}
+        </CategoryChips>
       </header>
     </>
   );

@@ -23,50 +23,42 @@ export interface CategoryBrandLinkItem {
  * indexable `/catalog/[slug]/[brand]` (or canonical L3 subcategory `/catalog/[brand]`) URLs
  * instead of noindex `?brand=...` filter query strings.
  */
-export function CategoryBrandLinks({
-  categorySlug,
-  categoryName,
-  brands,
-  currentBrandSlug,
-  minProducts = MIN_PRODUCTS_FOR_CATEGORY_BRAND,
-  maxItems = 10,
-}: {
+type BrandLinksProps = {
   categorySlug: string;
   categoryName: string;
   brands: readonly CategoryBrandLinkItem[];
   currentBrandSlug?: string;
   minProducts?: number;
   maxItems?: number;
-}) {
+};
+
+export function CategoryBrandItems({
+  categorySlug,
+  brands,
+  currentBrandSlug,
+  minProducts = MIN_PRODUCTS_FOR_CATEGORY_BRAND,
+  maxItems = 10,
+}: Omit<BrandLinksProps, "categoryName">) {
   const current = currentBrandSlug ? normalizeBrandSlug(currentBrandSlug) : undefined;
-  const eligible = brands
-    .filter((b) => b.productCount >= minProducts && normalizeBrandSlug(b.slug).length > 0)
-    .slice(0, maxItems);
+  return brands
+    .filter((brand) => brand.productCount >= minProducts && normalizeBrandSlug(brand.slug).length > 0)
+    .slice(0, maxItems)
+    .map((brand) => {
+      const slug = normalizeBrandSlug(brand.slug);
+      return (
+        <li key={slug}>
+          <Link href={categoryBrandHref(categorySlug, slug)} prefetch={false} aria-current={current === slug ? "page" : undefined}>
+            {brand.name}
+          </Link>
+        </li>
+      );
+    });
+}
 
-  if (eligible.length === 0) return null;
-
+export function CategoryBrandLinks({ categoryName, ...props }: BrandLinksProps) {
   return (
-    <nav
-      aria-label={`Популярні бренди в категорії «${categoryName}»`}
-      className="page-head__subs"
-    >
-      <ul className="chips chips--grey">
-        {eligible.map((brand) => {
-          const slug = normalizeBrandSlug(brand.slug);
-          const isCurrent = current === slug;
-          return (
-            <li key={slug}>
-              <Link
-                href={categoryBrandHref(categorySlug, slug)}
-                prefetch={false}
-                aria-current={isCurrent ? "page" : undefined}
-              >
-                {brand.name}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+    <nav aria-label={`Популярні бренди в категорії «${categoryName}»`} className="page-head__subs">
+      <ul className="chips chips--grey"><CategoryBrandItems {...props} /></ul>
     </nav>
   );
 }

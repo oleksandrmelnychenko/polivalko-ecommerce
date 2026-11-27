@@ -38,7 +38,8 @@
 .ctile__subs a:hover, .catalog-page .page-head__subs a:hover { color: var(--color-ink); border-color: var(--color-control); }
 .ctile__subs .ctile__more { background: var(--color-paper); }
 .catalog-page .page-head__subs a[aria-current="page"] { background: var(--shop-graphite); color: white; border-color: transparent; }
-.catalog-page .page-head__subs { display: block; }
+.catalog-page .page-head__subs { display: block; min-width: 0; }
+.catalog-page .page-head__subs:not(:has(li)) { display: none; }
 .catalog-page .page-head__subs ul { gap: 6px; margin: 0; }
 @media (min-width: 75rem) {
   .ctiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }

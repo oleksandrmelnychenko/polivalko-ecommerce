@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import type { Category } from "@polivalko/shared/api/types";
 import Link from "@/shared/ui/idle-link";
 
-export function CategoryChips({ items, current, label }: { items: Category["children"]; current?: string; label: string }) {
+export function CategoryChips({ items, current, label, children }: { items: Category["children"]; current?: string; label: string; children: ReactNode }) {
   const list = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
@@ -22,6 +22,7 @@ export function CategoryChips({ items, current, label }: { items: Category["chil
             <Link href={`/catalog/${item.slug}`} aria-current={current === item.slug ? "page" : undefined}>{item.name}</Link>
           </li>
         ))}
+        {children}
       </ul>
     </nav>
   );

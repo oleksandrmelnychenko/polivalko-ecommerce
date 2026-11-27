@@ -4,7 +4,7 @@ import { getBrandPages, searchProducts } from "../api/server";
 import { categoryBrandHref } from "../lib/category-brand-seo";
 import { listingIndexState, type SearchParams } from "../lib/listing-params";
 import { CatalogListing } from "./catalog-listing";
-import { CategoryBrandLinks } from "./category-brand-links";
+import { CategoryBrandItems } from "./category-brand-links";
 import { CategoryHead } from "./category-head";
 import { FirstPageIntro } from "./category-intro";
 import { ListingSkeleton } from "./listing-skeleton";
@@ -18,10 +18,11 @@ type CategoryScreenSlots = { after?: ReactNode };
 export function CategoryScreen({ category, searchParams, after }: CategoryScreenProps & CategoryScreenSlots) {
   return (
     <div className="container catalog-page listing-page">
-      <CategoryHead category={category} />
-      <Suspense fallback={null}>
-        <CategoryPopularBrands category={category} searchParams={searchParams} />
-      </Suspense>
+      <CategoryHead category={category}>
+        <Suspense fallback={null}>
+          <CategoryPopularBrands category={category} searchParams={searchParams} />
+        </Suspense>
+      </CategoryHead>
       <Suspense fallback={<ListingSkeleton head={false} />}>
         <CategoryListing category={category} searchParams={searchParams} />
       </Suspense>
@@ -67,9 +68,8 @@ async function CategoryPopularBrands({ category, searchParams }: CategoryScreenP
     .sort((a, b) => b.productCount - a.productCount);
 
   return (
-    <CategoryBrandLinks
+    <CategoryBrandItems
       categorySlug={category.slug}
-      categoryName={category.name}
       brands={brands}
     />
   );
