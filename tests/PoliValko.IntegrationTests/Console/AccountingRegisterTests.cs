@@ -431,9 +431,9 @@ public sealed class AccountingRegisterTests(ApiFactory api)
         (await admin.PostAsJsonAsync(Root + "/partners", partner, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
         var day = new DateOnly(2026, 11, 24);
 
-        var archived = await api.AddProductAsync("ruchnyi-instrument", "Архівний товар " + suffix, 100m, stock: 0);
+        var archived = await api.AddProductAsync("ruchnyi-instrument", "Архівний товар " + suffix, 100m, stock: 0, visible: false);
         await api.WithDbAsync(db => db.Set<Product>().Where(p => p.Id == archived.Id)
-            .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsArchived, true), Ct));
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsArchived, true).SetProperty(p => p.IsVisible, false), Ct));
 
         (await admin.PostAsJsonAsync(Root + "/warehouse/openings",
             new StockOpening(Guid.NewGuid(), Guid.Parse(org.Id), Guid.Parse(store.Id), archived.Id, 5m, day, "arch-open-" + suffix), Ct))
@@ -456,7 +456,7 @@ public sealed class AccountingRegisterTests(ApiFactory api)
         var stockRev = (await admin.ReadAsync<StockOperationState>(Root + "/stock-operations/" + stockDraft.Id)).Revision;
 
         await api.WithDbAsync(db => db.Set<Product>().Where(p => p.Id == laterArchived.Id)
-            .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsArchived, true), Ct));
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsArchived, true).SetProperty(p => p.IsVisible, false), Ct));
 
         (await admin.PostAsJsonAsync(Root + "/documents/" + invoiceDraft.Id + "/post", new PostInvoice(invoiceRev), Ct))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);

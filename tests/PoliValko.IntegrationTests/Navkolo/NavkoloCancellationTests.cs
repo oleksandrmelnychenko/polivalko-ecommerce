@@ -51,13 +51,23 @@ public sealed class NavkoloCancellationTests(ApiFactory api)
         await using var scope = host.Services.CreateAsyncScope();
         await scope.ServiceProvider.GetRequiredService<IOutboxHandler<OrderCancellationRequested>>().HandleAsync(new(order.Id), Ct);
     }
-    private async Task Cancel(TestOrder order)
+    private static async Task<HttpClient> AdminAsync(WebApplicationFactory<Program> host)
     {
-        using var admin = await Staff.AdminAsync(api);
+        var admin = host.CreateClient();
+        (await admin.PostAsJsonAsync("/api/v1/console/auth/login", new LoginRequest(ApiFactory.AdminEmail, ApiFactory.TestPassword), Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        var csrf = await admin.GetFromJsonAsync<CsrfTokenDto>("/api/v1/console/auth/csrf", Ct);
+        admin.DefaultRequestHeaders.Add("X-CSRF-TOKEN", csrf!.Token);
+        return admin;
+    }
+
+    private async Task Cancel(WebApplicationFactory<Program> host, TestOrder order, bool expectCancellationMessage = true)
+    {
+        using var admin = await AdminAsync(host);
         (await admin.PostJsonAsync($"/api/v1/console/orders/{order.Number}/status", new ChangeOrderStatusRequest(OrderStatus.Cancelled, "Тест Навколо"))).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await admin.PostJsonAsync($"/api/v1/console/orders/{order.Number}/status", new ChangeOrderStatusRequest(OrderStatus.Cancelled, "Повтор"))).StatusCode.ShouldBe(HttpStatusCode.Conflict);
         var messages = await api.WithDbAsync(db => db.OutboxMessages.Where(m => m.Type == OrderCancellationRequested.Type).Select(m => m.Payload).ToListAsync(Ct));
-        messages.Count(p => p.Contains(order.Id.ToString(), StringComparison.OrdinalIgnoreCase)).ShouldBe(1);
+        messages.Count(p => p.Contains(order.Id.ToString(), StringComparison.OrdinalIgnoreCase)).ShouldBe(expectCancellationMessage ? 1 : 0);
     }
     private Task<decimal> Reserved(TestOrder order) => api.WithDbAsync(db => db.Set<ProductStock>().Where(p => p.ProductId == order.ProductId).Select(p => p.ReservedQuantity).SingleAsync(Ct));
 
@@ -65,7 +75,7 @@ public sealed class NavkoloCancellationTests(ApiFactory api)
     public async Task Cancellation_before_export_releases_once_and_prevents_late_creation()
     {
         var order = await CreateAsync(); var provider = new Provider(); await using var host = Host(provider);
-        await Cancel(order); (await Reserved(order)).ShouldBe(0);
+        await Cancel(host, order); (await Reserved(order)).ShouldBe(0);
         await Task.WhenAll(Export(host, order), SyncCancellation(host, order), SyncCancellation(host, order));
         provider.Uploads.ShouldBe(0); provider.Cancellations.ShouldBe(0);
         (await Reserved(order)).ShouldBe(0);
@@ -75,7 +85,7 @@ public sealed class NavkoloCancellationTests(ApiFactory api)
     public async Task Failed_remote_cancellation_holds_stock_then_concurrent_retries_release_exactly_once()
     {
         var order = await CreateAsync(); var provider = new Provider(); await using var host = Host(provider);
-        await Export(host, order); await Cancel(order);
+        await Export(host, order); await Cancel(host, order);
         (await Reserved(order)).ShouldBe(2);
         provider.FailCancellation = true;
         await Should.ThrowAsync<NavkoloUnavailableException>(() => SyncCancellation(host, order));
@@ -95,7 +105,7 @@ public sealed class NavkoloCancellationTests(ApiFactory api)
     {
         var order = await CreateAsync(); var provider = new Provider { LoseUploadResponse = true }; await using var host = Host(provider);
         await Should.ThrowAsync<HttpRequestException>(() => Export(host, order));
-        await Cancel(order); (await Reserved(order)).ShouldBe(2);
+        await Cancel(host, order); (await Reserved(order)).ShouldBe(2);
         await SyncCancellation(host, order);
         provider.Cancellations.ShouldBe(1); (await Reserved(order)).ShouldBe(0);
     }
@@ -114,7 +124,7 @@ public sealed class NavkoloCancellationTests(ApiFactory api)
         saved.NavkoloExportAttemptedAt.ShouldBeNull();
         (await Reserved(order)).ShouldBe(2);
 
-        await Cancel(order);
+        await Cancel(host, order, expectCancellationMessage: false);
         await SyncCancellation(host, order);
         provider.Cancellations.ShouldBe(0);
         (await Reserved(order)).ShouldBe(0);
@@ -134,7 +144,7 @@ public sealed class NavkoloCancellationTests(ApiFactory api)
         else
             await Export(enabledHost, order);
 
-        await Cancel(order);
+        await Cancel(enabledHost, order);
         await Should.ThrowAsync<NavkoloUnavailableException>(() => SyncCancellation(productOnlyHost, order));
 
         provider.Cancellations.ShouldBe(0);
@@ -155,7 +165,7 @@ public sealed class NavkoloCancellationTests(ApiFactory api)
         await provider.UploadStarted.Task.WaitAsync(TimeSpan.FromSeconds(10), Ct);
         try
         {
-            await Cancel(order); (await Reserved(order)).ShouldBe(2);
+            await Cancel(host, order); (await Reserved(order)).ShouldBe(2);
             var cancelling = SyncCancellation(host, order);
             provider.ContinueUpload.TrySetResult();
             await Task.WhenAll(exporting, cancelling);
@@ -170,10 +180,10 @@ public sealed class NavkoloCancellationTests(ApiFactory api)
     {
         var order = await CreateAsync(); var provider = new Provider(); await using var host = Host(provider);
         await Export(host, order);
-        using var admin = await Staff.AdminAsync(api);
+        using var admin = await AdminAsync(host);
         foreach (var status in new[] { OrderStatus.Confirmed, OrderStatus.Shipped })
             (await admin.PostJsonAsync($"/api/v1/console/orders/{order.Number}/status", new ChangeOrderStatusRequest(status, "Тест"))).StatusCode.ShouldBe(HttpStatusCode.OK);
-        await Cancel(order); await SyncCancellation(host, order);
+        await Cancel(host, order); await SyncCancellation(host, order);
         // The goods left at shipment: the reserve ended then and the stock went down; the cancel brings back neither.
         (await Reserved(order)).ShouldBe(0);
         var row = await api.WithDbAsync(db => db.Set<StockReservation>().AsNoTracking().SingleAsync(r => r.OrderId == order.Id, Ct));
