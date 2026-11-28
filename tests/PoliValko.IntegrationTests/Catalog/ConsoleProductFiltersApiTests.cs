@@ -66,18 +66,21 @@ public sealed class ConsoleProductFiltersApiTests(ApiFactory api)
 
         var marker = Guid.NewGuid().ToString("N")[..6];
         var hiddenWithStock = await api.AddProductAsync("novyi-rik", $"Гірлянда прихована {marker}", 300m, stock: 4, visible: false);
+        var hiddenFullyReserved = await api.AddProductAsync("novyi-rik", $"Гірлянда в резерві {marker}", 300m, stock: 2, visible: false);
+        await api.WithDbAsync(db => db.Set<ProductStock>().Where(s => s.ProductId == hiddenFullyReserved.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.ReservedQuantity, 2m), Ct));
         var hiddenEmpty = await api.AddProductAsync("novyi-rik", $"Гірлянда без залишку {marker}", 300m, stock: 0, visible: false);
         var old = await api.AddProductAsync("novyi-rik", $"Гірлянда стара {marker}", 300m, createdAt: DateTimeOffset.UtcNow.AddDays(-120));
 
         var after = await manager.ReadAsync<ConsoleProductCountsDto>($"{Products}/counts");
-        after.All.ShouldBe(before.All + 3);
+        after.All.ShouldBe(before.All + 4);
         after.HiddenWithStock.ShouldBe(before.HiddenWithStock + 1);
-        after.OutOfStock.ShouldBe(before.OutOfStock + 1);
-        after.Recent30.ShouldBe(before.Recent30 + 2);
-        after.NeedsFilling.ShouldBe(before.NeedsFilling + 3);
+        after.OutOfStock.ShouldBe(before.OutOfStock + 2);
+        after.Recent30.ShouldBe(before.Recent30 + 3);
+        after.NeedsFilling.ShouldBe(before.NeedsFilling + 4);
 
         (await ListAsync(manager, $"q={marker}&hiddenWithStock=true")).Items.ShouldHaveSingleItem().Id.ShouldBe(hiddenWithStock.Id);
-        (await ListAsync(manager, $"q={marker}&newDays=30")).Items.Select(i => i.Id).ShouldBe([hiddenEmpty.Id, hiddenWithStock.Id], ignoreOrder: true);
+        (await ListAsync(manager, $"q={marker}&newDays=30")).Items.Select(i => i.Id).ShouldBe([hiddenEmpty.Id, hiddenFullyReserved.Id, hiddenWithStock.Id], ignoreOrder: true);
         (await ListAsync(manager, $"q={marker}&newDays=365")).Items.Select(i => i.Id).ShouldContain(old.Id);
     }
 

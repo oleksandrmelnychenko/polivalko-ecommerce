@@ -25,6 +25,9 @@ internal static class ShopStockSource
             UNION ALL SELECT s.order_id,(s.posted_at AT TIME ZONE 'Europe/Kyiv')::date,'order',o.number,-s.quantity,s.balance,s.posted_at
             FROM accounting.order_shipments s LEFT JOIN ordering.orders o ON o.id=s.order_id
             WHERE s.org_id={org} AND s.store_id={store} AND s.product_id={id}
+            UNION ALL SELECT r.id,(r.posted_at AT TIME ZONE 'Europe/Kyiv')::date,'orderReturn',o.number,r.quantity,r.balance,r.posted_at
+            FROM accounting.order_returns r LEFT JOIN ordering.orders o ON o.id=r.order_id
+            WHERE r.org_id={org} AND r.store_id={store} AND r.product_id={id}
             """);
         // Newest first in posting order, so each balance follows from the row below it; the opening stays at the bottom.
         return Results.Ok(new RegisterPage<WarehouseMovement>(await rows.OrderBy(r => r.RecordedAt == null)

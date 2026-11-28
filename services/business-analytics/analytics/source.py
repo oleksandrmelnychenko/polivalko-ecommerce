@@ -197,17 +197,21 @@ LEFT JOIN accounting.order_shipments sh ON sh.order_id=o.id AND sh.product_id=i.
 WHERE r.status='Succeeded' AND r.completed_at < ((%s::date + 1)::timestamp AT TIME ZONE 'Europe/Kyiv')
 """
 COST_EVENTS = """
-SELECT d.native_org_id::text AS org,d.native_store_id::text AS store,m.product_id::text AS product,
+SELECT d.native_org_id::text AS org,COALESCE(m.store_id,d.native_store_id)::text AS store,m.product_id::text AS product,
        d.day,d.id::text AS doc,m.delta,m.resulting_quantity AS balance,
        CASE WHEN d.kind IN ('in','income') AND lower(d.currency) IN ('uah','980') THEN
         (SELECT sum((x->>'total')::numeric) FROM jsonb_array_elements(
           CASE WHEN jsonb_typeof(d.details->'products')='array' THEN d.details->'products' ELSE '[]'::jsonb END) x
          WHERE x#>>'{product,id}'=m.product_id::text) END AS purchase
 FROM accounting.stock_movements m JOIN accounting.documents d ON d.id=m.document_id
-WHERE d.status='posted' AND d.day<=%s
+WHERE d.status='posted' AND NOT m.is_reversal AND d.day<=%s
 UNION ALL
 SELECT org_id::text,store_id::text,product_id::text,(posted_at AT TIME ZONE 'Europe/Kyiv')::date,
        order_id::text,-quantity,balance,NULL::numeric FROM accounting.order_shipments
+WHERE (posted_at AT TIME ZONE 'Europe/Kyiv')::date<=%s
+UNION ALL
+SELECT org_id::text,store_id::text,product_id::text,(posted_at AT TIME ZONE 'Europe/Kyiv')::date,
+       order_id::text,quantity,balance,NULL::numeric FROM accounting.order_returns
 WHERE (posted_at AT TIME ZONE 'Europe/Kyiv')::date<=%s
 ORDER BY org,store,product,day
 """
@@ -225,11 +229,14 @@ FROM accounting.warehouse_stock w LEFT JOIN catalog.product_stock s
 # decide, as before: a day counts as the start of an outage only if every balance that day was zero.
 OUTAGES = """
 WITH movements AS (
- SELECT d.native_org_id AS org,d.native_store_id AS store,m.product_id AS product,d.day,
+ SELECT d.native_org_id AS org,COALESCE(m.store_id,d.native_store_id) AS store,m.product_id AS product,d.day,
         m.resulting_quantity AS balance,m.delta AS change
  FROM accounting.stock_movements m JOIN accounting.documents d ON d.id=m.document_id
+ WHERE d.status='posted' AND NOT m.is_reversal
  UNION ALL SELECT org_id,store_id,product_id,(posted_at AT TIME ZONE 'Europe/Kyiv')::date,balance,-quantity
  FROM accounting.order_shipments
+ UNION ALL SELECT org_id,store_id,product_id,(posted_at AT TIME ZONE 'Europe/Kyiv')::date,balance,quantity
+ FROM accounting.order_returns
  UNION ALL SELECT org_id,store_id,product_id,day,quantity,quantity FROM accounting.stock_openings
 ), daily AS (
  SELECT org,store,product,day,min(balance) AS minimum,max(balance) AS maximum,sum(change) AS change
@@ -270,5 +277,5 @@ def read_register(as_of):
         ]
         from .register import apply_inventory_cost
 
-        apply_inventory_cost(source["facts"], conn.execute(COST_EVENTS, (as_of, as_of)))
+        apply_inventory_cost(source["facts"], conn.execute(COST_EVENTS, (as_of, as_of, as_of)))
         return source

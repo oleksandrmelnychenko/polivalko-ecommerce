@@ -107,7 +107,7 @@ internal static class InvoiceWorkflow
         var inserted = await db.Database.ExecuteSqlAsync($"""
             INSERT INTO accounting.warehouse_stock(org_id,store_id,product_id,quantity)
             SELECT o.id,s.id,p.id,{input.Quantity} FROM accounting.references o,accounting.references s,catalog.products p
-            WHERE o.id={input.OrgId} AND o.kind='organization' AND s.id={input.StoreId} AND s.kind='store' AND p.id={input.ProductId}
+            WHERE o.id={input.OrgId} AND o.kind='organization' AND s.id={input.StoreId} AND s.kind='store' AND p.id={input.ProductId} AND NOT p.is_archived
             ON CONFLICT DO NOTHING
             """, ct);
         if (inserted == 0)
@@ -115,7 +115,12 @@ internal static class InvoiceWorkflow
             var saved = await db.Database.SqlQuery<StockOpening>($"""
                 SELECT id,org_id,store_id,product_id,quantity,day,reference FROM accounting.stock_openings WHERE id={input.Id}
                 """).SingleOrDefaultAsync(ct);
-            return saved == input ? Results.Ok(input.Id) : Conflict("Перевірте реквізити. Початковий залишок можна ввести лише до першого руху цього товару в організації та на складі.");
+            if (saved == input) return Results.Ok(input.Id);
+            var archived = await db.Database.SqlQuery<int>($"""
+                SELECT 1 AS "Value" FROM catalog.products WHERE id={input.ProductId} AND is_archived
+                """).AnyAsync(ct);
+            if (archived) return Conflict("Архівний товар не можна ставити на склад. Спочатку відновіть його з архіву.");
+            return Conflict("Перевірте реквізити. Початковий залишок можна ввести лише до першого руху цього товару в організації та на складі.");
         }
         var recorded = await db.Database.ExecuteSqlAsync($"""
             INSERT INTO accounting.stock_openings VALUES({input.Id},{input.OrgId},{input.StoreId},{input.ProductId},{input.Quantity},{input.Day},{input.Reference})
@@ -206,6 +211,10 @@ internal static class InvoiceWorkflow
         var lines = await Impact(id, db, ct);
         if (lines.Count == 0) return Conflict("Додайте товарні позиції.");
         var ids = lines.Select(l => l.ProductId).ToArray();
+        var hasArchived = await db.Database.SqlQuery<int>($"""
+            SELECT 1 AS "Value" FROM catalog.products WHERE id=ANY({ids}) AND is_archived
+            """).AnyAsync(ct);
+        if (hasArchived) return Conflict("У документі є архівні товари. Відновіть їх із архіву або приберіть із чернетки.");
         var offer = await RecommendationOfferWorkflow.ForInvoice(id, db, ct);
         var unlinkedCatalogFallback = false;
         if (offer != null)
@@ -322,6 +331,8 @@ internal static class InvoiceWorkflow
                 WHERE product_id={offer.ProductId} AND warehouse_store_id IS NULL
                   AND quantity+{offer.Quantity}<=999999999.999
                 """, ct);
+            if (movements.Count == 0 && restored == 0)
+                return Conflict("Товар уже прив’язано до складу після проведення цієї пропозиції. Відв’яжіть склад або відкоригуйте залишок вручну.");
             synced += restored;
             await db.Database.ExecuteSqlAsync($"UPDATE accounting.recommendation_offers SET status='released',changed_at=now() WHERE id={offer.Id}", ct);
         }

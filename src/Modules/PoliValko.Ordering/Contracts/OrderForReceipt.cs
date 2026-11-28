@@ -5,4 +5,5 @@ public sealed record OrderForReceipt(
     string Number,
     PaymentMethod PaymentMethod,
     IReadOnlyList<OrderForReceiptItem> Items,
-    IReadOnlyList<OrderForReceiptRefund> Refunds);
+    IReadOnlyList<OrderForReceiptRefund> Refunds,
+    OrderStatus Status = OrderStatus.Completed);

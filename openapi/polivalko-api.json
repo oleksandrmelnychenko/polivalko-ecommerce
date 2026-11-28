@@ -16916,6 +16916,10 @@
               "null",
               "string"
             ]
+          },
+          "returnToStock": {
+            "type": "boolean",
+            "default": true
           }
         }
       },

@@ -8,7 +8,10 @@ namespace PoliValko.Ordering.Features.Cancellation;
 
 internal sealed class ConfigurationOrderSyncStatus(IConfiguration configuration) : IExternalOrderSyncStatus
 {
-    public bool IsEnabled => configuration.GetValue("Navkolo:OrderSyncEnabled", true);
+    public Task<bool> IsEnabledAsync(CancellationToken ct) =>
+        Task.FromResult(
+            configuration.GetValue("Navkolo:OrderSyncEnabled", true)
+            && !string.Equals(configuration["Navkolo:Mode"], "Disabled", StringComparison.OrdinalIgnoreCase));
 }
 
 internal static class OrderCancellationEffects

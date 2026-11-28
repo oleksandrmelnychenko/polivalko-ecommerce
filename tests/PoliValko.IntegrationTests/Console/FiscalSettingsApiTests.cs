@@ -3,9 +3,16 @@ using System.Net.Http.Json;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using PoliValko.Fiscal.Domain;
+using PoliValko.Fiscal.Features.Receipts;
 using PoliValko.Fiscal.Features.Settings;
 using PoliValko.Fiscal.Integrations.Checkbox;
 using PoliValko.Infrastructure.Settings;
+using PoliValko.Ordering.Contracts;
+using PoliValko.Ordering.Domain;
+using PoliValko.Ordering.Features.Checkout;
+using PoliValko.Ordering.Features.Console.Orders;
+using PoliValko.Payments.Features.Checkout;
 
 namespace PoliValko.IntegrationTests;
 
@@ -84,6 +91,73 @@ public sealed class FiscalSettingsApiTests(ApiFactory api)
             off.IssueOn.Card.ShouldBe("completion");
             (await admin.PutAsJsonAsync(Path, new SaveFiscalSettingsRequest(saved.Revision, false, null, null, null, false,
                 new ReceiptMomentsDto("payment", "completion", "none")), Ct)).StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        }
+        finally
+        {
+            await api.WithDbAsync(db => db.Set<PlatformSetting>().Where(s => s.Key == "fiscal.checkbox.v1").ExecuteDeleteAsync(Ct));
+        }
+    }
+
+    [Fact]
+    public async Task Card_order_with_completion_moment_issues_sale_on_completion_and_skips_return_before_completion()
+    {
+        using var admin = await Staff.AdminAsync(api);
+        using var client = api.CreateClient();
+        var original = await admin.ReadAsync<FiscalGatewayDto>(Path);
+        try
+        {
+            (await admin.PutAsJsonAsync(Path, new SaveFiscalSettingsRequest(original.Revision, false, null, null, null, false,
+                new ReceiptMomentsDto("completion", "completion", "none")), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+            async Task<(OrderCreatedDto Order, Guid ProductId)> CreatePaidCardOrderAsync(decimal price)
+            {
+                var product = await api.AddProductAsync("ruchnyi-instrument", $"Чек при виконанні {price}", price, stock: 5);
+                var body = CheckoutApiTests.Order(product.Id, 1, price.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture), CheckoutApiTests.UniquePhone()) with
+                {
+                    Delivery = new DeliveryRequest(DeliveryCodes.Pickup, null, null),
+                    Payment = new PaymentRequest(PaymentCodes.Card),
+                };
+                var created = await (await client.PostWithKeyAsync("/api/v1/orders", body)).ReadAsync<OrderCreatedDto>(HttpStatusCode.Created);
+                var start = await (await client.PostWithKeyAsync($"/api/v1/orders/{created.Number}/payments", new StartPaymentRequest(created.AccessToken)))
+                    .ReadAsync<StartPaymentDto>();
+                var invoiceId = start.PageUrl[(start.PageUrl.LastIndexOf('/') + 1)..];
+                (await client.PostAsJsonAsync($"/api/v1/payments/sandbox/{invoiceId}/complete", new CompleteSandboxPaymentRequest("success", null), Ct))
+                    .StatusCode.ShouldBe(HttpStatusCode.OK);
+                await api.ProcessOutboxAsync();
+                return (created, product.Id);
+            }
+
+            // Refunded before completion: neither sale nor return receipt should be issued.
+            var (earlyOrder, earlyProductId) = await CreatePaidCardOrderAsync(210m);
+            (await admin.GetFromJsonAsync<List<ReceiptDto>>($"/api/v1/console/orders/{earlyOrder.Number}/receipts", TestJson.Options, Ct))!.ShouldBeEmpty();
+            await (await admin.PostWithKeyAsync(
+                    $"/api/v1/console/orders/{earlyOrder.Number}/refunds",
+                    new CreateRefundRequest([new RefundLineRequest(earlyProductId, 1)], "Скасування до видачі")))
+                .ReadAsync<ConsoleOrderDto>();
+            await api.ProcessOutboxAsync();
+            await api.ProcessOutboxAsync();
+            (await admin.GetFromJsonAsync<List<ReceiptDto>>($"/api/v1/console/orders/{earlyOrder.Number}/receipts", TestJson.Options, Ct))!.ShouldBeEmpty();
+
+            // Completed then refunded: sale receipt issued on completion, return receipt issued on refund.
+            var (completedOrder, completedProductId) = await CreatePaidCardOrderAsync(320m);
+            (await admin.GetFromJsonAsync<List<ReceiptDto>>($"/api/v1/console/orders/{completedOrder.Number}/receipts", TestJson.Options, Ct))!.ShouldBeEmpty();
+            foreach (var status in new[] { OrderStatus.ReadyForPickup, OrderStatus.Completed })
+            {
+                (await admin.PostJsonAsync($"/api/v1/console/orders/{completedOrder.Number}/status", new ChangeOrderStatusRequest(status, "Видача")))
+                    .StatusCode.ShouldBe(HttpStatusCode.OK);
+            }
+            await api.ProcessOutboxAsync();
+            var afterCompletion = await admin.GetFromJsonAsync<List<ReceiptDto>>($"/api/v1/console/orders/{completedOrder.Number}/receipts", TestJson.Options, Ct);
+            afterCompletion!.ShouldHaveSingleItem().Kind.ShouldBe(ReceiptKind.Sell);
+
+            await (await admin.PostWithKeyAsync(
+                    $"/api/v1/console/orders/{completedOrder.Number}/refunds",
+                    new CreateRefundRequest([new RefundLineRequest(completedProductId, 1)], "Повернення після видачі")))
+                .ReadAsync<ConsoleOrderDto>();
+            await api.ProcessOutboxAsync();
+            await api.ProcessOutboxAsync();
+            var afterRefund = await admin.GetFromJsonAsync<List<ReceiptDto>>($"/api/v1/console/orders/{completedOrder.Number}/receipts", TestJson.Options, Ct);
+            afterRefund!.Select(r => r.Kind).ShouldBe([ReceiptKind.Sell, ReceiptKind.Return]);
         }
         finally
         {

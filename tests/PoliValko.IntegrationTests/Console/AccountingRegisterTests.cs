@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
+using PoliValko.Catalog.Domain;
 using PoliValko.Console.Features.Accounting;
 
 namespace PoliValko.IntegrationTests;
@@ -414,5 +416,51 @@ public sealed class AccountingRegisterTests(ApiFactory api)
             s => s.Due.ShouldBeNull());
         (await admin.ReadAsync<RegisterPage<WarehouseBalance>>(Root + "/warehouse?store=" + store.Id))
             .Items.Single(w => w.ProductId == product.Id).Quantity.ShouldBe(0m);
+    }
+
+    [Fact]
+    public async Task Archived_products_are_rejected_in_openings_drafts_stock_operations_and_posting()
+    {
+        using var admin = await Staff.AdminAsync(api);
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var org = await (await admin.PostAsJsonAsync(Root + "/references/organizations",
+            new ReferenceRequest("ФОП Архів " + suffix), Ct)).ReadAsync<RegisterReference>();
+        var store = await (await admin.PostAsJsonAsync(Root + "/references/stores",
+            new ReferenceRequest("Склад Архів " + suffix), Ct)).ReadAsync<RegisterReference>();
+        var partner = new NewPartner(Guid.NewGuid(), "Контрагент Архів " + suffix, "individual");
+        (await admin.PostAsJsonAsync(Root + "/partners", partner, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var day = new DateOnly(2026, 11, 24);
+
+        var archived = await api.AddProductAsync("ruchnyi-instrument", "Архівний товар " + suffix, 100m, stock: 0);
+        await api.WithDbAsync(db => db.Set<Product>().Where(p => p.Id == archived.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsArchived, true), Ct));
+
+        (await admin.PostAsJsonAsync(Root + "/warehouse/openings",
+            new StockOpening(Guid.NewGuid(), Guid.Parse(org.Id), Guid.Parse(store.Id), archived.Id, 5m, day, "arch-open-" + suffix), Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await admin.PostAsJsonAsync(Root + "/drafts",
+            new NewDraft(Guid.NewGuid(), partner.Id, "in", "ARCH-IN-" + suffix, day, org.Id, store.Id, [new(archived.Id, 1m, 100m)]), Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await admin.PostAsJsonAsync(Root + "/stock-operations",
+            new StockOperationDraft(Guid.NewGuid(), "income", day, Guid.Parse(org.Id), Guid.Parse(store.Id), null, null, [new(archived.Id, 1m, 100m)]), Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        // Archiving a product after draft creation must also block posting.
+        var laterArchived = await api.AddProductAsync("ruchnyi-instrument", "Архівований після чернетки " + suffix, 100m, stock: 0);
+        var invoiceDraft = new NewDraft(Guid.NewGuid(), partner.Id, "in", "ARCH-POST-" + suffix, day, org.Id, store.Id, [new(laterArchived.Id, 1m, 100m)]);
+        (await admin.PostAsJsonAsync(Root + "/drafts", invoiceDraft, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var invoiceRev = (await admin.ReadAsync<InvoiceState>(Root + "/documents/" + invoiceDraft.Id + "/operations")).Revision;
+
+        var stockDraft = new StockOperationDraft(Guid.NewGuid(), "income", day, Guid.Parse(org.Id), Guid.Parse(store.Id), null, null, [new(laterArchived.Id, 1m, 100m)]);
+        (await admin.PostAsJsonAsync(Root + "/stock-operations", stockDraft, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var stockRev = (await admin.ReadAsync<StockOperationState>(Root + "/stock-operations/" + stockDraft.Id)).Revision;
+
+        await api.WithDbAsync(db => db.Set<Product>().Where(p => p.Id == laterArchived.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsArchived, true), Ct));
+
+        (await admin.PostAsJsonAsync(Root + "/documents/" + invoiceDraft.Id + "/post", new PostInvoice(invoiceRev), Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await admin.PostAsJsonAsync(Root + "/stock-operations/" + stockDraft.Id + "/post", new PostStockOperation(stockRev), Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
 }

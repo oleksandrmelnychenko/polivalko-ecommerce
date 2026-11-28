@@ -30,6 +30,7 @@ internal sealed class OrderReceiptSource(PoliValkoDbContext db) : IOrderReceiptS
             order.Items.Select(i => new OrderForReceiptItem(i.Id, i.Sku, i.Name, i.UnitPrice, i.Quantity)).ToList(),
             order.Refunds
                 .Select(r => new OrderForReceiptRefund(r.Id, r.Lines.Select(l => new OrderForReceiptRefundLine(l.OrderItemId, l.Quantity)).ToList()))
-                .ToList());
+                .ToList(),
+            order.Status);
     }
 }

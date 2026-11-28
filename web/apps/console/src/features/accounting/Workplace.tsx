@@ -23,7 +23,7 @@ import { useRegister, type Doc, type Page, type Ref } from './api'
 type S = components['schemas']
 const queues = [
   { id: 'receivable', icon: IconArrowDownLeft, title: 'До отримання', empty: 'Усі проведені продажі оплачені' },
-  { id: 'payable', icon: IconWallet, title: 'До сплати', empty: 'Немає відкритих оплат постачальникам' },
+  { id: 'payable', icon: IconWallet, title: 'До сплати', empty: 'Немає відкритих оплат постачальникам або повернень покупцям' },
   { id: 'settled', icon: IconChecklist, title: 'Закриті', empty: 'Повністю оплачених накладних ще немає' },
 ] as const
 
@@ -79,7 +79,7 @@ export function Workplace() {
         )}
         {docs.data ? (
           docs.data.total ? (
-            <DocTable rows={docs.data.items} direction={queue.id === 'receivable' ? 'out' : queue.id === 'payable' ? 'in' : null}
+            <DocTable rows={docs.data.items} direction={queue.id === 'receivable' ? 'out' : null}
               balanceLabel={queue.id === 'receivable' ? 'До отримання' : queue.id === 'payable' ? 'До сплати' : 'Залишок до оплати'} />
           ) : (
             <PageState

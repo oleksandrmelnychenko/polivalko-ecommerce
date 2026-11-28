@@ -4302,6 +4302,8 @@ export interface components {
         ChangeOrderStatusRequest: {
             status: null | components["schemas"]["OrderStatus"];
             reason: null | string;
+            /** @default true */
+            returnToStock: boolean;
         };
         ChangeOwnPasswordRequest: {
             currentPassword: null | string;

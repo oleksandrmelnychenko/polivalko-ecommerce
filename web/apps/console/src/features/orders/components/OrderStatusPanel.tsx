@@ -1,4 +1,4 @@
-import { Alert, Button, Group, Text, Textarea } from '@mantine/core'
+import { Alert, Button, Checkbox, Group, Text, Textarea } from '@mantine/core'
 import { IconClipboardCheck, IconAlertTriangle, IconCheck, IconX } from '@tabler/icons-react'
 import { useState } from 'react'
 import type { OrderStatus } from '@polivalko/shared/api/types'
@@ -37,6 +37,7 @@ export function OrderStatusPanel({ order, status }: { order: ConsoleOrder; statu
   const { comment, setComment, busy, error, clearError, change } = status
   const [cancelOpen, setCancelOpen] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
+  const [cancelReturnToStock, setCancelReturnToStock] = useState(true)
   const route = orderRoute(order)
   const current = route.indexOf(order.status)
   const cancelled = order.status === 'cancelled'
@@ -47,19 +48,22 @@ export function OrderStatusPanel({ order, status }: { order: ConsoleOrder; statu
   function openCancel() {
     clearError()
     setCancelReason('')
+    setCancelReturnToStock(true)
     setCancelOpen(true)
   }
 
   function closeCancel() {
     setCancelOpen(false)
     setCancelReason('')
+    setCancelReturnToStock(true)
     clearError()
   }
 
   async function confirmCancel() {
-    if (!(await change('cancelled', cancelReason))) return
+    if (!(await change('cancelled', cancelReason, order.status === 'shipped' ? { returnToStock: cancelReturnToStock } : undefined))) return
     setCancelOpen(false)
     setCancelReason('')
+    setCancelReturnToStock(true)
   }
 
   return (
@@ -165,9 +169,14 @@ export function OrderStatusPanel({ order, status }: { order: ConsoleOrder; statu
           Покупець побачить статус «Скасоване». Змінити статус після цього вже не можна.
         </Text>
         {order.status === 'shipped' ? (
-          <Alert mb="sm" color="blue" variant="light">
-            Відвантажений товар із цього замовлення буде автоматично повернуто на склад після скасування.
-          </Alert>
+          <Checkbox
+            mb="sm"
+            label="Повернути відвантажений товар на склад"
+            description="Зніміть позначку, якщо посилку втрачено, пошкоджено або товар не повернеться в продаж."
+            checked={cancelReturnToStock}
+            disabled={busy !== null}
+            onChange={(event) => setCancelReturnToStock(event.currentTarget.checked)}
+          />
         ) : null}
         <Textarea
           label="Причина скасування"

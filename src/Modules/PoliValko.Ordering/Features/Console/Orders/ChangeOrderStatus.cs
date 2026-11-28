@@ -59,17 +59,27 @@ internal static class ChangeOrderStatus
         var reason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim();
         order.ChangeStatus(target, time.GetUtcNow(), user.StaffName(), reason);
 
-        if (target == OrderStatus.Completed && order.PaymentMethod != PaymentMethod.Card)
+        if (target == OrderStatus.Completed && (order.PaymentMethod != PaymentMethod.Card || order.PaymentStatus is PaymentStatus.Succeeded or PaymentStatus.PartiallyRefunded))
         {
             outbox.Enqueue(new FiscalReceiptRequested(order.Id, FiscalTrigger.Completion));
         }
 
         if (target == OrderStatus.Cancelled)
         {
-            await OrderCancellationEffects.ApplyAsync(order, outbox, reservations, orderSync.IsEnabled, ct);
+            await OrderCancellationEffects.ApplyAsync(order, outbox, reservations, await orderSync.IsEnabledAsync(ct), ct);
             if (from == OrderStatus.Shipped)
             {
-                await reservations.RestockAsync(order.Id, ct);
+                if (request.ReturnToStock)
+                {
+                    await reservations.RestockAsync(order.Id, ct);
+                }
+                else
+                {
+                    var quantities = order.Items
+                        .GroupBy(i => i.ProductId)
+                        .ToDictionary(g => g.Key, g => g.Sum(i => i.Quantity));
+                    await reservations.ApplyRefundAsync(order.Id, quantities, returnToStock: false, ct);
+                }
             }
         }
 
@@ -85,7 +95,8 @@ internal static class ChangeOrderStatus
             }
         }
 
-        audit.Record("order.status_changed", "Order", order.Number, new { from, to = target, reason });
+        audit.Record("order.status_changed", "Order", order.Number,
+            new { from, to = target, reason, returnToStock = target == OrderStatus.Cancelled && from == OrderStatus.Shipped ? request.ReturnToStock : (bool?)null });
         try
         {
             await db.SaveChangesAsync(ct);

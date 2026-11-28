@@ -88,6 +88,7 @@ internal static class CreateRefund
             Amount = refundLines.Sum(l => l.Amount),
             Reason = reason!,
             RequestedBy = user.StaffName(),
+            ReturnToStock = request.ReturnToStock,
             CreatedAt = now,
             Lines = refundLines,
         };
@@ -95,19 +96,20 @@ internal static class CreateRefund
 
         if (method == RefundMethod.Provider)
         {
+            // Card refunds mutate reservations/stock only once the payment provider confirms success
+            // (see OrderPayments.CompleteRefundAsync), so rejected refunds never leave phantom stock.
             outbox.Enqueue(new RefundRequested(order.Id, refund.Id));
         }
         else
         {
             order.ApplySucceededRefund(refund, now);
             outbox.Enqueue(new FiscalReceiptRequested(order.Id, FiscalTrigger.Refund, refund.Id));
+            await reservations.ApplyRefundAsync(
+                order.Id,
+                lines.ToDictionary(l => l.ProductId, l => l.Quantity),
+                request.ReturnToStock,
+                ct);
         }
-
-        await reservations.ApplyRefundAsync(
-            order.Id,
-            lines.ToDictionary(l => l.ProductId, l => l.Quantity),
-            request.ReturnToStock,
-            ct);
 
         audit.Record("order.refund_created", "Order", order.Number, new { refund.Id, method, amount = refund.Amount, reason, lines = lines.Count, returnToStock = request.ReturnToStock });
         try

@@ -111,9 +111,17 @@ internal static class StockOperations
         }
         var ids = lines.Select(l => l.ProductId).ToArray();
         var products = await db.Database.SqlQuery<ProductReference>($"""
-            SELECT id,coalesce(nullif(display_name,''),name) AS name,sku FROM catalog.products WHERE id=ANY({ids})
+            SELECT id,coalesce(nullif(display_name,''),name) AS name,sku FROM catalog.products WHERE id=ANY({ids}) AND NOT is_archived
             """).ToDictionaryAsync(p => p.Id, ct);
-        if (products.Count != ids.Length) return Invalid("Один із товарів відсутній у каталозі.");
+        if (products.Count != ids.Length)
+        {
+            var archived = await db.Database.SqlQuery<int>($"""
+                SELECT 1 AS "Value" FROM catalog.products WHERE id=ANY({ids}) AND is_archived
+                """).AnyAsync(ct);
+            return Invalid(archived
+                ? "Архівні товари не можна додавати до складських операцій. Відновіть товар із архіву."
+                : "Один із товарів відсутній у каталозі.");
+        }
         // A recount remembers the recorded quantity it was compared with, so later sales do not change its difference.
         // Editing the draft keeps that quantity for lines already counted on the same warehouse; only new lines take today's.
         Dictionary<Guid, decimal> book = [];
@@ -281,6 +289,10 @@ internal static class StockOperations
         if (confirmation.Revision != row.Revision) return Conflict("Чернетку змінили. Перегляньте актуальні позиції перед проведенням.");
         var stored = JsonSerializer.Deserialize<StoredOperation>(row.Details, Json)!;
         var ids = stored.Products.Select(p => p.Product.Id).ToArray();
+        var hasArchived = await db.Database.SqlQuery<int>($"""
+            SELECT 1 AS "Value" FROM catalog.products WHERE id=ANY({ids}) AND is_archived
+            """).AnyAsync(ct);
+        if (hasArchived) return Conflict("В операції є архівні товари. Відновіть їх із архіву або приберіть із чернетки.");
         var isTransfer = row.Kind == "transfer";
         if (isTransfer && (row.TargetStoreId is not { } targetStore || targetStore == row.StoreId))
             return Conflict("Вкажіть коректний склад-отримувач для переміщення.");

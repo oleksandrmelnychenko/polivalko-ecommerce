@@ -132,10 +132,15 @@ internal sealed class CatalogReservations(PoliValkoDbContext db, TimeProvider ti
     {
         if (row.WarehouseOrgId.HasValue && row.WarehouseStoreId.HasValue)
         {
+            var returnId = Guid.CreateVersion7(time.GetUtcNow());
             var restored = await db.Database.ExecuteSqlAsync($"""
-                UPDATE accounting.warehouse_stock
-                SET quantity = quantity + {delta}
-                WHERE org_id = {row.WarehouseOrgId} AND store_id = {row.WarehouseStoreId} AND product_id = {row.ProductId}
+                WITH movement AS (
+                    UPDATE accounting.warehouse_stock
+                    SET quantity = quantity + {delta}
+                    WHERE org_id = {row.WarehouseOrgId} AND store_id = {row.WarehouseStoreId} AND product_id = {row.ProductId}
+                    RETURNING org_id, store_id, product_id, quantity
+                ) INSERT INTO accounting.order_returns(id, order_id, product_id, org_id, store_id, quantity, balance)
+                SELECT {returnId}, {row.OrderId}, product_id, org_id, store_id, {delta}, quantity FROM movement
                 """, ct);
             if (restored == 1)
             {
@@ -149,30 +154,7 @@ internal sealed class CatalogReservations(PoliValkoDbContext db, TimeProvider ti
             return;
         }
 
-        var current = await db.Set<ProductStock>().AsNoTracking()
-            .Where(s => s.ProductId == row.ProductId)
-            .Select(s => new { s.WarehouseOrgId, s.WarehouseStoreId })
-            .SingleOrDefaultAsync(ct);
-        if (current is { WarehouseOrgId: not null, WarehouseStoreId: not null })
-        {
-            var restored = await db.Database.ExecuteSqlAsync($"""
-                UPDATE accounting.warehouse_stock
-                SET quantity = quantity + {delta}
-                WHERE org_id = {current.WarehouseOrgId} AND store_id = {current.WarehouseStoreId} AND product_id = {row.ProductId}
-                """, ct);
-            if (restored == 1)
-            {
-                await db.Database.ExecuteSqlAsync($"""
-                    UPDATE catalog.product_stock s SET quantity = w.quantity, updated_at = now()
-                    FROM accounting.warehouse_stock w
-                    WHERE (s.product_id, s.warehouse_org_id, s.warehouse_store_id) = (w.product_id, w.org_id, w.store_id)
-                        AND w.product_id = {row.ProductId} AND w.org_id = {current.WarehouseOrgId} AND w.store_id = {current.WarehouseStoreId}
-                    """, ct);
-            }
-            return;
-        }
-
-        await db.Set<ProductStock>().Where(s => s.ProductId == row.ProductId)
+        await db.Set<ProductStock>().Where(s => s.ProductId == row.ProductId && s.WarehouseOrgId == null && s.WarehouseStoreId == null)
             .ExecuteUpdateAsync(s => s.SetProperty(p => p.Quantity, p => p.Quantity + delta)
                 .SetProperty(p => p.UpdatedAt, time.GetUtcNow()), ct);
     }

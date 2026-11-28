@@ -1,4 +1,4 @@
-import { Alert, Button, Checkbox, Textarea } from '@mantine/core'
+import { Alert, Button, Checkbox, Text, Textarea } from '@mantine/core'
 import { IconAlertTriangle, IconInfoCircle, IconMinus, IconPlus, IconReceiptRefund } from '@tabler/icons-react'
 import { formatMoney } from '@polivalko/shared/lib/format'
 import type { ConsoleOrder } from '../api/orderDetailApi'
@@ -80,13 +80,25 @@ export function OrderRefundForm({ order, refund, onCancel }: { order: ConsoleOrd
         onChange={(event) => setReason(event.currentTarget.value)}
       />
 
-      <Checkbox
-        label="Повернути товар на склад"
-        description="Відновить залишок повернених позицій на складі та вітрині."
-        checked={returnToStock}
-        disabled={busy}
-        onChange={(event) => setReturnToStock(event.currentTarget.checked)}
-      />
+      {order.status === 'shipped' || order.status === 'completed' ? (
+        <Checkbox
+          label="Повернути товар на склад"
+          description={
+            order.refundMethod === 'provider'
+              ? 'Відновить залишок повернених позицій на складі та вітрині після підтвердження повернення платіжною системою.'
+              : 'Відновить залишок повернених позицій на складі та вітрині.'
+          }
+          checked={returnToStock}
+          disabled={busy}
+          onChange={(event) => setReturnToStock(event.currentTarget.checked)}
+        />
+      ) : (
+        <Text size="xs" c="dimmed">
+          {order.refundMethod === 'provider'
+            ? 'Товар ще не відвантажено: резерв за поверненими позиціями зніметься автоматично після підтвердження повернення платіжною системою.'
+            : 'Товар ще не відвантажено: резерв за поверненими позиціями зніметься автоматично.'}
+        </Text>
+      )}
 
       {error ? (
         <Alert color="red" variant="light" icon={<IconAlertTriangle size={16} />} role="alert">

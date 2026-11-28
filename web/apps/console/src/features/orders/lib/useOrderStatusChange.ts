@@ -25,11 +25,16 @@ export function useOrderStatusChange(number: string, onChanged: (order: ConsoleO
     }
   }
 
-  async function change(status: OrderStatus, reason: string): Promise<boolean> {
+  async function change(status: OrderStatus, reason: string, options?: { returnToStock?: boolean }): Promise<boolean> {
     setBusy(status)
     setError(null)
     try {
-      const result = await withCsrf((headers) => changeOrderStatus(headers, number, { status, reason: reason.trim() || null }))
+      const payload = {
+        status,
+        reason: reason.trim() || null,
+        ...(options?.returnToStock !== undefined ? { returnToStock: options.returnToStock } : {}),
+      }
+      const result = await withCsrf((headers) => changeOrderStatus(headers, number, payload))
       if (result.data) {
         onChanged(result.data)
         setComment('')

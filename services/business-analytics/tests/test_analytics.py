@@ -13,7 +13,7 @@ from analytics.neon import FrameStream
 from analytics.register import apply_inventory_cost, reconcile, unit_label
 from analytics.reports import documents, forecasts, policy_key, report
 from analytics.server import PolicyConflict, Service, app, load, now, save, service
-from analytics.source import ARCHIVE, COST_EVENTS, archived_rows, production, target
+from analytics.source import ARCHIVE, COST_EVENTS, OUTAGES, archived_rows, production, target
 
 DAY = date(2026, 11, 19)
 PRODUCT = {
@@ -428,6 +428,13 @@ class ConnectionTests(unittest.TestCase):
 
     def test_cost_events_include_console_stock_income_and_unit_codes_map_cleanly(self):
         self.assertIn("d.kind IN ('in','income')", COST_EVENTS)
+        self.assertIn("COALESCE(m.store_id,d.native_store_id)", COST_EVENTS)
+        self.assertIn("NOT m.is_reversal", COST_EVENTS)
+        self.assertIn("accounting.order_returns", COST_EVENTS)
+        self.assertEqual(COST_EVENTS.count("%s"), 3)
+        self.assertIn("COALESCE(m.store_id,d.native_store_id)", OUTAGES)
+        self.assertIn("WHERE d.status='posted' AND NOT m.is_reversal", OUTAGES)
+        self.assertIn("accounting.order_returns", OUTAGES)
         for code, expected in (("2009", "шт"), ("301", "кг"), ("0166", "л"), ("0006", "м"),
                                ("0055", "м²"), ("0113", "м³"), ("2006", "уп"), ("2007", "компл"), ("0304", "г")):
             self.assertEqual(unit_label(code), expected)

@@ -16,7 +16,7 @@ internal static class ConsoleProductFilter
     }
 
     public static IQueryable<Product> HiddenWithStock(this IQueryable<Product> products) =>
-        products.Where(p => !p.IsVisible && p.Stock.Quantity > 0);
+        products.Where(p => !p.IsVisible && p.Stock.Quantity - p.Stock.ReservedQuantity > 0);
 
     public static IQueryable<Product> WithBrand(this IQueryable<Product> products, string brand)
     {

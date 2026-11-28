@@ -1,6 +1,6 @@
-import { Alert, Button, Checkbox, Group, Select, Stack, Table, Text, Title } from '@mantine/core'
+import { Alert, Button, Checkbox, Group, Modal, Select, Stack, Table, Text, Title } from '@mantine/core'
 import { useEffect, useState } from 'react'
-import { IconBuildingStore, IconClipboardCheck, IconHistory, IconScale } from '@tabler/icons-react'
+import { IconBuildingStore, IconClipboardCheck, IconHistory, IconRotateClockwise, IconScale } from '@tabler/icons-react'
 import { MetricLabel } from '@/shared/ui/MetricCard'
 import { AppEditorModal } from '@/shared/ui/AppEditorModal'
 import { Link } from 'react-router-dom'
@@ -8,10 +8,11 @@ import type { components } from '@polivalko/shared/api/schema'
 import { usePermissions } from '@/features/auth'
 import { PermissionKeys } from '@/shared/auth/permissionKeys'
 import { problemMessage } from '@/shared/api/problem'
+import { notifySuccess } from '@/shared/ui/notify'
 import { PageState } from '@/shared/ui/PageState'
 import { Grid } from './RegisterTable'
 import { PaymentForm } from './InvoiceActions'
-import { money, save, useRegister, type Balance, type Ref, type Report } from './api'
+import { money, remove, save, useRegister, type Balance, type Ref, type Report } from './api'
 
 type Opening = components['schemas']['PartnerOpening']
 type Payment = components['schemas']['RecordedPayment']
@@ -119,30 +120,97 @@ export function OpeningConfirmation({
   )
 }
 
-function OpeningPayments({ opening, close }: { opening: Opening; close: () => void }) {
+function OpeningPayments({ opening, close, onChanged }: { opening: Opening; close: () => void; onChanged: () => void }) {
   const [opened, setOpened] = useState(true)
+  const [reversing, setReversing] = useState<Payment | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const { can } = usePermissions()
+  const canReverse = can(PermissionKeys.Accounting.Post)
   const query = useRegister<Payment[]>('openings/' + opening.id + '/payments')
+
+  async function reversePayment() {
+    if (busy || !reversing) return
+    setBusy(true)
+    setError('')
+    try {
+      const result = await remove('payments/' + reversing.id)
+      if (!result.response.ok) {
+        setError(problemMessage(result.error, 'Не вдалося сторнувати оплату.'))
+        query.reload()
+        return
+      }
+      notifySuccess('Оплату сторновано.')
+      setReversing(null)
+      query.reload()
+      onChanged()
+    } catch {
+      setError('Немає зв’язку з сервером. Повторіть операцію.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
-    <AppEditorModal opened={opened} onClose={() => setOpened(false)} onExitTransitionEnd={close}
-      className="ledger-editor" size="standard" title={<MetricLabel icon={IconHistory}>Історія оплат</MetricLabel>}>
-      <section className="ledger-form-block partner-payments">
-        <MetricLabel icon={IconScale}>{opening.account}</MetricLabel>
-        {!query.data ? <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
-          : !query.data.length ? <Text size="sm">Зареєстрованих оплат ще немає.</Text> : (
-            <Grid columns={['Дата', 'Спосіб', 'Каса або рахунок', 'Документ', 'Сума']}>
-              {query.data.map((p) => (
-                <Table.Tr key={p.id}>
-                  <Table.Td data-label="Дата">{p.day}</Table.Td>
-                  <Table.Td data-label="Спосіб">{p.method === 'bank' ? 'Банк' : 'Готівка'}</Table.Td>
-                  <Table.Td data-label="Каса або рахунок">{p.accountTitle}</Table.Td>
-                  <Table.Td data-label="Документ">{p.reference}</Table.Td>
-                  <Table.Td data-label="Сума" className="register-money">{money(p.amount, 'UAH')}</Table.Td>
-                </Table.Tr>
-              ))}
-            </Grid>
-        )}
-      </section>
-    </AppEditorModal>
+    <>
+      <AppEditorModal opened={opened} onClose={() => { if (!busy && !reversing) setOpened(false) }}
+        closeOnEscape={!reversing} closeOnClickOutside={!reversing} trapFocus={!reversing}
+        onExitTransitionEnd={close}
+        className="ledger-editor" size="standard" title={<MetricLabel icon={IconHistory}>Історія оплат</MetricLabel>}>
+        <section className="ledger-form-block partner-payments">
+          <MetricLabel icon={IconScale}>{opening.account}</MetricLabel>
+          {!query.data ? <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
+            : !query.data.length ? <Text size="sm">Зареєстрованих оплат ще немає.</Text> : (
+              <Grid columns={['Дата', 'Спосіб', 'Каса або рахунок', 'Документ', 'Сума', ...(canReverse ? ['Дії'] : [])]}>
+                {query.data.map((p) => (
+                  <Table.Tr key={p.id}>
+                    <Table.Td data-label="Дата">{p.day}</Table.Td>
+                    <Table.Td data-label="Спосіб">{p.method === 'bank' ? 'Банк' : 'Готівка'}</Table.Td>
+                    <Table.Td data-label="Каса або рахунок">{p.accountTitle}</Table.Td>
+                    <Table.Td data-label="Документ">{p.reference}</Table.Td>
+                    <Table.Td data-label="Сума" className="register-money">{money(p.amount, 'UAH')}</Table.Td>
+                    {canReverse && (
+                      <Table.Td data-label="Дії">
+                        <Button
+                          size="compact-xs"
+                          variant="subtle"
+                          color="red"
+                          leftSection={<IconRotateClockwise size={13} />}
+                          onClick={() => {
+                            setError('')
+                            setReversing(p)
+                          }}
+                        >
+                          Сторнувати
+                        </Button>
+                      </Table.Td>
+                    )}
+                  </Table.Tr>
+                ))}
+              </Grid>
+          )}
+        </section>
+      </AppEditorModal>
+      <Modal opened={reversing !== null} onClose={() => { if (!busy) { setReversing(null); setError('') } }}
+        title="Сторнувати оплату?" size="sm">
+        <Stack>
+          {reversing && (
+            <Text size="sm">
+              Сторнувати платіж на суму <b>{money(reversing.amount, 'UAH')}</b> від {reversing.day} ({reversing.reference})? Залишок початкового боргу перерахується автоматично.
+            </Text>
+          )}
+          {error && <Alert color="red">{error}</Alert>}
+          <Group justify="end">
+            <Button variant="default" onClick={() => { setReversing(null); setError('') }} disabled={busy}>
+              Скасувати
+            </Button>
+            <Button color="red" loading={busy} onClick={reversePayment}>
+              Сторнувати оплату
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+    </>
   )
 }
 
@@ -221,7 +289,7 @@ export function PartnerOpeningList({ partnerId, refresh, onDialogChange }: {
           ))}
         </Grid>
       )}
-      {history && <OpeningPayments opening={history} close={() => setHistory(null)} />}
+      {history && <OpeningPayments opening={history} close={() => setHistory(null)} onChanged={() => { refresh(); query.reload() }} />}
       {pay && (
         <PaymentForm
           due={query.data?.find((o) => o.id === pay.id)?.due ?? pay.due}

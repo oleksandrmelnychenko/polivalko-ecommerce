@@ -108,13 +108,19 @@ internal sealed class RefundSettlement(
         switch (result.State)
         {
             case ProviderRefundState.Succeeded:
-                if (!await orders.CompleteRefundAsync(refund.OrderId, refund.RefundId, time.GetUtcNow(), ct))
+                await using (var tx = await db.Database.BeginTransactionAsync(ct))
                 {
-                    return false;
+                    await orders.LoadForPaymentUpdateAsync(refund.OrderId, ct);
+                    if (!await orders.CompleteRefundAsync(refund.OrderId, refund.RefundId, time.GetUtcNow(), ct))
+                    {
+                        return false;
+                    }
+
+                    outbox.Enqueue(new FiscalReceiptRequested(refund.OrderId, FiscalTrigger.Refund, refund.RefundId));
+                    await db.SaveChangesAsync(ct);
+                    await tx.CommitAsync(ct);
                 }
 
-                outbox.Enqueue(new FiscalReceiptRequested(refund.OrderId, FiscalTrigger.Refund, refund.RefundId));
-                await db.SaveChangesAsync(ct);
                 logger.LogInformation("Повернення {Amount} за {Order} виконано провайдером", refund.Amount, refund.OrderNumber);
                 return true;
 

@@ -18,6 +18,8 @@ public sealed class OrderRefund
 
     public required string RequestedBy { get; init; }
 
+    public bool ReturnToStock { get; init; } = true;
+
     public DateTimeOffset CreatedAt { get; init; }
 
     public DateTimeOffset? CompletedAt { get; set; }

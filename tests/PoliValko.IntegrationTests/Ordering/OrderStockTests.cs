@@ -1,13 +1,16 @@
 using System.Net;
+using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PoliValko.Catalog.Contracts;
 using PoliValko.Catalog.Domain;
+using PoliValko.Console.Features.Accounting;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Ordering.Contracts;
 using PoliValko.Ordering.Domain;
 using PoliValko.Ordering.Features.Checkout;
 using PoliValko.Ordering.Features.Console.Orders;
+using PoliValko.Payments.Features.Checkout;
 
 namespace PoliValko.IntegrationTests;
 
@@ -59,18 +62,19 @@ public sealed class OrderStockTests(ApiFactory api)
     public async Task Partial_refund_before_shipment_reduces_reservation_so_shipment_deducts_only_remaining()
     {
         var product = await api.AddProductAsync("vse-dlia-polyvu", "Фітинг часткового повернення", 100m, stock: 10);
+        using var client = api.CreateClient();
         var body = CheckoutApiTests.Order(product.Id, 3, "300.00", CheckoutApiTests.UniquePhone()) with
         {
             Payment = new PaymentRequest(PaymentCodes.Card),
         };
-        var created = await (await new CheckoutApiTests(api).PostOrderAsync(body, Guid.NewGuid().ToString()))
+        var created = await (await client.PostWithKeyAsync("/api/v1/orders", body))
             .ReadAsync<OrderCreatedDto>(HttpStatusCode.Created);
-        await api.WithDbAsync(async db =>
-        {
-            var entity = await db.Set<Order>().SingleAsync(o => o.Number == created.Number, Ct);
-            entity.MarkPaid(DateTimeOffset.UtcNow, "Тест");
-            return await db.SaveChangesAsync(Ct);
-        });
+        var start = await (await client.PostWithKeyAsync($"/api/v1/orders/{created.Number}/payments", new StartPaymentRequest(created.AccessToken)))
+            .ReadAsync<StartPaymentDto>();
+        var invoiceId = start.PageUrl[(start.PageUrl.LastIndexOf('/') + 1)..];
+        (await client.PostAsJsonAsync($"/api/v1/payments/sandbox/{invoiceId}/complete", new CompleteSandboxPaymentRequest("success", null), Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        await api.ProcessOutboxAsync();
         (await StockAsync(product.Id)).ShouldBe((10m, 3m));
 
         using var admin = await Staff.AdminAsync(api);
@@ -79,10 +83,31 @@ public sealed class OrderStockTests(ApiFactory api)
                 new CreateRefundRequest([new RefundLineRequest(product.Id, 1)], "Зменшили кількість до відправки")))
             .ReadAsync<ConsoleOrderDto>();
 
+        // A card refund waits for provider confirmation before releasing reserved stock.
+        (await StockAsync(product.Id)).ShouldBe((10m, 3m));
+
+        await api.ProcessOutboxAsync();
         (await StockAsync(product.Id)).ShouldBe((10m, 2m));
 
         await MoveAsync(created.Number, OrderStatus.Shipped);
         (await StockAsync(product.Id)).ShouldBe((8m, 0m));
+
+        // Card refund after shipment with ReturnToStock = false must persist false and not restock on settlement.
+        await (await admin.PostWithKeyAsync(
+                $"/api/v1/console/orders/{created.Number}/refunds",
+                new CreateRefundRequest([new RefundLineRequest(product.Id, 1)], "Пошкоджено при доставці", ReturnToStock: false)))
+            .ReadAsync<ConsoleOrderDto>();
+        await api.ProcessOutboxAsync();
+        (await StockAsync(product.Id)).ShouldBe((8m, 0m));
+
+        // Card refund after shipment with ReturnToStock = true restores stock once provider confirms.
+        await (await admin.PostWithKeyAsync(
+                $"/api/v1/console/orders/{created.Number}/refunds",
+                new CreateRefundRequest([new RefundLineRequest(product.Id, 1)], "Повернули цілим", ReturnToStock: true)))
+            .ReadAsync<ConsoleOrderDto>();
+        (await StockAsync(product.Id)).ShouldBe((8m, 0m));
+        await api.ProcessOutboxAsync();
+        (await StockAsync(product.Id)).ShouldBe((9m, 0m));
     }
 
     [Fact]
@@ -169,6 +194,70 @@ public sealed class OrderStockTests(ApiFactory api)
             WHERE org_id = {orgId} AND store_id = {storeId} AND product_id = {product.Id}
             """).SingleAsync(Ct));
         warehouseQty.ShouldBe(5m);
+
+        var movements = await admin.ReadAsync<RegisterPage<WarehouseMovement>>(
+            $"/api/v1/console/accounting/warehouse/{product.Id}/movements?org={orgId}&store={storeId}");
+        movements.Items.ShouldContain(m => m.Kind == "order" && m.Reference == order.Number && m.Change == -2m && m.Balance == 3m);
+        movements.Items.ShouldContain(m => m.Kind == "orderReturn" && m.Reference == order.Number && m.Change == 2m && m.Balance == 5m);
+    }
+
+    [Fact]
+    public async Task Cancelling_a_shipped_order_with_return_to_stock_false_keeps_stock_written_off()
+    {
+        var product = await api.AddProductAsync("vse-dlia-polyvu", "Товар без повернення на склад", 100m, stock: 10);
+        var order = await TestOrders.PlaceAsync(api, product.Id, 2, 100m, CheckoutApiTests.UniquePhone());
+        await MoveAsync(order.Number, OrderStatus.Confirmed, OrderStatus.Shipped);
+        (await StockAsync(product.Id)).ShouldBe((8m, 0m));
+
+        using var admin = await Staff.AdminAsync(api);
+        (await admin.PostJsonAsync(
+                $"/api/v1/console/orders/{order.Number}/status",
+                new ChangeOrderStatusRequest(OrderStatus.Cancelled, "Посилку втрачено перевізником", ReturnToStock: false)))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await StockAsync(product.Id)).ShouldBe((8m, 0m));
+    }
+
+    [Fact]
+    public async Task Unlinked_order_refund_never_adds_phantom_stock_to_a_later_linked_warehouse()
+    {
+        var product = await api.AddProductAsync("vse-dlia-polyvu", "Товар прив'язаний після відвантаження", 100m, stock: 10);
+        var order = await TestOrders.PlaceAsync(api, product.Id, 2, 100m, CheckoutApiTests.UniquePhone());
+        await MoveAsync(order.Number, OrderStatus.Confirmed, OrderStatus.Shipped, OrderStatus.Completed);
+        (await StockAsync(product.Id)).ShouldBe((8m, 0m));
+
+        var orgId = Guid.NewGuid();
+        var storeId = Guid.NewGuid();
+        var account = $"late-link-{Guid.NewGuid():N}";
+        await api.WithDbAsync(async db =>
+        {
+            await db.Database.ExecuteSqlAsync($"""
+                INSERT INTO accounting.references(id, source_account, kind, source_id, title)
+                VALUES ({orgId}, {account}, 'organization', 'org-1', 'Пізній ФОП'),
+                       ({storeId}, {account}, 'store', 'store-1', 'Пізній склад');
+                INSERT INTO accounting.warehouse_stock(org_id, store_id, product_id, quantity)
+                VALUES ({orgId}, {storeId}, {product.Id}, 10);
+                """, Ct);
+            return 0;
+        });
+        await api.WithScopeAsync(async sp =>
+        {
+            (await sp.GetRequiredService<ICatalogWarehouseSource>().ConnectBulkAsync(orgId, storeId, overwriteExisting: false, Ct))
+                .Connected.ShouldBe(1);
+            return 0;
+        });
+
+        using var admin = await Staff.AdminAsync(api);
+        await (await admin.PostWithKeyAsync(
+                $"/api/v1/console/orders/{order.Number}/refunds",
+                new CreateRefundRequest([new RefundLineRequest(product.Id, 2)], "Повернення старого замовлення", ReturnToStock: true)))
+            .ReadAsync<ConsoleOrderDto>();
+
+        var warehouseQty = await api.WithDbAsync(db => db.Database.SqlQuery<decimal>($"""
+            SELECT quantity AS "Value" FROM accounting.warehouse_stock
+            WHERE org_id = {orgId} AND store_id = {storeId} AND product_id = {product.Id}
+            """).SingleAsync(Ct));
+        warehouseQty.ShouldBe(10m);
+        (await StockAsync(product.Id)).ShouldBe((10m, 0m));
     }
 
     [Fact]

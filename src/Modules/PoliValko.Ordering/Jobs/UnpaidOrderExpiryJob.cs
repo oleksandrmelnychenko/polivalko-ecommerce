@@ -95,7 +95,7 @@ internal sealed class UnpaidOrderExpiryJob(IServiceScopeFactory scopes, TimeProv
                 if (reason is not null)
                 {
                     order.ChangeStatus(OrderStatus.Cancelled, now, OrderActors.Schedule, reason);
-                    await OrderCancellationEffects.ApplyAsync(order, outbox, reservations, orderSync.IsEnabled, ct);
+                    await OrderCancellationEffects.ApplyAsync(order, outbox, reservations, await orderSync.IsEnabledAsync(ct), ct);
                     await db.SaveChangesAsync(ct);
                     await transaction.CommitAsync(ct);
                     cancelled++;

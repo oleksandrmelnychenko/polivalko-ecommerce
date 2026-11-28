@@ -72,7 +72,7 @@ public sealed record ConsoleOrderDto(
     string? RecipientPhone = null,
     bool NoCallback = false);
 
-public sealed record ChangeOrderStatusRequest(OrderStatus? Status, string? Reason);
+public sealed record ChangeOrderStatusRequest(OrderStatus? Status, string? Reason, bool ReturnToStock = true);
 
 public sealed record UpdateOrderNoteRequest(string? Note);
 

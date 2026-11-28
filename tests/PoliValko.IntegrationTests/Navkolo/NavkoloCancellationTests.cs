@@ -10,6 +10,7 @@ using PoliValko.Identity.Features.Auth;
 using PoliValko.Infrastructure.Outbox;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Security;
+using PoliValko.Navkolo.Configuration;
 using PoliValko.Navkolo.Contracts;
 using PoliValko.Navkolo.Integrations.NavkoloApi;
 using PoliValko.Ordering.Contracts;
@@ -35,10 +36,10 @@ public sealed class NavkoloCancellationTests(ApiFactory api)
         return new(id, product.Id, created.Number);
     }
 
-    private WebApplicationFactory<Program> Host(Provider provider, bool orderSyncEnabled = true) => api.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
+    private WebApplicationFactory<Program> Host(Provider provider, bool orderSyncEnabled = true, string mode = "Stub") => api.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
     {
         services.RemoveAll<INavkoloClient>(); services.AddSingleton<INavkoloClient>(provider);
-        services.RemoveAll<INavkoloSettings>(); services.AddSingleton<INavkoloSettings>(new TestSettings(orderSyncEnabled));
+        services.RemoveAll<INavkoloSettings>(); services.AddSingleton<INavkoloSettings>(new TestSettings(orderSyncEnabled, mode));
     }));
     private static async Task Export(WebApplicationFactory<Program> host, TestOrder order)
     {
@@ -200,10 +201,31 @@ public sealed class NavkoloCancellationTests(ApiFactory api)
         (await Reserved(order)).ShouldBe(0);
     }
 
-    private sealed class TestSettings(bool orderSyncEnabled) : INavkoloSettings
+    [Fact]
+    public async Task Disabled_mode_releases_exported_order_reservation_locally_on_cancellation()
+    {
+        var order = await CreateAsync();
+        var provider = new Provider();
+        await using var enabledHost = Host(provider, orderSyncEnabled: true, mode: "Stub");
+        await using var disabledModeHost = Host(provider, orderSyncEnabled: true, mode: NavkoloModes.Disabled);
+        await Export(enabledHost, order);
+        (await Reserved(order)).ShouldBe(2);
+
+        using var admin = disabledModeHost.CreateClient();
+        (await admin.PostAsJsonAsync("/api/v1/console/auth/login", new LoginRequest(ApiFactory.AdminEmail, ApiFactory.TestPassword), Ct))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        var csrf = await admin.GetFromJsonAsync<CsrfTokenDto>("/api/v1/console/auth/csrf", Ct);
+        admin.DefaultRequestHeaders.Add("X-CSRF-TOKEN", csrf!.Token);
+
+        (await admin.PostJsonAsync($"/api/v1/console/orders/{order.Number}/status", new ChangeOrderStatusRequest(OrderStatus.Cancelled, "Режим Disabled")))
+            .StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await Reserved(order)).ShouldBe(0);
+    }
+
+    private sealed class TestSettings(bool orderSyncEnabled, string mode = "Stub") : INavkoloSettings
     {
         public bool OrderSyncEnabled { get; } = orderSyncEnabled;
-        public Task<string> GetModeAsync(CancellationToken ct) => Task.FromResult("Stub");
+        public Task<string> GetModeAsync(CancellationToken ct) => Task.FromResult(mode);
     }
     private sealed class Provider : INavkoloClient
     {

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PoliValko.Catalog.Contracts;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Ordering.Contracts;
 using PoliValko.Ordering.Domain;
@@ -7,7 +8,7 @@ using PoliValko.Ordering.Features.Console.Orders;
 
 namespace PoliValko.Ordering.Features.PaymentState;
 
-internal sealed class OrderPayments(PoliValkoDbContext db) : IOrderPayments
+internal sealed class OrderPayments(PoliValkoDbContext db, ICatalogReservations reservations) : IOrderPayments
 {
     public async Task<PayableOrder?> FindPayableAsync(string number, string? token, CancellationToken ct)
     {
@@ -108,7 +109,11 @@ internal sealed class OrderPayments(PoliValkoDbContext db) : IOrderPayments
 
     public async Task<bool> CompleteRefundAsync(Guid orderId, Guid refundId, DateTimeOffset at, CancellationToken ct)
     {
-        var order = await WithRefundsAsync(orderId, ct);
+        var order = await db.Set<Order>()
+            .Include(o => o.Items)
+            .Include(o => o.Refunds).ThenInclude(r => r.Lines)
+            .AsSplitQuery()
+            .SingleAsync(o => o.Id == orderId, ct);
         var refund = order.Refunds.Single(r => r.Id == refundId);
         if (refund.Status != RefundStatus.Pending)
         {
@@ -116,6 +121,16 @@ internal sealed class OrderPayments(PoliValkoDbContext db) : IOrderPayments
         }
 
         order.ApplySucceededRefund(refund, at);
+        var items = order.Items.ToDictionary(i => i.Id, i => i.ProductId);
+        var quantities = refund.Lines
+            .Where(l => items.ContainsKey(l.OrderItemId) && l.Quantity > 0)
+            .GroupBy(l => items[l.OrderItemId])
+            .ToDictionary(g => g.Key, g => g.Sum(l => l.Quantity));
+        if (quantities.Count > 0)
+        {
+            await reservations.ApplyRefundAsync(order.Id, quantities, refund.ReturnToStock, ct);
+        }
+
         return true;
     }
 
@@ -164,6 +179,7 @@ internal sealed class OrderPayments(PoliValkoDbContext db) : IOrderPayments
             Amount = value,
             Reason = $"Кошти повернуто поза сайтом: провайдер {provider}, кабінет мерчанта або банк",
             RequestedBy = provider,
+            ReturnToStock = false,
             CreatedAt = at,
             Lines = remaining.Select(r => new OrderRefundLine
             {
@@ -176,6 +192,16 @@ internal sealed class OrderPayments(PoliValkoDbContext db) : IOrderPayments
         };
         order.Refunds.Add(refund);
         order.ApplySucceededRefund(refund, at);
+        // Release unshipped reservations without adding phantom stock for already-shipped outside reversals/chargebacks.
+        var quantities = remaining
+            .Where(r => r.Quantity > 0)
+            .GroupBy(r => r.Item.ProductId)
+            .ToDictionary(g => g.Key, g => g.Sum(r => r.Quantity));
+        if (quantities.Count > 0)
+        {
+            await reservations.ApplyRefundAsync(order.Id, quantities, returnToStock: false, ct);
+        }
+
         return refundId;
     }
 

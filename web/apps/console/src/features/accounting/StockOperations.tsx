@@ -314,7 +314,10 @@ export function StockOperationActions({
     <Alert color="orange" title="Спершу введіть початковий залишок">
       {unopened.length === 1
         ? <>Товар «{unopened[0].title}» ще не має руху</>
-        : <>Товари {unopened.map((l) => '«' + l.title + '»').join(', ')} ще не мають руху</>} на складі {state.store}. Після
+        : <>Товари {unopened.map((l) => '«' + l.title + '»').join(', ')} ще не мають руху</>}{' '}
+      {kind === 'transfer' && state.targetStore
+        ? `на складі ${state.store} або ${state.targetStore}`
+        : `на складі ${state.store}`}. Після
       проведення ввести для {unopened.length === 1 ? 'нього' : 'них'} початковий залишок
       уже не вийде, і склад покаже лише кількість із цієї операції. Якщо товар уже лежав на полиці, спершу введіть
       початковий залишок у «Склад → Залишки» або проведіть перерахунок.

@@ -103,8 +103,13 @@ internal sealed class IssueReceiptOnRequest(
             return true;
         }
 
-        var expected = order.PaymentMethod == PaymentMethod.Card ? ReceiptMoment.Payment : ReceiptMoment.Completion;
-        if (sell is null && moment != expected)
+        var saleExpected = moment switch
+        {
+            ReceiptMoment.Payment => order.PaymentMethod == PaymentMethod.Card,
+            ReceiptMoment.Completion => order.Status == OrderStatus.Completed,
+            _ => false,
+        };
+        if (sell is null && !saleExpected)
         {
             return false;
         }

@@ -2710,6 +2710,10 @@ namespace PoliValko.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("requested_by");
 
+                    b.Property<bool>("ReturnToStock")
+                        .HasColumnType("boolean")
+                        .HasColumnName("return_to_stock");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)

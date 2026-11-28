@@ -2,5 +2,5 @@ namespace PoliValko.Ordering.Contracts;
 
 public interface IExternalOrderSyncStatus
 {
-    bool IsEnabled { get; }
+    Task<bool> IsEnabledAsync(CancellationToken ct);
 }

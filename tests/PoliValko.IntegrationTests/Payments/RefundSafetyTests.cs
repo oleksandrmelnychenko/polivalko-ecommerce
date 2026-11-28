@@ -128,6 +128,9 @@ public sealed class RefundSafetyTests(ApiFactory api)
         refund.Status.ShouldBe(RefundStatus.Failed);
         refund.Error.ShouldBe("Банк відхилив повернення");
         (await api.WithDbAsync(db => db.Set<Order>().Where(o => o.Id == orderId).Select(o => o.RefundedAmount).SingleAsync(Ct))).ShouldBe(0m);
+        var productId = await api.WithDbAsync(db => db.Set<Order>().Where(o => o.Id == orderId).SelectMany(o => o.Items).Select(i => i.ProductId).SingleAsync(Ct));
+        var stock = await api.WithDbAsync(db => db.Set<ProductStock>().AsNoTracking().SingleAsync(s => s.ProductId == productId, Ct));
+        (stock.Quantity, stock.ReservedQuantity).ShouldBe((5m, 1m));
         (await AlertsAsync(orderId)).ShouldContain(a => a.Contains("не виконано"));
     }
 

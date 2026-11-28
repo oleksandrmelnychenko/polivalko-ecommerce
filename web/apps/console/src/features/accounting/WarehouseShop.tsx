@@ -114,6 +114,7 @@ export function MovementHistory({ row, close, onRefresh }: { row: WarehouseRow; 
     out: 'Видаткова накладна',
     customerReturn: 'Повернення від покупця',
     order: 'Відвантаження замовлення',
+    orderReturn: 'Повернення за замовленням',
     storno: 'Сторно',
     ...stockOperationNames,
   }
@@ -143,14 +144,14 @@ export function MovementHistory({ row, close, onRefresh }: { row: WarehouseRow; 
               <Grid columns={['Дата документа', 'Операція', 'Документ', 'Зміна', 'Після руху']}>
                 {query.data.items.map((m) => {
                   const url =
-                    m.kind === 'order' && m.reference
+                    (m.kind === 'order' || m.kind === 'orderReturn') && m.reference
                       ? '/sales/orders/' + encodeURIComponent(m.reference)
                       : null
                   return (
                     <Table.Tr key={m.kind + m.id}>
                       <Table.Td data-label="Дата">{m.day}</Table.Td>
                       <Table.Td data-label="Операція">{kinds[m.kind] ?? m.kind}</Table.Td>
-                      <Table.Td data-label="Документ">{m.kind === 'in' || m.kind === 'out' || m.kind === 'customerReturn' || m.kind in stockOperationNames ? <DocumentLink id={m.id}>{m.reference || m.id}</DocumentLink> : url ? <Link to={url}>{m.reference || m.id}</Link> : m.reference || '—'}</Table.Td>
+                      <Table.Td data-label="Документ">{m.kind === 'in' || m.kind === 'out' || m.kind === 'customerReturn' || m.kind === 'storno' || m.kind in stockOperationNames ? <DocumentLink id={m.id}>{m.reference || m.id}</DocumentLink> : url ? <Link to={url}>{m.reference || m.id}</Link> : m.reference || '—'}</Table.Td>
                       <Table.Td data-label="Зміна"><span className="wh-change" data-direction={Math.sign(m.change)}>
                         {m.change > 0 ? '+' : ''}
                         {count(m.change)}</span>

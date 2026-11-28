@@ -7,7 +7,9 @@ export type OrdersQuery = NonNullable<paths['/api/v1/console/orders']['get']['pa
 export type OrderCountsQuery = NonNullable<paths['/api/v1/console/orders/counts']['get']['parameters']['query']>
 export type OrderRow = components['schemas']['ConsoleOrderListItemDto']
 export type OrderCounts = components['schemas']['ConsoleOrderCountsDto']
-export type ChangeOrderStatusRequest = components['schemas']['ChangeOrderStatusRequest']
+export type ChangeOrderStatusRequest = Omit<components['schemas']['ChangeOrderStatusRequest'], 'returnToStock'> & {
+  returnToStock?: boolean
+}
 
 export function getOrders(query: OrdersQuery, signal?: AbortSignal) {
   return api.GET('/api/v1/console/orders', { params: { query }, signal })
@@ -18,7 +20,11 @@ export function getOrderCounts(query: OrderCountsQuery) {
 }
 
 export function changeOrderStatus(headers: CsrfHeaders, number: string, body: ChangeOrderStatusRequest) {
-  return api.POST('/api/v1/console/orders/{number}/status', { params: { path: { number } }, headers, body })
+  return api.POST('/api/v1/console/orders/{number}/status', {
+    params: { path: { number } },
+    headers,
+    body: { ...body, returnToStock: body.returnToStock ?? true },
+  })
 }
 
 export function exportOrders(search: URLSearchParams) {
