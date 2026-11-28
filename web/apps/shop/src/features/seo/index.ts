@@ -3,6 +3,7 @@ export {
   aboutPageJsonLd,
   articleJsonLd,
   breadcrumbJsonLd,
+  computeOfferValidFrom,
   computePriceValidUntil,
   contactPageJsonLd,
   faqPageJsonLd,

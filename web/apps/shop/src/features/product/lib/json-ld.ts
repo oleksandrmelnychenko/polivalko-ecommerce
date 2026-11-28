@@ -1,6 +1,7 @@
 import type { ProductDetails } from "@polivalko/shared/api/types";
 import {
   absoluteUrl,
+  computeOfferValidFrom,
   computePriceValidUntil,
   merchantReturnPolicy,
   organizationId,
@@ -9,6 +10,7 @@ import {
 } from "@/features/seo";
 import { hasPrice } from "@/shared/lib/price";
 import { googleProductCategory } from "@/shared/lib/google-product-taxonomy";
+import { extractProductModel, resolveProductBrand } from "@/shared/lib/product-brand";
 import { markupDescription } from "./description";
 import { gtinFromAttributes } from "@polivalko/shared/lib/gtin";
 
@@ -29,6 +31,7 @@ export type ProductReviewInput = {
 };
 
 export type ProductJsonLdOptions = {
+  validFrom?: string;
   priceValidUntil?: string;
   referenceDate?: Date | string;
   aggregateRating?: ProductRatingInput | null;
@@ -86,6 +89,8 @@ export function productJsonLd(product: ProductDetails, options?: ProductJsonLdOp
   const url = absoluteUrl(`/product/${product.slug}`);
   const description = markupDescription(product);
   const gtin = gtinFromAttributes(product.attributes);
+  const mpn = extractProductModel(product.attributes);
+  const brand = resolveProductBrand(product);
   const aggregateRating = buildAggregateRating(options?.aggregateRating);
   const review = buildReviews(options?.reviews);
 
@@ -97,10 +102,11 @@ export function productJsonLd(product: ProductDetails, options?: ProductJsonLdOp
     name: product.name,
     sku: product.sku,
     ...(gtin ? { [gtin.property]: gtin.value } : {}),
+    ...(mpn ? { mpn } : {}),
     description,
     image: product.images.length > 0 ? product.images.map((image) => absoluteUrl(image.url)) : undefined,
     category: googleProductCategory(product.category),
-    brand: product.brand ? { "@type": "Brand", name: product.brand } : undefined,
+    brand: brand ? { "@type": "Brand", name: brand } : undefined,
     additionalProperty:
       product.attributes.length > 0
         ? product.attributes.map((attribute) => ({ "@type": "PropertyValue", name: attribute.name, value: attribute.value }))
@@ -115,6 +121,7 @@ export function productJsonLd(product: ProductDetails, options?: ProductJsonLdOp
           url,
           price: product.price.value,
           priceCurrency: product.price.currency,
+          validFrom: options?.validFrom ?? computeOfferValidFrom(options?.referenceDate),
           priceValidUntil: options?.priceValidUntil ?? computePriceValidUntil(options?.referenceDate),
           availability: product.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
           itemCondition: "https://schema.org/NewCondition",

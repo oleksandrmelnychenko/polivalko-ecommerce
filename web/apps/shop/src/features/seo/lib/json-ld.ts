@@ -106,6 +106,12 @@ export function isConcreteSocialProfileUrl(raw: string): boolean {
   }
 }
 
+export function computeOfferValidFrom(referenceDate: Date | string = new Date()): string {
+  const base = typeof referenceDate === "string" ? new Date(referenceDate) : referenceDate;
+  const valid = Number.isNaN(base.getTime()) ? new Date() : new Date(base.getTime());
+  return valid.toISOString().slice(0, 10);
+}
+
 export function computePriceValidUntil(referenceDate: Date | string = new Date(), days = PRICE_VALID_DAYS): string {
   const base = typeof referenceDate === "string" ? new Date(referenceDate) : referenceDate;
   const valid = Number.isNaN(base.getTime()) ? new Date() : new Date(base.getTime());

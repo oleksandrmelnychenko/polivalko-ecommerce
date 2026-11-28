@@ -40,14 +40,26 @@ test("product structured data has no Offer when the price is 0", () => {
     absoluteUrl: (path) => `https://shop.test${path}`,
     organizationId: () => "https://shop.test/#organization",
     SITE_NAME: "Shop",
+    computeOfferValidFrom: () => "2026-11-26",
     computePriceValidUntil: () => "2027-02-24",
     productShippingDetails: (currency = "UAH") => [{ "@type": "OfferShippingDetails", shippingRate: { "@type": "MonetaryAmount", value: "0", currency } }],
     merchantReturnPolicy: () => ({ "@type": "MerchantReturnPolicy", "@id": "https://shop.test/#return-policy", applicableCountry: "UA", merchantReturnDays: 14 }),
   };
   const gtin = load("../../../packages/shared/lib/gtin.ts", () => ({}));
   const taxonomy = load("../src/shared/lib/google-product-taxonomy.ts", () => ({}));
+  const productBrand = loadShop("shared/lib/product-brand.ts");
   const { productJsonLd } = load("../src/features/product/lib/json-ld.ts", (name) =>
-    name === "@/features/seo" ? seo : name === "@/shared/lib/price" ? price : name === "@/shared/lib/google-product-taxonomy" ? taxonomy : name === "@polivalko/shared/lib/gtin" ? gtin : { markupDescription: () => undefined });
+    name === "@/features/seo"
+      ? seo
+      : name === "@/shared/lib/price"
+        ? price
+        : name === "@/shared/lib/google-product-taxonomy"
+          ? taxonomy
+          : name === "@/shared/lib/product-brand"
+            ? productBrand
+            : name === "@polivalko/shared/lib/gtin"
+              ? gtin
+              : { markupDescription: () => undefined });
   const product = {
     slug: "yalynka", name: "Ялинка", sku: "12254", seoDescription: null, descriptionHtml: null, images: [], brand: null, attributes: [],
     category: { name: "Новий рік" }, inStock: false, price: money("0.00"),

@@ -182,8 +182,23 @@ test("productJsonLd enriches Offer with shippingDetails, hasMerchantReturnPolicy
     assert.equal(offer.availability, "https://schema.org/InStock");
     assert.equal(offer.price, "2499.00");
     assert.equal(offer.priceCurrency, "UAH");
+    assert.equal(offer.validFrom, "2026-11-26");
     assert.equal(offer.priceValidUntil, "2027-02-24");
     assert.equal(offer.seller["@id"], organizationId());
+
+    // Unbranded product whose brand appears in description or MPN attribute still gets brand & mpn in JSON-LD.
+    const inferred = productJsonLd(
+      {
+        ...sampleProduct,
+        brand: null,
+        name: "Шланг Есо (1/2) 20 м",
+        descriptionHtml: "<p>Садовий шланг REHAU ECO Line.</p>",
+        attributes: [{ name: "Модель виробника", value: "RH-20" }],
+      },
+      { referenceDate: "2026-11-26T00:00:00Z" },
+    );
+    assert.deepEqual(inferred.brand, { "@type": "Brand", name: "REHAU" });
+    assert.equal(inferred.mpn, "RH-20");
 
     assert.equal(offer.hasMerchantReturnPolicy["@type"], "MerchantReturnPolicy");
     assert.equal(offer.hasMerchantReturnPolicy["@id"], returnPolicyId());

@@ -120,7 +120,7 @@ test("an empty list is an error, not an empty feed", () => {
   assert.throws(() => merchantFeedXml([], shop));
 });
 
-test("smoking tobacco items are excluded from the Merchant Center feed while garden tobacco dust stays eligible", () => {
+test("smoking tobacco and GMC-flagged Bi-58 ampoules are excluded from the feed while garden tobacco dust stays eligible", () => {
   const tobaccoSeeds = {
     ...hose,
     id: "01a1fea5-0000-7000-8000-000000010546",
@@ -128,6 +128,14 @@ test("smoking tobacco items are excluded from the Merchant Center feed while gar
     slug: "tiutiun-kurylnyi-havana-seedera-0-05-h-10546",
     name: "Тютюн Курильний Гавана SeedEra, 0,05 г",
     categoryPath: ["Все для рослин", "Насіння"],
+  };
+  const bi58 = {
+    ...hose,
+    id: "01a1fea5-0000-7000-8000-000000008431",
+    sku: "8431",
+    slug: "bi-58-10ml-8431",
+    name: "Бі-58 10 мл",
+    categoryPath: ["Все для рослин", "Засоби захисту рослин", "Інсектициди й акарициди"],
   };
   const tobaccoDust = {
     ...hose,
@@ -139,11 +147,13 @@ test("smoking tobacco items are excluded from the Merchant Center feed while gar
   };
 
   assert.equal(isMerchantFeedEligible(tobaccoSeeds), false);
+  assert.equal(isMerchantFeedEligible(bi58), false);
   assert.equal(isMerchantFeedEligible(tobaccoDust), true);
 
-  const xml = merchantFeedXml([hose, tobaccoSeeds, tobaccoDust], shop);
+  const xml = merchantFeedXml([hose, tobaccoSeeds, bi58, tobaccoDust], shop);
   assert.ok(xml.includes("<g:id>8326</g:id>"));
   assert.ok(!xml.includes("<g:id>10546</g:id>"));
+  assert.ok(!xml.includes("<g:id>8431</g:id>"));
   assert.ok(xml.includes("<g:id>11944</g:id>"));
   assert.ok(xml.includes("<g:google_product_category>Home &amp; Garden &gt; Lawn &amp; Garden &gt; Gardening &gt; Disease Control</g:google_product_category>"));
 });

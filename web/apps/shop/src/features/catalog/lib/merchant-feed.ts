@@ -3,50 +3,23 @@ import { plainText } from "@polivalko/shared/lib/format";
 import { gtinFromAttributes } from "@polivalko/shared/lib/gtin";
 import { clip } from "@/shared/lib/clip";
 import { googleProductCategoryFromPath } from "@/shared/lib/google-product-taxonomy";
+import {
+  DIRECT_BRAND_ALIASES,
+  extractBrandAttribute,
+  extractProductModel,
+  HOUSE_BRAND_TITLE_PATTERN,
+  matchBrandAliases,
+  PRODUCT_LINE_ALIASES,
+} from "@/shared/lib/product-brand";
 
 const TITLE_MAX = 150;
 const DESCRIPTION_MAX = 5000;
 const EXTRA_IMAGES = 10;
-const MODEL_ATTRIBUTE = "модель виробника";
-const BRAND_ATTRIBUTES = new Set(["бренд", "виробник", "торгова марка"]);
 const MIN_INFERRED_BRAND_LENGTH = 3;
 // Generic product-line names that exist as DB brands but should not win over manufacturer names in descriptions.
 const SKIP_DESCRIPTION_BRANDS = new Set(["супер добриво"]);
 
 type BrandMatcher = { name: string; folded: string; pattern: RegExp };
-type AliasRule = { brand: string; patterns: readonly RegExp[] };
-
-// Verified direct brand/manufacturer aliases present in catalog titles and descriptions.
-const DIRECT_BRAND_ALIASES: readonly AliasRule[] = [
-  { brand: "Сімейний Сад", patterns: [/(?:^|[^\p{L}\d])сімейний\s+сад(?=$|[^\p{L}\d])/iu] },
-  { brand: "Proventus", patterns: [/(?:^|[^\p{L}\d])провентус(?=$|[^\p{L}\d])/iu] },
-  { brand: "Lamela", patterns: [/(?:^|[^\p{L}\d])лмл(?=$|[^\p{L}\d])/iu] },
-  { brand: "Fiskars", patterns: [/(?:^|[^\p{L}\d])fiskars(?:xpert)?(?=$|[^\p{L}\d])/iu] },
-  { brand: "REHAU", patterns: [/(?:^|[^\p{L}\d])rehau(?=$|[^\p{L}\d])/iu] },
-  { brand: "DOLONI", patterns: [/(?:^|[^\p{L}\d])(?:doloni|долоні)(?=$|[^\p{L}\d])/iu] },
-  { brand: "ММ-Пласт", patterns: [/(?:^|[^\p{L}\d])мм-?пласт(?=$|[^\p{L}\d])/iu] },
-  { brand: "Hilfmann", patterns: [/(?:^|[^\p{L}\d])hilfmann?(?=$|[^\p{L}\d])/iu] },
-  { brand: "Water World Window", patterns: [/(?:^|[^\p{L}\d])water\s+world\s+window(?=$|[^\p{L}\d])/iu] },
-  { brand: "DLF", patterns: [/(?:^|[^\p{L}\d])dlf(?:\s+turfline)?(?=$|[^\p{L}\d])/iu] },
-  { brand: "Siarkopol", patterns: [/(?:^|[^\p{L}\d])siarkopol(?=$|[^\p{L}\d])/iu] },
-  { brand: "Bonomi", patterns: [/(?:^|[^\p{L}\d])bonomi(?=$|[^\p{L}\d])/iu] },
-  { brand: "БТУ-Центр", patterns: [/(?:^|[^\p{L}\d])біофренд(?=$|[^\p{L}\d])/iu] },
-  { brand: "Кіссон", patterns: [/(?:^|[^\p{L}\d])флорін(?=$|[^\p{L}\d])/iu] },
-];
-
-// Own-brand title marker for house-packed items (checked in title only so store promo copy in descriptions never matches).
-const HOUSE_BRAND_TITLE_PATTERN = /(?:^|[^\p{L}\d])poli-?valko(?=$|[^\p{L}\d])/iu;
-
-// Registered agrochemical/fertilizer product lines that map to a single manufacturer.
-// Applied only to the matching item and never propagated over Ukrainian repacker GTIN prefixes.
-const PRODUCT_LINE_ALIASES: readonly AliasRule[] = [
-  { brand: "Yara", patterns: [/(?:^|[^\p{L}\d])(?:яраміла|яравера|yaramila|yaravera)(?=$|[^\p{L}\d])/iu] },
-  { brand: "Protect Garden", patterns: [/(?:^|[^\p{L}\d])(?:магнікур|прованто|блу\s+бордо)(?=$|[^\p{L}\d])/iu] },
-  { brand: "Syngenta", patterns: [/(?:^|[^\p{L}\d])(?:ізабіон|хорус|міравіс|ураган\s+форте)(?=$|[^\p{L}\d])/iu] },
-  { brand: "Valagro", patterns: [/(?:^|[^\p{L}\d])(?:брексил|радіфарм|плантафол|мегафол|кендал)(?=$|[^\p{L}\d])/iu] },
-  { brand: "Bayer", patterns: [/(?:^|[^\p{L}\d])(?:превікур|фалькон)(?=$|[^\p{L}\d])/iu] },
-  { brand: "BASF", patterns: [/(?:^|[^\p{L}\d])(?:сігнум|бі-58)(?=$|[^\p{L}\d])/iu] },
-];
 
 function foldText(value: string): string {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -72,11 +45,6 @@ function buildBrandMatchers(items: readonly MerchantFeedItem[]): BrandMatcher[] 
         pattern: new RegExp(`(?:^|[^\\p{L}\\d])${escapeRegExp(folded)}(?=$|[^\\p{L}\\d])`, "iu"),
       };
     });
-}
-
-function matchAliases(rules: readonly AliasRule[], text: string): string | undefined {
-  if (!text) return undefined;
-  return rules.find((rule) => rule.patterns.some((pattern) => pattern.test(text)))?.brand;
 }
 
 /**
@@ -110,9 +78,7 @@ function resolveBrands(items: readonly MerchantFeedItem[]): Map<string, string> 
       continue;
     }
 
-    const fromAttribute = item.attributes
-      .find((attribute) => BRAND_ATTRIBUTES.has(attribute.name.trim().toLowerCase()))
-      ?.value.trim();
+    const fromAttribute = extractBrandAttribute(item.attributes);
     if (fromAttribute) {
       directBrands.set(item.id, fromAttribute);
       resolved.set(item.id, fromAttribute);
@@ -125,9 +91,9 @@ function resolveBrands(items: readonly MerchantFeedItem[]): Map<string, string> 
     const foldedDescription = foldText(description);
 
     const direct =
-      matchAliases(DIRECT_BRAND_ALIASES, title) ??
+      matchBrandAliases(DIRECT_BRAND_ALIASES, title) ??
       matchers.find((matcher) => matcher.pattern.test(foldedTitle))?.name ??
-      matchAliases(DIRECT_BRAND_ALIASES, description) ??
+      matchBrandAliases(DIRECT_BRAND_ALIASES, description) ??
       matchers.find((matcher) => !SKIP_DESCRIPTION_BRANDS.has(matcher.folded) && matcher.pattern.test(foldedDescription))?.name;
     if (direct) {
       directBrands.set(item.id, direct);
@@ -141,8 +107,8 @@ function resolveBrands(items: readonly MerchantFeedItem[]): Map<string, string> 
     }
 
     const fromProductLine =
-      matchAliases(PRODUCT_LINE_ALIASES, title) ??
-      matchAliases(PRODUCT_LINE_ALIASES, description);
+      matchBrandAliases(PRODUCT_LINE_ALIASES, title) ??
+      matchBrandAliases(PRODUCT_LINE_ALIASES, description);
     if (fromProductLine) {
       resolved.set(item.id, fromProductLine);
     }
@@ -179,14 +145,14 @@ function resolveBrands(items: readonly MerchantFeedItem[]): Map<string, string> 
   return resolved;
 }
 
-// Google Merchant Center prohibits tobacco and smoking items (e.g. smoking tobacco seeds),
-// while garden pest-control "тютюновий пил" remains allowed.
-const PROHIBITED_TOBACCO_PATTERN =
-  /(?:^|[^\p{L}])(?:тютюн\s+курильн\p{L}*|курильн\p{L}*\s+тютюн\p{L}*|табак\s+курительн\p{L}*|махорк\p{L}*|сигарет\p{L}*|сигар\p{L}*|кальян\p{L}*|вейп\p{L}*|smoking\s+tobacco)(?=$|[^\p{L}])/iu;
+// Google Merchant Center prohibits tobacco/smoking items (while garden pest-control "тютюновий пил" stays allowed)
+// and also auto-flags glass-ampoule dimethoate "Бі-58" under its prohibited drugs policy.
+const PROHIBITED_GMC_ITEMS_PATTERN =
+  /(?:^|[^\p{L}\d])(?:тютюн\s+курильн\p{L}*|курильн\p{L}*\s+тютюн\p{L}*|табак\s+курительн\p{L}*|махорк\p{L}*|сигарет\p{L}*|сигар\p{L}*|кальян\p{L}*|вейп\p{L}*|smoking\s+tobacco|(?:бі|би|bi)[\s-]?58)(?=$|[^\p{L}\d])/iu;
 
 export function isMerchantFeedEligible(item: Pick<MerchantFeedItem, "name" | "slug">): boolean {
   const text = `${item.name} ${item.slug.replace(/-/g, " ")}`;
-  return !PROHIBITED_TOBACCO_PATTERN.test(text);
+  return !PROHIBITED_GMC_ITEMS_PATTERN.test(text);
 }
 
 export type FeedShop = { url: string; name: string; description: string };
@@ -225,7 +191,7 @@ function itemXml(item: MerchantFeedItem, id: string, shop: FeedShop, brand: stri
   // A description is required; a product without its own text is described by its name.
   const description = clip(plainText(item.descriptionHtml).join(" "), DESCRIPTION_MAX) || title;
   const gtin = gtinFromAttributes(item.attributes)?.value;
-  const model = item.attributes.find((attribute) => attribute.name.trim().toLowerCase() === MODEL_ATTRIBUTE)?.value.trim();
+  const model = extractProductModel(item.attributes);
   const [image, ...more] = item.images;
   return [
     "<item>",
