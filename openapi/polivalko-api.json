@@ -4494,6 +4494,145 @@
         }
       }
     },
+    "/api/v1/console/accounting/warehouse/default-shop-source": {
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ConsoleGetDefaultShopWarehouse",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefaultWarehouseSetting"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ConsoleSetDefaultShopWarehouse",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDefaultWarehouseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/console/accounting/warehouse/initialize-from-catalog": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "operationId": "ConsoleInitializeWarehouseFromCatalog",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitializeWarehouseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogWarehouseInitResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/console/accounting/warehouse/{id}/movements": {
       "get": {
         "tags": [
@@ -16750,6 +16889,35 @@
           }
         }
       },
+      "CatalogWarehouseInitResult": {
+        "required": [
+          "initialized",
+          "connected",
+          "skipped",
+          "conflicts"
+        ],
+        "type": "object",
+        "properties": {
+          "initialized": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "connected": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "skipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "conflicts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "CategoryDto": {
         "required": [
           "id",
@@ -19767,6 +19935,31 @@
           }
         }
       },
+      "DefaultWarehouseSetting": {
+        "required": [
+          "orgId",
+          "storeId",
+          "organization",
+          "store"
+        ],
+        "type": "object",
+        "properties": {
+          "orgId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "storeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organization": {
+            "type": "string"
+          },
+          "store": {
+            "type": "string"
+          }
+        }
+      },
       "DeliveryAddressRequest": {
         "required": [
           "street",
@@ -21108,6 +21301,40 @@
           },
           "status": {
             "type": "string"
+          }
+        }
+      },
+      "InitializeWarehouseRequest": {
+        "required": [
+          "orgId",
+          "storeId",
+          "day",
+          "reference"
+        ],
+        "type": "object",
+        "properties": {
+          "orgId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "storeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "includeZeroStock": {
+            "type": "boolean",
+            "default": false
+          },
+          "setAsDefault": {
+            "type": "boolean",
+            "default": true
           }
         }
       },
@@ -23677,6 +23904,10 @@
         "properties": {
           "revision": {
             "type": "string"
+          },
+          "linkUnlinkedToShop": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -23688,6 +23919,10 @@
         "properties": {
           "revision": {
             "type": "string"
+          },
+          "linkUnlinkedToShop": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -26594,6 +26829,29 @@
           }
         }
       },
+      "SetDefaultWarehouseRequest": {
+        "required": [
+          "orgId",
+          "storeId"
+        ],
+        "type": "object",
+        "properties": {
+          "orgId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "storeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
       "SetProductArchiveRequest": {
         "required": [
           "archived"
@@ -27082,6 +27340,10 @@
           "firstMovement": {
             "type": "boolean",
             "default": false
+          },
+          "unlinkedFromShop": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -27292,6 +27554,10 @@
               "number"
             ],
             "format": "double"
+          },
+          "unlinkedFromShop": {
+            "type": "boolean",
+            "default": false
           }
         }
       },

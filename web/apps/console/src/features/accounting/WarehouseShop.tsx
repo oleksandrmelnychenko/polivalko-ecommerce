@@ -1,5 +1,5 @@
 import { DocumentLink, DocumentOverlayContext } from '@/shared/ui/DocumentLink'
-import { Alert, Button, Checkbox, Group, Select, Stack, Table, Text } from '@mantine/core'
+import { Alert, Button, Checkbox, Group, Select, Stack, Table, Text, TextInput } from '@mantine/core'
 import { useContext, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { components } from '@polivalko/shared/api/schema'
@@ -14,6 +14,9 @@ import { Grid } from './RegisterTable'
 import { remove, save, stockOperationNames, useRegister, type Page, type Ref } from './api'
 
 type BulkWarehouseConnection = { connected: number; skipped: number; conflicts: string[] }
+export type DefaultWarehouseSetting = { orgId: string; storeId: string; organization: string; store: string }
+type CatalogWarehouseInitResult = { initialized: number; connected: number; skipped: number; conflicts: string[] }
+const todayIso = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Kyiv' }).format(new Date())
 
 export type WarehouseRow = components['schemas']['WarehouseBalance']
 type Movement = components['schemas']['WarehouseMovement']
@@ -342,6 +345,246 @@ export function DisconnectShopSourceModal({
         {Boolean(row.reserved) && (
           <Alert color="orange">
             У товару є активний резерв інтернет-замовлень ({count(row.reserved)}). Спочатку завершіть або скасуйте відповідні замовлення.
+          </Alert>
+        )}
+        {error && <Alert color="red" role="alert">{error}</Alert>}
+      </Stack>
+    </AppEditorModal>
+  )
+}
+
+export function DefaultWarehouseModal({
+  current,
+  close,
+  onSaved,
+}: {
+  current: DefaultWarehouseSetting | null
+  close: () => void
+  onSaved: () => void
+}) {
+  const [opened, setOpened] = useState(true)
+  const [orgId, setOrgId] = useState<string | null>(current?.orgId ?? null)
+  const [storeId, setStoreId] = useState<string | null>(current?.storeId ?? null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const refs = useRegister<{ organizations: Ref[]; stores: Ref[] }>('references')
+  const organizations = refs.data?.organizations ?? []
+  const stores = refs.data?.stores ?? []
+  const effectiveOrgId = orgId ?? (organizations.length === 1 ? organizations[0].id : null)
+
+  async function submit(nextOrg: string | null, nextStore: string | null) {
+    if (busy) return
+    setBusy(true)
+    setError('')
+    try {
+      const result = await save('warehouse/default-shop-source', { orgId: nextOrg, storeId: nextStore }, 'PUT')
+      if (!result.response.ok) {
+        setError(problemMessage(result.error, 'Не вдалося зберегти основний склад вітрини.'))
+        return
+      }
+      notifySuccess(nextStore ? 'Основний склад вітрини збережено.' : 'Автоприв’язку нових товарів вимкнено.')
+      onSaved()
+      setOpened(false)
+    } catch {
+      setError('Немає зв’язку із сервером. Повторіть дію.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <AppEditorModal
+      opened={opened}
+      className="ledger-editor warehouse-modal"
+      onExitTransitionEnd={close}
+      onClose={() => { if (!busy) setOpened(false) }}
+      title={<MetricLabel icon={IconBuildingStore}>Основний склад вітрини</MetricLabel>}
+      footer={
+        <Group gap="xs">
+          <Button variant="default" onClick={() => setOpened(false)} disabled={busy}>Закрити</Button>
+          {current && (
+            <Button variant="subtle" color="red" loading={busy} onClick={() => void submit(null, null)}>
+              Вимкнути автоприв’язку
+            </Button>
+          )}
+          <Button loading={busy} disabled={!effectiveOrgId || !storeId} onClick={() => void submit(effectiveOrgId, storeId)}>
+            Зберегти
+          </Button>
+        </Group>
+      }
+    >
+      <Stack gap="sm">
+        <Text size="sm">
+          Усі нові товари, створені в каталозі, автоматично прив’язуватимуться до вибраного складу: щойно товар оприбуткують, його залишок одразу оновиться на вітрині.
+        </Text>
+        <section className="ledger-form-block">
+          <Select
+            required
+            searchable
+            label="Організація"
+            placeholder="Оберіть організацію"
+            data={organizations.map((r) => ({ value: r.id, label: r.title }))}
+            value={effectiveOrgId}
+            disabled={busy}
+            onChange={setOrgId}
+          />
+          <Select
+            required
+            searchable
+            label="Склад"
+            placeholder="Оберіть склад"
+            data={stores.map((r) => ({ value: r.id, label: r.title }))}
+            value={storeId}
+            disabled={busy}
+            onChange={setStoreId}
+          />
+        </section>
+        {error && <Alert color="red" role="alert">{error}</Alert>}
+      </Stack>
+    </AppEditorModal>
+  )
+}
+
+export function InitializeFromCatalogModal({
+  defaultOrgId,
+  defaultStoreId,
+  close,
+  onInitialized,
+}: {
+  defaultOrgId?: string | null
+  defaultStoreId?: string | null
+  close: () => void
+  onInitialized: () => void
+}) {
+  const [opened, setOpened] = useState(true)
+  const [orgId, setOrgId] = useState<string | null>(defaultOrgId ?? null)
+  const [storeId, setStoreId] = useState<string | null>(defaultStoreId ?? null)
+  const [day, setDay] = useState(todayIso)
+  const [reference, setReference] = useState('Перенесення залишків із каталогу')
+  const [includeZeroStock, setIncludeZeroStock] = useState(false)
+  const [setAsDefault, setSetAsDefault] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [summary, setSummary] = useState<CatalogWarehouseInitResult | null>(null)
+  const refs = useRegister<{ organizations: Ref[]; stores: Ref[] }>('references')
+
+  const organizations = refs.data?.organizations ?? []
+  const stores = refs.data?.stores ?? []
+  const effectiveOrgId = orgId ?? (organizations.length === 1 ? organizations[0].id : null)
+
+  async function submit() {
+    if (busy || !effectiveOrgId || !storeId || !day || !reference.trim()) return
+    setBusy(true)
+    setError('')
+    try {
+      const result = await save<CatalogWarehouseInitResult>('warehouse/initialize-from-catalog', {
+        orgId: effectiveOrgId,
+        storeId,
+        day,
+        reference: reference.trim(),
+        includeZeroStock,
+        setAsDefault,
+      })
+      if (!result.response.ok || !result.data) {
+        setError(problemMessage(result.error, 'Не вдалося перенести залишки з каталогу.'))
+        return
+      }
+      setSummary(result.data)
+      notifySuccess(`Перенесено на склад і прив’язано товарів: ${result.data.initialized}.`)
+      onInitialized()
+    } catch {
+      setError('Немає зв’язку із сервером. Повторіть дію.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <AppEditorModal
+      opened={opened}
+      className="ledger-editor warehouse-modal"
+      onExitTransitionEnd={close}
+      onClose={() => { if (!busy) setOpened(false) }}
+      title={<MetricLabel icon={IconBuildingStore}>Перенести залишки з каталогу на склад</MetricLabel>}
+      footer={
+        <Group gap="xs">
+          <Button variant="default" onClick={() => setOpened(false)} disabled={busy}>Закрити</Button>
+          {!summary && (
+            <Button onClick={submit} loading={busy} disabled={!effectiveOrgId || !storeId || !day || !reference.trim()}>
+              Перенести та прив’язати
+            </Button>
+          )}
+        </Group>
+      }
+    >
+      <Stack gap="sm">
+        <Text size="sm">
+          Створить початкові залишки на вибраному складі для всіх неархівних товарів каталогу, які ще не прив’язані до складу, й одразу підключить цей склад до вітрини.
+        </Text>
+        <section className="ledger-form-block">
+          <Select
+            required
+            searchable
+            label="Організація"
+            placeholder="Оберіть організацію"
+            data={organizations.map((r) => ({ value: r.id, label: r.title }))}
+            value={effectiveOrgId}
+            disabled={busy || Boolean(summary)}
+            onChange={setOrgId}
+          />
+          <Select
+            required
+            searchable
+            label="Склад"
+            placeholder="Оберіть склад"
+            data={stores.map((r) => ({ value: r.id, label: r.title }))}
+            value={storeId}
+            disabled={busy || Boolean(summary)}
+            onChange={setStoreId}
+          />
+          <Group grow>
+            <TextInput
+              required
+              type="date"
+              label="Дата початкових залишків"
+              value={day}
+              disabled={busy || Boolean(summary)}
+              onChange={(e) => setDay(e.currentTarget.value)}
+            />
+            <TextInput
+              required
+              label="Підстава"
+              maxLength={150}
+              value={reference}
+              disabled={busy || Boolean(summary)}
+              onChange={(e) => setReference(e.currentTarget.value)}
+            />
+          </Group>
+          <Checkbox
+            label="Встановити як основний склад вітрини для нових товарів"
+            checked={setAsDefault}
+            disabled={busy || Boolean(summary)}
+            onChange={(e) => setSetAsDefault(e.currentTarget.checked)}
+          />
+          <Checkbox
+            label="Також перенести товари з нульовим залишком"
+            description="Без позначки переносяться лише позиції з додатним залишком у каталозі."
+            checked={includeZeroStock}
+            disabled={busy || Boolean(summary)}
+            onChange={(e) => setIncludeZeroStock(e.currentTarget.checked)}
+          />
+        </section>
+        {summary && (
+          <Alert color={summary.conflicts.length > 0 ? 'orange' : 'green'} title="Перенесення залишків завершено">
+            <Text size="sm">
+              Перенесено й прив’язано: <b>{summary.initialized}</b> · Пропущено: <b>{summary.skipped}</b>
+            </Text>
+            {summary.conflicts.length > 0 && (
+              <Text size="xs" mt={6}>
+                Конфлікти ({summary.conflicts.length}): {summary.conflicts.slice(0, 10).join(', ')}
+                {summary.conflicts.length > 10 ? '…' : ''}
+              </Text>
+            )}
           </Alert>
         )}
         {error && <Alert color="red" role="alert">{error}</Alert>}

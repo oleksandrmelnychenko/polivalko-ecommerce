@@ -214,6 +214,50 @@ class RegisterTests(unittest.TestCase):
         apply_inventory_cost(facts, events)
         self.assertEqual([r["cost"] for r in facts], [None, 20, 10])
 
+    def test_moving_average_carries_cost_across_warehouse_transfers(self):
+        def event(day, store, doc, delta, balance, kind="in", purchase=None):
+            return {
+                "day": day,
+                "org": "o",
+                "store": store,
+                "product": "p",
+                "doc": doc,
+                "kind": kind,
+                "delta": D(delta),
+                "balance": D(balance),
+                "purchase": None if purchase is None else D(purchase),
+            }
+
+        sale_s2 = {
+            "doc": "sale-s2",
+            "org": "o",
+            "store": "s2",
+            "product": "p",
+            "unit": "шт",
+            "refund": False,
+            "cost": None,
+            "qty": D(2),
+        }
+        events = [
+            event(1, "s1", "in-1", 10, 10, kind="in", purchase=100),
+            # Deliberately place target-store inflow before source-store outflow in input order.
+            event(2, "s2", "tr-1", 4, 4, kind="transfer", purchase=None),
+            event(2, "s1", "tr-1", -4, 6, kind="transfer", purchase=None),
+            event(3, "s2", "sale-s2", -2, 2, kind="out", purchase=None),
+        ]
+        apply_inventory_cost([sale_s2], events)
+        self.assertEqual(sale_s2["cost"], D(20))
+
+        # Unknown cost on source store must not fabricate cost on target store.
+        unknown_sale = dict(sale_s2, doc="sale-unknown", cost=None)
+        unknown_events = [
+            event(1, "s1", "tr-unknown", -2, 3, kind="transfer", purchase=None),
+            event(1, "s2", "tr-unknown", 2, 2, kind="transfer", purchase=None),
+            event(2, "s2", "sale-unknown", -2, 0, kind="out", purchase=None),
+        ]
+        apply_inventory_cost([unknown_sale], unknown_events)
+        self.assertIsNone(unknown_sale["cost"])
+
     def test_seasonality_normalizes_growth_and_excludes_partial_year(self):
         rows = [
             doc(f"{y}-{m}", day=date(y, m, 1), amount=str((2 if m == 6 else 1) * scale))

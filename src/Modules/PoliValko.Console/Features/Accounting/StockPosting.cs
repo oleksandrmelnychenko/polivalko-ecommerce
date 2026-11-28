@@ -66,6 +66,46 @@ internal static class StockPosting
                 WHERE warehouse_org_id={org} AND warehouse_store_id={store} AND product_id=ANY({ids})
                 """).ToDictionaryAsync(q => q.ProductId, q => q.Quantity, ct);
 
+    // Product IDs that are not currently linked to any warehouse as their storefront stock source.
+    internal static async Task<HashSet<Guid>> UnlinkedAsync(PoliValkoDbContext db, Guid[] ids, CancellationToken ct) =>
+        ids.Length == 0
+            ? []
+            : (await db.Database.SqlQuery<Guid>($"""
+                SELECT product_id AS "Value" FROM catalog.product_stock
+                WHERE product_id=ANY({ids}) AND warehouse_org_id IS NULL AND warehouse_store_id IS NULL
+                """).ToListAsync(ct)).ToHashSet();
+
+    // Links any currently-unlinked products in ids to (org, store) and syncs their storefront quantity from warehouse_stock.
+    // Callers must hold the transaction and locks from LockAsync/LockStoresAsync and have already applied stock changes.
+    internal static async Task<int> LinkUnlinkedAsync(PoliValkoDbContext db, Guid org, Guid store, Guid[] ids, CancellationToken ct)
+    {
+        if (ids.Length == 0) return 0;
+        var linkedIds = await db.Database.SqlQuery<Guid>($"""
+            UPDATE catalog.product_stock c
+            SET warehouse_org_id={org},warehouse_store_id={store},quantity=w.quantity,updated_at=now()
+            FROM accounting.warehouse_stock w
+            WHERE w.org_id={org} AND w.store_id={store} AND w.product_id=c.product_id
+                AND c.product_id=ANY({ids})
+                AND c.warehouse_org_id IS NULL AND c.warehouse_store_id IS NULL
+                AND w.quantity>=c.reserved_quantity AND w.quantity<=999999999.999
+                AND NOT EXISTS (
+                    SELECT 1 FROM catalog.stock_reservations r
+                    WHERE r.product_id=c.product_id AND r.consumed AND NOT r.released
+                )
+            RETURNING c.product_id AS "Value"
+            """).ToListAsync(ct);
+        if (linkedIds.Count > 0)
+        {
+            var linkedArray = linkedIds.ToArray();
+            await db.Database.ExecuteSqlAsync($"""
+                UPDATE catalog.stock_reservations
+                SET warehouse_org_id={org},warehouse_store_id={store}
+                WHERE product_id=ANY({linkedArray}) AND NOT released AND NOT consumed
+                """, ct);
+        }
+        return linkedIds.Count;
+    }
+
     internal static string ShopConflict =>
         "Перевірте кількість: залишок магазину має покривати резерви і не перевищувати 999 999 999,999.";
 

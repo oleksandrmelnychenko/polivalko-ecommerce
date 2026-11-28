@@ -1,4 +1,4 @@
-import { Alert, Button, Group, Modal, Select, Stack, Table, Text, TextInput, Title } from '@mantine/core'
+import { Alert, Button, Checkbox, Group, Modal, Select, Stack, Table, Text, TextInput, Title } from '@mantine/core'
 import { IconRotateClockwise, IconTrash } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import type { components } from '@polivalko/shared/api/schema'
@@ -16,6 +16,7 @@ const qtyFmt = new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 3 })
 type ImpactLine = components['schemas']['InvoiceState']['stock'][number] & {
   reservedQuantity?: number | null
   firstMovement?: boolean
+  unlinkedFromShop?: boolean
 }
 type State = Omit<components['schemas']['InvoiceState'], 'stock'> & { stock: ImpactLine[] }
 type PaymentItem = State['payments'][number]
@@ -50,6 +51,8 @@ export function InvoiceActions({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const { can } = usePermissions()
+  const canLinkShop = can(PermissionKeys.Catalog.RunImport)
+  const [linkUnlinkedToShop, setLinkUnlinkedToShop] = useState(true)
   if (!query.data) return <PageState kind={query.status === 'ready' ? 'empty' : query.status} onRetry={query.reload} />
   const state = query.data
   const isReturn = doc.entityType === 'customerReturn' || doc.kind === 'customerReturn'
@@ -58,6 +61,7 @@ export function InvoiceActions({
   const reservedConflicts = state.stock.filter((item) => item.reservedQuantity != null && item.after < item.reservedQuantity)
   const reservedConflict = reservedConflicts.length > 0
   const unopened = state.stock.filter((item) => item.firstMovement)
+  const unlinked = purchase ? state.stock.filter((item) => item.unlinkedFromShop) : []
   const openingWarning = unopened.length > 0 && (
     <Alert color="orange" title="Спершу введіть початковий залишок">
       {unopened.length === 1
@@ -218,6 +222,14 @@ export function InvoiceActions({
       </Text>}
       {draft && openingWarning}
       {draft && reservedWarning}
+      {draft && purchase && unlinked.length > 0 && (
+        <Alert color="blue" variant="light">
+          {unlinked.length === 1
+            ? `Товар «${unlinked[0].title}» ще не прив’язаний до жодного складу вітрини.`
+            : `${unlinked.length} товари ще не прив’язані до жодного складу вітрини.`}{' '}
+          Під час проведення їх можна одразу підключити до складу «{state.store}», щоб залишок оновився на сайті.
+        </Alert>
+      )}
       <div className="invoice-totals">
         <div>
           <span>{isReturn ? 'Сума повернення' : 'Сума накладної'}</span>
@@ -278,6 +290,21 @@ export function InvoiceActions({
           </Text>
           {openingWarning}
           {reservedWarning}
+          {purchase && unlinked.length > 0 && (
+            canLinkShop ? (
+              <Checkbox
+                checked={linkUnlinkedToShop}
+                disabled={busy}
+                onChange={(e) => setLinkUnlinkedToShop(e.currentTarget.checked)}
+                label={`Прив’язати непідключені товари (${unlinked.length}) до вітрини складу «${state.store}»`}
+                description="Одразу синхронізує новий складський залишок цих товарів із вітриною інтернет-магазину."
+              />
+            ) : (
+              <Alert color="blue" variant="light">
+                {unlinked.length} товар(ів) не прив’язано до складу вітрини — їхній залишок на сайті не зміниться, доки склад не підключить адміністратор.
+              </Alert>
+            )
+          )}
           {negative && <Alert color="orange">На цьому складі бракує товару. Перевірте склад і надходження.</Alert>}
           {error && <Alert color="red">{error}</Alert>}
           <Group justify="end">
@@ -287,7 +314,7 @@ export function InvoiceActions({
             <Button
               disabled={negative || reservedConflict || !draft}
               loading={busy}
-              onClick={() => submit('post', { revision: state.revision })}
+              onClick={() => submit('post', { revision: state.revision, linkUnlinkedToShop: purchase && unlinked.length > 0 && canLinkShop && linkUnlinkedToShop })}
             >
               {isReturn ? 'Провести повернення' : 'Провести накладну'}
             </Button>

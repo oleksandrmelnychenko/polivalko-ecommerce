@@ -14,7 +14,7 @@ using PoliValko.Infrastructure.Security.Permissions;
 namespace PoliValko.Console.Features.Accounting;
 
 public sealed record StockImpact(Guid ProductId, string Title, decimal Before, decimal Change, decimal After,
-    decimal? ReservedQuantity = null, bool FirstMovement = false);
+    decimal? ReservedQuantity = null, bool FirstMovement = false, bool UnlinkedFromShop = false);
 public sealed record InvoicePayment(Guid Id, DateOnly Day,
     [property: JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)] decimal Amount,
     string Method, string AccountTitle, string Reference);
@@ -23,7 +23,7 @@ public sealed record InvoiceOfferReservation(decimal Quantity, string Unit);
 public sealed record InvoiceState(string Status, Guid OrgId, Guid StoreId, string Store, string Revision, string Total, string Paid, string? Due,
     List<StockImpact> Stock, List<RecordedPayment> Payments, InvoiceOfferReservation? OfferReservation);
 public sealed record WorkCounts(int Drafts, int Receivable, int Payable, int Settled);
-public sealed record PostInvoice(string Revision);
+public sealed record PostInvoice(string Revision, bool LinkUnlinkedToShop = false);
 public sealed record WarehouseBalance(Guid OrgId, Guid StoreId, string Organization, string Store, Guid ProductId, string Product, string Sku, decimal Quantity, decimal Opening,
     decimal? ShopQuantity, decimal? Reserved, Guid? SourceOrgId, Guid? SourceStoreId, string? SourceOrganization, string? SourceStore, bool Visible);
 public sealed record StockOpening(Guid Id, Guid OrgId, Guid StoreId, Guid ProductId, decimal Quantity, DateOnly Day, string Reference);
@@ -46,6 +46,12 @@ internal static class InvoiceWorkflow
             .RequirePermission(PermissionKeys.CatalogImportRun).Produces<BulkWarehouseConnection>();
         group.MapDelete("/warehouse/shop-source/{id:guid}", ShopStockSource.Disconnect).WithName("ConsoleDisconnectShopStock")
             .RequirePermission(PermissionKeys.CatalogImportRun).Produces<Guid>();
+        group.MapGet("/warehouse/default-shop-source", ShopStockSource.GetDefaultWarehouse).WithName("ConsoleGetDefaultShopWarehouse")
+            .Produces<DefaultWarehouseSetting?>();
+        group.MapPut("/warehouse/default-shop-source", ShopStockSource.SetDefaultWarehouse).WithName("ConsoleSetDefaultShopWarehouse")
+            .RequirePermission(PermissionKeys.CatalogImportRun).Produces<Guid>();
+        group.MapPost("/warehouse/initialize-from-catalog", ShopStockSource.InitializeFromCatalog).WithName("ConsoleInitializeWarehouseFromCatalog")
+            .RequirePermission(PermissionKeys.AccountingOpening).Produces<CatalogWarehouseInitResult>();
         group.MapGet("/warehouse/{id:guid}/movements", ShopStockSource.Movements).WithName("ConsoleWarehouseMovements")
             .Produces<RegisterPage<WarehouseMovement>>();
         group.MapGet("/partners/{id:guid}/positions", Positions).WithName("ConsoleAccountingPartnerPositions");
@@ -97,7 +103,7 @@ internal static class InvoiceWorkflow
         return Results.Ok(new RegisterPage<WarehouseBalance>(await rows.Skip((page - 1) * 50).Take(50).ToListAsync(ct), await rows.CountAsync(ct)));
     }
 
-    private static async Task<IResult> OpenStock(StockOpening input, PoliValkoDbContext db, IAuditLog audit, CancellationToken ct)
+    private static async Task<IResult> OpenStock(StockOpening input, PoliValkoDbContext db, IOutbox outbox, IAuditLog audit, CancellationToken ct)
     {
         if (input.Id == Guid.Empty || input.Day == default || input.Quantity is < 0 or > 1000000000 ||
             decimal.Round(input.Quantity, 3) != input.Quantity || string.IsNullOrWhiteSpace(input.Reference) || input.Reference.Length > 150)
@@ -127,6 +133,14 @@ internal static class InvoiceWorkflow
             ON CONFLICT(id) DO NOTHING
             """, ct);
         if (recorded == 0) return Conflict("Цей код документа вже використано.");
+        var synced = await db.Database.ExecuteSqlAsync($"""
+            UPDATE catalog.product_stock c SET quantity=w.quantity,updated_at=now()
+            FROM accounting.warehouse_stock w
+            WHERE (c.product_id,c.warehouse_org_id,c.warehouse_store_id)=(w.product_id,w.org_id,w.store_id)
+              AND w.org_id={input.OrgId} AND w.store_id={input.StoreId} AND w.product_id={input.ProductId}
+              AND w.quantity>=c.reserved_quantity AND w.quantity<=999999999.999
+            """, ct);
+        if (synced > 0) outbox.Enqueue(new StockAvailabilityChanged());
         audit.Record("accounting.stock_opened", "StockOpening", input.Id.ToString(), input);
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
@@ -155,7 +169,8 @@ internal static class InvoiceWorkflow
                         THEN coalesce(s_any.quantity,0) ELSE coalesce(w.quantity,0) END)
                     + CASE WHEN i.kind IN ('in','customerReturn') THEN qty ELSE -qty END) AS after,
                 CASE WHEN i.status='draft' THEN s_linked.reserved_quantity END AS reserved_quantity,
-                coalesce(i.status='draft' AND w.product_id IS NULL AND NOT (o.id IS NOT NULL AND s_any.warehouse_store_id IS NULL),false) AS first_movement
+                coalesce(i.status='draft' AND w.product_id IS NULL AND NOT (o.id IS NOT NULL AND s_any.warehouse_store_id IS NULL),false) AS first_movement,
+                coalesce(i.status='draft' AND s_any.warehouse_store_id IS NULL,false) AS unlinked_from_shop
             FROM items i
             LEFT JOIN accounting.warehouse_stock w ON w.org_id=i.native_org_id
                 AND w.store_id=i.native_store_id AND w.product_id=i.product_id
@@ -198,9 +213,14 @@ internal static class InvoiceWorkflow
             FOR UPDATE
             """).ToListAsync(ct)).SingleOrDefault();
 
-    private static async Task<IResult> Post(Guid id, PostInvoice confirmation, PoliValkoDbContext db, ICatalogReservations reservations,
-        IOutbox outbox, IAuditLog audit, CancellationToken ct)
+    private static async Task<IResult> Post(Guid id, PostInvoice confirmation, HttpContext http, IStaffAccessResolver accessResolver,
+        PoliValkoDbContext db, ICatalogReservations reservations, IOutbox outbox, IAuditLog audit, CancellationToken ct)
     {
+        if (confirmation.LinkUnlinkedToShop)
+        {
+            var access = await accessResolver.GetStaffAccessAsync(http.User, http.Items, ct);
+            if (access is null || !access.HasAny([PermissionKeys.CatalogImportRun])) return Results.Forbid();
+        }
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         var invoice = await Lock(id, db, ct);
         if (invoice is null) return Results.NotFound();
@@ -266,12 +286,18 @@ internal static class InvoiceWorkflow
             audit.Record("recommendation.fulfilled", "RecommendationOffer", offer.Id.ToString(), new { invoiceId = id, offer.ProductId, offer.Quantity });
         }
         var synced = 0;
+        var linkedToShop = 0;
         if (!unlinkedCatalogFallback)
         {
             var deltas = lines.Select(l => l.Change).ToArray();
             var (applied, appliedSynced) = await StockPosting.ApplyAsync(db, id, invoice.OrgId, invoice.StoreId, ids, deltas, ct);
             if (!applied) return Conflict(StockPosting.ShopConflict);
             synced = appliedSynced;
+            if (confirmation.LinkUnlinkedToShop && invoice.Kind == "in")
+            {
+                linkedToShop = await StockPosting.LinkUnlinkedAsync(db, invoice.OrgId, invoice.StoreId, ids, ct);
+                synced += linkedToShop;
+            }
         }
         if (synced > 0 || offer != null) outbox.Enqueue(new StockAvailabilityChanged());
         if (unlinkedCatalogFallback)
@@ -286,7 +312,7 @@ internal static class InvoiceWorkflow
         {
             await db.Database.ExecuteSqlAsync($"UPDATE accounting.documents SET status='posted' WHERE id={id}", ct);
         }
-        audit.Record("accounting.invoice_posted", "AccountingDocument", id.ToString(), new { invoice.Kind, invoice.Total, invoice.StoreId, unlinkedCatalogFallback });
+        audit.Record("accounting.invoice_posted", "AccountingDocument", id.ToString(), new { invoice.Kind, invoice.Total, invoice.StoreId, unlinkedCatalogFallback, linkedToShop });
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
         return Results.Ok(id);

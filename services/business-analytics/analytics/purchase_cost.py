@@ -76,7 +76,7 @@ WITH needed AS (
     WHERE r.source_account='valko-dntrade' AND nullif(trim(l.unit),'') IS NOT NULL
     GROUP BY lower(l.code) HAVING count(DISTINCT lower(trim(l.unit)))=1
   ) iu ON iu.navkolo_id=lower(prod.navkolo_id)
-), """ + checked_purchases() + """, matched AS (
+), """ + checked_purchases() + """, matched_direct AS (
   SELECT n.a,n.o,n.s,n.p,n.u,c.a AS src_a,c.u AS src_u,n.catalog_unit,
          c.day,c.stamp,c.id,c.number,c.qty,c.amount,n.first_day,
          c.ok AND (c.a=n.a OR NOT EXISTS (
@@ -84,8 +84,7 @@ WITH needed AS (
            WHERE 'id:'||lower(other.id::text)<>n.p
              AND (c.p='id:'||lower(other.navkolo_id)
                   OR (nullif(c.external_code,'') IS NOT NULL AND lower(other.navkolo_id)='dntrade-code:'||c.external_code))
-         )) AS valid,
-         max(c.day) FILTER (WHERE c.day<n.first_day) OVER (PARTITION BY n.a,n.o,n.s,n.p,n.u,c.a,c.u) AS prior_day
+         )) AS valid
   FROM checked c JOIN resolved n ON c.day<=n.last_day AND (
     (c.a=n.a AND c.o=n.o AND c.s=n.s AND c.p=n.p)
     OR (n.a='polivalko-native' AND c.a='valko-dntrade' AND c.loaded='1'
@@ -93,6 +92,58 @@ WITH needed AS (
         AND (c.p='id:'||n.ext_product
              OR (nullif(c.external_code,'') IS NOT NULL AND 'dntrade-code:'||c.external_code=n.ext_product)))
   )
+), transfers AS (
+  SELECT n.a,n.o,n.s,n.p,n.u,n.catalog_unit,n.first_day,n.ext_org,n.ext_product,
+         d.id,d.number,d.day,d.details->>'date' AS stamp,
+         lower(d.native_store_id::text) AS src_s,
+         lower(src_ref.source_id) AS src_ext_store,
+         accounting.stock_number(l->>'quantity') AS qty
+  FROM resolved n
+  JOIN accounting.documents d
+    ON n.a='polivalko-native' AND d.source_account='polivalko-native'
+   AND d.entity_type='stockOperation' AND d.kind='transfer' AND d.status='posted'
+   AND lower(d.native_org_id::text)=n.o AND lower(d.native_target_store_id::text)=n.s
+   AND d.day<=n.last_day
+  LEFT JOIN accounting.references src_ref
+    ON src_ref.id=d.native_store_id AND src_ref.source_account='valko-dntrade' AND src_ref.kind='store'
+  CROSS JOIN LATERAL jsonb_array_elements(
+    CASE WHEN jsonb_typeof(d.details->'products')='array' THEN d.details->'products' ELSE '[]'::jsonb END) l
+  WHERE 'id:'||lower(l#>>'{product,id}')=n.p
+    AND accounting.stock_number(l->>'quantity')>0
+), transfer_priced AS (
+  SELECT t.a,t.o,t.s,t.p,t.u,src.src_a,src.src_u,t.catalog_unit,
+         t.day,t.stamp,t.id,t.number,t.qty,
+         CASE WHEN src.valid AND src.src_qty>0 THEN t.qty * (src.src_amount / src.src_qty) END AS amount,
+         t.first_day,src.valid
+  FROM transfers t
+  JOIN LATERAL (
+    SELECT c.a AS src_a,c.u AS src_u,
+           bool_and(c.ok AND (c.a='polivalko-native' OR NOT EXISTS (
+             SELECT 1 FROM catalog.products other
+             WHERE 'id:'||lower(other.id::text)<>t.p
+               AND (c.p='id:'||lower(other.navkolo_id)
+                    OR (nullif(c.external_code,'') IS NOT NULL AND lower(other.navkolo_id)='dntrade-code:'||c.external_code))
+           ))) AS valid,
+           sum(c.qty) AS src_qty,sum(c.amount) AS src_amount
+    FROM (
+      SELECT c.a,c.u,c.p,c.external_code,c.day,c.ok,c.qty,c.amount,max(c.day) OVER (PARTITION BY c.a,c.u) AS latest_day
+      FROM checked c
+      WHERE c.day<=t.day AND (
+        (c.a='polivalko-native' AND c.o=t.o AND c.s=t.src_s AND c.p=t.p)
+        OR (c.a='valko-dntrade' AND c.loaded='1' AND c.o=t.ext_org AND c.s=t.src_ext_store
+            AND (c.p='id:'||t.ext_product
+                 OR (nullif(c.external_code,'') IS NOT NULL AND 'dntrade-code:'||c.external_code=t.ext_product)))
+      )
+    ) c WHERE c.day=c.latest_day
+    GROUP BY c.a,c.u
+  ) src ON src.src_qty>0
+), combined AS (
+  SELECT a,o,s,p,u,src_a,src_u,catalog_unit,day,stamp,id,number,qty,amount,first_day,valid FROM matched_direct
+  UNION ALL
+  SELECT a,o,s,p,u,src_a,src_u,catalog_unit,day,stamp,id,number,qty,amount,first_day,valid FROM transfer_priced
+), matched AS (
+  SELECT *,max(day) FILTER (WHERE day<first_day) OVER (PARTITION BY a,o,s,p,u,src_a,src_u) AS prior_day
+  FROM combined
 )
 SELECT a,o,s,p,u,src_a,src_u,catalog_unit,day,stamp,id::text AS id,number,sum(qty) AS qty,
        CASE WHEN bool_and(coalesce(valid,false)) THEN sum(amount) END AS amount

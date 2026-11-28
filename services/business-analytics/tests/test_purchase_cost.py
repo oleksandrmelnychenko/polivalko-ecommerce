@@ -143,3 +143,8 @@ class PurchaseCostTests(TestCase):
         self.assertEqual(summarize([sale_with_zero_cogs], DAY, 7)["products"][0]["profit"], Decimal(35))
         uncosted = document(lines=[position(cogs_total=0)])
         self.assertIsNone(summarize([uncosted], DAY, 7)["products"][0]["profit"])
+
+    def test_purchases_query_propagates_cost_across_posted_warehouse_transfers(self):
+        self.assertIn("d.entity_type='stockOperation' AND d.kind='transfer' AND d.status='posted'", PURCHASES)
+        self.assertIn("d.native_target_store_id", PURCHASES)
+        self.assertIn("transfer_priced", PURCHASES)

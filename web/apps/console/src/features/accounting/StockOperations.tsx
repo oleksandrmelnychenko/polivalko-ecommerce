@@ -1,4 +1,4 @@
-import { ActionIcon, Alert, Button, Group, Modal, Select, Stack, Table, Text, TextInput, Textarea, Title } from '@mantine/core'
+import { ActionIcon, Alert, Button, Checkbox, Group, Modal, Select, Stack, Table, Text, TextInput, Textarea, Title } from '@mantine/core'
 import { IconFilePencil, IconPackage, IconPlus, IconRotateClockwise, IconSearch, IconTrash } from '@tabler/icons-react'
 import { useState, type FormEvent } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
@@ -21,7 +21,10 @@ import { Grid } from './RegisterTable'
 import { money, remove, save, stockOperationNames, useRegister, writeOffReasons, type Doc, type Page, type Ref } from './api'
 
 type S = components['schemas']
-type StockLineState = S['StockOperationState']['lines'][number] & { reservedQuantity?: number | null }
+type StockLineState = S['StockOperationState']['lines'][number] & {
+  reservedQuantity?: number | null
+  unlinkedFromShop?: boolean
+}
 type State = Omit<S['StockOperationState'], 'lines'> & {
   targetStoreId?: string | null
   targetStore?: string | null
@@ -294,6 +297,8 @@ export function StockOperationActions({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const { can } = usePermissions()
+  const canLinkShop = can(PermissionKeys.Catalog.RunImport)
+  const [linkUnlinkedToShop, setLinkUnlinkedToShop] = useState(true)
   function setAction(next: typeof action) {
     updateAction(next)
     onDialogChange(next !== null)
@@ -310,6 +315,7 @@ export function StockOperationActions({
   const reservedConflict = reservedConflicts.length > 0
   // Only receipts, write-offs, and transfers need the opening first; a recount itself states the quantity on the shelf.
   const unopened = kind === 'recount' ? [] : state.lines.filter((l) => l.firstMovement)
+  const unlinked = kind === 'income' ? state.lines.filter((l) => l.unlinkedFromShop) : []
   const openingWarning = unopened.length > 0 && (
     <Alert color="orange" title="Спершу введіть початковий залишок">
       {unopened.length === 1
@@ -334,7 +340,10 @@ export function StockOperationActions({
     setBusy(true)
     setError('')
     try {
-      const result = await save(url + '/post', { revision: state.revision })
+      const result = await save(url + '/post', {
+        revision: state.revision,
+        linkUnlinkedToShop: kind === 'income' && unlinked.length > 0 && canLinkShop && linkUnlinkedToShop,
+      })
       if (!result.response.ok) {
         setError(problemMessage(result.error, 'Операцію не проведено.'))
         query.reload()
@@ -428,6 +437,14 @@ export function StockOperationActions({
       </Text>}
       {draft && openingWarning}
       {draft && reservedWarning}
+      {draft && kind === 'income' && unlinked.length > 0 && (
+        <Alert color="blue" variant="light">
+          {unlinked.length === 1
+            ? `Товар «${unlinked[0].title}» ще не прив’язаний до жодного складу вітрини.`
+            : `${unlinked.length} товари ще не прив’язані до жодного складу вітрини.`}{' '}
+          Під час проведення їх можна одразу підключити до складу «{state.store}», щоб залишок оновився на сайті.
+        </Alert>
+      )}
       <Movement state={state} />
       <Modal opened={action === 'post'} onClose={() => { if (!busy) setAction(null) }} title={stockOperationNames[kind]} size="lg">
         <Stack>
@@ -436,6 +453,21 @@ export function StockOperationActions({
           {kind === 'recount' && <Text size="sm">Рух — різниця між фактом і обліком на момент збереження чернетки.</Text>}
           {openingWarning}
           {reservedWarning}
+          {kind === 'income' && unlinked.length > 0 && (
+            canLinkShop ? (
+              <Checkbox
+                checked={linkUnlinkedToShop}
+                disabled={busy}
+                onChange={(e) => setLinkUnlinkedToShop(e.currentTarget.checked)}
+                label={`Прив’язати непідключені товари (${unlinked.length}) до вітрини складу «${state.store}»`}
+                description="Одразу синхронізує новий складський залишок цих товарів із вітриною інтернет-магазину."
+              />
+            ) : (
+              <Alert color="blue" variant="light">
+                {unlinked.length} товар(ів) не прив’язано до складу вітрини — їхній залишок на сайті не зміниться, доки склад не підключить адміністратор.
+              </Alert>
+            )
+          )}
           {negative && <Alert color="orange">На цьому складі бракує товару для цієї операції.</Alert>}
           {error && <Alert color="red">{error}</Alert>}
           <Group justify="end">

@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using PoliValko.Catalog.Contracts;
 using PoliValko.Infrastructure.Persistence;
+using PoliValko.Infrastructure.Security;
+using PoliValko.Infrastructure.Security.Permissions;
 
 namespace PoliValko.Console.Features.Accounting;
 
@@ -9,6 +11,9 @@ namespace PoliValko.Console.Features.Accounting;
 public sealed record WarehouseMovement(Guid Id, DateOnly Day, string Kind, string? Reference, decimal Change, decimal Balance,
     DateTimeOffset? RecordedAt);
 public sealed record ConnectWarehouseBulk(Guid OrgId, Guid StoreId, bool OverwriteExisting = false);
+public sealed record SetDefaultWarehouseRequest(Guid? OrgId, Guid? StoreId);
+public sealed record InitializeWarehouseRequest(Guid OrgId, Guid StoreId, DateOnly Day, string Reference,
+    bool IncludeZeroStock = false, bool SetAsDefault = true);
 
 internal static class ShopStockSource
 {
@@ -55,5 +60,44 @@ internal static class ShopStockSource
         var result = await sources.DisconnectAsync(id, ct);
         if (result.Conflict != null) return Results.Problem(detail: result.Conflict, statusCode: StatusCodes.Status409Conflict);
         return result.ProductId.HasValue ? Results.Ok(result.ProductId.Value) : Results.NotFound();
+    }
+
+    internal static async Task<IResult> GetDefaultWarehouse(ICatalogWarehouseSource sources, CancellationToken ct) =>
+        Results.Ok(await sources.GetDefaultWarehouseAsync(ct));
+
+    internal static async Task<IResult> SetDefaultWarehouse(
+        SetDefaultWarehouseRequest request,
+        HttpContext http,
+        ICatalogWarehouseSource sources,
+        CancellationToken ct)
+    {
+        var result = await sources.SetDefaultWarehouseAsync(request.OrgId, request.StoreId, http.User.StaffName(), ct);
+        if (result.Conflict != null) return Results.Problem(detail: result.Conflict, statusCode: StatusCodes.Status409Conflict);
+        return Results.Ok(result.ProductId ?? Guid.Empty);
+    }
+
+    internal static async Task<IResult> InitializeFromCatalog(
+        InitializeWarehouseRequest request,
+        HttpContext http,
+        IStaffAccessResolver accessResolver,
+        ICatalogWarehouseSource sources,
+        CancellationToken ct)
+    {
+        var access = await accessResolver.GetStaffAccessAsync(http.User, http.Items, ct);
+        if (access is null || !access.HasAny([PermissionKeys.CatalogImportRun]))
+            return Results.Forbid();
+        if (request.OrgId == Guid.Empty || request.StoreId == Guid.Empty || request.Day == default ||
+            string.IsNullOrWhiteSpace(request.Reference) || request.Reference.Trim().Length > 150)
+            return Results.BadRequest(new { title = "Вкажіть організацію, склад, дату і документ-підставу (до 150 символів)." });
+        var result = await sources.InitializeFromCatalogAsync(
+            request.OrgId,
+            request.StoreId,
+            request.Day,
+            request.Reference,
+            request.IncludeZeroStock,
+            request.SetAsDefault,
+            http.User.StaffName(),
+            ct);
+        return Results.Ok(result);
     }
 }

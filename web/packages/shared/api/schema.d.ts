@@ -1408,6 +1408,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/console/accounting/warehouse/default-shop-source": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ConsoleGetDefaultShopWarehouse"];
+        put: operations["ConsoleSetDefaultShopWarehouse"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/console/accounting/warehouse/initialize-from-catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ConsoleInitializeWarehouseFromCatalog"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/console/accounting/warehouse/{id}/movements": {
         parameters: {
             query?: never;
@@ -4268,6 +4300,15 @@ export interface components {
             /** Format: int32 */
             quantity: number;
         };
+        CatalogWarehouseInitResult: {
+            /** Format: int32 */
+            initialized: number;
+            /** Format: int32 */
+            connected: number;
+            /** Format: int32 */
+            skipped: number;
+            conflicts: string[];
+        };
         CategoryDto: {
             /** Format: uuid */
             id: string;
@@ -5015,6 +5056,14 @@ export interface components {
             /** Format: int32 */
             cancelled: number;
         };
+        DefaultWarehouseSetting: {
+            /** Format: uuid */
+            orgId: string;
+            /** Format: uuid */
+            storeId: string;
+            organization: string;
+            store: string;
+        };
         DeliveryAddressRequest: {
             street: null | string;
             house: null | string;
@@ -5327,6 +5376,19 @@ export interface components {
             /** Format: uuid */
             productId: null | string;
             status: string;
+        };
+        InitializeWarehouseRequest: {
+            /** Format: uuid */
+            orgId: string;
+            /** Format: uuid */
+            storeId: string;
+            /** Format: date */
+            day: string;
+            reference: string;
+            /** @default false */
+            includeZeroStock: boolean;
+            /** @default true */
+            setAsDefault: boolean;
         };
         IntegrationStatusDto: {
             navkoloMode: string;
@@ -5997,9 +6059,13 @@ export interface components {
         };
         PostInvoice: {
             revision: string;
+            /** @default false */
+            linkUnlinkedToShop: boolean;
         };
         PostStockOperation: {
             revision: string;
+            /** @default false */
+            linkUnlinkedToShop: boolean;
         };
         ProblemDetails: {
             type?: null | string;
@@ -6690,6 +6756,12 @@ export interface components {
         SetAccountLockRequest: {
             locked: null | boolean;
         };
+        SetDefaultWarehouseRequest: {
+            /** Format: uuid */
+            orgId: null | string;
+            /** Format: uuid */
+            storeId: null | string;
+        };
         SetProductArchiveRequest: {
             archived: boolean;
         };
@@ -6809,6 +6881,8 @@ export interface components {
             reservedQuantity?: null | number;
             /** @default false */
             firstMovement: boolean;
+            /** @default false */
+            unlinkedFromShop: boolean;
         };
         StockOpening: {
             /** Format: uuid */
@@ -6873,6 +6947,8 @@ export interface components {
             firstMovement: boolean;
             /** Format: double */
             reservedQuantity?: null | number;
+            /** @default false */
+            unlinkedFromShop: boolean;
         };
         StockOperationState: {
             /** Format: uuid */
@@ -10566,6 +10642,128 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BulkWarehouseConnection"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleGetDefaultShopWarehouse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DefaultWarehouseSetting"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleSetDefaultShopWarehouse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetDefaultWarehouseRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ConsoleInitializeWarehouseFromCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InitializeWarehouseRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogWarehouseInitResult"];
                 };
             };
             /** @description Unauthorized */

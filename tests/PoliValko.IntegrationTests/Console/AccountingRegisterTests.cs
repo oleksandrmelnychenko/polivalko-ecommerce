@@ -463,4 +463,87 @@ public sealed class AccountingRegisterTests(ApiFactory api)
         (await admin.PostAsJsonAsync(Root + "/stock-operations/" + stockDraft.Id + "/post", new PostStockOperation(stockRev), Ct))
             .StatusCode.ShouldBe(HttpStatusCode.Conflict);
     }
+
+    [Fact]
+    public async Task Default_warehouse_auto_links_new_products_incoming_post_links_unlinked_and_catalog_init_migrates_stock()
+    {
+        using var admin = await Staff.AdminAsync(api);
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var org = await (await admin.PostAsJsonAsync(Root + "/references/organizations",
+            new ReferenceRequest("ФОП Авто " + suffix), Ct)).ReadAsync<RegisterReference>();
+        var store = await (await admin.PostAsJsonAsync(Root + "/references/stores",
+            new ReferenceRequest("Склад Авто " + suffix), Ct)).ReadAsync<RegisterReference>();
+        var orgId = Guid.Parse(org.Id);
+        var storeId = Guid.Parse(store.Id);
+        var partner = new NewPartner(Guid.NewGuid(), "Постачальник Авто " + suffix, "juridical");
+        (await admin.PostAsJsonAsync(Root + "/partners", partner, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var categoryId = await api.WithDbAsync(db => db.Set<Category>().Where(c => c.Slug == "ruchnyi-instrument").Select(c => c.Id).SingleAsync(Ct));
+        var day = new DateOnly(2026, 11, 25);
+
+        try
+        {
+            // 1. Set default storefront warehouse and verify newly created product is auto-linked.
+            (await admin.PutAsJsonAsync(Root + "/warehouse/default-shop-source", new SetDefaultWarehouseRequest(orgId, storeId), Ct))
+                .StatusCode.ShouldBe(HttpStatusCode.OK);
+            var def = await admin.ReadAsync<PoliValko.Catalog.Contracts.DefaultWarehouseSetting>(Root + "/warehouse/default-shop-source");
+            def.OrgId.ShouldBe(orgId);
+            def.StoreId.ShouldBe(storeId);
+
+            var createdId = await (await admin.PostAsJsonAsync("/api/v1/console/catalog/products",
+                new PoliValko.Catalog.Features.Console.Products.CreateCatalogProductRequest("Новий авто-товар " + suffix, "AUTO-" + suffix, categoryId), Ct))
+                .ReadAsync<Guid>(HttpStatusCode.Created);
+            var autoStock = await api.WithDbAsync(db => db.Set<ProductStock>().AsNoTracking().SingleAsync(s => s.ProductId == createdId, Ct));
+            autoStock.WarehouseOrgId.ShouldBe(orgId);
+            autoStock.WarehouseStoreId.ShouldBe(storeId);
+
+            // Opening stock on auto-linked product syncs storefront quantity immediately.
+            (await admin.PostAsJsonAsync(Root + "/warehouse/openings",
+                new StockOpening(Guid.NewGuid(), orgId, storeId, createdId, 6m, day, "auto-open-" + suffix), Ct))
+                .StatusCode.ShouldBe(HttpStatusCode.OK);
+            (await api.WithDbAsync(db => db.Set<ProductStock>().AsNoTracking().SingleAsync(s => s.ProductId == createdId, Ct)))
+                .Quantity.ShouldBe(6m);
+
+            // 2. Clear default warehouse, then test incoming invoice + income operation with LinkUnlinkedToShop = true.
+            (await admin.PutAsJsonAsync(Root + "/warehouse/default-shop-source", new SetDefaultWarehouseRequest(null, null), Ct))
+                .StatusCode.ShouldBe(HttpStatusCode.OK);
+
+            var unlinkedInvoiceProd = await api.AddProductAsync("ruchnyi-instrument", "Непідключений ПН " + suffix, 120m, stock: 0);
+            var inDraft = new NewDraft(Guid.NewGuid(), partner.Id, "in", "IN-LINK-" + suffix, day, org.Id, store.Id, [new(unlinkedInvoiceProd.Id, 4m, 80m)]);
+            (await admin.PostAsJsonAsync(Root + "/drafts", inDraft, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+            var inState = await admin.ReadAsync<InvoiceState>(Root + "/documents/" + inDraft.Id + "/operations");
+            inState.Stock.Single().UnlinkedFromShop.ShouldBeTrue();
+            (await admin.PostAsJsonAsync(Root + "/documents/" + inDraft.Id + "/post", new PostInvoice(inState.Revision, LinkUnlinkedToShop: true), Ct))
+                .StatusCode.ShouldBe(HttpStatusCode.OK);
+            var linkedAfterInvoice = await api.WithDbAsync(db => db.Set<ProductStock>().AsNoTracking().SingleAsync(s => s.ProductId == unlinkedInvoiceProd.Id, Ct));
+            (linkedAfterInvoice.WarehouseOrgId, linkedAfterInvoice.WarehouseStoreId, linkedAfterInvoice.Quantity).ShouldBe((orgId, storeId, 4m));
+
+            var unlinkedOpProd = await api.AddProductAsync("ruchnyi-instrument", "Непідключений ОП " + suffix, 150m, stock: 0);
+            var opDraft = new StockOperationDraft(Guid.NewGuid(), "income", day, orgId, storeId, null, null, [new(unlinkedOpProd.Id, 5m, 90m)]);
+            (await admin.PostAsJsonAsync(Root + "/stock-operations", opDraft, Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+            var opState = await admin.ReadAsync<StockOperationState>(Root + "/stock-operations/" + opDraft.Id);
+            opState.Lines.Single().UnlinkedFromShop.ShouldBeTrue();
+            (await admin.PostAsJsonAsync(Root + "/stock-operations/" + opDraft.Id + "/post", new PostStockOperation(opState.Revision, LinkUnlinkedToShop: true), Ct))
+                .StatusCode.ShouldBe(HttpStatusCode.OK);
+            var linkedAfterOp = await api.WithDbAsync(db => db.Set<ProductStock>().AsNoTracking().SingleAsync(s => s.ProductId == unlinkedOpProd.Id, Ct));
+            (linkedAfterOp.WarehouseOrgId, linkedAfterOp.WarehouseStoreId, linkedAfterOp.Quantity).ShouldBe((orgId, storeId, 5m));
+
+            // 3. Initialize warehouse from catalog migrates unlinked positive stock into openings + links to storefront.
+            var catalogOnly = await api.AddProductAsync("ruchnyi-instrument", "Залишок каталогу " + suffix, 200m, stock: 7);
+            var initResult = await (await admin.PostAsJsonAsync(Root + "/warehouse/initialize-from-catalog",
+                new InitializeWarehouseRequest(orgId, storeId, day, "Перенесення " + suffix, IncludeZeroStock: false, SetAsDefault: true), Ct))
+                .ReadAsync<PoliValko.Catalog.Contracts.CatalogWarehouseInitResult>();
+            initResult.Initialized.ShouldBeGreaterThanOrEqualTo(1);
+            var migrated = await api.WithDbAsync(db => db.Set<ProductStock>().AsNoTracking().SingleAsync(s => s.ProductId == catalogOnly.Id, Ct));
+            (migrated.WarehouseOrgId, migrated.WarehouseStoreId, migrated.Quantity).ShouldBe((orgId, storeId, 7m));
+            var whQty = await api.WithDbAsync(db => db.Database.SqlQuery<decimal>($"""
+                SELECT quantity AS "Value" FROM accounting.warehouse_stock
+                WHERE org_id = {orgId} AND store_id = {storeId} AND product_id = {catalogOnly.Id}
+                """).SingleAsync(Ct));
+            whQty.ShouldBe(7m);
+        }
+        finally
+        {
+            await admin.PutAsJsonAsync(Root + "/warehouse/default-shop-source", new SetDefaultWarehouseRequest(null, null), Ct);
+        }
+    }
 }

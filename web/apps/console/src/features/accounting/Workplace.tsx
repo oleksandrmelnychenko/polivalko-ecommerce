@@ -1,7 +1,7 @@
 import { DocTable } from './DocumentTable'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { Paginator } from '@/shared/ui/paginator/Paginator'
-import { Button, Group, Select, Stack, Table, TextInput } from '@mantine/core'
+import { Alert, Button, Group, Select, Stack, Table, Text, TextInput } from '@mantine/core'
 import { StockOperationRegister } from './StockOperations'
 import { IconArrowDownLeft, IconBuilding, IconBuildingWarehouse, IconChecklist, IconFiles, IconWallet, IconHistory, IconLink, IconLinkOff, IconPackage, IconPlus, IconSearch, IconListCheck } from '@tabler/icons-react'
 import type { components } from '@polivalko/shared/api/schema'
@@ -17,7 +17,18 @@ import { StockOpeningForm } from './StockOpeningForm'
 import './warehouse.css'
 import { InventoryReview } from './InventoryReview'
 import { ReferencesModal } from './ReferencesModal'
-import { activeSource, BulkShopSourceModal, count, DisconnectShopSourceModal, ShopSourceForm, MovementHistory, type WarehouseRow } from './WarehouseShop'
+import {
+  activeSource,
+  BulkShopSourceModal,
+  count,
+  DefaultWarehouseModal,
+  DisconnectShopSourceModal,
+  InitializeFromCatalogModal,
+  MovementHistory,
+  ShopSourceForm,
+  type DefaultWarehouseSetting,
+  type WarehouseRow,
+} from './WarehouseShop'
 import { useRegister, type Doc, type Page, type Ref } from './api'
 
 type S = components['schemas']
@@ -112,11 +123,15 @@ export function WarehouseBalances() {
   const [opening, setOpening] = useState(false)
   const [referencesOpen, setReferencesOpen] = useState(false)
   const [bulkConnectOpen, setBulkConnectOpen] = useState(false)
+  const [defaultWarehouseOpen, setDefaultWarehouseOpen] = useState(false)
+  const [initCatalogOpen, setInitCatalogOpen] = useState(false)
   const [source, setSource] = useState<WarehouseRow | null>(null)
   const [disconnectRow, setDisconnectRow] = useState<WarehouseRow | null>(null)
   const [history, setHistory] = useState<WarehouseRow | null>(null)
   const { can } = usePermissions()
+  const canInitFromCatalog = can(PermissionKeys.Accounting.Opening) && can(PermissionKeys.Catalog.RunImport)
   const refs = useRegister<{ stores: Ref[] }>('references')
+  const defaultWarehouse = useRegister<DefaultWarehouseSetting | null>('warehouse/default-shop-source')
   const result = useRegister<Page<S['WarehouseBalance']>>('warehouse?' + params)
   const page = Math.max(1, Number(params.get('page')) || 1)
   function filter(key: string, value: string | null) {
@@ -140,12 +155,44 @@ export function WarehouseBalances() {
               Прив’язати до вітрини
             </Button>
           )}
+          {canInitFromCatalog && (
+            <Button radius="xl" variant="default" leftSection={<IconBuildingWarehouse size={16} />} onClick={() => setInitCatalogOpen(true)}>
+              Перенести з каталогу
+            </Button>
+          )}
           <Button component={Link} to="/warehouse/inventory?view=inventory" radius="xl" variant="default"
             leftSection={<IconListCheck size={16} />}>Звірити залишки</Button>
           {can(PermissionKeys.Accounting.Opening) && <Button radius="xl" leftSection={<IconPlus size={16} />}
             onClick={() => setOpening(true)}>Ввести початковий залишок</Button>}
         </Group>
       } />
+      {defaultWarehouse.status === 'ready' && (
+        defaultWarehouse.data ? (
+          <Alert color="teal" variant="light">
+            <Group justify="space-between" align="center" gap="xs" wrap="wrap">
+              <Text size="sm">
+                Основний склад вітрини (автоприв’язка нових товарів): <b>{defaultWarehouse.data.organization} / {defaultWarehouse.data.store}</b>
+              </Text>
+              {can(PermissionKeys.Catalog.RunImport) && (
+                <Button size="compact-xs" variant="default" onClick={() => setDefaultWarehouseOpen(true)}>
+                  Змінити
+                </Button>
+              )}
+            </Group>
+          </Alert>
+        ) : can(PermissionKeys.Catalog.RunImport) ? (
+          <Alert color="blue" variant="light">
+            <Group justify="space-between" align="center" gap="xs" wrap="wrap">
+              <Text size="sm">
+                Основний склад вітрини не вибрано — нові товари каталогу не прив’язуватимуться до складу автоматично.
+              </Text>
+              <Button size="compact-xs" variant="default" onClick={() => setDefaultWarehouseOpen(true)}>
+                Налаштувати
+              </Button>
+            </Group>
+          </Alert>
+        ) : null
+      )}
       <section className="ledger-card warehouse-list">
         <header className="ledger-card-head">
           <h2><MetricLabel icon={IconBuildingWarehouse}>Залишки за складами</MetricLabel></h2>
@@ -188,7 +235,17 @@ export function WarehouseBalances() {
               </Table.Tr>
             ))}
           </Grid>
-        ) : <PageState kind="empty" title={params.has('q') || params.has('store') ? 'За цими умовами позицій немає' : 'Проведених складських залишків поки немає'} /> :
+        ) : (
+          <PageState
+            kind="empty"
+            title={params.has('q') || params.has('store') ? 'За цими умовами позицій немає' : 'Проведених складських залишків поки немає'}
+            action={!params.has('q') && !params.has('store') && canInitFromCatalog ? (
+              <Button leftSection={<IconBuildingWarehouse size={16} />} onClick={() => setInitCatalogOpen(true)}>
+                Перенести залишки з каталогу
+              </Button>
+            ) : undefined}
+          />
+        ) :
           <PageState kind={result.status === 'ready' ? 'empty' : result.status} onRetry={result.reload} />}
       </section>
       {source && (
@@ -212,6 +269,24 @@ export function WarehouseBalances() {
           defaultStoreId={params.get('store')}
           close={() => setBulkConnectOpen(false)}
           onConnected={result.reload}
+        />
+      )}
+      {defaultWarehouseOpen && (
+        <DefaultWarehouseModal
+          current={defaultWarehouse.data ?? null}
+          close={() => setDefaultWarehouseOpen(false)}
+          onSaved={defaultWarehouse.reload}
+        />
+      )}
+      {initCatalogOpen && (
+        <InitializeFromCatalogModal
+          defaultOrgId={defaultWarehouse.data?.orgId ?? null}
+          defaultStoreId={params.get('store') ?? defaultWarehouse.data?.storeId ?? null}
+          close={() => setInitCatalogOpen(false)}
+          onInitialized={() => {
+            result.reload()
+            defaultWarehouse.reload()
+          }}
         />
       )}
       {referencesOpen && (

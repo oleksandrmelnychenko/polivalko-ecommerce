@@ -198,7 +198,7 @@ WHERE r.status='Succeeded' AND r.completed_at < ((%s::date + 1)::timestamp AT TI
 """
 COST_EVENTS = """
 SELECT d.native_org_id::text AS org,COALESCE(m.store_id,d.native_store_id)::text AS store,m.product_id::text AS product,
-       d.day,d.id::text AS doc,m.delta,m.resulting_quantity AS balance,
+       d.day,d.id::text AS doc,d.kind AS kind,m.delta,m.resulting_quantity AS balance,
        CASE WHEN d.kind IN ('in','income') AND lower(d.currency) IN ('uah','980') THEN
         (SELECT sum((x->>'total')::numeric) FROM jsonb_array_elements(
           CASE WHEN jsonb_typeof(d.details->'products')='array' THEN d.details->'products' ELSE '[]'::jsonb END) x
@@ -207,11 +207,11 @@ FROM accounting.stock_movements m JOIN accounting.documents d ON d.id=m.document
 WHERE d.status='posted' AND NOT m.is_reversal AND d.day<=%s
 UNION ALL
 SELECT org_id::text,store_id::text,product_id::text,(posted_at AT TIME ZONE 'Europe/Kyiv')::date,
-       order_id::text,-quantity,balance,NULL::numeric FROM accounting.order_shipments
+       order_id::text,'order',-quantity,balance,NULL::numeric FROM accounting.order_shipments
 WHERE (posted_at AT TIME ZONE 'Europe/Kyiv')::date<=%s
 UNION ALL
 SELECT org_id::text,store_id::text,product_id::text,(posted_at AT TIME ZONE 'Europe/Kyiv')::date,
-       order_id::text,quantity,balance,NULL::numeric FROM accounting.order_returns
+       order_id::text,'orderReturn',quantity,balance,NULL::numeric FROM accounting.order_returns
 WHERE (posted_at AT TIME ZONE 'Europe/Kyiv')::date<=%s
 ORDER BY org,store,product,day
 """

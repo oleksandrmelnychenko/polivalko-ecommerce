@@ -18,12 +18,13 @@ public sealed record StockOperationLine(Guid ProductId, decimal Quantity, decima
 public sealed record StockOperationDraft(Guid Id, string Kind, DateOnly Day, Guid OrgId, Guid StoreId,
     string? Reason, string? Comment, List<StockOperationLine>? Lines, Guid? TargetStoreId = null);
 public sealed record StockOperationChange(string Revision, StockOperationDraft Draft);
-public sealed record PostStockOperation(string Revision);
+public sealed record PostStockOperation(string Revision, bool LinkUnlinkedToShop = false);
 // Book is the recorded quantity a recount was compared with; Before/Change/After are the warehouse movement,
 // expected for a draft and recorded once the operation is posted. FirstMovement marks a draft line whose product has
 // never moved on this warehouse: posting it closes the way to an opening balance for that product there.
 public sealed record StockOperationLineState(Guid ProductId, string Title, string Sku, decimal Quantity, decimal? Price,
-    decimal? Book, decimal Before, decimal Change, decimal After, bool FirstMovement, decimal? ReservedQuantity = null);
+    decimal? Book, decimal Before, decimal Change, decimal After, bool FirstMovement, decimal? ReservedQuantity = null,
+    bool UnlinkedFromShop = false);
 public sealed record StockOperationState(Guid Id, string Kind, string Status, string Number, DateOnly Day,
     Guid OrgId, Guid StoreId, string Store, string? Reason, string? Comment, string Revision, string? Total,
     List<StockOperationLineState> Lines, Guid? TargetStoreId = null, string? TargetStore = null);
@@ -262,6 +263,7 @@ internal static class StockOperations
             ? await StockPosting.QuantitiesAsync(db, row.OrgId, targetId, ids, ct)
             : null;
         var reserved = row.Status == "draft" ? await StockPosting.ReservedAsync(db, row.OrgId, row.StoreId, ids, ct) : [];
+        var unlinked = row.Status == "draft" ? await StockPosting.UnlinkedAsync(db, ids, ct) : [];
         var posted = stored.Posted?.ToDictionary(p => p.ProductId) ?? [];
         var lines = stored.Products.Select(p =>
         {
@@ -271,16 +273,22 @@ internal static class StockOperations
                 && (!current.ContainsKey(p.Product.Id) || (targetCurrent != null && !targetCurrent.ContainsKey(p.Product.Id)));
             decimal? reservedQty = row.Status == "draft" && reserved.TryGetValue(p.Product.Id, out var r) ? r : null;
             return new StockOperationLineState(p.Product.Id, p.Product.Title, p.Product.Sku, p.Quantity, p.Price, p.Book,
-                before, done?.Change ?? change, done?.After ?? before + change, firstMovement, reservedQty);
+                before, done?.Change ?? change, done?.After ?? before + change, firstMovement, reservedQty,
+                row.Status == "draft" && unlinked.Contains(p.Product.Id));
         }).ToList();
         return Results.Ok(new StockOperationState(row.Id, row.Kind, row.Status, row.Number, row.Day, row.OrgId, row.StoreId, row.Store,
             stored.Reason, stored.Comment, row.Revision, row.Total?.ToString("F2", CultureInfo.InvariantCulture), lines,
             row.TargetStoreId, row.TargetStore));
     }
 
-    private static async Task<IResult> Post(Guid id, PostStockOperation confirmation, PoliValkoDbContext db, ICatalogReservations reservations,
-        IOutbox outbox, IAuditLog audit, CancellationToken ct)
+    private static async Task<IResult> Post(Guid id, PostStockOperation confirmation, HttpContext http, IStaffAccessResolver accessResolver,
+        PoliValkoDbContext db, ICatalogReservations reservations, IOutbox outbox, IAuditLog audit, CancellationToken ct)
     {
+        if (confirmation.LinkUnlinkedToShop)
+        {
+            var access = await accessResolver.GetStaffAccessAsync(http.User, http.Items, ct);
+            if (access is null || !access.HasAny([PermissionKeys.CatalogImportRun])) return Results.Forbid();
+        }
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         var row = await Find(id, true, db, ct);
         if (row == null) return Results.NotFound();
@@ -317,6 +325,12 @@ internal static class StockOperations
         var changedDeltas = changed.Select(m => m.Line.Change).ToArray();
         var (applied, synced) = await StockPosting.ApplyAsync(db, id, row.OrgId, row.StoreId, changedIds, changedDeltas, ct);
         if (!applied) return Conflict(StockPosting.ShopConflict);
+        var linkedToShop = 0;
+        if (confirmation.LinkUnlinkedToShop && row.Kind == "income")
+        {
+            linkedToShop = await StockPosting.LinkUnlinkedAsync(db, row.OrgId, row.StoreId, ids, ct);
+            synced += linkedToShop;
+        }
         if (isTransfer && changedIds.Length > 0)
         {
             var targetDeltas = changed.Select(m => -m.Line.Change).ToArray();
@@ -331,7 +345,7 @@ internal static class StockOperations
             UPDATE accounting.documents SET status='posted',details=details||jsonb_build_object('posted',{posted}::jsonb) WHERE id={id}
             """, ct);
         audit.Record("accounting.stock_operation_posted", "AccountingDocument", id.ToString(),
-            new { row.Kind, row.StoreId, row.TargetStoreId, Lines = changed.Count });
+            new { row.Kind, row.StoreId, row.TargetStoreId, Lines = changed.Count, linkedToShop });
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
         return Results.Ok(id);

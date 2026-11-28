@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using PoliValko.Catalog.Contracts;
 using PoliValko.Catalog.Domain;
+using PoliValko.Catalog.Features.Pricing;
 using PoliValko.Infrastructure.Audit;
 using PoliValko.Infrastructure.Persistence;
 using PoliValko.Infrastructure.Storefront;
@@ -40,14 +41,28 @@ internal static class ProductLifecycle
         slugBase = slugBase.Length > 240 ? slugBase[..240].TrimEnd('-') : slugBase;
         var slug = slugBase.Length > 0 ? slugBase : "product";
         if (await db.Set<Product>().AnyAsync(p => p.Slug == slug, ct)) slug = $"{slug}-{id:N}";
+        var defaultWarehouse = await CatalogWarehouseSource.ReadDefaultWarehouseAsync(db, ct);
         db.Add(new Product
         {
             Id = id, Name = name!, NavkoloId = $"local:{id:N}", Sku = sku!, Slug = slug, CategoryId = input.CategoryId,
             CreatedAt = now, UpdatedAt = now, IsVisible = false,
             Price = new ProductPrice { ProductId = id, UpdatedAt = now },
-            Stock = new ProductStock { ProductId = id, UpdatedAt = now }
+            Stock = new ProductStock
+            {
+                ProductId = id,
+                WarehouseOrgId = defaultWarehouse?.OrgId,
+                WarehouseStoreId = defaultWarehouse?.StoreId,
+                UpdatedAt = now,
+            }
         });
-        audit.Record("catalog.product_created", "Product", sku, new { id, name, input.CategoryId });
+        audit.Record("catalog.product_created", "Product", sku, new
+        {
+            id,
+            name,
+            input.CategoryId,
+            warehouseOrgId = defaultWarehouse?.OrgId,
+            warehouseStoreId = defaultWarehouse?.StoreId,
+        });
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
         return TypedResults.Created($"/api/v1/console/catalog/products/{id}", id);

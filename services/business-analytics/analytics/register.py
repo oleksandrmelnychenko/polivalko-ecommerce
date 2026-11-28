@@ -114,38 +114,64 @@ def number(value):
 def apply_inventory_cost(facts, events):
     """Historical moving average only from an evidenced empty opening balance.
 
-    Source rows are ordered by warehouse, SKU, day. Multiple movements without
-    a provable intraday order invalidate that day's valuation.
+    Movements are evaluated per (org, product) chronologically by day. Transfer outflows
+    are processed before transfer inflows on the same day so a transfer carries the source
+    warehouse's moving-average unit cost into the destination warehouse. Multiple movements
+    for the same warehouse on one day without a provable intraday order invalidate that
+    warehouse's valuation.
     """
     by_line = defaultdict(list)
     for r in facts:
         if not r["refund"] and r["cost"] is None:
             by_line[r["doc"], r["org"], r["store"], r["product"]].append(r)
-    for (org, store, product), movements in groupby(events, lambda e: (e["org"], e["store"], e["product"])):
-        balance = value = None
-        for _, same_day in groupby(movements, lambda e: e["day"]):
-            batch = list(same_day)
-            if len(batch) != 1:
-                balance = value = None
-                continue
-            e = batch[0]
-            before = e["balance"] - e["delta"]
-            if before == 0:
-                value = Decimal(0)
-            elif balance != before:
-                value = None
-            balance = e["balance"]
-            if value is None:
-                continue
-            if e["delta"] > 0:
-                value = value + e["purchase"] if e["purchase"] is not None else None
-            elif before > 0:
-                cost = value / before
-                matched = by_line[e["doc"], org, store, product]
-                if sum(r["qty"] for r in matched) <= -e["delta"]:
-                    for r in matched:
-                        r["cost"] = r["qty"] * cost
-                value += e["delta"] * cost
+
+    grouped = defaultdict(list)
+    for e in events:
+        grouped[e["org"], e["product"]].append(e)
+
+    for (org, product), product_events in grouped.items():
+        by_day = defaultdict(lambda: defaultdict(list))
+        for e in product_events:
+            by_day[e["day"]][e["store"]].append(e)
+
+        state = {}
+        for day in sorted(by_day):
+            transfer_costs = {}
+            day_stores = sorted(
+                by_day[day].items(),
+                key=lambda item: (
+                    1 if len(item[1]) == 1 and item[1][0].get("kind") == "transfer" and item[1][0]["delta"] > 0 else 0,
+                    item[0],
+                ),
+            )
+            for store, batch in day_stores:
+                balance, value = state.get(store, (None, None))
+                if len(batch) != 1:
+                    state[store] = (None, None)
+                    continue
+                e = batch[0]
+                before = e["balance"] - e["delta"]
+                if before == 0:
+                    value = Decimal(0)
+                elif balance != before:
+                    value = None
+                balance = e["balance"]
+                if value is not None:
+                    if e["delta"] > 0:
+                        inflow_cost = e["purchase"]
+                        if inflow_cost is None and e.get("kind") == "transfer":
+                            inflow_cost = transfer_costs.get(e["doc"])
+                        value = value + inflow_cost if inflow_cost is not None else None
+                    elif before > 0:
+                        cost = value / before
+                        if e.get("kind") == "transfer":
+                            transfer_costs[e["doc"]] = -e["delta"] * cost
+                        matched = by_line[e["doc"], org, store, product]
+                        if sum(r["qty"] for r in matched) <= -e["delta"]:
+                            for r in matched:
+                                r["cost"] = r["qty"] * cost
+                        value += e["delta"] * cost
+                state[store] = (balance, value)
     original = defaultdict(set)
     for r in facts:
         if not r["refund"]:
