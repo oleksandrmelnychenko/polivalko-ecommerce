@@ -50,8 +50,6 @@ internal static class ProductLifecycle
             Stock = new ProductStock
             {
                 ProductId = id,
-                WarehouseOrgId = defaultWarehouse?.OrgId,
-                WarehouseStoreId = defaultWarehouse?.StoreId,
                 UpdatedAt = now,
             }
         });
@@ -64,6 +62,20 @@ internal static class ProductLifecycle
             warehouseStoreId = defaultWarehouse?.StoreId,
         });
         await db.SaveChangesAsync(ct);
+        if (defaultWarehouse is { } dw)
+        {
+            // catalog.product_stock has a composite FK to accounting.warehouse_stock(org_id, store_id, product_id).
+            await db.Database.ExecuteSqlAsync($"""
+                INSERT INTO accounting.warehouse_stock(org_id, store_id, product_id, quantity)
+                VALUES ({dw.OrgId}, {dw.StoreId}, {id}, 0)
+                ON CONFLICT DO NOTHING
+                """, ct);
+            await db.Database.ExecuteSqlAsync($"""
+                UPDATE catalog.product_stock
+                SET warehouse_org_id = {dw.OrgId}, warehouse_store_id = {dw.StoreId}, updated_at = {now}
+                WHERE product_id = {id}
+                """, ct);
+        }
         await transaction.CommitAsync(ct);
         return TypedResults.Created($"/api/v1/console/catalog/products/{id}", id);
     }

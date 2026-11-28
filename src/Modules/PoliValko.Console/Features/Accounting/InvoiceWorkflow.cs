@@ -126,7 +126,24 @@ internal static class InvoiceWorkflow
                 SELECT 1 AS "Value" FROM catalog.products WHERE id={input.ProductId} AND is_archived
                 """).AnyAsync(ct);
             if (archived) return Conflict("Архівний товар не можна ставити на склад. Спочатку відновіть його з архіву.");
-            return Conflict("Перевірте реквізити. Початковий залишок можна ввести лише до першого руху цього товару в організації та на складі.");
+            // Auto-linked new products start with an untouched zero warehouse_stock row; allow opening stock before any movement.
+            var updatedZero = await db.Database.ExecuteSqlAsync($"""
+                UPDATE accounting.warehouse_stock w
+                SET quantity={input.Quantity}
+                WHERE w.org_id={input.OrgId} AND w.store_id={input.StoreId} AND w.product_id={input.ProductId}
+                  AND w.quantity=0
+                  AND NOT EXISTS (
+                      SELECT 1 FROM accounting.stock_openings o
+                      WHERE o.org_id=w.org_id AND o.store_id=w.store_id AND o.product_id=w.product_id
+                  )
+                  AND NOT EXISTS (
+                      SELECT 1 FROM accounting.stock_movements m
+                      JOIN accounting.documents d ON d.id=m.document_id
+                      WHERE d.native_org_id=w.org_id AND m.store_id=w.store_id AND m.product_id=w.product_id
+                  )
+                """, ct);
+            if (updatedZero == 0)
+                return Conflict("Перевірте реквізити. Початковий залишок можна ввести лише до першого руху цього товару в організації та на складі.");
         }
         var recorded = await db.Database.ExecuteSqlAsync($"""
             INSERT INTO accounting.stock_openings VALUES({input.Id},{input.OrgId},{input.StoreId},{input.ProductId},{input.Quantity},{input.Day},{input.Reference})
